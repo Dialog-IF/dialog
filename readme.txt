@@ -1,4 +1,4 @@
-This archive contains version 0f/01 of the Dialog compiler and interactive
+This archive contains version 0f/02 of the Dialog compiler and interactive
 debugger, bundled with documentation and version 0.23 of the dialog Standard
 Library.
 
@@ -37,6 +37,14 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0f/02 Lib 0.23 (Manual revision 9):
+
+		Compiler: Fixed a bug that caused heavily nested conditional
+		expressions to compile very slowly.
+
+		Documentation: Removed two obsolete entries from the quick
+		reference.
 
 	0f/01 Lib 0.23 (Manual revision 8):
 

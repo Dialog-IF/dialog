@@ -184,6 +184,179 @@ static void end_routine_cl(struct clause *cl) {
 	end_routine(cl->clause_id, &cl->predicate->pred->arena);
 }
 
+static void comp_dump_instr(struct program *prg, struct clause *cl, struct cinstr *ci) {
+	value_t v;
+	struct opinfo *info;
+	int j;
+	char namebuf[20];
+
+	printf("\t");
+	info = &opinfo[ci->op];
+	if(info->flags & OPF_SUBOP) {
+		snprintf(namebuf, sizeof(namebuf), "%s %d", info->name, ci->subop);
+	} else {
+		snprintf(namebuf, sizeof(namebuf), "%s", info->name);
+	}
+	printf("%-19s", namebuf);
+	if(info->flags & OPF_BRANCH) {
+		if(ci->subop) {
+			printf("~");
+		} else {
+			printf(" ");
+		}
+		if(ci->implicit == 0xffff) {
+			printf("FAIL ");
+		} else {
+			printf("R%-3d ", ci->implicit);
+		}
+	} else {
+		printf("      ");
+	}
+	for(j = 0; j < 3; j++) {
+		char buf[13];
+
+		v = ci->oper[j];
+		switch(v.tag) {
+		case VAL_NUM:
+		case OPER_NUM:
+			snprintf(buf, sizeof(buf), "%d", v.value);
+			break;
+		case VAL_OBJ:
+			assert(v.value < prg->nworldobj);
+			snprintf(buf, sizeof(buf), "#%s", prg->worldobjnames[v.value]->name);
+			break;
+		case VAL_DICT:
+			assert(v.value < prg->ndictword);
+			snprintf(buf, sizeof(buf), "@%s", prg->dictwordnames[v.value]->name);
+			break;
+		case VAL_NIL:
+			snprintf(buf, sizeof(buf), "[]");
+			break;
+		case VAL_RAW:
+			snprintf(buf, sizeof(buf), "0x%04x", v.value);
+			break;
+		case OPER_ARG:
+			snprintf(buf, sizeof(buf), "A%d", v.value);
+			break;
+		case OPER_TEMP:
+			snprintf(buf, sizeof(buf), "X%d", v.value);
+			break;
+		case OPER_VAR:
+			if(cl) {
+				assert(v.value < cl->nvar);
+				snprintf(buf, sizeof(buf), "V%d/$%s", v.value, cl->varnames[v.value]->name);
+			} else {
+				snprintf(buf, sizeof(buf), "V%d", v.value);
+			}
+			break;
+		case OPER_RLAB:
+			snprintf(buf, sizeof(buf), "R%d", v.value);
+			break;
+		case OPER_FAIL:
+			snprintf(buf, sizeof(buf), "<FAIL>");
+			break;
+		case OPER_GFLAG:
+			snprintf(buf, sizeof(buf), "GF%d", v.value);
+			break;
+		case OPER_GVAR:
+			snprintf(buf, sizeof(buf), "GV%d", v.value);
+			break;
+		case OPER_OFLAG:
+			snprintf(buf, sizeof(buf), "OF%d", v.value);
+			break;
+		case OPER_OVAR:
+			snprintf(buf, sizeof(buf), "OV%d", v.value);
+			break;
+		case OPER_BOX:
+			snprintf(buf, sizeof(buf), "B%d/@%s", v.value, prg->boxclasses[v.value].class->name);
+			break;
+		case OPER_PRED:
+			printf(" %s", prg->predicates[v.value]->printed_name);
+			break;
+		case OPER_FILE:
+			assert(j == 0);
+			assert(ci->oper[1].tag == OPER_NUM);
+			printf(" %s:%d", sourcefile[v.value], ci->oper[1].value);
+			break;
+		case OPER_WORD:
+			assert(v.value < prg->nword);
+			snprintf(buf, sizeof(buf), "\"%s\"", prg->allwords[v.value]->name);
+			break;
+		case VAL_NONE:
+			snprintf(buf, sizeof(buf), "-");
+			break;
+		default:
+			assert(0);
+		}
+
+		if(v.tag == OPER_PRED || v.tag == OPER_FILE || v.tag == OPER_STR) break;
+
+		printf(" %-12s", buf);
+	}
+	v = ci->oper[0];
+	if(v.tag == OPER_GFLAG) {
+		assert(v.value < prg->nglobalflag);
+		printf(" %s", prg->globalflagpred[v.value]->printed_name);
+	} else if(v.tag == OPER_GVAR) {
+		assert(v.value < prg->nglobalvar);
+		printf(" %s", prg->globalvarpred[v.value]->printed_name);
+	} else if(v.tag == OPER_OFLAG) {
+		assert(v.value < prg->nobjflag);
+		printf(" %s", prg->objflagpred[v.value]->printed_name);
+	} else if(v.tag == OPER_OVAR) {
+		assert(v.value < prg->nobjvar);
+		printf(" %s", prg->objvarpred[v.value]->printed_name);
+	}
+	printf("\n");
+}
+
+void comp_dump_routine(struct program *prg, struct clause *cl, struct comp_routine *r) {
+	int i;
+
+	for(i = 0; i < r->ninstr; i++) {
+		comp_dump_instr(prg, cl, &r->instr[i]);
+	}
+}
+
+void comp_dump_routines(struct program *prg) {
+	int i;
+
+	printf("####\n");
+	for(i = 0; i < nroutine; i++) {
+		printf("R%d:\n", i);
+		comp_dump_routine(prg, 0, &routines[i]);
+	}
+}
+
+static void comp_dump_label(struct predicate *pred, int i) {
+	printf("R%d:", i);
+	if(pred->routines[i].reftrack == i) {
+		printf(" (group leader)");
+	} else if(pred->routines[i].reftrack == 0xffff) {
+		printf(" (unreachable)");
+	} else {
+		printf(" (part of group R%d)", pred->routines[i].reftrack);
+	}
+	printf("\n");
+}
+
+void comp_dump_predicate(struct program *prg, struct predname *predname) {
+	int i;
+	struct predicate *pred = predname->pred;
+	uint16_t cid;
+
+	printf("Intermediate code for %s: %d %d\n",
+		predname->printed_name,
+		pred->normal_entry,
+		pred->initial_value_entry);
+
+	for(i = 0; i < pred->nroutine; i++) {
+		comp_dump_label(pred, i);
+		cid = pred->routines[i].clause_id;
+		comp_dump_routine(prg, (cid == 0xffff)? 0 : pred->clauses[cid], &pred->routines[i]);
+	}
+}
+
 static int findvar(struct clause *cl, struct word *w) {
 	int i;
 
@@ -2243,64 +2416,77 @@ static void comp_clause_chain(struct program *prg, struct predicate *pred, struc
 	}
 }
 
-static int try_eliminate_choice(struct comp_routine *r, int i);
+static int can_eliminate_choice(
+	int rnum,
+	int inum,
+	value_t restore_var,
+	struct cinstr **pop_instr,
+	struct cinstr **restore_instr,
+	uint8_t *visited)
+{
+	int i, j, retval = 1;
+	struct comp_routine *r = &routines[rnum];
 
-static int can_eliminate_choice(struct comp_routine *r, int inum, int restore_vnum, struct cinstr **pop_instr, struct cinstr **restore_instr, int *any) {
-	int i, j;
+	if(!inum && visited[rnum]) {
+		return visited[rnum] - 1;
+	}
 	
 	for(i = inum; i < r->ninstr; i++) {
 		if(r->instr[i].op == I_POP_CHOICE) {
-			return *pop_instr == &r->instr[i];
+			retval = (*pop_instr == &r->instr[i]);
+			break;
 		} else if(r->instr[i].op == I_PUSH_CHOICE
-		|| r->instr[i].op == I_SAVE_CHOICE) {
-			*any |= try_eliminate_choice(r, i);
-			if(r->instr[i].op != I_NOP) {
-				return 0;
-			}
-		} else if(r->instr[i].op == I_CUT_CHOICE) {
-			return 0;
-		} else if(r->instr[i].op == I_PROCEED) {
-			// Proceeding from a simple invocation is safe.
-			return (r->instr[i].subop == 1);
-		} else if(r->instr[i].op == I_PUSH_STOP
-		|| r->instr[i].op == I_POP_STOP
+		|| r->instr[i].op == I_SAVE_CHOICE
+		|| r->instr[i].op == I_CUT_CHOICE
+		|| r->instr[i].op == I_PUSH_STOP
 		|| r->instr[i].op == I_ALLOCATE
 		|| r->instr[i].op == I_INVOKE_ONCE
 		|| r->instr[i].op == I_INVOKE_MULTI
 		|| r->instr[i].op == I_INVOKE_TAIL_ONCE
 		|| r->instr[i].op == I_INVOKE_TAIL_MULTI) {
-			return 0;
+			retval = 0;
+			break;
+		} else if(r->instr[i].op == I_PROCEED) {
+			// Proceeding from a simple invocation is safe.
+			retval = (r->instr[i].subop == 1);
+			break;
 		} else if(r->instr[i].op == I_RESTORE_CHOICE) {
-			if(r->instr[i].oper[0].tag == OPER_VAR && r->instr[i].oper[0].value == restore_vnum) {
+			if(r->instr[i].oper[0].tag == restore_var.tag
+			&& r->instr[i].oper[0].value == restore_var.value) {
 				if(!*restore_instr) {
 					*restore_instr = &r->instr[i];
 				}
-				return *restore_instr == &r->instr[i];
+				retval = (*restore_instr == &r->instr[i]);
 			} else {
-				return 0;
+				retval = 0;
 			}
+			break;
 		} else if(r->instr[i].op != I_JUMP
 		&& opinfo[r->instr[i].op].flags & (OPF_CAN_FAIL | OPF_ENDS_ROUTINE)) {
-			return 0;
+			retval = 0;
+			break;
 		}
 		if(opinfo[r->instr[i].op].flags & OPF_BRANCH) {
 			if(r->instr[i].implicit != 0xffff
-			&& !can_eliminate_choice(&routines[r->instr[i].implicit], 0, restore_vnum, pop_instr, restore_instr, any)) {
-				return 0;
+			&& !can_eliminate_choice(r->instr[i].implicit, 0, restore_var, pop_instr, restore_instr, visited)) {
+				retval = 0;
+				break;
 			}
 		}
 		for(j = 0; j < 3; j++) {
 			if(r->instr[i].oper[j].tag == OPER_RLAB
-			&& !can_eliminate_choice(&routines[r->instr[i].oper[j].value], 0, restore_vnum, pop_instr, restore_instr, any)) {
-				return 0;
+			&& !can_eliminate_choice(r->instr[i].oper[j].value, 0, restore_var, pop_instr, restore_instr, visited)) {
+				retval = 0;
+				break;
 			}
 		}
 	}
 
-	return 1;
+	if(!inum) visited[rnum] = retval + 1;
+	return retval;
 }
 
-static void do_eliminate_choice(struct comp_routine *r, int inum, uint16_t fail_lab) {
+static void do_eliminate_choice(struct comp_routine *r, int inum, uint16_t fail_lab, uint8_t *visited) {
 	int i, j;
 
 	for(i = inum; i < r->ninstr; i++) {
@@ -2314,7 +2500,10 @@ static void do_eliminate_choice(struct comp_routine *r, int inum, uint16_t fail_
 			if(r->instr[i].implicit == 0xffff) {
 				r->instr[i].implicit = fail_lab;
 			} else {
-				do_eliminate_choice(&routines[r->instr[i].implicit], 0, fail_lab);
+				if(!visited[r->instr[i].implicit]) {
+					visited[r->instr[i].implicit] = 1;
+					do_eliminate_choice(&routines[r->instr[i].implicit], 0, fail_lab, visited);
+				}
 			}
 		}
 		for(j = 0; j < 3; j++) {
@@ -2322,71 +2511,78 @@ static void do_eliminate_choice(struct comp_routine *r, int inum, uint16_t fail_
 				r->instr[i].oper[j].tag = OPER_RLAB;
 				r->instr[i].oper[j].value = fail_lab;
 			} else if(r->instr[i].oper[j].tag == OPER_RLAB) {
-				do_eliminate_choice(&routines[r->instr[i].oper[j].value], 0, fail_lab);
+				if(!visited[r->instr[i].oper[j].value]) {
+					visited[r->instr[i].oper[j].value] = 1;
+					do_eliminate_choice(&routines[r->instr[i].oper[j].value], 0, fail_lab, visited);
+				}
 			}
 		}
 	}
 }
 
-static int try_eliminate_choice(struct comp_routine *r, int i) {
+static int try_eliminate_choice(int rnum, int i, struct program *prg, uint8_t *visited) {
 	uint16_t fail_lab;
 	struct cinstr *pop_instr, *restore_instr;
 	int any = 0;
+	struct comp_routine *r = &routines[rnum];
 
-	if(r->instr[i].op == I_SAVE_CHOICE
-	&& r->instr[i].oper[0].tag == OPER_VAR
-	&& i + 1 < r->ninstr
-	&& r->instr[i + 1].op == I_PUSH_CHOICE) {
-		assert(r->instr[i + 1].oper[1].tag == OPER_RLAB);
-		fail_lab = r->instr[i + 1].oper[1].value;
-		pop_instr = &routines[fail_lab].instr[0];
-		restore_instr = 0;
-		if(can_eliminate_choice(r, i + 2, r->instr[i].oper[0].value, &pop_instr, &restore_instr, &any)) {
-			any |= 1;
-			do_eliminate_choice(r, i + 2, fail_lab);
-			r->instr[i].op = I_NOP;
-			memset(r->instr[i].oper, 0, sizeof(r->instr[i].oper));
-			r->instr[i + 1].op = I_NOP;
-			memset(r->instr[i + 1].oper, 0, sizeof(r->instr[i + 1].oper));
-			assert(pop_instr->op == I_POP_CHOICE);
-			pop_instr->op = I_NOP;
-			memset(pop_instr->oper, 0, sizeof(pop_instr->oper));
-			if(restore_instr) {
-				assert(restore_instr->op == I_RESTORE_CHOICE);
-				restore_instr->op = I_NOP;
-				memset(restore_instr->oper, 0, sizeof(restore_instr->oper));
-			}
-		}
-	} else if(r->instr[i].op == I_PUSH_CHOICE) {
+	if(r->instr[i].op == I_PUSH_CHOICE) {
 		assert(r->instr[i].oper[1].tag == OPER_RLAB);
 		fail_lab = r->instr[i].oper[1].value;
 		pop_instr = &routines[fail_lab].instr[0];
 		restore_instr = 0;
-		if(can_eliminate_choice(r, i + 1, -1, &pop_instr, &restore_instr, &any)) {
-			any |= 1;
-			do_eliminate_choice(r, i + 1, fail_lab);
-			r->instr[i].op = I_NOP;
-			memset(r->instr[i].oper, 0, sizeof(r->instr[i].oper));
-			assert(pop_instr->op == I_POP_CHOICE);
-			pop_instr->op = I_NOP;
-			memset(pop_instr->oper, 0, sizeof(pop_instr->oper));
-			assert(!restore_instr);
+		if(i
+		&& r->instr[i - 1].op == I_SAVE_CHOICE
+		&& (r->instr[i - 1].oper[0].tag == OPER_VAR || r->instr[i - 1].oper[0].tag == OPER_TEMP)) {
+			if(can_eliminate_choice(rnum, i + 1, r->instr[i - 1].oper[0], &pop_instr, &restore_instr, visited)) {
+				any = 1;
+				memset(visited, 0, nroutine);
+				do_eliminate_choice(r, i + 1, fail_lab, visited);
+				memset(visited, 0, nroutine);
+				r->instr[i - 1].op = I_NOP;
+				memset(r->instr[i - 1].oper, 0, sizeof(r->instr[i - 1].oper));
+				r->instr[i].op = I_NOP;
+				memset(r->instr[i].oper, 0, sizeof(r->instr[i].oper));
+				assert(pop_instr->op == I_POP_CHOICE);
+				pop_instr->op = I_NOP;
+				memset(pop_instr->oper, 0, sizeof(pop_instr->oper));
+				if(restore_instr) {
+					assert(restore_instr->op == I_RESTORE_CHOICE);
+					restore_instr->op = I_NOP;
+					memset(restore_instr->oper, 0, sizeof(restore_instr->oper));
+				}
+			}
+		} else {
+			if(can_eliminate_choice(rnum, i + 1, (value_t) {VAL_NONE}, &pop_instr, &restore_instr, visited)) {
+				any = 1;
+				memset(visited, 0, nroutine);
+				do_eliminate_choice(r, i + 1, fail_lab, visited);
+				memset(visited, 0, nroutine);
+				r->instr[i].op = I_NOP;
+				memset(r->instr[i].oper, 0, sizeof(r->instr[i].oper));
+				assert(pop_instr->op == I_POP_CHOICE);
+				pop_instr->op = I_NOP;
+				memset(pop_instr->oper, 0, sizeof(pop_instr->oper));
+				assert(!restore_instr);
+			}
 		}
 	}
 
 	return any;
 }
 
-static int optimize_choice_frames() {
+static int optimize_choice_frames(struct program *prg) {
 	int rnum, i;
 	struct comp_routine *r;
 	int any = 0;
+	uint8_t visited[nroutine];
 
-	for(rnum = 0; rnum < nroutine; rnum++) {
+	memset(visited, 0, nroutine);
+	for(rnum = nroutine - 1; rnum >= 0; rnum--) {
 		r = &routines[rnum];
-		for(i = 0; i < r->ninstr; i++) {
+		for(i = r->ninstr - 1; i >= 0; i--) {
 			if(r->instr[i].op == I_SAVE_CHOICE || r->instr[i].op == I_PUSH_CHOICE) {
-				any |= try_eliminate_choice(r, i);
+				any |= try_eliminate_choice(rnum, i, prg, visited);
 			}
 		}
 	}
@@ -2395,70 +2591,68 @@ static int optimize_choice_frames() {
 }
 
 static int eliminate_env_visitor(uint16_t rnum, int inum, int edit, uint8_t *visited) {
-	int i, j;
+	int i, j, retval = 1;
 	struct comp_routine *r = &routines[rnum];
 
-	if(edit || !visited[rnum]) {
-		visited[rnum] = 1;
-
-		if(edit) {
-			// No vars left, so no need to identify the owner for printouts.
-			// Anonymizing allows us to detect duplicates across clauses.
-			r->clause_id = 0xffff;
-		}
-
-		for(i = inum; i < r->ninstr; i++) {
-			if(r->instr[i].op == I_DEALLOCATE) {
-				if(edit) {
-					r->instr[i].op = I_NOP;
-					memset(r->instr[i].oper, 0, sizeof(r->instr[i].oper));
-				}
-				visited[rnum] = 0;
-				return 1;
-			} else if(r->instr[i].op == I_ALLOCATE) {
-				visited[rnum] = 0;
-				return 0;
-			} else if(r->instr[i].op == I_INVOKE_ONCE || r->instr[i].op == I_INVOKE_MULTI) {
-				visited[rnum] = 0;
-				return 0;
-			}
-			if(opinfo[r->instr[i].op].flags & OPF_BRANCH) {
-				if(r->instr[i].implicit != 0xffff
-				&& !eliminate_env_visitor(r->instr[i].implicit, 0, edit, visited)) {
-					visited[rnum] = 0;
-					return 0;
-				}
-			}
-			for(j = 0; j < 3; j++) {
-				if(r->instr[i].oper[j].tag == OPER_RLAB
-				&& !eliminate_env_visitor(r->instr[i].oper[j].value, 0, edit, visited)) {
-					visited[rnum] = 0;
-					return 0;
-				}
-			}
-		}
-
-		visited[rnum] = 0;
-		return 1;
-	} else {
-		return 0; // only builtins have looping call graphs anyway
+	if(!inum && visited[rnum]) {
+		return visited[rnum] - 1;
 	}
+
+	visited[rnum] = 1; // should we encounter a loop, be sure to stop the recursion
+
+	if(edit) {
+		// No vars left, so no need to identify the owner for printouts.
+		// Anonymizing allows us to detect duplicates across clauses.
+		r->clause_id = 0xffff;
+	}
+
+	for(i = inum; i < r->ninstr; i++) {
+		if(r->instr[i].op == I_DEALLOCATE) {
+			if(edit) {
+				r->instr[i].op = I_NOP;
+				memset(r->instr[i].oper, 0, sizeof(r->instr[i].oper));
+			}
+			break;
+		} else if(r->instr[i].op == I_ALLOCATE) {
+			retval = 0;
+			break;
+		} else if(r->instr[i].op == I_INVOKE_ONCE || r->instr[i].op == I_INVOKE_MULTI) {
+			retval = 0;
+			break;
+		}
+		if(opinfo[r->instr[i].op].flags & OPF_BRANCH) {
+			if(r->instr[i].implicit != 0xffff
+			&& !eliminate_env_visitor(r->instr[i].implicit, 0, edit, visited)) {
+				retval = 0;
+				break;
+			}
+		}
+		for(j = 0; j < 3; j++) {
+			if(r->instr[i].oper[j].tag == OPER_RLAB
+			&& !eliminate_env_visitor(r->instr[i].oper[j].value, 0, edit, visited)) {
+				retval = 0;
+				break;
+			}
+		}
+	}
+
+	if(!inum) visited[rnum] = retval + 1;
+	return retval;
 }
 
-static int try_eliminate_env(uint16_t rnum, int i) {
+static int try_eliminate_env(uint16_t rnum, int i, uint8_t *visited) {
 	struct comp_routine *r = &routines[rnum];
 	int any = 0;
 
 	assert(r->instr[i].oper[0].tag == OPER_NUM);
 	if(!r->instr[i].oper[0].value) {
-		uint8_t visited[nroutine];
-
-		memset(visited, 0, nroutine);
 		if(eliminate_env_visitor(rnum, i + 1, 0, visited)) {
-			any |= 1;
+			any = 1;
 			r->instr[i].op = I_NOP;
 			memset(r->instr[i].oper, 0, sizeof(r->instr[i].oper));
+			memset(visited, 0, nroutine);
 			(void) eliminate_env_visitor(rnum, i + 1, 1, visited);
+			memset(visited, 0, nroutine);
 		}
 	}
 
@@ -2469,13 +2663,15 @@ static int optimize_env_frames(struct program *prg) {
 	int rnum, i;
 	struct comp_routine *r;
 	int any = 0;
+	uint8_t visited[nroutine];
 
+	memset(visited, 0, nroutine);
 	if(prg->optflags & OPTF_ENV_FRAMES) {
-		for(rnum = 0; rnum < nroutine; rnum++) {
+		for(rnum = nroutine - 1; rnum >= 0; rnum--) {
 			r = &routines[rnum];
-			for(i = 0; i < r->ninstr; i++) {
+			for(i = r->ninstr - 1; i >= 0; i--) {
 				if(r->instr[i].op == I_ALLOCATE) {
-					any |= try_eliminate_env(rnum, i);
+					any |= try_eliminate_env(rnum, i, visited);
 				}
 			}
 		}
@@ -2556,18 +2752,16 @@ static int optimize_vars(struct program *prg, struct predicate *pred) {
 							for(j = 0; j < 3; j++) {
 								if(ci->oper[j].tag == OPER_VAR) {
 									vnum = ci->oper[j].value;
-									if(seen_in[vnum] != 0xffff) {
-										if(!multi[vnum]) {
-											ci->oper[j].tag = OPER_TEMP;
-										}
-										ci->oper[j].value = remap[vnum];
+									assert(seen_in[vnum] != 0xffff);
+									if(!multi[vnum]) {
+										ci->oper[j].tag = OPER_TEMP;
 									}
+									ci->oper[j].value = remap[vnum];
 								}
 							}
 						}
 					}
 				}
-
 				cl->nvar = nextvar;
 			}
 		}
@@ -2576,164 +2770,6 @@ static int optimize_vars(struct program *prg, struct predicate *pred) {
 	//printf("Eliminated %d more frames\n", eliminated);
 
 	return eliminated;
-}
-
-void comp_dump_routine(struct program *prg, struct clause *cl, struct comp_routine *r) {
-	int i, j;
-	value_t v;
-	struct opinfo *info;
-
-	for(i = 0; i < r->ninstr; i++) {
-		char namebuf[20];
-
-		printf("\t");
-		info = &opinfo[r->instr[i].op];
-		if(info->flags & OPF_SUBOP) {
-			snprintf(namebuf, sizeof(namebuf), "%s %d", info->name, r->instr[i].subop);
-		} else {
-			snprintf(namebuf, sizeof(namebuf), "%s", info->name);
-		}
-		printf("%-19s", namebuf);
-		if(info->flags & OPF_BRANCH) {
-			if(r->instr[i].subop) {
-				printf("~");
-			} else {
-				printf(" ");
-			}
-			if(r->instr[i].implicit == 0xffff) {
-				printf("FAIL ");
-			} else {
-				printf("R%-3d ", r->instr[i].implicit);
-			}
-		} else {
-			printf("      ");
-		}
-		for(j = 0; j < 3; j++) {
-			char buf[13];
-
-			v = r->instr[i].oper[j];
-			switch(v.tag) {
-			case VAL_NUM:
-			case OPER_NUM:
-				snprintf(buf, sizeof(buf), "%d", v.value);
-				break;
-			case VAL_OBJ:
-				assert(v.value < prg->nworldobj);
-				snprintf(buf, sizeof(buf), "#%s", prg->worldobjnames[v.value]->name);
-				break;
-			case VAL_DICT:
-				assert(v.value < prg->ndictword);
-				snprintf(buf, sizeof(buf), "@%s", prg->dictwordnames[v.value]->name);
-				break;
-			case VAL_NIL:
-				snprintf(buf, sizeof(buf), "[]");
-				break;
-			case VAL_RAW:
-				snprintf(buf, sizeof(buf), "0x%04x", v.value);
-				break;
-			case OPER_ARG:
-				snprintf(buf, sizeof(buf), "A%d", v.value);
-				break;
-			case OPER_TEMP:
-				snprintf(buf, sizeof(buf), "X%d", v.value);
-				break;
-			case OPER_VAR:
-				if(cl) {
-					assert(v.value < cl->nvar);
-					snprintf(buf, sizeof(buf), "V%d/$%s", v.value, cl->varnames[v.value]->name);
-				} else {
-					snprintf(buf, sizeof(buf), "V%d", v.value);
-				}
-				break;
-			case OPER_RLAB:
-				snprintf(buf, sizeof(buf), "R%d", v.value);
-				break;
-			case OPER_FAIL:
-				snprintf(buf, sizeof(buf), "<FAIL>");
-				break;
-			case OPER_GFLAG:
-				snprintf(buf, sizeof(buf), "GF%d", v.value);
-				break;
-			case OPER_GVAR:
-				snprintf(buf, sizeof(buf), "GV%d", v.value);
-				break;
-			case OPER_OFLAG:
-				snprintf(buf, sizeof(buf), "OF%d", v.value);
-				break;
-			case OPER_OVAR:
-				snprintf(buf, sizeof(buf), "OV%d", v.value);
-				break;
-			case OPER_BOX:
-				snprintf(buf, sizeof(buf), "B%d/@%s", v.value, prg->boxclasses[v.value].class->name);
-				break;
-			case OPER_PRED:
-				printf(" %s", prg->predicates[v.value]->printed_name);
-				break;
-			case OPER_FILE:
-				assert(j == 0);
-				assert(r->instr[i].oper[1].tag == OPER_NUM);
-				printf(" %s:%d", sourcefile[v.value], r->instr[i].oper[1].value);
-				break;
-			case OPER_WORD:
-				assert(v.value < prg->nword);
-				snprintf(buf, sizeof(buf), "\"%s\"", prg->allwords[v.value]->name);
-				break;
-			case VAL_NONE:
-				snprintf(buf, sizeof(buf), "-");
-				break;
-			default:
-				assert(0);
-			}
-
-			if(v.tag == OPER_PRED || v.tag == OPER_FILE || v.tag == OPER_STR) break;
-
-			printf(" %-12s", buf);
-		}
-		v = r->instr[i].oper[0];
-		if(v.tag == OPER_GFLAG) {
-			assert(v.value < prg->nglobalflag);
-			printf(" %s", prg->globalflagpred[v.value]->printed_name);
-		} else if(v.tag == OPER_GVAR) {
-			assert(v.value < prg->nglobalvar);
-			printf(" %s", prg->globalvarpred[v.value]->printed_name);
-		} else if(v.tag == OPER_OFLAG) {
-			assert(v.value < prg->nobjflag);
-			printf(" %s", prg->objflagpred[v.value]->printed_name);
-		} else if(v.tag == OPER_OVAR) {
-			assert(v.value < prg->nobjvar);
-			printf(" %s", prg->objvarpred[v.value]->printed_name);
-		}
-		printf("\n");
-	}
-}
-
-static void comp_dump_label(struct predicate *pred, int i) {
-	printf("R%d:", i);
-	if(pred->routines[i].reftrack == i) {
-		printf(" (group leader)");
-	} else if(pred->routines[i].reftrack == 0xffff) {
-		printf(" (unreachable)");
-	} else {
-		printf(" (part of group R%d)", pred->routines[i].reftrack);
-	}
-	printf("\n");
-}
-
-void comp_dump_predicate(struct program *prg, struct predname *predname) {
-	int i;
-	struct predicate *pred = predname->pred;
-	uint16_t cid;
-
-	printf("Intermediate code for %s: %d %d\n",
-		predname->printed_name,
-		pred->normal_entry,
-		pred->initial_value_entry);
-
-	for(i = 0; i < pred->nroutine; i++) {
-		comp_dump_label(pred, i);
-		cid = pred->routines[i].clause_id;
-		comp_dump_routine(prg, (cid == 0xffff)? 0 : pred->clauses[cid], &pred->routines[i]);
-	}
 }
 
 static int try_reftrack_from(int rnum, int group, int force) {
@@ -3523,12 +3559,14 @@ void comp_predicate(struct program *prg, struct predname *predname) {
 	do {
 		any = 0;
 		any |= optimize_env_frames(prg);
-		any |= optimize_choice_frames();
-		pack_instructions();
-		resolve_jump_chains(pred);
+		any |= optimize_choice_frames(prg);
 		track_refs(pred);
 		any |= optimize_vars(prg, pred);
 	} while(any);
+
+	pack_instructions();
+	resolve_jump_chains(pred);
+	track_refs(pred);
 
 	pred->routines = arena_alloc(&pred->arena, nroutine * sizeof(struct comp_routine));
 	memcpy(pred->routines, routines, nroutine * sizeof(struct comp_routine));
