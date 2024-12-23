@@ -1,4 +1,4 @@
-This archive contains version 0g/01 of the Dialog compiler and interactive
+This archive contains version 0g/02 of the Dialog compiler and interactive
 debugger, bundled with documentation and version 0.26 of the dialog Standard
 Library.
 
@@ -37,6 +37,10 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0g/02 Lib 0.26 (Manual revision 11):
+
+		Re-release of 0g/01, including several files that were missing.
 
 	0g/01 Lib 0.26 (Manual revision 11):
 
