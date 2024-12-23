@@ -1591,7 +1591,16 @@ static void comp_now(struct program *prg, struct clause *cl, struct astnode *an,
 		ci->oper[0] = (value_t) {OPER_FILE, FILENUMPART(an->line)};
 		ci->oper[1] = (value_t) {OPER_NUM, LINEPART(an->line)};
 	}
-	if(an->kind == AN_RULE) {
+	if(an->kind == AN_RULE
+	|| (an->kind == AN_NEG_BLOCK && an->children[0]->kind == AN_NEG_RULE && !an->children[0]->next_in_body)) {
+		if(an->kind == AN_NEG_BLOCK) {
+			an = an->children[0];
+			if(an->predicate->arity > 1 || (an->predicate->pred->flags & PREDF_GLOBAL_VAR)) {
+				report(LVL_ERR, an->line, "Invalid (now) syntax.");
+				prg->errorflag = 1;
+				return;
+			}
+		}
 		if(!(an->predicate->pred->flags & PREDF_DYNAMIC)) {
 			report(LVL_ERR, an->line, "Cannot modify non-dynamic predicate.");
 			prg->errorflag = 1;
@@ -1625,7 +1634,11 @@ static void comp_now(struct program *prg, struct clause *cl, struct astnode *an,
 			ci->oper[1] = v1;
 			ci->oper[2] = v2;
 		}
-	} else if(an->kind == AN_NEG_RULE) {
+	} else if(an->kind == AN_NEG_RULE
+	|| (an->kind == AN_NEG_BLOCK && an->children[0]->kind == AN_RULE && !an->children[0]->next_in_body)) {
+		if(an->kind == AN_NEG_BLOCK) {
+			an = an->children[0];
+		}
 		if(!(an->predicate->pred->flags & PREDF_DYNAMIC)) {
 			report(LVL_ERR, an->line, "Cannot modify non-dynamic predicate.");
 			prg->errorflag = 1;
@@ -1684,7 +1697,8 @@ static void comp_now(struct program *prg, struct clause *cl, struct astnode *an,
 			comp_now(prg, cl, an, seen, known_args);
 		}
 	} else {
-		assert(0);
+		report(LVL_ERR, an->line, "Invalid (now) syntax.");
+		prg->errorflag = 1;
 	}
 }
 

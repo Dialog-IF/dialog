@@ -56,8 +56,6 @@ p.indented {
 }
 
 span.code {
-	//font-family: Verdana, Geneva, sans-serif;
-	//font-weight: bold;
 	font-size: 0.9em;
 	color: #602010;
 }
@@ -136,17 +134,14 @@ div.footer {
 }
 
 p.nav {
-	//font-size: .9em;
 	margin-top: .5em;
 	margin-bottom: .5em;
-	//font-variant: small-caps;
 }
 
 p.tagline {
 	font-size: .8em;
 	margin-top: .5em;
 	margin-bottom: .5em;
-	//font-variant: small-caps;
 }
 
 a:link {
@@ -170,8 +165,6 @@ a.copybtn:hover {
 }
 
 div.blkoutput {
-	//width: 100%;
-	//border: 2px solid #777d90;
 	border: 2px solid #444444;
 	border-radius: 10px;
 	background-color: #eef4ff;
@@ -179,8 +172,6 @@ div.blkoutput {
 }
 
 div.blkcode {
-	//width: 100%;
-	//border: 2px solid #726e62;
 	border: 2px solid #444444;
 	border-radius: 10px;
 	background-color: #e6dfc6;

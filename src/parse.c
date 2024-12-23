@@ -1557,6 +1557,9 @@ int parse_file(struct lexer *lexer, int filenum, struct clause ***clause_dest_pt
 				report(LVL_ERR, line, "Bad kind of expression at beginning of line.");
 				return 0;
 			}
+			if(clause->predicate->builtin == BI_LIB_VERSION) {
+				lexer->lib_file = filenum;
+			}
 			if(clause->predicate->builtin == BI_QUERY || (
 				clause->predicate->builtin
 				&& clause->predicate->builtin != BI_HASPARENT

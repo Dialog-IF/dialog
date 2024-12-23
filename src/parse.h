@@ -68,6 +68,7 @@ struct lexer {
 	uint32_t		totallines;
 	uint32_t		totalwords;
 	int			errorflag;
+	int			lib_file;
 };
 
 int parse_file(struct lexer *lexer, int filenum, struct clause ***clause_dest_ptr);

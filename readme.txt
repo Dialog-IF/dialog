@@ -1,5 +1,5 @@
-This archive contains version 0k/03 of the Dialog compiler and interactive
-debugger, bundled with documentation and version 0.40 of the Dialog Standard
+This archive contains version 0k/04 of the Dialog compiler and interactive
+debugger, bundled with documentation and version 0.41 of the Dialog Standard
 Library.
 
 Directory structure:
@@ -37,6 +37,29 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0k/04, Lib 0.41 (Manual revision 26):
+
+		Library: Fixed a bug where objects immediately inside a closed
+		opaque visibility ceiling weren't considered visible.
+
+		Library: Open a closed container before stepping out of it.
+
+		Library: Don't describe contents when opening a box from the inside.
+
+		Library: Added '(Its $)'.
+
+		Compiler: Warn if the last filename on the commandline does not
+		refer to a library, i.e. a file that defines a rule for
+		'(library version)'.
+
+		Compiler: Allow '(now)' together with a double-negated flag,
+		such as in '(now) ~($Obj is on)' when '@($ is on)' is an access
+		predicate for '~($ is off)'.
+
+		Debugger: Improved support for cursor keys in TTY driver.
+
+		Manual: Removed wrongly formatted CSS comments.
 
 	0k/03, Lib 0.40 (Manual revision 25):
 

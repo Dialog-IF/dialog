@@ -257,6 +257,8 @@ static int getkey() {
 			state = STATE_ESC;
 		} else if(state == STATE_ESC && inbuf == '[') {
 			state = STATE_CSI;
+		} else if(state == STATE_ESC && inbuf == 'O') {
+			state = STATE_CSI;
 		} else if(state == STATE_CSI) {
 			if(inbuf >= '0' && inbuf <= '9') {
 				param *= 10;

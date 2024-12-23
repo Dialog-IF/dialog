@@ -1,6 +1,6 @@
 
 (library version)
-	Library version 0.40.
+	Library version 0.41.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -580,10 +580,15 @@
 			($Obj has relation #in)
 			($Parent is closed)
 			($Parent is opaque)
+			~(current visibility ceiling $Parent)
 		}
 		($Parent is visible up to $Ceiling)
 	(else)
-		(if) ($Ceiling is closed) ($Ceiling is opaque) (then)
+		(if)
+			($Ceiling is closed)
+			($Ceiling is opaque)
+			~(current visibility ceiling $Ceiling)
+		(then)
 			*($Sub has parent $Ceiling)
 			~($Sub has relation #in)
 		(else)
@@ -1624,13 +1629,16 @@
 
 (narrate opening $Obj)
 	You open (the $Obj)
-	(collect $Child)
-		*($Child is #in $Obj)
-		(reveal $Child)
-	(into $List)
-	(if) (nonempty $List) (then)
-		, revealing (a $List)
-		(notice $List)
+	(current player $Player)
+	(if) ~($Player is nested #in $Obj) (then)
+		(collect $Child)
+			*($Child is #in $Obj)
+			(reveal $Child)
+		(into $List)
+		(if) (nonempty $List) (then)
+			, revealing (a $List)
+			(notice $List)
+		(endif)
 	(endif)
 	.
 
@@ -2483,6 +2491,12 @@
 	(current player $Actor)
 	($Actor has ancestor $Obj)
 	(recursively leave descendants of $Obj)
+
+(before [leave $Obj])
+	($Obj is closed)
+	(current player $Player)
+	($Player is #in $Obj)
+	(first try [open $Obj])
 
 (instead of [leave $Obj])
 	(current player $Actor)
@@ -3882,6 +3896,7 @@
 (es $Obj)		(current player $Obj)
 (the $Obj is)		(current player $Obj) you're
 (it $Obj is)		(current player $Obj) you're
+(That $Obj)		(current player $Obj) You
 (That's $Obj)		(current player $Obj) You're
 
 (a (proper $Obj))	(maybe link $Obj)
@@ -3952,6 +3967,7 @@
 (A full $Obj)		(uppercase) (a full $Obj)
 (The full $Obj)		(uppercase) (the full $Obj)
 (It $Obj)		(uppercase) (it $Obj)
+(Its $Obj)		(uppercase) (its $Obj)
 (The $Obj is)		(uppercase) (the $Obj is)
 (That $Obj)		(uppercase) (that $Obj)
 

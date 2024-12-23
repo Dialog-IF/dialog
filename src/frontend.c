@@ -154,6 +154,7 @@ struct builtinspec {
 	{BI_STORY_RELEASE,	PREDNF_DEFINABLE_BI, 0,		3,	{"story", "release", 0}},
 	{BI_STYLEDEF,		PREDNF_DEFINABLE_BI, 0,		3,	{"style", "class", 0}},
 	{BI_ENDINGS,		PREDNF_DEFINABLE_BI, 0,		3,	{"removable", "word", "endings"}},
+	{BI_LIB_VERSION,	PREDNF_DEFINABLE_BI, 0,		2,	{"library", "version"}},
 	{BI_RESOURCEDEF,	PREDNF_DEFINABLE_BI, 0,		3,	{"define", "resource", 0}},
 	{BI_RESOLVERESOURCE,	PREDNF_DEFINABLE_BI, 0,		5,	{"", "resolve", "resource", 0, 0}},
 	{BI_INJECTED_QUERY,	PREDNF_DEFINABLE_BI, 0,		3,	{"", "query", 0}},
@@ -424,12 +425,12 @@ void trace_now_expression(struct astnode *an, uint8_t *bound, struct clause *cl,
 				}
 			}
 		}
-	} else if(an->kind == AN_BLOCK || an->kind == AN_FIRSTRESULT) {
+	} else if(an->kind == AN_BLOCK || an->kind == AN_NEG_BLOCK || an->kind == AN_FIRSTRESULT) {
 		for(an = an->children[0]; an; an = an->next_in_body) {
 			trace_now_expression(an, bound, cl, prg);
 		}
 	} else {
-		assert(0); exit(1);
+		report(LVL_ERR, an->line, "Invalid (now) syntax.");
 	}
 }
 
@@ -881,6 +882,14 @@ static int mark_all_dynamic(struct program *prg, struct astnode *an, line_t line
 			success &= mark_all_dynamic(prg, an->children[0], line, allow_multi);
 		} else if(an->kind == AN_FIRSTRESULT) {
 			success &= mark_all_dynamic(prg, an->children[0], line, 1);
+		} else if(an->kind == AN_NEG_BLOCK) {
+			if((an->children[0]->kind != AN_RULE && an->children[0]->kind != AN_NEG_RULE)
+			|| an->children[0]->next_in_body) {
+				report(LVL_ERR, line, "(now) only works with rules, negated rules, and blocks.");
+				success = 0;
+			} else {
+				success &= mark_all_dynamic(prg, an->children[0], line, 1);
+			}
 		} else {
 			report(LVL_ERR, line, "(now) only works with rules, negated rules, and blocks.");
 			success = 0;
@@ -2378,6 +2387,7 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 	nsourcefile = nfile;
 	sourcefile = fname;
 
+	lexer.lib_file = -1;
 	clause_dest = &first_clause;
 	for(fnum = 0; fnum < nfile; fnum++) {
 		lexer.file = fopen(fname[fnum], "r");
@@ -2398,6 +2408,12 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 	*clause_dest = 0;
 
 	report(LVL_INFO, 0, "Total word count: %d", lexer.totalwords);
+
+	if(lexer.lib_file < 0) {
+		report(LVL_WARN, 0, "No library (such as stdlib.dg) was specified on the commandline.");
+	} else if(lexer.lib_file != nfile - 1) {
+		report(LVL_WARN, 0, "The library (in this case %s) should normally appear last on the commandline.", sourcefile[lexer.lib_file]);
+	}
 
 	if(verbose >= 4) {
 		struct word *w;
