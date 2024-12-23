@@ -1,6 +1,6 @@
 
 (library version)
-	Library version 0.18.
+	Library version 0.19.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -395,6 +395,22 @@
 		(recursively add $Sub to scope)
 	}
 
+(scope)
+	(rebuild scope)
+	The current scope is: (line)
+	(exhaust) {
+		*($Obj is in scope)
+		$Obj:
+		%% Prevent (the $) from revealing hidden objects
+		(if) ($Obj is hidden) (then)
+			(the $Obj)
+			(now) ($Obj is hidden)
+		(else)
+			(the $Obj)
+		(endif)
+		(line)
+	}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Select player, enter a room or other location, move floating objects
 
@@ -476,14 +492,17 @@
 			(from $Room through $Target to $OtherRoom)
 			(if) ($OtherRoom is visited) (then)
 				Through (the $Target) you see (a $OtherRoom).
+				(notice $OtherRoom)
 			(else)
 				You can't quite make out what's on the other
 				side of (the $Target).
+				(notice $Target)
 			(endif)
 		(elseif) (room $Target) ($Target is unvisited) (then)
 			You can't get a good view of what's in that direction.
 		(else)
 			(Name $Dir) from here (is $Target) (a $Target).
+			(notice $Target)
 		(endif)
 	(else)
 		(narrate failing to look $Dir)
@@ -3069,7 +3088,16 @@
 	(the full $Obj)
 	(describe self-describing action $More)
 
+(actions on)
+	(now) (tracing actions)
+
+(actions off)
+	(now) ~(tracing actions)
+
 (try $Action)
+	(if) (tracing actions) (then)
+		(line) ACTION: $Action \( (describe action $Action) \) (line)
+	(endif)
 	~{ (refuse $Action) (stop) }
 	(exhaust) *(before $Action)
 	~{ (refuse $Action) (stop) }
@@ -3234,6 +3262,7 @@
 (understand [$Word] as number $N)
 	(parse numeral $Word into $N)
 
+(spell out 0)		zero
 (spell out 1)		one
 (spell out 2)		two
 (spell out 3)		three
@@ -3351,10 +3380,12 @@
 (isn't $Obj)		(current player $Obj) aren't
 (has $Obj)		(current player $Obj) have
 (does $Obj)		(current player $Obj) do
+(that $Obj)		(current player $Obj) yourself
 (s $Obj)		(current player $Obj)
 (es $Obj)		(current player $Obj)
 (the $Obj is)		(current player $Obj) you're
 (it $Obj is)		(current player $Obj) you're
+(That's $Obj)		(current player $Obj) You're
 
 (a (proper $Obj))	(name $Obj)
 (the (proper $Obj))	(name $Obj)
@@ -3380,7 +3411,7 @@
 (has (plural $))	have
 (does (plural $))	do
 (that (plural $))	those
-(that's (plural $))	those are
+(That's (plural $))	Those are
 
 (a (an $Obj))		an (name $Obj)
 
@@ -3408,7 +3439,7 @@
 (the $O is)		(the $O) (is $O)
 (it $O is)		(it $O) (is $O)
 (that $)		that
-(that's $)		that's
+(That's $)		That's
 
 (doesn't $Obj)		(does $Obj) (no space) n't
 
@@ -3422,7 +3453,6 @@
 (It $Obj)		(uppercase) (it $Obj)
 (The $Obj is)		(uppercase) (the $Obj is)
 (That $Obj)		(uppercase) (that $Obj)
-(That's $Obj)		(uppercase) (that's $Obj)
 
 (open or closed $Obj)
 	(if) ($Obj is open) (then)
@@ -4063,7 +4093,6 @@
 
 (rewrite [x | $Words] into [examine | $Words])
 (rewrite [l | $Words] into [look | $Words])
-(rewrite [g] into [again])
 
 %% Fallback rewrite rule does nothing.
 
@@ -4520,21 +4549,9 @@
 (parse action [])
 
 (parse action $Words)
-	%% The first step is to rewrite simple synonyms:
+	%% First, check for UNDO.
 
-	(rewrite $Words into $Simplified)
-
-	%% Next, we handle AGAIN:
-
-	(if) ($Simplified = [again]) (last command was $ActualWords) (then)
-	(else)
-		($ActualWords = $Simplified)
-		(now) (last command was $ActualWords)
-	(endif)
-
-	%% Handle UNDO:
-
-	(if) ($ActualWords = [undo]) (then)
+	(if) ($Words = [undo]) (then)
 		(if) ~(interpreter supports undo) (then)
 			This interpreter doesn't support undo.
 		(elseif) (undo) (then)
@@ -4552,11 +4569,20 @@
 			Undoing the last turn.
 			(line)
 			(location headline)
-			(now) (last command was [undo])
-			(now) ~(implicit action is $)
-			(now) ~(implicit action wants direction)
-			(now) ~(implicit object list $)
 			(stop)
+		(endif)
+
+		%% Handle AGAIN and rewriting:
+
+		(if)
+			($Words = [$W])
+			($W is one of [again g])
+			(last command was $LastCmd)
+		(then)
+			(rewrite $LastCmd into $ActualWords)
+		(else)
+			(now) (last command was $Words)
+			(rewrite $Words into $ActualWords)
 		(endif)
 
 		%% Parse the action. Special treatment if we've asked for
@@ -5133,4 +5159,5 @@
 (report fatal error 2)	Auxiliary heap space exhausted.
 (report fatal error 3)	Type error: Expected object.
 (report fatal error 4)	Type error: Expected simple value.
+(report fatal error 5)	Invalid dynamic operation.
 (report fatal error $)	Invalid error code!

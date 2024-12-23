@@ -1,31 +1,62 @@
-This is version 0c/05 of the Dialog compiler, bundled with version 0.17 of its
-standard library.
+This archive contains version 0d/01 of the Dialog compiler and interactive
+debugger, bundled with documentation and version 0.19 of the dialog Standard
+Library.
 
 Directory structure:
 
 	readme.txt	This file.
-	license.txt	License and disclaimer (standard 2-clause BSD).
 
-	src		Complete source code for the Dialog compiler.
+	license.txt	License and disclaimer.
+
+	src		Complete source code for the Dialog compiler and
+			interactive debugger.
+
 	prebuilt	Binaries for Linux (i386, x86_64) and Windows.
 
 	docs		Documentation for the programming language and library.
 
 	stdlib.dg	The Dialog standard library.
+
 	stddebug.dg	The Dialog standard debugging extension.
 
-Building the compiler (requires a C compiler and make):
+Building the software under Linux (requires a C compiler and make):
 
 	cd src
 	make
 
-	(this will produce an executable file called dialogc)
+	(this will produce two executable files called dialogc and dgdebug)
+
+Cross-compiling the Windows version of the software under Linux (requires
+mingw32):
+
+	cd src
+	make dialogc.exe dgdebug.exe
 
 Project website:
 
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0d/01 Lib 0.19 (Manual revision 4):
+
+		Introduced the Interactive Debugger, with corresponding
+		modifications to the documentation.
+
+		Added '(breakpoint)' built-in predicate.
+
+		Library: Added '(actions on)', '(actions off)', and '(scope)'
+		predicates to be queried from the debugger. The corresponding
+		player-accessible commands remain in the debugging extension.
+
+		Library: Modified the treatment of UNDO and AGAIN, to better
+		support the interactive debugger.
+
+		Library: Minor improvements.
+
+	Library release 0.18:
+
+		Added '(print raw input $)'.
 
 	0c/05 Lib 0.17 (Manual revision 3):
 

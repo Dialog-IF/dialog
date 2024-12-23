@@ -9,7 +9,12 @@
 #include <sys/time.h>
 #include <time.h>
 
-#include "rules.h"
+#include "common.h"
+#include "arena.h"
+#include "ast.h"
+#include "frontend.h"
+#include "compile.h"
+#include "eval.h"
 #include "report.h"
 #include "zcode.h"
 #include "blorb.h"
@@ -18,9 +23,6 @@
 #define TWEAK_PROPDISPATCH 4
 
 #define NZOBJFLAG 48
-
-// Store dynamic binary relations using arrays instead of object properties.
-#define PROPARRAY 1
 
 struct var {
 	struct var	*next;
@@ -54,16 +56,11 @@ struct dictword {
 
 struct backend_pred {
 	int		global_label;
-	int		for_words_label;
 	int		trace_output_label;
 	uint16_t	user_global;
 	uint16_t	user_flag_mask;
 	int		object_flag;
-#if PROPARRAY
 	int		propbase_label;
-#else
-	int		objprop, objpropslot;
-#endif
 	int		set_label;
 	int		clear_label;
 	int		complex_global_label;
@@ -79,6 +76,7 @@ struct backend_wobj {
 	uint16_t	addr_proptable;
 	uint8_t		npropword[64];
 	uint16_t	*propword[64];
+	int		initialparent;
 };
 
 struct global_string {
@@ -110,19 +108,6 @@ struct scantable {
 	uint16_t		length;
 	uint16_t		*value;
 };
-
-struct endings_point {
-	int			nway;
-	struct endings_way	**ways;
-};
-
-struct endings_way {
-	uint8_t			letter;
-	uint8_t			final;
-	struct endings_point	more;
-};
-
-struct endings_point endings_root;
 
 uint16_t extended_zscii[69] = {
 	// These unicode chars map to zscii characters 155..223 in order.
@@ -157,8 +142,9 @@ struct routine *routinehash[BUCKETS];
 
 static uint8_t *zcore;
 
-static int ndict, nalloc_dict;
+static int ndict;
 static struct dictword *dictionary;
+static uint16_t *dictmap;	// from intermediate code dict_id - 256 to backend dictionary[] index
 
 static uint16_t *global_labels;
 static int next_global_label = G_FIRST_FREE, nalloc_global_label;
@@ -173,11 +159,6 @@ static uint16_t *extflagreaders = 0;
 
 static uint16_t undoflag_global, undoflag_mask;
 
-#if !PROPARRAY
-static int curr_objprop = 1, next_objpropslot = 0;
-static struct predicate *reverse_objpropslot[63][32];
-#endif
-
 int next_free_prop = 1;
 uint16_t propdefault[64];
 
@@ -187,6 +168,8 @@ static int tracing_enabled;
 
 struct scantable *scantable;
 int nscantable;
+
+static struct backend_wobj *backendwobj;
 
 void get_timestamp(char *dest, char *longdest) {
 	time_t t = 0;
@@ -303,6 +286,24 @@ uint16_t resolve_rnum(uint16_t num) {
 	}
 
 	return r->actual_routine;
+}
+
+static uint8_t unicode_to_zscii(uint16_t uchar) {
+	int i;
+
+	if(uchar < 128) {
+		return uchar;
+	} else {
+		for(i = 0; i < sizeof(extended_zscii) / 2; i++) {
+			if(extended_zscii[i] == uchar) break;
+		}
+		if(i >= sizeof(extended_zscii) / 2) {
+			report(LVL_ERR, 0, "Unsupported unicode character U+%04x in dictionary word context.", uchar);
+			exit(1);
+		} else {
+			return 155 + i;
+		}
+	}
 }
 
 static int utf8_to_zscii(uint8_t *dest, int ndest, char *src, uint32_t *special) {
@@ -503,8 +504,14 @@ int assemble_oper(uint32_t org, uint32_t oper, struct routine *r) {
 
 	switch(oper >> 16) {
 	case 5:
-	case 6:
 		zcore[org] = oper & 0xff;
+		return 1;
+	case 6:
+		value = oper & 0xff;
+		if(value >= 1 && value <= 0xf) {
+			assert(value <= r->nlocal);
+		}
+		zcore[org] = value;
 		return 1;
 	case 7:
 		zcore[org] = 0x10 + user_global_base + (oper & 0xff);
@@ -756,28 +763,6 @@ int pass1(struct routine *r, uint32_t org) {
 	return size;
 }
 
-void backend_add_dict(struct word *w) {
-	uint8_t pentets[9];
-	uint8_t zbuf[MAXSTRING];
-	int n;
-	uint32_t uchar;
-
-	if(ndict >= nalloc_dict) {
-		nalloc_dict = (ndict * 2) + 8;
-		dictionary = realloc(dictionary, nalloc_dict * sizeof(struct dictword));
-	}
-	dictionary[ndict].word = w;
-	n = utf8_to_zscii(zbuf, sizeof(zbuf), w->name, &uchar);
-	if(uchar) {
-		report(LVL_ERR, 0, "Unsupported character U+%04x in explicit dictionary word '@%s'.", uchar, w->name);
-		exit(1);
-	}
-	n = encode_chars(pentets, 9, 1, zbuf);
-	memset(pentets + n, 5, 9 - n);
-	pack_pentets(dictionary[ndict].encoded, pentets, 9);
-	ndict++;
-}
-
 int cmp_dictword(const void *a, const void *b) {
 	const struct dictword *aa = (const struct dictword *) a;
 	const struct dictword *bb = (const struct dictword *) b;
@@ -791,26 +776,83 @@ int cmp_dictword(const void *a, const void *b) {
 	return 0;
 }
 
-void init_backend_wobj(struct worldobj *wo, int strip) {
-	struct backend_wobj *wobj;
+static void prepare_dictionary(struct program *prg) {
+	int i, n;
+	uint8_t pentets[9];
+	uint8_t zbuf[MAXSTRING];
+	uint32_t uchar;
+
+	dictmap = malloc(prg->ndictword * sizeof(*dictmap));
+	memset(dictmap, 0xff, prg->ndictword * sizeof(*dictmap));
+
+	ndict = prg->ndictword;
+	dictionary = malloc(ndict * sizeof(*dictionary));
+
+	for(i = 0; i < ndict; i++) {
+		dictionary[i].word = prg->dictwordnames[i];
+		n = utf8_to_zscii(zbuf, sizeof(zbuf), prg->dictwordnames[i]->name, &uchar);
+		if(uchar) {
+			report(
+				LVL_ERR,
+				0,
+				"Unsupported character U+%04x in explicit dictionary word '@%s'.",
+				uchar,
+				prg->dictwordnames[i]->name);
+			exit(1);
+		}
+		n = encode_chars(pentets, 9, 1, zbuf);
+		memset(pentets + n, 5, 9 - n);
+		pack_pentets(dictionary[i].encoded, pentets, 9);
+	}
+
+	qsort(dictionary, ndict, sizeof(struct dictword), cmp_dictword);
+
+	for(i = 0; i < ndict; ) {
+		assert(dictionary[i].word->name[0]);
+		assert(dictionary[i].word->name[1]);
+		assert(dictionary[i].word->dict_id >= 256);
+		dictmap[dictionary[i].word->dict_id - 256] = i;
+		if(i < ndict - 1 && !memcmp(dictionary[i].encoded, dictionary[i + 1].encoded, 6)) {
+			report(LVL_INFO, 0, "Consolidating dictionary words \"%s\" and \"%s\".",
+				dictionary[i].word->name,
+				dictionary[i + 1].word->name);
+			assert(dictionary[i + 1].word->dict_id >= 256);
+			dictmap[dictionary[i + 1].word->dict_id - 256] = i;
+			memmove(dictionary + i, dictionary + i + 1, (ndict - i - 1) * sizeof(struct dictword));
+			ndict--;
+		} else {
+			i++;
+		}
+	}
+}
+
+void init_backend_wobj(struct program *prg, int id, struct backend_wobj *wobj, int strip) {
 	uint8_t pentets[256];
 	int n;
 	uint8_t zbuf[MAXSTRING];
 	uint32_t uchar;
 
-	wobj = wo->backend = calloc(1, sizeof(struct backend_wobj));
 	if(strip) {
 		pentets[0] = 5;
 		n = 1;
 	} else {
-		n = utf8_to_zscii(zbuf, sizeof(zbuf), wo->astnode->word->name, &uchar);
+		n = utf8_to_zscii(zbuf, sizeof(zbuf), prg->worldobjnames[id]->name, &uchar);
 		if(uchar) {
-			report(LVL_ERR, 0, "Unsupported character U+%04x in object name '#%s'\n", uchar, wo->astnode->word->name);
+			report(
+				LVL_ERR,
+				0,
+				"Unsupported character U+%04x in object name '#%s'\n",
+				uchar,
+				prg->worldobjnames[id]->name);
 			exit(1);
 		}
 		n = encode_chars(pentets, sizeof(pentets), 0, zbuf);
 		if(n == sizeof(pentets)) {
-			report(LVL_ERR, 0, "Object name too long: '#%s'", wo->astnode->word->name);
+			report(
+				LVL_ERR,
+				0,
+				"Object name too long: '#%s'",
+				prg->worldobjnames[id]->name);
 			exit(1);
 		}
 	}
@@ -889,7 +931,7 @@ int is_simple_builtin(struct astnode *an, int negated) {
 
 		if(!negated
 		&& an->predicate->builtin
-		&& !((struct backend_pred *) an->predicate->backend)->global_label) {
+		&& !((struct backend_pred *) an->predicate->pred->backend)->global_label) {
 			return 1;
 		}
 
@@ -898,21 +940,21 @@ int is_simple_builtin(struct astnode *an, int negated) {
 			return 1;
 		}
 
-		if(an->predicate->dynamic) {
+		if(an->predicate->pred->dynamic) {
 			if(!an->predicate->arity
 			|| !an->children[0]->unbound) {
 				if(an->predicate->builtin != BI_HASPARENT || !negated) {
 					return 1;
 				}
 			}
-			if(an->predicate->flags & PREDF_GLOBAL_VAR) {
-				if(an->predicate->dynamic->global_bufsize == 1 || !negated) {
+			if(an->predicate->pred->flags & PREDF_GLOBAL_VAR) {
+				if(an->predicate->pred->dynamic->global_bufsize == 1 || !negated) {
 					return 1;
 				}
 			}
 		}
 
-		if(an->predicate->flags & PREDF_FAIL) {
+		if(an->predicate->pred->flags & PREDF_FAIL) {
 			return 1;
 		}
 
@@ -947,10 +989,15 @@ int is_simple_builtin(struct astnode *an, int negated) {
 	return 1;
 }
 
-int find_dictword_id(struct word *w) {
+uint16_t dictword_tag(struct word *w) {
 	assert(w->flags & WORDF_DICT);
 
-	return w->dict_id;
+	if(w->dict_id < 256) {
+		return 0x3e00 | w->dict_id;
+	} else {
+		assert(dictmap[w->dict_id - 256] < ndict);
+		return 0x2000 | dictmap[w->dict_id - 256];
+	}
 }
 
 void compile_put_ast_in_reg(struct routine *r, struct astnode *an, int target_reg, struct var *vars);
@@ -1048,7 +1095,7 @@ uint32_t compile_ast_to_oper(struct routine *r, struct astnode *an, struct var *
 	case AN_TAG:
 		return SMALL_OR_LARGE(1 + an->word->obj_id);
 	case AN_DICTWORD:
-		return LARGE(0x2000 + find_dictword_id(an->word));
+		return LARGE(dictword_tag(an->word));
 	case AN_INTEGER:
 		return LARGE(0x4000 + an->value);
 	case AN_EMPTY_LIST:
@@ -1240,7 +1287,7 @@ void compile_put_ast_in_reg(struct routine *r, struct astnode *an, int target_re
 	case AN_DICTWORD:
 		zi = append_instr(r, Z_STORE);
 		zi->oper[0] = SMALL(target_reg);
-		zi->oper[1] = LARGE(0x2000 + find_dictword_id(an->word));
+		zi->oper[1] = LARGE(dictword_tag(an->word));
 		break;
 	case AN_INTEGER:
 		zi = append_instr(r, Z_STORE);
@@ -1565,18 +1612,38 @@ struct astnode *compile_add_words(struct routine *r, struct astnode *an) {
 	struct scantable *st;
 
 	n = 0;
-	for(sub = an; sub && sub->kind == AN_BAREWORD; sub = sub->next_in_body) {
-		n++;
+	sub = an;
+	while(sub && (
+		sub->kind == AN_BAREWORD ||
+		(sub->kind == AN_RULE && (
+			sub->predicate->builtin == BI_SPACE ||
+			sub->predicate->builtin == BI_NOSPACE ||
+			sub->predicate->builtin == BI_LINE ||
+			sub->predicate->builtin == BI_PAR))))
+	{
+		if(sub->kind == AN_BAREWORD) {
+			n++;
+		}
+		sub = sub->next_in_body;
 	}
 
 	table = malloc(n * sizeof(struct word *));
 	n = 0;
-	while(an && an->kind == AN_BAREWORD) {
-		for(i = 0; i < n; i++) {
-			if(table[i] == an->word) break;
-		}
-		if(i == n) {
-			table[n++] = an->word;
+	while(an && (
+		an->kind == AN_BAREWORD ||
+		(an->kind == AN_RULE && (
+			an->predicate->builtin == BI_SPACE ||
+			an->predicate->builtin == BI_NOSPACE ||
+			an->predicate->builtin == BI_LINE ||
+			an->predicate->builtin == BI_PAR))))
+	{
+		if(an->kind == AN_BAREWORD) {
+			for(i = 0; i < n; i++) {
+				if(table[i] == an->word) break;
+			}
+			if(i == n) {
+				table[n++] = an->word;
+			}
 		}
 		an = an->next_in_body;
 	}
@@ -1585,18 +1652,18 @@ struct astnode *compile_add_words(struct routine *r, struct astnode *an) {
 	if(n == 1) {
 		zi = append_instr(r, Z_CALL2N);
 		zi->oper[0] = ROUTINE(R_AUX_PUSH1);
-		zi->oper[1] = LARGE(0x2000 + find_dictword_id(table[0]));
+		zi->oper[1] = LARGE(dictword_tag(table[0]));
 	} else if(n == 2) {
 		zi = append_instr(r, Z_CALLVN);
 		zi->oper[0] = ROUTINE(R_AUX_PUSH2);
-		zi->oper[1] = LARGE(0x2000 + find_dictword_id(table[0]));
-		zi->oper[2] = LARGE(0x2000 + find_dictword_id(table[1]));
+		zi->oper[1] = LARGE(dictword_tag(table[0]));
+		zi->oper[2] = LARGE(dictword_tag(table[1]));
 	} else if(n == 3) {
 		zi = append_instr(r, Z_CALLVN);
 		zi->oper[0] = ROUTINE(R_AUX_PUSH3);
-		zi->oper[1] = LARGE(0x2000 + find_dictword_id(table[0]));
-		zi->oper[2] = LARGE(0x2000 + find_dictword_id(table[1]));
-		zi->oper[3] = LARGE(0x2000 + find_dictword_id(table[2]));
+		zi->oper[1] = LARGE(dictword_tag(table[0]));
+		zi->oper[2] = LARGE(dictword_tag(table[1]));
+		zi->oper[3] = LARGE(dictword_tag(table[2]));
 	} else {
 		zi = append_instr(r, Z_CALL2S);
 		zi->oper[0] = ROUTINE(R_AUX_ALLOC);
@@ -1608,7 +1675,7 @@ struct astnode *compile_add_words(struct routine *r, struct astnode *an) {
 		st->length = n;
 		st->value = malloc(n * sizeof(uint16_t));
 		for(i = 0; i < n; i++) {
-			st->value[i] = 0x2000 + find_dictword_id(table[i]);
+			st->value[i] = dictword_tag(table[i]);
 		}
 
 		zi = append_instr(r, Z_COPY_TABLE);
@@ -1621,21 +1688,20 @@ struct astnode *compile_add_words(struct routine *r, struct astnode *an) {
 	return an;
 }
 
-void compile_now(struct routine *r, struct astnode *an, struct var *vars) {
+void compile_now(struct routine *r, struct astnode *an, struct var *vars, struct program *prg) {
 	struct zinstr *zi;
+	struct predname *predname;
 	struct predicate *pred;
 	struct backend_pred *bp;
 	int t1, t2;
 	uint32_t o1, o2;
-	struct dynamic *dyn;
 
 	while(an) {
 		if(an->kind == AN_RULE) {
-			pred = an->predicate;
-			dyn = pred->dynamic;
+			predname = an->predicate;
+			pred = predname->pred;
 			bp = pred->backend;
-			assert(dyn);
-			if(pred->builtin == BI_HASPARENT) {
+			if(predname->builtin == BI_HASPARENT) {
 				o1 = compile_ast_to_oper(r, an->children[0], vars);
 				if(an->children[0]->kind != AN_TAG) {
 					t1 = next_temp++;
@@ -1657,12 +1723,12 @@ void compile_now(struct routine *r, struct astnode *an, struct var *vars) {
 				zi = append_instr(r, Z_INSERT_OBJ);
 				zi->oper[0] = o1;
 				zi->oper[1] = o2;
-			} else if(pred->arity == 0) {
+			} else if(predname->arity == 0) {
 				zi = append_instr(r, Z_OR);
 				zi->oper[0] = USERGLOBAL(bp->user_global);
 				zi->oper[1] = SMALL_OR_LARGE(bp->user_flag_mask);
 				zi->store = DEST_USERGLOBAL(bp->user_global);
-			} else if(pred->arity == 1) {
+			} else if(predname->arity == 1) {
 				assert(!(pred->flags & PREDF_FIXED_FLAG));
 				if(pred->flags & PREDF_GLOBAL_VAR) {
 					o1 = compile_ast_to_oper(r, an->children[0], vars);
@@ -1722,8 +1788,7 @@ void compile_now(struct routine *r, struct astnode *an, struct var *vars) {
 						zi->oper[1] = SMALL(bp->object_flag);
 					}
 				}
-			} else if(pred->arity == 2) {
-#if PROPARRAY
+			} else if(predname->arity == 2) {
 				o1 = compile_ast_to_oper(r, an->children[0], vars);
 				if(an->children[0]->kind != AN_TAG) {
 					t1 = next_temp++;
@@ -1746,53 +1811,15 @@ void compile_now(struct routine *r, struct astnode *an, struct var *vars) {
 				zi->oper[0] = REF(bp->propbase_label);
 				zi->oper[1] = o1;
 				zi->oper[2] = o2;
-#else
-				t1 = next_temp++;
-				if(an->children[0]->kind == AN_TAG) {
-					zi = append_instr(r, Z_GETPROPADDR);
-					zi->oper[0] = SMALL_OR_LARGE(1 + an->children[0]->word->obj_id);
-					zi->oper[1] = SMALL(bp->objprop);
-					zi->store = REG_X + t1;
-				} else {
-					o1 = compile_ast_to_oper(r, an->children[0], vars);
-					zi = append_instr(r, Z_CALL2S);
-					zi->oper[0] = ROUTINE(R_DEREF_OBJ_FORCE);
-					zi->oper[1] = o1;
-					zi->store = REG_X + t1;
-					zi = append_instr(r, Z_GETPROPADDR);
-					zi->oper[0] = VALUE(REG_X + t1);
-					zi->oper[1] = SMALL(bp->objprop);
-					zi->store = REG_X + t1;
-				}
-				o2 = compile_ast_to_oper(r, an->children[1], vars);
-				if(an->children[1]->kind != AN_VARIABLE
-				&& an->children[1]->kind != AN_PAIR) {
-					zi = append_instr(r, Z_STOREW);
-					zi->oper[0] = VALUE(REG_X + t1);
-					zi->oper[1] = SMALL(bp->objpropslot);
-					zi->oper[2] = o2;
-				} else {
-					t2 = next_temp++;
-					zi = append_instr(r, Z_CALL2S);
-					zi->oper[0] = ROUTINE(R_DEREF_SIMPLE); // todo handle this in a better way
-					zi->oper[1] = o2;
-					zi->store = REG_X + t2;
-					zi = append_instr(r, Z_STOREW);
-					zi->oper[0] = VALUE(REG_X + t1);
-					zi->oper[1] = SMALL(bp->objpropslot);
-					zi->oper[2] = VALUE(REG_X + t2);
-				}
-#endif
 			} else {
 				assert(0); // unimplemented (now) case
 				exit(1);
 			}
 		} else if(an->kind == AN_NEG_RULE) {
-			pred = an->predicate;
-			dyn = pred->dynamic;
+			predname = an->predicate;
+			pred = predname->pred;
 			bp = pred->backend;
-			assert(dyn);
-			if(pred->builtin == BI_HASPARENT) {
+			if(predname->builtin == BI_HASPARENT) {
 				if(an->children[1]->kind == AN_VARIABLE
 				&& !an->children[1]->word->name[0]) {
 					if(an->children[0]->kind == AN_TAG) {
@@ -1811,12 +1838,12 @@ void compile_now(struct routine *r, struct astnode *an, struct var *vars) {
 					report(LVL_ERR, an->line, "When resetting a per-object variable, the second argument must be anonymous ($).");
 					exit(1);
 				}
-			} else if(pred->arity == 0) {
+			} else if(predname->arity == 0) {
 				zi = append_instr(r, Z_AND);
 				zi->oper[0] = USERGLOBAL(bp->user_global);
 				zi->oper[1] = LARGE(bp->user_flag_mask ^ 0xffff);
 				zi->store = DEST_USERGLOBAL(bp->user_global);
-			} else if(pred->arity == 1) {
+			} else if(predname->arity == 1) {
 				assert(!(pred->flags & PREDF_FIXED_FLAG));
 				if(pred->flags & PREDF_GLOBAL_VAR) {
 					if(an->children[0]->kind == AN_VARIABLE
@@ -1858,10 +1885,9 @@ void compile_now(struct routine *r, struct astnode *an, struct var *vars) {
 						zi->oper[1] = SMALL(bp->object_flag);
 					}
 				}
-			} else if(pred->arity == 2) {
+			} else if(predname->arity == 2) {
 				if(an->children[1]->kind == AN_VARIABLE
 				&& !an->children[1]->word->name[0]) {
-#if PROPARRAY
 					if(an->children[0]->kind == AN_VARIABLE
 					&& !an->children[0]->word->name[0]) {
 						// (now) ~($ relation $) clears the array
@@ -1880,7 +1906,7 @@ void compile_now(struct routine *r, struct astnode *an, struct var *vars) {
 						zi = append_instr(r, Z_COPY_TABLE);
 						zi->oper[0] = VALUE(REG_TEMP);
 						zi->oper[1] = VALUE(REG_STACK);
-						zi->oper[2] = LARGE(0x10000-(nworldobj * 2 - 1));
+						zi->oper[2] = LARGE(0x10000-(prg->nworldobj * 2 - 1));
 					} else {
 						o1 = compile_ast_to_oper(r, an->children[0], vars);
 						if(an->children[0]->kind != AN_TAG) {
@@ -1895,28 +1921,6 @@ void compile_now(struct routine *r, struct astnode *an, struct var *vars) {
 						zi->oper[1] = o1;
 						zi->oper[2] = SMALL(0);
 					}
-#else
-					if(an->children[0]->kind == AN_TAG) {
-						zi = append_instr(r, Z_GETPROPADDR);
-						zi->oper[0] = SMALL_OR_LARGE(1 + an->children[0]->word->obj_id);
-						zi->oper[1] = SMALL(bp->objprop);
-						zi->store = REG_TEMP;
-					} else {
-						o1 = compile_ast_to_oper(r, an->children[0], vars);
-						zi = append_instr(r, Z_CALL2S);
-						zi->oper[0] = ROUTINE(R_DEREF_OBJ_FORCE);
-						zi->oper[1] = o1;
-						zi->store = REG_TEMP;
-						zi = append_instr(r, Z_GETPROPADDR);
-						zi->oper[0] = VALUE(REG_TEMP);
-						zi->oper[1] = SMALL(bp->objprop);
-						zi->store = REG_TEMP;
-					}
-					zi = append_instr(r, Z_STOREW);
-					zi->oper[0] = VALUE(REG_TEMP);
-					zi->oper[1] = SMALL(bp->objpropslot);
-					zi->oper[2] = SMALL(0);
-#endif
 				} else {
 					report(LVL_ERR, an->line, "When resetting a per-object variable, the second argument must be anonymous ($).");
 					exit(1);
@@ -1926,7 +1930,7 @@ void compile_now(struct routine *r, struct astnode *an, struct var *vars) {
 				exit(1);
 			}
 		} else if(an->kind == AN_BLOCK || an->kind == AN_FIRSTRESULT) {
-			compile_now(r, an->children[0], vars);
+			compile_now(r, an->children[0], vars, prg);
 		} else {
 			assert(0); // invalid astnode after (now)
 			exit(1);
@@ -1935,27 +1939,26 @@ void compile_now(struct routine *r, struct astnode *an, struct var *vars) {
 	}
 }
 
-void compile_dynamic(struct routine *r, struct astnode *an, struct var *vars) {
+void compile_dynamic(struct routine *r, struct astnode *an, struct var *vars, struct program *prg) {
 	struct zinstr *zi;
+	struct predname *predname;
 	struct predicate *pred;
 	struct backend_pred *bp;
-	int t1, i;
+	int t1;
 	uint32_t o1, o2;
 	struct var *v;
-	struct dynamic *dyn;
 	uint16_t ll;
 
-	pred = an->predicate;
+	predname = an->predicate;
+	pred = predname->pred;
 	bp = pred->backend;
-	dyn = pred->dynamic;
-	assert(dyn);
 
-	if(pred->arity == 0) {
+	if(predname->arity == 0) {
 		zi = append_instr(r, (an->kind == AN_RULE)? Z_TESTN : Z_TEST);
 		zi->oper[0] = USERGLOBAL(bp->user_global);
 		zi->oper[1] = SMALL_OR_LARGE(bp->user_flag_mask);
 		zi->branch = RFALSE;
-	} else if(pred->arity == 1) {
+	} else if(predname->arity == 1) {
 		if(pred->flags & PREDF_GLOBAL_VAR) {
 			if(pred->dynamic->global_bufsize > 1) {
 				if(an->children[0]->kind == AN_VARIABLE
@@ -2035,21 +2038,7 @@ void compile_dynamic(struct routine *r, struct astnode *an, struct var *vars) {
 			}
 		} else {
 			assert(!an->children[0]->unbound);
-			if((pred->flags & PREDF_FIXED_FLAG)
-			&& dyn->fixed_flag_count == 1) {
-				for(i = 0; i < nworldobj; i++) {
-					if(dyn->initial_flag[i]) break;
-				}
-				o1 = compile_ast_to_oper(r, an->children[0], vars);
-				zi = append_instr(r, Z_CALL2S);
-				zi->oper[0] = ROUTINE(R_DEREF);
-				zi->oper[1] = o1;
-				zi->store = REG_TEMP;
-				zi = append_instr(r, (an->kind == AN_RULE)? Z_JNE : Z_JE);
-				zi->oper[0] = VALUE(REG_TEMP);
-				zi->oper[1] = SMALL_OR_LARGE(i + 1);
-				zi->branch = RFALSE;
-			} else if(an->children[0]->kind == AN_TAG && bp->object_flag < NZOBJFLAG) {
+			if(an->children[0]->kind == AN_TAG && bp->object_flag < NZOBJFLAG) {
 				o1 = compile_ast_to_oper(r, an->children[0], vars);
 				zi = append_instr(r, (an->kind == AN_RULE)? Z_JNA : Z_JA);
 				zi->oper[0] = o1;
@@ -2073,9 +2062,8 @@ void compile_dynamic(struct routine *r, struct astnode *an, struct var *vars) {
 				zi->oper[2] = SMALL(bp->object_flag);
 			}
 		}
-	} else if(pred->arity == 2) {
+	} else if(predname->arity == 2) {
 		if(an->kind == AN_NEG_RULE) {
-#if PROPARRAY
 			ll = r->next_label++;
 			o1 = compile_ast_to_oper(r, an->children[0], vars);
 			zi = append_instr(r, Z_CALL2S);
@@ -2112,46 +2100,7 @@ void compile_dynamic(struct routine *r, struct astnode *an, struct var *vars) {
 			zi->branch = RFALSE;
 
 			zi = append_instr(r, OP_LABEL(ll));
-#else
-			ll = r->next_label++;
-			o1 = compile_ast_to_oper(r, an->children[0], vars);
-			zi = append_instr(r, Z_CALL2S);
-			zi->oper[0] = ROUTINE(R_DEREF_OBJ);
-			zi->oper[1] = o1;
-			zi->store = REG_TEMP;
-			zi = append_instr(r, Z_JZ); // non-object first argument -> succeed
-			zi->oper[0] = VALUE(REG_TEMP);
-			zi->branch = ll;
-			zi = append_instr(r, Z_GETPROPADDR);
-			zi->oper[0] = VALUE(REG_TEMP);
-			zi->oper[1] = SMALL(bp->objprop);
-			zi->store = REG_TEMP;
-			t1 = next_temp++;
-			zi = append_instr(r, Z_LOADW);
-			zi->oper[0] = VALUE(REG_TEMP);
-			zi->oper[1] = SMALL(bp->objpropslot);
-			zi->store = REG_X + t1;
-			zi = append_instr(r, Z_JZ); // unassigned property -> succeed
-			zi->oper[0] = VALUE(REG_X + t1);
-			zi->branch = ll;
-			o2 = compile_ast_to_oper(r, an->children[1], vars);
-			zi = append_instr(r, Z_CALL2S);
-			zi->oper[0] = ROUTINE(R_DEREF);
-			zi->oper[1] = o2;
-			zi->store = REG_TEMP;
-			zi = append_instr(r, Z_JL); // unbound second argument -> fail
-			zi->oper[0] = VALUE(REG_TEMP);
-			zi->oper[1] = VALUE(REG_C000);
-			zi->branch = RFALSE;
-			// assume property is a simple value
-			zi = append_instr(r, Z_JE); // would unify -> fail
-			zi->oper[0] = VALUE(REG_TEMP);
-			zi->oper[1] = VALUE(REG_X + t1);
-			zi->branch = RFALSE;
-			zi = append_instr(r, OP_LABEL(ll));
-#endif
 		} else {
-#if PROPARRAY
 			o1 = compile_ast_to_oper(r, an->children[0], vars);
 			if(an->children[0]->kind != AN_TAG) {
 				zi = append_instr(r, Z_CALL2S);
@@ -2208,75 +2157,6 @@ void compile_dynamic(struct routine *r, struct astnode *an, struct var *vars) {
 				zi->oper[2] = o2;
 			}
 		}
-#else
-			if(an->children[0]->kind == AN_TAG) {
-				zi = append_instr(r, Z_GETPROPADDR);
-				zi->oper[0] = SMALL_OR_LARGE(1 + an->children[0]->word->obj_id);
-				zi->oper[1] = SMALL(bp->objprop);
-				zi->store = REG_TEMP;
-			} else {
-				o1 = compile_ast_to_oper(r, an->children[0], vars);
-				zi = append_instr(r, Z_CALL2S);
-				zi->oper[0] = ROUTINE(R_DEREF_OBJ);
-				zi->oper[1] = o1;
-				zi->store = REG_TEMP;
-				zi = append_instr(r, Z_JZ);
-				zi->oper[0] = VALUE(REG_TEMP);
-				zi->branch = RFALSE;
-				zi = append_instr(r, Z_GETPROPADDR);
-				zi->oper[0] = VALUE(REG_TEMP);
-				zi->oper[1] = SMALL(bp->objprop);
-				zi->store = REG_TEMP;
-			}
-			if(an->children[1]->kind == AN_VARIABLE) {
-				for(v = vars; v; v = v->next) {
-					if(v->name == an->children[1]->word) break;
-				}
-			} else {
-				v = 0;
-			}
-			if(v && !v->used) {
-				if(v->persistent) {
-					zi = append_instr(r, Z_LOADW);
-					zi->oper[0] = VALUE(REG_TEMP);
-					zi->oper[1] = SMALL(bp->objpropslot);
-					zi->store = REG_TEMP;
-					zi = append_instr(r, Z_JZ);
-					zi->oper[0] = VALUE(REG_TEMP);
-					zi->branch = RFALSE;
-					zi = append_instr(r, Z_STOREW);
-					zi->oper[0] = VALUE(REG_ENV);
-					zi->oper[1] = SMALL(2 + v->slot);
-					zi->oper[2] = VALUE(REG_TEMP);
-				} else {
-					zi = append_instr(r, Z_LOADW);
-					zi->oper[0] = VALUE(REG_TEMP);
-					zi->oper[1] = SMALL(bp->objpropslot);
-					zi->store = REG_X + v->slot;
-					zi = append_instr(r, Z_JZ);
-					zi->oper[0] = VALUE(REG_X + v->slot);
-					zi->branch = RFALSE;
-				}
-				v->used = 1;
-			} else {
-				t1 = next_temp++;
-				zi = append_instr(r, Z_LOADW);
-				zi->oper[0] = VALUE(REG_TEMP);
-				zi->oper[1] = SMALL(bp->objpropslot);
-				zi->store = REG_X + t1;
-				if(an->children[1]->unbound) {
-					zi = append_instr(r, Z_JZ);
-					zi->oper[0] = VALUE(REG_X + t1);
-					zi->branch = RFALSE;
-				}
-				o2 = compile_ast_to_oper(r, an->children[1], vars);
-				zi = append_instr(r, Z_CALLVN);
-				zi->oper[0] = VALUE(REG_R_USIMPLE); // also fails if property was unassigned
-				zi->oper[1] = VALUE(REG_X + t1);
-				zi->oper[2] = o2;
-			}
-		}
-#endif
 	} else {
 		assert(0); // unimplemented dynamic case
 		exit(1);
@@ -2296,8 +2176,9 @@ struct var *findvar(struct astnode *an, struct var *vars) {
 	return 0;
 }
 
-void compile_simple_builtin(struct routine *r, struct astnode *an, int for_words, struct var *vars) {
-	struct predicate *pred = an->predicate;
+void compile_simple_builtin(struct routine *r, struct astnode *an, struct predicate *me_pred, struct var *vars, struct program *prg) {
+	struct predname *predname = an->predicate;
+	struct predicate *pred = predname->pred;
 	struct zinstr *zi;
 	int i, reg;
 	uint32_t oper[2], o1, o2;
@@ -2313,11 +2194,9 @@ void compile_simple_builtin(struct routine *r, struct astnode *an, int for_words
 		return;
 	}
 
-	if(pred->flags & PREDF_OUTPUT) {
-		if(!for_words) {
-			call_output_routine(r, an, vars);
-		}
-	} else switch(pred->builtin) {
+	if(predname->nameflags & PREDNF_OUTPUT) {
+		call_output_routine(r, an, vars);
+	} else switch(predname->builtin) {
 	case BI_RESTART:
 		zi = append_instr(r, Z_CALL1N);
 		zi->oper[0] = ROUTINE(R_LINE);
@@ -2359,7 +2238,7 @@ void compile_simple_builtin(struct routine *r, struct astnode *an, int for_words
 			zi->oper[0] = ROUTINE(R_DEREF);
 			zi->oper[1] = o1;
 			zi->store = reg;
-			zi = append_instr(r, (pred->builtin == BI_PLUS)? Z_INC : Z_DEC);
+			zi = append_instr(r, (predname->builtin == BI_PLUS)? Z_INC : Z_DEC);
 			zi->oper[0] = SMALL(reg);
 			zi = append_instr(r, Z_JL);
 			zi->oper[0] = VALUE(reg);
@@ -2384,17 +2263,17 @@ void compile_simple_builtin(struct routine *r, struct astnode *an, int for_words
 		}
 		o1 = compile_ast_to_oper(r, an->children[2], vars);
 		zi = append_instr(r, Z_CALLVN);
-		if(pred->builtin == BI_PLUS) {
+		if(predname->builtin == BI_PLUS) {
 			zi->oper[0] = ROUTINE(R_PLUS);
-		} else if(pred->builtin == BI_MINUS) {
+		} else if(predname->builtin == BI_MINUS) {
 			zi->oper[0] = ROUTINE(R_MINUS);
-		} else if(pred->builtin == BI_TIMES) {
+		} else if(predname->builtin == BI_TIMES) {
 			zi->oper[0] = ROUTINE(R_TIMES);
-		} else if(pred->builtin == BI_DIVIDED) {
+		} else if(predname->builtin == BI_DIVIDED) {
 			zi->oper[0] = ROUTINE(R_DIVIDED);
-		} else if(pred->builtin == BI_MODULO) {
+		} else if(predname->builtin == BI_MODULO) {
 			zi->oper[0] = ROUTINE(R_MODULO);
-		} else if(pred->builtin == BI_RANDOM) {
+		} else if(predname->builtin == BI_RANDOM) {
 			zi->oper[0] = ROUTINE(R_RANDOM);
 		}
 		zi->oper[1] = oper[0];
@@ -2436,6 +2315,8 @@ void compile_simple_builtin(struct routine *r, struct astnode *an, int for_words
 		zi = append_instr(r, Z_STORE);
 		zi->oper[0] = SMALL(REG_TRACING);
 		zi->oper[1] = SMALL(0);
+		break;
+	case BI_BREAKPOINT:
 		break;
 	case BI_LIST:
 		ll = r->next_label++;
@@ -2531,45 +2412,47 @@ void compile_simple_builtin(struct routine *r, struct astnode *an, int for_words
 		zi->branch = RFALSE;
 		break;
 	case BI_ROMAN:
-		if(!for_words) {
-			zi = append_instr(r, Z_TEXTSTYLE);
-			zi->oper[0] = SMALL(0);
+		ll = r->next_label++;
+		if(me_pred->flags & PREDF_INVOKED_FOR_WORDS) {
+			zi = append_instr(r, Z_JNZ);
+			zi->oper[0] = VALUE(REG_FORWORDS);
+			zi->branch = ll;
 		}
+		zi = append_instr(r, Z_TEXTSTYLE);
+		zi->oper[0] = SMALL(0);
+		zi = append_instr(r, OP_LABEL(ll));
 		break;
 	case BI_BOLD:
-		if(!for_words) {
-			zi = append_instr(r, Z_CALL2N);
-			zi->oper[0] = ROUTINE(R_ENABLE_STYLE);
-			zi->oper[1] = SMALL(2);
-		}
+		zi = append_instr(r, Z_CALL2N);
+		zi->oper[0] = ROUTINE(R_ENABLE_STYLE);
+		zi->oper[1] = SMALL(2);
 		break;
 	case BI_ITALIC:
-		if(!for_words) {
-			zi = append_instr(r, Z_CALL2N);
-			zi->oper[0] = ROUTINE(R_ENABLE_STYLE);
-			zi->oper[1] = SMALL(4);
-		}
+		zi = append_instr(r, Z_CALL2N);
+		zi->oper[0] = ROUTINE(R_ENABLE_STYLE);
+		zi->oper[1] = SMALL(4);
 		break;
 	case BI_REVERSE:
-		if(!for_words) {
-			zi = append_instr(r, Z_CALL2N);
-			zi->oper[0] = ROUTINE(R_ENABLE_STYLE);
-			zi->oper[1] = SMALL(1);
-		}
+		zi = append_instr(r, Z_CALL2N);
+		zi->oper[0] = ROUTINE(R_ENABLE_STYLE);
+		zi->oper[1] = SMALL(1);
 		break;
 	case BI_FIXED:
-		if(!for_words) {
-			zi = append_instr(r, Z_CALL2N);
-			zi->oper[0] = ROUTINE(R_ENABLE_STYLE);
-			zi->oper[1] = SMALL(8);
-		}
+		zi = append_instr(r, Z_CALL2N);
+		zi->oper[0] = ROUTINE(R_ENABLE_STYLE);
+		zi->oper[1] = SMALL(8);
 		break;
 	case BI_UPPER:
-		if(!for_words) {
-			zi = append_instr(r, Z_STORE);
-			zi->oper[0] = SMALL(REG_UPPER);
-			zi->oper[1] = SMALL(1);
+		ll = r->next_label++;
+		if(me_pred->flags & PREDF_INVOKED_FOR_WORDS) {
+			zi = append_instr(r, Z_JNZ);
+			zi->oper[0] = VALUE(REG_FORWORDS);
+			zi->branch = ll;
 		}
+		zi = append_instr(r, Z_STORE);
+		zi->oper[0] = SMALL(REG_UPPER);
+		zi->oper[1] = SMALL(1);
+		zi = append_instr(r, OP_LABEL(ll));
 		break;
 	case BI_UNIFY:
 		if(an->children[0]->kind == AN_VARIABLE) {
@@ -2679,13 +2562,13 @@ void compile_simple_builtin(struct routine *r, struct astnode *an, int for_words
 		zi = append_instr(r, Z_CALLVN);
 		zi->oper[0] = VALUE(REG_R_USIMPLE);
 		zi->oper[1] = LARGE(
-			(pred->builtin == BI_WORDREP_RETURN)? 0x3e0d :
-			(pred->builtin == BI_WORDREP_SPACE)? 0x3e20 :
-			(pred->builtin == BI_WORDREP_BACKSPACE)? 0x3e08 :
-			(pred->builtin == BI_WORDREP_UP)? 0x3e81 :
-			(pred->builtin == BI_WORDREP_DOWN)? 0x3e82 :
-			(pred->builtin == BI_WORDREP_LEFT)? 0x3e83 :
-			(pred->builtin == BI_WORDREP_RIGHT)? 0x3e84 :
+			(predname->builtin == BI_WORDREP_RETURN)? 0x3e0d :
+			(predname->builtin == BI_WORDREP_SPACE)? 0x3e20 :
+			(predname->builtin == BI_WORDREP_BACKSPACE)? 0x3e08 :
+			(predname->builtin == BI_WORDREP_UP)? 0x3e81 :
+			(predname->builtin == BI_WORDREP_DOWN)? 0x3e82 :
+			(predname->builtin == BI_WORDREP_LEFT)? 0x3e83 :
+			(predname->builtin == BI_WORDREP_RIGHT)? 0x3e84 :
 			0);
 		zi->oper[2] = o1;
 		break;
@@ -2751,7 +2634,7 @@ void compile_simple_builtin(struct routine *r, struct astnode *an, int for_words
 		}
 		break;
 	case 0:
-		compile_dynamic(r, an, vars);
+		compile_dynamic(r, an, vars, prg);
 		break;
 	default:
 		assert(0); // unimplemented simple builtin
@@ -2779,21 +2662,10 @@ void compile_dynlinkage_set(struct predicate *pred, uint16_t label) {
 	zi = append_instr(r, Z_SET_ATTR);
 	zi->oper[0] = VALUE(REG_LOCAL+0);
 	zi->oper[1] = SMALL(bp->object_flag);
-#if PROPARRAY
 	zi = append_instr(r, Z_STOREW);
 	zi->oper[0] = REF(bp->propbase_label);
 	zi->oper[1] = VALUE(REG_LOCAL+0);
 	zi->oper[2] = USERGLOBAL(bp->user_global);
-#else
-	zi = append_instr(r, Z_GETPROPADDR);
-	zi->oper[0] = VALUE(REG_LOCAL+0);
-	zi->oper[1] = SMALL(bp->objprop);
-	zi->store = REG_TEMP;
-	zi = append_instr(r, Z_STOREW);
-	zi->oper[0] = VALUE(REG_TEMP);
-	zi->oper[1] = SMALL(bp->objpropslot);
-	zi->oper[2] = USERGLOBAL(bp->user_global);
-#endif
 	zi = append_instr(r, Z_LOAD);
 	zi->oper[0] = SMALL(REG_LOCAL+0);
 	zi->store = DEST_USERGLOBAL(bp->user_global);
@@ -2836,21 +2708,10 @@ void compile_dynlinkage_clear(struct predicate *pred, uint16_t label) {
 		zi->oper[0] = USERGLOBAL(bp->user_global);
 		zi->oper[1] = SMALL(bp->object_flag);
 
-#if PROPARRAY
 		zi = append_instr(r, Z_LOADW);
 		zi->oper[0] = REF(bp->propbase_label);
 		zi->oper[1] = USERGLOBAL(bp->user_global);
 		zi->store = DEST_USERGLOBAL(bp->user_global);
-#else
-		zi = append_instr(r, Z_GETPROPADDR);
-		zi->oper[0] = USERGLOBAL(bp->user_global);
-		zi->oper[1] = SMALL(bp->objprop);
-		zi->store = REG_TEMP;
-		zi = append_instr(r, Z_LOADW);
-		zi->oper[0] = VALUE(REG_TEMP);
-		zi->oper[1] = SMALL(bp->objpropslot);
-		zi->store = DEST_USERGLOBAL(bp->user_global);
-#endif
 		zi = append_instr(r, Z_JNZ);
 		zi->oper[0] = USERGLOBAL(bp->user_global);
 		zi->branch = 2;
@@ -2894,21 +2755,10 @@ void compile_dynlinkage_clear(struct predicate *pred, uint16_t label) {
 	zi->oper[1] = USERGLOBAL(bp->user_global);
 
 	zi = append_instr(r, OP_LABEL(4));
-#if PROPARRAY
 	zi = append_instr(r, Z_LOADW);
 	zi->oper[0] = REF(bp->propbase_label);
 	zi->oper[1] = VALUE(REG_LOCAL+1);
 	zi->store = REG_LOCAL+2;
-#else
-	zi = append_instr(r, Z_GETPROPADDR);
-	zi->oper[0] = VALUE(REG_LOCAL+1);
-	zi->oper[1] = SMALL(bp->objprop);
-	zi->store = REG_TEMP;
-	zi = append_instr(r, Z_LOADW);
-	zi->oper[0] = VALUE(REG_TEMP);
-	zi->oper[1] = SMALL(bp->objpropslot);
-	zi->store = REG_LOCAL+2;
-#endif
 	zi = append_instr(r, Z_JE);
 	zi->oper[0] = VALUE(REG_LOCAL+0);
 	zi->oper[1] = VALUE(REG_LOCAL+2);
@@ -2920,7 +2770,6 @@ void compile_dynlinkage_clear(struct predicate *pred, uint16_t label) {
 	zi->oper[0] = REL_LABEL(4);
 
 	zi = append_instr(r, OP_LABEL(5));
-#if PROPARRAY
 	zi = append_instr(r, Z_LOADW);
 	zi->oper[0] = REF(bp->propbase_label);
 	zi->oper[1] = VALUE(REG_LOCAL+2);
@@ -2929,39 +2778,14 @@ void compile_dynlinkage_clear(struct predicate *pred, uint16_t label) {
 	zi->oper[0] = REF(bp->propbase_label);
 	zi->oper[1] = VALUE(REG_LOCAL+1);
 	zi->oper[2] = VALUE(REG_LOCAL+2);
-#else
-	zi = append_instr(r, Z_GETPROPADDR);
-	zi->oper[0] = VALUE(REG_LOCAL+0);
-	zi->oper[1] = SMALL(bp->objprop);
-	zi->store = REG_LOCAL+2;
-	zi = append_instr(r, Z_LOADW);
-	zi->oper[0] = VALUE(REG_LOCAL+2);
-	zi->oper[1] = SMALL(bp->objpropslot);
-	zi->store = REG_LOCAL+2;
-	zi = append_instr(r, Z_STOREW);
-	zi->oper[0] = VALUE(REG_TEMP);
-	zi->oper[1] = SMALL(bp->objpropslot);
-	zi->oper[2] = VALUE(REG_LOCAL+2);
-#endif
 	zi = append_instr(r, Z_RFALSE);
 
 	// Special case: Remove first element of list
 	zi = append_instr(r, OP_LABEL(3));
-#if PROPARRAY
 	zi = append_instr(r, Z_LOADW);
 	zi->oper[0] = REF(bp->propbase_label);
 	zi->oper[1] = USERGLOBAL(bp->user_global);
 	zi->store = DEST_USERGLOBAL(bp->user_global);
-#else
-	zi = append_instr(r, Z_GETPROPADDR);
-	zi->oper[0] = USERGLOBAL(bp->user_global);
-	zi->oper[1] = SMALL(bp->objprop);
-	zi->store = REG_TEMP;
-	zi = append_instr(r, Z_LOADW);
-	zi->oper[0] = VALUE(REG_TEMP);
-	zi->oper[1] = SMALL(bp->objpropslot);
-	zi->store = DEST_USERGLOBAL(bp->user_global);
-#endif
 	zi = append_instr(r, Z_RFALSE);
 }
 
@@ -3009,21 +2833,10 @@ void compile_dynlinkage_list(struct predicate *pred, uint16_t label) {
 	zi = append_instr(r, Z_JZ);
 	zi->oper[0] = USERGLOBAL(bp->user_global);
 	zi->branch = RFALSE;
-#if PROPARRAY
 	zi = append_instr(r, Z_LOADW);
 	zi->oper[0] = REF(bp->propbase_label);
 	zi->oper[1] = USERGLOBAL(bp->user_global);
 	zi->store = REG_A + 1;
-#else
-	zi = append_instr(r, Z_GETPROPADDR);
-	zi->oper[0] = USERGLOBAL(bp->user_global);
-	zi->oper[1] = SMALL(bp->objprop);
-	zi->store = REG_TEMP;
-	zi = append_instr(r, Z_LOADW);
-	zi->oper[0] = VALUE(REG_TEMP);
-	zi->oper[1] = SMALL(bp->objpropslot);
-	zi->store = REG_A + 1;
-#endif
 	zi = append_instr(r, Z_JZ);
 	zi->oper[0] = VALUE(REG_A+1);
 	zi->branch = 2; // Case: There is exactly one object with the flag set.
@@ -3055,21 +2868,10 @@ void compile_dynlinkage_list(struct predicate *pred, uint16_t label) {
 	zi->oper[0] = ROUTINE(R_RETRY_ME_ELSE);
 	zi->oper[1] = SMALL(2);
 	zi->oper[2] = ROUTINE(sublab);
-#if PROPARRAY
 	zi = append_instr(r, Z_LOADW);
 	zi->oper[0] = REF(bp->propbase_label);
 	zi->oper[1] = VALUE(REG_A+1);
 	zi->store = REG_TEMP;
-#else
-	zi = append_instr(r, Z_GETPROPADDR);
-	zi->oper[0] = VALUE(REG_A+1);
-	zi->oper[1] = SMALL(bp->objprop);
-	zi->store = REG_TEMP;
-	zi = append_instr(r, Z_LOADW);
-	zi->oper[0] = VALUE(REG_TEMP);
-	zi->oper[1] = SMALL(bp->objpropslot);
-	zi->store = REG_TEMP;
-#endif
 	zi = append_instr(r, Z_JZ);
 	zi->oper[0] = VALUE(REG_TEMP);
 	zi->branch = 1;
@@ -3152,28 +2954,47 @@ void compile_extflag_reader(uint16_t routine_label, uint16_t array_label) {
 	zi->oper[0] = VALUE(REG_LOCAL+0);
 }
 
-void compile_body(struct astnode *an, struct routine **rptr, int for_words, int envflags, struct var *vars, int tail);
-void compile_if(struct astnode *an, struct routine **rptr, int for_words, int envflags, struct var *vars, int tail);
+void compile_body(struct astnode *an, struct routine **rptr, struct predicate *pred, int envflags, struct var *vars, int tail, struct program *prg);
+void compile_if(struct astnode *an, struct routine **rptr, struct predicate *pred, int envflags, struct var *vars, int tail, struct program *prg);
 
-struct astnode *compile_simple_astnode(struct routine *r, struct astnode *an, int for_words, int envflags, struct var *vars) {
+struct astnode *compile_simple_astnode(struct routine *r, struct astnode *an, struct predicate *pred, int envflags, struct var *vars, struct program *prg) {
 	struct zinstr *zi;
 	uint32_t o1;
 	struct routine *rcopy;
+	uint16_t ll1, ll2;
+	struct astnode *next1, *next2;
 
 	switch(an->kind) {
 	case AN_BAREWORD:
-		if(for_words) {
-			return compile_add_words(r, an);
+		if(pred->flags & PREDF_INVOKED_FOR_WORDS) {
+			if(pred->flags & PREDF_INVOKED_NORMALLY) {
+				ll1 = r->next_label++;
+				ll2 = r->next_label++;
+				zi = append_instr(r, Z_JZ);
+				zi->oper[0] = VALUE(REG_FORWORDS);
+				zi->branch = ll1;
+				next1 = compile_add_words(r, an);
+				zi = append_instr(r, Z_JUMP);
+				zi->oper[0] = REL_LABEL(ll2);
+				zi = append_instr(r, OP_LABEL(ll1));
+				next2 = compile_output(r, an);
+				zi = append_instr(r, OP_LABEL(ll2));
+				assert(next1 == next2);
+				return next2;
+			} else {
+				return compile_add_words(r, an);
+			}
 		} else {
+			assert(pred->flags & PREDF_INVOKED_NORMALLY);
 			return compile_output(r, an);
 		}
 	case AN_RULE:
-		assert(!(an->predicate->flags & PREDF_FAIL));
-		compile_simple_builtin(r, an, for_words, vars);
+		assert(!(an->predicate->pred->flags & PREDF_FAIL));
+		compile_simple_builtin(r, an, pred, vars, prg);
 		return an->next_in_body;
 	case AN_NEG_RULE:
-		if(!(an->predicate->flags & PREDF_FAIL)) {
-			compile_simple_builtin(r, an, for_words, vars);
+		if(!(an->predicate->pred->flags & PREDF_FAIL)) {
+			compile_simple_builtin(r, an, pred, vars, prg);
 		}
 		return an->next_in_body;
 	case AN_TAG:
@@ -3182,17 +3003,10 @@ struct astnode *compile_simple_astnode(struct routine *r, struct astnode *an, in
 	case AN_PAIR:
 	case AN_EMPTY_LIST:
 	case AN_DICTWORD:
-		if(for_words) {
-			o1 = compile_ast_to_oper(r, an, vars);
-			zi = append_instr(r, Z_CALL2N);
-			zi->oper[0] = ROUTINE(R_AUX_PUSH1);
-			zi->oper[1] = o1;
-		} else {
-			o1 = compile_ast_to_oper(r, an, vars);
-			zi = append_instr(r, Z_CALL2N);
-			zi->oper[0] = ROUTINE(R_PRINT_VALUE);
-			zi->oper[1] = o1;
-		}
+		o1 = compile_ast_to_oper(r, an, vars);
+		zi = append_instr(r, Z_CALL2N);
+		zi->oper[0] = ROUTINE(R_PRINT_VALUE);
+		zi->oper[1] = o1;
 		return an->next_in_body;
 	case AN_JUST:
 		if(envflags & ENVF_CUT_SAVED) {
@@ -3207,17 +3021,17 @@ struct astnode *compile_simple_astnode(struct routine *r, struct astnode *an, in
 		}
 		return an->next_in_body;
 	case AN_NOW:
-		compile_now(r, an->children[0], vars);
+		compile_now(r, an->children[0], vars, prg);
 		return an->next_in_body;
 	case AN_IF:
 		rcopy = r;
-		compile_if(an, &rcopy, for_words, envflags, vars, 0);
+		compile_if(an, &rcopy, pred, envflags, vars, 0, prg);
 		assert(r == rcopy);
 		return an->next_in_body;
 	case AN_BLOCK:
 	case AN_FIRSTRESULT:
 		rcopy = r;
-		compile_body(an->children[0], &rcopy, for_words, envflags, vars, 0);
+		compile_body(an->children[0], &rcopy, pred, envflags, vars, 0, prg);
 		assert(r == rcopy);
 		return an->next_in_body;
 	default:
@@ -3226,7 +3040,7 @@ struct astnode *compile_simple_astnode(struct routine *r, struct astnode *an, in
 	}
 }
 
-void find_vars(struct astnode *an, struct var **vars, int *subgoal) {
+static void find_vars(struct astnode *an, struct var **vars, int *subgoal) {
 	struct var *v;
 	int i;
 
@@ -3287,7 +3101,7 @@ void find_vars(struct astnode *an, struct var **vars, int *subgoal) {
 			if(an->kind == AN_RULE
 			|| an->kind == AN_NEG_RULE) {
 				if(subgoal
-				&& !(an->predicate->builtin && !((struct backend_pred *) an->predicate->backend)->global_label)) {
+				&& !(an->predicate->builtin && !((struct backend_pred *) an->predicate->pred->backend)->global_label)) {
 					(*subgoal)++;
 				}
 			}
@@ -3472,7 +3286,7 @@ void add_trace_code(struct routine *r, uint16_t variant, uint16_t printer, line_
 	zi->oper[0] = ROUTINE(variant);
 	zi->oper[1] = ROUTINE(printer);
 	zi->oper[2] = LARGE(LINEPART(line));
-	zi->oper[3] = SMALL(line >> 24);
+	zi->oper[3] = SMALL(FILENUMPART(line));
 }
 
 void custom_trace_printer(uint16_t label, struct valuelist *removed, uint16_t nextlabel) {
@@ -3518,13 +3332,14 @@ int simple_constant_list(struct astnode *an) {
 	return an && an->kind == AN_EMPTY_LIST;
 }
 
-void compile_rule(struct astnode *an, struct routine **rptr, int for_words, int envflags, struct var *vars, int tail) {
+void compile_rule(struct astnode *an, struct routine **rptr, struct predicate *me_pred, int envflags, struct var *vars, int tail, struct program *prg) {
 	int i, n;
 	struct zinstr *zi;
 	struct routine *r = *rptr;
-	struct predicate *pred = an->predicate;
+	struct predname *predname = an->predicate;
+	struct predicate *pred = predname->pred;
 	struct backend_pred *bp = pred->backend;
-	uint16_t cont_lab, call_lab = (for_words && bp->for_words_label)? bp->for_words_label : bp->global_label;
+	uint16_t cont_lab, call_lab = bp->global_label;
 	uint32_t o1;
 	struct astnode *sub;
 	uint16_t lab1, lab2;
@@ -3532,7 +3347,7 @@ void compile_rule(struct astnode *an, struct routine **rptr, int for_words, int 
 
 	assert(call_lab);
 
-	if(pred->builtin == BI_IS_ONE_OF
+	if(predname->builtin == BI_IS_ONE_OF
 	&& an->subkind == RULE_SIMPLE) {
 		if(an->children[1]->kind == AN_PAIR	// at least one element required
 		&& simple_constant_list(an->children[1])) {
@@ -3576,7 +3391,7 @@ void compile_rule(struct astnode *an, struct routine **rptr, int for_words, int 
 			zi = append_instr(r, OP_LABEL(lab2));
 			if(tail) {
 				assert(!an->next_in_body);
-				compile_body(0, rptr, for_words, envflags, vars, tail);
+				compile_body(0, rptr, me_pred, envflags, vars, tail, prg);
 			}
 			return;
 		} else {
@@ -3600,7 +3415,7 @@ void compile_rule(struct astnode *an, struct routine **rptr, int for_words, int 
 		return;
 	}
 
-	if(pred->builtin == BI_SPLIT
+	if(predname->builtin == BI_SPLIT
 	&& an->children[1]->kind == AN_PAIR	// at least one element required
 	&& simple_constant_list(an->children[1])) {
 #if 0
@@ -3755,7 +3570,7 @@ int is_simple_kind(int kind) {
 struct astnode *strip_trivial_conditions(struct astnode *an);
 
 int is_trivial_condition(struct astnode *an) {
-	if(an->kind == AN_RULE && (an->predicate->flags & PREDF_FAIL)) {
+	if(an->kind == AN_RULE && (an->predicate->pred->flags & PREDF_FAIL)) {
 		return 1;
 	}
 	if((an->kind == AN_RULE || an->kind == AN_NEG_RULE) && (an->predicate->builtin == BI_HAVE_UNDO)) {
@@ -3763,13 +3578,13 @@ int is_trivial_condition(struct astnode *an) {
 	}
 	if((an->kind == AN_RULE || an->kind == AN_NEG_RULE)
 	&& an->subkind == RULE_SIMPLE
-	&& an->predicate->dynamic) {
+	&& an->predicate->pred->dynamic) {
 		if(an->predicate->arity == 0) {
 			return 1;
 		}
 		if(an->predicate->arity == 1
 		&& !an->children[0]->unbound
-		&& !(an->predicate->flags & PREDF_GLOBAL_VAR)) {
+		&& !(an->predicate->pred->flags & PREDF_GLOBAL_VAR)) {
 			return 1;
 		}
 		if(an->predicate->builtin == BI_HASPARENT
@@ -3816,7 +3631,7 @@ void compile_trivial_condition(struct routine *r, struct astnode *an, uint16_t f
 	uint16_t ll;
 	int treg;
 
-	if(an->kind == AN_RULE && (an->predicate->flags & PREDF_FAIL)) {
+	if(an->kind == AN_RULE && (an->predicate->pred->flags & PREDF_FAIL)) {
 		if(failure == RFALSE) {
 			zi = append_instr(r, Z_RFALSE);
 		} else {
@@ -3840,8 +3655,8 @@ void compile_trivial_condition(struct routine *r, struct astnode *an, uint16_t f
 
 	if((an->kind == AN_RULE || an->kind == AN_NEG_RULE)
 	&& an->subkind == RULE_SIMPLE
-	&& an->predicate->dynamic) {
-		bp = an->predicate->backend;
+	&& an->predicate->pred->dynamic) {
+		bp = an->predicate->pred->backend;
 
 		if(an->predicate->arity == 0) {
 			zi = append_instr(r, (an->kind == AN_RULE)? Z_TESTN : Z_TEST);
@@ -3850,7 +3665,7 @@ void compile_trivial_condition(struct routine *r, struct astnode *an, uint16_t f
 			zi->branch = failure;
 		} else if(an->predicate->arity == 1
 		&& !an->children[0]->unbound
-		&& !(an->predicate->flags & PREDF_GLOBAL_VAR)) {
+		&& !(an->predicate->pred->flags & PREDF_GLOBAL_VAR)) {
 			if(an->children[0]->kind == AN_TAG && bp->object_flag < NZOBJFLAG) {
 				o1 = compile_ast_to_oper(r, an->children[0], vars);
 				zi = append_instr(r, (an->kind == AN_RULE)? Z_JNA : Z_JA);
@@ -3987,7 +3802,7 @@ int only_simple_builtins(struct astnode *an) {
 	return 1;
 }
 
-void compile_if(struct astnode *an, struct routine **rptr, int for_words, int envflags, struct var *vars, int tail) {
+void compile_if(struct astnode *an, struct routine **rptr, struct predicate *pred, int envflags, struct var *vars, int tail, struct program *prg) {
 	struct routine *r = *rptr;
 	struct zinstr *zi;
 	uint16_t elselab = 0xffff, endlab = 0xffff;
@@ -3997,8 +3812,8 @@ void compile_if(struct astnode *an, struct routine **rptr, int for_words, int en
 
 	if(an->children[0]
 	&& an->children[0]->kind == AN_RULE
-	&& (an->children[0]->predicate->flags & PREDF_FAIL)) {
-		compile_body(an->children[2], rptr, for_words, envflags, vars, tail);
+	&& (an->children[0]->predicate->pred->flags & PREDF_FAIL)) {
+		compile_body(an->children[2], rptr, pred, envflags, vars, tail, prg);
 	} else if(body_succeeds(an->children[0])) {
 		for(v = vars; v; v = v->next) {
 			if(v->name == an->word) break;
@@ -4008,13 +3823,13 @@ void compile_if(struct astnode *an, struct routine **rptr, int for_words, int en
 		zi->oper[0] = VALUE(REG_ENV);
 		zi->oper[1] = SMALL(2 + v->slot);
 		zi->oper[2] = VALUE(REG_CHOICE);
-		compile_body(an->children[0], rptr, for_words, envflags, vars, 0);
+		compile_body(an->children[0], rptr, pred, envflags, vars, 0, prg);
 		r = *rptr;
 		zi = append_instr(r, Z_LOADW);
 		zi->oper[0] = VALUE(REG_ENV);
 		zi->oper[1] = SMALL(2 + v->slot);
 		zi->store = REG_CHOICE;
-		compile_body(an->children[1], rptr, for_words, envflags, vars, tail);
+		compile_body(an->children[1], rptr, pred, envflags, vars, tail, prg);
 	} else {
 		ensure_vars_exist(an, r, vars, 1);
 
@@ -4031,7 +3846,7 @@ void compile_if(struct astnode *an, struct routine **rptr, int for_words, int en
 				endlab = r->next_label++;
 				compile_trivial_conditions(r, an->children[0], elselab, vars);
 				stash = stash_lingering(vars);
-				compile_body(an->children[1], rptr, for_words, envflags, vars, 0);
+				compile_body(an->children[1], rptr, pred, envflags, vars, 0, prg);
 				assert(r == *rptr);
 				if(an->children[2]) {
 					zi = append_instr(r, Z_JUMP);
@@ -4039,23 +3854,23 @@ void compile_if(struct astnode *an, struct routine **rptr, int for_words, int en
 				}
 				zi = append_instr(r, OP_LABEL(elselab));
 				reapply_lingering(vars, stash);
-				compile_body(an->children[2], rptr, for_words, envflags, vars, 0);
+				compile_body(an->children[2], rptr, pred, envflags, vars, 0, prg);
 				assert(r == *rptr);
 				zi = append_instr(r, OP_LABEL(endlab));
 				reapply_lingering(vars, stash);
 				free(stash);
-				compile_body(0, rptr, for_words, envflags, vars, tail);
+				compile_body(0, rptr, pred, envflags, vars, tail, prg);
 			} else {
 				elselab = r->next_label++;
 				if(!tail) endlab = make_routine_label();
 				compile_trivial_conditions(r, an->children[0], elselab, vars);
 				stash = stash_lingering(vars);
-				compile_body(an->children[1], rptr, for_words, envflags, vars, tail? tail : endlab);
+				compile_body(an->children[1], rptr, pred, envflags, vars, tail? tail : endlab, prg);
 				// rptr may have changed, r remains
 				zi = append_instr(r, OP_LABEL(elselab));
 				reapply_lingering(vars, stash);
 				free(stash);
-				compile_body(an->children[2], &r, for_words, envflags, vars, tail? tail : endlab);
+				compile_body(an->children[2], &r, pred, envflags, vars, tail? tail : endlab, prg);
 				if(!tail) {
 					clear_lingering(vars);
 					r = *rptr = make_routine(endlab, 0);
@@ -4076,19 +3891,19 @@ void compile_if(struct astnode *an, struct routine **rptr, int for_words, int en
 			zi = append_instr(r, Z_CALL2N);
 			zi->oper[0] = ROUTINE(R_TRY_ME_ELSE_0);
 			zi->oper[1] = ROUTINE(elselab);
-			compile_body(an->children[0], rptr, for_words, envflags, vars, 0);
+			compile_body(an->children[0], rptr, pred, envflags, vars, 0, prg);
 			r = *rptr;
 			zi = append_instr(r, Z_LOADW);
 			zi->oper[0] = VALUE(REG_ENV);
 			zi->oper[1] = SMALL(2 + v->slot);
 			zi->store = REG_CHOICE;
-			compile_body(an->children[1], rptr, for_words, envflags, vars, tail? tail : endlab);
+			compile_body(an->children[1], rptr, pred, envflags, vars, tail? tail : endlab, prg);
 
 			clear_lingering(vars);
 			r = *rptr = make_routine(elselab, 0);
 			zi = append_instr(r, Z_CALL1N);
 			zi->oper[0] = ROUTINE(R_TRUST_ME_0);
-			compile_body(an->children[2], rptr, for_words, envflags, vars, tail? tail : endlab);
+			compile_body(an->children[2], rptr, pred, envflags, vars, tail? tail : endlab, prg);
 
 			if(!tail) {
 				clear_lingering(vars);
@@ -4098,14 +3913,14 @@ void compile_if(struct astnode *an, struct routine **rptr, int for_words, int en
 	}
 }
 
-void compile_neg(struct astnode *an, struct routine **rptr, int for_words, int envflags, struct var *vars) {
+void compile_neg(struct astnode *an, struct routine **rptr, struct predicate *pred, int envflags, struct var *vars, struct program *prg) {
 	struct routine *r = *rptr;
 	struct zinstr *zi;
 	struct var *v;
 	uint16_t lab;
 
 	if(an->kind == AN_NEG_RULE
-	&& (an->predicate->flags & PREDF_FAIL)) {
+	&& (an->predicate->pred->flags & PREDF_FAIL)) {
 		/* do nothing */
 	} else {
 		for(v = vars; v; v = v->next) {
@@ -4124,12 +3939,12 @@ void compile_neg(struct astnode *an, struct routine **rptr, int for_words, int e
 		zi->oper[0] = ROUTINE(R_TRY_ME_ELSE_0);
 		zi->oper[1] = ROUTINE(lab);
 		if(an->kind == AN_NEG_BLOCK) {
-			compile_body(an->children[0], rptr, for_words, envflags, vars, 0);
+			compile_body(an->children[0], rptr, pred, envflags, vars, 0, prg);
 		} else {
 			if(is_simple_builtin(an, 1)) {
-				compile_simple_builtin(r, an, for_words, vars);
+				compile_simple_builtin(r, an, pred, vars, prg);
 			} else {
-				compile_rule(an, rptr, for_words, envflags, vars, 0);
+				compile_rule(an, rptr, pred, envflags, vars, 0, prg);
 			}
 		}
 		r = *rptr;
@@ -4146,7 +3961,7 @@ void compile_neg(struct astnode *an, struct routine **rptr, int for_words, int e
 	}
 }
 
-void compile_disjunction(struct astnode *an, struct routine **rptr, int for_words, int envflags, struct var *vars, int tail) {
+void compile_disjunction(struct astnode *an, struct routine **rptr, struct predicate *pred, int envflags, struct var *vars, int tail, struct program *prg) {
 	struct routine *r = *rptr;
 	struct zinstr *zi;
 	int i;
@@ -4165,7 +3980,7 @@ void compile_disjunction(struct astnode *an, struct routine **rptr, int for_word
 	for(i = 0; i < nfork; i++) {
 		if(table[i]
 		&& table[i]->kind == AN_RULE
-		&& (table[i]->predicate->flags & PREDF_FAIL)) {
+		&& (table[i]->predicate->pred->flags & PREDF_FAIL)) {
 			memmove(table + i, table + i + 1, (nfork - i - 1) * sizeof(struct astnode *));
 			nfork--;
 			i--;
@@ -4196,7 +4011,7 @@ void compile_disjunction(struct astnode *an, struct routine **rptr, int for_word
 				zi = append_instr(r, Z_CALL1N);
 				zi->oper[0] = ROUTINE(R_TRUST_ME_0);
 			}
-			compile_body(table[i], rptr, for_words, envflags, vars, tail? tail : endlab);
+			compile_body(table[i], rptr, pred, envflags, vars, tail? tail : endlab, prg);
 			if(i < nfork - 1) {
 				clear_lingering(vars);
 				r = *rptr = make_routine(lab, 0);
@@ -4210,7 +4025,7 @@ void compile_disjunction(struct astnode *an, struct routine **rptr, int for_word
 	free(table);
 }
 
-void compile_exhaust(struct astnode *an, struct routine **rptr, int for_words, int envflags, struct var *vars) {
+void compile_exhaust(struct astnode *an, struct routine **rptr, struct predicate *pred, int envflags, struct var *vars, struct program *prg) {
 	struct routine *r = *rptr;
 	struct zinstr *zi;
 	uint16_t lab;
@@ -4221,7 +4036,7 @@ void compile_exhaust(struct astnode *an, struct routine **rptr, int for_words, i
 	zi = append_instr(r, Z_CALL2N);
 	zi->oper[0] = ROUTINE(R_TRY_ME_ELSE_0);
 	zi->oper[1] = ROUTINE(lab);
-	compile_body(an->children[0], rptr, for_words, envflags, vars, ROUTINE(R_FAIL_PRED));
+	compile_body(an->children[0], rptr, pred, envflags, vars, ROUTINE(R_FAIL_PRED), prg);
 
 	clear_lingering(vars);
 	r = *rptr = make_routine(lab, 0);
@@ -4229,7 +4044,7 @@ void compile_exhaust(struct astnode *an, struct routine **rptr, int for_words, i
 	zi->oper[0] = ROUTINE(R_TRUST_ME_0);
 }
 
-void compile_firstresult(struct astnode *an, struct routine **rptr, int for_words, int envflags, struct var *vars) {
+void compile_firstresult(struct astnode *an, struct routine **rptr, struct predicate *pred, int envflags, struct var *vars, struct program *prg) {
 	struct routine *r = *rptr;
 	struct zinstr *zi;
 	struct var *v;
@@ -4268,13 +4083,13 @@ void compile_firstresult(struct astnode *an, struct routine **rptr, int for_word
 	// todo just one multiquery
 
 	if(!sub) {
-		compile_body(an->children[0], rptr, for_words, envflags, vars, 0);
+		compile_body(an->children[0], rptr, pred, envflags, vars, 0, prg);
 	} else {
 		zi = append_instr(r, Z_STOREW);
 		zi->oper[0] = VALUE(REG_ENV);
 		zi->oper[1] = SMALL(2 + v->slot);
 		zi->oper[2] = VALUE(REG_CHOICE);
-		compile_body(an->children[0], rptr, for_words, envflags, vars, 0);
+		compile_body(an->children[0], rptr, pred, envflags, vars, 0, prg);
 		r = *rptr;
 		zi = append_instr(r, Z_LOADW);
 		zi->oper[0] = VALUE(REG_ENV);
@@ -4283,7 +4098,7 @@ void compile_firstresult(struct astnode *an, struct routine **rptr, int for_word
 	}
 }
 
-void compile_collect(struct astnode *an, struct routine **rptr, int envflags, struct var *vars) {
+void compile_collect(struct astnode *an, struct routine **rptr, struct predicate *pred, int envflags, struct var *vars, struct program *prg) {
 	struct routine *r = *rptr;
 	struct zinstr *zi;
 	uint16_t lab;
@@ -4293,7 +4108,7 @@ void compile_collect(struct astnode *an, struct routine **rptr, int envflags, st
 
 	if(an->children[0]
 	&& an->children[0]->kind == AN_RULE
-	&& (an->children[0]->predicate->flags & PREDF_FAIL)) {
+	&& (an->children[0]->predicate->pred->flags & PREDF_FAIL)) {
 		o2 = compile_ast_to_oper(r, an->children[2], vars);
 		zi = append_instr(r, Z_CALLVN);
 		zi->oper[0] = VALUE(REG_R_USIMPLE);
@@ -4306,7 +4121,7 @@ void compile_collect(struct astnode *an, struct routine **rptr, int envflags, st
 		zi = append_instr(r, Z_CALL2N);
 		zi->oper[0] = ROUTINE(R_TRY_ME_ELSE_0);
 		zi->oper[1] = ROUTINE(lab);
-		compile_body(an->children[0], rptr, 0, envflags, vars, 0);
+		compile_body(an->children[0], rptr, pred, envflags, vars, 0, prg);
 		r = *rptr;
 		o1 = compile_ast_to_oper(r, an->children[1], vars);
 		zi = append_instr(r, Z_CALL2N);
@@ -4334,7 +4149,7 @@ int only_preds_with_wordtables(struct astnode *an) {
 
 	while(an) {
 		if(an->kind == AN_RULE
-		&& ((struct backend_pred *) an->predicate->backend)->wordtableprop) {
+		&& ((struct backend_pred *) an->predicate->pred->backend)->wordtableprop) {
 			// ok
 		} else if(an->kind == AN_OR) {
 			for(i = 0; i < an->nchild; i++) {
@@ -4349,7 +4164,7 @@ int only_preds_with_wordtables(struct astnode *an) {
 	return 1;
 }
 
-void compile_wordtable_pusher(struct astnode *an, struct routine **rptr, int envflags, struct var *vars) {
+void compile_wordtable_pusher(struct astnode *an, struct routine **rptr, struct predicate *pred, int envflags, struct var *vars, struct program *prg) {
 	struct routine *r = *rptr;
 	struct zinstr *zi;
 	int i;
@@ -4358,7 +4173,7 @@ void compile_wordtable_pusher(struct astnode *an, struct routine **rptr, int env
 
 	if(an->kind == AN_OR) {
 		for(i = 0; i < an->nchild; i++) {
-			compile_wordtable_pusher(an->children[i], rptr, envflags, vars);
+			compile_wordtable_pusher(an->children[i], rptr, pred, envflags, vars, prg);
 		}
 	} else {
 		assert(an->kind == AN_RULE);
@@ -4372,8 +4187,8 @@ void compile_wordtable_pusher(struct astnode *an, struct routine **rptr, int env
 		zi = append_instr(r, Z_CALLVS);
 		zi->oper[0] = ROUTINE(R_PUSH_WORDTABLE);
 		zi->oper[1] = o1;
-		zi->oper[2] = SMALL(((struct backend_pred *) an->predicate->backend)->wordtableprop);
-		zi->oper[3] = SMALL(((struct backend_pred *) an->predicate->backend)->wordtableflag);
+		zi->oper[2] = SMALL(((struct backend_pred *) an->predicate->pred->backend)->wordtableprop);
+		zi->oper[3] = SMALL(((struct backend_pred *) an->predicate->pred->backend)->wordtableflag);
 		zi->store = REG_TEMP;
 
 		zi = append_instr(r, Z_JZ);
@@ -4384,10 +4199,12 @@ void compile_wordtable_pusher(struct astnode *an, struct routine **rptr, int env
 		zi->oper[0] = ROUTINE(lab2);
 
 		zi = append_instr(r, OP_LABEL(ll));
+		zi = append_instr(r, Z_INC);
+		zi->oper[0] = SMALL(REG_FORWORDS);
 		zi = append_instr(r, Z_CALL2N);
 		zi->oper[0] = ROUTINE(R_TRY_ME_ELSE_0);
 		zi->oper[1] = ROUTINE(lab1);
-		compile_body(an, rptr, 1, envflags, vars, 0);
+		compile_body(an, rptr, pred, envflags, vars, 0, prg);
 		r = *rptr;
 		zi = append_instr(r, Z_RFALSE);
 
@@ -4395,6 +4212,8 @@ void compile_wordtable_pusher(struct astnode *an, struct routine **rptr, int env
 		r = *rptr = make_routine(lab1, 0);
 		zi = append_instr(r, Z_CALL1N);
 		zi->oper[0] = ROUTINE(R_TRUST_ME_0);
+		zi = append_instr(r, Z_DEC);
+		zi->oper[0] = SMALL(REG_FORWORDS);
 		zi = append_instr(r, Z_RET);
 		zi->oper[0] = ROUTINE(lab2);
 
@@ -4403,7 +4222,7 @@ void compile_wordtable_pusher(struct astnode *an, struct routine **rptr, int env
 	}
 }
 
-void compile_collect_words(struct astnode *an, struct routine **rptr, int envflags, struct var *vars) {
+void compile_collect_words(struct astnode *an, struct routine **rptr, struct predicate *pred, int envflags, struct var *vars, struct program *prg) {
 	struct routine *r = *rptr;
 	struct zinstr *zi;
 	uint16_t lab;
@@ -4413,7 +4232,7 @@ void compile_collect_words(struct astnode *an, struct routine **rptr, int envfla
 
 	if(an->children[0]
 	&& an->children[0]->kind == AN_RULE
-	&& (an->children[0]->predicate->flags & PREDF_FAIL)) {
+	&& (an->children[0]->predicate->pred->flags & PREDF_FAIL)) {
 		o1 = compile_ast_to_oper(r, an->children[1], vars);
 		zi = append_instr(r, Z_CALLVN);
 		zi->oper[0] = VALUE(REG_R_USIMPLE);
@@ -4423,14 +4242,16 @@ void compile_collect_words(struct astnode *an, struct routine **rptr, int envfla
 		zi = append_instr(r, Z_CALL1N);
 		zi->oper[0] = ROUTINE(R_COLLECT_BEGIN);
 		if(only_preds_with_wordtables(an->children[0])) {
-			compile_wordtable_pusher(an->children[0], rptr, envflags, vars);
+			compile_wordtable_pusher(an->children[0], rptr, pred, envflags, vars, prg);
 			r = *rptr;
 		} else {
 			lab = make_routine_label();
+			zi = append_instr(r, Z_INC);
+			zi->oper[0] = SMALL(REG_FORWORDS);
 			zi = append_instr(r, Z_CALL2N);
 			zi->oper[0] = ROUTINE(R_TRY_ME_ELSE_0);
 			zi->oper[1] = ROUTINE(lab);
-			compile_body(an->children[0], rptr, 1, envflags, vars, 0);
+			compile_body(an->children[0], rptr, pred, envflags, vars, 0, prg);
 			r = *rptr;
 			zi = append_instr(r, Z_RFALSE);
 
@@ -4438,6 +4259,8 @@ void compile_collect_words(struct astnode *an, struct routine **rptr, int envfla
 			r = *rptr = make_routine(lab, 0);
 			zi = append_instr(r, Z_CALL1N);
 			zi->oper[0] = ROUTINE(R_TRUST_ME_0);
+			zi = append_instr(r, Z_DEC);
+			zi->oper[0] = SMALL(REG_FORWORDS);
 		}
 		o1 = compile_ast_to_oper(r, an->children[1], vars);
 		zi = append_instr(r, Z_CALL1S);
@@ -4450,7 +4273,7 @@ void compile_collect_words(struct astnode *an, struct routine **rptr, int envfla
 	}
 }
 
-void compile_collect_check(struct astnode *an, struct routine **rptr, int envflags, struct var *vars) {
+void compile_collect_check(struct astnode *an, struct routine **rptr, struct predicate *pred, int envflags, struct var *vars, struct program *prg) {
 	struct routine *r = *rptr;
 	struct zinstr *zi;
 	uint16_t lab;
@@ -4461,7 +4284,7 @@ void compile_collect_check(struct astnode *an, struct routine **rptr, int envfla
 #if 0
 	if(an->children[0]
 	&& an->children[0]->kind == AN_RULE
-	&& ((struct backend_pred *) an->children[0]->predicate->backend)->wordtableprop
+	&& ((struct backend_pred *) an->children[0]->predicate->pred->backend)->wordtableprop
 	&& !an->children[0]->next_in_body) {
 		printf("could check immediately for %s\n", an->children[0]->predicate->printed_name);
 	}
@@ -4469,14 +4292,16 @@ void compile_collect_check(struct astnode *an, struct routine **rptr, int envfla
 	zi = append_instr(r, Z_CALL1N);
 	zi->oper[0] = ROUTINE(R_COLLECTCHK_BEGIN);
 	if(only_preds_with_wordtables(an->children[0])) {
-		compile_wordtable_pusher(an->children[0], rptr, envflags, vars);
+		compile_wordtable_pusher(an->children[0], rptr, pred, envflags, vars, prg);
 		r = *rptr;
 	} else {
 		lab = make_routine_label();
+		zi = append_instr(r, Z_INC);
+		zi->oper[0] = SMALL(REG_FORWORDS);
 		zi = append_instr(r, Z_CALL2N);
 		zi->oper[0] = ROUTINE(R_TRY_ME_ELSE_0);
 		zi->oper[1] = ROUTINE(lab);
-		compile_body(an->children[0], rptr, 1, envflags, vars, 0);
+		compile_body(an->children[0], rptr, pred, envflags, vars, 0, prg);
 		r = *rptr;
 		zi = append_instr(r, Z_RFALSE);
 
@@ -4484,6 +4309,8 @@ void compile_collect_check(struct astnode *an, struct routine **rptr, int envfla
 		r = *rptr = make_routine(lab, 0);
 		zi = append_instr(r, Z_CALL1N);
 		zi->oper[0] = ROUTINE(R_TRUST_ME_0);
+		zi = append_instr(r, Z_DEC);
+		zi->oper[0] = SMALL(REG_FORWORDS);
 	}
 	o1 = compile_ast_to_oper(r, an->children[1], vars);
 	zi = append_instr(r, Z_CALL2N);
@@ -4491,7 +4318,7 @@ void compile_collect_check(struct astnode *an, struct routine **rptr, int envfla
 	zi->oper[1] = o1;
 }
 
-void compile_select(struct astnode *an, struct routine **rptr, int for_words, int envflags, struct var *vars, int tail) {
+void compile_select(struct astnode *an, struct routine **rptr, struct predicate *pred, int envflags, struct var *vars, int tail, struct program *prg) {
 	int i;
 	struct routine *r = *rptr;
 	struct zinstr *zi;
@@ -4500,126 +4327,120 @@ void compile_select(struct astnode *an, struct routine **rptr, int for_words, in
 
 	ensure_vars_exist(an, r, vars, 1);
 
-	if(for_words) {
-		for(i = 0; i < an->nchild; i++) {
-			compile_body(an->children[i], rptr, 1, envflags, vars, (i == an->nchild - 1)? tail : 0);
-		}
+	if(an->nchild == 1) {
+		compile_body(an->children[0], rptr, pred, envflags, vars, tail, prg);
+		return;
+	}
+
+	if(!tail) endlab = make_routine_label();
+
+	assert(envflags & ENVF_ENV);
+
+	if(an->subkind == SEL_STOPPING && an->nchild == 2) {
+		uint16_t flagmask, flagglobal;
+
+		flagglobal = alloc_user_flag(&flagmask);
+
+		ll = r->next_label++;
+		zi = append_instr(r, Z_TEST);
+		zi->oper[0] = USERGLOBAL(flagglobal);
+		zi->oper[1] = SMALL_OR_LARGE(flagmask);
+		zi->branch = ll;
+
+		zi = append_instr(r, Z_OR);
+		zi->oper[0] = USERGLOBAL(flagglobal);
+		zi->oper[1] = SMALL_OR_LARGE(flagmask);
+		zi->store = DEST_USERGLOBAL(flagglobal);
+
+		compile_body(an->children[0], rptr, pred, envflags, vars, tail? tail : endlab, prg);
+		// rptr may change, r remains
+		zi = append_instr(r, OP_LABEL(ll));
+		clear_lingering(vars);
+		compile_body(an->children[1], rptr, pred, envflags, vars, tail? tail : endlab, prg);
 	} else {
-		if(an->nchild == 1) {
-			compile_body(an->children[0], rptr, 0, envflags, vars, tail);
-			return;
-		}
+		if(an->subkind == SEL_STOPPING) {
+			int sel = next_select++;
 
-		if(!tail) endlab = make_routine_label();
+			zi = append_instr(r, Z_CALLVS);
+			zi->oper[0] = ROUTINE(R_SEL_STOPPING);
+			zi->oper[1] = SMALL(sel);
+			zi->oper[2] = SMALL(an->nchild - 1);
+			zi->store = REG_TEMP;
+		} else if(an->subkind == SEL_RANDOM) {
+			int sel = next_select++;
 
-		assert(envflags & ENVF_ENV);
-
-		if(an->subkind == SEL_STOPPING && an->nchild == 2) {
-			uint16_t flagmask, flagglobal;
-
-			flagglobal = alloc_user_flag(&flagmask);
-
-			ll = r->next_label++;
-			zi = append_instr(r, Z_TEST);
-			zi->oper[0] = USERGLOBAL(flagglobal);
-			zi->oper[1] = SMALL_OR_LARGE(flagmask);
-			zi->branch = ll;
-
-			zi = append_instr(r, Z_OR);
-			zi->oper[0] = USERGLOBAL(flagglobal);
-			zi->oper[1] = SMALL_OR_LARGE(flagmask);
-			zi->store = DEST_USERGLOBAL(flagglobal);
-
-			compile_body(an->children[0], rptr, 0, envflags, vars, tail? tail : endlab);
-			// rptr may change, r remains
-			zi = append_instr(r, OP_LABEL(ll));
-			clear_lingering(vars);
-			compile_body(an->children[1], rptr, 0, envflags, vars, tail? tail : endlab);
-		} else {
-			if(an->subkind == SEL_STOPPING) {
-				int sel = next_select++;
-
-				zi = append_instr(r, Z_CALLVS);
-				zi->oper[0] = ROUTINE(R_SEL_STOPPING);
-				zi->oper[1] = SMALL(sel);
-				zi->oper[2] = SMALL(an->nchild - 1);
-				zi->store = REG_TEMP;
-			} else if(an->subkind == SEL_RANDOM) {
-				int sel = next_select++;
-
-				if(an->nchild < 2) {
-					report(LVL_ERR, an->line, "(select) ... (at random) requires at least two alternatives.");
-					exit(1);
-				}
-
-				zi = append_instr(r, Z_CALLVS);
-				zi->oper[0] = ROUTINE(R_SEL_RANDOM);
-				zi->oper[1] = SMALL(sel);
-				zi->oper[2] = SMALL(an->nchild);
-				zi->store = REG_TEMP;
-			} else if(an->subkind == SEL_T_RANDOM) {
-				int sel = next_select++;
-
-				if(an->nchild < 2) {
-					report(LVL_ERR, an->line, "(select) ... (then at random) requires at least two alternatives.");
-					exit(1);
-				}
-
-				zi = append_instr(r, Z_CALLVS);
-				zi->oper[0] = ROUTINE(R_SEL_T_RANDOM);
-				zi->oper[1] = SMALL(sel);
-				zi->oper[2] = SMALL(an->nchild);
-				zi->store = REG_TEMP;
-			} else if(an->subkind == SEL_P_RANDOM) {
-				zi = append_instr(r, Z_RANDOM);
-				zi->oper[0] = SMALL(an->nchild);
-				zi->store = REG_TEMP;
-			} else if(an->subkind == SEL_T_P_RANDOM) {
-				int sel = next_select++;
-
-				zi = append_instr(r, Z_CALLVS);
-				zi->oper[0] = ROUTINE(R_SEL_T_P_RANDOM);
-				zi->oper[1] = SMALL(sel);
-				zi->oper[2] = SMALL(an->nchild);
-				zi->store = REG_TEMP;
-			} else if(an->subkind == SEL_CYCLING) {
-				int sel = next_select++;
-
-				zi = append_instr(r, Z_CALLVS);
-				zi->oper[0] = ROUTINE(R_SEL_CYCLING);
-				zi->oper[1] = SMALL(sel);
-				zi->oper[2] = SMALL(an->nchild);
-				zi->store = REG_TEMP;
-			} else {
-				assert(0); // unimplemented select variant.
+			if(an->nchild < 2) {
+				report(LVL_ERR, an->line, "(select) ... (at random) requires at least two alternatives.");
 				exit(1);
 			}
 
-			for(i = 0; i < an->nchild - 1; i++) {
-				ll = r->next_label++;
-				zi = append_instr(r, Z_JNE);
-				zi->oper[0] = VALUE(REG_TEMP);
-				zi->oper[1] = SMALL((an->subkind == SEL_P_RANDOM)? i + 1 : i);
-				zi->branch = ll;
-				*rptr = r;
-				clear_lingering(vars);
-				compile_body(an->children[i], rptr, 0, envflags, vars, tail? tail : endlab);
-				// rptr may change, r remains
-				zi = append_instr(r, OP_LABEL(ll));
+			zi = append_instr(r, Z_CALLVS);
+			zi->oper[0] = ROUTINE(R_SEL_RANDOM);
+			zi->oper[1] = SMALL(sel);
+			zi->oper[2] = SMALL(an->nchild);
+			zi->store = REG_TEMP;
+		} else if(an->subkind == SEL_T_RANDOM) {
+			int sel = next_select++;
+
+			if(an->nchild < 2) {
+				report(LVL_ERR, an->line, "(select) ... (then at random) requires at least two alternatives.");
+				exit(1);
 			}
-			*rptr = r;
-			clear_lingering(vars);
-			compile_body(an->children[i], rptr, 0, envflags, vars, tail? tail : endlab);
+
+			zi = append_instr(r, Z_CALLVS);
+			zi->oper[0] = ROUTINE(R_SEL_T_RANDOM);
+			zi->oper[1] = SMALL(sel);
+			zi->oper[2] = SMALL(an->nchild);
+			zi->store = REG_TEMP;
+		} else if(an->subkind == SEL_P_RANDOM) {
+			zi = append_instr(r, Z_RANDOM);
+			zi->oper[0] = SMALL(an->nchild);
+			zi->store = REG_TEMP;
+		} else if(an->subkind == SEL_T_P_RANDOM) {
+			int sel = next_select++;
+
+			zi = append_instr(r, Z_CALLVS);
+			zi->oper[0] = ROUTINE(R_SEL_T_P_RANDOM);
+			zi->oper[1] = SMALL(sel);
+			zi->oper[2] = SMALL(an->nchild);
+			zi->store = REG_TEMP;
+		} else if(an->subkind == SEL_CYCLING) {
+			int sel = next_select++;
+
+			zi = append_instr(r, Z_CALLVS);
+			zi->oper[0] = ROUTINE(R_SEL_CYCLING);
+			zi->oper[1] = SMALL(sel);
+			zi->oper[2] = SMALL(an->nchild);
+			zi->store = REG_TEMP;
+		} else {
+			assert(0); // unimplemented select variant.
+			exit(1);
 		}
 
-		if(!tail) {
+		for(i = 0; i < an->nchild - 1; i++) {
+			ll = r->next_label++;
+			zi = append_instr(r, Z_JNE);
+			zi->oper[0] = VALUE(REG_TEMP);
+			zi->oper[1] = SMALL((an->subkind == SEL_P_RANDOM)? i + 1 : i);
+			zi->branch = ll;
+			*rptr = r;
 			clear_lingering(vars);
-			*rptr = make_routine(endlab, 0);
+			compile_body(an->children[i], rptr, pred, envflags, vars, tail? tail : endlab, prg);
+			// rptr may change, r remains
+			zi = append_instr(r, OP_LABEL(ll));
 		}
+		*rptr = r;
+		clear_lingering(vars);
+		compile_body(an->children[i], rptr, pred, envflags, vars, tail? tail : endlab, prg);
+	}
+
+	if(!tail) {
+		clear_lingering(vars);
+		*rptr = make_routine(endlab, 0);
 	}
 }
 
-void compile_stoppable(struct astnode *an, struct routine **rptr, int for_words, int envflags, struct var *vars) {
+void compile_stoppable(struct astnode *an, struct routine **rptr, struct predicate *pred, int envflags, struct var *vars, struct program *prg) {
 	struct routine *r = *rptr;
 	struct zinstr *zi;
 	uint16_t endlab = make_routine_label();
@@ -4631,7 +4452,7 @@ void compile_stoppable(struct astnode *an, struct routine **rptr, int for_words,
 	zi = append_instr(r, Z_CALL1N);
 	zi->oper[0] = ROUTINE(R_PUSH_STOP);
 
-	compile_body(an->children[0], rptr, for_words, envflags, vars, R_STOP_PRED);
+	compile_body(an->children[0], rptr, pred, envflags, vars, R_STOP_PRED, prg);
 
 	clear_lingering(vars);
 
@@ -4640,7 +4461,7 @@ void compile_stoppable(struct astnode *an, struct routine **rptr, int for_words,
 	zi->oper[0] = ROUTINE(R_TRUST_ME_0);
 }
 
-void compile_statusbar(struct astnode *an, struct routine **rptr, int for_words, int envflags, struct var *vars) {
+void compile_statusbar(struct astnode *an, struct routine **rptr, struct predicate *pred, int envflags, struct var *vars, struct program *prg) {
 	struct routine *r = *rptr;
 	struct zinstr *zi;
 	uint16_t endlab = make_routine_label();
@@ -4652,7 +4473,7 @@ void compile_statusbar(struct astnode *an, struct routine **rptr, int for_words,
 	zi->oper[1] = o1;
 	zi->oper[2] = ROUTINE(endlab);
 
-	compile_body(an->children[1], rptr, 0, envflags, vars, R_STOP_PRED);
+	compile_body(an->children[1], rptr, pred, envflags, vars, R_STOP_PRED, prg);
 
 	clear_lingering(vars);
 
@@ -4664,7 +4485,7 @@ void compile_statusbar(struct astnode *an, struct routine **rptr, int for_words,
 	zi->oper[0] = ROUTINE(R_ENDSTATUS);
 }
 
-void compile_body(struct astnode *an, struct routine **rptr, int for_words, int envflags, struct var *vars, int tail) {
+void compile_body(struct astnode *an, struct routine **rptr, struct predicate *pred, int envflags, struct var *vars, int tail, struct program *prg) {
 	struct routine *r = *rptr;
 	struct zinstr *zi;
 
@@ -4702,10 +4523,9 @@ void compile_body(struct astnode *an, struct routine **rptr, int for_words, int 
 				}
 			}
 			return;
-		} else if(an->kind == AN_RULE && (an->predicate->flags & PREDF_FAIL)) {
+		} else if(an->kind == AN_RULE && (an->predicate->pred->flags & PREDF_FAIL)) {
 #if 0
-			printf("eliminating body call to ");
-			pp_predname(an->predicate);
+			printf("eliminating body call to %s", an->predicate->printed_name);
 			if(an->next_in_body) printf(" non-tail!");
 			printf("\n");
 #endif
@@ -4718,51 +4538,51 @@ void compile_body(struct astnode *an, struct routine **rptr, int for_words, int 
 			}
 			return;
 		} else if(an->kind == AN_BLOCK) {
-			compile_body(an->children[0], rptr, for_words, envflags, vars, an->next_in_body? 0 : tail);
+			compile_body(an->children[0], rptr, pred, envflags, vars, an->next_in_body? 0 : tail, prg);
 			an = an->next_in_body;
 			if(tail && !an) return;
 		} else if(an->kind == AN_OR) {
-			compile_disjunction(an, rptr, for_words, envflags, vars, an->next_in_body? 0 : tail);
+			compile_disjunction(an, rptr, pred, envflags, vars, an->next_in_body? 0 : tail, prg);
 			an = an->next_in_body;
 			if(tail && !an) return;
 		} else if(an->kind == AN_IF) {
-			compile_if(an, rptr, for_words, envflags, vars, an->next_in_body? 0 : tail);
+			compile_if(an, rptr, pred, envflags, vars, an->next_in_body? 0 : tail, prg);
 			an = an->next_in_body;
 			if(tail && !an) return;
 		} else if(an->kind == AN_EXHAUST) {
-			compile_exhaust(an, rptr, for_words, envflags, vars);
+			compile_exhaust(an, rptr, pred, envflags, vars, prg);
 			an = an->next_in_body;
 		} else if(an->kind == AN_FIRSTRESULT) {
-			compile_firstresult(an, rptr, for_words, envflags, vars);
+			compile_firstresult(an, rptr, pred, envflags, vars, prg);
 			an = an->next_in_body;
 		} else if(an->kind == AN_COLLECT) {
-			compile_collect(an, rptr, envflags, vars);
+			compile_collect(an, rptr, pred, envflags, vars, prg);
 			an = an->next_in_body;
 		} else if(an->kind == AN_COLLECT_WORDS) {
-			compile_collect_words(an, rptr, envflags, vars);
+			compile_collect_words(an, rptr, pred, envflags, vars, prg);
 			an = an->next_in_body;
 		} else if(an->kind == AN_COLLECT_WORDS_CHECK) {
-			compile_collect_check(an, rptr, envflags, vars);
+			compile_collect_check(an, rptr, pred, envflags, vars, prg);
 			an = an->next_in_body;
 		} else if(an->kind == AN_SELECT) {
-			compile_select(an, rptr, for_words, envflags, vars, an->next_in_body? 0 : tail);
+			compile_select(an, rptr, pred, envflags, vars, an->next_in_body? 0 : tail, prg);
 			an = an->next_in_body;
 			if(tail && !an) return;
 		} else if(an->kind == AN_STOPPABLE) {
-			compile_stoppable(an, rptr, for_words, envflags, vars);
+			compile_stoppable(an, rptr, pred, envflags, vars, prg);
 			an = an->next_in_body;
 		} else if(an->kind == AN_STATUSBAR) {
-			compile_statusbar(an, rptr, for_words, envflags, vars);
+			compile_statusbar(an, rptr, pred, envflags, vars, prg);
 			an = an->next_in_body;
 		} else if(is_simple_builtin(an, 0)) {
-			an = compile_simple_astnode(r, an, for_words, envflags, vars);
+			an = compile_simple_astnode(r, an, pred, envflags, vars, prg);
 		} else if(an->kind == AN_RULE) {
-			assert(!(an->predicate->flags & PREDF_FAIL));
-			compile_rule(an, rptr, for_words, envflags, vars, an->next_in_body? 0 : tail);
+			assert(!(an->predicate->pred->flags & PREDF_FAIL));
+			compile_rule(an, rptr, pred, envflags, vars, an->next_in_body? 0 : tail, prg);
 			an = an->next_in_body;
 			if(tail && !an) return;
 		} else if(an->kind == AN_NEG_RULE || an->kind == AN_NEG_BLOCK) {
-			compile_neg(an, rptr, for_words, envflags, vars);
+			compile_neg(an, rptr, pred, envflags, vars, prg);
 			an = an->next_in_body;
 		} else {
 			assert(0); // unimplemented astnode
@@ -4806,9 +4626,10 @@ int contains_simple_call(struct astnode *an, int exclude_tail) {
 
 void prepare_clause(struct clause *cl) {
 	struct backend_clause *bc = cl->backend;
-	struct predicate *pred = cl->predicate;
+	struct predname *predname = cl->predicate;
+	struct predicate *pred = predname->pred;
 	struct astnode *body = cl->body, *an;
-	int subgoal = 0, envflags = pred->arity, npersistent = 0, ntemp = 0;
+	int subgoal = 0, envflags = predname->arity, npersistent = 0, ntemp = 0;
 	struct var *v;
 	int i;
 
@@ -4835,7 +4656,7 @@ void prepare_clause(struct clause *cl) {
 		}
 	}
 
-	for(i = 0; i < pred->arity; i++) {
+	for(i = 0; i < predname->arity; i++) {
 		find_vars(cl->params[i], &bc->vars, &subgoal);
 	}
 	find_vars(body, &bc->vars, &subgoal);
@@ -4858,12 +4679,12 @@ void prepare_clause(struct clause *cl) {
 	bc->first_free_temp = ntemp;
 }
 
-void compile_clause(struct clause *original_clause, struct astnode *body, struct astnode **params, struct routine *r, int for_words, line_t line) {
+void compile_clause(struct clause *original_clause, struct astnode *body, struct astnode **params, struct routine *r, line_t line, struct program *prg) {
 	struct zinstr *zi;
 	int i;
 	struct backend_clause *bc = original_clause->backend;
-	struct predicate *pred = original_clause->predicate;
-	struct backend_pred *bp = pred->backend;
+	struct predname *predname = original_clause->predicate;
+	struct backend_pred *bp = predname->pred->backend;
 	int envflags = bc->envflags;
 	struct var *v;
 	uint16_t traceroutine;
@@ -4874,7 +4695,7 @@ void compile_clause(struct clause *original_clause, struct astnode *body, struct
 		v->used = 0;
 		v->still_in_reg = 0;
 		v->remaining_occurrences = count_occurrences(body, v->name);
-		for(i = 0; i < pred->arity; i++) {
+		for(i = 0; i < predname->arity; i++) {
 			v->remaining_occurrences += count_occurrences(params[i], v->name);
 		}
 	}
@@ -4896,7 +4717,7 @@ void compile_clause(struct clause *original_clause, struct astnode *body, struct
 				zi = append_instr(r, Z_STOREW);
 				zi->oper[0] = VALUE(REG_ENV);
 				zi->oper[1] = SMALL(ENV_CUT);
-				zi->oper[2] = VALUE(REG_A + pred->arity);
+				zi->oper[2] = VALUE(REG_A + predname->arity);
 			}
 
 			if(envflags & ENVF_SIMPLE_SAVED) {
@@ -4919,15 +4740,15 @@ void compile_clause(struct clause *original_clause, struct astnode *body, struct
 	next_temp = bc->first_free_temp;
 
 	// Check the simple parameters first, to conserve heap space.
-	for(i = 0; i < pred->arity; i++) {
+	for(i = 0; i < predname->arity; i++) {
 		if(is_simple_kind(params[i]->kind)) {
-			compile_param(r, params[i], REG_A + i, bc->vars, !!(pred->unbound_in & (1 << i)));
+			compile_param(r, params[i], REG_A + i, bc->vars, !!(predname->pred->unbound_in & (1 << i)));
 		}
 	}
 
-	for(i = 0; i < pred->arity; i++) {
+	for(i = 0; i < predname->arity; i++) {
 		if(!is_simple_kind(params[i]->kind)) {
-			compile_param(r, params[i], REG_A + i, bc->vars, !!(pred->unbound_in & (1 << i)));
+			compile_param(r, params[i], REG_A + i, bc->vars, !!(predname->pred->unbound_in & (1 << i)));
 		}
 	}
 
@@ -4941,12 +4762,12 @@ void compile_clause(struct clause *original_clause, struct astnode *body, struct
 		}
 	}
 
-	compile_body(body, &r, for_words, envflags, bc->vars, TAIL_CONT);
+	compile_body(body, &r, predname->pred, envflags, bc->vars, TAIL_CONT, prg);
 
 	if(next_temp > max_temp) max_temp = next_temp;
 }
 
-void compile_trace_output(struct predicate *pred, uint16_t label) {
+void compile_trace_output(struct predname *predname, uint16_t label) {
 	int i, j, arg = 0;
 	char buf[128];
 	uint8_t zbuf[128];
@@ -4957,14 +4778,14 @@ void compile_trace_output(struct predicate *pred, uint16_t label) {
 	uint32_t uchar;
 
 	r = make_routine(label, 0);
-	for(i = 0; i < pred->nword; i++) {
-		if(pred->words[i]) {
+	for(i = 0; i < predname->nword; i++) {
+		if(predname->words[i]) {
 			if(i && (bufpos < sizeof(buf) - 1)) {
 				buf[bufpos++] = ' ';
 			}
-			for(j = 0; pred->words[i]->name[j]; j++) {
+			for(j = 0; predname->words[i]->name[j]; j++) {
 				if(bufpos < sizeof(buf) - 1) {
-					buf[bufpos++] = pred->words[i]->name[j];
+					buf[bufpos++] = predname->words[i]->name[j];
 				}
 			}
 		} else {
@@ -4972,7 +4793,7 @@ void compile_trace_output(struct predicate *pred, uint16_t label) {
 				buf[bufpos] = 0;
 				utf8_to_zscii(zbuf, sizeof(zbuf), buf, &uchar);
 				if(uchar) {
-					report(LVL_ERR, 0, "Unsupported character U+%04x in part of predicate name %s", uchar, pred->printed_name);
+					report(LVL_ERR, 0, "Unsupported character U+%04x in part of predicate name %s", uchar, predname->printed_name);
 					exit(1);
 				}
 				lab = find_global_string(zbuf)->global_label;
@@ -4994,7 +4815,7 @@ void compile_trace_output(struct predicate *pred, uint16_t label) {
 		buf[bufpos] = 0;
 		utf8_to_zscii(zbuf, sizeof(zbuf), buf, &uchar);
 		if(uchar) {
-			report(LVL_ERR, 0, "Unsupported character U+%04x in part of predicate name %s", uchar, pred->printed_name);
+			report(LVL_ERR, 0, "Unsupported character U+%04x in part of predicate name %s", uchar, predname->printed_name);
 			exit(1);
 		}
 		lab = find_global_string(zbuf)->global_label;
@@ -5005,14 +4826,14 @@ void compile_trace_output(struct predicate *pred, uint16_t label) {
 	//append_instr(r, Z_END);
 }
 
-uint16_t tag_simple_value(struct astnode *an) {
+static uint16_t tag_simple_value(struct astnode *an) {
 	switch(an->kind) {
 	case AN_TAG:
 		return 1 + an->word->obj_id;
 	case AN_EMPTY_LIST:
 		return 0x1fff;
 	case AN_DICTWORD:
-		return 0x2000 + find_dictword_id(an->word);
+		return dictword_tag(an->word);
 	case AN_INTEGER:
 		return 0x4000 + an->value;
 	}
@@ -5021,6 +4842,93 @@ uint16_t tag_simple_value(struct astnode *an) {
 	assert(an->kind != AN_VARIABLE);
 	assert(0);
 	exit(1);
+}
+
+static uint16_t tag_eval_value(value_t v, struct program *prg) {
+	switch(v.tag) {
+	case VAL_NUM:
+		assert(v.value >= 0);
+		assert(v.value <= 0x3fff);
+		return 0x4000 + v.value;
+	case VAL_OBJ:
+		assert(v.value < prg->nworldobj);
+		assert(v.value < 0x1ffe);
+		return 1 + v.value;
+	case VAL_DICT:
+		if(v.value < 256) {
+			return 0x3e00 | v.value;
+		} else {
+			assert(dictmap[v.value - 256] < ndict);
+			return 0x2000 | dictmap[v.value - 256];
+		}
+	case VAL_NIL:
+		return 0x1fff;
+	}
+	assert(0);
+	exit(1);
+}
+
+static int render_eval_value(uint8_t *buffer, int nword, value_t v, struct eval_state *es, struct predname *predname) {
+	int count, size = 1, n;
+	uint16_t value;
+
+	// Simple elements (including the empty list) are serialised as themselves.
+	// Proper lists are serialised as the elements, followed by c000+n.
+	// Improper lists are serialised as the elements, followed by the improper tail element, followed by e000+n.
+
+	switch(v.tag) {
+	case VAL_NUM:
+	case VAL_OBJ:
+	case VAL_DICT:
+	case VAL_NIL:
+		value = tag_eval_value(v, es->program);
+		break;
+	case VAL_PAIR:
+		count = 0;
+		for(;;) {
+			n = render_eval_value(buffer, nword, eval_gethead(v, es), es, predname);
+			size += n;
+			nword -= n;
+			buffer += 2 * n;
+			count++;
+			v = eval_gettail(v, es);
+			if(v.tag == VAL_NIL) {
+				value = 0xc000 | count;
+				break;
+			} else if(v.tag != VAL_PAIR) {
+				n = render_eval_value(buffer, nword, v, es, predname);
+				size += n;
+				nword -= n;
+				buffer += 2 * n;
+				value = 0xe000 | count;
+				break;
+			}
+		}
+		break;
+	case VAL_REF:
+		report(
+			LVL_ERR,
+			0,
+			"Initial value of global variable %s must be bound.",
+			predname->printed_name);
+		exit(1);
+	default:
+		assert(0);
+		exit(1);
+	}
+
+	if(!nword) {
+		report(
+			LVL_ERR,
+			0,
+			"Initial value of global variable %s is too large.",
+			predname->printed_name);
+		exit(1);
+	}
+
+	buffer[0] = value >> 8;
+	buffer[1] = value & 0xff;
+	return size;
 }
 
 struct memoized_index *add_memoized_index(struct clause **clauses, struct indexvalue *values, int nvalue, uint16_t label, struct memoized_index **ptr) {
@@ -5062,15 +4970,23 @@ struct memoized_index *find_memoized_index(struct clause **clauses, struct index
 	return 0;
 }
 
-void compile_clause_chain(struct predicate *pred, struct clause **clauses, int nclause, struct routine *r, int for_words, int truly_first);
+void compile_clause_chain(struct clause **clauses, int nclause, struct routine *r, int truly_first, struct program *prg);
 
-void compile_index_entry(struct routine *r, struct predicate *pred, struct clause **clauses, struct indexvalue *values, int n, int for_words, int indirect) {
+void compile_index_entry(
+	struct routine *r,
+	int arity,
+	struct clause **clauses,
+	struct indexvalue *values,
+	int n,
+	int indirect,
+	struct program *prg)
+{
 	int m;
 	int offs;
 	struct astnode *body;
 
 	if(n == 1) {
-		struct astnode *modparams[pred->arity];
+		struct astnode *modparams[arity];
 		struct clause subclause;
 		struct backend_clause subbc;
 
@@ -5084,7 +5000,7 @@ void compile_index_entry(struct routine *r, struct predicate *pred, struct claus
 		memcpy(&subclause, clauses[offs], sizeof(subclause));
 		memcpy(&subbc, subclause.backend, sizeof(subbc));
 		subclause.backend = &subbc;
-		memcpy(modparams, clauses[offs]->params, pred->arity * sizeof(struct astnode *));
+		memcpy(modparams, clauses[offs]->params, arity * sizeof(struct astnode *));
 		if(indirect) {
 			assert(modparams[0]->kind == AN_PAIR);
 			modparams[0] = modparams[0]->children[1];
@@ -5092,16 +5008,16 @@ void compile_index_entry(struct routine *r, struct predicate *pred, struct claus
 			subbc.removed->value = values[0].value;
 			subbc.removed->next = ((struct backend_clause *) clauses[offs]->backend)->removed;
 		} else if(!values[0].drop_first) {
-			modparams[0] = mkast(AN_VARIABLE);
-			modparams[0]->word = find_word("");
+			modparams[0] = mkast(AN_VARIABLE, 0, clauses[offs]->arena, clauses[offs]->line);
+			modparams[0]->word = find_word(prg, "");
 		}
 		compile_clause(
 			&subclause,
 			body,
 			modparams,
 			r,
-			for_words,
-			clauses[offs]->line);
+			clauses[offs]->line,
+			prg);
 	} else {
 		struct clause *subclauses[n];
 		struct backend_clause *bc;
@@ -5118,12 +5034,13 @@ void compile_index_entry(struct routine *r, struct predicate *pred, struct claus
 				subclauses[m]->body = clauses[offs]->body;
 			}
 			subclauses[m]->predicate = clauses[offs]->predicate;
-			assert(subclauses[m]->predicate == pred);
+			subclauses[m]->arena = clauses[offs]->arena;
+			assert(subclauses[m]->predicate->arity == arity);
 			subclauses[m]->line = clauses[offs]->line;
 			bc = subclauses[m]->backend = malloc(sizeof(struct backend_clause));
 			memcpy(bc, clauses[offs]->backend, sizeof(struct backend_clause));
-			subclauses[m]->params = malloc(pred->arity * sizeof(struct astnode *));
-			memcpy(subclauses[m]->params, clauses[offs]->params, pred->arity * sizeof(struct astnode *));
+			subclauses[m]->params = malloc(arity * sizeof(struct astnode *));
+			memcpy(subclauses[m]->params, clauses[offs]->params, arity * sizeof(struct astnode *));
 			if(indirect) {
 				assert(subclauses[m]->params[0]->kind == AN_PAIR);
 				subclauses[m]->params[0] = subclauses[m]->params[0]->children[1];
@@ -5131,11 +5048,11 @@ void compile_index_entry(struct routine *r, struct predicate *pred, struct claus
 				bc->removed->value = values[m].value;
 				bc->removed->next = ((struct backend_clause *) clauses[offs]->backend)->removed;
 			} else if(!values[m].drop_first) {
-				subclauses[m]->params[0] = mkast(AN_VARIABLE);
-				subclauses[m]->params[0]->word = find_word("");
+				subclauses[m]->params[0] = mkast(AN_VARIABLE, 0, clauses[offs]->arena, clauses[offs]->line);
+				subclauses[m]->params[0]->word = find_word(prg, "");
 			}
 		}
-		compile_clause_chain(pred, subclauses, n, r, for_words, 0);
+		compile_clause_chain(subclauses, n, r, 0, prg);
 		for(m = 0; m < n; m++) {
 			free(subclauses[m]->backend);
 			free(subclauses[m]->params);
@@ -5150,11 +5067,11 @@ void compile_index(
 	uint32_t oper,
 	struct routine *r,
 	uint16_t failure,
-	struct predicate *pred,
+	int arity,
 	struct clause **clauses,
-	int for_words,
 	int indirect,
-	struct memoized_index **memos)
+	struct memoized_index **memos,
+	struct program *prg)
 {
 	int i, k, mid;
 	struct zinstr *zi;
@@ -5179,9 +5096,9 @@ void compile_index(
 		zi->oper[0] = oper;
 		zi->oper[1] = (values[mid].value == 0x1fff)? VALUE(REG_NIL) : SMALL_OR_LARGE(values[mid].value);
 		zi->branch = ll;
-		compile_index(mid, values, oper, r, failure, pred, clauses, for_words, indirect, memos);
+		compile_index(mid, values, oper, r, failure, arity, clauses, indirect, memos, prg);
 		zi = append_instr(r, OP_LABEL(ll));
-		compile_index(n - mid, values + mid, oper, r, failure, pred, clauses, for_words, indirect, memos);
+		compile_index(n - mid, values + mid, oper, r, failure, arity, clauses, indirect, memos, prg);
 	} else {
 		for(i = 0; i < n; i += k) {
 			for(k = 1; i + k < n && values[i + k].value == values[i].value; k++);
@@ -5198,7 +5115,7 @@ void compile_index(
 
 				mi->pending = 0;
 				zi = append_instr(r, OP_LABEL(mi->label));
-				compile_index_entry(r, pred, clauses, &values[i], k, for_words, indirect);
+				compile_index_entry(r, arity, clauses, &values[i], k, indirect, prg);
 			} else {
 				zi = append_instr(r, Z_JE);
 				zi->oper[0] = oper;
@@ -5217,13 +5134,13 @@ void compile_index(
 	}
 }
 
-void complete_index(struct routine *r, struct predicate *pred, int for_words, int indirect, struct memoized_index *mi) {
+void complete_index(struct routine *r, int arity, int indirect, struct memoized_index *mi, struct program *prg) {
 	struct memoized_index *next;
 
 	while(mi) {
 		if(mi->pending) {
 			(void) append_instr(r, OP_LABEL(mi->label));
-			compile_index_entry(r, pred, mi->clauses, mi->values, mi->nvalue, for_words, indirect);
+			compile_index_entry(r, arity, mi->clauses, mi->values, mi->nvalue, indirect, prg);
 		}
 		next = mi->next;
 		free(mi);
@@ -5247,9 +5164,9 @@ int is_initial_check(struct astnode *an, struct astnode **args, int narg) {
 
 	if((an->kind == AN_RULE || an->kind == AN_NEG_RULE)
 	&& an->subkind == RULE_SIMPLE
-	&& an->predicate->dynamic
+	&& an->predicate->pred->dynamic
 	&& an->predicate->arity == 1
-	&& !(an->predicate->flags & PREDF_GLOBAL_VAR)) {
+	&& !(an->predicate->pred->flags & PREDF_GLOBAL_VAR)) {
 		for(i = 0; i < an->predicate->arity; i++) {
 			if(an->children[0]->kind != AN_VARIABLE) return 0;
 			for(j = 0; j < narg; j++) {
@@ -5279,17 +5196,17 @@ struct astnode *compile_initial_checks(struct routine *r, struct astnode *an, st
 
 	if(an && is_initial_check(an, args, narg)) {
 		do {
-			assert(an->predicate->dynamic);
+			assert(an->predicate->pred->dynamic);
 			assert(an->predicate->arity == 1);
 			assert(!an->children[0]->unbound);
-			assert(!(an->predicate->flags & PREDF_GLOBAL_VAR));
+			assert(!(an->predicate->pred->flags & PREDF_GLOBAL_VAR));
 
 			for(arg = 0; arg < narg; arg++) {
 				if(an->children[0]->word == args[arg]->word) break;
 			}
 			assert(arg < narg);
 
-			bp = an->predicate->backend;
+			bp = an->predicate->pred->backend;
 
 			if(bp->object_flag >= NZOBJFLAG) {
 				zi = append_instr(r, Z_CALL2S);
@@ -5332,7 +5249,7 @@ struct astnode *compile_initial_checks(struct routine *r, struct astnode *an, st
 #define CFLAG_OBJFLAG	0x08
 #define CFLAG_FROMLIST	0x10
 
-void compile_clause_chain(struct predicate *pred, struct clause **clauses, int nclause, struct routine *r, int for_words, int truly_first) {
+void compile_clause_chain(struct clause **clauses, int nclause, struct routine *r, int truly_first, struct program *prg) {
 	uint16_t cont = 0, ll, ll2;
 	int i, j, k, m, nc, nv;
 	struct indexvalue *values = 0;
@@ -5345,18 +5262,23 @@ void compile_clause_chain(struct predicate *pred, struct clause **clauses, int n
 	struct astnode *an, *sub;
 	uint8_t clauseflags[nclause];
 	struct var *v;
-	struct dynamic *dyn;
 	uint16_t not_just_objs = 0;
 	struct memoized_index *memos;
+	struct predname *predname;
+	struct predicate *pred;
+
+	assert(nclause);
+
+	predname = clauses[0]->predicate;
+	pred = predname->pred;
 
 #if 0
-	printf("begin compile_clause_chain ");
-	pp_predname(pred);
+	printf("begin compile_clause_chain %s", predname->printed_name);
 	printf(" n = %d\n", nclause);
 #endif
 
 	memset(clauseflags, 0, nclause);
-	if(pred->arity && !(pred->unbound_in & 1)) {
+	if(predname->arity && !(pred->unbound_in & 1)) {
 		for(i = 0; i < nclause; i++) {
 			bc = clauses[i]->backend;
 			if(clauses[i]->params[0]->kind == AN_PAIR) {
@@ -5373,7 +5295,7 @@ void compile_clause_chain(struct predicate *pred, struct clause **clauses, int n
 				&& clauses[i]->body
 				&& clauses[i]->body->kind == AN_RULE
 				&& clauses[i]->body->subkind == RULE_SIMPLE
-				&& (clauses[i]->body->predicate->flags & PREDF_FIXED_FLAG)
+				&& (clauses[i]->body->predicate->pred->flags & PREDF_FIXED_FLAG)
 				&& clauses[i]->body->children[0]->kind == AN_VARIABLE
 				&& clauses[i]->body->children[0]->word == an->word) {
 					for(v = bc->vars; v; v = v->next) {
@@ -5412,10 +5334,10 @@ void compile_clause_chain(struct predicate *pred, struct clause **clauses, int n
 		}
 	}
 #if 0
-	if(pred->arity && !(pred->unbound_in & 1)) {
-		printf("Considering %s of clauses for ", truly_first? "the chain" : "a subchain");
-		pp_predname(pred);
-		printf("\n");
+	if(predname->arity && !(pred->unbound_in & 1)) {
+		printf("Considering %s of clauses for %s\n",
+			truly_first? "the chain" : "a subchain",
+			predname->printed_name);
 		for(i = 0; i < nclause; i++) {
 			if(clauseflags[i]) {
 				char ch = 's';
@@ -5457,7 +5379,7 @@ void compile_clause_chain(struct predicate *pred, struct clause **clauses, int n
 	}
 
 #if 0
-	if(pred->arity && !(pred->unbound_in & 1)) {
+	if(predname->arity && !(pred->unbound_in & 1)) {
 		for(i = 0; i < nclause; i++) {
 			if(clauseflags[i]) {
 				char ch = 's';
@@ -5478,7 +5400,7 @@ void compile_clause_chain(struct predicate *pred, struct clause **clauses, int n
 		nc = 1;
 		indirect = 0;
 		property = 0;
-		if(pred->arity && !(pred->unbound_in & 1)) {
+		if(predname->arity && !(pred->unbound_in & 1)) {
 			if(clauseflags[i]) {
 				indirect = !!(clauseflags[i] & CFLAG_INDIRECT);
 				if(clauseflags[i] & CFLAG_OBJECT) {
@@ -5513,7 +5435,7 @@ void compile_clause_chain(struct predicate *pred, struct clause **clauses, int n
 
 		if(nc > 1 && !indirect && !(pred->flags & PREDF_INVOKED_MULTI) && need_choice) {
 			for(j = 0; j < nc; j++) {
-				for(k = 1; k < pred->arity; k++) {
+				for(k = 1; k < predname->arity; k++) {
 					if(clauses[i + j]->params[k]->kind != AN_VARIABLE) break;
 					for(m = 1; m < k; m++) {
 						if(clauses[i + j]->params[k]->word
@@ -5523,7 +5445,7 @@ void compile_clause_chain(struct predicate *pred, struct clause **clauses, int n
 					}
 					if(m < k) break;
 				}
-				if(k < pred->arity
+				if(k < predname->arity
 				|| !body_succeeds(clauses[i + j]->body)) {
 					break;
 				}
@@ -5537,10 +5459,11 @@ void compile_clause_chain(struct predicate *pred, struct clause **clauses, int n
 		for(j = 0; j < nc; j++) {
 			if(clauseflags[i + j] & CFLAG_OBJFLAG) {
 				assert(clauses[i + j]->body->kind == AN_RULE);
-				assert(clauses[i + j]->body->predicate->flags & PREDF_FIXED_FLAG);
-				dyn = clauses[i + j]->body->predicate->dynamic;
-				for(k = 0; k < nworldobj; k++) {
-					if(dyn->initial_flag[k]) nv++;
+				assert(clauses[i + j]->body->predicate->pred->flags & PREDF_FIXED_FLAG);
+				for(k = 0; k < prg->nworldobj; k++) {
+					if(clauses[i + j]->body->predicate->fixedvalues[k]) {
+						nv++;
+					}
 				}
 			} else if(clauseflags[i + j] & CFLAG_FROMLIST) {
 				assert(clauses[i + j]->body->kind == AN_RULE);
@@ -5562,9 +5485,8 @@ void compile_clause_chain(struct predicate *pred, struct clause **clauses, int n
 					clauses[i + j]->params[0];
 				if(clauseflags[i + j] & CFLAG_OBJFLAG) {
 					assert(an->kind == AN_VARIABLE);
-					dyn = clauses[i + j]->body->predicate->dynamic;
-					for(k = 0; k < nworldobj; k++) {
-						if(dyn->initial_flag[k]) {
+					for(k = 0; k < prg->nworldobj; k++) {
+						if(clauses[i + j]->body->predicate->fixedvalues[k]) {
 							values[m].offset = j;
 							values[m].an = an;
 							values[m].value = 1 + k;
@@ -5592,7 +5514,7 @@ void compile_clause_chain(struct predicate *pred, struct clause **clauses, int n
 			qsort(values, nv, sizeof(struct indexvalue), cmp_indexvalue);
 		} else {
 			if(!last && !(pred->flags & PREDF_INVOKED_MULTI)) {
-				for(k = 0; k < pred->arity; k++) {
+				for(k = 0; k < predname->arity; k++) {
 					if(pred->unbound_in & (1 << k)) break;
 					if(clauses[i]->params[k]->kind != AN_VARIABLE) break;
 					for(m = 1; m < k; m++) {
@@ -5603,7 +5525,7 @@ void compile_clause_chain(struct predicate *pred, struct clause **clauses, int n
 					}
 					if(m < k) break;
 				}
-				if(k == pred->arity) {
+				if(k == predname->arity) {
 					an = split_initial_checks(clauses[i]->body, clauses[i]->params, k);
 					if(body_succeeds(an)) {
 #if 0
@@ -5621,7 +5543,7 @@ void compile_clause_chain(struct predicate *pred, struct clause **clauses, int n
 			for(j = 0; j < nv; j++) {
 				if(values[j].value < 0x1fff) {
 					assert(values[j].value);
-					wobj = worldobjs[values[j].value - 1]->backend;
+					wobj = &backendwobj[values[j].value - 1];
 					if(!wobj->npropword[property]) {
 						values[j].label = make_routine_label();
 						wobj->npropword[property] = 1;
@@ -5643,15 +5565,15 @@ void compile_clause_chain(struct predicate *pred, struct clause **clauses, int n
 
 		if(truly_first && i == 0 && (pred->flags & PREDF_CONTAINS_JUST)) {
 			zi = append_instr(r, Z_STORE);
-			zi->oper[0] = SMALL(REG_A + pred->arity);
+			zi->oper[0] = SMALL(REG_A + predname->arity);
 			zi->oper[1] = VALUE(REG_CHOICE);
 		}
 
 		if(last && have_choice) {
-			if(pred->arity + !!(pred->flags & PREDF_CONTAINS_JUST)) {
+			if(predname->arity + !!(pred->flags & PREDF_CONTAINS_JUST)) {
 				zi = append_instr(r, Z_CALL2N);
 				zi->oper[0] = ROUTINE(R_TRUST_ME);
-				zi->oper[1] = SMALL(pred->arity + !!(pred->flags & PREDF_CONTAINS_JUST));
+				zi->oper[1] = SMALL(predname->arity + !!(pred->flags & PREDF_CONTAINS_JUST));
 			} else {
 				zi = append_instr(r, Z_CALL1N);
 				zi->oper[0] = ROUTINE(R_TRUST_ME_0);
@@ -5664,10 +5586,10 @@ void compile_clause_chain(struct predicate *pred, struct clause **clauses, int n
 			assert(have_choice);
 			assert(!last);
 			if(need_choice) {
-				if(pred->arity + !!(pred->flags & PREDF_CONTAINS_JUST)) {
+				if(predname->arity + !!(pred->flags & PREDF_CONTAINS_JUST)) {
 					zi = append_instr(r, Z_CALLVN);
 					zi->oper[0] = ROUTINE(R_RETRY_ME_ELSE);
-					zi->oper[1] = SMALL(pred->arity + !!(pred->flags & PREDF_CONTAINS_JUST));
+					zi->oper[1] = SMALL(predname->arity + !!(pred->flags & PREDF_CONTAINS_JUST));
 					zi->oper[2] = ROUTINE(cont);
 				} else {
 					zi = append_instr(r, Z_CALL2N);
@@ -5675,10 +5597,10 @@ void compile_clause_chain(struct predicate *pred, struct clause **clauses, int n
 					zi->oper[1] = ROUTINE(cont);
 				}
 			} else {
-				if(pred->arity + !!(pred->flags & PREDF_CONTAINS_JUST)) {
+				if(predname->arity + !!(pred->flags & PREDF_CONTAINS_JUST)) {
 					zi = append_instr(r, Z_CALL2N);
 					zi->oper[0] = ROUTINE(R_TRUST_ME);
-					zi->oper[1] = SMALL(pred->arity + !!(pred->flags & PREDF_CONTAINS_JUST));
+					zi->oper[1] = SMALL(predname->arity + !!(pred->flags & PREDF_CONTAINS_JUST));
 				} else {
 					zi = append_instr(r, Z_CALL1N);
 					zi->oper[0] = ROUTINE(R_TRUST_ME_0);
@@ -5691,10 +5613,10 @@ void compile_clause_chain(struct predicate *pred, struct clause **clauses, int n
 		if(need_choice) {
 			assert(valid_args);
 			if(!have_choice) {
-				if(pred->arity + !!(pred->flags & PREDF_CONTAINS_JUST)) {
+				if(predname->arity + !!(pred->flags & PREDF_CONTAINS_JUST)) {
 					zi = append_instr(r, Z_CALLVN);
 					zi->oper[0] = ROUTINE(R_TRY_ME_ELSE);
-					zi->oper[1] = SMALL((pred->arity + !!(pred->flags & PREDF_CONTAINS_JUST) + CHOICE_SIZEOF) * 2);
+					zi->oper[1] = SMALL((predname->arity + !!(pred->flags & PREDF_CONTAINS_JUST) + CHOICE_SIZEOF) * 2);
 					zi->oper[2] = ROUTINE(cont);
 				} else {
 					zi = append_instr(r, Z_CALL2N);
@@ -5708,9 +5630,12 @@ void compile_clause_chain(struct predicate *pred, struct clause **clauses, int n
 
 		if(nv > 1) {
 #if 0
-			printf("%sMaking %s index for %d cases (obtained from %d clauses) of ", truly_first? "" : "   ", indirect? "indirect" : "direct", nv, nc);
-			pp_predname(pred);
-			if(for_words) printf(" (for words)");
+			printf("%sMaking %s index for %d cases (obtained from %d clauses) of %s",
+				truly_first? "" : "   ",
+				indirect? "indirect" : "direct",
+				nv,
+				nc,
+				predname->printed_name);
 			if(property) printf(" using property %d", property);
 			printf("\n");
 #endif
@@ -5748,8 +5673,8 @@ void compile_clause_chain(struct predicate *pred, struct clause **clauses, int n
 					for(j = 0; j < nv && values[j].value < 0x1fff; j++);
 					assert(j < nv);
 					memos = 0;
-					compile_index(nv - j, values + j, VALUE(REG_TEMP), r, ll, pred, clauses + i, for_words, indirect, &memos);
-					complete_index(r, pred, for_words, indirect, memos);
+					compile_index(nv - j, values + j, VALUE(REG_TEMP), r, ll, predname->arity, clauses + i, indirect, &memos, prg);
+					complete_index(r, predname->arity, indirect, memos, prg);
 				} else {
 					if(ll == RFALSE) {
 						zi = append_instr(r, Z_CALL2S);
@@ -5782,8 +5707,8 @@ void compile_clause_chain(struct predicate *pred, struct clause **clauses, int n
 					zi->store = REG_A+0;
 				}
 				memos = 0;
-				compile_index(nv, values, indirect? VALUE(REG_X+0) : VALUE(REG_A+0), r, ll, pred, clauses + i, for_words, indirect, &memos);
-				complete_index(r, pred, for_words, indirect, memos);
+				compile_index(nv, values, indirect? VALUE(REG_X+0) : VALUE(REG_A+0), r, ll, predname->arity, clauses + i, indirect, &memos, prg);
+				complete_index(r, predname->arity, indirect, memos, prg);
 			}
 
 			if(ll != RFALSE) {
@@ -5796,7 +5721,7 @@ void compile_clause_chain(struct predicate *pred, struct clause **clauses, int n
 				for(j = 0; j < nv && values[j].value < 0x1fff; j += k) {
 					for(k = 1; j + k < nv && values[j + k].value == values[j].value; k++);
 					r = make_routine(values[j].label, 0);
-					compile_index_entry(r, pred, clauses + i, &values[j], k, for_words, indirect);
+					compile_index_entry(r, predname->arity, clauses + i, &values[j], k, indirect, prg);
 				}
 			}
 		} else {
@@ -5814,8 +5739,8 @@ void compile_clause_chain(struct predicate *pred, struct clause **clauses, int n
 				body,
 				clauses[i]->params,
 				r,
-				for_words,
-				clauses[i]->line);
+				clauses[i]->line,
+				prg);
 		}
 
 		if(cont) {
@@ -5826,23 +5751,23 @@ void compile_clause_chain(struct predicate *pred, struct clause **clauses, int n
 	}
 
 #if 0
-	printf("end compile_clause_chain ");
-	pp_predname(pred);
+	printf("end compile_clause_chain %s", predname->printed_name);
 #endif
 }
 
-void compile_predicate(struct predicate *pred) {
+void compile_predicate(struct predname *predname, struct program *prg) {
+	struct predicate *pred = predname->pred;
 	struct backend_pred *bp = pred->backend;
 	struct routine *r;
 	int i;
 
-	if(!pred->builtin || (pred->flags & PREDF_DEFINABLE_BI)) {
+	if(!predname->builtin || (predname->nameflags & PREDNF_DEFINABLE_BI)) {
 		for(i = 0; i < pred->nclause; i++) {
 			prepare_clause(pred->clauses[i]);
 		}
 
 		if(bp->trace_output_label) {
-			compile_trace_output(pred, bp->trace_output_label);
+			compile_trace_output(predname, bp->trace_output_label);
 		}
 
 		if(pred->dynamic && !(pred->flags & PREDF_FIXED_FLAG)) {
@@ -5854,23 +5779,20 @@ void compile_predicate(struct predicate *pred) {
 			if(pred->nclause) {
 				if(bp->global_label) {
 					r = make_routine(bp->global_label, 0);
-					compile_clause_chain(pred, pred->clauses, pred->nclause, r, 0, 1);
-				}
-				if(bp->for_words_label) {
-					r = make_routine(bp->for_words_label, 0);
-					compile_clause_chain(pred, pred->clauses, pred->nclause, r, 1, 1);
+					compile_clause_chain(pred->clauses, pred->nclause, r, 1, prg);
 				}
 			}
 		}
 	}
 }
 
-int add_static_words_for(struct predicate *pred, int objnum, int multi, uint16_t *table, int *tablepos, int *not_all_static) {
+int add_static_words_for(struct predname *predname, int objnum, int multi, uint16_t *table, int *tablepos, int *not_all_static) {
 	int i, j, just = 0;
 	struct astnode *an;
 	int sub_not_all_static;
+	struct predicate *pred = predname->pred;
 
-	//printf("considering %s %s\n", pred->printed_name, worldobjs[objnum]->astnode->word->name);
+	//printf("considering %s %s\n", predname->printed_name, worldobjs[objnum]->astnode->word->name);
 
 	for(i = 0; i < pred->nclause && !just; i++) {
 		//if(pred->clauses[i]->negated) return 0;
@@ -5882,13 +5804,13 @@ int add_static_words_for(struct predicate *pred, int objnum, int multi, uint16_t
 						just = 1;
 					} else if(an->kind == AN_BAREWORD || an->kind == AN_DICTWORD) {
 						for(j = 0; j < *tablepos; j++) {
-							if(table[j] == 0x2000 + find_dictword_id(an->word)) break;
+							if(table[j] == dictword_tag(an->word)) break;
 						}
 						if(j == *tablepos) {
 							if(*tablepos == 31) return 0;
-							table[(*tablepos)++] = 0x2000 + find_dictword_id(an->word);
+							table[(*tablepos)++] = dictword_tag(an->word);
 						}
-					} else if(an->kind == AN_RULE && (an->predicate->flags & PREDF_FAIL)) {
+					} else if(an->kind == AN_RULE && (an->predicate->pred->flags & PREDF_FAIL)) {
 						break;
 					} else {
 						return 0;
@@ -5903,20 +5825,20 @@ int add_static_words_for(struct predicate *pred, int objnum, int multi, uint16_t
 					return 0;
 				} else if(an->kind == AN_BAREWORD || an->kind == AN_DICTWORD) {
 					for(j = 0; j < *tablepos; j++) {
-						if(table[j] == 0x2000 + find_dictword_id(an->word)) break;
+						if(table[j] == dictword_tag(an->word)) break;
 					}
 					if(j == *tablepos) {
 						if(*tablepos == 31) return 0;
-						table[(*tablepos)++] = 0x2000 + find_dictword_id(an->word);
+						table[(*tablepos)++] = dictword_tag(an->word);
 					}
-				} else if(an->kind == AN_RULE && (an->predicate->flags & PREDF_FAIL)) {
+				} else if(an->kind == AN_RULE && (an->predicate->pred->flags & PREDF_FAIL)) {
 					break;
 				} else if(an->kind == AN_RULE
 				&& an->nchild == 1
 				&& an->children[0]->kind == AN_VARIABLE
 				&& an->children[0]->word == pred->clauses[i]->params[0]->word) {
-					if(an->predicate->flags & PREDF_FIXED_FLAG) {
-						if(!an->predicate->dynamic->initial_flag[objnum]) {
+					if(an->predicate->pred->flags & PREDF_FIXED_FLAG) {
+						if(!an->predicate->fixedvalues[objnum]) {
 							break;
 						}
 					} else {
@@ -5946,24 +5868,25 @@ int add_static_words_for(struct predicate *pred, int objnum, int multi, uint16_t
 	return 1;
 }
 
-void compute_static_wordlist(struct predicate *pred, int do_prune, int knownflag) {
+void compute_static_wordlist(struct predname *predname, int do_prune, int knownflag, struct program *prg) {
 	uint16_t table[32];
 	int pos = 0;
 	int i, j, not_all_static;
+	struct predicate *pred = predname->pred;
 	struct backend_pred *bp = pred->backend;
 	struct backend_wobj *bw;
 	struct astnode *an;
 
-	for(i = 0; i < nworldobj; i++) {
-		bw = worldobjs[i]->backend;
+	for(i = 0; i < prg->nworldobj; i++) {
+		bw = &backendwobj[i];
 		pos = 0;
 		not_all_static = 0;
-		if(add_static_words_for(pred, i, 1, table, &pos, &not_all_static)) {
+		if(add_static_words_for(predname, i, 1, table, &pos, &not_all_static)) {
 			if(!bp->wordtableprop) {
 				if(next_free_prop >= 64) return;
 				bp->wordtableprop = next_free_prop++;
 				bp->wordtableflag = knownflag;
-				bp->wordtableflags = calloc(nworldobj, 1);
+				bp->wordtableflags = calloc(prg->nworldobj, 1);
 			}
 			bp->wordtableflags[i] = !not_all_static;
 			if(pos) {
@@ -6007,13 +5930,14 @@ void compute_static_wordlist(struct predicate *pred, int do_prune, int knownflag
 	}
 }
 
-char *decode_metadata_str(int builtin) {
+char *decode_metadata_str(int builtin, struct program *prg) {
+	struct predname *predname;
 	struct predicate *pred;
 	struct astnode *an;
 	char *buf;
 
-	pred = find_builtin(builtin);
-	if(pred && pred->nclause) {
+	predname = find_builtin(prg, builtin);
+	if(predname && (pred = predname->pred)->nclause) {
 		an = decode_output(&buf, pred->clauses[0]->body, 0, 0);
 		if(an) {
 			report(
@@ -6028,49 +5952,11 @@ char *decode_metadata_str(int builtin) {
 	}
 }
 
-void add_ending(char *utf8) {
-	uint8_t zscii[64], ch;
-	int len;
-	struct endings_point *pt;
-	int i;
-
-	if(utf8_to_zscii(zscii, sizeof(zscii), utf8, 0) != strlen(utf8)) {
-		report(LVL_ERR, 0, "Bad word ending '%s'.", utf8);
-		exit(1);
-	}
-
-	for(len = 0; zscii[len]; len++);
-	assert(len);
-
-	pt = &endings_root;
-	while(len--) {
-		ch = zscii[len];
-		if(ch >= 'A' && ch <= 'Z') {
-			ch += 'a' - 'A';
-		}
-		for(i = 0; i < pt->nway; i++) {
-			if(pt->ways[i]->letter == ch) {
-				break;
-			}
-		}
-		if(i == pt->nway) {
-			pt->nway++;
-			pt->ways = realloc(pt->ways, pt->nway * sizeof(struct endings_way *));
-			pt->ways[i] = calloc(1, sizeof(struct endings_way));
-			pt->ways[i]->letter = ch;
-		}
-		if(len) {
-			pt = &pt->ways[i]->more;
-		} else {
-			pt->ways[i]->final = 1;
-		}
-	}
-}
-
 void compile_endings_check(struct routine *r, struct endings_point *pt, int level, int have_allocated) {
 	int i, j;
 	struct zinstr *zi;
 	uint16_t ll, ll2;
+	uint8_t zscii;
 
 	zi = append_instr(r, Z_DEC_JL);
 	zi->oper[0] = SMALL(REG_LOCAL+1);
@@ -6086,17 +5972,18 @@ void compile_endings_check(struct routine *r, struct endings_point *pt, int leve
 		} else {
 			ll = r->next_label++;
 		}
+		zscii = unicode_to_zscii(pt->ways[i]->letter);
 		if(verbose >= 2) {
 			for(j = 0; j < level; j++) printf("    ");
-			if(pt->ways[i]->letter >= 'a' && pt->ways[i]->letter <= 'z') {
-				printf("If word[len - %d] == '%c'\n", level + 1, pt->ways[i]->letter);
+			if(zscii >= 'a' && zscii <= 'z') {
+				printf("If word[len - %d] == '%c'\n", level + 1, zscii);
 			} else {
-				printf("If word[len - %d] == zscii(%d)\n", level + 1, pt->ways[i]->letter);
+				printf("If word[len - %d] == zscii(%d)\n", level + 1, zscii);
 			}
 		}
 		zi = append_instr(r, Z_JNE);
 		zi->oper[0] = VALUE(REG_LOCAL+2);
-		zi->oper[1] = SMALL(pt->ways[i]->letter);
+		zi->oper[1] = SMALL(zscii);
 		zi->branch = ll;
 		if(pt->ways[i]->final) {
 			if(!have_allocated) {
@@ -6152,6 +6039,180 @@ void compile_endings_check(struct routine *r, struct endings_point *pt, int leve
 	}
 }
 
+void initial_values(struct program *prg, uint8_t *zcore, uint16_t addr_globals, uint16_t addr_aux, uint16_t *extflagarrays, int n_extflag) {
+	struct eval_state es;
+	int i, j, status;
+	struct predname *predname;
+	struct predicate *pred;
+	struct backend_pred *bp;
+	struct backend_wobj *wobj, *parent;
+	struct dynamic *dyn;
+	uint8_t seen[prg->nworldobj];
+	value_t eval_args[2];
+	uint16_t addr, value;
+
+	init_evalstate(&es, prg);
+
+	for(i = 0; i < prg->npredicate; i++) {
+		predname = prg->predicates[i];
+		pred = predname->pred;
+		bp = pred->backend;
+		if(bp->wordtableflags) {
+			for(j = 0; j < prg->nworldobj; j++) {
+				if(bp->wordtableflags[j]) {
+					wobj = &backendwobj[j];
+					zcore[wobj->addr_objtable + bp->wordtableflag / 8] |= 0x80 >> (bp->wordtableflag & 7);
+				}
+			}
+		}
+		if(pred->flags & PREDF_DYNAMIC) {
+			dyn = pred->dynamic;
+
+			if(predname->arity == 0) {
+				eval_reinitialize(&es);
+				if(eval_initial(&es, predname, 0)) {
+					zcore[addr_globals + 2 * (user_global_base + bp->user_global) + 0] |= bp->user_flag_mask >> 8;
+					zcore[addr_globals + 2 * (user_global_base + bp->user_global) + 1] |= bp->user_flag_mask & 0xff;
+				}
+			} else if(predname->arity == 1) {
+				if(pred->flags & PREDF_GLOBAL_VAR) {
+					eval_reinitialize(&es);
+					eval_args[0] = eval_makevar(&es);
+					if(eval_initial(&es, predname, eval_args)) {
+						if(eval_args[0].tag == VAL_REF) {
+							report(
+								LVL_ERR,
+								0,
+								"Initial value of global variable %s must be bound.",
+								predname->printed_name);
+						} else if(dyn->global_bufsize > 1) {
+							addr = addr_aux + 2 * global_labels[bp->complex_global_label];
+							value = 1 + render_eval_value(zcore + addr + 2, dyn->global_bufsize, eval_args[0], &es, predname);
+							zcore[addr + 0] = value >> 8;
+							zcore[addr + 1] = value & 0xff;
+						} else if(eval_args[0].tag == VAL_PAIR) {
+							report(
+								LVL_ERR,
+								0,
+								"Global variable %s has no declared buffer size, and cannot hold a complex initial value.",
+								predname->printed_name);
+						} else {
+							value = tag_eval_value(eval_args[0], prg);
+							zcore[addr_globals + 2 * (user_global_base + bp->user_global) + 0] = value >> 8;
+							zcore[addr_globals + 2 * (user_global_base + bp->user_global) + 1] = value & 0xff;
+						}
+					}
+				} else {
+					int last_wobj = 0;
+
+					for(j = 0; j < prg->nworldobj; j++) {
+						wobj = &backendwobj[j];
+						if(pred->flags & PREDF_FIXED_FLAG) {
+							assert(predname->nfixedvalue >= prg->nworldobj);
+							status = predname->fixedvalues[j];
+						} else {
+							eval_reinitialize(&es);
+							eval_args[0] = (value_t) {VAL_OBJ, j};
+							status = eval_initial(&es, predname, eval_args);
+						}
+						if(status) {
+							if(bp->object_flag >= NZOBJFLAG) {
+								int num = (bp->object_flag - NZOBJFLAG) / 8;
+								int mask = 0x80 >> ((bp->object_flag - NZOBJFLAG) & 7);
+								assert(num < n_extflag);
+								addr = global_labels[extflagarrays[num]] + 1 + j;
+								zcore[addr] |= mask;
+							} else {
+								zcore[wobj->addr_objtable + bp->object_flag / 8] |= 0x80 >> (bp->object_flag & 7);
+							}
+							if(dyn->linkage_flags & (LINKF_LIST | LINKF_CLEAR)) {
+								addr = global_labels[bp->propbase_label] + 2 + j * 2;
+								zcore[addr + 0] = last_wobj >> 8;
+								zcore[addr + 1] = last_wobj & 0xff;
+								last_wobj = j + 1;
+							}
+						}
+					}
+					if(dyn->linkage_flags & (LINKF_LIST | LINKF_CLEAR)) {
+						zcore[addr_globals + 2 * (user_global_base + bp->user_global) + 0] = last_wobj >> 8;
+						zcore[addr_globals + 2 * (user_global_base + bp->user_global) + 1] = last_wobj & 0xff;
+					}
+				}
+			} else if(predname->arity == 2) {
+				for(j = 0; j < prg->nworldobj; j++) {
+					wobj = &backendwobj[j];
+					eval_reinitialize(&es);
+					eval_args[0] = (value_t) {VAL_OBJ, j};
+					eval_args[1] = eval_makevar(&es);
+					if(predname->builtin == BI_HASPARENT) {
+						if(eval_initial(&es, predname, eval_args)) {
+							if(eval_args[1].tag != VAL_OBJ) {
+								report(
+									LVL_ERR,
+									0,
+									"Initial value of ($ has parent $) must have objects in both parameters.");
+							}
+							wobj->initialparent = eval_args[1].value;
+						} else {
+							wobj->initialparent = -1;
+						}
+					} else {
+						if(eval_initial(&es, predname, eval_args)) {
+							if(eval_args[1].tag == VAL_REF) {
+								report(
+									LVL_ERR,
+									0,
+									"Initial value of dynamic per-object variable %s, for #%s, must be bound.",
+									predname->printed_name,
+									prg->worldobjnames[j]->name);
+							} else if(eval_args[1].tag == VAL_PAIR) {
+								report(
+									LVL_ERR,
+									0,
+									"Too complex initial value of dynamic per-object variable %s, for #%s.",
+									predname->printed_name,
+									prg->worldobjnames[j]->name);
+							}
+							addr = global_labels[bp->propbase_label] + 2 + j * 2;
+							value = tag_eval_value(eval_args[1], prg);
+							zcore[addr + 0] = value >> 8;
+							zcore[addr + 1] = value & 0xff;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	for(i = 0; i < prg->nworldobj; i++) {
+		memset(seen, 0, prg->nworldobj);
+		wobj = &backendwobj[i];
+		for(j = i; j >= 0; j = backendwobj[j].initialparent) {
+			if(seen[j]) {
+				report(
+					LVL_ERR,
+					0,
+					"Badly formed object tree! #%s is nested in itself.",
+					prg->worldobjnames[j]->name);
+				exit(1);
+			}
+			seen[j] = 1;
+		}
+		j = wobj->initialparent;
+		if(j >= 0) {
+			parent = &backendwobj[j];
+			zcore[wobj->addr_objtable + 6] = (j + 1) >> 8;
+			zcore[wobj->addr_objtable + 7] = (j + 1) & 0xff;
+			zcore[wobj->addr_objtable + 8] = zcore[parent->addr_objtable + 10];
+			zcore[wobj->addr_objtable + 9] = zcore[parent->addr_objtable + 11];
+			zcore[parent->addr_objtable + 10] = (i + 1) >> 8;
+			zcore[parent->addr_objtable + 11] = (i + 1) & 0xff;
+		}
+	}
+
+	free_evalstate(&es);
+}
+
 const static char ifid_template[] = "NNNNNNNN-NNNN-NNNN-NNNN-NNNNNNNNNNNN";
 
 int match_template(const char *txt, const char *template) {
@@ -6169,7 +6230,7 @@ int match_template(const char *txt, const char *template) {
 	}
 }
 
-void backend(char *filename, char *format, char *coverfname, char *coveralt, int heapsize, int auxsize, int strip, int linecount) {
+void backend(char *filename, char *format, char *coverfname, char *coveralt, int heapsize, int auxsize, int strip, int linecount, struct program *prg) {
 	int nglobal;
 	uint16_t addr_abbrevtable, addr_abbrevstr, addr_objtable, addr_globals, addr_static, addr_heap, addr_heapend, addr_aux, addr_dictionary, addr_seltable;
 	uint32_t org;
@@ -6178,8 +6239,8 @@ void backend(char *filename, char *format, char *coverfname, char *coveralt, int
 	int i, j, k;
 	struct backend_wobj *wobj;
 	struct global_string *gs;
-	struct astnode *an;
-	struct predicate *pred, *hasparent;
+	struct predname *predname;
+	struct predicate *pred;
 	struct dynamic *dyn;
 	uint16_t checksum = 0;
 	char *ifid, *author, *title, *noun, *blurb;
@@ -6231,77 +6292,43 @@ void backend(char *filename, char *format, char *coverfname, char *coveralt, int
 		zi = append_instr(r, Z_RFALSE);
 	}
 
-	init_backend_pred(find_builtin(BI_CONSTRUCTORS))->global_label = make_routine_label();
-	init_backend_pred(find_builtin(BI_ERROR_ENTRY))->global_label = make_routine_label();
+	init_backend_pred(find_builtin(prg, BI_PROGRAM_ENTRY)->pred)->global_label = make_routine_label();
+	init_backend_pred(find_builtin(prg, BI_ERROR_ENTRY)->pred)->global_label = make_routine_label();
 
-	init_backend_pred(find_builtin(BI_GETINPUT))->global_label = R_GET_INPUT_PRED;
-	init_backend_pred(find_builtin(BI_GETRAWINPUT))->global_label = R_GET_RAW_INPUT_PRED;
-	init_backend_pred(find_builtin(BI_QUIT))->global_label = R_QUIT_PRED;
-	init_backend_pred(find_builtin(BI_SAVE))->global_label = R_SAVE_PRED;
-	init_backend_pred(find_builtin(BI_SAVE_UNDO))->global_label = R_SAVE_UNDO_PRED;
-	init_backend_pred(find_builtin(BI_SCRIPT_ON))->global_label = R_SCRIPT_ON_PRED;
-	init_backend_pred(find_builtin(BI_REPEAT))->global_label = R_REPEAT_PRED;
-	init_backend_pred(find_builtin(BI_OBJECT))->global_label = R_OBJECT_PRED;
-	init_backend_pred(find_builtin(BI_HASPARENT))->global_label = R_HASPARENT_PRED;
-	init_backend_pred(find_builtin(BI_IS_ONE_OF))->global_label = R_CONTAINS_PRED;
-	init_backend_pred(find_builtin(BI_SERIALNUMBER))->global_label = R_SERIALNUMBER_PRED;
-	init_backend_pred(find_builtin(BI_COMPILERVERSION))->global_label = R_COMPILERVERSION_PRED;
-	//init_backend_pred(find_builtin(BI_MEMINFO))->global_label = R_MEMINFO_PRED;
-	init_backend_pred(find_builtin(BI_MEMSTATS))->global_label = R_MEMSTATS_PRED;
-	init_backend_pred(find_builtin(BI_SPLIT))->global_label = R_SPLIT_PRED;
-	init_backend_pred(find_builtin(BI_STOP))->global_label = R_STOP_PRED;
+	init_backend_pred(find_builtin(prg, BI_GETINPUT)->pred)->global_label = R_GET_INPUT_PRED;
+	init_backend_pred(find_builtin(prg, BI_GETRAWINPUT)->pred)->global_label = R_GET_RAW_INPUT_PRED;
+	init_backend_pred(find_builtin(prg, BI_QUIT)->pred)->global_label = R_QUIT_PRED;
+	init_backend_pred(find_builtin(prg, BI_SAVE)->pred)->global_label = R_SAVE_PRED;
+	init_backend_pred(find_builtin(prg, BI_SAVE_UNDO)->pred)->global_label = R_SAVE_UNDO_PRED;
+	init_backend_pred(find_builtin(prg, BI_SCRIPT_ON)->pred)->global_label = R_SCRIPT_ON_PRED;
+	init_backend_pred(find_builtin(prg, BI_REPEAT)->pred)->global_label = R_REPEAT_PRED;
+	init_backend_pred(find_builtin(prg, BI_OBJECT)->pred)->global_label = R_OBJECT_PRED;
+	init_backend_pred(find_builtin(prg, BI_HASPARENT)->pred)->global_label = R_HASPARENT_PRED;
+	init_backend_pred(find_builtin(prg, BI_IS_ONE_OF)->pred)->global_label = R_CONTAINS_PRED;
+	init_backend_pred(find_builtin(prg, BI_SERIALNUMBER)->pred)->global_label = R_SERIALNUMBER_PRED;
+	init_backend_pred(find_builtin(prg, BI_COMPILERVERSION)->pred)->global_label = R_COMPILERVERSION_PRED;
+	init_backend_pred(find_builtin(prg, BI_MEMSTATS)->pred)->global_label = R_MEMSTATS_PRED;
+	init_backend_pred(find_builtin(prg, BI_SPLIT)->pred)->global_label = R_SPLIT_PRED;
+	init_backend_pred(find_builtin(prg, BI_STOP)->pred)->global_label = R_STOP_PRED;
 
-	hasparent = find_builtin(BI_HASPARENT);
+	tracing_enabled = !!(find_builtin(prg, BI_TRACE_ON)->pred->flags & (PREDF_INVOKED_NORMALLY | PREDF_INVOKED_FOR_WORDS));
 
-	tracing_enabled = !!(find_builtin(BI_TRACE_ON)->flags & (PREDF_INVOKED_NORMALLY | PREDF_INVOKED_FOR_WORDS));
-
-	for(i = 0; i < nworldobj; i++) {
-		init_backend_wobj(worldobjs[i], strip);
+	backendwobj = calloc(prg->nworldobj, sizeof(struct backend_wobj));
+	for(i = 0; i < prg->nworldobj; i++) {
+		init_backend_wobj(prg, i, &backendwobj[i], strip);
 	}
 
-	for(i = 0; i < npredicate; i++) {
-		init_backend_pred(predicates[i]);
+	for(i = 0; i < prg->npredicate; i++) {
+		init_backend_pred(prg->predicates[i]->pred);
 	}
 
-	qsort(dictionary, ndict, sizeof(struct dictword), cmp_dictword);
-	for(i = 0; i < ndict; ) {
-		assert(dictionary[i].word->name[0]);
-		if(!dictionary[i].word->name[1]) {
-			// single-char word
-			dictionary[i].word->dict_id = 0x1e00 | dictionary[i].word->name[0];
-			memmove(dictionary + i, dictionary + i + 1, (ndict - i - 1) * sizeof(struct dictword));
-			ndict--;
-		} else {
-			dictionary[i].word->dict_id = i;
-			if(i < ndict - 1 && !memcmp(dictionary[i].encoded, dictionary[i + 1].encoded, 6)) {
-				report(LVL_INFO, 0, "Consolidating dictionary words \"%s\" and \"%s\".",
-					dictionary[i].word->name,
-					dictionary[i + 1].word->name);
-				dictionary[i + 1].word->dict_id = i;
-				memmove(dictionary + i, dictionary + i + 1, (ndict - i - 1) * sizeof(struct dictword));
-				ndict--;
-			} else {
-				i++;
-			}
-		}
-	}
+	prepare_dictionary(prg);
 
 	(void) make_global_label(); // ensure that the array is allocated
 
-	pred = find_builtin(BI_ENDINGS);
-	for(i = 0; i < pred->nclause; i++) {
-		for(an = pred->clauses[i]->body; an; an = an->next_in_body) {
-			if(an->kind != AN_BAREWORD) {
-				report(LVL_ERR, an->line, "Body of (removable word endings) may only contain simple words.");
-				exit(1);
-			}
-			add_ending(an->word->name);
-		}
-	}
-
-	if(endings_root.nway) {
+	if(prg->endings_root.nway) {
 		if(verbose >= 2) printf("Stemming algorithm:\n");
-		compile_endings_check(routines[R_TRY_STEMMING], &endings_root, 0, 0);
+		compile_endings_check(routines[R_TRY_STEMMING], &prg->endings_root, 0, 0);
 	} else {
 		zi = append_instr(routines[R_TRY_STEMMING], Z_RFALSE);
 	}
@@ -6313,35 +6340,37 @@ void backend(char *filename, char *format, char *coverfname, char *coveralt, int
 	assert(undoflag_global == 0);	// hardcoded in runtime_z.c
 	assert(undoflag_mask == 1);	// hardcoded in runtime_z.c
 
-	for(i = 0; i < npredicate; i++) {
-		pred = predicates[i];
+	for(i = 0; i < prg->npredicate; i++) {
+		predname = prg->predicates[i];
+		pred = predname->pred;
 		if((pred->flags & PREDF_INVOKED_FOR_WORDS)
 		&& !(pred->flags & PREDF_INVOKED_NORMALLY)
 		&& !(pred->flags & PREDF_INVOKED_SIMPLE)
-		&& pred->arity == 1
+		&& !(pred->flags & PREDF_MACRO)
+		&& predname->arity == 1
 		&& !(pred->unbound_in & 1)) {
-			//printf("Candidate for wordlist: %s %d\n", pred->printed_name, !(pred->flags & PREDF_INVOKED_DEEP_WORDS));
+			//printf("Candidate for wordlist: %s %d\n", predname->printed_name, !(pred->flags & PREDF_INVOKED_DEEP_WORDS));
 			if(verbose >= 2) {
-				printf("Debug: Wordtable flag %d: %s\n", next_flag, pred->printed_name);
+				printf("Debug: Wordtable flag %d: %s\n", next_flag, predname->printed_name);
 			}
-			compute_static_wordlist(pred, !(pred->flags & PREDF_INVOKED_DEEP_WORDS), next_flag++);
+			compute_static_wordlist(predname, !(pred->flags & PREDF_INVOKED_DEEP_WORDS), next_flag++, prg);
 		}
 	}
 
-	for(i = 0; i < npredicate; i++) {
-		pred = predicates[i];
+	for(i = 0; i < prg->npredicate; i++) {
+		predname = prg->predicates[i];
+		pred = predname->pred;
 		struct backend_pred *bp = pred->backend;
 		dyn = pred->dynamic;
 
 		// Reserve native z-machine flags for the dynamic per-object flags.
-		if(dyn && pred->arity == 1 && !(pred->flags & (PREDF_GLOBAL_VAR | PREDF_FIXED_FLAG))) {
+		if(dyn && predname->arity == 1 && !(pred->flags & (PREDF_GLOBAL_VAR | PREDF_FIXED_FLAG))) {
 			if(verbose >= 2) {
-				printf("Debug: Dynamic flag %d: ", next_flag);
-				pp_predname(pred);
-				if(pred->dynamic->linkage_flags & LINKF_SET) printf(" set");
-				if(pred->dynamic->linkage_flags & LINKF_RESET) printf(" reset");
-				if(pred->dynamic->linkage_flags & LINKF_LIST) printf(" list");
-				if(pred->dynamic->linkage_flags & LINKF_CLEAR) printf(" clear");
+				printf("Debug: Dynamic flag %d: %s", next_flag, predname->printed_name);
+				if(dyn->linkage_flags & LINKF_SET) printf(" set");
+				if(dyn->linkage_flags & LINKF_RESET) printf(" reset");
+				if(dyn->linkage_flags & LINKF_LIST) printf(" list");
+				if(dyn->linkage_flags & LINKF_CLEAR) printf(" clear");
 				printf("\n");
 			}
 			if(next_flag >= NZOBJFLAG) {
@@ -6349,28 +6378,18 @@ void backend(char *filename, char *format, char *coverfname, char *coveralt, int
 				exit(1);
 			}
 			bp->object_flag = next_flag++;
-			if(pred->dynamic->linkage_flags & (LINKF_LIST | LINKF_CLEAR)) {
+			if(dyn->linkage_flags & (LINKF_LIST | LINKF_CLEAR)) {
 				bp->user_global = next_user_global++;
-#if PROPARRAY
 				bp->propbase_label = make_global_label();
-#else
-				if(next_objpropslot == 32) {
-					curr_objprop++;
-					next_objpropslot = 0;
-				}
-				reverse_objpropslot[curr_objprop - 1][next_objpropslot] = pred;
-				bp->objprop = curr_objprop;
-				bp->objpropslot = next_objpropslot++;
-#endif
-				if(pred->dynamic->linkage_flags & LINKF_LIST) {
+				if(dyn->linkage_flags & LINKF_LIST) {
 					bp->global_label = make_routine_label();
 					pred->flags |= PREDF_INVOKED_SIMPLE | PREDF_INVOKED_MULTI;
 				}
-				if(pred->dynamic->linkage_flags & LINKF_SET) {
+				if(dyn->linkage_flags & LINKF_SET) {
 					bp->set_label = make_routine_label();
 					compile_dynlinkage_set(pred, bp->set_label);
 				}
-				if(pred->dynamic->linkage_flags & (LINKF_RESET | LINKF_CLEAR)) {
+				if(dyn->linkage_flags & (LINKF_RESET | LINKF_CLEAR)) {
 					bp->clear_label = make_routine_label();
 					compile_dynlinkage_clear(pred, bp->clear_label);
 				}
@@ -6381,33 +6400,29 @@ void backend(char *filename, char *format, char *coverfname, char *coveralt, int
 		}
 	}
 
-	for(i = 0; i < npredicate; i++) {
-		pred = predicates[i];
+	for(i = 0; i < prg->npredicate; i++) {
+		predname = prg->predicates[i];
+		pred = predname->pred;
 		struct backend_pred *bp = pred->backend;
 		if(pred->nclause
-		&& !(pred->builtin && !(pred->flags & PREDF_DEFINABLE_BI))
+		&& !(predname->builtin && !(predname->nameflags & PREDNF_DEFINABLE_BI))
 		&& (!pred->dynamic || ((pred->flags & PREDF_FIXED_FLAG) && (pred->unbound_in & 1)))) {
-			if(pred->flags & PREDF_INVOKED_NORMALLY) {
+			if(pred->flags & PREDF_INVOKED) {
 				if(!bp->global_label) {
 					bp->global_label = make_routine_label();
 				}
 			}
-			if(pred->flags & PREDF_INVOKED_FOR_WORDS) {
-				bp->for_words_label = make_routine_label();
-			}
-			if(tracing_enabled && (bp->global_label || bp->for_words_label)) {
+			if(tracing_enabled && bp->global_label) {
 				bp->trace_output_label = make_routine_label();
 			}
 		}
-		if((dyn = pred->dynamic) && pred->builtin != BI_HASPARENT) {
-			if(pred->arity == 0) {
+		if((dyn = pred->dynamic) && predname->builtin != BI_HASPARENT) {
+			if(predname->arity == 0) {
 				bp->user_global = alloc_user_flag(&bp->user_flag_mask);
-			} else if(pred->arity == 1) {
+			} else if(predname->arity == 1) {
 				if(pred->flags & PREDF_GLOBAL_VAR) {
 #if 0
-					printf("Global: ");
-					pp_predname(pred);
-					printf("\n");
+					printf("Global: %s\n", predname->printed_name);
 #endif
 					if(pred->dynamic->global_bufsize > 1) {
 						bp->complex_global_label = make_global_label();
@@ -6415,27 +6430,17 @@ void backend(char *filename, char *format, char *coverfname, char *coveralt, int
 						bp->user_global = next_user_global++;
 					}
 				} else if(pred->flags & PREDF_FIXED_FLAG) {
-					/* if(pred->dynamic->fixed_flag_count != 1) */
 					assert(!pred->dynamic->linkage_flags);
 					if(verbose >= 2) {
-						printf("Debug: %s flag %d: ", (next_flag >= NZOBJFLAG)? "Extended fixed" : "Fixed", next_flag);
-						pp_predname(pred);
-						printf("\n");
+						printf("Debug: %s flag %d: %s\n",
+							(next_flag >= NZOBJFLAG)? "Extended fixed" : "Fixed",
+							next_flag,
+							predname->printed_name);
 					}
 					bp->object_flag = next_flag++;
 				}
-			} else if(pred->arity == 2) {
-#if PROPARRAY
+			} else if(predname->arity == 2) {
 				bp->propbase_label = make_global_label();
-#else
-				if(next_objpropslot == 32) {
-					curr_objprop++;
-					next_objpropslot = 0;
-				}
-				reverse_objpropslot[curr_objprop - 1][next_objpropslot] = pred;
-				bp->objprop = curr_objprop;
-				bp->objpropslot = next_objpropslot++;
-#endif
 			}
 		}
 	}
@@ -6451,42 +6456,17 @@ void backend(char *filename, char *format, char *coverfname, char *coveralt, int
 		}
 	}
 
-#if !PROPARRAY
-	for(i = 0; i < nworldobj; i++) {
-		wobj = worldobjs[i]->backend;
-		for(j = curr_objprop; j >= 1; j--) {
-			wobj->npropword[j] =
-				(j == curr_objprop)
-				? next_objpropslot
-				: 32;
-			wobj->propword[j] = calloc(wobj->npropword[j], 2);
-			for(k = 0; k < wobj->npropword[j]; k++) {
-				pred = reverse_objpropslot[j - 1][k];
-				if(!(pred->dynamic->linkage_flags & (LINKF_LIST | LINKF_CLEAR))) {
-					assert(pred->arity == 2);
-					an = pred->dynamic->initial_value[i];
-					if(an) {
-						wobj->propword[j][k] = tag_simple_value(an);
-					}
-				}
-			}
-		}
-	}
-
-	next_free_prop = curr_objprop + !!next_objpropslot;
-#endif
-
 #if 0
 	{
 		struct word *words[2];
 		words[0] = find_word("dict");
 		words[1] = 0;
-		pp_predicate(find_predicate(2, words));
+		pp_predicate(find_predicate(prg, 2, words));
 	}
 #endif
 
-	for(i = 0; i < npredicate; i++) {
-		compile_predicate(predicates[i]);
+	for(i = 0; i < prg->npredicate; i++) {
+		compile_predicate(prg->predicates[i], prg);
 	}
 
 #if 0
@@ -6503,8 +6483,8 @@ void backend(char *filename, char *format, char *coverfname, char *coveralt, int
 			resolve_rnum(propdefault[i] & 0x7fff);
 		}
 	}
-	for(i = 0; i < nworldobj; i++) {
-		wobj = worldobjs[i]->backend;
+	for(i = 0; i < prg->nworldobj; i++) {
+		wobj = &backendwobj[i];
 		for(j = 63; j > 0; j--) {
 			int n = wobj->npropword[j];
 			for(k = 0; k < n; k++) {
@@ -6513,37 +6493,37 @@ void backend(char *filename, char *format, char *coverfname, char *coveralt, int
 			}
 		}
 	}
-	resolve_rnum(((struct backend_pred *) find_builtin(BI_CONSTRUCTORS)->backend)->global_label);
-	resolve_rnum(((struct backend_pred *) find_builtin(BI_ERROR_ENTRY)->backend)->global_label);
+	resolve_rnum(((struct backend_pred *) find_builtin(prg, BI_PROGRAM_ENTRY)->pred->backend)->global_label);
+	resolve_rnum(((struct backend_pred *) find_builtin(prg, BI_ERROR_ENTRY)->pred->backend)->global_label);
 	resolve_rnum(R_FAIL_PRED);
 
 #if 0
 	printf("routines traced\n");
 #endif
 
-	ifid = decode_metadata_str(BI_STORY_IFID);
+	ifid = decode_metadata_str(BI_STORY_IFID, prg);
 	if(!ifid) {
 		if(linecount > 100) {
 			report(LVL_WARN, 0, "No IFID declared.");
 		}
 	} else if(!match_template(ifid, ifid_template)) {
-		report(LVL_WARN, find_builtin(BI_STORY_IFID)->clauses[0]->line, "Ignoring invalid IFID. It should have the format %s, where N is an uppercase hexadecimal digit.", ifid_template);
+		report(LVL_WARN, find_builtin(prg, BI_STORY_IFID)->pred->clauses[0]->line, "Ignoring invalid IFID. It should have the format %s, where N is an uppercase hexadecimal digit.", ifid_template);
 		ifid = 0;
 	}
 
-	author = decode_metadata_str(BI_STORY_AUTHOR);
+	author = decode_metadata_str(BI_STORY_AUTHOR, prg);
 	if(!author && linecount > 100) {
 		report(LVL_WARN, 0, "No author declared.");
 	}
-	title = decode_metadata_str(BI_STORY_TITLE);
+	title = decode_metadata_str(BI_STORY_TITLE, prg);
 	if(!title && linecount > 100) {
 		report(LVL_WARN, 0, "No title declared.");
 	}
-	noun = decode_metadata_str(BI_STORY_NOUN);
-	blurb = decode_metadata_str(BI_STORY_BLURB);
+	noun = decode_metadata_str(BI_STORY_NOUN, prg);
+	blurb = decode_metadata_str(BI_STORY_BLURB, prg);
 
-	pred = find_builtin(BI_STORY_RELEASE);
-	if(pred && pred->nclause) {
+	predname = find_builtin(prg, BI_STORY_RELEASE);
+	if(predname && (pred = predname->pred)->nclause) {
 		if(pred->clauses[0]->body || pred->clauses[0]->params[0]->kind != AN_INTEGER) {
 			report(LVL_ERR, pred->clauses[0]->line, "Malformed story release declaration. Use e.g. (story release 1).");
 			exit(1);
@@ -6564,8 +6544,8 @@ void backend(char *filename, char *format, char *coverfname, char *coveralt, int
 	addr_aux = org;
 	org += 2 * auxsize;
 
-	for(i = 0; i < npredicate; i++) {
-		pred = predicates[i];
+	for(i = 0; i < prg->npredicate; i++) {
+		pred = prg->predicates[i]->pred;
 		struct backend_pred *bp = pred->backend;
 		if((pred->flags & PREDF_GLOBAL_VAR)
 		&& (pred->dynamic->global_bufsize > 1)) {
@@ -6577,14 +6557,14 @@ void backend(char *filename, char *format, char *coverfname, char *coveralt, int
 	addr_objtable = org;
 	org += 63 * 2;
 
-	for(i = 0; i < nworldobj; i++) {
-		wobj = worldobjs[i]->backend;
+	for(i = 0; i < prg->nworldobj; i++) {
+		wobj = &backendwobj[i];
 		wobj->addr_objtable = org;
 		org += 14;
 	}
 
-	for(i = 0; i < nworldobj; i++) {
-		wobj = worldobjs[i]->backend;
+	for(i = 0; i < prg->nworldobj; i++) {
+		wobj = &backendwobj[i];
 
 		wobj->addr_proptable = org;
 		org += 1 + wobj->n_encoded * 2;
@@ -6603,28 +6583,29 @@ void backend(char *filename, char *format, char *coverfname, char *coveralt, int
 
 	for(i = 0; i < n_extflag; i++) {
 		set_global_label(extflagarrays[i], org - 1);
-		org += nworldobj;
+		org += prg->nworldobj;
 	}
 
 	if(org & 1) org++;
 
 	addr_globals = org;
 	org += nglobal * 2;
-#if PROPARRAY
-	for(i = 0; i < npredicate; i++) {
-		pred = predicates[i];
+
+	for(i = 0; i < prg->npredicate; i++) {
+		predname = prg->predicates[i];
+		pred = predname->pred;
 		struct backend_pred *bp = pred->backend;
 		if(pred->dynamic
-		&& pred->builtin != BI_HASPARENT
-		&& (pred->arity == 2 || (pred->dynamic->linkage_flags & (LINKF_LIST | LINKF_CLEAR)))) {
+		&& predname->builtin != BI_HASPARENT
+		&& (predname->arity == 2 || (pred->dynamic->linkage_flags & (LINKF_LIST | LINKF_CLEAR)))) {
 			assert(bp->propbase_label);
 			set_global_label(bp->propbase_label, org - 2); // -2 because it will be indexed by 1-based object id
-			org += nworldobj * 2;
+			org += prg->nworldobj * 2;
 		} else {
 			assert(!bp->propbase_label);
 		}
 	}
-#endif
+
 	addr_abbrevstr = org;
 	org += 2;
 
@@ -6663,7 +6644,7 @@ void backend(char *filename, char *format, char *coverfname, char *coveralt, int
 	set_global_label(G_TEMPSPACE_REGISTERS, addr_globals + (REG_TEMP - 0x10) * 2);
 	set_global_label(G_ARG_REGISTERS, addr_globals + (REG_A - 0x10) * 2);
 	set_global_label(G_DICT_TABLE, addr_dictionary + 4 + NSTOPCHAR);
-	set_global_label(G_OBJECT_ID_END, 1 + nworldobj);
+	set_global_label(G_OBJECT_ID_END, 1 + prg->nworldobj);
 	set_global_label(G_SELTABLE, addr_seltable);
 
 	assert(REG_SPACE == REG_TEMP + 1);
@@ -6694,8 +6675,12 @@ void backend(char *filename, char *format, char *coverfname, char *coveralt, int
 	printf("pass 1 complete\n");
 #endif
 
-	set_global_label(G_CONSTRUCTORS, routines[resolve_rnum(((struct backend_pred *) find_builtin(BI_CONSTRUCTORS)->backend)->global_label)]->address);
-	set_global_label(G_ERROR_ENTRY_POINT, routines[resolve_rnum(((struct backend_pred *) find_builtin(BI_ERROR_ENTRY)->backend)->global_label)]->address);
+	set_global_label(
+		G_PROGRAM_ENTRY,
+		routines[resolve_rnum(((struct backend_pred *) find_builtin(prg, BI_PROGRAM_ENTRY)->pred->backend)->global_label)]->address);
+	set_global_label(
+		G_ERROR_ENTRY,
+		routines[resolve_rnum(((struct backend_pred *) find_builtin(prg, BI_ERROR_ENTRY)->pred->backend)->global_label)]->address);
 
 	for(i = 0; i < BUCKETS; i++) {
 		for(gs = stringhash[i]; gs; gs = gs->next) {
@@ -6747,76 +6732,6 @@ void backend(char *filename, char *format, char *coverfname, char *coveralt, int
 	zcore[0x3e] = VERSION[3];
 	zcore[0x3f] = VERSION[4];
 
-	for(i = 0; i < npredicate; i++) {
-		pred = predicates[i];
-		struct backend_pred *bp = pred->backend;
-		if(bp->wordtableflags) {
-			for(j = 0; j < nworldobj; j++) {
-				if(bp->wordtableflags[j]) {
-					wobj = worldobjs[j]->backend;
-					zcore[wobj->addr_objtable + bp->wordtableflag / 8] |= 0x80 >> (bp->wordtableflag & 7);
-				}
-			}
-		}
-		if((dyn = pred->dynamic) && pred->builtin != BI_HASPARENT) {
-			if(pred->arity == 0) {
-				if(dyn->initial_global_flag) {
-					zcore[addr_globals + 2 * (user_global_base + bp->user_global) + 0] |= bp->user_flag_mask >> 8;
-					zcore[addr_globals + 2 * (user_global_base + bp->user_global) + 1] |= bp->user_flag_mask & 0xff;
-				}
-			} else if(pred->arity == 1) {
-				if(pred->flags & PREDF_GLOBAL_VAR) {
-					an = dyn->initial_global_value;
-					if(an) {
-						uint16_t value = tag_simple_value(an);
-						zcore[addr_globals + 2 * (user_global_base + bp->user_global) + 0] = value >> 8;
-						zcore[addr_globals + 2 * (user_global_base + bp->user_global) + 1] = value & 0xff;
-					}
-				} else {
-					int last_wobj = 0;
-
-					for(j = 0; j < nworldobj; j++) {
-						wobj = worldobjs[j]->backend;
-						if(dyn->initial_flag[j]) {
-							if(bp->object_flag >= NZOBJFLAG) {
-								int num = (bp->object_flag - NZOBJFLAG) / 8;
-								int mask = 0x80 >> ((bp->object_flag - NZOBJFLAG) & 7);
-								assert(num < n_extflag);
-								uint16_t addr = global_labels[extflagarrays[num]] + 1 + j;
-								zcore[addr] |= mask;
-							} else {
-								zcore[wobj->addr_objtable + bp->object_flag / 8] |= 0x80 >> (bp->object_flag & 7);
-							}
-							if(dyn->linkage_flags & (LINKF_LIST | LINKF_CLEAR)) {
-#if PROPARRAY
-								uint16_t addr = global_labels[bp->propbase_label] + 2 + j * 2;
-								zcore[addr + 0] = last_wobj >> 8;
-								zcore[addr + 1] = last_wobj & 0xff;
-#else
-								wobj->propword[bp->objprop][bp->objpropslot] = last_wobj;
-#endif
-								last_wobj = j + 1;
-							}
-						}
-					}
-					if(dyn->linkage_flags & (LINKF_LIST | LINKF_CLEAR)) {
-						zcore[addr_globals + 2 * (user_global_base + bp->user_global) + 0] = last_wobj >> 8;
-						zcore[addr_globals + 2 * (user_global_base + bp->user_global) + 1] = last_wobj & 0xff;
-					}
-				}
-#if PROPARRAY
-			} else if(pred->arity == 2) {
-				for(j = 0; j < nworldobj; j++) {
-					uint16_t addr = global_labels[bp->propbase_label] + 2 + j * 2;
-					uint16_t value = dyn->initial_value[j]? tag_simple_value(dyn->initial_value[j]) : 0;
-					zcore[addr + 0] = value >> 8;
-					zcore[addr + 1] = value & 0xff;
-				}
-#endif
-			}
-		}
-	}
-
 	init_abbrev(addr_abbrevstr, addr_abbrevtable);
 
 	for(i = 1; i < 64; i++) {
@@ -6827,37 +6742,10 @@ void backend(char *filename, char *format, char *coverfname, char *coveralt, int
 		zcore[addr++] = value & 0xff;
 	}
 
-	for(i = 0; i < nworldobj; i++) {
-		uint8_t seen[nworldobj];
+	initial_values(prg, zcore, addr_globals, addr_aux, extflagarrays, n_extflag);
 
-		memset(seen, 0, nworldobj);
-		wobj = worldobjs[i]->backend;
-		j = i;
-		for(;;) {
-			if(seen[j]) {
-				report(LVL_ERR, 0, "Badly formed object tree! #%s is nested in itself.", worldobjs[j]->astnode->word->name);
-				exit(1);
-			}
-			seen[j] = 1;
-			an = hasparent->dynamic->initial_value[j];
-			if(!an) break;
-			if(an->kind != AN_TAG) {
-				report(LVL_ERR, 0, "Initial value of ($ has parent $) must have objects in both parameters.");
-				exit(1);
-			}
-			j = an->word->obj_id;
-		}
-		an = hasparent->dynamic->initial_value[i];
-		if(an) {
-			struct backend_wobj *parent = worldobjs[an->word->obj_id]->backend;
-
-			zcore[wobj->addr_objtable + 6] = (an->word->obj_id + 1) >> 8;
-			zcore[wobj->addr_objtable + 7] = (an->word->obj_id + 1) & 0xff;
-			zcore[wobj->addr_objtable + 8] = zcore[parent->addr_objtable + 10];
-			zcore[wobj->addr_objtable + 9] = zcore[parent->addr_objtable + 11];
-			zcore[parent->addr_objtable + 10] = (i + 1) >> 8;
-			zcore[parent->addr_objtable + 11] = (i + 1) & 0xff;
-		}
+	for(i = 0; i < prg->nworldobj; i++) {
+		wobj = &backendwobj[i];
 		zcore[wobj->addr_objtable + 12] = wobj->addr_proptable >> 8;
 		zcore[wobj->addr_objtable + 13] = wobj->addr_proptable & 0xff;
 		zcore[wobj->addr_proptable + 0] = wobj->n_encoded;
@@ -6995,7 +6883,7 @@ void backend(char *filename, char *format, char *coverfname, char *coveralt, int
 
 void usage(char *prgname) {
 	fprintf(stderr, "Dialog compiler " VERSION ".\n");
-	fprintf(stderr, "Copyright 2018 Linus Akesson.\n");
+	fprintf(stderr, "Copyright 2018-2019 Linus Akesson.\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Usage: %s [options] [source code filename ...]\n", prgname);
 	fprintf(stderr, "\n");
@@ -7042,7 +6930,9 @@ int main(int argc, char **argv) {
 	int auxsize = 600, heapsize = 1400;
 	int strip = 0;
 	int opt, i;
-	int linecount;
+	struct program *prg;
+
+	comp_init();
 
 	do {
 		opt = getopt_long(argc, argv, "?hVvo:t:c:a:H:A:s", longopts, 0);
@@ -7121,9 +7011,17 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	linecount = frontend(argc - optind, argv + optind);
+	prg = new_program();
+	frontend_add_builtins(prg);
+	prg->optflags |= OPTF_BOUND_PARAMS;
 
-	backend(outname, format, coverfname, coveralt, heapsize, auxsize, strip, linecount);
+	if(!frontend(prg, argc - optind, argv + optind)) {
+		exit(1);
+	}
+
+	backend(outname, format, coverfname, coveralt, heapsize, auxsize, strip, prg->totallines, prg);
+
+	free_program(prg);
 
 	return 0;
 }

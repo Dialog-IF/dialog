@@ -9,7 +9,7 @@
 <body>
 	<div class="chapter">
 	<h1>Chapter 10: Miscellaneous features</h1>
-	<div class="navlinks">(<a href="#pronouns">Pronouns</a>&nbsp;&bull; <a href="#listutil">List manipulation</a>&nbsp;&bull; <a href="#treeutil">Object tree manipulation</a>&nbsp;&bull; <a href="#commoncomplaints">Common checks and complaints</a>&nbsp;&bull; <a href="#questions">Asking simple questions</a>&nbsp;&bull; <a href="#fungibility">Identical objects</a>)</div>
+	<div class="navlinks">(<a href="#pronouns">Pronouns</a>&nbsp;&bull; <a href="#listutil">List manipulation</a>&nbsp;&bull; <a href="#treeutil">Object tree manipulation</a>&nbsp;&bull; <a href="#libdebug">Predicates for debugging</a>&nbsp;&bull; <a href="#commoncomplaints">Common checks and complaints</a>&nbsp;&bull; <a href="#questions">Asking simple questions</a>&nbsp;&bull; <a href="#fungibility">Identical objects</a>)</div>
 <a id="pronouns"></a><h2>Pronouns</h2>
 <p>Dialog allows the player to refer to recently mentioned objects using the words
 <span class="prginput">IT</span>, <span class="prginput">HIM</span>, <span class="prginput">HER</span>, and
@@ -225,6 +225,13 @@ are numbered starting with&nbsp;1.
 without keywords; splits the list anywhere. Useful for parsing e.g.
 <span class="prginput">GIVE ATTILA THE HUN A COOKIE</span>.
 </p>
+<h3>Lists of characters</h3>
+<p class="codeline">(print raw input $List)</p>
+<p class="noteline">This is a handy predicate for printing back input obtained by the
+built-in predicate <span class="code">(get raw input $)</span>. It iterates through
+the given list, printing the elements with <span class="code">(no space)</span> in
+between.
+</p>
 <a id="treeutil"></a><h2>Object tree manipulation</h2>
 <p>The Dialog standard library organizes objects into tree-like structures using a
 combination of the built-in <span class="code">($&nbsp;has parent&nbsp;$)</span> dynamic predicate,
@@ -291,6 +298,21 @@ Attempt to remove <span class="code">$Obj</span> if it is worn, or part of somet
 <p class="codeline">(recursively leave non-vehicles)</p>
 <p class="noteline">While the player character is the direct child of an object that is
 neither a room nor a vehicle, make an attempt to leave that object.
+</p>
+<a id="libdebug"></a><h2>Predicates for debugging</h2>
+<p>The standard library offers a couple of predicates that are meant to be used
+from the interactive debugger.
+</p>
+<p class="codeline">(scope)</p>
+<p class="noteline">Show the current scope, which typically includes all objects within
+reach and sight of the player, including the objects representing the
+current and neighbouring rooms.
+</p>
+<p class="codeline">(actions on)</p>
+<p class="noteline">Enable tracing of actions as they are attempted.
+</p>
+<p class="codeline">(actions off)</p>
+<p class="noteline">Disable tracing of actions.
 </p>
 <a id="commoncomplaints"></a><h2>Common checks and complaints</h2>
 <p>The following predicates are quite useful when writing
@@ -773,7 +795,7 @@ It's your call.
 </p>
 	<div class="footer">
 	<p class="nav">Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 3, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 4, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

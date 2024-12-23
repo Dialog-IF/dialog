@@ -518,12 +518,14 @@ the children of the previous parent of the troll.
 <p class="codeline">(now) ~(#axe has parent $)</p>
 <p class="noteline">Remove the axe from play (i.e. detach it from the object tree).
 </p>
-<p>You are responsible for maintaining a well-formed object tree. The Z-machine
-standard forbids cycles, such as a pair of boxes inside each other, but Dialog
-doesn't monitor your tree operations to detect breaches. Be wary of updating
-the object tree while there is an ongoing iteration: An untimely change of a
-sibling pointer could easily divert the iterating code into a different part of
-the object tree.
+<p>You are responsible for maintaining a well-formed object tree. This means that
+you're not allowed to create cycles, such as a pair of boxes inside each other.
+Compiled Dialog code cannot detect violations of this rule at runtime, but the
+interactive debugger does.
+</p>
+<p>Be wary of updating the object tree while there is an ongoing iteration: An
+untimely change of a sibling pointer could easily divert the iterating code
+into a different part of the object tree.
 </p>
 <p>That being said, Dialog guarantees that you can safely iterate over all objects
 with a particular parent, and move them (or a subset of them) to a different
@@ -548,7 +550,7 @@ part of the object tree:
 </div>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="sugar.html">Chapter 6: Syntactic sugar</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 3, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 4, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

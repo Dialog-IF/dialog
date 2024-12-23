@@ -125,9 +125,13 @@ clear the entire screen and disable the status bar, use <span class="code">(clea
 all)</span>. Be aware that on some interpreters, clearing interferes with the
 player's ability to scroll back and review earlier parts of the play session.
 </p>
-<p>The built-in predicate <span class="code">(space&nbsp;$)</span> prints a given number of spaces
-in succession. Its vertical counterpart, <span class="code">(par&nbsp;$)</span>, produces a given
-number of blank lines in succession.
+<p>The built-in predicate <span class="code">(space&nbsp;$)</span> prints a given number of space
+characters in succession.
+</p>
+<p>Its vertical counterpart, <span class="code">(par&nbsp;$)</span>, produces a paragraph break with
+a height corresponding to the given number of blank lines. Adjacent paragraph
+breaks are merged based on the maximum specified height, so
+<span class="code">(par&nbsp;5)&nbsp;(par&nbsp;7)</span> produces seven blank lines.
 </p>
 <textarea class="copyarea" id="copy1" readonly>
 (program entry point)
@@ -185,9 +189,9 @@ explicitly.
 </p>
 <p>The parameter, <span class="code">$Char</span>, is unified with a dictionary word
 representing the character that was typed, e.g. <span class="code">@e</span> if the
-<span class="prginput">E</span> key was pressed. Note that on the Z-machine, dictionary words
-are case-insensitive, so at least for the 26 letters of the English alphabet,
-there is no way to tell whether the player was holding shift or not.
+<span class="prginput">E</span> key was pressed. Note that dictionary words are
+case-insensitive, so for letters of the alphabet there is no way to tell
+whether the player was holding shift or not.
 </p>
 <p>Some special keys correspond to dictionary words that can't be represented
 directly in Dialog source code. The dictionary words for these keys can be
@@ -419,32 +423,37 @@ following rule definition:
 <a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <a id="trace"></a><h2>Debugging</h2>
-<p>Two built-in predicates control <i>low-level tracing</i> of queries:
+<p>The following built-in predicates are useful for debugging:
+</p>
+<p class="codeline">(breakpoint)</p>
+<p class="noteline">If the program is currently running inside the interactive debugger,
+suspend execution and print the current source code filename and line
+number. When execution resumes, this query succeeds.
+</p>
+<p class="noteline">If the program is running on the Z-machine, the query simply succeeds.
 </p>
 <p class="codeline">(trace on)</p>
 <p class="noteline">Enables tracing. Following this, debugging information will be printed
-when queries are made, and when rule bodies are entered.
+when queries are made, and when rule bodies are entered. The
+interactive debugger will also report when solutions are found, and
+when dynamic predicates are updated.
 </p>
 <p class="codeline">(trace off)</p>
 <p class="noteline">Disables tracing.
 </p>
 <p>If your program source code contains a query to <span class="code">(trace on)</span>
-anywhere, the compiler will insert extra instructions all over the generated
-code, to deal with tracing. This is known as <i>instrumenting</i> the code, and
-it makes the program slower and larger. Thus, you'll only want to use these
-predicates temporarily, during debugging. The compiler prints a warning when it
-adds the extra instructions.
+anywhere, the Z-machine backend will insert extra instructions all over the
+generated code, to deal with tracing. This is known as <i>instrumenting</i> the
+code, and it makes the program slower and larger. Thus, you'll only want to use
+these predicates temporarily, during debugging. The compiler prints a warning
+when it adds the extra instructions.
 </p>
-<p>Please be aware that the Dialog compiler optimizes your program, and you will
-be tracing the optimized code. This means that certain queries and rules will
-be missing from the debug printouts. And occasionally it may seem like a rule
-body is being entered even though it shouldn't (in which case the rule will
-typically fail right after the printout). Admittedly, tracing at this low level
-can make debugging harder than it needs to be, but it is highly useful when
-trying to speed up a program. In the future, an interactive debugger might be
-developed, for stepping through the program statements at a more intuitive
-level. Until then, tracing nevertheless offers a powerful complement to
-manually coded debug printouts.
+<p>Please be aware that the Dialog compiler and debugger do optimize your program,
+and you will be tracing the optimized code, so certain queries and rules will
+be missing from the debug printouts. You will generally want to do all your
+tracing in the debugger, which mercifully turns off some of the more confusing
+optimizations. That being said, tracing the optimized Z-code is highly useful
+when trying to speed up a program.
 </p>
 <a id="system"></a><h2>System control</h2>
 <p>The following built-in predicates offer low-level control over the interpreter
@@ -507,16 +516,16 @@ fails.
 <p class="noteline">Disables the transcript feature. This predicate always succeeds.
 </p>
 <p class="codeline">(display memory statistics)</p>
-<p class="noteline">Prints a line of information specific to the compiler backend (there is
-currently only one), about the peak memory usage in the heap and
-auxiliary heap areas. The size of these areas can be adjusted by
-passing commandline options to the compiler. During debugging and
-testing, you may wish to invoke this predicate just before quitting, as
-it will tell you how close you are to the limits.
+<p class="noteline">Prints a line of information specific to the compiler backend, about
+the peak memory usage in the heap and auxiliary heap areas. Currently,
+only the Z-machine backend does this. The size of these areas can be
+adjusted by passing commandline options to the compiler. During
+debugging and testing, you may wish to invoke this predicate just
+before quitting, as it will tell you how close you are to the limits.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="beyondprg.html">Chapter 8: Beyond the program</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 3, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 4, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

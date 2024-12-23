@@ -79,8 +79,7 @@ struct zinstr {
 //	1	space has been inhibited
 //	2	a normal space is pending
 //	3	a normal space has been printed
-//	4	a line feed has been printed
-//	5	a paragraph break has been printed
+//	4 + n	a line feed has been printed, followed by n extra blank lines
 
 #define REG_STACK		0x00
 #define REG_LOCAL		0x01
@@ -103,22 +102,23 @@ struct zinstr {
 #define REG_FATALJMP		0x1f	/* catch/throw reference for runtime errors */
 #define REG_MINAUX		0x20	/* for memory statistics */
 #define REG_UPPER		0x21	/* is an uppercase letter pending? */
+#define REG_FORWORDS		0x22	/* are we gathering words? */
 
 /* useful constants */
 
-#define REG_2000		0x22
-#define REG_3FFF		0x23
-#define REG_4000		0x24
-#define REG_8000		0x25
-#define REG_C000		0x26
-#define REG_FFFF		0x27
-#define REG_AUXBASE		0x28
-#define REG_NIL			0x29	/* 1fff */
-#define REG_R_SPA		0x2a	/* R_SPACE_PRINT_AUTO */
-#define REG_R_USIMPLE		0x2b	/* R_UNIFY_SIMPLE */
+#define REG_2000		0x23
+#define REG_3FFF		0x24
+#define REG_4000		0x25
+#define REG_8000		0x26
+#define REG_C000		0x27
+#define REG_FFFF		0x28
+#define REG_AUXBASE		0x29
+#define REG_NIL			0x2a	/* 1fff */
+#define REG_R_SPA		0x2b	/* R_SPACE_PRINT_AUTO */
+#define REG_R_USIMPLE		0x2c	/* R_UNIFY_SIMPLE */
 
-#define REG_A			0x2c	/* need 13 registers, one more than max arity */
-#define REG_X			0x39
+#define REG_A			0x2d	/* need 13 registers, one more than max arity */
+#define REG_X			0x3a
 
 #define REG_PUSH		0x100
 #define DEST_USERGLOBAL(x)	(0x200 | (x))
@@ -298,8 +298,8 @@ enum {
 	G_DICT_TABLE,
 	G_OBJECT_ID_END,
 	G_SELTABLE,
-	G_CONSTRUCTORS,
-	G_ERROR_ENTRY_POINT,
+	G_PROGRAM_ENTRY,
+	G_ERROR_ENTRY,
 
 	G_FIRST_FREE
 };

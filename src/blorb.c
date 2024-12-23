@@ -7,7 +7,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "rules.h"
+#include "common.h"
 #include "blorb.h"
 #include "report.h"
 

@@ -1,25 +1,13 @@
 
 (extension version)
-	Debugging extension 1.0.
+	Debugging extension 1.1.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Informative actions
 
 (understand command [scope])
 (perform [scope])
-	The current scope is: (line)
-	(exhaust) {
-		*($Obj is in scope)
-		$Obj:
-		%% Prevent (the $) from revealing hidden objects
-		(if) ($Obj is hidden) (then)
-			(the $Obj)
-			(now) ($Obj is hidden)
-		(else)
-			(the $Obj)
-		(endif)
-		(line)
-	}
+	(scope)
 
 (understand command [allrooms])
 (perform [allrooms])
@@ -72,13 +60,8 @@
 
 (understand command [actions on])
 (perform [actions on])
-	(now) (tracing actions)
+	(actions on)
 
 (understand command [actions off])
 (perform [actions off])
-	(now) ~(tracing actions)
-
-(try $Action)
-	(tracing actions)
-	(line) ACTION: $Action \( (describe action $Action) \) (line)
-	(fail)
+	(actions off)

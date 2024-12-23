@@ -1,0 +1,301 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<link rel="StyleSheet" href="style.css" type="text/css" />
+	<title>Software</title>
+</head>
+<body>
+	<div class="chapter">
+	<h1>Software</h1>
+	<div class="navlinks">(<a href="#compiler">The compiler</a>&nbsp;&bull; <a href="#dgdebug">The interactive debugger</a>&nbsp;&bull; <a href="#buildtools">Building from source code</a>)</div>
+<p>An archive containing the latest version of Dialog can be found here:
+</p>
+<p class="indented"><a href="https://linusakesson.net/dialog/">https://linusakesson.net/dialog/</a>
+</p>
+<p>The archive contains the full source code for the Dialog compiler and
+interactive debugger, as well as pre-built executable files for Linux (i386 and
+x86_64) and Windows. The compiler is called <span class="tt">dialogc</span>, and the debugger
+is called <span class="tt">dgdebug</span>.
+</p>
+<p>Both the compiler and the interactive debugger have to be started from a
+commandline shell. Depending on what operating system you use, you may have to
+copy the executable files to a system-specific location, or simply navigate to
+the directory that contains them.
+</p>
+<p>The Windows version of the debugger makes use of a third-party library,
+<i>Windows&nbsp;Glk</i> by David Kinder. Make sure to put the two included
+<span class="tt">DLL</span> files in the same directory as the executable file
+(<span class="tt">dgdebug.exe</span>).
+</p>
+<p>To check that everything is in place, try the following two commands:
+</p>
+<div class="blkoutput">dialogc --version<br />
+dgdebug --version</div><p>Each of them should print the current version number of the Dialog software.
+The first two characters (a digit and a letter) identify the language version,
+which is currently <b>0d</b>. Following that is a slash, and then the software
+revision number.
+</p>
+<p>The archive also contains the latest version of the Dialog standard library,
+<span class="tt">stdlib.dg</span>, and the standard debugging library extension,
+<span class="tt">stddebug.dg</span>. You should make local copies of these files for each of
+your projects, because if you ever wish to rebuild your story in the future,
+you'll want to have access to the exact version of the library you used. Also,
+you may wish to make story-specific modifications to the library.
+</p>
+<p>A copy of this manual is also included in the archive, and a file called
+<span class="nobreak"><span class="tt">license.txt</span></span> that details how you may use the software. In
+short, you have the right to use, modify, and redistribute the compiler and
+standard library (with or without source code), in whole or in part, as long as
+attribution is given.
+</p>
+<a id="compiler"></a><h2>The compiler</h2>
+<p>Dialog is a compiled language. Source code is stored in text files with the
+filename extension <span class="tt">.dg</span>. When international characters are used, they
+must be encoded in UTF-8. The compiler delivers its output in <span class="tt">.zblorb</span>,
+<span class="tt">.z8</span>, or <span class="tt">.z5</span> format. When the zblorb format is chosen, the
+compiler can optionally include cover art with the story, but this feature is
+not regarded as a part of the Dialog language itself.
+</p>
+<div class="img"><img src="overview.png" /></div>
+<p>To compile a Dialog story into <span class="tt">zblorb</span> format, invoke the compiler with
+the source code filenames as arguments, and optionally use
+<span class="nobreak"><span class="tt">-o</span></span> to specify an output filename. The default output
+filename is constructed from the name of the first source code file, combined
+with a filename extension that is appropriate for the current output format.
+</p>
+<p>The order of source code filenames is important. The story must appear before
+the standard library, and any extensions (such as the standard debugging
+library) should appear in between. For instance:
+</p>
+<p><span class="tt">dialogc story.dg stddebug.dg stdlib.dg</span>
+</p>
+<p>This will produce a file called <span class="tt">story.zblorb</span>, based on the name of the
+first source code file.
+</p>
+<p>The example games in this manual do not declare IFIDs, which is mandatory when
+the zblorb output format is used. To compile the examples, you must ask the
+compiler to emit raw z8 (or&nbsp;z5) code by adding <span class="nobreak"><span class="tt">-t&nbsp;z8</span></span>
+<span class="nobreak">(or <span class="tt">-t&nbsp;z5</span>)</span> to the command line:
+</p>
+<p><span class="tt">dialogc -t z8 example.dg stdlib.dg</span>
+</p>
+<p>This will produce a file called <span class="tt">example.z8</span>.
+</p>
+<p>The examples in Part&nbsp;I do not make use of the standard library at all, so they
+are compiled like this:
+</p>
+<p><span class="tt">dialogc -t z8 example.dg</span>
+</p>
+<p>When you use the <span class="tt">z5</span> output format, the resulting file is limited to
+256&nbsp;KiB, compared to 512&nbsp;KiB for <span class="tt">z8</span>. However, the <span class="tt">z5</span> format
+is more compact, and switching to this format can reduce the size of the story
+file by about 5%.
+</p>
+<p>The <span class="nobreak"><span class="tt">-v</span></span> flag makes the compiler more verbose. Give it
+once, and the compiler will print the wordcount for your story, as well as some
+technical stats. Give it twice <span class="nobreak">(<span class="tt">-vv</span>)</span> and the compiler
+will dump additional information that can be useful for debugging.
+</p>
+<p>To see the full list of options supported by <span class="tt">dialogc</span>, type:
+</p>
+<p><span class="tt">dialogc --help</span>
+</p>
+<a id="dgdebug"></a><h2>The interactive debugger</h2>
+<p>This section uses terminology that may be confusing if you've only just started
+to learn about Dialog. Please skim through the section anyway, because having a
+back-of-the-mind awareness of these techniques can be very helpful later.
+</p>
+<p>We've seen that the role of the <a href="software.html#compiler">compiler</a> is to convert your
+Dialog program into a compact, widely-supported runtime format. In contrast,
+the <i>interactive debugger</i> runs your game directly from source code, and
+allows you to inspect and manipulate the program while it is running.
+</p>
+<div class="img"><img src="debugger.png" /></div>
+<p>To debug your game, launch the debugger from the commandline with your source
+code filenames as arguments:
+</p>
+<p><span class="tt">dgdebug story.dg stdlib.dg</span>
+</p>
+<p>The order of the filenames is significant, just like when compiling.
+</p>
+<p>The debugger also accepts a couple of commandline options. For a complete list,
+type:
+</p>
+<p><span class="tt">dgdebug --help</span>
+</p>
+<h3>Running the game</h3>
+<p>At startup, the debugger analyzes your program, reporting any compilation
+errors. If everything looks fine, it launches the program. You can then play
+your game normally.
+</p>
+<p>When the game is asking for input, you may instead choose to type an arbitrary
+<a href="execution.html#predsrules">query</a>, <a href="choicepoints.html#multiqueries">multi-query</a>, or
+<a href="dynamic.html">now-statement</a>. This can be used to inspect or control the running
+program.
+</p>
+<p>The debugger remains operational after your program terminates. To start over,
+type <span class="code">(restart)</span>. To quit the debugger, either press Control-D
+(Linux), close the window (Windows), or type the special command
+<span class="tt">@quit</span>.
+</p>
+<h3>Modifying a running game</h3>
+<p>The interactive debugger watches your source code files for changes. New code
+is merged into the running program automatically, so you can test new
+functionality without restarting the game.
+</p>
+<p>If there are compilation errors in the new version of the source code, the
+debugger will report them and put the execution on hold until you've fixed
+them.
+</p>
+<p>Any <a href="dynamic.html">dynamic predicates</a> that have changed during gameplay retain
+their value, so that e.g. the player character remains in the current room,
+with any picked-up objects still in their inventory. But unchanged dynamic
+predicates will reflect the initial value declarations as they're given in the
+new version of the source code.
+</p>
+<p>The debugger also tries to match <a href="control.html#select">select statements</a> in the old and
+new versions of the code, in order to make the transition as seamless as
+possible. But you may occasionally find that a select statement has been reset.
+</p>
+<p>Be aware that by modifying the source code, you can introduce new
+<a href="execution.html#parameters">objects</a> and <a href="varsvalues.html#values">dictionary words</a>, but you can't
+remove them. This affects the operation of the built-in <span class="code">(object&nbsp;$)</span>
+predicate, as well as <span class="code">(get input&nbsp;$)</span>, with particular consequences
+for games that use the <a href="builtins.html#input">removable word endings</a> feature. To remove
+extraneous objects and dictionary words, use <span class="code">(restart)</span> (or
+<span class="tt">@replay</span>; see below).
+</p>
+<h3>Debugging commands</h3>
+<p>In addition to arbitrary queries and now-statements, the debugger allows you to
+type <i>debugging commands</i> at the game prompt. These are recognized by a
+leading <span class="tt">@</span> character.
+</p>
+<p>The debugger maintains a list of all <i>accumulated input</i> that you've typed
+into the running program. Only proper input counts, not queries or debugging
+commands. The list is cleared on restart, and trimmed on undo, so in that sense
+it represents a straight path from the beginning of the game to the current
+game state. The following debugging commands make use of it:
+</p>
+<p class="codeline"><span class="tt">@replay</span></p>
+<p class="noteline">Resets the game, and re-enters all accumulated input. This will
+normally reproduce the current game position from a clean start, but it
+may work differently if you've made changes to the source code, or if
+the game includes randomized behaviour. It can be useful for catching
+unintended non-local effects of a code change.
+</p>
+<p class="codeline"><span class="tt">@again</span></p>
+<p class="noteline">Performs an undo operation, and then re-enters the most recent line of
+input. This command offers more fine-grained control than
+<span class="tt">@replay</span>, and generally works better for games with randomized
+behaviour. It lets you focus on the local effects of a code change.
+</p>
+<p class="codeline"><span class="tt">@g</span></p>
+<p class="noteline">A synonym for <span class="tt">@again</span>.
+</p>
+<p class="codeline"><span class="tt">@save</span></p>
+<p class="noteline">Saves the accumulated input as a simple text file. The debugger will
+ask you for a filename.
+</p>
+<p class="codeline"><span class="tt">@restore</span></p>
+<p class="noteline">Resets the game, and reads input from a text file, thus recreating the
+saved game position. The debugger will ask you for a filename.
+</p>
+<p>You can get a full list of debugging commands by typing <span class="tt">@help</span> at the
+prompt. These commands can be abbreviated as long as the abbreviation is unique;
+<span class="tt">@h</span> works for <span class="tt">@help</span>, for instance.
+</p>
+<h3>Suspending execution</h3>
+<p>The terminal version of the debugger (i.e. <i>not</i> the Windows&nbsp;Glk version)
+allows you to suspend a running computation by pressing Control-C at any time.
+This will immediately take you to a prompt where you can type queries and
+debugging commands.
+</p>
+<p>To resume execution, type a blank line at this prompt.
+</p>
+<p>Suspending is useful when you've enabled <a href="builtins.html#trace">tracing</a> and found that you
+got a bit more than you bargained for. At the <span class="tt">[More]</span> prompt, simply
+hit Control-C, type <span class="code">(trace&nbsp;off)</span>, and press return a second time.
+</p>
+<p>It can also be used to escape from an accidental infinite loop, using
+<span class="code">(stop)</span>. This is rarely needed, however, because the debugger does
+not perform tail-call optimization, and there's a limit on the number of
+recursive calls.
+</p>
+<h3>Some useful debugging techniques</h3>
+<p>Use queries to inspect the state of the running program, e.g. type
+<span class="code">*($&nbsp;has parent #box)</span> into the game to get a list of every object
+that's currently a direct child of the <span class="code">#box</span> object.
+</p>
+<p>The standard library provides <span class="code">(actions&nbsp;on)</span> and
+<span class="code">(actions&nbsp;off)</span>, for controlling <i>action tracing</i>. When
+enabled, this feature makes the library print the names of
+<a href="actions.html">actions</a> as it tries them.
+</p>
+<p>The library also provides <span class="code">(scope)</span>, for listing every object that's
+currently <a href="moving.html#scope">in&nbsp;scope</a>.
+</p>
+<p>The following predicates are highly useful for manipulating the state of the
+running game:
+</p>
+<p class="codeline">(enter <i>Room</i>)</p>
+<p class="noteline">to teleport the player character to a given room,
+</p>
+<p class="codeline">(now) (<i>Object</i> is #heldby <i>Player</i>)</p>
+<p class="noteline">to purloin an object, and
+</p>
+<p class="codeline">(try <i>Action</i>)</p>
+<p class="noteline">to temporarily sidestep a parser problem.
+</p>
+<p>Query tracing can be enabled interactively with <span class="code">(trace&nbsp;on)</span>, and
+disabled with <span class="code">(trace&nbsp;off)</span>. Tracing a complete player command will
+produce a lot of output as the command is parsed. Sometimes it makes more sense
+to temporarily add <span class="code">(trace&nbsp;on)</span> and <span class="code">(trace&nbsp;off)</span> to the
+source code, surrounding the particular bit that you're interested in.
+Remember, the debugger lets you do this while the program is running.
+</p>
+<p>Use the built-in predicate <span class="code">(breakpoint)</span> to suspend the program
+from within the source code, in order to inspect the game state at arbitrary
+points during execution.
+</p>
+<p>The command <span class="prginput">AGAIN</span> (or <span class="prginput">G</span>) lets the player repeat
+the last line of input. During development, you will often want to change
+something in the most recent response, and then retry the action to
+see what the new version looks like. <span class="prginput">AGAIN</span> usually works for
+this, but there's a snag: If you've added new dictionary words, e.g. by
+changing a <span class="code">(dict&nbsp;$)</span> rule, then a regular <span class="prginput">AGAIN</span> will
+fail to pick up the new words. Use the up-arrow to fetch the command from the
+input history instead. Another option is to use the debugging command
+<span class="tt">@again</span> (or <span class="tt">@g</span>), which will handle this corner-case
+transparently. That command also performs an implicit undo, which is
+particularly useful for debugging games with timed puzzles.
+</p>
+<p>Finally, a word of warning: The interactive debugger does not try to emulate
+the Z-machine compiler backend. The Z-machine truncates dictionary words, but
+the debugger doesn't. The debugger allocates a larger heap area, but doesn't
+optimize tail calls. Always test the compiled version of your game thoroughly,
+in a Z-code interpreter, before releasing it.
+</p>
+<a id="buildtools"></a><h2>Building from source code</h2>
+<p>To build the Dialog compiler and debugger from source, you need a working
+C&nbsp;compiler (such as <span class="tt">gcc</span> or <span class="tt">clang</span>) and some version of the
+make command (such as <span class="tt">gmake</span>). Unpack the archive, enter the
+<span class="tt">src</span> directory, and type &ldquo;<span class="tt">make</span>&rdquo;. If all went well, you
+should now have two executable files called <span class="tt">dialogc</span> and
+<span class="tt">dgdebug</span> in the current directory. These are the compiler and debugger,
+respectively.
+</p>
+<p>If you are on a Unix-like system, and you wish to install the tools in a
+system-wide location, type &ldquo;<span class="tt">sudo&nbsp;make&nbsp;install</span>&rdquo;.
+</p>
+<p>The Windows binaries can be cross-compiled on a Linux system using the
+<span class="tt">Mingw32</span> toolchain.
+</p>
+	<div class="footer">
+	<p class="nav">Back to the <a href="index.html">Table of Contents</a></p>
+	<p class="tagline">The Dialog Manual, Revision 4, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	</div>
+	</div>
+</body>
+</html>
