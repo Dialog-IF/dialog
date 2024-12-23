@@ -132,8 +132,6 @@ static uint8_t resolve_aachar(uint32_t uchar) {
 	if(uchar < 127) {
 		return uchar;
 	} else {
-		// todo populate with default chars from latin1
-
 		for(i = 0; i < ncharmap; i++) {
 			if(charmap[i].glyph == uchar) {
 				return 128 + i;
@@ -147,6 +145,7 @@ static uint8_t resolve_aachar(uint32_t uchar) {
 
 		charmap[i].glyph = uchar;
 		ncharmap++;
+
 		return 128 + i;
 	}
 }
@@ -155,11 +154,8 @@ static uint8_t aachar_to_lower(uint8_t ch) {
 	if(ch >= 'A' && ch <= 'Z') {
 		return ch - 'A' + 'a';
 	} else if(ch >= 128) {
-		if(charmap[ch - 128].tolower) {
-			return charmap[ch - 128].tolower;
-		} else {
-			return ch;
-		}
+		charmap[ch - 128].tolower = resolve_aachar(unicode_to_lower(charmap[ch - 128].glyph));
+		return charmap[ch - 128].tolower;
 	} else {
 		return ch;
 	}
@@ -2495,6 +2491,11 @@ static void analyze_chars() {
 	uint16_t heap[130];
 	uint8_t rootref;
 
+	for(i = 0; i < ncharmap; i++) {
+		charmap[i].tolower = resolve_aachar(unicode_to_lower(charmap[i].glyph));
+		charmap[i].toupper = resolve_aachar(unicode_to_upper(charmap[i].glyph));
+	}
+
 	memset(node, 0, sizeof(node));
 	for(i = 0; i < 0x80; i++) {
 		node[i].aachar = 0x20 + i;	// char in range 20..9f
@@ -2642,16 +2643,8 @@ void chunk_lang(FILE *f, struct program *prg, uint32_t *crc) {
 	}
 	putbyte_crc(ncharmap, f, crc);
 	for(i = 0; i < ncharmap; i++) {
-		if(charmap[i].tolower) {
-			putbyte_crc(charmap[i].tolower, f, crc);
-		} else {
-			putbyte_crc(0x80 + i, f, crc);
-		}
-		if(charmap[i].toupper) {
-			putbyte_crc(charmap[i].toupper, f, crc);
-		} else {
-			putbyte_crc(0x80 + i, f, crc);
-		}
+		putbyte_crc(charmap[i].tolower, f, crc);
+		putbyte_crc(charmap[i].toupper, f, crc);
 		putbyte_crc((charmap[i].glyph >> 16) & 0xff, f, crc);
 		putbyte_crc((charmap[i].glyph >> 8) & 0xff, f, crc);
 		putbyte_crc((charmap[i].glyph >> 0) & 0xff, f, crc);
@@ -2690,7 +2683,7 @@ void chunk_writ(FILE *f, uint32_t *crc) {
 			} else {
 				code = charbits[0x5f] ^ (1 << nprefix);
 				for(k = 0; k < 7; k++) {
-					if(ch & (0x80 >> k)) {
+					if(ch & (0x40 >> k)) {
 						code |= 1 << (nprefix + k);
 					}
 				}

@@ -7,6 +7,7 @@
 #include "common.h"
 #include "output.h"
 #include "terminal.h"
+#include "unicode.h"
 
 enum {
 	SP_AUTO = 0,
@@ -40,7 +41,7 @@ static struct boxstate *boxstack;
 static int nalloc_box;
 static int boxsp;
 static int space;
-static uint8_t *wrapbuf;
+static uint16_t *wrapbuf;
 static int delayed_spaces;
 static int wrappos;
 static int wrapstyle;
@@ -60,11 +61,12 @@ static void update_size() {
 	if(force_width) w = force_width;
 	if(w < width) syncwrap();
 	width = w;
-	wrapbuf = realloc(wrapbuf, width + 1);
+	wrapbuf = realloc(wrapbuf, (width + 1) * sizeof(uint16_t));
 }
 
 static void syncwrap() {
 	int i;
+	uint8_t utf8[(wrappos + 1) * 3];
 
 	if(wrappos
 	&& column + delayed_spaces + wrappos > width
@@ -84,21 +86,28 @@ static void syncwrap() {
 	if(wrapstyle) {
 		term_effectstyle(wrapstyle);
 	}
-	term_sendbytes(wrapbuf, wrappos);
+	unicode_to_utf8_n(utf8, (wrappos + 1) * 3, wrapbuf, wrappos);
+	term_sendbytes(utf8, strlen((char *) utf8));
 	column += wrappos;
 	wrappos = 0;
 }
 
 static void sendstr_n(const char *str, int n) {
 	int i;
-	char ch;
+	uint16_t ch, wstr[n + 1];
 
 	if(!boxstack[boxsp].visible) return;
 
-	for(i = 0; i < n; i++) {
-		ch = str[i];
+	utf8_to_unicode_n(wstr, n + 1, (uint8_t *) str, n);
+
+	for(i = 0; wstr[i]; i++) {
+		ch = wstr[i];
 		if(boxstack[boxsp].upper) {
-			if(ch >= 'a' && ch <= 'z') ch = ch - 'a' + 'A';
+			if(ch >= 'a' && ch <= 'z') {
+				ch = ch - 'a' + 'A';
+			} else if(ch >= 0x80) {
+				ch = unicode_to_upper(ch);
+			}
 			boxstack[boxsp].upper = 0;
 		}
 		if(wrappos >= width) {
@@ -334,7 +343,7 @@ void o_reset(int force_w, int quirks) {
 	force_width = force_w;
 	if(force_width) width = force_width;
 	space = SP_DONELINE + (quirks? 999 : 0);
-	wrapbuf = realloc(wrapbuf, width + 1);
+	wrapbuf = realloc(wrapbuf, (width + 1) * sizeof(uint16_t));
 	wrappos = 0;
 	boxsp = 0;
 	if(!nalloc_box) {

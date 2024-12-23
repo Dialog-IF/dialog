@@ -747,13 +747,14 @@ void trace_invocations(struct program *prg) {
 		if(!predname->special
 		&& !(predname->builtin && !(predname->nameflags & PREDNF_DEFINABLE_BI))
 		&& predname->builtin != BI_INVOKE_CLOSURE
+		&& predname->builtin != BI_ERROR_ENTRY
 		&& !pred->dynamic
 		&& (pred->flags & PREDF_INVOKED_BY_PROGRAM)
 		&& !(pred->flags & PREDF_DEFINED)) {
 			report(
 				LVL_WARN,
 				pred->invoked_at_line,
-				"Predicate %s is invoked but there is no matching rule.",
+				"A query is made to '%s', but there is no matching rule definition.",
 				predname->printed_name);
 		}
 	}
@@ -841,17 +842,20 @@ void find_dict_words(struct program *prg, struct astnode *an, int include_barewo
 	while(an) {
 		if(an->kind == AN_DICTWORD
 		|| (an->kind == AN_BAREWORD && include_barewords)) {
-			char strbuf[strlen(an->word->name) + 1];
+			int len = strlen(an->word->name);
+			uint16_t wstr[len + 1];
+			char strbuf[(len * 3) + 1];
 
 			assert(an->word->name[0]);
-			for(i = 0; an->word->name[i]; i++) {
-				if(an->word->name[i] >= 'A' && an->word->name[i] <= 'Z') {
-					strbuf[i] = an->word->name[i] - 'A' + 'a';
-				} else {
-					strbuf[i] = an->word->name[i];
+			utf8_to_unicode(wstr, len + 1, (uint8_t *) an->word->name);
+			for(i = 0; wstr[i]; i++) {
+				if(wstr[i] >= 'A' && wstr[i] <= 'Z') {
+					wstr[i] = wstr[i] - 'A' + 'a';
+				} else if(wstr[i] >= 0x80) {
+					wstr[i] = unicode_to_lower(wstr[i]);
 				}
 			}
-			strbuf[i] = 0;
+			unicode_to_utf8((uint8_t *) strbuf, (len * 3) + 1, wstr);
 			w = find_word(prg, strbuf);
 			ensure_dict_word(prg, w);
 			if(!(an->word->flags & WORDF_DICT)) {
@@ -1479,6 +1483,8 @@ static int add_ending(struct program *prg, char *utf8) {
 		ch = unicode[len];
 		if(ch >= 'A' && ch <= 'Z') {
 			ch += 'a' - 'A';
+		} else if(ch >= 0x80) {
+			ch = unicode_to_lower(ch);
 		}
 		for(i = 0; i < pt->nway; i++) {
 			if(pt->ways[i]->letter == ch) {

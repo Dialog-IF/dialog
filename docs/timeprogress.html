@@ -465,9 +465,49 @@ amusing things the player might want to try:
 <div class="copycode">
 <a class="copybtn" href="" onClick="document.getElementById('copy11').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
+<p>Custom options can be added to the menu by defining rules for <span class="code">(game over
+option)</span>. A multi-query will be made to this predicate, and the output is
+supposed to end with a comma. For instance:
+</p>
+<textarea class="copyarea" id="copy12" readonly>
+(game over option)
+	read a NOTE by the author,
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(game over option)</td></tr>
+<tr><td class="left"></td><td class="right">read a NOTE by the author,</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy12').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>And here is how to specify what happens when the user types the given word:
+</p>
+<textarea class="copyarea" id="copy13" readonly>
+(parse game over [note])
+	(par)
+	Thanks for playing!
+	(line)
+	-- (space) The Author
+	(par)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(parse game over [note])</td></tr>
+<tr><td class="left"></td><td class="right">(par)</td></tr>
+<tr><td class="left"></td><td class="right">Thanks for playing!</td></tr>
+<tr><td class="left"></td><td class="right">(line)</td></tr>
+<tr><td class="left"></td><td class="right">-- (space) The Author</td></tr>
+<tr><td class="left"></td><td class="right">(par)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy13').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="understanding.html">Chapter 9: Understanding player input</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 12, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 13, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

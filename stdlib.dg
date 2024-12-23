@@ -1,6 +1,6 @@
 
 (library version)
-	Library version 0.26.
+	Library version 0.27.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -4173,15 +4173,9 @@
 		(endif)
 		the last move,
 	(endif)
-	(if) (amusing enabled) (then)
-		see a list of
-		(if) (library links enabled) (then)
-			(link [amusing]) AMUSING
-		(else)
-			AMUSING
-		(endif)
-		things to do,
-	(endif)
+	(exhaust) {
+		*(game over option)
+	}
 	or
 	(if) (library links enabled) (then)
 		(link [quit]) QUIT ?
@@ -4190,6 +4184,16 @@
 	(endif)
 	> (get input $Words)
 	(stoppable) (parse game over $Words)
+
+(game over option)
+	(amusing enabled)
+	see a list of
+	(if) (library links enabled) (then)
+		(link [amusing]) AMUSING
+	(else)
+		AMUSING
+	(endif)
+	things to do,
 
 (parse game over [restart])
 	(restart)

@@ -1366,6 +1366,7 @@ int debugger(int argc, char **argv) {
 	struct debugger dbg = {0};
 	int running = 1;
 	uint8_t termbuf[MAXINPUT];
+	uint16_t wtermbuf[MAXINPUT];
 	value_t tail, v;
 	int i, j, success;
 	struct predname *predname;
@@ -1657,11 +1658,15 @@ int debugger(int argc, char **argv) {
 					}
 				}
 			} else if(dbg.status == ESTATUS_GET_INPUT || dbg.status == ESTATUS_GET_RAW_INPUT) {
-				for(i = 0; termbuf[i]; i++) {
-					if(termbuf[i] >= 'A' && termbuf[i] <= 'Z') {
-						termbuf[i] = termbuf[i] - 'A' + 'a';
+				utf8_to_unicode(wtermbuf, MAXINPUT, termbuf);
+				for(i = 0; wtermbuf[i]; i++) {
+					if(wtermbuf[i] >= 'A' && wtermbuf[i] <= 'Z') {
+						wtermbuf[i] = wtermbuf[i] - 'A' + 'a';
+					} else if(wtermbuf[i] >= 0x80) {
+						wtermbuf[i] = unicode_to_lower(wtermbuf[i]);
 					}
 				}
+				unicode_to_utf8(termbuf, MAXINPUT, wtermbuf);
 				dyn_add_inputlog(&dbg.ds, termbuf);
 				tail = (value_t) {VAL_NIL};
 				if(dbg.status == ESTATUS_GET_RAW_INPUT) {

@@ -21,7 +21,7 @@ static const char ifid_template[] = "NNNNNNNN-NNNN-NNNN-NNNN-NNNNNNNNNNNN";
 static int match_template(const char *txt, const char *template) {
 	for(;;) {
 		if(*template == 'N') {
-			if(!((*txt >= '0' && *txt <= '9') || (*txt >= 'A' && *txt <= 'Z'))) {
+			if(!((*txt >= '0' && *txt <= '9') || (*txt >= 'A' && *txt <= 'F'))) {
 				return 0;
 			}
 		} else if(*template != *txt) {

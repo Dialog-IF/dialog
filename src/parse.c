@@ -31,7 +31,7 @@ static int valid_varname_char(uint8_t ch) {
 		(ch >= 'a' && ch <= 'z')
 		|| (ch >= 'A' && ch <= 'Z')
 		|| (ch >= '0' && ch <= '9')
-		|| (ch >= 128 && ch <= 255)
+		|| ch >= 128
 		|| ch == '_'
 		|| ch == '-';
 }

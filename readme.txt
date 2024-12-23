@@ -1,5 +1,5 @@
-This archive contains version 0g/03 of the Dialog compiler and interactive
-debugger, bundled with documentation and version 0.26 of the dialog Standard
+This archive contains version 0g/04 of the Dialog compiler and interactive
+debugger, bundled with documentation and version 0.27 of the dialog Standard
 Library.
 
 Directory structure:
@@ -37,6 +37,21 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0g/04 Lib 0.27 (Manual revision 13):
+
+		Debugger and aa-machine backend: Improved support for Unicode
+		characters, including case conversion.
+
+		Aa-backend bugfix: Non-ASCII characters are now treated
+		properly during string encoding.
+
+		Library: Added a new '(game over option)' predicate, for adding
+		custom options to the game over menu.
+
+		Compiler: Rephrased a confusing warning message.
+
+		Documentation: Clarifications and minor updates.
 
 	0g/03 Lib 0.26 (Manual revision 12):
 
