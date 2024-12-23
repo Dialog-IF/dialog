@@ -465,7 +465,6 @@ void pp_clause(struct clause *cl) {
 	printf(" ---> ");
 	pp_body(cl->body);
 	printf("\n");
-	if(cl->structure) printf("\tstructure: %s\n", cl->structure);
 }
 
 void pp_predicate(struct predname *predname, struct program *prg) {

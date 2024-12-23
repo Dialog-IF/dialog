@@ -1,6 +1,6 @@
 
 (library version)
-	Library version 0.39.
+	Library version 0.40.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -366,7 +366,12 @@
 %% Given a room and a target room, what direction (if any) leads there?
 
 (from $Here go $Dir to room $Room)
-	(if) (bound $Dir) (then)
+	(if) (bound $Room) (then)
+		(from $Here go $Dir to $Room)
+	(or)
+		(from $Here through $Door to $Room)
+		(from $Here go $Dir to $Door)
+	(else)
 		*(from $Here go $Dir to $Target)
 		(if) (room $Target) (then)
 			($Target = $Room)
@@ -377,11 +382,6 @@
 			~($Target blocks passage)
 			(from $Here through $Target to $Room)
 		(endif)
-	(else)
-		(from $Here go $Dir to $Room)
-		(or)
-		(from $Here through $Door to $Room)
-		(from $Here go $Dir to $Door)
 	(endif)
 
 (interface (from $<Room go $<Dir to object $>Obj))
@@ -537,7 +537,7 @@
 %% These rules should generally be left as they are:
 
 (rebuild scope)
-	(recompute visibility)
+	(update environment around player)
 	(forget pronouns out of scope)
 
 (interface ($>Obj is in scope))
@@ -2412,6 +2412,36 @@
 (grammar [get/jump/go [out off] of [single]] for [leave $])
 (grammar [get/jump/go off [single]] for [leave $])
 
+(understand [u/up] as [leave $Obj])
+	(current player $Player)
+	($Player has parent $Obj)
+	(seat $Obj)
+
+(understand [go/get u/up] as [leave $Obj])
+	(current player $Player)
+	($Player has parent $Obj)
+	(seat $Obj)
+
+(understand [d/down] as [leave $Obj])
+	(current player $Player)
+	($Player is #on $Obj)
+	~(seat $Obj)
+
+(understand [go/get/climb d/down] as [leave $Obj])
+	(current player $Player)
+	($Player is #on $Obj)
+	~(seat $Obj)
+
+(understand [out] as [leave $Obj])
+	(current player $Player)
+	($Player is #in $Obj)
+	~(room $Obj)
+
+(understand [go/get out] as [leave $Obj])
+	(current player $Player)
+	($Player is #in $Obj)
+	~(room $Obj)
+
 (grammar [leave/exit] for [leave])
 (grammar [get/jump [out off]] for [leave])
 
@@ -2488,9 +2518,8 @@
 
 (perform [leave $Obj])
 	(narrate leaving $Obj)
-	(current player $Player)
 	($Obj is $NewRel $NewObj)
-	(now) ($Player is $NewRel $NewObj)
+	(move player to $NewRel $NewObj)
 
 %% GO TO <room>
 
@@ -2576,45 +2605,24 @@
 		%% Only consider the first direction in the list.
 		([+ $Dir | $] = $DirList)
 	(endif)
+	(unlikely [go $Dir])
+
+(unlikely [go $Dir])
 	(current room $Room)
 	~{
 		(from $Room go $Dir to $Target)
 		{ (room $Target) (or) (door $Target) (or) (direction $Target) }
 	}
 
-(before [go $Dir])
-	(current player $Actor)
-	~{ ($Dir = #down) ($Actor has relation #on) }
-	~{ ($Dir = #out) ($Actor has relation #in) }
-	~{ ($Dir = #up) ($Actor has parent $Parent) (seat $Parent) }
+(before [go $])
 	(recursively leave non-vehicles)
 
 (before [go $Dir])
-	(current player $Actor)
-	~{ ($Dir = #down) ($Actor has relation #on) }
-	~{ ($Dir = #out) ($Actor has relation #in) }
 	(current room $Room)
 	(from $Room go $Dir to $Target)
 	(door $Target)
 	($Target is closed)
 	(first try [open $Target])
-
-(instead of [go #up])
-	(current player $Player)
-	($Player has parent $Obj)
-	(seat $Obj)
-	(try [leave $Obj])
-
-(instead of [go #down])
-	(current player $Actor)
-	($Actor is #on $Obj)
-	(try [leave $Obj])
-
-(instead of [go #out])
-	(current player $Actor)
-	($Actor is #in $Obj)
-	~(room $Obj)
-	(try [leave $Obj])
 
 (prevent [go $])
 	(current player $Actor)
@@ -3402,12 +3410,12 @@
 			(notice player's $Stripped) %% Set 'them'.
 		(endif)
 		(exhaust) {
-			*(expand complex objlist $ComplexObjects $ObjList)
-			(line) Trying to (describe action [$Verb | $ObjList]):
+			*(expand complex objlist $ComplexObjects $ObjList $Obj)
+			(line) (The full $Obj):
 			(try-decorated $Verb $ObjList)
 		}
 	(else)
-		*(expand complex objlist $ComplexObjects $ObjList)
+		*(expand complex objlist $ComplexObjects $ObjList $)
 		(try-decorated $Verb $ObjList)
 	(endif)
 
@@ -3446,19 +3454,19 @@
 (strip decorations from [$Obj | $MoreIn] into [$Obj | $MoreOut])
 	(strip decorations from $MoreIn into $MoreOut)
 
-(expand complex objlist [] [])
+(expand complex objlist [] [] [])
 	(just)
 
-(expand complex objlist [[+ | $ObjList] | $MoreIn] [$Obj | $MoreOut])
+(expand complex objlist [[+ | $ObjList] | $MoreIn] [$Obj | $MoreOut] $Obj)
 	(just)
 	*($Obj is one of $ObjList)
-	*(expand complex objlist $MoreIn $MoreOut)
+	*(expand complex objlist $MoreIn $MoreOut $)
 
-(expand complex objlist [$Other | $MoreIn] [$Other | $MoreOut])
-	*(expand complex objlist $MoreIn $MoreOut)
+(expand complex objlist [$Other | $MoreIn] [$Other | $MoreOut] $Obj)
+	*(expand complex objlist $MoreIn $MoreOut $Obj)
 
 (unlikely-complex [$Verb | $ComplexObjList] $VeryLevel)
-	*(expand complex objlist $ComplexObjList $SimpleObjList)
+	*(expand complex objlist $ComplexObjList $SimpleObjList $)
 	(strip decorations from $SimpleObjList into $Stripped)
 	(level $VeryLevel unlikely [$Verb | $Stripped])
 
@@ -3500,7 +3508,7 @@
 	(if) (inhibiting next tick) (then)
 		(now) ~(inhibiting next tick)
 	(else)
-		(recompute visibility)
+		(update environment around player)
 		(exhaust) *(early on every tick)
 		(exhaust) *(on every tick)
 		(exhaust) *(late on every tick)
@@ -3793,6 +3801,7 @@
 (es [$Single])			(es $Single)
 (the [$Single] is)		(the $Single is)
 (it [$Single] is)		(it $Single is)
+(them [$Single])		(them $Single)
 
 (it (nonempty $List))		they
 (its (nonempty $List))		their
@@ -3805,6 +3814,7 @@
 (es (nonempty $List))
 (the (nonempty $List) is)	(the $List) are
 (it (nonempty $List) is)	they're
+(them (nonempty $List))		them
 
 (the full $Obj)		
 	(the $Obj)
@@ -4427,6 +4437,7 @@
 (global variable (deferred commandline $))
 
 (read-parse-act)
+	(rebuild scope)
 	(if) (deferred commandline $Words) (then)
 		(now) ~(deferred commandline $)
 		(stoppable) {
@@ -5312,9 +5323,6 @@
 		(narrate undoing)
 		(stop)
 	(endif)
-
-	(rebuild scope)
-
 	(if)
 		(nonempty $ChoiceList)
 		($Words = [$Index])

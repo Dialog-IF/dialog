@@ -1322,6 +1322,10 @@ static int compute_wordmap(struct program *prg, struct astnode *generators, stru
 	(void) j;
 	(void) k;
 
+	if(tallies[prg->ndictword].count > MAXWORDMAP) {
+		return -1;
+	}
+
 #if 1
 	for(i = 0; i < prg->ndictword; i++) {
 		if(tallies[i].count <= MAXWORDMAP) {
@@ -1361,10 +1365,6 @@ static int compute_wordmap(struct program *prg, struct astnode *generators, stru
 		}
 	}
 #endif
-
-	if(tallies[prg->ndictword].count > MAXWORDMAP) {
-		return -1;
-	}
 
 	pred->wordmaps = realloc(pred->wordmaps, (pred->nwordmap + 1) * sizeof(struct wordmap));
 	map = &pred->wordmaps[pred->nwordmap++];
@@ -2173,133 +2173,19 @@ static void frontend_reset_program(struct program *prg) {
 	}
 }
 
-static uint32_t *selectidbuf;
-static int selectidpos, nalloc_selectid;
+static int nselectform;
+static int nalloc_selectform;
+static struct selectform *selectforms;
 
-static void extract_select_statements(struct program *prg, struct astnode *an) {
-	int i;
-
-	while(an) {
-		if(an->kind == AN_SELECT && an->subkind != SEL_P_RANDOM) {
-			if(selectidpos >= nalloc_selectid) {
-				nalloc_selectid = 2 * selectidpos + 8;
-				selectidbuf = realloc(selectidbuf, nalloc_selectid * sizeof(uint32_t));
-			}
-			selectidbuf[selectidpos++] = an->value;
-		}
-		for(i = 0; i < an->nchild; i++) {
-			extract_select_statements(prg, an->children[i]);
-		}
-		an = an->next_in_body;
-	}
-}
-
-static void enumerate_select_statements(struct program *prg, struct astnode *an, uint32_t *mapping) {
-	int i;
-
-	while(an) {
-		if(an->kind == AN_SELECT
-		&& an->subkind != SEL_P_RANDOM
-		&& !(an->subkind == SEL_STOPPING && an->nchild == 2 && (prg->optflags & OPTF_SIMPLE_SELECT))) {
-			if(mapping) {
-				an->value = *mapping++;
-				assert(an->value < prg->nselect);
-			} else {
-				if(prg->nselect >= prg->nalloc_select) {
-					prg->nalloc_select = 2 * prg->nselect + 8;
-					prg->select = realloc(prg->select, prg->nalloc_select);
-				}
-				an->value = prg->nselect;
-				prg->select[prg->nselect++] = 0;
-			}
-		}
-		for(i = 0; i < an->nchild; i++) {
-			enumerate_select_statements(prg, an->children[i], mapping);
-		}
-		an = an->next_in_body;
-	}
-}
-
-static char *structbuf;
-static int structpos, nalloc_struct;
-
-static void add_structchar(char ch) {
-	if(structpos >= nalloc_struct) {
-		nalloc_struct = structpos * 2 + 8;
-		structbuf = realloc(structbuf, nalloc_struct);
-	}
-	structbuf[structpos++] = ch;
-}
-
-static void determine_clause_struct(struct astnode *an) {
-	int i;
-
-	while(an) {
-		if(an->kind == AN_SELECT && an->subkind != SEL_P_RANDOM) {
-			add_structchar('A' + an->subkind);
-			add_structchar('[');
-			for(i = 0; i < an->nchild; i++) {
-				if(i) add_structchar(',');
-				determine_clause_struct(an->children[i]);
-			}
-			add_structchar(']');
-		} else {
-			for(i = 0; i < an->nchild; i++) {
-				determine_clause_struct(an->children[i]);
-			}
-		}
-		an = an->next_in_body;
-	}
-}
-
-static int match_clause_param(struct astnode *a, struct astnode *b) {
-	if(a->kind != b->kind) return 0;
-
-	switch(a->kind) {
-	case AN_BAREWORD:
-	case AN_DICTWORD:
-	case AN_TAG:
-	case AN_VARIABLE:
-		return a->word == b->word;
-	case AN_INTEGER:
-		return a->value == b->value;
-	case AN_PAIR:
-		return
-			match_clause_param(a->children[0], b->children[0]) &&
-			match_clause_param(a->children[1], b->children[1]);
-	case AN_EMPTY_LIST:
-		return 1;
-	default:
-		assert(0); exit(1);
-	}
-}
-
-static void find_select_mapping(struct predicate *oldpred, int n_old, struct predicate *newpred, int n_new, uint16_t *result) {
+static void match_select_forms(struct selectform *oldform, int n_old, struct selectform *newform, int n_new) {
 	uint16_t cost[n_old + 1][n_new + 1], bestcost;
 	char path[n_old + 1][n_new + 1], bestpath;
-	int i, j, k;
-	struct clause *oldcl, *newcl;
-
-#if 0
-	for(i = 0; i < n_old; i++) {
-		printf("old clause %d: %04x \"%s\"\n",
-			i,
-			oldpred->selectclauses[i],
-			oldpred->clauses[oldpred->selectclauses[i]]->structure);
-	}
-
-	for(i = 0; i < n_new; i++) {
-		printf("new clause %d: %04x \"%s\"\n",
-			i,
-			newpred->selectclauses[i],
-			newpred->clauses[newpred->selectclauses[i]]->structure);
-	}
-#endif
+	int i, j;
 
 	for(i = n_old; i >= 0; i--) {
 		for(j = n_new; j >= 0; j--) {
 			bestcost = 0xffff;
-			bestpath = 0xff;
+			bestpath = 0;
 			if(i == n_old && j == n_new) {
 				// match end-of-list with end-of-list at zero cost
 				bestcost = 0;
@@ -2320,23 +2206,12 @@ static void find_select_mapping(struct predicate *oldpred, int n_old, struct pre
 				}
 			}
 			if(i < n_old && j < n_new) {
-				oldcl = oldpred->clauses[oldpred->selectclauses[i]];
-				newcl = newpred->clauses[newpred->selectclauses[j]];
-				if(!strcmp(oldcl->structure, newcl->structure)) {
-					for(k = 0; k < newcl->predicate->arity; k++) {
-						if(!match_clause_param(
-							oldpred->clauses[oldpred->selectclauses[i]]->params[k],
-							newpred->clauses[newpred->selectclauses[j]]->params[k]))
-						{
-							break;
-						}
-					}
-					if(k == newcl->predicate->arity) {
-						// a match is possible here, at zero cost
-						if(cost[i + 1][j + 1] < bestcost) {
-							bestcost = cost[i + 1][j + 1];
-							bestpath = 'm';
-						}
+				if(oldform[i].subkind == newform[j].subkind
+				&& oldform[i].nchild == newform[j].nchild) {
+					// a match is possible here, at zero cost
+					if(cost[i + 1][j + 1] < bestcost) {
+						bestcost = cost[i + 1][j + 1];
+						bestpath = 'm';
 					}
 				}
 			}
@@ -2350,14 +2225,14 @@ static void find_select_mapping(struct predicate *oldpred, int n_old, struct pre
 		switch(path[i][j]) {
 		case 'i':
 			//printf("generate new for %04x\n", j);
-			result[j++] = 0xffff;
+			newform[j++].assigned_id = 0xffff;
 			break;
 		case 'r':
 			i++;
 			break;
 		case 'm':
 			//printf("copy old %04x to new %04x\n", i, j);
-			result[j++] = i++;
+			newform[j++].assigned_id = oldform[i++].assigned_id;
 			break;
 		default:
 			assert(0); exit(1);
@@ -2365,87 +2240,87 @@ static void find_select_mapping(struct predicate *oldpred, int n_old, struct pre
 	}
 }
 
-static void recover_select_statements(struct program *prg) {
-	int i, j, n_new;
+static void discover_select_statements(struct program *prg, struct astnode *an) {
+	int i;
+
+	while(an) {
+		if(an->kind == AN_SELECT) {
+			if(nselectform >= nalloc_selectform) {
+				nalloc_selectform = 2 * nselectform + 8;
+				selectforms = realloc(selectforms, nalloc_selectform * sizeof(struct selectform));
+			}
+			selectforms[nselectform].subkind = an->subkind;
+			selectforms[nselectform].nchild = an->nchild;
+			selectforms[nselectform].assigned_id = 0xffff;
+			nselectform++;
+		}
+		for(i = 0; i < an->nchild; i++) {
+			discover_select_statements(prg, an->children[i]);
+		}
+		an = an->next_in_body;
+	}
+}
+
+static void update_select_statements(struct program *prg, struct astnode *an, struct selectform *table, int *next) {
+	int i;
+
+	while(an) {
+		if(an->kind == AN_SELECT) {
+			assert(an->value == -1);
+			an->value = table[(*next)++].assigned_id;
+			assert(an->value != -1);
+		}
+		for(i = 0; i < an->nchild; i++) {
+			update_select_statements(prg, an->children[i], table, next);
+		}
+		an = an->next_in_body;
+	}
+}
+
+static void assign_select_statements(struct program *prg) {
+	int i, j, next;
 	struct predname *predname;
 	struct predicate *pred;
-	uint16_t *newtable = 0;
-	struct clause *oldcl, *newcl;
-	int nalloc_new = 0;
-
-	structpos = 0;
 
 	for(i = 0; i < prg->npredicate; i++) {
 		predname = prg->predicates[i];
-		pred = predname->pred;
-		n_new = 0;
-		for(j = 0; j < pred->nclause; j++) {
-			structpos = 0;
-			determine_clause_struct(pred->clauses[j]->body);
-			if(structpos) {
-				add_structchar(0);
-				pred->clauses[j]->structure = arena_strdup(&pred->arena, structbuf);
-				if(n_new >= nalloc_new) {
-					nalloc_new = n_new * 2 + 8;
-					newtable = realloc(newtable, nalloc_new * sizeof(uint16_t));
-				}
-				newtable[n_new++] = j;
-			} else {
-				pred->clauses[j]->structure = 0;
+		if(!predname->special) {
+			pred = predname->pred;
+			nselectform = 0;
+			for(j = 0; j < pred->nclause; j++) {
+				discover_select_statements(prg, pred->clauses[j]->body);
 			}
-		}
-		pred->nselectclause = n_new;
-		if(n_new) {
-			pred->selectclauses = arena_alloc(&pred->arena, n_new * sizeof(uint16_t));
-			memcpy(pred->selectclauses, newtable, n_new * sizeof(uint16_t));
-			if(predname->old_pred && predname->old_pred->nselectclause) {
-#if 0
-				printf("trying to match %d old against %d new for %s\n",
-					predname->old_pred->nselectclause,
-					n_new,
-					predname->printed_name);
-#endif
-				find_select_mapping(
-					predname->old_pred,
-					predname->old_pred->nselectclause,
-					pred,
-					pred->nselectclause,
-					newtable);
-				for(j = 0; j < n_new; j++) {
-					newcl = pred->clauses[pred->selectclauses[j]];
-					if(newtable[j] == 0xffff) {
-						enumerate_select_statements(prg, newcl->body, 0);
-					} else {
-						oldcl = predname->old_pred->clauses[
-							predname->old_pred->selectclauses[newtable[j]]];
-						selectidpos = 0;
-						extract_select_statements(prg, oldcl->body);
-						enumerate_select_statements(prg, newcl->body, selectidbuf);
+			assert(!pred->selectforms);
+			pred->nselectform = nselectform;
+			pred->selectforms = arena_alloc(&pred->arena, nselectform * sizeof(struct selectform));
+			memcpy(pred->selectforms, selectforms, nselectform * sizeof(struct selectform));
+			if(predname->old_pred && predname->old_pred->nselectform) {
+				match_select_forms(
+					predname->old_pred->selectforms,
+					predname->old_pred->nselectform,
+					pred->selectforms,
+					nselectform);
+			}
+			for(j = 0; j < nselectform; j++) {
+				if(pred->selectforms[j].assigned_id == 0xffff) {
+					if(prg->nselect >= prg->nalloc_select) {
+						prg->nalloc_select = 2 * prg->nselect + 8;
+						prg->select = realloc(prg->select, prg->nalloc_select);
 					}
-				}
-			} else {
-#if 0
-				printf("generating %d new for %s\n",
-					n_new,
-					predname->printed_name);
-#endif
-				for(j = 0; j < n_new; j++) {
-					newcl = pred->clauses[pred->selectclauses[j]];
-					enumerate_select_statements(prg, newcl->body, 0);
+					pred->selectforms[j].assigned_id = prg->nselect;
+					prg->select[prg->nselect++] = 0;
 				}
 			}
+			next = 0;
+			for(j = 0; j < pred->nclause; j++) {
+				update_select_statements(prg, pred->clauses[j]->body, pred->selectforms, &next);
+			}
 		}
-		pred_release(predname->old_pred);
-		predname->old_pred = 0;
 	}
 
-	free(structbuf);
-	structbuf = 0;
-	nalloc_struct = 0;
-	free(selectidbuf);
-	selectidbuf = 0;
-	nalloc_selectid = 0;
-	free(newtable);
+	free(selectforms);
+	nalloc_selectform = 0;
+	selectforms = 0;
 }
 
 char *decode_metadata_str(int builtin, struct word *param, struct program *prg, struct arena *arena) {
@@ -2485,7 +2360,7 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 		predname = prg->predicates[i];
 		if(!predname->special) {
 			pred_release(predname->old_pred);
-			if(predname->pred->nselectclause) {
+			if(predname->pred->nselectform) {
 				predname->old_pred = predname->pred;
 				pred_claim(predname->old_pred);
 			} else {
@@ -2747,7 +2622,7 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 		}
 	} while(flag);
 
-	recover_select_statements(prg);
+	assign_select_statements(prg);
 	trace_invocations(prg);
 	find_fixed_flags(prg);
 

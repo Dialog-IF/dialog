@@ -207,7 +207,6 @@ struct clause {
 	struct clause		*next_in_source;
 	void			*backend;
 	struct word		**varnames;
-	char			*structure;
 	struct clause_code	*entrypoints;
 	line_t			line;
 	uint16_t		nvar;
@@ -242,16 +241,22 @@ struct predname {
 #define PREDNF_META		0x0001
 #define PREDNF_DEFINABLE_BI	0x0002
 
+struct selectform {
+	uint8_t			subkind;
+	uint8_t			nchild;
+	uint16_t		assigned_id;
+};
+
 struct predicate {
 	struct clause		**clauses;
 	struct clause		**macrodefs;
+	struct selectform	*selectforms;
 	uint32_t		flags;
 	uint16_t		nclause;
 	uint16_t		nmacrodef;
 	uint16_t		unbound_in;
 	uint16_t		unbound_out;
-	uint16_t		nselectclause;
-	uint16_t		*selectclauses;
+	uint16_t		nselectform;
 	uint16_t		nwordmap;
 	uint16_t		nroutine;
 	struct wordmap		*wordmaps;

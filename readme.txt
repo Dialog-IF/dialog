@@ -1,5 +1,5 @@
-This archive contains version 0k/02 of the Dialog compiler and interactive
-debugger, bundled with documentation and version 0.39 of the Dialog Standard
+This archive contains version 0k/03 of the Dialog compiler and interactive
+debugger, bundled with documentation and version 0.40 of the Dialog Standard
 Library.
 
 Directory structure:
@@ -37,6 +37,35 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0k/03, Lib 0.40 (Manual revision 25):
+
+		Library: Printing the name of each object when expanding a
+		complex action, rather than spelling out the entire action.
+
+		Library: Understanding DOWN, UP, and OUT as ambiguously
+		referring to '[leave $]' and '[go $]' when the player is
+		respectively on a supporter, in or on a seat, or in a
+		container.
+
+		Library: '(them $)' can now deal with a list argument.
+
+		Library: Allowing '(from $ go $ to room $)' to be invoked with
+		just the first parameter bound, to backtrack over all exits.
+
+		Library: '(perform [leave $])' now uses '(move player to $ $)'
+		instead of setting the location of the player object directly.
+
+		Library: Updating the environment around the player (the cache
+		variables) before drawing the status line.
+
+		Debugger: Reimplemented and simplified the algorithm for
+		matching select statements when updating a running program.
+
+		Debugger: No longer crashes when encountering output boxes
+		while collecting words.
+
+		Aa-backend: Picking shorter opcodes in some situations.
 
 	0k/02, Lib 0.39 (Manual revision 24):
 

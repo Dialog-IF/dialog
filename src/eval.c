@@ -1327,69 +1327,77 @@ static int eval_run(struct eval_state *es) {
 			break;
 		case I_BEGIN_BOX:
 			assert(ci->oper[0].tag == OPER_BOX);
-			if(es->divsp == EVAL_MAXDIV) {
-				pred_release(pp.pred);
-				return ESTATUS_ERR_IO;
-			}
-			es->divstack[es->divsp++] = ci->oper[0].value;
-			if(ci->subop == BOX_STATUS) {
-				if(es->inStatus || es->nSpan) {
+			if(!es->forwords) {
+				if(es->divsp == EVAL_MAXDIV) {
+					pred_release(pp.pred);
+					return ESTATUS_ERR_IO;
+				}
+				es->divstack[es->divsp++] = ci->oper[0].value;
+				if(ci->subop == BOX_STATUS) {
+					if(es->inStatus || es->nSpan) {
+						pred_release(pp.pred);
+						return ESTATUS_ERR_IO;
+					} else {
+						o_begin_box("status");
+						es->inStatus = 1;
+					}
+				} else if(ci->subop == BOX_DIV && es->nSpan) {
 					pred_release(pp.pred);
 					return ESTATUS_ERR_IO;
 				} else {
-					o_begin_box("status");
-					es->inStatus = 1;
+					if(!push_aux(es, (value_t) {VAL_NUM, es->divstyle})) {
+						pred_release(pp.pred);
+						return ESTATUS_ERR_AUX;
+					}
+					if(ci->subop == BOX_SPAN) {
+						o_sync();
+						o_begin_box("span");
+						es->nSpan++;
+					} else {
+						o_par_n(es->program->boxclasses[ci->oper[0].value].margintop);
+						o_begin_box("box");
+					}
+					if(es->program->boxclasses[ci->oper[0].value].style) {
+						es->divstyle = es->program->boxclasses[ci->oper[0].value].style & 0x7f;
+					}
+					o_set_style(STYLE_ROMAN);
+					o_set_style(es->divstyle);
 				}
-			} else if(ci->subop == BOX_DIV && es->nSpan) {
-				pred_release(pp.pred);
-				return ESTATUS_ERR_IO;
-			} else {
-				if(!push_aux(es, (value_t) {VAL_NUM, es->divstyle})) {
-					pred_release(pp.pred);
-					return ESTATUS_ERR_AUX;
-				}
-				if(ci->subop == BOX_SPAN) {
-					o_sync();
-					o_begin_box("span");
-					es->nSpan++;
-				} else {
-					o_par_n(es->program->boxclasses[ci->oper[0].value].margintop);
-					o_begin_box("box");
-				}
-				if(es->program->boxclasses[ci->oper[0].value].style) {
-					es->divstyle = es->program->boxclasses[ci->oper[0].value].style & 0x7f;
-				}
-				o_set_style(STYLE_ROMAN);
-				o_set_style(es->divstyle);
 			}
 			break;
 		case I_BEGIN_LINK:
-			if(!es->nLink) {
-				begin_link(es, value_of(ci->oper[0], es));
+			if(!es->forwords) {
+				if(!es->nLink) {
+					begin_link(es, value_of(ci->oper[0], es));
+				}
+				es->nLink++;
+				es->nSpan++;
 			}
-			es->nLink++;
-			es->nSpan++;
 			break;
 		case I_BEGIN_LINK_RES:
-			if(!es->nLink) {
-				v = eval_deref(value_of(ci->oper[0], es), es);
-				assert(v.tag == VAL_NUM);
-				begin_link_res(es, v.value);
+			if(!es->forwords) {
+				if(!es->nLink) {
+					v = eval_deref(value_of(ci->oper[0], es), es);
+					assert(v.tag == VAL_NUM);
+					begin_link_res(es, v.value);
+				}
+				es->nLink++;
+				es->nSpan++;
 			}
-			es->nLink++;
-			es->nSpan++;
 			break;
 		case I_BEGIN_LOG:
 			o_begin_box("debugger");
 			break;
 		case I_BEGIN_SELF_LINK:
-			if(!es->nLink) {
-				if(!es->hide_links) {
-					o_begin_self_link();
+			if(!es->forwords) {
+				if(!es->nLink) {
+					if(!es->hide_links) {
+						o_begin_self_link();
+					}
 				}
+				es->nLink++;
+				es->nSpan++;
 			}
-			es->nLink++;
-			es->nSpan++;
 			break;
 		case I_BREAKPOINT:
 			if(!ci->subop && tr_line) {
@@ -1653,42 +1661,48 @@ static int eval_run(struct eval_state *es) {
 			revert_env_to(es, env->env);
 			break;
 		case I_EMBED_RES:
-			v = eval_deref(value_of(ci->oper[0], es), es);
-			assert(v.tag == VAL_NUM);
-			o_print_word("[");
-			o_print_word(es->program->resources[v.value].alt);
-			o_print_word("]");
+			if(!es->forwords) {
+				v = eval_deref(value_of(ci->oper[0], es), es);
+				assert(v.tag == VAL_NUM);
+				o_print_word("[");
+				o_print_word(es->program->resources[v.value].alt);
+				o_print_word("]");
+			}
 			break;
 		case I_END_BOX:
-			if(!es->divsp) {
-				pred_release(pp.pred);
-				return ESTATUS_ERR_IO;
-			}
-			es->divsp--;
-			o_end_box();
-			if(ci->subop == BOX_STATUS) {
-				es->inStatus = 0;
-			} else {
-				if(ci->subop == BOX_SPAN) {
-					es->nSpan--;
-				} else {
-					o_par_n(es->program->boxclasses[ci->oper[0].value].marginbottom);
+			if(!es->forwords) {
+				if(!es->divsp) {
+					pred_release(pp.pred);
+					return ESTATUS_ERR_IO;
 				}
-				assert(es->aux);
-				v = es->auxstack[--es->aux];
-				assert(v.tag == VAL_NUM);
-				es->divstyle = v.value;
+				es->divsp--;
+				o_end_box();
+				if(ci->subop == BOX_STATUS) {
+					es->inStatus = 0;
+				} else {
+					if(ci->subop == BOX_SPAN) {
+						es->nSpan--;
+					} else {
+						o_par_n(es->program->boxclasses[ci->oper[0].value].marginbottom);
+					}
+					assert(es->aux);
+					v = es->auxstack[--es->aux];
+					assert(v.tag == VAL_NUM);
+					es->divstyle = v.value;
+				}
+				o_set_style(STYLE_ROMAN);
+				o_set_style(es->divstyle);
 			}
-			o_set_style(STYLE_ROMAN);
-			o_set_style(es->divstyle);
 			break;
 		case I_END_LINK:
 		case I_END_LINK_RES:
-			es->nLink--;
-			es->nSpan--;
-			if(!es->nLink) {
-				if(!es->hide_links) {
-					o_end_link();
+			if(!es->forwords) {
+				es->nLink--;
+				es->nSpan--;
+				if(!es->nLink) {
+					if(!es->hide_links) {
+						o_end_link();
+					}
 				}
 			}
 			break;
@@ -1696,11 +1710,13 @@ static int eval_run(struct eval_state *es) {
 			o_end_box();
 			break;
 		case I_END_SELF_LINK:
-			es->nLink--;
-			es->nSpan--;
-			if(!es->nLink) {
-				if(!es->hide_links) {
-					o_end_self_link();
+			if(!es->forwords) {
+				es->nLink--;
+				es->nSpan--;
+				if(!es->nLink) {
+					if(!es->hide_links) {
+						o_end_self_link();
+					}
 				}
 			}
 			break;

@@ -2620,12 +2620,22 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				if(ci->oper[0].tag == OPER_VAR
 				|| ci->oper[0].tag == OPER_ARG
 				|| ci->oper[0].tag == OPER_TEMP) {
-					ai->oper[0] = encode_value(ci->oper[1], prg);
+					if(ci->oper[1].tag == VAL_OBJ && ci->oper[1].value < 0xff) {
+						ai->op |= 0x80;
+						ai->oper[0] = (aaoper_t) {AAO_VBYTE, 1 + ci->oper[1].value};
+					} else {
+						ai->oper[0] = encode_value(ci->oper[1], prg);
+					}
 					ai->oper[1] = encode_dest(ci->oper[0], prg, 1);
 				} else if(ci->oper[1].tag == OPER_VAR
 				|| ci->oper[1].tag == OPER_ARG
 				|| ci->oper[1].tag == OPER_TEMP) {
-					ai->oper[0] = encode_value(ci->oper[0], prg);
+					if(ci->oper[0].tag == VAL_OBJ && ci->oper[0].value < 0xff) {
+						ai->op |= 0x80;
+						ai->oper[0] = (aaoper_t) {AAO_VBYTE, 1 + ci->oper[0].value};
+					} else {
+						ai->oper[0] = encode_value(ci->oper[0], prg);
+					}
 					ai->oper[1] = encode_dest(ci->oper[1], prg, 1);
 				} else {
 					assert(0);
