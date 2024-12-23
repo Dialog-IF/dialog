@@ -1,4 +1,4 @@
-This archive contains version 0h/01 of the Dialog compiler and interactive
+This archive contains version 0h/02 of the Dialog compiler and interactive
 debugger, bundled with documentation and version 0.30 of the dialog Standard
 Library.
 
@@ -37,6 +37,16 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0h/02 Lib 0.30 (Manual revision 16):
+
+		Debugger: Results from interactive queries to *(split $ by $
+		into $ and $) are displayed properly.
+
+		Debugger: Attempts to define closures interactively are
+		rejected, but no longer crash.
+
+		Aa-backend: Improved code generation.
 
 	0h/01 Lib 0.30 (Manual revision 15):
 

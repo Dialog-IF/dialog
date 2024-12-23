@@ -962,6 +962,11 @@ static struct astnode *parse_expr(int parsemode, struct lexer *lexer, struct are
 			}
 		} else {
 			// Closure
+			if(lexer->string) {
+				report(LVL_ERR, line, "Closures cannot be defined interactively.");
+				lexer->errorflag = 1;
+				return 0;
+			}
 			orig_line = line;
 			body = 0;
 			dest = &body;

@@ -1073,6 +1073,8 @@ static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an,
 		// a1 = repurposed as list iterator
 		// a2 = left output
 		// a3 = right output
+		// however, if tracing is enabled, a4 is the iterator
+		i = do_trace? 4 : 1;
 		if(!do_trace) {
 			comp_value_into(cl, an->children[0], (value_t) {OPER_ARG, 0}, seen);
 			if(an->children[2]->kind != AN_VARIABLE
@@ -1087,7 +1089,7 @@ static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an,
 		labmatch = make_routine_id();
 		lab = make_routine_id();
 		ci = add_instr(I_ASSIGN);
-		ci->oper[0] = (value_t) {OPER_ARG, 1};
+		ci->oper[0] = (value_t) {OPER_ARG, i};
 		ci->oper[1] = (value_t) {OPER_ARG, 0};
 		ci = add_instr(I_JUMP);
 		ci->oper[0] = (value_t) {OPER_RLAB, labloop};
@@ -1096,11 +1098,11 @@ static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an,
 		begin_routine(labloop);
 		ci = add_instr(I_ASSIGN);
 		ci->oper[0] = (value_t) {OPER_TEMP, t2};
-		ci->oper[1] = (value_t) {OPER_ARG, 1};
+		ci->oper[1] = (value_t) {OPER_ARG, i};
 		ci = add_instr(I_GET_PAIR_RR);
 		ci->oper[0] = (value_t) {OPER_TEMP, t2};
 		ci->oper[1] = (value_t) {OPER_TEMP, t1};
-		ci->oper[2] = (value_t) {OPER_ARG, 1};
+		ci->oper[2] = (value_t) {OPER_ARG, i};
 		ci = add_instr(I_PREPARE_INDEX);
 		ci->oper[0] = (value_t) {OPER_TEMP, t1};
 		for(sub = an->children[1]; sub->kind != AN_EMPTY_LIST; sub = sub->children[1]) {
@@ -1115,17 +1117,17 @@ static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an,
 
 		begin_routine(lab);
 		ci = add_instr(I_POP_CHOICE);
-		ci->oper[0] = (value_t) {OPER_NUM, 4};
+		ci->oper[0] = (value_t) {OPER_NUM, do_trace? 5 : 4};
 		ci = add_instr(I_JUMP);
 		ci->oper[0] = (value_t) {OPER_RLAB, labloop};
 		end_routine_cl(cl);
 
 		begin_routine(labmatch);
 		ci = add_instr(I_PUSH_CHOICE);
-		ci->oper[0] = (value_t) {OPER_NUM, 4};
+		ci->oper[0] = (value_t) {OPER_NUM, do_trace? 5 : 4};
 		ci->oper[1] = (value_t) {OPER_RLAB, lab};
 		ci = add_instr(I_UNIFY);
-		ci->oper[0] = (value_t) {OPER_ARG, 1};
+		ci->oper[0] = (value_t) {OPER_ARG, i};
 		ci->oper[1] = (value_t) {OPER_ARG, 3};
 		if(do_trace
 		|| an->children[2]->kind != AN_VARIABLE

@@ -60,6 +60,18 @@ struct textstring {
 	uint8_t			*chars;
 };
 
+enum {
+	SEGSTATE_UNREACHED,
+	SEGSTATE_ENQUEUED,
+	SEGSTATE_LINKED
+};
+
+struct segment {
+	int			ninstr;
+	struct aainstr		*instr;
+	uint8_t			state;
+};
+
 static struct charmap charmap[128];
 static int ncharmap;
 static uint32_t charbits[129];	// for chars 20..a0 where 7f is extended and a0 is end, lsb first, set stop bit
@@ -76,6 +88,11 @@ static int n_glb_word, n_obj_word;
 
 static uint16_t *dynlink_id;
 static int n_dynlink;
+static uint16_t *initialparent;
+static uint16_t *initialsibling;
+static uint16_t *initialchild;
+static uint16_t *initial_tree_dfs;
+static int initial_tree_pos = 1;
 
 static int heap_sz, aux_sz, fixed_sz, longterm_sz;
 
@@ -107,6 +124,9 @@ static uint32_t *symbols;
 static uint32_t aatotalsize;
 
 static int *altstring;
+
+static struct segment *segment;
+static int nsegment, nalloc_segment;
 
 static int cmp_aadict(const void *a, const void *b) {
 	const struct dictentry *aa = a;
@@ -467,17 +487,76 @@ static int render_eval_value(uint16_t *buffer, int nword, value_t v, struct eval
 	return size;
 }
 
+static void visit_initial_tree(int onum, struct program *prg) {
+	int i;
+
+	if(initial_tree_dfs[onum]) {
+		report(
+			LVL_ERR,
+			0,
+			"Badly formed object tree! #%s is nested in itself.",
+			prg->worldobjnames[onum - 1]->name);
+		exit(1);
+	}
+	initial_tree_dfs[onum] = initial_tree_pos++;
+	for(i = initialchild[onum]; i; i = initialsibling[i - 1]) {
+		visit_initial_tree(i - 1, prg);
+	}
+}
+
+static void analyze_tree(struct program *prg) {
+	struct eval_state es;
+	value_t eval_args[2];
+	int i, j;
+	struct predname *predname = find_builtin(prg, BI_HASPARENT);
+
+	initialparent = arena_calloc(&aa_arena, prg->nworldobj * sizeof(uint16_t));
+	initialsibling = arena_calloc(&aa_arena, prg->nworldobj * sizeof(uint16_t));
+	initialchild = arena_calloc(&aa_arena, prg->nworldobj * sizeof(uint16_t));
+	initial_tree_dfs = arena_calloc(&aa_arena, prg->nworldobj * sizeof(uint16_t));
+
+	init_evalstate(&es, prg);
+	for(i = 0; i < prg->nworldobj; i++) {
+		eval_reinitialize(&es);
+		eval_args[0] = (value_t) {VAL_OBJ, i};
+		eval_args[1] = eval_makevar(&es);
+		if(eval_initial(&es, predname, eval_args)) {
+			if(eval_args[1].tag != VAL_OBJ) {
+				report(
+					LVL_ERR,
+					0,
+					"Initial value of ($ has parent $) must have objects in both parameters.");
+			}
+			initialparent[i] = eval_args[1].value + 1;
+		}
+		if(es.errorflag) exit(1);
+	}
+	free_evalstate(&es);
+
+	for(i = 0; i < prg->nworldobj; i++) {
+		j = initialparent[i];
+		if(j > 0) {
+			initialsibling[i] = initialchild[j - 1];
+			initialchild[j - 1] = i + 1;
+		}
+	}
+
+	for(i = 0; i < prg->nworldobj; i++) {
+		if(!initialparent[i]) {
+			visit_initial_tree(i, prg);
+		}
+	}
+
+	assert(initial_tree_pos == 1 + prg->nworldobj);
+}
+
 static int initial_values(struct program *prg, uint16_t *core, int ltt) {
 	struct eval_state es;
 	struct predname *predname;
 	struct predicate *pred;
 	int i, j;
 	int addr, size, status;
-	uint16_t initialparent[prg->nworldobj];
 	value_t eval_args[2];
-	uint8_t seen[prg->nworldobj];
-
-	memset(initialparent, 0, prg->nworldobj * sizeof(uint16_t));
 
 	init_evalstate(&es, prg);
 
@@ -544,46 +623,34 @@ static int initial_values(struct program *prg, uint16_t *core, int ltt) {
 						core[AA_N_INITREG + 1 + prg->nworldobj + first_gvar + prg->nglobalvar + dynlink_id[predname->dyn_id]] = last_wobj;
 					}
 				}
-			} else if(predname->arity == 2) {
+			} else if(predname->arity == 2 && predname->builtin != BI_HASPARENT) {
 				for(j = 0; j < prg->nworldobj; j++) {
 					eval_reinitialize(&es);
 					eval_args[0] = (value_t) {VAL_OBJ, j};
 					eval_args[1] = eval_makevar(&es);
-					if(predname->builtin == BI_HASPARENT) {
-						if(eval_initial(&es, predname, eval_args)) {
-							if(eval_args[1].tag != VAL_OBJ) {
-								report(
-									LVL_ERR,
-									0,
-									"Initial value of ($ has parent $) must have objects in both parameters.");
-							}
-							initialparent[j] = eval_args[1].value + 1;
-						}
-					} else {
-						assert(predname->dyn_id);
-						if(eval_initial(&es, predname, eval_args)) {
-							addr = 1 + prg->nworldobj + n_glb_word + j * n_obj_word + first_ovar + (predname->dyn_id - 1);
-							if(eval_args[1].tag == VAL_REF) {
-								report(
-									LVL_ERR,
-									0,
-									"Initial value of dynamic per-object variable %s, for #%s, must be bound.",
-									predname->printed_name,
-									prg->worldobjnames[j]->name);
-							} else if(eval_args[1].tag == VAL_PAIR) {
-								core[AA_N_INITREG + addr] = 0x8000 | ltt;
-								core[AA_N_INITREG + ltt + 1] = addr;
-								size = 2 + render_eval_value(
-									core + AA_N_INITREG + ltt + 2,
-									fixed_sz + longterm_sz - ltt - 2,
-									eval_args[0],
-									&es,
-									predname);
-								core[AA_N_INITREG + ltt + 0] = size;
-								ltt += size;
-							} else {
-								core[AA_N_INITREG + addr] = tag_eval_value(eval_args[1], prg);
-							}
+					assert(predname->dyn_id);
+					if(eval_initial(&es, predname, eval_args)) {
+						addr = 1 + prg->nworldobj + n_glb_word + j * n_obj_word + first_ovar + (predname->dyn_id - 1);
+						if(eval_args[1].tag == VAL_REF) {
+							report(
+								LVL_ERR,
+								0,
+								"Initial value of dynamic per-object variable %s, for #%s, must be bound.",
+								predname->printed_name,
+								prg->worldobjnames[j]->name);
+						} else if(eval_args[1].tag == VAL_PAIR) {
+							core[AA_N_INITREG + addr] = 0x8000 | ltt;
+							core[AA_N_INITREG + ltt + 1] = addr;
+							size = 2 + render_eval_value(
+								core + AA_N_INITREG + ltt + 2,
+								fixed_sz + longterm_sz - ltt - 2,
+								eval_args[0],
+								&es,
+								predname);
+							core[AA_N_INITREG + ltt + 0] = size;
+							ltt += size;
+						} else {
+							core[AA_N_INITREG + addr] = tag_eval_value(eval_args[1], prg);
 						}
 					}
 					if(es.errorflag) exit(1);
@@ -593,18 +660,6 @@ static int initial_values(struct program *prg, uint16_t *core, int ltt) {
 	}
 
 	for(i = 0; i < prg->nworldobj; i++) {
-		memset(seen, 0, prg->nworldobj);
-		for(j = i + 1; j > 0; j = initialparent[j - 1]) {
-			if(seen[j - 1]) {
-				report(
-					LVL_ERR,
-					0,
-					"Badly formed object tree! #%s is nested in itself.",
-					prg->worldobjnames[j - 1]->name);
-				exit(1);
-			}
-			seen[j - 1] = 1;
-		}
 		j = initialparent[i];
 		if(j > 0) {
 			core[AA_N_INITREG + 1 + prg->nworldobj + n_glb_word + i * n_obj_word + OVAR_PARENT] = j;
@@ -695,6 +750,74 @@ static aaoper_t encode_dest(value_t v, struct program *prg, int unify) {
 	} else {
 		printf("%d\n", v.tag);
 		assert(0); exit(1);
+	}
+}
+
+static void end_segment() {
+	if(nsegment >= nalloc_segment) {
+		nalloc_segment = nalloc_segment * 2 + 8;
+		segment = realloc(segment, nalloc_segment * sizeof(struct segment));
+	}
+
+	segment[nsegment].ninstr = ninstr;
+	segment[nsegment].instr = arena_alloc(&aa_arena, ninstr * sizeof(struct aainstr));
+	memcpy(segment[nsegment].instr, aainstr, ninstr * sizeof(struct aainstr));
+	segment[nsegment].state = SEGSTATE_UNREACHED;
+	nsegment++;
+	memset(aainstr, 0, ninstr * sizeof(struct aainstr));
+	ninstr = 0;
+}
+
+static void flatten_segments(struct program *prg) {
+	int segorder[nsegment], stack[nsegment];
+	int nsegorder = 0;
+	int s, sp = 0, target;
+	struct aainstr *ai;
+	int i, j;
+	int symbols[nextlabel];
+
+	memset(symbols, 0xff, nextlabel * sizeof(int));
+	for(i = 0; i < nsegment; i++) {
+		for(j = 0; segment[i].instr[j].op == AA_LABEL; j++) {
+			symbols[segment[i].instr[j].oper[0].value] = i;
+		}
+	}
+
+	stack[sp++] = 0;
+
+	while(sp) {
+		s = stack[--sp];
+		if(segment[s].state != SEGSTATE_LINKED) {
+			segorder[nsegorder++] = s;
+			segment[s].state = SEGSTATE_LINKED;
+			for(i = 0; i < segment[s].ninstr; i++) {
+				ai = &segment[s].instr[i];
+				for(j = 0; j < 4; j++) {
+					if(ai->oper[j].type == AAO_CODE
+					&& ai->oper[j].value != AAFAIL) {
+						target = symbols[ai->oper[j].value];
+						if(target >= 0
+						&& segment[target].state == SEGSTATE_UNREACHED) {
+							stack[sp++] = target;
+							segment[target].state = SEGSTATE_ENQUEUED;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	nalloc_instr = 0;
+	for(i = 0; i < nsegorder; i++) {
+		nalloc_instr += segment[segorder[i]].ninstr;
+	}
+	aainstr = realloc(aainstr, nalloc_instr * sizeof(struct aainstr));
+
+	assert(ninstr == 0);
+	for(i = 0; i < nsegorder; i++) {
+		s = segorder[i];
+		memcpy(aainstr + ninstr, segment[s].instr, segment[s].ninstr * sizeof(struct aainstr));
+		ninstr += segment[s].ninstr;
 	}
 }
 
@@ -839,9 +962,6 @@ static void compile_index(
 	struct cinstr *instr,
 	int ninstr,
 	uint32_t labelbase,
-	uint8_t *encountered,
-	uint16_t *rstack,
-	int *rsp,
 	uint32_t endlab)
 {
 	struct index_slot table[ninstr];
@@ -856,10 +976,6 @@ static void compile_index(
 		} else {
 			assert(instr[i].oper[1].tag == OPER_RLAB);
 			table[i].label = labelbase + instr[i].oper[1].value;
-			if(!encountered[instr[i].oper[1].value]) {
-				rstack[(*rsp)++] = instr[i].oper[1].value;
-				encountered[instr[i].oper[1].value] = 1;
-			}
 		}
 	}
 
@@ -971,11 +1087,27 @@ static int generate_output(struct program *prg, struct cinstr *instr, int dry_ru
 	return ninstr;
 }
 
+static void visit_reachable_routines(int rnum, struct predicate *pred, uint8_t *reachable) {
+	int i, j;
+	struct comp_routine *cr = &pred->routines[rnum];
+
+	if(reachable[rnum]) return;
+
+	reachable[rnum] = 1;
+	for(i = 0; i < cr->ninstr; i++) {
+		for(j = 0; j < 3; j++) {
+			if(cr->instr[i].oper[j].tag == OPER_RLAB) {
+				visit_reachable_routines(cr->instr[i].oper[j].value, pred, reachable);
+			}
+		}
+		if(cr->instr[i].implicit != 0xffff) {
+			visit_reachable_routines(cr->instr[i].implicit, pred, reachable);
+		}
+	}
+}
+
 static void compile_routines(struct program *prg, struct predicate *pred, int first_r, uint32_t labelbase) {
 	int i, j, k, m, sub_r_id;
-	uint16_t rstack[pred->nroutine];
-	uint8_t encountered[pred->nroutine];
-	int rsp = 0;
 	int sel, n, id, flag;
 	struct aainstr *ai;
 	struct comp_routine *cr;
@@ -984,13 +1116,19 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 	struct word *w;
 	struct wordmap *map;
 	aaoper_t aao;
+	uint8_t reachable[pred->nroutine];
 
-	memset(encountered, 0, pred->nroutine);
-	rstack[rsp++] = first_r;
-	encountered[first_r] = 1;
-	while(rsp) {
-		sub_r_id = rstack[--rsp];
+	memset(reachable, 0, sizeof(reachable));
+	visit_reachable_routines(first_r, pred, reachable);
+
+	for(sub_r_id = 0; sub_r_id < pred->nroutine; sub_r_id++) {
+		if(!reachable[sub_r_id]) {
+			continue;
+		}
 		assert(pred->routines[sub_r_id].reftrack != 0xffff);
+		if(sub_r_id == first_r) {
+			add_label(pred->predname->pred_id);
+		}
 		cr = &pred->routines[sub_r_id];
 		add_label(labelbase + sub_r_id);
 		for(i = 0; i < cr->ninstr; i++) {
@@ -1154,7 +1292,7 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				} else {
 					ll = nextlabel++;
 				}
-				compile_index(prg, &cr->instr[i], n, labelbase, encountered, rstack, &rsp, ll);
+				compile_index(prg, &cr->instr[i], n, labelbase, ll);
 				if(ll == AAFAIL) {
 					i++;
 				} else {
@@ -1174,10 +1312,6 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				} else {
 					assert(ci->oper[1].tag == OPER_RLAB);
 					ai->oper[1] = (aaoper_t) {AAO_CODE, labelbase + ci->oper[1].value};
-					if(!encountered[ci->oper[1].value]) {
-						rstack[rsp++] = ci->oper[1].value;
-						encountered[ci->oper[1].value] = 1;
-					}
 				}
 				break;
 			case I_CLRALL_OFLAG:
@@ -1463,10 +1597,6 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 					ai->oper[1] = (aaoper_t) {AAO_CODE, AAFAIL};
 				} else {
 					ai->oper[1] = (aaoper_t) {AAO_CODE, labelbase + ci->implicit};
-					if(!encountered[ci->implicit]) {
-						rstack[rsp++] = ci->implicit;
-						encountered[ci->implicit] = 1;
-					}
 				}
 				break;
 			case I_IF_CAN_EMBED:
@@ -1481,10 +1611,6 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 					ai->oper[2] = (aaoper_t) {AAO_CODE, AAFAIL};
 				} else {
 					ai->oper[2] = (aaoper_t) {AAO_CODE, labelbase + ci->implicit};
-					if(!encountered[ci->implicit]) {
-						rstack[rsp++] = ci->implicit;
-						encountered[ci->implicit] = 1;
-					}
 				}
 				break;
 			case I_IF_GFLAG:
@@ -1497,10 +1623,6 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 					ai->oper[2] = (aaoper_t) {AAO_CODE, AAFAIL};
 				} else {
 					ai->oper[2] = (aaoper_t) {AAO_CODE, labelbase + ci->implicit};
-					if(!encountered[ci->implicit]) {
-						rstack[rsp++] = ci->implicit;
-						encountered[ci->implicit] = 1;
-					}
 				}
 				break;
 			case I_IF_GREATER:
@@ -1512,10 +1634,6 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 					ai->oper[2] = (aaoper_t) {AAO_CODE, AAFAIL};
 				} else {
 					ai->oper[2] = (aaoper_t) {AAO_CODE, labelbase + ci->implicit};
-					if(!encountered[ci->implicit]) {
-						rstack[rsp++] = ci->implicit;
-						encountered[ci->implicit] = 1;
-					}
 				}
 				break;
 			case I_IF_GVAR_EQ:
@@ -1529,10 +1647,6 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 					ai->oper[3] = (aaoper_t) {AAO_CODE, AAFAIL};
 				} else {
 					ai->oper[3] = (aaoper_t) {AAO_CODE, labelbase + ci->implicit};
-					if(!encountered[ci->implicit]) {
-						rstack[rsp++] = ci->implicit;
-						encountered[ci->implicit] = 1;
-					}
 				}
 				break;
 			case I_IF_HAVE_LINK:
@@ -1547,10 +1661,6 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 					ai->oper[2] = (aaoper_t) {AAO_CODE, AAFAIL};
 				} else {
 					ai->oper[2] = (aaoper_t) {AAO_CODE, labelbase + ci->implicit};
-					if(!encountered[ci->implicit]) {
-						rstack[rsp++] = ci->implicit;
-						encountered[ci->implicit] = 1;
-					}
 				}
 				break;
 			case I_IF_HAVE_UNDO:
@@ -1565,10 +1675,6 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 					ai->oper[2] = (aaoper_t) {AAO_CODE, AAFAIL};
 				} else {
 					ai->oper[2] = (aaoper_t) {AAO_CODE, labelbase + ci->implicit};
-					if(!encountered[ci->implicit]) {
-						rstack[rsp++] = ci->implicit;
-						encountered[ci->implicit] = 1;
-					}
 				}
 				break;
 			case I_IF_HAVE_QUIT:
@@ -1583,10 +1689,6 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 					ai->oper[2] = (aaoper_t) {AAO_CODE, AAFAIL};
 				} else {
 					ai->oper[2] = (aaoper_t) {AAO_CODE, labelbase + ci->implicit};
-					if(!encountered[ci->implicit]) {
-						rstack[rsp++] = ci->implicit;
-						encountered[ci->implicit] = 1;
-					}
 				}
 				break;
 			case I_IF_MATCH:
@@ -1602,10 +1704,6 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 					ai->oper[2] = (aaoper_t) {AAO_CODE, AAFAIL};
 				} else {
 					ai->oper[2] = (aaoper_t) {AAO_CODE, labelbase + ci->implicit};
-					if(!encountered[ci->implicit]) {
-						rstack[rsp++] = ci->implicit;
-						encountered[ci->implicit] = 1;
-					}
 				}
 				break;
 			case I_IF_NIL:
@@ -1616,10 +1714,6 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 					ai->oper[1] = (aaoper_t) {AAO_CODE, AAFAIL};
 				} else {
 					ai->oper[1] = (aaoper_t) {AAO_CODE, labelbase + ci->implicit};
-					if(!encountered[ci->implicit]) {
-						rstack[rsp++] = ci->implicit;
-						encountered[ci->implicit] = 1;
-					}
 				}
 				break;
 			case I_IF_NUM:
@@ -1630,10 +1724,6 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 					ai->oper[1] = (aaoper_t) {AAO_CODE, AAFAIL};
 				} else {
 					ai->oper[1] = (aaoper_t) {AAO_CODE, labelbase + ci->implicit};
-					if(!encountered[ci->implicit]) {
-						rstack[rsp++] = ci->implicit;
-						encountered[ci->implicit] = 1;
-					}
 				}
 				break;
 			case I_IF_OBJ:
@@ -1644,10 +1734,6 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 					ai->oper[1] = (aaoper_t) {AAO_CODE, AAFAIL};
 				} else {
 					ai->oper[1] = (aaoper_t) {AAO_CODE, labelbase + ci->implicit};
-					if(!encountered[ci->implicit]) {
-						rstack[rsp++] = ci->implicit;
-						encountered[ci->implicit] = 1;
-					}
 				}
 				break;
 			case I_IF_OFLAG:
@@ -1660,10 +1746,6 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 					ai->oper[2] = (aaoper_t) {AAO_CODE, AAFAIL};
 				} else {
 					ai->oper[2] = (aaoper_t) {AAO_CODE, labelbase + ci->implicit};
-					if(!encountered[ci->implicit]) {
-						rstack[rsp++] = ci->implicit;
-						encountered[ci->implicit] = 1;
-					}
 				}
 				break;
 			case I_IF_OVAR_EQ:
@@ -1681,10 +1763,6 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 					ai->oper[3] = (aaoper_t) {AAO_CODE, AAFAIL};
 				} else {
 					ai->oper[3] = (aaoper_t) {AAO_CODE, labelbase + ci->implicit};
-					if(!encountered[ci->implicit]) {
-						rstack[rsp++] = ci->implicit;
-						encountered[ci->implicit] = 1;
-					}
 				}
 				break;
 			case I_IF_PAIR:
@@ -1695,10 +1773,6 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 					ai->oper[1] = (aaoper_t) {AAO_CODE, AAFAIL};
 				} else {
 					ai->oper[1] = (aaoper_t) {AAO_CODE, labelbase + ci->implicit};
-					if(!encountered[ci->implicit]) {
-						rstack[rsp++] = ci->implicit;
-						encountered[ci->implicit] = 1;
-					}
 				}
 				break;
 			case I_IF_UNIFY:
@@ -1710,10 +1784,6 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 					ai->oper[2] = (aaoper_t) {AAO_CODE, AAFAIL};
 				} else {
 					ai->oper[2] = (aaoper_t) {AAO_CODE, labelbase + ci->implicit};
-					if(!encountered[ci->implicit]) {
-						rstack[rsp++] = ci->implicit;
-						encountered[ci->implicit] = 1;
-					}
 				}
 				break;
 			case I_IF_WORD:
@@ -1724,10 +1794,6 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 					ai->oper[1] = (aaoper_t) {AAO_CODE, AAFAIL};
 				} else {
 					ai->oper[1] = (aaoper_t) {AAO_CODE, labelbase + ci->implicit};
-					if(!encountered[ci->implicit]) {
-						rstack[rsp++] = ci->implicit;
-						encountered[ci->implicit] = 1;
-					}
 				}
 				break;
 			case I_INVOKE_MULTI:
@@ -1757,10 +1823,6 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 					assert(ci->oper[0].tag == OPER_RLAB);
 					ai = add_instr(AA_JMP);
 					ai->oper[0] = (aaoper_t) {AAO_CODE, labelbase + ci->oper[0].value};
-					if(!encountered[ci->oper[0].value]) {
-						rstack[rsp++] = ci->oper[0].value;
-						encountered[ci->oper[0].value] = 1;
-					}
 				}
 				break;
 			case I_MAKE_VAR:
@@ -1784,10 +1846,6 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				} else {
 					assert(ci->oper[1].tag == OPER_RLAB);
 					ai->oper[1] = (aaoper_t) {AAO_CODE, labelbase + ci->oper[1].value};
-					if(!encountered[ci->oper[1].value]) {
-						rstack[rsp++] = ci->oper[1].value;
-						encountered[ci->oper[1].value] = 1;
-					}
 				}
 				add_label(ll);
 				break;
@@ -1813,10 +1871,6 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				} else {
 					assert(ci->oper[1].tag == OPER_RLAB);
 					ai->oper[1] = (aaoper_t) {AAO_CODE, labelbase + ci->oper[1].value};
-					if(!encountered[ci->oper[1].value]) {
-						rstack[rsp++] = ci->oper[1].value;
-						encountered[ci->oper[1].value] = 1;
-					}
 				}
 				add_label(ll);
 				break;
@@ -1839,10 +1893,6 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				} else {
 					assert(ci->oper[2].tag == OPER_RLAB);
 					ai->oper[1] = (aaoper_t) {AAO_CODE, labelbase + ci->oper[2].value};
-					if(!encountered[ci->oper[2].value]) {
-						rstack[rsp++] = ci->oper[2].value;
-						encountered[ci->oper[2].value] = 1;
-					}
 				}
 				add_label(ll);
 				break;
@@ -1864,10 +1914,6 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 					assert(cr->instr[i + 1].oper[1].tag == OPER_RLAB);
 					ai->op = (ai->op & 0x80) | AA_POP_PUSH_CHOICE;
 					ai->oper[1] = (aaoper_t) {AAO_CODE, labelbase + cr->instr[i + 1].oper[1].value};
-					if(!encountered[cr->instr[i + 1].oper[1].value]) {
-						rstack[rsp++] = cr->instr[i + 1].oper[1].value;
-						encountered[cr->instr[i + 1].oper[1].value] = 1;
-					}
 					i++;
 				}
 				break;
@@ -1983,19 +2029,11 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 					ai->oper[0] = (aaoper_t) {AAO_ZERO};
 				}
 				ai->oper[1] = (aaoper_t) {AAO_CODE, labelbase + ci->oper[1].value};
-				if(!encountered[ci->oper[1].value]) {
-					rstack[rsp++] = ci->oper[1].value;
-					encountered[ci->oper[1].value] = 1;
-				}
 				break;
 			case I_PUSH_STOP:
 				ai = add_instr(AA_PUSH_STOP);
 				assert(ci->oper[0].tag == OPER_RLAB);
 				ai->oper[0] = (aaoper_t) {AAO_CODE, labelbase + ci->oper[0].value};
-				if(!encountered[ci->oper[0].value]) {
-					rstack[rsp++] = ci->oper[0].value;
-					encountered[ci->oper[0].value] = 1;
-				}
 				break;
 			case I_QUIT:
 				ai = add_instr(AA_EXT0);
@@ -2063,7 +2101,7 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 						ai->oper[1] = (aaoper_t) {AAO_INDEX, first_sel_byte + sel};
 						ai->oper[2] = (aaoper_t) {AAO_STORE_REG, REG_IDX};
 						ai = add_instr(AA_CHECK_EQ | 0x80);
-						ai->oper[0] = (aaoper_t) {AAO_VBYTE, n - 1};
+						ai->oper[0] = (aaoper_t) {AAO_BYTE, n - 1};
 						ai->oper[1] = (aaoper_t) {AAO_CODE, ll};
 						ai = add_instr(AA_INC_RAW);
 						ai->oper[0] = (aaoper_t) {AAO_REG, REG_IDX};
@@ -2084,7 +2122,7 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 						ai->oper[1] = (aaoper_t) {AAO_INDEX, first_sel_byte + sel};
 						ai->oper[2] = (aaoper_t) {AAO_STORE_REG, REG_IDX};
 						ai = add_instr(AA_CHECK_EQ | 0x80);
-						ai->oper[0] = (aaoper_t) {AAO_VBYTE, 0xff};
+						ai->oper[0] = (aaoper_t) {AAO_BYTE, 0xff};
 						ai->oper[1] = (aaoper_t) {AAO_CODE, ll};
 
 						ai = add_instr(AA_RAND_RAW);
@@ -2180,7 +2218,7 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 						ai->oper[1] = (aaoper_t) {AAO_INDEX, first_sel_byte + sel};
 						ai->oper[2] = (aaoper_t) {AAO_STORE_REG, REG_IDX};
 						ai = add_instr(AA_CHECK_EQ | 0x80);
-						ai->oper[0] = (aaoper_t) {AAO_VBYTE, n};
+						ai->oper[0] = (aaoper_t) {AAO_BYTE, n};
 						ai->oper[1] = (aaoper_t) {AAO_CODE, ll};
 						ai = add_instr(AA_INC_RAW);
 						ai->oper[0] = (aaoper_t) {AAO_REG, REG_IDX};
@@ -2231,10 +2269,6 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				ai = add_instr(AA_SET_CONT);
 				if(ci->oper[0].tag == OPER_RLAB) {
 					ai->oper[0] = (aaoper_t) {AAO_CODE, labelbase + ci->oper[0].value};
-					if(!encountered[ci->oper[0].value]) {
-						rstack[rsp++] = ci->oper[0].value;
-						encountered[ci->oper[0].value] = 1;
-					}
 				} else {
 					assert(ci->oper[0].tag == OPER_FAIL);
 					ai->oper[0] = (aaoper_t) {AAO_CODE, AAFAIL};
@@ -2388,6 +2422,7 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				assert(0); exit(1);
 			}
 		}
+		end_segment();
 	}
 }
 
@@ -2400,7 +2435,6 @@ static void compile_predicate(struct predname *predname, struct program *prg) {
 	|| predname->builtin == BI_HASPARENT
 	|| predname->builtin == BI_OBJECT) {
 		if(pred->normal_entry >= 0) {
-			add_label(predname->pred_id);
 			labelbase = nextlabel;
 			nextlabel += pred->nroutine;
 			compile_routines(prg, pred, pred->normal_entry, labelbase);
@@ -2408,10 +2442,46 @@ static void compile_predicate(struct predname *predname, struct program *prg) {
 	}
 }
 
+static void visit_reachable_instr(int inum, int *symbols) {
+	uint8_t op;
+	int i, j;
+
+	for(;;) {
+		aainstr[inum].flags |= AAIF_REACHABLE;
+		op = aainstr[inum].op;
+		for(i = 0; i < 4; i++) {
+			if(aainstr[inum].oper[i].type == AAO_CODE
+			&& aainstr[inum].oper[i].value != AAFAIL) {
+				j = symbols[aainstr[inum].oper[i].value];
+				assert(j);
+				if(!(aainstr[j].flags & AAIF_REACHABLE)) {
+					visit_reachable_instr(j, symbols);
+				}
+			}
+		}
+		if(op == AA_FAIL
+		|| op == AA_PROCEED
+		|| op == AA_JMP
+		|| op == AA_JMP_MULTI
+		|| op == AA_JMP_SIMPLE
+		|| op == AA_JMP_TAIL
+		|| op == AA_POP_ENV_PROCEED
+		|| op == AA_STOP
+		|| (op == AA_EXT0 && (
+			aainstr[inum].oper[0].value == AAEXT0_QUIT ||
+			aainstr[inum].oper[0].value == AAEXT0_RESTORE)))
+		{
+			break;
+		}
+		inum++;
+	}
+}
+
 static void compile_program(struct program *prg) {
 	struct aainstr *ai;
-	int i;
+	int i, j;
 	uint32_t ll;
+	int *symbols;
 
 	// the first prg->npredicate labels are predicate entry points
 	nextlabel = prg->npredicate;
@@ -2445,13 +2515,58 @@ static void compile_program(struct program *prg) {
 	ai = add_instr(AA_EXT0);
 	ai->oper[0] = (aaoper_t) {AAO_BYTE, AAEXT0_QUIT};
 
+	end_segment();
+
 	// predicate code
 
 	for(i = 0; i < prg->npredicate; i++) {
 		compile_predicate(prg->predicates[i], prg);
 	}
 
+	flatten_segments(prg);
+
+	// eliminate jumps to single, small instructions
+	symbols = calloc(nextlabel, sizeof(int));
+	for(i = 0; i < ninstr; i++) {
+		if(aainstr[i].op == AA_LABEL) {
+			j = i + 1;
+			while(aainstr[j].op == AA_LABEL) j++;
+			symbols[aainstr[i].oper[0].value] = j;
+		}
+	}
+	for(i = 0; i < ninstr; i++) {
+		if(aainstr[i].op == AA_JMP
+		&& aainstr[i].oper[0].value != AAFAIL) {
+			j = symbols[aainstr[i].oper[0].value];
+			assert(j);
+			if(aainstr[j].op == AA_FAIL
+			|| aainstr[j].op == AA_PROCEED
+			|| aainstr[j].op == AA_POP_ENV_PROCEED
+			|| aainstr[j].op == AA_STOP
+			|| (aainstr[j].op == AA_EXT0 && (
+				aainstr[j].oper[0].value == AAEXT0_QUIT ||
+				aainstr[j].oper[0].value == AAEXT0_RESTART)))
+			{
+				memcpy(&aainstr[i], &aainstr[j], sizeof(struct aainstr));
+			}
+		}
+	}
+
+	// mark live code
+	visit_reachable_instr(0, symbols);
+	visit_reachable_instr(1, symbols);
+
+	free(symbols);
+
+	// transform jmp 0 to fail
+	// transform set_cont + jmp to jmpl
+	// eliminate dead instructions
 	for(i = 0; i < ninstr - 2; i++) {
+		if(aainstr[i].op != AA_LABEL
+		&& !(aainstr[i].flags & AAIF_REACHABLE)) {
+			aainstr[i].op = AA_SKIP;
+			memset(aainstr[i].oper, 0, sizeof(aainstr[i].oper));
+		}
 		if(aainstr[i].op == AA_JMP
 		&& aainstr[i].oper[0].value == AAFAIL) {
 			aainstr[i].op = AA_FAIL;
@@ -3198,7 +3313,8 @@ static void analyze_code() {
 						actual == AAO_VAR))
 					&& !(expected == AAO_CODE &&
 						(actual == AAO_CODE2 ||
-						actual == AAO_CODE1)))
+						actual == AAO_CODE1))
+					&& !(ai->op == (AA_CHECK_EQ | 0x80) && actual == AAO_BYTE))
 					{
 						printf("%02x", ai->op);
 						for(j = 0; j < 4; j++) {
@@ -3355,6 +3471,7 @@ void backend_aa(
 	fixed_sz = 1 + prg->nworldobj + n_glb_word + prg->nworldobj * n_obj_word;
 	longterm_sz = ltssize;
 
+	analyze_tree(prg);
 	compile_program(prg);
 	analyze_resources(prg);
 	analyze_chars();

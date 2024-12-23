@@ -279,7 +279,10 @@ void o_print_str(const char *utf8) {
 			for(n = 0; utf8[i + n] && utf8[i + n] != ' '; n++);
 			o_print_word_n(utf8 + i, n);
 			i += n;
-			while(utf8[i] == ' ') i++;
+			while(utf8[i] == ' ') {
+				o_space();
+				i++;
+			}
 		}
 	}
 }

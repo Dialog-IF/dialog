@@ -201,8 +201,11 @@ typedef struct aaoper {
 
 struct aainstr {
 	uint8_t		op;		// AA_* possibly with 0x80 added
+	uint8_t		flags;
 	struct aaoper	oper[4];
 };
+
+#define AAIF_REACHABLE	0x01
 
 struct aaopinfo {
 	uint8_t		op;
