@@ -184,6 +184,9 @@ excluded from the set of objects.
 <p class="codeline">[takable]</p>
 <p class="noteline">One or more items in scope, whose relation to their parent is neither
 <span class="code">#heldby</span>, <span class="code">#wornby</span>, or <span class="code">#partof</span>.
+Furthermore, they shouldn't be nested below an object that's held or
+worn by a non-player character, or nested below the current player
+(regardless of relation).
 </p>
 <p>Finally, a list of words that isn't recognized as a special token will match
 any of the words in the list. This results in slightly faster and more compact
@@ -1550,7 +1553,7 @@ BAG</span>, where the bag should not be included in “all”.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="miscfeat.html">Chapter 11: Miscellaneous features</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 30, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 31, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

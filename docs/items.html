@@ -9,7 +9,7 @@
 <body>
 	<div class="chapter">
 	<h1>Chapter 4: Items</h1>
-	<div class="navlinks">(<a href="#pristine">Pristine and handled objects</a>&nbsp;&bull; <a href="#plursynonyms">Plural forms</a>&nbsp;&bull; <a href="#appearance">All about appearances</a>&nbsp;&bull; <a href="#initheld">Pristineness of nested objects</a>)</div>
+	<div class="navlinks">(<a href="#pristine">Pristine and handled objects</a>&nbsp;&bull; <a href="#plursynonyms">Plural forms</a>&nbsp;&bull; <a href="#appearance">All about appearances</a>&nbsp;&bull; <a href="#initheld">Pristineness of nested objects</a>&nbsp;&bull; <a href="#clothing">Clothing</a>)</div>
 <p><i>Items</i> are objects that can be picked up by the player:
 </p>
 <textarea class="copyarea" id="copy0" readonly>
@@ -551,9 +551,233 @@ of the prose describing nearby objects (e.g. the room). As soon as they are
 handled, the library takes over, unless the story author explicitly reclaims
 control over their appearance.
 </p>
+<a id="clothing"></a><h2>Clothing</h2>
+<p>Objects—typically animate ones—can wear clothes. Clothes are objects that have
+the <span class="code">(wearable&nbsp;$)</span> trait, and therefore the <span class="code">(item&nbsp;$)</span>
+trait by inheritance.
+</p>
+<p>The <i>outermost</i> layer of
+clothing is modelled by the <span class="code">#wornby</span> relation:
+</p>
+<textarea class="copyarea" id="copy14" readonly>
+(#trenchcoat is #wornby #bob)
+(#shoes is #wornby #bob)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(#trenchcoat is #wornby #bob)</td></tr>
+<tr><td class="both" colspan="2">(#shoes is #wornby #bob)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy14').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Clothes may also be worn <span class="code">#under</span> other garments:
+</p>
+<textarea class="copyarea" id="copy15" readonly>
+(#shirt is #under #trenchcoat)
+(#pants is #under #trenchcoat)
+(#socks is #under #shoes)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(#shirt is #under #trenchcoat)</td></tr>
+<tr><td class="both" colspan="2">(#pants is #under #trenchcoat)</td></tr>
+<tr><td class="both" colspan="2">(#socks is #under #shoes)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy15').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Use <span class="code">($&nbsp;is worn by&nbsp;$)</span> to check whether an object is currently worn
+by somebody, at any level of nesting.
+</p>
+<p>By default, clothes are see-through, so Bob's socks are visible despite being
+located <span class="code">#under</span> his shoes. The outer garment can be made opaque to
+prevent this:
+</p>
+<textarea class="copyarea" id="copy16" readonly>
+(opaque #trenchcoat)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(opaque #trenchcoat)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy16').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Should the player try to remove a piece of clothing that's underneath another,
+an attempt is made to remove the outer item first. If this fails, the entire
+action is stopped.
+</p>
+<p>It's possible to indicate that some garments can't be worn together with
+others. This is done by adding rules to the <span class="code">(wearing $ removes&nbsp;$)</span>
+predicate:
+</p>
+<textarea class="copyarea" id="copy17" readonly>
+(wearing #glasses removes #sunglasses)
+(wearing #sunglasses removes #glasses)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(wearing #glasses removes #sunglasses)</td></tr>
+<tr><td class="both" colspan="2">(wearing #sunglasses removes #glasses)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy17').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>This might lead to the following exchange:
+</p>
+<div class="blkoutput">&gt; wear sunglasses<br />
+(first attempting to remove the glasses)<br />
+You take off the glasses.<br />
+<br />
+You put on the sunglasses.</div><p>For a larger number of mutually exclusive items, it is more convenient to
+define a trait:
+</p>
+<textarea class="copyarea" id="copy18" readonly>
+(glasses #glasses)
+(glasses #sunglasses)
+(glasses #monocle)
+(wearing (glasses $) removes (glasses $))
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(glasses #glasses)</td></tr>
+<tr><td class="both" colspan="2">(glasses #sunglasses)</td></tr>
+<tr><td class="both" colspan="2">(glasses #monocle)</td></tr>
+<tr><td class="both" colspan="2">(wearing (glasses $) removes (glasses $))</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy18').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Other articles of clothing would typically be worn <i>over</i> others; this is
+indicated with the <span class="code">(wearing $ covers&nbsp;$)</span> predicate:
+</p>
+<textarea class="copyarea" id="copy19" readonly>
+(wearing #trenchcoat covers #shirt/#pants)
+(wearing #shoes covers #socks)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(wearing #trenchcoat covers #shirt/#pants)</td></tr>
+<tr><td class="both" colspan="2">(wearing #shoes covers #socks)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy19').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>In the above example, if the player tries to wear the shoes while already
+wearing the socks, the socks will end up <span class="code">#under</span> the shoes. Later,
+if the player tries to remove the socks, an attempt is first made to remove the
+shoes. But we didn't say anything about putting on socks while wearing shoes,
+so this is allowed. To properly model the socks-shoes relationship, we would
+also have to define:
+</p>
+<textarea class="copyarea" id="copy20" readonly>
+(wearing #socks removes #shoes)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(wearing #socks removes #shoes)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy20').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>But this combination of constraints—<span class="code">(wearing $A covers $B)</span> and
+<span class="code">(wearing $B removes $A)</span>—is so common that the library gives us the
+option to specify both relations in one go:
+</p>
+<textarea class="copyarea" id="copy21" readonly>
+(#socks goes underneath #shoes)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(#socks goes underneath #shoes)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy21').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Actually, <span class="code">($&nbsp;goes underneath&nbsp;$)</span> does more: It is treated as a
+transitive relation, meaning that if the shirt goes underneath the jacket and
+the jacket goes underneath the trenchcoat, then the library can figure out that
+the shirt must go underneath the trenchcoat. Thus the trenchcoat would
+automatically cover the shirt, and putting on the shirt would involve removing
+the trenchcoat first.
+</p>
+<p>But for this to work, the library must be able to invoke <span class="code">($&nbsp;goes
+underneath&nbsp;$)</span> in a <a href="choicepoints.html#multiqueries">multi-query</a>, with the second
+parameter unbound. Therefore, be aware that if the second parameter is a trait,
+it needs to be prefixed by an asterisk:
+</p>
+<textarea class="copyarea" id="copy22" readonly>
+(#underpants goes underneath *(pants $))
+((pants $) goes underneath #trenchcoat)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(#underpants goes underneath *(pants $))</td></tr>
+<tr><td class="both" colspan="2">((pants $) goes underneath #trenchcoat)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy22').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<h3>Advanced technique: Multiple covers</h3>
+<p>So far in this chapter, we've tacitly assumed that an article of clothing can
+only ever be worn underneath a single parent. This is inherent in the
+object-tree model, but it rules out situations such as a spandex one-piece worn
+underneath a shirt and a pair of trousers at the same time. The library doesn't
+support such a use case directly, but it can be implemented with the help of
+<a href="actions.html#actionprocess">before- and after-rules</a>:
+</p>
+<textarea class="copyarea" id="copy23" readonly>
+#onepiece
+
+(* goes underneath #shirt/#trousers)
+
+(before [remove *])
+	(* is worn by #player)
+	*($Outer is one of [#shirt #trousers])
+	($Outer is worn by #player)
+	(first try [remove $Outer])
+
+(after [remove #shirt/#trousers])
+	(* is worn by #player)
+	*($Outer is one of [#shirt #trousers])
+	($Outer is worn by #player)
+	(now) (* is #under $Outer)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">#onepiece</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(* goes underneath #shirt/#trousers)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(before [remove *])</td></tr>
+<tr><td class="left"></td><td class="right">(* is worn by #player)</td></tr>
+<tr><td class="left"></td><td class="right">*($Outer is one of [#shirt #trousers])</td></tr>
+<tr><td class="left"></td><td class="right">($Outer is worn by #player)</td></tr>
+<tr><td class="left"></td><td class="right">(first try [remove $Outer])</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(after [remove #shirt/#trousers])</td></tr>
+<tr><td class="left"></td><td class="right">(* is worn by #player)</td></tr>
+<tr><td class="left"></td><td class="right">*($Outer is one of [#shirt #trousers])</td></tr>
+<tr><td class="left"></td><td class="right">($Outer is worn by #player)</td></tr>
+<tr><td class="left"></td><td class="right">(now) (* is #under $Outer)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy23').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="moving.html">Chapter 5: Moving around</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 30, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 31, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

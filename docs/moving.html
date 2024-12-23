@@ -410,9 +410,13 @@ expressions</a>:
 <a class="copybtn" href="" onClick="document.getElementById('copy8').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <a id="light"></a><h2>Light and darkness</h2>
-<p>An object is <i>illuminated</i> by another object when there is a path between
-them, via child-parent relations in the object tree, that doesn't pass through
-a closed, opaque object.
+<p>Light travels up and down the object tree. It can pass between a child and its
+parent, unless the parent is opaque and the child is <span class="code">#under</span> it, or
+the parent is closed and opaque and the child is <span class="code">#in</span> it. Openable
+objects are opaque by default.
+</p>
+<p>An object is <i>illuminated</i> by another object if the latter provides light,
+and light can pass between the objects.
 </p>
 <p>By default, rooms are assumed to contain ambient light, so they act as light
 sources. Hence, most objects are illuminated by default. But it is possible to
@@ -505,16 +509,18 @@ succeeds when the current player character is illuminated.
 <a id="scope"></a><h2>Reachability, visibility, and scope</h2>
 <p>An object is within <i>reach</i> of another object (such as the player
 character) when there is a path between them, via child-parent relations in the
-object tree, that doesn't pass through a closed object. An exception is if the
-object is explicitly declared to be <span class="code">(out of reach&nbsp;$)</span>. Reach does
-not extend across room boundaries, but doors and other objects that are located
-at the perimeter of the current room, using <span class="code">(from $ go $ to $)</span>,
-are automatically moved into the room.
+object tree, that doesn't pass through a closed object. Objects that are nested
+<span class="code">#under</span> an object that is <span class="code">#wornby</span> somebody other than
+the current player character are also considered out of reach. Finally, objects
+may explicitly be declared <span class="code">(out of reach&nbsp;$)</span>.
 </p>
 <p>An object is <i>visible</i> to another object (such as the player character)
 when they are both illuminated, and there is a path between them, via
-child-parent relations in the object tree, that doesn't pass through a closed,
-opaque object. Visibility does not extend across room boundaries, but doors and
+child-parent relations in the object tree, that doesn't 1. pass through a
+closed, opaque object, or 2. pass underneath an opaque object. Openable objects
+are opaque by default.
+</p>
+<p>Neither reach nor visibility extends across room boundaries, but doors and
 other objects that are located at the perimeter of the current room, using
 <span class="code">(from $ go $ to $)</span>, are automatically moved into the room.
 </p>
@@ -530,8 +536,8 @@ observer and the object are in the same room.
 <p>Most actions require reachability. Of the ones that don't, some (e.g.
 <span class="prginput">LOOK IN)</span> explicitly require visibility. Normally, anything that
 is reachable is also visible (but something that is visible might be in a
-closed, transparent container, and hence not reachable). But when the player is
-in the dark, their possessions are typically reachable but not visible.
+closed, transparent container, and hence not reachable). But in darkness,
+objects tend to be reachable but not visible.
 </p>
 <p>Under certain circumstances, when a player looks through a door (e.g. by
 looking in a compass direction), the name of the room on the other side is
@@ -545,14 +551,19 @@ refer to, i.e. the only objects that the parser will understand. The predicate
 scope, or, with a <a href="choicepoints.html#multiqueries">multi-query</a>, to backtrack over every
 object in scope.
 </p>
-<p>By default, all objects that are visible to the player character are in scope.
-All of the player's reachable possessions are also in scope, which is useful
-e.g. for turning on the flashlight in a dark room. The current room is always
-in scope, and neighbouring rooms are in scope if the player can see.
+<p>The default scope is everything that the player can see or reach, plus objects
+that are marked out of reach but would be reachable otherwise. If the current
+room is in scope and the player can see, neighbouring rooms are also added to
+the scope.
 </p>
-<p>Finally, it is possible to add objects to the scope explicitly using the
-predicate <span class="code">(add $ to scope)</span>, typically with some condition, like
-this:
+<p>If the player cannot see, the intangible object <span class="code">#darkness</span>
+(responding to <span class="prginput">DARKNESS</span> and <span class="prginput">DARK</span>) is
+automatically added to the scope. By default, the player can't do much with
+this object except examine it, which invokes <span class="code">(narrate darkness)</span>,
+printing &ldquo;<span class="prgoutput">You are surrounded by darkness</span>&rdquo;.
+</p>
+<p>It is possible to add other objects to the scope using the predicate <span class="code">(add
+$ to scope)</span>, typically with some condition, like this:
 </p>
 <textarea class="copyarea" id="copy13" readonly>
 (add #mother to scope)
@@ -913,7 +924,7 @@ conditions.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="actions.html">Chapter 6: Actions</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 30, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 31, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

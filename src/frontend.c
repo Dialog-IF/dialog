@@ -842,24 +842,6 @@ void trace_invocations(struct program *prg) {
 	free(tracequeue);
 	tracequeue = 0;
 	tracequeue_r = tracequeue_w = 0;
-
-	for(i = 0; i < prg->npredicate; i++) {
-		predname = prg->predicates[i];
-		pred = predname->pred;
-		if(!predname->special
-		&& !(predname->builtin && !(predname->nameflags & PREDNF_DEFINABLE_BI))
-		&& predname->builtin != BI_INVOKE_CLOSURE
-		&& predname->builtin != BI_ERROR_ENTRY
-		&& !pred->dynamic
-		&& (pred->flags & PREDF_INVOKED_BY_PROGRAM)
-		&& !(pred->flags & PREDF_DEFINED)) {
-			report(
-				LVL_WARN,
-				pred->invoked_at_line,
-				"A query is made to '%s', but there is no matching rule definition.",
-				predname->printed_name);
-		}
-	}
 }
 
 static int mark_all_dynamic(struct program *prg, struct astnode *an, line_t line, int allow_multi) {
@@ -2580,6 +2562,58 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 		arena_free(&lexer.temp_arena);
 		frontend_reset_program(prg);
 		return 0;
+	}
+
+	for(i = 0; i < prg->npredicate; i++) {
+		predname = prg->predicates[i];
+		pred = predname->pred;
+
+		if(!predname->special && !predname->builtin) {
+			int defined, queried, interface;
+
+			defined = (pred->flags & (PREDF_DEFINED | PREDF_DYNAMIC | PREDF_MACRO));
+			queried = pred->flags & PREDF_MENTIONED_IN_QUERY;
+			interface = !!pred->iface_decl;
+
+			if((pred->flags & PREDF_DEFINED) && !queried && !interface) {
+				assert(pred->nclause);
+				report(
+					LVL_WARN,
+					pred->clauses[0]->line,
+					"Possible typo: A rule is defined "
+						"for '%s', but this "
+						"predicate is never queried "
+						"and has no interface "
+						"definition.",
+					predname->printed_name);
+			} else if((pred->flags & PREDF_DYNAMIC) && !queried) {
+				report(
+					LVL_WARN,
+					0,
+					"Possible typo: '%s' appears in a "
+						"now-expression, but is "
+						"never queried.",
+					predname->printed_name);
+			} else if(queried && !defined && !interface) {
+				report(
+					LVL_WARN,
+					pred->invoked_at_line,
+					"Possible typo: A query is made to "
+						"'%s', but there is "
+						"no matching rule or "
+						"interface definition.",
+					predname->printed_name);
+			} else if(interface && !queried && !defined) {
+				report(
+					LVL_WARN,
+					pred->iface_decl->line,
+					"Possible typo: An interface is "
+						"defined for '%s', but there "
+						"is no matching rule "
+						"definition or query.",
+					predname->printed_name);
+			}
+		}
 	}
 
 #if 0

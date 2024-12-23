@@ -45,7 +45,7 @@ static void get_timestamp(char *dest, char *longdest) {
 
 void usage(char *prgname) {
 	fprintf(stderr, "Dialog compiler " VERSION ".\n");
-	fprintf(stderr, "Copyright 2018-2020 Linus Akesson.\n");
+	fprintf(stderr, "Copyright 2018-2021 Linus Akesson.\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Usage: %s [options] [source code filename ...]\n", prgname);
 	fprintf(stderr, "\n");

@@ -268,19 +268,19 @@ parts, or to backtrack over such relations, use the following predicate:
 <p class="noteline">At least one of <span class="code">$Obj</span> and <span class="code">$Ancestor</span> must be
 bound.
 </p>
-<p>Items of clothing may have parts, and such parts should generally be regarded
-as being worn by whoever wears the parent item. To check whether an object is
-worn by a person according to this definition, use:
+<p>Items of clothing may be located underneath other garments. To check whether an
+object is directly <span class="code">#wornby</span> a person or nested under an object that
+is, use:
 </p>
-<p class="codeline">($Obj is recursively worn by $Person)</p>
-<p class="noteline">Both parameters must be bound.
+<p class="codeline">($Obj is worn by $Person)</p>
+<p class="noteline">The first parameter must be bound.
 </p>
 <p>When writing <span class="nobreak"><span class="code">before</span>-</span>rules for actions, the following
 predicates may come in handy:
 </p>
 <p class="codeline">(ensure $Obj is held)</p>
 <p class="noteline">Attempt to take <span class="code">$Obj</span> if it is an item, but not currently held.
-Attempt to remove <span class="code">$Obj</span> if it is worn, or part of something worn.
+Attempt to remove <span class="code">$Obj</span> if it is worn, or nested under something worn.
 </p>
 <p class="codeline">(recursively leave non-vehicles)</p>
 <p class="noteline">While the player character is the direct child of an object that is
@@ -833,7 +833,7 @@ It's your call.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="libref.html">Appendix: Predicate index</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 30, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 31, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

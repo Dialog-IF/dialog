@@ -45,9 +45,8 @@ generating a universally unique identifier (UUID), such as the <span class="tt">
 command under Linux (available in the Debian package <span class="tt">uuid-runtime</span>).
 </p>
 <p>The Dialog compiler will complain if the story contains more than one hundred
-lines of source code and no IFID is provided. The standard library is also
-included in the line count, so it's really only trivial test programs like the
-examples provided so far in this manual that are exempt from the warning.
+lines of source code and no IFID is provided. The standard library is not
+included in the line count.
 </p>
 <p>A story author may also want to specify one or more of the following:
 </p>
@@ -96,6 +95,11 @@ part of the story banner), by querying the following built-in predicates:
 <p><span class="code">(compiler version)</span>
 </p>
 <p>The serial number is the compilation date in <span class="tt">YYMMDD</span> format.
+</p>
+<p>The standard library defines a rule for <span class="code">(library version)</span>, which
+prints the library version string. The compiler looks for this definition to
+check that a library appears as the last filename on the commandline, and
+prints a warning otherwise.
 </p>
 <a id="interface"></a><h2>Interfaces</h2>
 <p>Predicates are versatile building blocks with many potential usage patterns.
@@ -412,7 +416,7 @@ the debugger have full support.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="quickref.html">Appendix: Quick reference</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 30, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 31, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

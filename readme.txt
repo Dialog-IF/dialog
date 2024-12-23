@@ -1,5 +1,5 @@
-This archive contains version 0m/02 of the Dialog compiler and interactive
-debugger, bundled with documentation and version 0.45 of the Dialog Standard
+This archive contains version 0m/03 of the Dialog compiler and interactive
+debugger, bundled with documentation and version 0.46 of the Dialog Standard
 Library.
 
 Directory structure:
@@ -37,6 +37,43 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0m/03, Lib 0.46 (Manual revision 31):
+
+		Library: Changed how darkness is handled: Unlit objects are now
+		reachable, and a #darkness object is added to the scope.
+		Updated the visibility, reachability, and scope rules
+		accordingly.
+
+		Library: Added support for clothes worn underneath other
+		clothes. Updated the visibility, reachability, and scope rules
+		accordingly.
+
+		Library: Added '(wearing $ removes $)', '(wearing $ covers $)',
+		and '($ goes underneath $)' for specifying how wearable objects
+		interact with each other.
+
+		Library: '(look $)' now falls back on '(descr $)' by default.
+
+		Library: Searching animate objects is now prevented by default.
+
+		Compiler: Improved typo detection. A warning is printed for
+		each predicate that appears in just one of the following roles:
+		As a rule definition, as a query, and as an interface
+		declaration.
+
+		Compiler: Don't include the standard library in the total
+		linecount when deciding whether to warn about missing metadata.
+
+		Aa-backend: Print a better error message when the output isn't
+		a regular file.
+
+		Documentation: Updated the section on light and darkness.
+		Updated the section on reachability, visibility, and scope.
+		Added a section about clothing.
+
+		Documentation: Added a note about how the compiler looks for
+		'(library version)' to identify the library.
 
 	0m/02, Lib 0.45 (Manual revision 30):
 

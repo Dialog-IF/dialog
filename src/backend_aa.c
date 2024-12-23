@@ -291,8 +291,8 @@ static int chunkheader(FILE *f, char *id, uint32_t size) {
 	int pad = size & 1;
 
 	if(ftell(f) != 8 + aatotalsize) {
-		printf("%s\n", id);
-		assert(0); exit(1);
+		report(LVL_ERR, 0, "Unexpected file position when writing %s chunk. Disk full?", id);
+		exit(1);
 	}
 
 	if(verbose >= 2) {

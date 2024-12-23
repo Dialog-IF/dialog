@@ -1,6 +1,6 @@
 
 (library version)
-	Library version 0.45.
+	Library version 0.46.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -72,7 +72,6 @@
 (interface (from $<Room go $>Dir to $>Obj))
 (interface (from $<Room through $>Door to $>Obj))
 
-(interface (add $>Obj to scope))
 (interface ($<Room attracts $>Obj))
 
 (interface (maximum score $>Number))
@@ -329,7 +328,6 @@
 (female $)		(fail)
 (fine where it is $)	(fail)
 (inherently dark $)	(fail)
-(intangible $)		(fail)
 (item $)		(fail)
 (lockable $)		(fail)
 (male $)		(fail)
@@ -427,20 +425,26 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Access rules
 
-(global variable (current visibility ceiling $))
+(interface (visibility ceiling of $<Obj is $>Ceil))
 
-(recompute visibility)
-	(current player $Player)
-	(visibility ceiling of $Player is $Ceil)
-	(now) (current visibility ceiling $Ceil)
-	(if) (light reaches ceiling $Ceil) (then)
-		(now) (player can see)
+(visibility ceiling of $Obj is $Ceil)
+	(if) ($Obj has parent $Parent) (then)
+		(if)
+			(opaque $Parent)
+			($Obj has relation $Rel)
+			(if) ($Rel = #in) (then)
+				($Parent is closed)
+			(else)
+				($Rel = #under)
+			(endif)
+		(then)
+			($Ceil = $Parent)
+		(else)
+			(visibility ceiling of $Parent is $Ceil)
+		(endif)
 	(else)
-		(now) ~(player can see)
+		($Ceil = $Obj)
 	(endif)
-
-(recompute visibility)
-	%% E.g. if there is no current player.
 
 (interface (light reaches ceiling $<Ceil))
 
@@ -451,99 +455,87 @@
 	*($Obj provides light)
 	(visibility ceiling of $Obj is $Ceil)
 
-(interface (visibility ceiling of $<Obj is $>Ceil))
+(global variable (current scope ceiling $))
 
-(visibility ceiling of $Obj is $Ceil)
-	(if) ($Obj has parent $Parent) (then)
-		(if)
-			($Obj has relation #in)
-			(opaque $Parent)
-			($Parent is closed)
-		(then)
-			($Ceil = $Parent)
-		(else)
-			(visibility ceiling of $Parent is $Ceil)
-		(endif)
+(recompute visibility)
+	(current player $Player)
+	(visibility ceiling of $Player is $Ceil)
+	(if) (light reaches ceiling $Ceil) (then)
+		(now) (current scope ceiling $Ceil)
+		(now) (player can see)
 	(else)
-		($Ceil = $Obj)
+		(reachability ceiling of $Player is $RCeil)
+		(now) (current scope ceiling $RCeil)
+		(now) ~(player can see)
 	(endif)
+
+(recompute visibility)
+	%% Fallback e.g. if there is no current player.
 
 (interface (player can see $<Obj))
 
 (player can see $Obj)
-	(current visibility ceiling $Ceil)
-	(if) (visibility ceiling of $Obj is $Ceil) (then)
-		{
-			(player can see)
-		(or)
-			(current player $Player)
-			($Obj has ancestor $Player)
-		}
-	(else)
-		(room $Obj)
+	(player can see)
+	(current scope ceiling $Ceil)
+	(if) (room $Obj) ~($Obj = $Ceil) (then)
 		(room $Ceil)
-		(player can see)
 		{
 			(from $Ceil go $ to $Obj)
 		(or)
 			(from $Ceil through $Door to $Obj)
 			~($Door blocks light)
 		}
+	(else)
+		(visibility ceiling of $Obj is $Ceil)
 	(endif)
 
 (interface (reachability ceiling of $<Obj is $>Ceil))
 
-(reachability ceiling of $O is $Ceil)
-	(if) ($O is $Rel $Parent) (then)
-		(if) ($Rel = #in) ($Parent is closed) (then)
-			($Parent = $Ceil)
+(reachability ceiling of $Obj is $Ceil)
+	(if) ($Obj is $Rel $Parent) (then)
+		(if)
+			($Rel = #in)
+			($Parent is closed)
+		(or)
+			($Rel = #under)
+			($Parent is #wornby $Actor)
+			~(current player $Actor)
+		(then)
+			($Ceil = $Parent)
 		(else)
 			(reachability ceiling of $Parent is $Ceil)
 		(endif)
 	(else)
-		($O = $Ceil)
+		($Ceil = $Obj)
 	(endif)
 
-(interface (trace reachability $<Obj to $<Player or $<Ceil))
+(interface (player can reach $<Obj))
 
-(trace reachability $Obj to $Obj or $)
-(trace reachability $Obj to $ or $Obj)
-(trace reachability $Obj to $Ceil1 or $Ceil2)
-	($Obj is $Rel $Parent)
-	(if) ($Rel = #in) ($Parent is closed) (then)
-		($Parent = $Ceil2)
-	(else)
-		(trace reachability $Parent to $Ceil1 or $Ceil2)
-	(endif)
-
-(interface ($<Obj is reachable by $<Actor))
-
-($Obj is reachable by $Actor)
-	~(out of reach $Obj)
-	(reachability ceiling of $Actor is $Ceil)
-	(reachability ceiling of $Obj is $Ceil)
-
-(interface ($<Obj is reachable by player))
-
-($Obj is reachable by player)
+(player can reach $Obj)
 	~(out of reach $Obj)
 	(current player $Player)
 	(reachability ceiling of $Player is $Ceil)
-	(trace reachability $Obj to $Player or $Ceil)
+	{
+		($Obj = $Ceil)
+	(or)
+		(reachability ceiling of $Obj is $Ceil)
+	}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Scope
 
-%% This predicate can be extended by the game, typically using rules that check
-%% certain conditions, e.g. what the current room is:
+%% The following predicate can be extended by the game, typically using rules
+%% that check certain conditions, e.g. what the current room is:
 
-(add $ to scope)	(fail)
+(interface (add $>Obj to scope))
 
-%% These rules should generally be left as they are:
+(add #darkness to scope)
+	~(player can see)
 
-(rebuild scope)
-	(update environment around player)
-	(forget pronouns out of scope)
+%% The default scope is everything that the player can see or reach, plus
+%% objects that are marked out of reach but would be reachable otherwise.
+%% Instead of querying the predicates defined above, we compute all of this in
+%% a single traversal of the object tree, for better performance.
 
 (interface ($>Obj is in scope))
 
@@ -551,56 +543,93 @@
 	*(add $Obj to scope)
 
 ($Obj is in scope)
-	(if) (player can see) (then)
-		(current visibility ceiling $Ceil)
-		{
-			*($Obj is visible up to $Ceil)
-		(or)
-			(room $Ceil)
-			{
-				*(from $Ceil go $ to $Obj)
-				(room $Obj)
-			(or)
-				*(from $Ceil through $Door to $Obj)
-				~($Door blocks light)
-			}
-		}
-	(else)
-		{
-			(current visibility ceiling $Obj)
-		(or)
-			(current player $Player)
-			*($Obj is visible up to $Player)
-		}
-	(endif)
-
-(interface ($>Obj is visible up to $<Ceil))
-
-($Obj is visible up to $Obj)
-
-($Obj is visible up to $Ceiling)
-	(if) (bound $Obj) (then)
-		($Obj has parent $Parent)
-		~{
-			($Obj has relation #in)
-			(opaque $Parent)
-			($Parent is closed)
-			~(current visibility ceiling $Parent)
-		}
-		($Parent is visible up to $Ceiling)
-	(else)
-		(if)
-			(opaque $Ceiling)
-			($Ceiling is closed)
-			~(current visibility ceiling $Ceiling)
-		(then)
-			*($Sub has parent $Ceiling)
-			~($Sub has relation #in)
+	(current scope ceiling $Ceil)
+	(if) (fully bound $Obj) (then)
+		(if) (player can see) (then)
+			(traverse scope bottom-up $Obj to $Ceil wearer $)
 		(else)
-			*($Sub has parent $Ceiling)
+			{
+				($Obj = $Ceil)
+			(or)
+				(reachability ceiling of $Obj is $Ceil)
+			}
 		(endif)
-		*($Obj is visible up to $Sub)
+	(else)
+		{
+			($Obj = $Ceil)
+		(or)
+			*($InCeil is #in $Ceil)
+			*(traverse scope top-down $Obj from $InCeil wearer $)
+		}
 	(endif)
+
+($Obj is in scope)
+	(if) (bound $Obj) (then)
+		(room $Obj)
+	(endif)
+	(player can see)
+	(current scope ceiling $Ceil)
+	(room $Ceil)
+	{
+		*(from $Ceil go $ to $Obj)
+		(room $Obj)
+	(or)
+		*(from $Ceil through $Door to $Obj)
+		~($Door blocks light)
+	}
+
+(interface (traverse scope bottom-up $<Obj to $<Ceil wearer $Wearer))
+
+(traverse scope bottom-up $Ceil to $Ceil wearer $)
+(traverse scope bottom-up $Obj to $Ceil wearer $Wearer)
+	($Obj is $Rel $Parent)
+	(if) ($Rel = #wornby) (then)
+		($Parent = $Wearer)
+	(endif)
+	(if) ($Parent = $Ceil) (then)
+		($Rel = #in)
+	(elseif) (opaque $Parent) (then)
+		(if) ($Rel = #in) (then)
+			($Parent is open)
+		(elseif) ($Rel = #under) (then)
+			(current player $Wearer)
+		(endif)
+	(endif)
+	(traverse scope bottom-up $Parent to $Ceil wearer $Wearer)
+
+(interface (traverse scope top-down $>Obj from $<Ceil wearer $Wearer))
+
+(traverse scope top-down $Obj from $Obj wearer $)
+(traverse scope top-down $Output from $Obj wearer $Wearer)
+	(if) (opaque $Obj) (then)
+		*($Child is $Rel $Obj)
+		(if) ($Rel = #in) (then)
+			($Obj is open)
+		(elseif) ($Rel = #under) (then)
+			(current player $Wearer)
+		(endif)
+	(else)
+		*($Child is $Rel $Obj)
+	(endif)
+	(if) ($Rel = #wornby) (then)
+		($Wearer = $Obj)
+	(endif)
+	*(traverse scope top-down $Output from $Child wearer $Wearer)
+
+#darkness
+(name *)	darkness
+(dict *)	dark
+(singleton *)
+(intangible *)
+(descr *)	(narrate darkness)
+
+(rebuild scope)
+	(update environment around player)
+	(forget pronouns out of scope)
+
+%% Debugging predicate:
+
+(interface (scope))
 
 (scope)
 	(rebuild scope)
@@ -701,7 +730,7 @@
 
 (perform [look $Dir])
 	(if)
-		(current visibility ceiling $Room)
+		(current scope ceiling $Room)
 		(room $Room)
 		(from $Room go $Dir to $Target)
 	(then)
@@ -789,7 +818,7 @@
 
 (prevent [look #in (opaque $Obj)])
 	($Obj is closed)
-	~(current visibility ceiling $Obj)
+	~(current scope ceiling $Obj)
 	(if) (openable $Obj) (then)
 		(The $Obj is) closed.
 	(else)
@@ -798,6 +827,12 @@
 
 (prevent [look #behind (room $Obj)])
 	Looking behind (the $Obj) doesn't make sense.
+
+(prevent [look #under $Obj])
+	($Obj is #wornby $Actor)
+	~(current player $Actor)
+	(animate $Actor)
+	(The $Actor) might not like that.
 
 (perform [look $Rel $Obj])
 	(collect $C)
@@ -894,7 +929,9 @@
 		You can't get a good view of (the $Obj) from here.
 	(endif)
 
-(perform [examine (current visibility ceiling $Obj)])
+(perform [examine $Obj])
+	(current player $Player)
+	($Player is nested #in $Obj)
 	(look $Obj)
 
 (perform [examine $Obj])
@@ -945,7 +982,7 @@
 	($Player is $Rel $Loc)
 	(div @roomheader) (location headline)
 	(if) (player can see) (then)
-		(current visibility ceiling $Ceil)
+		(current scope ceiling $Ceil)
 		(look $Ceil)
 		(make appearances $Rel $Loc)
 		(par)
@@ -960,6 +997,10 @@
 (instead of [search (current room $R)])
 	(try [look])
 
+(prevent [search (animate $Obj)])
+	~(current player $Obj)
+	(The $Obj) might not like that.
+
 (perform [search $O])
 	(if) (opaque $O) ($O is closed) (then)
 		($InList = [])
@@ -968,7 +1009,11 @@
 	(endif)
 	(collect $C) *($C is #on $O) (reveal $C) (into $OnList)
 	(collect $C) *($C is #behind $O) (reveal $C) (into $BehindList)
-	(collect $C) *($C is #under $O) (reveal $C) (into $UnderList)
+	(if) ($O has relation #wornby) (then)
+		($UnderList = [])
+	(else)
+		(collect $C) *($C is #under $O) (reveal $C) (into $UnderList)
+	(endif)
 	(if) (nonempty $InList) (then)
 		(if) ($InList = [$InObj]) (then)
 			(A $InObj) (is $InObj) in (the $O).
@@ -1187,8 +1232,11 @@
 (grammar [take/grab/snatch/steal/acquire/hold/gather/get/pick [takable]] for [take $])
 (grammar [pick up [takable]] for [take $])
 
+(unlikely [take ~(item $)])
+
 (unlikely [take $Obj])
-	~(item $Obj) (or) ($Obj has relation $Rel) ($Rel is one of [#partof #heldby #wornby])
+	($Obj has relation $Rel)
+	($Rel is one of [#partof #heldby #wornby])
 
 (unlikely [take $Obj from $Parent])
 	~($Obj has ancestor $Parent)
@@ -1205,16 +1253,6 @@
 		That's not where (the $Obj) (is $Obj).
 	(endif)
 
-(perform [take $Obj from $Parent])
-	(current player $Player)
-	($Obj is recursively worn by $Player)
-	{
-		($Parent = $Player)
-	(or)
-		($Parent has ancestor $Player)
-	}
-	(try [remove $Obj])
-
 (perform [take $Obj from $])
 	(try [take $Obj])
 
@@ -1225,6 +1263,7 @@
 
 (prevent [take $Obj])
 	(when $Obj is already held)
+	(or) (when $Obj is already worn)
 	(or) (when $Obj is fine where it is)
 	(or) (when $Obj is part of something)
 	(or) (when $Obj is held by someone)
@@ -1252,8 +1291,14 @@
 (grammar [take [worn] off] for [remove $])
 
 (unlikely [remove $Obj])
-	(current player $Actor)
-	~($Obj is #wornby $Actor)
+	(current player $Player)
+	~($Obj is #wornby $Player)
+
+(before [remove $Obj])
+	($Obj is #under $Cover)
+	(current player $Player)
+	($Cover is worn by $Player)
+	(first try [remove $Cover])
 
 (instead of [remove $Obj])
 	~(wearable $Obj)
@@ -1265,8 +1310,14 @@
 	(when $Obj is part of something)
 
 (prevent [remove $Obj])
-	(current player $Actor)
-	~($Obj is recursively worn by $Actor)
+	($Obj is #under $Cover)
+	(current player $Player)
+	($Cover is worn by $Player)
+	You'd have to remove (the $Cover) first.
+
+(prevent [remove $Obj])
+	(current player $Player)
+	~($Obj is #wornby $Player)
 	But you aren't wearing (the $Obj).
 
 (narrate removing $Obj)
@@ -1274,8 +1325,13 @@
 
 (perform [remove $Obj])
 	(narrate removing $Obj)
-	(current player $Actor)
-	(now) ($Obj is #heldby $Actor)
+	(current player $Player)
+	(exhaust) {
+		*($Sub is #under $Obj)
+		(now) ($Sub is #wornby $Player)
+		(now) ($Sub is handled)
+	}
+	(now) ($Obj is #heldby $Player)
 	(now) ($Obj is handled)
 
 %% WEAR <obj>
@@ -1288,23 +1344,37 @@
 	~(wearable $Obj)
 
 (unlikely [wear $Obj])
-	(current player $Actor)
-	($Obj is #wornby $Actor)
+	(current player $Player)
+	($Obj is worn by $Player)
+
+(before [wear $Obj])
+	(current player $Player)
+	~($Obj is worn by $Player)
+	(if)
+		*($Worn is worn by $Player bottom-up)
+		(wearing $Obj removes $Worn)
+	(then)
+		(first try [remove $Worn])
+	(endif)
 
 (before [wear $Obj])
 	(wearable $Obj)
-	(current player $Actor)
-	~($Obj is nested #wornby $Actor)
+	(current player $Player)
+	~($Obj is worn by $Player)
 	(ensure $Obj is held)
 
 (prevent [wear $Obj])
-	(current player $Actor)
-	($Obj is recursively worn by $Actor)
-	You are already wearing (the $Obj).
+	(when $Obj is already worn)
 
 (prevent [wear $Obj])
 	~(wearable $Obj)
 	(The $Obj) can't be worn.
+
+(prevent [wear $Obj])
+	(current player $Player)
+	*($Worn is worn by $Player bottom-up)
+	(wearing $Obj removes $Worn)
+	You can't do that while wearing (the $Worn).
 
 (prevent [wear $Obj])
 	(when $Obj isn't directly held)
@@ -1314,8 +1384,14 @@
 
 (perform [wear $Obj])
 	(narrate wearing $Obj)
-	(current player $Actor)
-	(now) ($Obj is #wornby $Actor)
+	(current player $Player)
+	(exhaust) {
+		*($Worn is #wornby $Player)
+		(wearing $Obj covers $Worn)
+		(now) ($Worn is #under $Obj)
+		(now) ($Worn is handled)
+	}
+	(now) ($Obj is #wornby $Player)
 	(now) ($Obj is handled)
 
 %% PUT <obj> <rel> <obj>
@@ -1440,7 +1516,7 @@
 (perform [inventory])
 	(current player $Player)
 	(collect $C) *($C is #heldby $Player) (into $HeldList)
-	(collect $C) *($C is #wornby $Player) (into $WornList)
+	(collect $C) *($C is worn by $Player top-down) (into $WornList)
 	(if) (empty $HeldList) (then)
 		(narrate holding nothing)
 	(else)
@@ -1991,7 +2067,7 @@
 
 (perform [cut $Obj with $])
 	You consider cutting
-	(if) ($Obj is part of $Player) (current player $Player) (then)
+	(if) (current player $Player) ($Obj is part of $Player) (then)
 		off
 	(endif)
 	(the $Obj), but reject the idea.
@@ -2491,7 +2567,7 @@
 	~{
 		($Actor has ancestor $Obj)
 	(or)
-		($Obj is nested #wornby $Actor)
+		($Obj is worn by $Actor)
 	}
 
 ~(very unlikely [leave (current room $)])
@@ -2522,7 +2598,7 @@
 
 (instead of [leave $Obj])
 	(current player $Actor)
-	($Obj is nested #wornby $Actor)
+	($Obj is worn by $Actor)
 	(try [remove $Obj])
 
 (instead of [leave (current room $)])
@@ -3386,6 +3462,11 @@
 	(the full $Obj)
 	(describe self-describing action $More)
 
+%% Debugging predicates:
+
+(interface (actions on))
+(interface (actions off))
+
 (actions on)
 	(now) (tracing actions)
 
@@ -3871,6 +3952,10 @@
 	(if) (player can see $NPC) (then)
 		(narrate $NPC removing $Obj)
 	(endif)
+	(exhaust) {
+		*($Sub is #under $Obj)
+		(now) ($Sub is #wornby $NPC)
+	}
 	(now) ($Obj is #heldby $NPC)
 
 (narrate $NPC removing $Obj)
@@ -3966,6 +4051,7 @@
 (interface (the $<Obj))
 (interface (the full $<Obj))
 (interface (A $<Obj))
+(interface (A full $<Obj))
 (interface (Name $<Obj))
 (interface (The $<Obj))
 (interface (The full $<Obj))
@@ -4144,6 +4230,9 @@
 
 (name $)
 
+%% Avoid a compiler warning, since the library doesn't use this:
+(interface (Its $<Obj))
+
 (Name $Obj)		(uppercase) (name $Obj)
 (A $Obj)		(uppercase) (a $Obj)
 (The $Obj)		(uppercase) (the $Obj)
@@ -4244,6 +4333,8 @@
 		(listing $Rest $PrintClosure $Conjunction $The $NPp1)
 	(endif)
 
+(interface (list of objects $<Rel $<Loc))
+
 (list of objects $Rel $Loc)
 	(collect $Obj)
 		*($Obj is $Rel $Loc)
@@ -4279,11 +4370,6 @@
 	(else)
 		unlocked
 	(endif)
-
-(dict (room $Room))
-	(inherently dark $Room)
-	~(light reaches ceiling $Room)
-	dark darkness
 
 %% By default, any word mentioned in the name rule is included:
 
@@ -4401,8 +4487,7 @@
 	(It $Obj) seem(s $Obj) to be harmless.
 
 (look $Obj)
-	($Obj has parent $Parent)
-	(look $Parent)
+	(descr $Obj)
 
 (feel (room $))
 	You poke around at your surroundings. They feel as expected.
@@ -4527,23 +4612,23 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Common complaints and prevent-checks
 
-(when $O is out of sight)
-	~(player can see $O)
-	(if) (player can see) (then)
-		You can't see any such thing.
-	(else)
-		You can't see well enough to do that in the darkness.
-	(endif)
+(when $ is out of sight)
+	~(player can see)
+	You can't see well enough to do that in the darkness.
 
-(when $O is already held)
-	(current player $Actor)
-	{
-		($O is #heldby $Actor)
-		You're already holding (the $O).
-	(or)
-		($O is recursively worn by $Actor)
-		You're already wearing (the $O).
-	}
+(when $Obj is out of sight)
+	~(player can see $Obj)
+	You can't see any such thing.
+
+(when $Obj is already held)
+	(current player $Player)
+	($Obj is #heldby $Player)
+	You're already holding (the $Obj).
+
+(when $Obj is already worn)
+	(current player $Player)
+	($Obj is worn by $Player)
+	You're already wearing (the $Obj).
 
 (when $O isn't directly held)
 	(current player $Actor)
@@ -4554,16 +4639,16 @@
 	(not here $Obj)
 	(The $Obj) (isn't $Obj) here.
 
-(when $O is out of reach)
-	~($O is reachable by player)
-	(if) (player can see $O) (then)
-		You can't reach (the $O).
-	(else)
-		(The $O) (isn't $O) here.
-	(endif)
+(when (intangible $Obj) is out of reach)
+	(The $Obj is) intangible.
 
-(when (intangible $O) is out of reach)
-	(The $O is) intangible.
+(when $Obj is out of reach)
+	~(player can reach $Obj)
+	(if) (player can see $Obj) (then)
+		You can't reach (the $Obj).
+	(else)
+		(The $Obj) (isn't $Obj) here.
+	(endif)
 
 (when $O is part of something)
 	($O is #partof $Parent)
@@ -4782,8 +4867,7 @@
 
 (narrate darkness)
 	You are surrounded by darkness.
-	(current visibility ceiling $Ceil)
-	(notice $Ceil)
+	(notice #darkness)
 
 (current score 0)
 (reported score is 0)
@@ -5106,7 +5190,7 @@
 
 (understand $Words as object $Output preferably worn)
 	(current actor $Actor)
-	*(parse $Words as object $Output {($_ is #wornby $Actor)} [] 1)
+	*(parse $Words as object $Output {($_ is worn by $Actor)} [] 1)
 
 (understand $Words as single object $Output preferably supporter)
 	*(parse $Words as single object $Output {(supporter $_)} [])
@@ -5130,6 +5214,8 @@
 	~($Rel is one of [#partof #heldby #wornby])
 	(current player $Player)
 	~($Obj has ancestor $Player)
+	~($Obj is nested #wornby $)
+	~($Obj is nested #heldby $)
 
 (interface (verify object policy $Policy $<Obj))
 
@@ -5952,6 +6038,8 @@
 
 %% Waiting for a keypress:
 
+(interface (any key))
+
 (any key)
 	(get key $)
 
@@ -6054,16 +6142,18 @@
 (interface ($>Obj has ancestor $>Ancestor))
 
 ($Obj has ancestor $Ancestor)
-	(if) (bound $Obj) (then)
+	(if) (fully bound $Obj) (then)
 		($Obj has parent $Parent)
 		{
-			($Parent = $Ancestor) (or)
+			($Parent = $Ancestor)
+		(or)
 			*($Parent has ancestor $Ancestor)
 		}
 	(else)
 		*($Sub has parent $Ancestor)
 		{
-			($Obj = $Sub) (or)
+			($Obj = $Sub)
+		(or)
 			*($Obj has ancestor $Sub)
 		}
 	(endif)
@@ -6071,7 +6161,7 @@
 (interface ($>Obj is nested $>Rel $>Loc))
 
 ($Obj is nested $Rel $Loc)
-	(if) (bound $Obj) (then)
+	(if) (fully bound $Obj) (then)
 		($Obj has parent $Parent)
 		{
 			($Obj has relation $Rel)
@@ -6090,38 +6180,111 @@
 (interface ($>Obj is part of $>Ancestor))
 
 ($Obj is part of $Ancestor)
+	*($Obj is recursively #partof $Ancestor)
+
+(interface ($>Obj is recursively $<Rel $>Ancestor))
+
+($Obj is recursively $Rel $Ancestor)
 	(if) (bound $Obj) (then)
-		($Obj is #partof $Parent)
+		($Obj is $Rel $Parent)
 		{
-			($Parent = $Ancestor) (or)
-			*($Parent is part of $Ancestor)
+			($Parent = $Ancestor)
+		(or)
+			*($Parent is recursively $Rel $Ancestor)
 		}
 	(else)
-		*($Sub is #partof $Ancestor)
-		{
-			($Obj = $Sub) (or)
-			*($Obj is part of $Sub)
-		}
+		*($Obj is recursively $Rel $Ancestor top-down)
 	(endif)
 
-(interface ($<Obj is recursively worn by $<Actor))
+(interface ($>Obj is recursively $<Rel $<Ancestor top-down))
 
-($Obj is recursively worn by $Actor)
-	($Obj is #wornby $Actor)
+($Obj is recursively $Rel $Ancestor top-down)
+	*($Sub is $Rel $Ancestor)
+	{
+		($Obj = $Sub)
+	(or)
+		*($Obj is recursively $Rel $Sub top-down)
+	}
 
-($Obj is recursively worn by $Actor)
-	($Obj is #partof $OtherObj)
-	($OtherObj is recursively worn by $Actor)
+(interface ($>Obj is recursively $<Rel $<Ancestor bottom-up))
+
+($Obj is recursively $Rel $Ancestor bottom-up)
+	*($Sub is $Rel $Ancestor)
+	{
+		*($Obj is recursively $Rel $Sub bottom-up)
+	(or)
+		($Obj = $Sub)
+	}
+
+(interface ($>Obj is worn by $>Actor))
+
+($Obj is worn by $Actor)
+	(if) (bound $Obj) (then)
+		($Obj is $Rel $Parent)
+		(if) ($Rel = #wornby) (then)
+			($Parent = $Actor)
+		(else)
+			($Rel = #under)
+			($Parent is worn by $Actor)
+		(endif)
+	(else)
+		*($Obj is worn by $Actor top-down)
+	(endif)
+
+(interface ($>Obj is worn by $<Actor top-down))
+
+($Obj is worn by $Actor top-down)
+	*($Cover is #wornby $Actor)
+	{
+		($Obj = $Cover)
+	(or)
+		*($Obj is recursively #under $Cover top-down)
+	}
+
+(interface ($>Obj is worn by $<Actor bottom-up))
+
+($Obj is worn by $Actor bottom-up)
+	*($Cover is #wornby $Actor)
+	{
+		*($Obj is recursively #under $Cover bottom-up)
+	(or)
+		($Obj = $Cover)
+	}
+
+(interface (wearing $<New covers $<Old))
+
+(wearing $New covers $Old)
+	($Old recursively goes underneath $New)
+
+(interface (wearing $<New removes $<Old))
+
+(wearing $New removes $Old)
+	($New recursively goes underneath $Old)
+
+(interface ($<Obj recursively goes underneath $>Cover))
+
+($Obj recursively goes underneath $Cover)
+	($Obj goes underneath $Next)
+	{
+		($Next = $Cover)
+	(or)
+		*($Next recursively goes underneath $Cover)
+	}
+
+(interface ($<Obj goes underneath $>Cover))
+
+($ goes underneath $)
+	(fail)
 
 %% The following predicates are useful when writing before-rules:
 
 (interface (ensure $<Obj is held))
 
 (ensure $Obj is held)
-	(current player $Actor)
-	(if) ($Obj is recursively worn by $Actor) (then)
+	(current player $Player)
+	(if) (wearable $Obj) ($Obj is worn by $Player) (then)
 		(first try [remove $Obj])
-	(elseif) (item $Obj) ~($Obj is #heldby $Actor) (then)
+	(elseif) (item $Obj) ~($Obj is #heldby $Player) (then)
 		(first try [take $Obj])
 	(endif)
 
@@ -6233,6 +6396,8 @@
 		*($Word is one of $List)
 		(uppercase) $Word
 	}
+
+(interface (randomly select $>Element from $<List))
 
 (randomly select $Element from $List)
 	(length of $List into $N)

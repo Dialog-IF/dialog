@@ -758,6 +758,7 @@ static struct astnode *parse_expr(int parsemode, struct lexer *lexer, struct are
 			return 0;
 		}
 		an->subkind = RULE_MULTI;
+		an->predicate->pred->flags |= PREDF_MENTIONED_IN_QUERY;
 		break;
 	case TOK_NOSPACE:
 		an = mkast(AN_RULE, 0, arena, line);
@@ -1128,6 +1129,8 @@ static struct astnode *parse_expr(int parsemode, struct lexer *lexer, struct are
 		} else if(an->predicate->special == SP_IF) {
 			an = parse_if(lexer, arena);
 			if(!an) return 0;
+		} else {
+			an->predicate->pred->flags |= PREDF_MENTIONED_IN_QUERY;
 		}
 		break;
 	case '{':
@@ -1246,6 +1249,7 @@ static struct astnode *parse_expr(int parsemode, struct lexer *lexer, struct are
 				return 0;
 			}
 			an->kind = AN_NEG_RULE;
+			an->predicate->pred->flags |= PREDF_MENTIONED_IN_QUERY;
 		} else {
 			an = mkast(AN_NEG_BLOCK, 1, arena, line);
 			dest = &an->children[0];
@@ -1361,6 +1365,7 @@ static struct astnode *parse_expr_nested(
 			return 0;
 		}
 		if(negated) an->kind = AN_NEG_RULE;
+		an->predicate->pred->flags |= PREDF_MENTIONED_IN_QUERY;
 		if(*nnested >= MAXNESTEDEXPR) {
 			report(LVL_ERR, an->line, "Too many nested expressions in rule head.");
 			lexer->errorflag = 1;
@@ -1576,7 +1581,9 @@ int parse_file(struct lexer *lexer, int filenum, struct clause ***clause_dest_pt
 
 	report(LVL_INFO, 0, "Word count for \"%s\": %d", sourcefile[filenum], lexer->wordcount);
 
-	lexer->totallines += LINEPART(line);
+	if(lexer->lib_file != filenum) {
+		lexer->totallines += LINEPART(line);
+	}
 	lexer->totalwords += lexer->wordcount;
 
 	return !lexer->errorflag;
