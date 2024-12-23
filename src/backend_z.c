@@ -2507,7 +2507,12 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				break;
 			case I_IF_MATCH:
 				o1 = generate_value(r, ci->oper[0], prg, t1);
-				o2 = generate_value(r, ci->oper[1], prg, t2);
+				if(ci->oper[1].tag == VAL_DICT) {
+					// Check unboxed o1 against the mandatory part.
+					o2 = LARGE(prg->dictmap[ci->oper[1].value]);
+				} else {
+					o2 = generate_value(r, ci->oper[1], prg, t2);
+				}
 				zi = append_instr(r, Z_CALL2S);
 				zi->oper[0] = ROUTINE(R_DEREF_UNBOX);
 				zi->oper[1] = o1;

@@ -1,4 +1,4 @@
-This archive contains version 0f/02 of the Dialog compiler and interactive
+This archive contains version 0f/03 of the Dialog compiler and interactive
 debugger, bundled with documentation and version 0.23 of the dialog Standard
 Library.
 
@@ -37,6 +37,12 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0f/03 Lib 0.23 (Manual revision 9):
+
+		Compiler: Fixed a bug in the Z-machine backend where, under
+		certain conditions, long dictionary words didn't get truncated
+		at compile-time.
 
 	0f/02 Lib 0.23 (Manual revision 9):
 
