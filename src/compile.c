@@ -52,7 +52,7 @@ struct opinfosrc {
 	{I_COMPUTE_R,		OPF_SUBOP,			"COMPUTE_R"},
 	{I_COMPUTE_V,		OPF_SUBOP,			"COMPUTE_V"},
 	{I_CUT_CHOICE,		0,				"CUT_CHOICE"},
-	{I_DEALLOCATE,		0,				"DEALLOCATE"},
+	{I_DEALLOCATE,		OPF_SUBOP,			"DEALLOCATE"},
 	{I_END_STATUS,		0,				"END_STATUS"},
 	{I_FIRST_CHILD,		0,				"FIRST_CHILD"},
 	{I_FIRST_OFLAG,		0,				"FIRST_OFLAG"},
@@ -895,6 +895,7 @@ static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an,
 
 	if(!do_trace && tail == CONT_TAIL) {
 		ci = add_instr(I_DEALLOCATE);
+		ci->subop = 0;
 		ci = add_instr(I_INVOKE_TAIL_ONCE + (an->subkind == RULE_MULTI));
 		ci->oper[0] = (value_t) {OPER_PRED, an->predicate->pred_id};
 		end_routine_cl(cl);
@@ -1337,6 +1338,7 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 
 	if(tail == CONT_TAIL) {
 		ci = add_instr(I_DEALLOCATE);
+		ci->subop = 1;
 		ci = add_instr(I_PROCEED);
 		end_routine_cl(cl);
 	} else if(tail != NO_TAIL) {
@@ -1427,7 +1429,7 @@ static void comp_clause(struct program *prg, struct predicate *pred, struct inde
 
 	ci = add_instr(I_ALLOCATE);
 	ci->oper[0] = (value_t) {OPER_NUM, cl->nvar};
-	ci->oper[1] = (value_t) {OPER_NUM, cl->max_call_arity};
+	ci->oper[1] = (value_t) {OPER_NUM, cl->predicate->arity};
 
 	for(i = 0; i < cl->predicate->arity; i++) {
 		an = cl->params[i];
@@ -1980,6 +1982,9 @@ void comp_builtin(struct program *prg, int builtin) {
 	switch(builtin) {
 	case BI_IS_ONE_OF:
 		lab = make_routine_id();
+		ci = add_instr(I_ALLOCATE);
+		ci->oper[0] = (value_t) {OPER_NUM, 0};
+		ci->oper[1] = (value_t) {OPER_NUM, 2};
 		ci = add_instr(I_GET_PAIR_RR);
 		ci->oper[0] = (value_t) {OPER_ARG, 1};
 		ci->oper[1] = (value_t) {OPER_TEMP, 0};
@@ -1990,6 +1995,8 @@ void comp_builtin(struct program *prg, int builtin) {
 		ci = add_instr(I_UNIFY);
 		ci->oper[0] = (value_t) {OPER_ARG, 0};
 		ci->oper[1] = (value_t) {OPER_TEMP, 0};
+		ci = add_instr(I_DEALLOCATE);
+		ci->subop = 1;
 		ci = add_instr(I_PROCEED);
 		end_routine(0xffff, &pred->arena);
 		begin_routine(lab);
@@ -2005,6 +2012,8 @@ void comp_builtin(struct program *prg, int builtin) {
 		ci = add_instr(I_UNIFY);
 		ci->oper[0] = (value_t) {OPER_ARG, 0};
 		ci->oper[1] = (value_t) {OPER_TEMP, 0};
+		ci = add_instr(I_DEALLOCATE);
+		ci->subop = 1;
 		ci = add_instr(I_PROCEED);
 		end_routine(0xffff, &pred->arena);
 		break;
@@ -2030,7 +2039,7 @@ void comp_builtin(struct program *prg, int builtin) {
 		begin_routine(lab);
 		ci = add_instr(I_ALLOCATE);
 		ci->oper[0] = (value_t) {OPER_NUM, 6};
-		ci->oper[1] = (value_t) {OPER_NUM, 0};
+		ci->oper[1] = (value_t) {OPER_NUM, 4};
 		ci = add_instr(I_ASSIGN);
 		ci->oper[0] = (value_t) {OPER_VAR, 0};
 		ci->oper[1] = (value_t) {OPER_ARG, 0};
@@ -2103,6 +2112,7 @@ void comp_builtin(struct program *prg, int builtin) {
 		ci->oper[1] = (value_t) {OPER_VAR, 5};
 		ci->oper[2] = (value_t) {OPER_VAR, 2};
 		ci = add_instr(I_DEALLOCATE);
+		ci->subop = 1;
 		ci = add_instr(I_PROCEED);
 		end_routine(0xffff, &pred->arena);
 		break;
@@ -2155,6 +2165,7 @@ void comp_builtin(struct program *prg, int builtin) {
 		ci->oper[0] = (value_t) {OPER_ARG, 0};
 		ci->oper[1] = (value_t) {OPER_VAR, 0};
 		ci = add_instr(I_DEALLOCATE);
+		ci->subop = 0;
 		ci = add_instr(I_GET_KEY);
 		end_routine(0xffff, &pred->arena);
 		break;
@@ -2220,6 +2231,10 @@ void comp_builtin(struct program *prg, int builtin) {
 		ci->oper[1] = (value_t) {OPER_NUM, 0};
 		ci = add_instr(I_SET_CONT);
 		ci->oper[0] = (value_t) {OPER_RLAB, lab};
+		ci = add_instr(I_TRACEPOINT);
+		ci->subop = TR_LINE;
+		ci->oper[0] = (value_t) {OPER_FILE, 0};
+		ci->oper[1] = (value_t) {OPER_NUM, 0};
 		ci = add_instr(I_BREAKPOINT);
 		ci->subop = 0;
 		end_routine(0xffff, &pred->arena);
@@ -2353,6 +2368,7 @@ void comp_dyn_var(struct program *prg, struct predname *predname) {
 	ci->oper[1] = (value_t) {OPER_VAR, 0};
 	ci->oper[2] = (value_t) {OPER_VAR, 1};
 	ci = add_instr(I_DEALLOCATE);
+	ci->subop = 1;
 	ci = add_instr(I_PROCEED);
 	end_routine(0xffff, &pred->arena);
 
@@ -2404,6 +2420,7 @@ void comp_has_parent(struct program *prg, struct predname *predname) {
 	ci->oper[1] = (value_t) {OPER_VAR, 0};
 	ci->oper[2] = (value_t) {OPER_VAR, 1};
 	ci = add_instr(I_DEALLOCATE);
+	ci->subop = 1;
 	ci = add_instr(I_PROCEED);
 	end_routine(0xffff, &pred->arena);
 

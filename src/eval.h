@@ -66,6 +66,7 @@ struct eval_state {
 	value_t			*heap;
 	value_t			*temp;
 	value_t			arg[MAXPARAM + 1];
+	value_t			orig_arg0;	// for tracing an indexed argument
 	uint16_t		nalloc_env;
 	uint16_t		nalloc_choice;
 	uint16_t		nalloc_aux;

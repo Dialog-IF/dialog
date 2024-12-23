@@ -870,6 +870,12 @@ static int eval_run(struct eval_state *es) {
 				pred_release(pp.pred);
 				return ESTATUS_ERR_HEAP;
 			}
+			if(ci->oper[1].value) {
+				es->envstack[es->env].tracevars[0] = es->orig_arg0;
+			}
+			for(i = 1; i < ci->oper[1].value; i++) {
+				es->envstack[es->env].tracevars[i] = es->arg[i];
+			}
 			break;
 		case I_ASSIGN:
 			set_by_ref(ci->oper[0], value_of(ci->oper[1], es), es);
@@ -878,7 +884,9 @@ static int eval_run(struct eval_state *es) {
 			o_begin_box("status");
 			break;
 		case I_BREAKPOINT:
-			if(!ci->subop) report(LVL_NOTE, tr_line, "Query made to (breakpoint)");
+			if(!ci->subop && tr_line) {
+				report(LVL_NOTE, tr_line, "Query made to (breakpoint)");
+			}
 			pred_release(pp.pred);
 			es->resume = es->cont;
 			es->cont.pred = 0;
@@ -1006,6 +1014,9 @@ static int eval_run(struct eval_state *es) {
 		case I_DEALLOCATE:
 			assert(es->env > 0);
 			env = &es->envstack[es->env];
+			for(i = 0; i < env->ntracevar; i++) {
+				es->arg[i] = env->tracevars[i];
+			}
 			pred_release(es->cont.pred);
 			es->simple = env->simple;
 			es->cont = env->cont;
@@ -1359,15 +1370,16 @@ static int eval_run(struct eval_state *es) {
 			}
 			if(pp.routine == 0xffff && !pp.pred->predname->builtin) {
 				do_fail(es, &pp);
-			}
-			if(es->program->eval_ticker) es->program->eval_ticker();
-			if(interrupted) {
-				if(!push_env(es, 0, 0)) {
-					pred_release(pp.pred);
-					return ESTATUS_ERR_HEAP;
+			} else {
+				if(es->program->eval_ticker) es->program->eval_ticker();
+				if(interrupted) {
+					if(!push_env(es, 0, 0)) {
+						pred_release(pp.pred);
+						return ESTATUS_ERR_HEAP;
+					}
+					es->resume = pp;
+					return ESTATUS_SUSPENDED;
 				}
-				es->resume = pp;
-				return ESTATUS_SUSPENDED;
 			}
 			pc = 0;
 			break;
@@ -1387,15 +1399,16 @@ static int eval_run(struct eval_state *es) {
 			}
 			if(pp.routine == 0xffff && !pp.pred->predname->builtin) {
 				do_fail(es, &pp);
-			}
-			if(es->program->eval_ticker) es->program->eval_ticker();
-			if(interrupted) {
-				if(!push_env(es, 0, 0)) {
-					pred_release(pp.pred);
-					return ESTATUS_ERR_HEAP;
+			} else {
+				if(es->program->eval_ticker) es->program->eval_ticker();
+				if(interrupted) {
+					if(!push_env(es, 0, 0)) {
+						pred_release(pp.pred);
+						return ESTATUS_ERR_HEAP;
+					}
+					es->resume = pp;
+					return ESTATUS_SUSPENDED;
 				}
-				es->resume = pp;
-				return ESTATUS_SUSPENDED;
 			}
 			pc = 0;
 			break;
@@ -1419,15 +1432,16 @@ static int eval_run(struct eval_state *es) {
 			}
 			if(pp.routine == 0xffff && !pp.pred->predname->builtin) {
 				do_fail(es, &pp);
-			}
-			if(es->program->eval_ticker) es->program->eval_ticker();
-			if(interrupted) {
-				if(!push_env(es, 0, 0)) {
-					pred_release(pp.pred);
-					return ESTATUS_ERR_HEAP;
+			} else {
+				if(es->program->eval_ticker) es->program->eval_ticker();
+				if(interrupted) {
+					if(!push_env(es, 0, 0)) {
+						pred_release(pp.pred);
+						return ESTATUS_ERR_HEAP;
+					}
+					es->resume = pp;
+					return ESTATUS_SUSPENDED;
 				}
-				es->resume = pp;
-				return ESTATUS_SUSPENDED;
 			}
 			pc = 0;
 			break;
@@ -1905,14 +1919,17 @@ static int eval_run(struct eval_state *es) {
 						if(!unify(es, v, v2)) {
 							do_fail(es, &pp);
 							pc = 0;
+							break;
 						}
 						v0 = es->heap[v0.value + 1];
 						v2 = es->heap[v.value + 1];
 					}
 				}
-				if(!unify(es, (value_t) {VAL_NIL}, v2)) {
-					do_fail(es, &pp);
-					pc = 0;
+				if(v0.value == v1.value) {
+					if(!unify(es, (value_t) {VAL_NIL}, v2)) {
+						do_fail(es, &pp);
+						pc = 0;
+					}
 				}
 			}
 			break;
@@ -1930,8 +1947,8 @@ static int eval_run(struct eval_state *es) {
 				assert(ci->oper[2].tag == OPER_PRED);
 				tr_line = MKLINE(ci->oper[0].value, ci->oper[1].value);
 				predname = es->program->predicates[ci->oper[2].value];
-				for(i = 0; i < predname->arity; i++) {
-					es->envstack[es->env].tracevars[i] = es->arg[i];
+				if(predname->arity) {
+					es->orig_arg0 = es->arg[0];
 				}
 				if(predname->builtin != BI_GETINPUT
 				&& predname->builtin != BI_GETRAWINPUT) {
@@ -1950,7 +1967,7 @@ static int eval_run(struct eval_state *es) {
 					es,
 					TR_ENTER,
 					predname,
-					es->envstack[es->envstack[es->env].env].tracevars,
+					es->envstack[es->env].tracevars,
 					MKLINE(ci->oper[0].value, ci->oper[1].value));
 			} else if(ci->subop == TR_QDONE) {
 				assert(ci->oper[2].tag == OPER_PRED);
@@ -1959,14 +1976,14 @@ static int eval_run(struct eval_state *es) {
 					es,
 					TR_QDONE,
 					predname,
-					es->envstack[es->env].tracevars,
+					es->arg,
 					MKLINE(ci->oper[0].value, ci->oper[1].value));
 				if(pp.pred->predname->builtin == BI_INJECTED_QUERY) {
 					trace(
 						es,
 						TR_REPORT,
 						predname,
-						es->envstack[es->env].tracevars,
+						es->arg,
 						0);
 				}
 			} else {
@@ -2018,17 +2035,19 @@ static int eval_run(struct eval_state *es) {
 					}
 				}
 				if(i == n) {
-					do_fail(es, &pp);
-					pc = 0;
 					break;
 				}
 				v = eval_deref(es->heap[v.value + 1], es);
 			}
 			es->aux = es->wordcheckaux;
 			assert(es->aux);
-			v = es->auxstack[--es->aux];
-			assert(v.tag == VAL_NUM);
-			es->wordcheckaux = v.value;
+			v0 = es->auxstack[--es->aux];
+			assert(v0.tag == VAL_NUM);
+			es->wordcheckaux = v0.value;
+			if(v.tag != VAL_NIL) {
+				do_fail(es, &pp);
+				pc = 0;
+			}
 			break;
 		default:
 			printf("unimplemented cinstr! %d\n", ci->op);

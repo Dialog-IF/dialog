@@ -1152,7 +1152,7 @@ static void cmd_replay(struct debugger *dbg) {
 	free(dbg->pending_input);
 
 	dbg->pending_input = dbg->ds.inputlog;
-	dbg->pending_wpos = dbg->ds.ninput;
+	dbg->pending_wpos = dbg->nalloc_pend = dbg->ds.ninput;
 
 	dbg->ds.inputlog = 0;
 	dbg->ds.ninput = 0;

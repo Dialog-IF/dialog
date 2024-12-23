@@ -7,7 +7,7 @@ enum {
 	I_ASSIGN,		// -- dest, value
 
 	I_ALLOCATE,		// -- number of variables, number of trace variables
-	I_DEALLOCATE,		// --
+	I_DEALLOCATE,		// -- subop = restore args flag
 	I_PROCEED,		// -E
 	I_SET_CONT,		// -- routine id
 
