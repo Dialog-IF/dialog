@@ -2136,7 +2136,7 @@ static void frontend_reset_program(struct program *prg) {
 		cl->params[2]->word = find_word(prg, "");
 		cl->body = deepcopy_astnode(prg->closurebodies[i], cl->arena, 0);
 		add_clause(cl, predname->pred);
-		analyse_clause(prg, cl, 1);
+		analyse_clause(prg, cl, 0);
 		assert(cl == predname->pred->clauses[i]);
 		for(j = 0; j < cl->nvar; j++) {
 			if(!strcmp(cl->varnames[j]->name, "_")) {

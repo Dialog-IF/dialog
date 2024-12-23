@@ -1,6 +1,6 @@
 
 (library version)
-	Library version 0.35.
+	Library version 0.36.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -647,16 +647,16 @@
 	(narrate entering $Room)
 
 (update environment around player)
-	(recompute visibility)
 	(if) (current player $Player) ($Player is in room $Room) (then)
 		(now) (current room $Room)
-		(if) ($Room is unvisited) (player can see) (then)
-			(now) ($Room is visited)
-		(endif)
 		(exhaust) {
 			*($Room attracts $Object)
 			(now) ($Object is #in $Room)
 		}
+		(recompute visibility)
+		(if) ($Room is unvisited) (player can see) (then)
+			(now) ($Room is visited)
+		(endif)
 	(endif)
 
 (narrate entering (room $))

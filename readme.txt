@@ -1,5 +1,5 @@
-This archive contains version 0j/01 of the Dialog compiler and interactive
-debugger, bundled with documentation and version 0.35 of the Dialog Standard
+This archive contains version 0j/02 of the Dialog compiler and interactive
+debugger, bundled with documentation and version 0.36 of the Dialog Standard
 Library.
 
 Directory structure:
@@ -37,6 +37,14 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0j/02, Lib 0.36:
+
+		Debugger: Removed stray warnings about singleton variables when
+		merging changes to the running program.
+
+		Library: Visibility is now recomputed after updating the
+		current room variable and moving any floating objects.
 
 	0j/01, Lib 0.35 (Manual revision 21):
 

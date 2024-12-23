@@ -387,13 +387,16 @@ void o_reset(int force_w, int quirks) {
 }
 
 void o_leave_all() {
-	o_sync();
-	boxsp = 0;
-	boxstack[boxsp].boxclass = CLA_MAIN;
-	boxstack[boxsp].style = STYLE_ROMAN;
-	boxstack[boxsp].upper = 0;
-	boxstack[boxsp].visible = 1;
-	boxstack[boxsp].wrap = !term_handles_wrapping();
+	if(boxstack[boxsp].boxclass != CLA_DEBUG
+	&& boxstack[boxsp].boxclass != CLA_INTDEBUG) {
+		o_sync();
+		boxsp = 0;
+		boxstack[boxsp].boxclass = CLA_MAIN;
+		boxstack[boxsp].style = STYLE_ROMAN;
+		boxstack[boxsp].upper = 0;
+		boxstack[boxsp].visible = 1;
+		boxstack[boxsp].wrap = !term_handles_wrapping();
+	}
 }
 
 void o_cleanup() {
