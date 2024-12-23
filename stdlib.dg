@@ -1,6 +1,6 @@
 
 (library version)
-	Library version 0.12.
+	Library version 0.13.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -419,16 +419,16 @@
 	(narrate entering $Room)
 
 (update environment around player)
-	(current player $Player)
-	($Player is in room $Room)
-	(now) (current room $Room)
-	(if) ($Room is unvisited) (player can see) (then)
-		(now) ($Room is visited)
+	(if) (current player $Player) ($Player is in room $Room) (then)
+		(now) (current room $Room)
+		(if) ($Room is unvisited) (player can see) (then)
+			(now) ($Room is visited)
+		(endif)
+		(exhaust) {
+			*($Room attracts $Object)
+			(now) ($Object is #in $Room)
+		}
 	(endif)
-	(exhaust) {
-		*($Room attracts $Object)
-		(now) ($Object is #in $Room)
-	}
 
 (narrate entering (room $))
 	(par)
@@ -2713,6 +2713,7 @@
 	(current player $Actor)
 	($Actor is $Rel $Obj)
 	~(room $Obj)
+	~(vehicle $Obj)
 	(when $Actor is $Rel $Obj)
 
 (perform [go $Dir])
@@ -4050,9 +4051,9 @@
 
 (program entry point)
 	(par 2)
+	(update environment around player)
 	(stoppable) (intro)
 	(par)
-	(update environment around player)
 	(read-parse-act loop)
 
 (intro)
