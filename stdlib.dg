@@ -1,6 +1,6 @@
 
 (library version)
-	Library version 0.24.
+	Library version 0.25.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -2072,8 +2072,14 @@
 (understand [tell/ask | $Words] as [tell $Actor to | $Action])
 	*(split $Words by [, to] into $Left and $Right)
 	*(understand $Left as single object $Actor preferably animate)
+	(current actor $OldActor)
+	(now) (current actor $Actor)
 	(rewrite $Right into $Simplified)
-	*(understand $Simplified as $Action)
+	(collect $A)
+		*(understand $Simplified as $A)
+	(into $List)
+	(now) (current actor $OldActor)
+	*($Action is one of $List)
 
 (understand [ask | $Words] as [tell $Actor to give $Obj to $Player])
 	*(split $Words by [for] into $Left and $Right)
@@ -3061,8 +3067,14 @@
 	*(split $Words by [,] into $Left and $Right)
 	*(understand $Left as single object $Actor preferably animate)
 	(object $Actor) %% Significant when allowing parse errors.
+	(current actor $OldActor)
+	(now) (current actor $Actor)
 	(rewrite $Right into $Simplified)
-	*(understand $Simplified as $Action)
+	(collect $A)
+		*(understand $Simplified as $A)
+	(into $List)
+	(now) (current actor $OldActor)
+	*($Action is one of $List)
 
 (understand $Words as $Words)
 	(understand $Words)
@@ -4206,17 +4218,17 @@
 	*(parse $Words as object $Output {(takable $_)} [] 1)
 
 (understand $Words as object $Output preferably held)
-	(current player $Player)
-	*(parse $Words as object $Output {($_ is #heldby $Player)} [] 1)
+	(current actor $Actor)
+	*(parse $Words as object $Output {($_ is #heldby $Actor)} [] 1)
 
 (understand $Words as single object $Output preferably held)
-	(current player $Player)
-	*(parse $Words as single object $Output {($_ is #heldby $Player)} [])
+	(current actor $Actor)
+	*(parse $Words as single object $Output {($_ is #heldby $Actor)} [])
 
 (understand $Words as object $Output preferably held excluding $ExcludeObj)
-	(current player $Player)
+	(current actor $Actor)
 	*(parse $Words as object $Output {
-		($_ is #heldby $Player)
+		($_ is #heldby $Actor)
 		~($_ = $ExcludeObj)
 	} [] 1)
 
@@ -4225,8 +4237,8 @@
 	%% [1] produces 'someone' instead of 'something' in error responses.
 
 (understand $Words as object $Output preferably worn)
-	(current player $Player)
-	*(parse $Words as object $Output {($_ is #wornby $Player)} [] 1)
+	(current actor $Actor)
+	*(parse $Words as object $Output {($_ is #wornby $Actor)} [] 1)
 
 (understand $Words as single object $Output preferably supporter)
 	*(parse $Words as single object $Output {(supporter $_)} [])
@@ -4237,9 +4249,9 @@
 (takable (item $Obj))
 	~($Obj has relation #partof)
 	~{
-		($Obj is $Rel $Player)
+		($Obj is $Rel $Parent)
 		($Rel is one of [#heldby #wornby])
-		(current player $Player)
+		(current actor $Parent)
 	}
 
 (verify object policy (object $Policy) $Obj)
@@ -4486,6 +4498,8 @@
 %% That's because an action may modify the scope, which affects the parsing of
 %% subsequent actions.
 
+(global variable (current actor $))
+
 (parse commandline [])
 	Come again?
 
@@ -4531,6 +4545,10 @@
 			(location headline)
 			(stop)
 		(endif)
+
+		%% Usually, the player is the actor.
+		(current player $Player)
+		(now) (current actor $Player)
 
 		%% Handle AGAIN and rewriting:
 
