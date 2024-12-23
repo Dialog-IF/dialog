@@ -3959,6 +3959,7 @@ static void initial_values(struct program *prg, uint8_t *zcore, uint16_t addr_gl
 					eval_args[1] = eval_makevar(&es);
 					if(predname->builtin != BI_HASPARENT) {
 						if(eval_initial(&es, predname, eval_args)) {
+							addr = global_labels[bp->propbase_label] + 2 + j * 2;
 							if(eval_args[1].tag == VAL_REF) {
 								report(
 									LVL_ERR,
@@ -3968,18 +3969,28 @@ static void initial_values(struct program *prg, uint8_t *zcore, uint16_t addr_gl
 									prg->worldobjnames[j]->name);
 								exit(1);
 							} else if(eval_args[1].tag == VAL_PAIR) {
-								report(
-									LVL_ERR,
-									0,
-									"Too complex initial value of dynamic per-object variable %s, for #%s.",
-									predname->printed_name,
-									prg->worldobjnames[j]->name);
-								exit(1);
+								value = 0x8000 | lttop;
+								zcore[addr + 0] = value >> 8;
+								zcore[addr + 1] = value & 0xff;
+								value = addr;
+								addr = addr_lts + lttop * 2;
+								zcore[addr + 2] = value >> 8;
+								zcore[addr + 3] = value & 0xff;
+								value = 2 + render_eval_value(
+									zcore + addr + 4,
+									ltssize - lttop - 2,
+									eval_args[1],
+									&es,
+									predname,
+									0);
+								zcore[addr + 0] = value >> 8;
+								zcore[addr + 1] = value & 0xff;
+								lttop += value;
+							} else {
+								value = tag_eval_value(eval_args[1], prg);
+								zcore[addr + 0] = value >> 8;
+								zcore[addr + 1] = value & 0xff;
 							}
-							addr = global_labels[bp->propbase_label] + 2 + j * 2;
-							value = tag_eval_value(eval_args[1], prg);
-							zcore[addr + 0] = value >> 8;
-							zcore[addr + 1] = value & 0xff;
 						}
 					}
 					if(es.errorflag) exit(1);

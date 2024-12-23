@@ -1,4 +1,4 @@
-This archive contains version 0k/01 of the Dialog compiler and interactive
+This archive contains version 0k/02 of the Dialog compiler and interactive
 debugger, bundled with documentation and version 0.39 of the Dialog Standard
 Library.
 
@@ -37,6 +37,11 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0k/02, Lib 0.39 (Manual revision 24):
+
+		Compiler: Fixed a bug that prevented per-object variables from
+		being initialized to complex values.
 
 	0k/01, Lib 0.39 (Manual revision 24):
 
@@ -116,7 +121,7 @@ Release notes:
 		Debugger: Removed spurious blank line when entering a status
 		bar environment.
 
-	0j/02, Lib 0.36:
+	0j/02, Lib 0.36 (Manual revision 21):
 
 		Debugger: Removed stray warnings about singleton variables when
 		merging changes to the running program.

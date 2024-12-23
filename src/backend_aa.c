@@ -584,7 +584,7 @@ static int initial_values(struct program *prg, uint16_t *core, int ltt) {
 							size = 2 + render_eval_value(
 								core + AA_N_INITREG + ltt + 2,
 								fixed_sz + longterm_sz - ltt - 2,
-								eval_args[0],
+								eval_args[1],
 								&es,
 								predname,
 								0);
