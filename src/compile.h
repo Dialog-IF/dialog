@@ -191,6 +191,7 @@ struct comp_routine {
 	uint16_t		clause_id;	// so the debugger can print variable names
 	uint16_t		diverted;
 	uint16_t		reftrack;	// ffff = unvisited, self = group leader, other = part of group
+	uint16_t		n_edge_in;
 };
 
 void comp_init();

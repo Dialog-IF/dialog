@@ -445,7 +445,7 @@ void pp_predicate(struct predname *predname, struct program *prg) {
 			(pred->flags & PREDF_FIXED_FLAG)? 'F' : 'D'
 		) : '-');
 	printf("%s of arity %d\n", predname->printed_name, predname->arity);
-	if(prg->optflags & OPTF_BOUND_PARAMS) {
+	if((prg->optflags & OPTF_BOUND_PARAMS) && !(pred->flags & PREDF_DYNAMIC)) {
 		for(i = 0; i < predname->arity; i++) {
 			if(pred->unbound_in & (1 << i)) {
 				printf("\tIncoming parameter #%d can be unbound because of ", i + 1);

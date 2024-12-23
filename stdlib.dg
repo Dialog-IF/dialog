@@ -1,6 +1,6 @@
 
 (library version)
-	Library version 0.28.
+	Library version 0.29.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -1769,6 +1769,7 @@
 	~(potable $Obj)
 
 (before [eat $Obj])
+	{ (edible $Obj) (or) (potable $Obj) }
 	(item $Obj)
 	(ensure $Obj is held)
 
@@ -1811,6 +1812,7 @@
 	~(potable $Obj)
 
 (before [drink $Obj])
+	{ (edible $Obj) (or) (potable $Obj) }
 	(item $Obj)
 	(ensure $Obj is held)
 
@@ -2104,6 +2106,9 @@
 (describe action [tell $Actor to give $Obj to (current player $)])
 	ask (the full $Actor) for (the full $Obj)
 
+(describe action [tell $Actor to tell (current player $) about $Topic])
+	ask (the full $Actor) about (describe topic $Topic)
+
 (describe action [tell $Actor to | $Action])
 	tell (the full $Actor) to (describe action $Action)
 
@@ -2112,6 +2117,9 @@
 
 (instead of [tell $NPC to greet])
 	(try [greet $NPC])
+
+(instead of [tell $NPC to tell (current player $) about $Topic])
+	(try [ask $NPC about $Topic])
 
 (perform [tell $Actor to | $])
 	(if) (animate $Actor) (then)
@@ -4591,6 +4599,10 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Topics
+
+(describe topic $Topic)
+	($Topic = [, | $])
+	(the full $Topic)
 
 (describe topic (object $Obj))
 	(the full $Obj)

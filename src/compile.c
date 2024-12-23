@@ -345,6 +345,7 @@ static void comp_dump_label(struct predicate *pred, int i) {
 	} else {
 		printf(" (part of group R%d)", pred->routines[i].reftrack);
 	}
+	printf(" (%d incoming)", pred->routines[i].n_edge_in);
 	printf("\n");
 }
 
@@ -2529,13 +2530,19 @@ static int can_eliminate_choice(
 	value_t restore_var,
 	struct cinstr **pop_instr,
 	struct cinstr **restore_instr,
-	uint8_t *visited)
+	uint8_t *visited,
+	int shared_path)
 {
 	int i, j, retval = 1;
 	struct comp_routine *r = &routines[rnum];
 
-	if(!inum && visited[rnum]) {
-		return visited[rnum] - 1;
+	if(!inum) {
+		if(visited[rnum]) {
+			return visited[rnum] - 1;
+		}
+		if(routines[rnum].n_edge_in > 1) {
+			shared_path = 1;
+		}
 	}
 	
 	for(i = inum; i < r->ninstr; i++) {
@@ -2574,15 +2581,42 @@ static int can_eliminate_choice(
 			break;
 		}
 		if(opinfo[r->instr[i].op].flags & OPF_BRANCH) {
-			if(r->instr[i].implicit != 0xffff
-			&& !can_eliminate_choice(r->instr[i].implicit, 0, restore_var, pop_instr, restore_instr, visited)) {
-				retval = 0;
-				break;
+			if(r->instr[i].implicit == 0xffff) {
+				if(shared_path) {
+					retval = 0;
+					break;
+				}
+			} else {
+				if(!can_eliminate_choice(
+					r->instr[i].implicit,
+					0,
+					restore_var,
+					pop_instr,
+					restore_instr,
+					visited,
+					shared_path))
+				{
+					retval = 0;
+					break;
+				}
 			}
 		}
 		for(j = 0; j < 3; j++) {
+			if(r->instr[i].oper[j].tag == OPER_FAIL
+			&& shared_path) {
+				retval = 0;
+				break;
+			}
 			if(r->instr[i].oper[j].tag == OPER_RLAB
-			&& !can_eliminate_choice(r->instr[i].oper[j].value, 0, restore_var, pop_instr, restore_instr, visited)) {
+			&& !can_eliminate_choice(
+				r->instr[i].oper[j].value,
+				0,
+				restore_var,
+				pop_instr,
+				restore_instr,
+				visited,
+				shared_path))
+			{
 				retval = 0;
 				break;
 			}
@@ -2642,7 +2676,7 @@ static int try_eliminate_choice(int rnum, int i, struct program *prg, uint8_t *v
 	if(i
 	&& r->instr[i - 1].op == I_SAVE_CHOICE
 	&& (r->instr[i - 1].oper[0].tag == OPER_VAR || r->instr[i - 1].oper[0].tag == OPER_TEMP)) {
-		if(can_eliminate_choice(rnum, i + 1, r->instr[i - 1].oper[0], &pop_instr, &restore_instr, visited)) {
+		if(can_eliminate_choice(rnum, i + 1, r->instr[i - 1].oper[0], &pop_instr, &restore_instr, visited, 0)) {
 			any = 1;
 			memset(visited, 0, nroutine);
 			do_eliminate_choice(r, i + 1, fail_lab, visited);
@@ -2661,7 +2695,7 @@ static int try_eliminate_choice(int rnum, int i, struct program *prg, uint8_t *v
 			}
 		}
 	} else {
-		if(can_eliminate_choice(rnum, i + 1, (value_t) {VAL_NONE}, &pop_instr, &restore_instr, visited)) {
+		if(can_eliminate_choice(rnum, i + 1, (value_t) {VAL_NONE}, &pop_instr, &restore_instr, visited, 0)) {
 			any = 1;
 			memset(visited, 0, nroutine);
 			do_eliminate_choice(r, i + 1, fail_lab, visited);
@@ -3613,7 +3647,7 @@ static void resolve_jump_chains(struct predicate *pred) {
 void comp_predicate(struct program *prg, struct predname *predname) {
 	struct predicate *pred = predname->pred;
 	struct cinstr *ci;
-	int i, any;
+	int i, j, k, any;
 
 	memset(routines, 0, nroutine * sizeof(struct comp_routine));
 	nroutine = 0;
@@ -3641,6 +3675,7 @@ void comp_predicate(struct program *prg, struct predname *predname) {
 		ci->oper[0] = (value_t) {OPER_FAIL};
 		end_routine(0xffff, &pred->arena);
 	}
+	routines[pred->normal_entry].n_edge_in++;
 
 	if(predname->builtin == BI_HASPARENT) {
 		assert(pred->initial_value_entry == -1);
@@ -3648,12 +3683,14 @@ void comp_predicate(struct program *prg, struct predname *predname) {
 		pred->normal_entry = make_routine_id();
 		begin_routine(pred->normal_entry);
 		comp_has_parent(prg, predname);
+		routines[pred->normal_entry].n_edge_in++;
 	} else if((pred->flags & PREDF_DYNAMIC) && predname->arity == 2) {
 		assert(pred->initial_value_entry == -1);
 		pred->initial_value_entry = pred->normal_entry;
 		pred->normal_entry = make_routine_id();
 		begin_routine(pred->normal_entry);
 		comp_dyn_var(prg, predname);
+		routines[pred->normal_entry].n_edge_in++;
 	} else if((pred->flags & PREDF_DYNAMIC) && predname->arity == 1
 	&& !(pred->flags & PREDF_GLOBAL_VAR)) {
 		assert(pred->initial_value_entry == -1);
@@ -3661,6 +3698,20 @@ void comp_predicate(struct program *prg, struct predname *predname) {
 		pred->normal_entry = make_routine_id();
 		begin_routine(pred->normal_entry);
 		comp_dyn_list(prg, predname);
+		routines[pred->normal_entry].n_edge_in++;
+	}
+
+	for(i = 0; i < nroutine; i++) {
+		for(j = 0; j < routines[i].ninstr; j++) {
+			if(routines[i].instr[j].implicit != 0xffff) {
+				routines[routines[i].instr[j].implicit].n_edge_in++;
+			}
+			for(k = 0; k < 3; k++) {
+				if(routines[i].instr[j].oper[k].tag == OPER_RLAB) {
+					routines[routines[i].instr[j].oper[k].value].n_edge_in++;
+				}
+			}
+		}
 	}
 
 	do {

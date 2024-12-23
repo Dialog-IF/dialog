@@ -1,5 +1,5 @@
-This archive contains version 0g/05 of the Dialog compiler and interactive
-debugger, bundled with documentation and version 0.28 of the dialog Standard
+This archive contains version 0g/06 of the Dialog compiler and interactive
+debugger, bundled with documentation and version 0.29 of the dialog Standard
 Library.
 
 Directory structure:
@@ -37,6 +37,20 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0g/06 Lib 0.29 (Manual revision 14):
+
+		Library: In the before-rules for eating and drinking, only
+		attempt to pick up the indicated object if it is edible or
+		potable.
+
+		Library: Treat "X, tell me about Y" as "ask X about Y".
+
+		Library: Fixed a bug where '(describe topic $)' couldn't deal
+		with ambiguity.
+
+		Compiler: Fixed a bug related to the optimization of nested
+		disjunctions.
 
 	0g/05 Lib 0.28 (Manual revision 14):
 
