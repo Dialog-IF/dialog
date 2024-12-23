@@ -287,6 +287,7 @@ struct predicate {
 #define PREDF_INVOKED_NORMALLY		0x00040000
 #define PREDF_NEEDS_LABEL		0x00080000
 #define PREDF_MIGHT_STOP		0x00100000
+#define PREDF_MAY_INLINE		0x00200000
 
 #define PREDF_INVOKED (PREDF_INVOKED_NORMALLY | PREDF_INVOKED_FOR_WORDS | PREDF_INVOKED_BY_PROGRAM | PREDF_INVOKED_BY_DEBUGGER)
 
@@ -406,12 +407,14 @@ struct program {
 #define OPTF_SIMPLE_SELECT	0x00000010
 #define OPTF_NO_LINKS		0x00000020
 #define OPTF_NO_LOG		0x00000040
+#define OPTF_INLINE		0x00000080
 
 typedef void (*word_visitor_t)(struct word *);
 
 struct program *new_program(void);
 struct astnode *mkast(int kind, int nchild, struct arena *arena, line_t line);
 struct astnode *deepcopy_astnode(struct astnode *an, struct arena *arena, line_t line);
+int astnode_equals(struct astnode *a, struct astnode *b);
 struct word *find_word(struct program *prg, char *name);
 struct word *find_word_nocreate(struct program *prg, char *name);
 void ensure_dict_word(struct program *prg, struct word *w);

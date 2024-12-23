@@ -1,6 +1,6 @@
 
 (library version)
-	Library version 0.37.
+	Library version 0.38.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -3196,6 +3196,24 @@
 	Failed to restore the game state.
 	(stop)
 
+%% UNDO
+
+(command [undo])
+(perform [undo])
+	(if) ~(interpreter supports undo) (then)
+		This interpreter doesn't support undo.
+	(elseif) (undo) (then)
+		Failed to undo last turn.
+	(else)
+		There are no more turns to undo!
+	(endif)
+	(stop)
+
+(narrate undoing)
+	Undoing the last turn.
+	(line)
+	(location headline)
+
 %% TRANSCRIPT
 
 (command [transcript on])
@@ -3305,17 +3323,6 @@
 	*($Action is one of $List)
 
 (understand $Words as $Action)
-	(default actions enabled)
-	*(understand $Words as non-all object $Obj)
-	~(empty $Obj)
-	~($Obj = [1])
-	(if) ($Obj = [a $RealObj]) (then)
-		(default action $RealObj $Action)
-	(else)
-		(default action $Obj $Action)
-	(endif)
-
-(understand $Words as $Action)
 	(implicit action is $Implicit)
 	(if) (implicit action wants direction) (then)
 		*(understand $Words as direction $O)
@@ -3324,6 +3331,18 @@
 		*(understand $Words as non-all object $O)
 	(endif)
 	(recover implicit action $Implicit $O into $Action)
+
+(understand $Words as $Action)
+	(default actions enabled)
+	~{ (implicit action is $) ~(implicit action wants direction) }
+	*(understand $Words as non-all object $Obj)
+	~(empty $Obj)
+	~($Obj = [1])
+	(if) ($Obj = [a $RealObj]) (then)
+		(default action $RealObj $Action)
+	(else)
+		(default action $Obj $Action)
+	(endif)
 
 (default action $Obj [examine $Obj])
 
@@ -5360,23 +5379,12 @@
 	%% By convention used by testers to put comments in a transcript.
 
 (parse commandline [undo] with choices $)
-	(if) ~(interpreter supports undo) (then)
-		This interpreter doesn't support undo.
-	(elseif) (undo) (then)
-		Failed to undo last turn.
-	(else)
-		There are no more turns to undo!
-	(endif)
-	(stop)
+	(try [undo])
 
 (parse commandline $Words with choices $ChoiceList)
-	%% The commandline wasn't UNDO.
 	%% Before proceeding, save the current undo state:
-
 	(if) (save undo 1) (then)
-		Undoing the last turn.
-		(line)
-		(location headline)
+		(narrate undoing)
 		(stop)
 	(endif)
 

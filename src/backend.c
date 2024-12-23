@@ -205,7 +205,8 @@ int main(int argc, char **argv) {
 
 	prg = new_program();
 	frontend_add_builtins(prg);
-	prg->optflags |= OPTF_BOUND_PARAMS | OPTF_TAIL_CALLS | OPTF_ENV_FRAMES | OPTF_SIMPLE_SELECT | OPTF_NO_LOG;
+	prg->optflags |= OPTF_BOUND_PARAMS | OPTF_TAIL_CALLS | OPTF_ENV_FRAMES;
+	prg->optflags |= OPTF_SIMPLE_SELECT | OPTF_NO_LOG | OPTF_INLINE;
 	if(!aamachine) {
 		prg->optflags |= OPTF_NO_LINKS;
 	}

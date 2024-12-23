@@ -1,5 +1,5 @@
-This archive contains version 0j/03 of the Dialog compiler and interactive
-debugger, bundled with documentation and version 0.37 of the Dialog Standard
+This archive contains version 0j/04 of the Dialog compiler and interactive
+debugger, bundled with documentation and version 0.38 of the Dialog Standard
 Library.
 
 Directory structure:
@@ -37,6 +37,20 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0j/04, Lib 0.38 (Manual revision 23):
+
+		Library: Undo is performed as an action, [undo], and reported
+		via '(narrate undoing)'. It is still parsed as a special case.
+
+		Library: When the player types an object name in response to a
+		direct question (e.g. "To whom?"), don't understand it as a
+		request to perform the default action (e.g. examine).
+
+		Compiler: Fixed a bug that disallowed @-prefixed words in
+		slash-expressions.
+
+		Compiler: Several improvements to the optimizer.
 
 	0j/03, Lib 0.37 (Manual revision 22):
 

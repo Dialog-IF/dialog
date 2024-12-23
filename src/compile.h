@@ -136,6 +136,7 @@ enum {
 
 struct opinfo {
 	uint8_t		flags;
+	uint8_t		refs;
 	char		*name;
 };
 

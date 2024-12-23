@@ -116,7 +116,7 @@ static int next_token(struct lexer *lexer, int parsemode) {
 				column++;
 				if(ch != EOF && (
 					valid_varname_char((uint8_t) ch)
-					|| (lexer->kind == TOK_DICTWORD && !strchr("\n\r\t ()[]{}~*|%", ch))))
+					|| (lexer->kind == TOK_DICTWORD && !strchr("\n\r\t ()[]{}~*|%/", ch))))
 				{
 					if(ch == '\\') {
 						ch = lexer_getc(lexer);

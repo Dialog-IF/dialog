@@ -1843,7 +1843,7 @@ static int decode_output(char **bufptr, struct astnode *an, int *p_space, int *p
 int frontend_visit_clauses(struct program *prg, struct arena *temp_arena, struct clause **first_ptr) {
 	struct clause *cl, *sub, **clause_dest, **cld;
 	struct astnode *an;
-	int i, j;
+	int i, j, k;
 	char buf[32];
 	struct predicate *pred;
 
@@ -2078,6 +2078,39 @@ int frontend_visit_clauses(struct program *prg, struct arena *temp_arena, struct
 	pred = find_builtin(prg, BI_INVOKE_CLOSURE)->pred;
 	for(i = 0; i < pred->nclause; i++) {
 		pred->clauses[i]->body = expand_macros(pred->clauses[i]->body, prg, &pred->arena);
+	}
+
+	for(i = 0; i < prg->npredicate; i++) {
+		pred = prg->predicates[i]->pred;
+		if(pred->nclause == 1) {
+			cl = pred->clauses[0];
+			for(j = 0; j < pred->predname->arity; j++) {
+				if(cl->params[j]->kind != AN_VARIABLE) break;
+			}
+			if(j == pred->predname->arity
+			&& (an = cl->body)
+			&& an->kind == AN_RULE
+			&& !(an->predicate->builtin == BI_FAIL)
+			&& !an->next_in_body) {
+				for(j = 0; j < an->nchild; j++) {
+					if(an->children[j]->kind != AN_VARIABLE) {
+						break;
+					}
+					for(k = 0; k < pred->predname->arity; k++) {
+						if(an->children[j]->word == cl->params[k]->word) {
+							break;
+						}
+					}
+					if(an->children[j]->word->name[0]
+					&& k == pred->predname->arity) {
+						break;
+					}
+				}
+				if(j == an->nchild) {
+					pred->flags |= PREDF_MAY_INLINE;
+				}
+			}
+		}
 	}
 
 	if(verbose >= 3) {
