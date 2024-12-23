@@ -9,7 +9,7 @@
 <body>
 	<div class="chapter">
 	<h1>Chapter 10: Understanding player input</h1>
-	<div class="navlinks">(<a href="#grammar">Grammar definitions</a>&nbsp;&bull; <a href="#newactions">Adding actions</a>&nbsp;&bull; <a href="#unlikely">Adjusting the likelihood of actions</a>&nbsp;&bull; <a href="#liblinks">Links and default actions</a>&nbsp;&bull; <a href="#newaction">Example: Defining a new action</a>&nbsp;&bull; <a href="#howparser">How the parser works</a>)</div>
+	<div class="navlinks">(<a href="#grammar">Grammar definitions</a>&nbsp;&bull; <a href="#newactions">Adding actions</a>&nbsp;&bull; <a href="#unlikely">Adjusting the likelihood of actions</a>&nbsp;&bull; <a href="#liblinks">Links and default actions</a>&nbsp;&bull; <a href="#newaction">Example: Defining a new action</a>&nbsp;&bull; <a href="#howparser">How the parser works</a>&nbsp;&bull; <a href="#customtokens">Custom grammar tokens</a>)</div>
 <p>Actions originate from the <i>parser</i>, a central part of the standard
 library. This chapter describes how to extend the parser to understand new
 kinds of sentences.
@@ -182,7 +182,7 @@ excluded from the set of objects.
 <p class="noteline">One or more objects currently worn by the player.
 </p>
 <p class="codeline">[takable]</p>
-<p class="noteline">One or more objects in scope, whose relation to their parent is neither
+<p class="noteline">One or more items in scope, whose relation to their parent is neither
 <span class="code">#heldby</span>, <span class="code">#wornby</span>, or <span class="code">#partof</span>.
 </p>
 <p>Finally, a list of words that isn't recognized as a special token will match
@@ -1414,9 +1414,143 @@ way it sees fit before parsing.
 <p>Rewriting is not used by the library itself, but it offers a powerful way for
 story authors to override the default behaviour of the parser.
 </p>
+<a id="customtokens"></a><h2>Custom grammar tokens</h2>
+<p>This section explains how to add new grammar tokens, like <span class="code">[worn]</span>
+or <span class="code">[single held]</span>. It's an advanced topic, and most story authors
+can safely skip ahead to the next chapter.
+</p>
+<p>Let's create a <span class="code">[spell]</span> token, to be used like this:
+</p>
+<textarea class="copyarea" id="copy58" readonly>
+(grammar [cast [spell]] for [cast $])
+(grammar [look up [spell]] for [consult #spellbook about $])
+
+(understand [xyzzy] as spell #xyzzy)
+(understand [plugh/abracadabra] as spell #plugh)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(grammar [cast [spell]] for [cast $])</td></tr>
+<tr><td class="both" colspan="2">(grammar [look up [spell]] for [consult #spellbook about $])</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(understand [xyzzy] as spell #xyzzy)</td></tr>
+<tr><td class="both" colspan="2">(understand [plugh/abracadabra] as spell #plugh)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy58').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Recall (from <a href="understanding.html#howparser">How the parser works</a>) that the library defines a
+generic <span class="code">(understand $ as&nbsp;$)</span> rule that queries a table of grammar
+definitions. This table is called <span class="code">(grammar entry $ $&nbsp;$)</span>, and it is
+constructed at compile-time from instantiations of the <span class="code">(grammar $
+for&nbsp;$)</span> access predicate.
+</p>
+<p>A definition like the following:
+</p>
+<textarea class="copyarea" id="copy59" readonly>
+(grammar [give [held] to [animate]] for [give $ to $])
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(grammar [give [held] to [animate]] for [give $ to $])</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy59').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>is transformed into the following table entry:
+</p>
+<textarea class="copyarea" id="copy60" readonly>
+(grammar entry @give [22 to 11] [give $ to $])
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(grammar entry @give [22 to 11] [give $ to $])</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy60').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The first parameter of the grammar entry is the first word of the grammar rule.
+This helps the compiler create efficient lookup code. The second parameter
+corresponds to the rest of the grammar rule, with numeric values instead of
+symbolic tokens (e.g. <span class="code">22</span> instead of <span class="code">[held]</span>). The
+third parameter is the action template, exactly as supplied in the grammar
+definition.
+</p>
+<p>There are two reasons for translating the grammar tokens into numbers: It makes
+the code more compact (and therefore faster on old systems), and it prevents
+the grammar tokens from cluttering the game dictionary.
+</p>
+<p>Grammar tokens are converted to numbers using a set of access predicate
+definitions in the standard library. For instance, here is the rule for
+converting <span class="code">[direction]</span> to <span class="code">50</span>:
+</p>
+<textarea class="copyarea" id="copy61" readonly>
+@(grammar transformer [[direction] | $Tail] $SoFar $Verb $Action $Rev)
+	(grammar transformer $Tail [50 | $SoFar] $Verb $Action $Rev)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">@(grammar transformer [[direction] | $Tail] $SoFar $Verb $Action $Rev)</td></tr>
+<tr><td class="left"></td><td class="right">(grammar transformer $Tail [50 | $SoFar] $Verb $Action $Rev)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy61').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>It operates by removing one element from the incoming list (first parameter),
+tacking on a new element to the outgoing list (second parameter), and leaving
+three more parameters intact.
+</p>
+<p>Numbers in the range 90-99 are reserved for story authors. To create our new
+<span class="code">[spell]</span> token, we add a similar rule to map the token to an unused
+number in this range:
+</p>
+<textarea class="copyarea" id="copy62" readonly>
+@(grammar transformer [[spell] | $Tail] $SoFar $Verb $Action $Rev)
+	(grammar transformer $Tail [90 | $SoFar] $Verb $Action $Rev)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">@(grammar transformer [[spell] | $Tail] $SoFar $Verb $Action $Rev)</td></tr>
+<tr><td class="left"></td><td class="right">(grammar transformer $Tail [90 | $SoFar] $Verb $Action $Rev)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy62').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Next, we supply a rule for what to do when the number 90 is encountered in the
+grammar table:
+</p>
+<textarea class="copyarea" id="copy63" readonly>
+(match grammar token 90 against $Words $ into $Obj)
+	*(understand $Words as spell $Obj)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(match grammar token 90 against $Words $ into $Obj)</td></tr>
+<tr><td class="left"></td><td class="right">*(understand $Words as spell $Obj)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy63').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>In the above example, we delegate to a separate custom predicate for handling
+spells. Under other circumstances, we might have queried an existing predicate
+such as <span class="code">*(understand $Words as object $Obj preferably { ... })</span>.
+</p>
+<p>The third parameter of <span class="code">(match grammar token $ against $ $ into&nbsp;$)</span>
+is rarely used. It contains matches from later grammar tokens (they are parsed
+from right to left). These can be objects, plus-prefixed lists like <span class="code">[+
+#foo #bar #baz]</span>, or anything else; it depends on the type of the next
+token. This feature allows you to craft rules for e.g. <span class="prginput">PUT ALL IN
+BAG</span>, where the bag should not be included in “all”.
+</p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="miscfeat.html">Chapter 11: Miscellaneous features</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 27, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 28, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

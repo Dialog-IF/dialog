@@ -2,6 +2,7 @@
 #define EVAL_MULTI 0xffff
 
 #define EVAL_MAXDIV 8
+#define EVAL_MAX_UNDO 50
 
 typedef struct prgpoint {
 	struct predicate	*pred;
@@ -63,6 +64,7 @@ struct eval_state {
 	struct eval_undo	*undostack;
 	int			nalloc_undo;
 	int			nundo;
+	int			did_prune_undo;
 
 	struct env		*envstack;
 	struct choice		*choicestack;

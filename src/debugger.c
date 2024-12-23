@@ -863,8 +863,10 @@ static void push_undo(void *userdata) {
 	int i, j;
 
 	if(ds->nundo >= ds->nalloc_undo) {
-		ds->nalloc_undo = 2 * ds->nundo + 8;
-		ds->undo = realloc(ds->undo, ds->nalloc_undo * sizeof(struct dyn_undo));
+		arena_free(&ds->undo[0].arena);
+		memmove(ds->undo, ds->undo + 1, (ds->nalloc_undo - 1) * sizeof(struct dyn_undo));
+		ds->nundo--;
+		ds->did_prune_undo = 1;
 	}
 
 	u = &ds->undo[ds->nundo++];
@@ -987,6 +989,8 @@ static void pop_undo(struct eval_state *es, void *userdata) {
 
 static int init_dynstate(struct dyn_state *ds, struct program *prg) {
 	memset(ds, 0, sizeof(*ds));
+	ds->nalloc_undo = EVAL_MAX_UNDO;
+	ds->undo = malloc(ds->nalloc_undo * sizeof(struct dyn_undo));
 	return grow_dyn_state(ds, prg);
 }
 
@@ -1243,8 +1247,8 @@ static int restart(struct debugger *dbg) {
 		return 0;
 	}
 	(void) check_modification_times(dbg);
-	(void) init_dynstate(&dbg->ds, dbg->prg);
 	init_evalstate(&dbg->es, dbg->prg);
+	(void) init_dynstate(&dbg->ds, dbg->prg);
 	dbg->es.trace = old_trace;
 	dbg->es.hide_links = old_hidelinks;
 	dbg->es.dyn_callbacks = &dyn_callbacks;

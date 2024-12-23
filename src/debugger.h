@@ -54,4 +54,5 @@ struct dyn_state {
 	struct dyn_undo		*undo;
 	int			nalloc_undo;
 	int			nundo;
+	int			did_prune_undo;
 };

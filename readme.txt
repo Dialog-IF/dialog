@@ -1,5 +1,5 @@
-This archive contains version 0k/05 of the Dialog compiler and interactive
-debugger, bundled with documentation and version 0.42 of the Dialog Standard
+This archive contains version 0k/06 of the Dialog compiler and interactive
+debugger, bundled with documentation and version 0.43 of the Dialog Standard
 Library.
 
 Directory structure:
@@ -37,6 +37,53 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0k/06, Lib 0.43 (Manual revision 28):
+
+		Library: Added a default perform-rule saying "You can't"
+		followed by the action description. No more blank responses.
+
+		Library: Changed '($ is opaque)' to '(opaque $)' and removed
+		the alias '($ is transparent)'.
+
+		Library: Changed the output of "exits" to make compass
+		directions clickable if library links are enabled, and to use
+		"the" instead of "a" for doors.
+
+		Library: No longer understands "open" as any open object when
+		default actions are enabled. This prevents "open door" from
+		being ambiguously understood as '[open #door]' and '[examine
+		#door]' when the door is open.
+
+		Library: Added "hug" as a separate action from "kiss". Hug
+		redirects to kiss by default, for backwards compatibility.
+
+		Library: The default rules for NPC actions, '(let $NPC ...)',
+		now invoke '(notice $NPC)' to set the pronouns.
+
+		Library: Make object names clickable when enumerating a complex
+		action (if library links are enabled).
+
+		Library: When printing a group of fungible objects with
+		'(the $)', don't create a hyperlink.
+
+		Library: Prevent cycles in the object tree when the player
+		attempts to pick up an object that is their ancestor, such as a
+		seat.
+
+		Library: The default rules for climb and enter now use
+		'(move player to $ $)'.
+
+		Library: No longer redraws the status bar twice when flowing
+		between nodes in choice mode.
+
+		Library: Miscellaneous bugfixes and optimizations.
+
+		Debugger: Imposed a limit of 50 undo steps, to conserve memory.
+
+		Manual: Added a section about creating custom grammar tokens.
+
+		Manual: Updated an example in the Items chapter.
 
 	0k/05, Lib 0.42 (Manual revision 27):
 

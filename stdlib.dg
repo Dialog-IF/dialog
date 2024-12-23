@@ -1,6 +1,6 @@
 
 (library version)
-	Library version 0.42.
+	Library version 0.43.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -279,7 +279,6 @@
 @($Obj is revealed)		~($Obj is hidden)
 @($Obj is pristine)		~($Obj is handled)
 @($Obj is unvisited)		~($Obj is visited)
-@($Obj is transparent)		~($Obj is opaque)
 @($Obj is in order)		~($Obj is broken)
 
 %% Inheritance relations
@@ -296,6 +295,7 @@
 (actor supporter $Obj)		*(on-seat $Obj)
 (seat $Obj)			*(in-seat $Obj)
 (seat $Obj)			*(on-seat $Obj)
+(opaque $Obj)			*(openable $Obj)
 (openable $Obj)			*(lockable $Obj)
 (plural $Obj)			*(pair $Obj)
 
@@ -306,7 +306,6 @@
 ((openable $) is closed)
 ((lockable $) is locked)
 ((switchable $) is off)
-((openable $) is opaque)
 
 %% Convenience predicate:
 
@@ -418,8 +417,7 @@
 ($Door blocks passage)
 	($Door is closed)
 
-($Door blocks light)
-	($Door is opaque)
+((opaque $Door) blocks light)
 	($Door is closed)
 
 @(from $Room go $Dir through $Door to $Target)
@@ -459,7 +457,7 @@
 	(if) ($Obj has parent $Parent) (then)
 		(if)
 			($Obj has relation #in)
-			($Parent is opaque)
+			(opaque $Parent)
 			($Parent is closed)
 		(then)
 			($Ceil = $Parent)
@@ -585,15 +583,15 @@
 		($Obj has parent $Parent)
 		~{
 			($Obj has relation #in)
+			(opaque $Parent)
 			($Parent is closed)
-			($Parent is opaque)
 			~(current visibility ceiling $Parent)
 		}
 		($Parent is visible up to $Ceiling)
 	(else)
 		(if)
+			(opaque $Ceiling)
 			($Ceiling is closed)
-			($Ceiling is opaque)
 			~(current visibility ceiling $Ceiling)
 		(then)
 			*($Sub has parent $Ceiling)
@@ -766,8 +764,7 @@
 		(or) (when $Obj is out of sight)
 	}
 
-(before [look #in $Obj])
-	($Obj is opaque)
+(before [look #in (opaque $Obj)])
 	($Obj is closed)
 	(first try [open $Obj])
 
@@ -790,8 +787,7 @@
 	~(container $Obj)
 	(The $Obj) can't contain things.
 
-(prevent [look #in $Obj])
-	($Obj is opaque)
+(prevent [look #in (opaque $Obj)])
 	($Obj is closed)
 	~(current visibility ceiling $Obj)
 	(if) (openable $Obj) (then)
@@ -918,7 +914,7 @@
 			}
 		(endif)
 	(endif)
-	(if) (container $Obj) ~{ ($Obj is opaque) ($Obj is closed) } (then)
+	(if) (container $Obj) ~{ (opaque $Obj) ($Obj is closed) } (then)
 		(if) (fungibility enabled) (then)
 			(collect $Child)
 				*($Child is #in $Obj)
@@ -946,11 +942,11 @@
 
 (perform [look])
 	(current player $Player)
-	(current visibility ceiling $Ceil)
+	($Player is $Rel $Loc)
 	(div @roomheader) (location headline)
 	(if) (player can see) (then)
+		(current visibility ceiling $Ceil)
 		(look $Ceil)
-		($Player is $Rel $Loc)
 		(make appearances $Rel $Loc)
 		(par)
 	(else)
@@ -965,7 +961,7 @@
 	(try [look])
 
 (perform [search $O])
-	(if) ($O is closed) ($O is opaque) (then)
+	(if) (opaque $O) ($O is closed) (then)
 		($InList = [])
 	(else)
 		(collect $C) *($C is #in $O) (reveal $C) (into $InList)
@@ -1044,7 +1040,7 @@
 
 %% KISS <obj>
 
-(grammar [kiss/hug/embrace/love [animate]] for [kiss $])
+(grammar [kiss/love [animate]] for [kiss $])
 
 (prevent [kiss $Obj])
 	(current player $Player)
@@ -1057,6 +1053,13 @@
 
 (perform [kiss $Obj])
 	(The $Obj is) unmoved by your display of affection.
+
+%% HUG <obj>
+
+(grammar [hug/embrace [animate]] for [hug $])
+
+(perform [hug $Obj])
+	(try [kiss $Obj])
 
 %% JUMP
 
@@ -1214,6 +1217,11 @@
 
 (perform [take $Obj from $])
 	(try [take $Obj])
+
+(before [take (item $Obj)])
+	(current player $Player)
+	($Player has ancestor $Obj)
+	(first try [leave $Obj])
 
 (prevent [take $Obj])
 	(when $Obj is already held)
@@ -1475,34 +1483,39 @@
 		(exhaust) {
 			*(from $Room go $Dir to $Target)
 			(direction $Dir)
-			(if) (door $Target) (then)
-				(Name $Dir)
-				through (a $Target)
-				(if) ($Target is closed) (then)
-					\(currently closed\)
-				(elseif)
-					(from $Room through $Target to $R)
-					($R is visited)
-				(then)
-					to
-					(if) (inherently dark $R) (then)
-						darkness
-					(else)
-						(the $R)
-					(endif)
+			(if) (door $Target) (or) (room $Target) (then)
+				(if) (library links enabled) (then)
+					(link) (Name $Dir)
+				(else)
+					(Name $Dir)
 				(endif)
-				. (line)
-			(elseif) (room $Target) (then)
-				(Name $Dir)
-				(if) ($Target is visited) (then)
-					to
-					(if) (inherently dark $Target) (then)
-						darkness
-					(else)
-						(the $Target)
+				(if) (door $Target) (then)
+					through (the $Target)
+					(if) ($Target is closed) (then)
+						\(currently closed\)
+					(elseif)
+						(from $Room through $Target to $R)
+						($R is visited)
+					(then)
+						to
+						(if) (inherently dark $R) (then)
+							darkness
+						(else)
+							(the $R)
+						(endif)
 					(endif)
+					. (line)
+				(else)
+					(if) ($Target is visited) (then)
+						to
+						(if) (inherently dark $Target) (then)
+							darkness
+						(else)
+							(the $Target)
+						(endif)
+					(endif)
+					. (line)
 				(endif)
-				. (line)
 			(endif)
 		}
 	(endif)
@@ -2310,8 +2323,7 @@
 
 (perform [climb $Obj])
 	(narrate climbing $Obj)
-	(current player $Actor)
-	(now) ($Actor is #on $Obj)
+	(move player to #on $Obj)
 
 %% ENTER <obj>
 
@@ -2389,8 +2401,7 @@
 
 (perform [enter $Obj])
 	(narrate entering $Obj)
-	(current player $Actor)
-	(now) ($Actor is #in $Obj)
+	(move player to #in $Obj)
 
 %% SIT
 
@@ -2764,10 +2775,6 @@
 (grammar [swim/bathe in [single]] for [swim in $])
 (grammar [swim/bathe] for [swim])
 
-(perform [swim in $Obj])
-	You can't swim in (the $Obj).
-	(tick) (stop)
-
 (perform [swim])
 	In what?
 	(asking for object in [swim in []])
@@ -2976,7 +2983,11 @@
 
 (understand command [restart])
 (perform [restart])
-	Restart the game from the beginning? \(y (no space) / (no space) n\)
+	Restart the game from the beginning? \(
+	(if) (library links enabled) (then) (link) y (else) y (endif)
+	(no space) / (no space)
+	(if) (library links enabled) (then) (link) n (else) n (endif)
+	\)
 	(if) (yesno) (then)
 		(restart)
 		Failed to restart.
@@ -3414,7 +3425,9 @@
 
 (prevent $)	(fail)
 
-(perform $)
+(perform $Action)
+	You can't (describe action $Action).
+	(tick) (stop)
 
 (after $)	(fail)
 
@@ -3444,36 +3457,53 @@
 		(then)
 			(notice player's $Obj)
 		(endif)
-		(exhaust) {
-			*(regroup stripped action $MultiAction of $MultiAction
-				into $Regrouped $Multi)
-			%% Assuming the marbles are fungible, now we are
-			%% backtracking over:
-			%% [put [#marble1 #marble2] #in #bowl]
-			%% [put #marblefloor #in #bowl]
-			(if)
-				~(empty $Multi)
-			(then)
-				%% If at least two multi-actions are implied,
-				%% describe each step.
-				(line) (The full $Multi):
-			(endif)
+		(if) *($List is one of $MultiAction) (nonempty $List) (then)
 			(exhaust) {
-				*($Regrouped recursively contains $O)
-				(object $O)
-				(now) ~($O is hidden)
+				*(regroup stripped action $MultiAction of
+					$MultiAction into $Regrouped $Multi)
+				%% Assuming the marbles are fungible, now we
+				%% are backtracking over:
+				%% [put [#marble1 #marble2] #in #bowl]
+				%% [put #marblefloor #in #bowl]
+				(if)
+					~(empty $Multi)
+				(then)
+					%% If at least two multi-actions are
+					%% implied, describe each step.
+					(line)
+					(if) (library links enabled) (then)
+						(link) (The full $Multi)
+					(else)
+						(The full $Multi)
+					(endif)
+					:
+				(endif)
+				(try regrouped $Regrouped)
 			}
-			(if) *($Elem is one of $Regrouped) (nonempty $Elem) (then)
-				(group-try $Regrouped)
-			(else)
-				(try $Regrouped)
-			(endif)
-			(if) ~(command $Regrouped) (then)
-				(tick)
-			(endif)
-			(par)
-		}
+		(else)
+			%% Optimize the common case.
+			(try regrouped $MultiAction)
+		(endif)
 	(endif)
+
+(try regrouped $Regrouped)
+	(exhaust) {
+		*($Regrouped recursively contains $O)
+		(object $O)
+		(now) ~($O is hidden)
+	}
+	(if)
+		*($Elem is one of $Regrouped)
+		(nonempty $Elem)
+	(then)
+		(group-try $Regrouped)
+	(else)
+		(try $Regrouped)
+	(endif)
+	(if) ~(command $Regrouped) (then)
+		(tick)
+	(endif)
+	(par)
 
 %% Add rules to the following six predicates, and to
 %% '(action $ may group $ with $)', to deal with groups of objects.
@@ -3707,6 +3737,7 @@
 
 (narrate $NPC climbing $Obj)
 	(The $NPC) get(s $NPC) onto (the $Obj).
+	(notice $NPC)
 
 (interface (let $<NPC close $<Obj))
 (interface (narrate $<NPC closing $<Obj))
@@ -3719,6 +3750,7 @@
 
 (narrate $NPC closing $Obj)
 	(The $NPC) close(s $NPC) (the $Obj).
+	(notice $NPC)
 
 (interface (let $<NPC drop $<Obj))
 (interface (narrate $<NPC dropping $<Obj))
@@ -3732,6 +3764,7 @@
 
 (narrate $NPC dropping $Obj)
 	(The $NPC) drop(s $NPC) (the $Obj).
+	(notice $NPC)
 
 (interface (let $<NPC enter $<Obj))
 (interface (narrate $<NPC entering $<Obj))
@@ -3744,6 +3777,7 @@
 
 (narrate $NPC entering $Obj)
 	(The $NPC) get(s $NPC) into (the $Obj).
+	(notice $NPC)
 
 (interface (let $<NPC go $<Dir))
 (interface (narrate $<NPC leaving $<OldRoom $<Dir to $<NewRoom))
@@ -3770,9 +3804,11 @@
 			(The $Obj) leaves (the $OldRoom).
 		(else)
 			(The $Obj) enter(s $Obj) from (from-adverb $InDir).
+			(notice $Obj)
 		(endif)
 	(else)
 		(The $Obj) enter(s $Obj) from (the $OldRoom).
+		(notice $Obj)
 	(endif)
 
 (interface (let $<NPC leave $<Obj))
@@ -3787,6 +3823,7 @@
 
 (narrate $NPC leaving $Obj)
 	(The $NPC) leave(s $NPC) (the $Obj).
+	(notice $NPC)
 
 (interface (let $<NPC open $<Obj))
 (interface (narrate $<NPC opening $<Obj))
@@ -3799,6 +3836,7 @@
 
 (narrate $NPC opening $Obj)
 	(The $NPC) open(s $NPC) (the $Obj).
+	(notice $NPC)
 
 (interface (let $<NPC put $<Obj $<Rel $<Dest))
 (interface (narrate $<NPC putting $<Obj $<Rel $<Dest))
@@ -3811,6 +3849,7 @@
 
 (narrate $NPC putting $Obj $Rel $Dest)
 	(The $NPC) put(s $NPC) (the $Obj) (name $Rel) (the $Dest).
+	(notice $NPC)
 
 (interface (let $<NPC remove $<Obj))
 (interface (narrate $<NPC removing $<Obj))
@@ -3824,6 +3863,7 @@
 
 (narrate $NPC removing $Obj)
 	(The $NPC) take(s $NPC) off (the $Obj).
+	(notice $NPC)
 
 (interface (let $<NPC take $<Obj))
 (interface (narrate $<NPC taking $<Obj))
@@ -3836,6 +3876,7 @@
 
 (narrate $NPC taking $Obj)
 	(The $NPC) take(s $NPC) (the $Obj).
+	(notice $NPC)
 
 (interface (let $<NPC wear $<Obj))
 (interface (narrate $<NPC wearing $<Obj))
@@ -3848,6 +3889,7 @@
 
 (narrate $NPC wearing $Obj)
 	(The $NPC) put(s $NPC) on (the $Obj).
+	(notice $NPC)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Numbers
@@ -4172,12 +4214,15 @@
 	(if) (fungibility enabled) ($NInc > 1) (then)
 		(if) ($The = @the) (then)
 			the
-		(endif)
-		(spell out $NInc)
-		(if) (library links enabled) (interpreter supports links) (then)
-			(link) (plural name $Head)
-		(else)
+			(spell out $NInc)
 			(plural name $Head)
+		(else)
+			(spell out $NInc)
+			(if) (library links enabled) (then)
+				(link) (plural name $Head)
+			(else)
+				(plural name $Head)
+			(endif)
 		(endif)
 	(else)
 		(query $PrintClosure $Head)
@@ -4207,7 +4252,11 @@
 
 (dict (openable $Obj))
 	(if) ($Obj is open) (then)
-		open opened
+		%% With default actions, "open box" would look like a request
+		%% to examine an already-open box, which is probably not
+		%% what the player intended.
+		(if) ~(default actions enabled) (then) open (endif)
+		opened
 	(else)
 		closed
 	(endif)
@@ -4373,7 +4422,7 @@
 
 (make appearances $Rel $Loc)
 	(if)
-		~{ ($Loc is opaque) ($Loc is closed) ($Rel = #in) }
+		~{ (opaque $Loc) ($Loc is closed) ($Rel = #in) }
 		($Loc is $ParentRel $ParentLoc)
 	(then)
 		(make appearances $ParentRel $ParentLoc)
@@ -4608,8 +4657,6 @@
 				(report score change)
 			(endif)
 
-			(redraw status bar)
-
 			(if) (current node $DispObj) (then)
 				(collect $Choice)
 					*($DispObj offers $Choice)
@@ -4622,10 +4669,11 @@
 					(if) ($DispObj flows to $Fallback) (then)
 						(activate node $Fallback)
 					(endif)
-				(else)
-					(enumerate choices $ChoiceList 1)
 				(endif)
+				(redraw status bar)
+				(enumerate choices $ChoiceList 1)
 			(else)
+				(redraw status bar)
 				($ChoiceList = [])
 			(endif)
 

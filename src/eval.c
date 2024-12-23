@@ -339,6 +339,27 @@ static value_t collect_pop(struct eval_state *es) {
 	return v;
 }
 
+void free_evalstate_undo(struct eval_undo *u) {
+	int j, etop;
+
+	if(u->choice >= 0 && u->choicestack[u->choice].envtop > u->env + 1) {
+		etop = u->choicestack[u->choice].envtop;
+	} else {
+		etop = u->env + 1;
+	}
+	for(j = 0; j < etop; j++) {
+		free(u->envstack[j].vars);
+		free(u->envstack[j].tracevars);
+		pred_release(u->envstack[j].cont.pred);
+	}
+	for(j = 0; j <= u->choice; j++) {
+		pred_release(u->choicestack[j].cont.pred);
+		pred_release(u->choicestack[j].nextcase.pred);
+	}
+	pred_release(u->cont.pred);
+	arena_free(&u->arena);
+}
+
 static void eval_push_undo(struct eval_state *es) {
 	struct arena *a;
 	struct eval_undo *u;
@@ -346,8 +367,10 @@ static void eval_push_undo(struct eval_state *es) {
 	int i;
 
 	if(es->nundo >= es->nalloc_undo) {
-		es->nalloc_undo = 2 * es->nundo + 8;
-		es->undostack = realloc(es->undostack, es->nalloc_undo * sizeof(struct eval_undo));
+		free_evalstate_undo(&es->undostack[0]);
+		memmove(es->undostack, es->undostack + 1, (es->nalloc_undo - 1) * sizeof(struct eval_undo));
+		es->nundo--;
+		es->did_prune_undo = 1;
 	}
 
 	u = &es->undostack[es->nundo];
@@ -2844,10 +2867,10 @@ static int eval_run(struct eval_state *es) {
 			}
 			break;
 		case I_UNDO:
-			pred_release(pp.pred);
-			pp.pred = 0;
 			if(eval_pop_undo(es)) {
 				assert(es->dyn_callbacks);
+				pred_release(pp.pred);
+				pp.pred = 0;
 				es->dyn_callbacks->pop_undo(es, es->dyn_callback_data);
 				if(!unify(es, es->arg[0], (value_t) {VAL_NUM, 1}, 0)) {
 					do_fail(es, &pp);
@@ -2858,7 +2881,7 @@ static int eval_run(struct eval_state *es) {
 					pc = 0;
 					if(!pp.pred) return ESTATUS_SUCCESS;
 				}
-			} else {
+			} else if(!es->did_prune_undo) {
 				do_fail(es, &pp);
 				pc = 0;
 			}
@@ -3029,12 +3052,13 @@ void init_evalstate(struct eval_state *es, struct program *prg) {
 	es->env = -1;
 	es->choice = -1;
 	es->randomseed = 1;
+	es->nalloc_undo = EVAL_MAX_UNDO;
+	es->undostack = malloc(es->nalloc_undo * sizeof(struct eval_undo));
 	eval_reinitialize(es);
 }
 
 void free_evalstate(struct eval_state *es) {
-	int i, j, etop;
-	struct eval_undo *u;
+	int i;
 
 	cut_to(es, -1);
 	revert_env_to(es, -1);
@@ -3046,23 +3070,7 @@ void free_evalstate(struct eval_state *es) {
 	es->resume.pred = 0;
 
 	for(i = 0; i < es->nundo; i++) {
-		u = &es->undostack[i];
-		if(u->choice >= 0 && u->choicestack[u->choice].envtop > u->env + 1) {
-			etop = u->choicestack[u->choice].envtop;
-		} else {
-			etop = u->env + 1;
-		}
-		for(j = 0; j < etop; j++) {
-			free(u->envstack[j].vars);
-			free(u->envstack[j].tracevars);
-			pred_release(u->envstack[j].cont.pred);
-		}
-		for(j = 0; j <= u->choice; j++) {
-			pred_release(u->choicestack[j].cont.pred);
-			pred_release(u->choicestack[j].nextcase.pred);
-		}
-		pred_release(u->cont.pred);
-		arena_free(&u->arena);
+		free_evalstate_undo(&es->undostack[i]);
 	}
 	free(es->undostack);
 
