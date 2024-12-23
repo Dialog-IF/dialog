@@ -1,6 +1,6 @@
 
 (library version)
-	Library version 0.17.
+	Library version 0.18.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -5094,6 +5094,15 @@
 	(into $WordSet)
 	(nonempty $WordSet)
 	*(split $Input by $WordSet into $Left and $Right)
+
+(print raw input [])
+(print raw input [$First | $Rest])
+	$First
+	(exhaust) {
+		*($Char is one of $Rest)
+		(no space)
+		$Char
+	}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Get rid of some compiler warnings
