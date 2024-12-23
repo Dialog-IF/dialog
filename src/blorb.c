@@ -111,9 +111,11 @@ static void build_ifiction(struct program *prg, uint8_t *imgdata, int imgwidth, 
 	addstr("      <author>");
 	addstr_escape(prg->meta_author, 0);
 	addstr("</author>\n");
-	addstr("      <headline>");
-	addstr_escape(prg->meta_noun, 0);
-	addstr("</headline>\n");
+	if(prg->meta_noun) {
+		addstr("      <headline>");
+		addstr_escape(prg->meta_noun, 0);
+		addstr("</headline>\n");
+	}
 	addstr("      <group>Dialog</group>\n");
 	if(prg->meta_blurb) {
 		addstr("      <description>");

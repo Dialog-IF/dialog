@@ -233,13 +233,17 @@ int main(int argc, char **argv) {
 	}
 
 	prg->meta_author = decode_metadata_str(BI_STORY_AUTHOR, 0, prg, &prg->arena);
-	if(!prg->meta_author && need_meta) {
-		report(LVL_WARN, 0, "No author declared.");
+	if(!prg->meta_author) {
+		if(need_meta) {
+			report(LVL_WARN, 0, "No author declared.");
+		}
 		prg->meta_author = "Anonymous";
 	}
 	prg->meta_title = decode_metadata_str(BI_STORY_TITLE, 0, prg, &prg->arena);
-	if(!prg->meta_title && need_meta) {
-		report(LVL_WARN, 0, "No title declared.");
+	if(!prg->meta_title) {
+		if(need_meta) {
+			report(LVL_WARN, 0, "No title declared.");
+		}
 		prg->meta_title = "An Interactive Fiction";
 	}
 	prg->meta_noun = decode_metadata_str(BI_STORY_NOUN, 0, prg, &prg->arena);

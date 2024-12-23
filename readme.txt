@@ -1,4 +1,4 @@
-This archive contains version 0h/02 of the Dialog compiler and interactive
+This archive contains version 0h/03 of the Dialog compiler and interactive
 debugger, bundled with documentation and version 0.30 of the dialog Standard
 Library.
 
@@ -37,6 +37,11 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0h/03 Lib 0.30 (Manual revision 16):
+
+		Compiler: No longer crashes when trying to generate a zblorb
+		that lacks certain metadata.
 
 	0h/02 Lib 0.30 (Manual revision 16):
 
