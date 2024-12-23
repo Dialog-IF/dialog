@@ -93,7 +93,7 @@ succeed (once) or fail. To set the flag for a particular object, use the
 <div class="copycode">
 <a class="copybtn" href="" onClick="document.getElementById('copy3').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
-<p>Per-object flags may only be set for objects (e.g. not lists or numbers). If an
+<p>Per-object flags may only be set for objects (not e.g. lists or numbers). If an
 attempt is made to set the flag when the parameter isn't bound to an object, a
 fatal runtime error occurs.
 </p>
@@ -146,9 +146,9 @@ number or list, and per-object flags may only be set for objects.
 <div class="copycode">
 <a class="copybtn" href="" onClick="document.getElementById('copy6').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
-<p>If the parameter is bound to anything other than an object, the predicate
-fails, without generating a fatal error: A per-object flag may only be set for
-objects, but it can be queried for any value.
+<p>If the predicate is queried with a parameter that's bound to something other
+than an object, it fails without generating a fatal error: A per-object flag
+may only be set for objects, but it can be queried for any value.
 </p>
 <p>If the parameter is unbound, the query binds it to an object for which the flag
 is set (failing if there are none). With a multi-query, it is possible to
@@ -503,17 +503,17 @@ with a particular parent, and move them (or a subset of them) to a different
 part of the object tree:
 </p>
 <textarea class="copyarea" id="copy22" readonly>
-(exhaust) {
-	*($Obj has parent #safe)
-	(now) ($Obj has parent #knapsack)
-}
+	(exhaust) {
+		*($Obj has parent #safe)
+		(now) ($Obj has parent #knapsack)
+	}
 </textarea>
 <div class="blkcode">
 <table>
-<tr><td class="both" colspan="2">(exhaust) {</td></tr>
-<tr><td class="left"></td><td class="right">*($Obj has parent #safe)</td></tr>
-<tr><td class="left"></td><td class="right">(now) ($Obj has parent #knapsack)</td></tr>
-<tr><td class="both" colspan="2">}</td></tr>
+<tr><td class="left"></td><td class="right">(exhaust) {</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>*($Obj has parent #safe)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(now) ($Obj has parent #knapsack)</td></tr>
+<tr><td class="left"></td><td class="right">}</td></tr>
 </table>
 </div>
 <div class="copycode">
@@ -554,7 +554,7 @@ tree, the apple will be located in the bowl, and the lettuce in the fridge.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="sugar.html">Chapter 7: Syntactic sugar</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 29, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 30, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

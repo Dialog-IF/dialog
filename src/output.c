@@ -337,7 +337,9 @@ void o_end_link() {
 }
 
 void o_begin_self_link() {
+	uint8_t saved_upper = boxstack[boxsp].upper;
 	o_print_str("<");
+	boxstack[boxsp].upper = saved_upper;
 }
 
 void o_end_self_link() {

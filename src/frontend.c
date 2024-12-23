@@ -2108,6 +2108,7 @@ int frontend_visit_clauses(struct program *prg, struct arena *temp_arena, struct
 					cl->line,
 					prg,
 					cl);
+				if(prg->errorflag) return 0;
 				for(; an; an = an->next_in_body) {
 					if(an->kind == AN_RULE || an->kind == AN_NEG_RULE) {
 						if(an->predicate->builtin
@@ -2330,6 +2331,16 @@ static void assign_select_statements(struct program *prg) {
 			pred = predname->pred;
 			nselectform = 0;
 			for(j = 0; j < pred->nclause; j++) {
+				if(j) {
+					if(nselectform >= nalloc_selectform) {
+						nalloc_selectform = 2 * nselectform + 8;
+						selectforms = realloc(selectforms, nalloc_selectform * sizeof(struct selectform));
+					}
+					selectforms[nselectform].subkind = 0xff;
+					selectforms[nselectform].nchild = 0xff;
+					selectforms[nselectform].assigned_id = 0xffff;
+					nselectform++;
+				}
 				discover_select_statements(prg, pred->clauses[j]->body);
 			}
 			assert(!pred->selectforms);
@@ -2344,7 +2355,8 @@ static void assign_select_statements(struct program *prg) {
 					nselectform);
 			}
 			for(j = 0; j < nselectform; j++) {
-				if(pred->selectforms[j].assigned_id == 0xffff) {
+				if(pred->selectforms[j].subkind != 0xff
+				&& pred->selectforms[j].assigned_id == 0xffff) {
 					if(prg->nselect >= prg->nalloc_select) {
 						prg->nalloc_select = 2 * prg->nselect + 8;
 						prg->select = realloc(prg->select, prg->nalloc_select);
@@ -2355,8 +2367,14 @@ static void assign_select_statements(struct program *prg) {
 			}
 			next = 0;
 			for(j = 0; j < pred->nclause; j++) {
+				if(j) {
+					assert(pred->selectforms[next].subkind == 0xff);
+					assert(pred->selectforms[next].assigned_id == 0xffff);
+					next++;
+				}
 				update_select_statements(prg, pred->clauses[j]->body, pred->selectforms, &next);
 			}
+			assert(next == pred->nselectform);
 		}
 	}
 

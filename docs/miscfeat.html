@@ -443,6 +443,8 @@ them, and then define rules in terms of the trait:
 	marble
 (plural name (marble $))
 	marbles
+(plural dict (marble $))
+	marbles
 (*(marble $) is #in #bowl)
 </textarea>
 <div class="blkcode">
@@ -456,6 +458,8 @@ them, and then define rules in terms of the trait:
 <tr><td class="both" colspan="2">(name (marble $))</td></tr>
 <tr><td class="left"></td><td class="right">marble</td></tr>
 <tr><td class="both" colspan="2">(plural name (marble $))</td></tr>
+<tr><td class="left"></td><td class="right">marbles</td></tr>
+<tr><td class="both" colspan="2">(plural dict (marble $))</td></tr>
 <tr><td class="left"></td><td class="right">marbles</td></tr>
 <tr><td class="both" colspan="2">(*(marble $) is #in #bowl)</td></tr>
 </table>
@@ -473,6 +477,8 @@ object definitions automatically</a>. The following is mostly equivalent:
 	marble
 (plural name (marble $))
 	marbles
+(plural dict (marble $))
+	marbles
 (*(marble $) is #in #bowl)
 </textarea>
 <div class="blkcode">
@@ -482,6 +488,8 @@ object definitions automatically</a>. The following is mostly equivalent:
 <tr><td class="both" colspan="2">(name (marble $))</td></tr>
 <tr><td class="left"></td><td class="right">marble</td></tr>
 <tr><td class="both" colspan="2">(plural name (marble $))</td></tr>
+<tr><td class="left"></td><td class="right">marbles</td></tr>
+<tr><td class="both" colspan="2">(plural dict (marble $))</td></tr>
 <tr><td class="left"></td><td class="right">marbles</td></tr>
 <tr><td class="both" colspan="2">(*(marble $) is #in #bowl)</td></tr>
 </table>
@@ -510,8 +518,11 @@ is expressed as a pairwise relation:
 </div>
 <p>Now, in response to <span class="prginput">LOOK IN BOWL</span>, the library might print:
 </p>
-<div class="blkoutput">There are five marbles in the bowl.</div><p>A common <span class="code">(plural name&nbsp;$)</span> must be defined for each copy of the
-object for this to work.
+<div class="blkoutput">There are five marbles in the bowl.</div><p>A common printed name, <span class="code">(plural name&nbsp;$)</span>, must be defined for each
+copy of the object for this to work. In addition, the plural noun—and only the
+noun—must be declared using the <span class="code">(plural dict&nbsp;$)</span> predicate. Thus,
+if the plural name is “glass marbles”, then the plural dict should only be
+“marbles”.
 </p>
 <p>Although the objects start out identical, that will change as soon as the
 player starts moving them around. The library considers two objects <i>truly
@@ -549,6 +560,8 @@ object as appropriate. Thus:
 	box
 (plural name (box $))
 	boxes
+(plural dict (box $))
+	boxes
 (item *(box $))
 (openable *(box $))
 
@@ -581,6 +594,8 @@ object as appropriate. Thus:
 <tr><td class="both" colspan="2">(name (box $))</td></tr>
 <tr><td class="left"></td><td class="right">box</td></tr>
 <tr><td class="both" colspan="2">(plural name (box $))</td></tr>
+<tr><td class="left"></td><td class="right">boxes</td></tr>
+<tr><td class="both" colspan="2">(plural dict (box $))</td></tr>
 <tr><td class="left"></td><td class="right">boxes</td></tr>
 <tr><td class="both" colspan="2">(item *(box $))</td></tr>
 <tr><td class="both" colspan="2">(openable *(box $))</td></tr>
@@ -652,6 +667,8 @@ start:
 	box
 (plural name (box $))
 	boxes
+(plural dict (box $))
+	boxes
 (item *(box $))
 (openable *(box $))
 (*(box $) is handled)
@@ -660,6 +677,8 @@ start:
 (name (marble $))
 	marble
 (plural name (marble $))
+	marbles
+(plural dict (marble $))
 	marbles
 (item *(marble $))
 (edible *(marble $))
@@ -727,6 +746,8 @@ start:
 <tr><td class="left"></td><td class="right">box</td></tr>
 <tr><td class="both" colspan="2">(plural name (box $))</td></tr>
 <tr><td class="left"></td><td class="right">boxes</td></tr>
+<tr><td class="both" colspan="2">(plural dict (box $))</td></tr>
+<tr><td class="left"></td><td class="right">boxes</td></tr>
 <tr><td class="both" colspan="2">(item *(box $))</td></tr>
 <tr><td class="both" colspan="2">(openable *(box $))</td></tr>
 <tr><td class="both" colspan="2">(*(box $) is handled)</td></tr>
@@ -735,6 +756,8 @@ start:
 <tr><td class="both" colspan="2">(name (marble $))</td></tr>
 <tr><td class="left"></td><td class="right">marble</td></tr>
 <tr><td class="both" colspan="2">(plural name (marble $))</td></tr>
+<tr><td class="left"></td><td class="right">marbles</td></tr>
+<tr><td class="both" colspan="2">(plural dict (marble $))</td></tr>
 <tr><td class="left"></td><td class="right">marbles</td></tr>
 <tr><td class="both" colspan="2">(item *(marble $))</td></tr>
 <tr><td class="both" colspan="2">(edible *(marble $))</td></tr>
@@ -806,9 +829,11 @@ judicial use of fungibility could enhance certain scenes by making the
 interaction feel more natural, and that may sometimes be worth the extra work.
 It's your call.
 </p>
+<p>Fungible objects are good candidates for <a href="actions.html#groupactions">group actions</a>.
+</p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="libref.html">Appendix: Predicate index</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 29, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 30, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

@@ -290,8 +290,8 @@ the cursor in the top left corner.
 are ignored in the top status area.
 </p>
 <p>The top status area can be split into multiple segments horizontally. These
-segments are described using nested so called <i>floating</i> divs. These have
-a <span class="code">float</span> attribute that is set to either <span class="code">left</span> or
+segments are described using so called <i>floating</i> divs. These have a
+<span class="code">float</span> attribute that is set to either <span class="code">left</span> or
 <span class="code">right</span> to determine where inside the status area the segment should
 be located. The width of the segment can be specified in absolute numbers
 (using the <span class="code">ch</span> unit) or as a percentage of the width of the
@@ -361,9 +361,9 @@ height, expressed as an integer followed by the word <span class="code">em</span
 </p>
 <p class="codeline">width</p>
 <p class="noteline">For divs nested inside the top status area: The desired width, as an
-integer followed by a unit. Supported units are <span class="code">em</span> and
-<span class="code">%</span>. An <span class="code">em</span> is interpreted as the width of a
-character in the fixed-pitch font.
+integer followed by a unit. Supported units are <span class="code">ch</span> and
+<span class="code">%</span>. One <span class="code">ch</span> represents the width of a character
+in the fixed-pitch font.
 </p>
 <p class="codeline">float</p>
 <p class="noteline">For divs nested inside the top status area: The desired location within
@@ -423,8 +423,8 @@ folds away the current div. It is currently only supported by the Å-machine web
 interpreter. Note that if more output is sent to the cleared div, this new
 output may or may not be visible to the player.
 </p>
-<p>All of the above predicates succeed (unless they generate a runtime error). All
-of them may be ignored by interpreters.
+<p>All of the above predicates succeed (except when they generate a runtime
+error). All of them may be ignored by interpreters.
 </p>
 <a id="input"></a><h2>Input</h2>
 <p>User input is represented by dictionary words.
@@ -1007,7 +1007,7 @@ unoptimized case.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="dynamic.html">Chapter 6: Dynamic predicates</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 29, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 30, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

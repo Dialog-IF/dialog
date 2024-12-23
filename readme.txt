@@ -1,5 +1,5 @@
-This archive contains version 0m/01 of the Dialog compiler and interactive
-debugger, bundled with documentation and version 0.44 of the Dialog Standard
+This archive contains version 0m/02 of the Dialog compiler and interactive
+debugger, bundled with documentation and version 0.45 of the Dialog Standard
 Library.
 
 Directory structure:
@@ -37,6 +37,43 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0m/02, Lib 0.45 (Manual revision 30):
+
+		Library: SWITCH now only redirects to SWITCH ON if the object
+		is switchable (and off).
+
+		Library: EXITS now properly prints the name of an inherently
+		dark room that is lit up by an object.
+
+		Library: The output of '(list objects $ $)' no longer includes
+		the current player.
+
+		Library: Cleaned up the grammar rules to avoid ambiguous
+		parsing of e.g. GET OUT as both '[leave]' and '[leave $]'.
+
+		Library: Added PROFFER as a synonym for GIVE.
+
+		Library: Added HEY as a synonym for GREET.
+
+		Library: Asterisk-prefixed input is now consistently ignored,
+		also when typed in response to disambiguation questions and in
+		the game-over menu.
+
+		Compiler: Improved the code for detecting cyclic access
+		predicates.
+
+		Debugger: Improved the algorithm for matching select statements
+		when updating a running program.
+
+		Debugger: Fixed an inconsistency in the interaction between
+		'(uppercase)' and hyperlinks.
+
+		Manual: Added clarifications on how to use '(plural name $)'
+		and '(plural dict $)' and fixed the corresponding example in
+		the section on identical objects.
+
+		Manual: Miscellaneous improvements to Part I.
 
 	0m/01, Lib 0.44 (Manual revision 29):
 

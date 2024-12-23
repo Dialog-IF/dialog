@@ -132,11 +132,12 @@ if-statements without else-clauses succeed when none of the conditions are met
 choice points, so if a failure is encountered further down in the rule (or even
 in the calling rule, if this was a multi-query), then execution might resume
 somewhere in the middle of this code, printing half-sentences as a result.
+When that happens, it is almost always due to a bug elsewhere in the program.
 </p>
-<p>When that happens, it is almost always due to a bug elsewhere in the program.
-So, arguably, the disjunction-based version is correct. But in the spirit of
-defensive programming, it's generally a good idea to stick to if-statements
-when writing code with side-effects, such as printing.
+<p>Technically the disjunction-based version works just as well as the if-based
+version. But in the spirit of defensive programming, it's generally a good idea
+to stick to if-statements when writing code with side-effects, such as
+printing.
 </p>
 <a id="negation"></a><h2>Negation</h2>
 <p>Is there a way to test whether a query fails? We can certainly do it with an
@@ -510,7 +511,7 @@ time on taking the other items.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="io.html">Chapter 5: Input and output</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 29, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 30, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

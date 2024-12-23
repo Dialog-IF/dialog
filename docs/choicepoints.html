@@ -13,12 +13,15 @@
 <a id="disjunctions"></a><h2>Disjunctions</h2>
 <p>So far, we have seen that rule bodies can contain text and values to be
 printed, as well as queries to be made to predicates. As soon as a query fails,
-the entire rule fails. Hence, the rule can be regarded as a <i>conjunction</i>
-(boolean &ldquo;and&rdquo;) of queries.
+the entire rule fails. Hence, a rule body can be regarded as a
+<i>conjunction</i> (boolean &ldquo;and&rdquo;) of queries.
 </p>
-<p>It is also possible, using special syntax, to put <i>disjunctions</i> (boolean
-&ldquo;or&rdquo;) into rule bodies. The <span class="code">(or)</span> keyword may look like a query,
-but is in fact an infix operator. Here is an example:
+<p>On the other hand, the rules that make up a predicate are tried one at a time
+until one succeeds—they form a <i>disjunction</i> (boolean &ldquo;or&rdquo;).
+</p>
+<p>It is also possible, using special syntax, to put disjunctions inside rule
+bodies. The <span class="code">(or)</span> keyword may look like a query, but is in fact an
+infix operator. Here is an example:
 </p>
 <textarea class="copyarea" id="copy0" readonly>
 (program entry point)
@@ -63,7 +66,43 @@ but is in fact an infix operator. Here is an example:
 <div class="copycode">
 <a class="copybtn" href="" onClick="document.getElementById('copy0').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
-<p>The output is:
+<p>Note that this part of the code:
+</p>
+<textarea class="copyarea" id="copy1" readonly>
+(tasty $Obj)
+	(fruit $Obj)
+	(or)
+	($Obj = #steak) (player eats meat)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(tasty $Obj)</td></tr>
+<tr><td class="left"></td><td class="right">(fruit $Obj)</td></tr>
+<tr><td class="left"></td><td class="right">(or)</td></tr>
+<tr><td class="left"></td><td class="right">($Obj = #steak) (player eats meat)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy1').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>is exactly equivalent to:
+</p>
+<textarea class="copyarea" id="copy2" readonly>
+(tasty $Obj)	(fruit $Obj)
+
+(tasty $Obj)	($Obj = #steak) (player eats meat)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left">(tasty $Obj)</td><td class="right">(fruit $Obj)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left">(tasty $Obj)</td><td class="right">($Obj = #steak) (player eats meat)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy2').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The output from the program is:
 </p>
 <div class="blkoutput">Apple: Yummy!<br />
 Steak: Yummy!<br />
@@ -78,7 +117,7 @@ everything to the left and right of itself. Therefore, if we try to move the
 <span class="code">tasty</span> condition verbatim into the <span class="code">Yummy</span> rule itself,
 we run into trouble:
 </p>
-<textarea class="copyarea" id="copy1" readonly>
+<textarea class="copyarea" id="copy3" readonly>
 %% This will not work as desired:
 
 (descr $Obj)
@@ -105,7 +144,7 @@ we run into trouble:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy1').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy3').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Now if we try to describe the apple, only the first leg of the
 <span class="code">(or)</span> expression will execute, and the query to <span class="code">(descr
@@ -116,7 +155,7 @@ can be used to organize Dialog code into <i>blocks</i>. The <span class="code">(
 operation extends as far as it can to the left and right, but it won't go
 beyond the limits of its containing block. Thus:
 </p>
-<textarea class="copyarea" id="copy2" readonly>
+<textarea class="copyarea" id="copy4" readonly>
 %% The following version is correct:
 
 (descr $Obj)
@@ -143,13 +182,13 @@ beyond the limits of its containing block. Thus:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy2').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy4').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <a id="backtracking"></a><h2>Backtracking</h2>
 <p>Now consider the following predicate, which determines who is considered
 royalty in some fictional world:
 </p>
-<textarea class="copyarea" id="copy3" readonly>
+<textarea class="copyarea" id="copy5" readonly>
 (royalty #king)
 (royalty #queen)
 
@@ -176,7 +215,7 @@ royalty in some fictional world:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy3').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy5').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>To check whether a person is royalty, unless they're the actual king or queen,
 we first consider their mother (in the first leg of the disjunction). Let's
@@ -202,7 +241,7 @@ within subroutine calls. But of course, side-effects cannot be undone: What's
 printed is printed. This can be used to narrate what's going on while the
 program is searching for a solution:
 </p>
-<textarea class="copyarea" id="copy4" readonly>
+<textarea class="copyarea" id="copy6" readonly>
 (program entry point)
 	{
 		($X = #door)
@@ -249,7 +288,7 @@ program is searching for a solution:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy4').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy6').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>The output is:
 </p>
@@ -264,12 +303,13 @@ this until one of the rules succeeds.
 <p>Now we are in a position to understand what is actually going on: Before
 attempting to unify the parameters with those of a rule head, Dialog creates a
 choice point. In case of failure, the query parameters (and all other variables
-that have been bound since) are restored to their original state, and the next
+that have been bound since) are restored to their earlier state, and the next
 rule is attempted.
 </p>
 <p>However, there is one critical difference between queries and disjunctions: As
 soon as a rule succeeds, that query is considered over and done. So on success,
-Dialog simply discards any choice points that were created as part of the query.
+Dialog simply discards any lingering choice points that were created as part of
+the query.
 </p>
 <a id="multiqueries"></a><h2>Multi-queries</h2>
 <p>Sometimes when we query a predicate, we want to be able to go back and
@@ -282,7 +322,7 @@ choice points as soon as a rule succeeds. This is done by putting an asterisk
 </p>
 <p>Here is an example:
 </p>
-<textarea class="copyarea" id="copy5" readonly>
+<textarea class="copyarea" id="copy7" readonly>
 (program entry point)
 	*(fruit $Obj)	%% This is a multi-query. Also, $Obj is unbound here.
 	$Obj is a fruit.
@@ -313,7 +353,7 @@ choice points as soon as a rule succeeds. This is done by putting an asterisk
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy5').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy7').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>The output of the program is:
 </p>
@@ -328,7 +368,7 @@ resemble a traditional subroutine call, because it can effectively
 choice points remain in effect after the multi-query returns. This provides a
 very powerful mechanism for searching through a database of relations:
 </p>
-<textarea class="copyarea" id="copy6" readonly>
+<textarea class="copyarea" id="copy8" readonly>
 (#lisa is a child of #marge)
 (#lisa is a child of #homer)
 (#bart is a child of #marge)
@@ -385,7 +425,7 @@ very powerful mechanism for searching through a database of relations:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy6').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy8').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Output:
 </p>
@@ -432,10 +472,10 @@ a regular query is guaranteed to return at most once.
 <p>That example illustrates a general class of problems in the spirit of the
 pencil-and-paper game Sudoku: Dialog searches through the parameter space by
 tentatively binding variables to values and checking that all constraints are
-met, backtracking when they are not, until one or more solutions are found.
-The main difference between the family tree example and Sudoku is that in the
-latter, all the variables are lined up on a grid from the start, whereas in the
-former, the variables are parameters of recursive queries.
+met, backtracking when they are not, until one or more solutions are found. The
+main difference between Sudoku and the family tree example is that in the
+former, all the variables are lined up on a grid from the start, whereas in the
+latter, the variables are parameters of recursive queries.
 </p>
 <p>In interactive fiction, this technique can be useful for working with small
 relational databases, as in the example. But its biggest strength is in parsing
@@ -453,7 +493,7 @@ unify the value with each member of the list in turn. If both parameters are
 bound, a regular query to <span class="code">($&nbsp;is one of&nbsp;$)</span> can be used to check
 whether the value is in the list:
 </p>
-<textarea class="copyarea" id="copy7" readonly>
+<textarea class="copyarea" id="copy9" readonly>
 (descr $Obj)	($Obj is one of [#apple #orange #banana]) Yummy!
 (descr $Obj)	You see nothing unexpected about it.
 </textarea>
@@ -464,12 +504,12 @@ whether the value is in the list:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy7').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy9').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>But with the help of a multi-query, the same predicate can be used as a list
 iterator. Here is a more elegant re-implementation of an earlier example:
 </p>
-<textarea class="copyarea" id="copy8" readonly>
+<textarea class="copyarea" id="copy10" readonly>
 (program entry point)
 	*($X is one of [#door #foot #apple #pencil])
 	Checking (the $X).
@@ -500,14 +540,14 @@ iterator. Here is a more elegant re-implementation of an earlier example:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy8').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>The output is:
 </p>
 <div class="blkoutput">Checking the oaken door. Checking my left foot. Checking the green apple. Yes, it's a fruit!</div><p>Incidentally, <span class="code">($&nbsp;is one of&nbsp;$)</span> is a built-in predicate for
 performance reasons only. We could have defined it ourselves like this:
 </p>
-<textarea class="copyarea" id="copy9" readonly>
+<textarea class="copyarea" id="copy11" readonly>
 ($Element is one of [$Element | $])
 ($Element is one of [$ | $Tail])
 	*($Element is one of $Tail)
@@ -520,7 +560,7 @@ performance reasons only. We could have defined it ourselves like this:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy9').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy11').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Note the asterisk in front of the recursive call. By making this a multi-query,
 <span class="code">$Element</span> iterates over the entire <span class="code">$Tail</span>, and we
@@ -531,20 +571,22 @@ empty list.
 <a id="exhaust"></a><h2>Visiting all solutions</h2>
 <p>A Dialog statement can be prefixed with the <span class="code">(exhaust)</span> keyword.
 This will cause Dialog to consider every nook and cranny of the search tree,
-without remaining on the first successful branch. The statement (usually a
-block) executes, backtracking is performed on success as well as on failure,
-and in the end the entire <span class="code">(exhaust)</span> construct succeeds. Here is an
+without remaining on the first successful branch. The statement—usually a
+block—executes, backtracking is performed on success as well as on failure, and
+in the end the entire <span class="code">(exhaust)</span> construct succeeds. Here is an
 example:
 </p>
-<textarea class="copyarea" id="copy10" readonly>
+<textarea class="copyarea" id="copy12" readonly>
 (program entry point)
 	(exhaust) {
 		*($X is one of [#door #foot #apple #pencil])
-		(line) Checking (the $X).
+		(line)
+		Checking (the $X).
 		(fruit $X)
 		Yes, it's a fruit!
 	}
-	(line) The program continues, but $X is unbound again.
+	(line)
+	The program continues, but $X is unbound again.
 
 (fruit #apple)
 
@@ -558,11 +600,13 @@ example:
 <tr><td class="both" colspan="2">(program entry point)</td></tr>
 <tr><td class="left"></td><td class="right">(exhaust) {</td></tr>
 <tr><td class="left"></td><td class="right"><span class="tab"> </span>*($X is one of [#door #foot #apple #pencil])</td></tr>
-<tr><td class="left"></td><td class="right"><span class="tab"> </span>(line) Checking (the $X).</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(line)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>Checking (the $X).</td></tr>
 <tr><td class="left"></td><td class="right"><span class="tab"> </span>(fruit $X)</td></tr>
 <tr><td class="left"></td><td class="right"><span class="tab"> </span>Yes, it's a fruit!</td></tr>
 <tr><td class="left"></td><td class="right">}</td></tr>
-<tr><td class="left"></td><td class="right">(line) The program continues, but $X is unbound again.</td></tr>
+<tr><td class="left"></td><td class="right">(line)</td></tr>
+<tr><td class="left"></td><td class="right">The program continues, but $X is unbound again.</td></tr>
 <tr><td class="blank" colspan="2"></td></tr>
 <tr><td class="both" colspan="2">(fruit #apple)</td></tr>
 <tr><td class="blank" colspan="2"></td></tr>
@@ -573,7 +617,7 @@ example:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy12').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>The output is:
 </p>
@@ -583,7 +627,7 @@ Checking the green apple. Yes, it's a fruit!<br />
 Checking the pencil.<br />
 The program continues, but $ is unbound again.</div><p>Incidentally,
 </p>
-<textarea class="copyarea" id="copy11" readonly>
+<textarea class="copyarea" id="copy13" readonly>
 	(exhaust) <i>statement</i>
 </textarea>
 <div class="blkcode">
@@ -592,11 +636,11 @@ The program continues, but $ is unbound again.</div><p>Incidentally,
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy11').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy13').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>is exactly equivalent to
 </p>
-<textarea class="copyarea" id="copy12" readonly>
+<textarea class="copyarea" id="copy14" readonly>
 	{ <i>statement</i> (fail) (or) }
 </textarea>
 <div class="blkcode">
@@ -605,7 +649,7 @@ The program continues, but $ is unbound again.</div><p>Incidentally,
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy12').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy14').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>where <span class="code">(fail)</span> is a built-in predicate that always fails.
 </p>
@@ -615,7 +659,7 @@ we would like to collect the results of those computations into a list, and
 then perform some work on the list as a whole. This can be done with the
 following special syntax:
 </p>
-<textarea class="copyarea" id="copy13" readonly>
+<textarea class="copyarea" id="copy15" readonly>
 	(collect $Element)
 		...
 	(into $List)
@@ -628,7 +672,7 @@ following special syntax:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy13').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy15').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>The ellipsis represents some code that is expected to bind
 <span class="code">$Element</span> to a value.  That value is remembered, and backtracking
@@ -638,7 +682,7 @@ list is then unified with the output parameter, <span class="code">$List</span>.
 </p>
 <p>Example:
 </p>
-<textarea class="copyarea" id="copy14" readonly>
+<textarea class="copyarea" id="copy16" readonly>
 (program entry point)
 	(collect $F)
 		*(fruit $F)
@@ -663,7 +707,7 @@ list is then unified with the output parameter, <span class="code">$List</span>.
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy14').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy16').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>The output is:
 </p>
@@ -674,7 +718,7 @@ collect-expression is nearly always a multi-query.
 <a id="collectwords"></a><h2>Collecting words</h2>
 <p>There is also a special variant of the collect-into syntax:
 </p>
-<textarea class="copyarea" id="copy15" readonly>
+<textarea class="copyarea" id="copy17" readonly>
 	(collect words)
 		...
 	(into $List)
@@ -687,7 +731,7 @@ collect-expression is nearly always a multi-query.
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy15').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy17').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>This makes Dialog execute the inner statements, while diverting all output into
 a list of dictionary words. That list is then unified with the output
@@ -703,7 +747,7 @@ come out as <span class="code">@north-we</span>, but that will unify just fine w
 </p>
 <p>Example:
 </p>
-<textarea class="copyarea" id="copy16" readonly>
+<textarea class="copyarea" id="copy18" readonly>
 (name #apple)	green apple
 (dict #apple)	yummy		%% Extra synonyms can be listed here.
 
@@ -746,7 +790,7 @@ come out as <span class="code">@north-we</span>, but that will unify just fine w
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy16').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy18').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>The output is:
 </p>
@@ -759,7 +803,7 @@ as separate words. They are: <span class="code">. , ; * " ( )</span> When printe
 <span class="code">. , ;</span> and <span class="code">)</span> inhibit whitespace on their left, and
 <span class="code">(</span> inhibits whitespace on its right:
 </p>
-<textarea class="copyarea" id="copy17" readonly>
+<textarea class="copyarea" id="copy19" readonly>
 (program entry point)
 	(collect words)
 		Hello, world!
@@ -786,7 +830,7 @@ as separate words. They are: <span class="code">. , ; * " ( )</span> When printe
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy17').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy19').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>produces the output:
 </p>
@@ -795,7 +839,7 @@ Printing each word: hello, world!</div><a id="accumulate"></a><h2>Accumulating n
 <p>Instead of returning the collected values as a list, it is possible to add them
 together:
 </p>
-<textarea class="copyarea" id="copy18" readonly>
+<textarea class="copyarea" id="copy20" readonly>
 	(accumulate $Element)
 		...
 	(into $Sum)
@@ -808,7 +852,7 @@ together:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy18').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy20').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>The elements have to be numbers, and the resulting sum must be within the valid
 range of numbers (i.e. no more than 16383). If that is not the case, then the
@@ -818,7 +862,7 @@ whole accumulate-statement fails.
 <p>The <span class="code">$Element</span> can be a constant. If it is 1, the resulting sum will
 be the number of ways the inner expression succeeded. Thus:
 </p>
-<textarea class="copyarea" id="copy19" readonly>
+<textarea class="copyarea" id="copy21" readonly>
 (program entry point)
 	(accumulate 1)
 		*(fruit $)
@@ -843,7 +887,7 @@ be the number of ways the inner expression succeeded. Thus:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy19').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy21').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>would produce the output:
 </p>
@@ -870,7 +914,7 @@ example is the object that represents the player character inside the game
 world. Suppose (although this is not necessarily a good idea in practice) that
 you want this object to print as &ldquo;you&rdquo;, but parse only as &ldquo;me&rdquo;:
 </p>
-<textarea class="copyarea" id="copy20" readonly>
+<textarea class="copyarea" id="copy22" readonly>
 (name #player)	you
 (dict #player)	(just) me
 
@@ -893,7 +937,7 @@ you want this object to print as &ldquo;you&rdquo;, but parse only as &ldquo;me&
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy20').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy22').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Here, when a multi-query is made for <span class="code">*(dict #player)</span>, Dialog sets
 up a choice point as usual, and enters the first matching rule. But this rule
@@ -913,7 +957,7 @@ the second <span class="code">(just)</span> has no effect.
 supply of choice points. This can be used to create infinite loops (such as the
 main game loop or the game-over menu).
 </p>
-<textarea class="copyarea" id="copy21" readonly>
+<textarea class="copyarea" id="copy23" readonly>
 (program entry point)
 	*(repeat forever)
 	This gets printed over and over. (line)
@@ -928,7 +972,7 @@ main game loop or the game-over menu).
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy21').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy23').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>In the above example, the query to <span class="code">(fail)</span> makes Dialog backtrack
 to the multi-query to <span class="code">(repeat forever)</span>, which will keep on
@@ -941,7 +985,7 @@ created by <span class="code">(repeat forever)</span>. This can be done explicit
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="control.html">Chapter 4: More control structures</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 29, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 30, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

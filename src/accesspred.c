@@ -200,12 +200,15 @@ struct astnode *expand_macro_body(
 	if(!an) return 0;
 
 	if(!instance) {
-		if(container->macro_instance >= 255) {
-			report(LVL_ERR, line, "Too many nested access predicate invocations. Cyclic definition?");
-			prg->errorflag = 1;
-			return 0;
-		}
 		instance = ++container->macro_instance;
+		if(instance == 255) {
+			report(LVL_ERR, line, "Too many nested access predicate invocations. Cyclic definition?");
+		}
+	}
+
+	if(container->macro_instance >= 255) {
+		prg->errorflag = 1;
+		return 0;
 	}
 
 	if(an->kind == AN_VARIABLE && an->word->name[0]) {

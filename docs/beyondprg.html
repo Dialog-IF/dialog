@@ -24,7 +24,7 @@ compile-time.
 </p>
 <p>Each published story should at the very least include a unique
 identifier&mdash;called the <i>IFID</i>&mdash;to distinguish it from other works.
-Different versions of the same story (e.g. bug fix releases) should be marked
+Different versions of the same story (e.g. bug-fix releases) should be marked
 with the same IFID. To declare the IFID, use the following predicate:
 </p>
 <textarea class="copyarea" id="copy0" readonly>
@@ -98,7 +98,7 @@ part of the story banner), by querying the following built-in predicates:
 <p>The serial number is the compilation date in <span class="tt">YYMMDD</span> format.
 </p>
 <a id="interface"></a><h2>Interfaces</h2>
-<p>Predicates are versatile building blocks, with many potential usage patterns.
+<p>Predicates are versatile building blocks with many potential usage patterns.
 Their parameters can be inputs, outputs, or both, and they can be bound,
 unbound, or partially bound (i.e. lists with unbound variables inside).
 </p>
@@ -171,7 +171,7 @@ it is an input. The actual declaration is:
 </div>
 <p>Interface declarations are machine-readable documentation. They do not affect
 the generated story file in any way. However, the compiler will check the
-program for interface violations—unbound values the could end up in the wrong
+program for interface violations—unbound values that could end up in the wrong
 place at the wrong time—and warn you about them at compile-time.
 </p>
 <a id="runtimeerror"></a><h2>Runtime errors</h2>
@@ -186,10 +186,10 @@ arrays fills up&mdash;which could happen at any time, in the middle of any
 operation&mdash;there's not much Dialog can do, except abandon all hope and
 re-initialize itself.
 </p>
-<p>For the Z-machine backend, the main heap, auxiliary heap, and long-term heap
-occupy 1000, 500, and 500&nbsp;words respectively by default, and this should be
-more than enough for most interactive stories. The size of each area can be
-adjusted by passing commandline options to the compiler. A built-in predicate,
+<p>For compiled code, the main heap, auxiliary heap, and long-term heap occupy
+1000, 500, and 500&nbsp;words respectively by default, and this should be more than
+enough for most interactive stories. The size of each area can be adjusted by
+passing commandline options to the compiler. A built-in predicate,
 <span class="code">(display memory statistics)</span>, prints the peak usage of each memory
 area so far. During debugging and testing, you may wish to invoke this
 predicate just before quitting, as it will tell you how close you are to the
@@ -412,7 +412,7 @@ the debugger have full support.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="quickref.html">Appendix: Quick reference</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 29, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 30, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

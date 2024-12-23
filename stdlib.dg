@@ -1,6 +1,6 @@
 
 (library version)
-	Library version 0.44.
+	Library version 0.45.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -1498,29 +1498,25 @@
 						\(currently closed\)
 					(elseif)
 						(from $Room through $Target to $R)
-						($R is visited)
 					(then)
-						to
-						(if) (inherently dark $R) (then)
-							darkness
-						(else)
-							(the $R)
-						(endif)
+						(describe remote room $R)
 					(endif)
-					. (line)
 				(else)
-					(if) ($Target is visited) (then)
-						to
-						(if) (inherently dark $Target) (then)
-							darkness
-						(else)
-							(the $Target)
-						(endif)
-					(endif)
-					. (line)
+					(describe remote room $Target)
 				(endif)
+				. (line)
 			(endif)
 		}
+	(endif)
+
+(describe remote room $Room)
+	(if) ($Room is visited) (then)
+		to
+		(if) (light reaches ceiling $Room) (then)
+			(the $Room)
+		(else)
+			darkness
+		(endif)
 	(endif)
 
 %% EXIST (misspelled EXITS, just for the giggles)
@@ -1540,10 +1536,10 @@
 %% GIVE <obj> TO <obj>
 %% GIVE <obj>
 
-(grammar [give/offer [held] to [animate]] for [give $ to $])
-(grammar [give/offer [animate] [held]] for [give $ to $] reversed)
+(grammar [give/offer/proffer [held] to [animate]] for [give $ to $])
+(grammar [give/offer/proffer [animate] [held]] for [give $ to $] reversed)
 
-(grammar [give/offer [held]] for [give $])
+(grammar [give/offer/proffer [held]] for [give $])
 
 (unlikely [give $Obj to $Obj])
 
@@ -1841,16 +1837,16 @@
 
 (unlikely [switch ~(switchable $)])
 
-(instead of [switch $Obj])
-	($Obj is on)
-	(try [switch off $Obj])
-
-(instead of [switch $Obj])
-	($Obj is off)
-	(try [switch on $Obj])
+(instead of [switch (switchable $Obj)])
+	(if) ($Obj is on) (then)
+		(try [switch off $Obj])
+	(else)
+		(try [switch on $Obj])
+	(endif)
 
 (perform [switch $Obj])
 	(The $Obj) can't be switched on or off.
+	(tick) (stop)
 
 %% SQUEEZE <obj>
 
@@ -2181,8 +2177,8 @@
 %% GREET <obj> (redirected to TALK TO by default)
 %% GREET
 
-(grammar [greet/hello/hi [animate]] for [greet $])
-(grammar [greet/hello/hi] for [greet])
+(grammar [greet/hello/hi/hey [animate]] for [greet $])
+(grammar [greet/hello/hi/hey] for [greet])
 
 (unlikely [greet $Obj])
 	~(animate $Obj)
@@ -2446,32 +2442,32 @@
 (grammar [get/jump/go [out off] of [single]] for [leave $])
 (grammar [get/jump/go off [single]] for [leave $])
 
-(understand [u/up] as [leave $Obj])
+(understand [u/up] as [leave])
 	(current player $Player)
 	($Player has parent $Obj)
 	(seat $Obj)
 
-(understand [go/get u/up] as [leave $Obj])
+(understand [go/get u/up] as [leave])
 	(current player $Player)
 	($Player has parent $Obj)
 	(seat $Obj)
 
-(understand [d/down] as [leave $Obj])
+(understand [d/down] as [leave])
 	(current player $Player)
 	($Player is #on $Obj)
 	~(seat $Obj)
 
-(understand [go/get/climb d/down] as [leave $Obj])
+(understand [go/get/climb d/down] as [leave])
 	(current player $Player)
 	($Player is #on $Obj)
 	~(seat $Obj)
 
-(understand [out] as [leave $Obj])
+(understand [out] as [leave])
 	(current player $Player)
 	($Player is #in $Obj)
 	~(room $Obj)
 
-(understand [go/get out] as [leave $Obj])
+(understand [go/get out] as [leave])
 	(current player $Player)
 	($Player is #in $Obj)
 	~(room $Obj)
@@ -4464,6 +4460,7 @@
 (list objects $Rel $Loc)
 	(collect $Obj)
 		*($Obj is $Rel $Loc)
+		~(current player $Obj)
 	(into $List)
 	(if) (nonempty $List) (then)
 		(Name $Rel) (the $Loc) (is $List) (a $List).
@@ -4693,18 +4690,29 @@
 			(else)
 				(redraw status bar)
 				($ChoiceList = [])
-				> (get input $Words)
+				(prompt and input $Words)
 			(endif)
 
 			(parse commandline $Words with choices $ChoiceList)
 		}
 	(endif)
 
+(interface (prompt and input $>Words))
+
+(prompt and input $Words)
+	*(repeat forever)
+	> (get input $Words)
+
+	%% '*' is by convention used by testers to put comments in a
+	%% transcript. Ignore it and try again.
+
+	~($Words = [\* | $])
+
 (interface (get choice of $<ChoiceList into $>Words))
 
 (get choice of $ChoiceList into $Words)
 	(enumerate choices $ChoiceList 1)
-	> (get input $Words)
+	(prompt and input $Words)
 
 (interface (enumerate choices $<ObjList $<FirstIndex))
 
@@ -4933,7 +4941,7 @@
 	(endif)
 	from the beginning?
 	(line)
-	> (get input $Words)
+	(prompt and input $Words)
 	(stoppable) (parse game over $Words)
 
 (game over option)
@@ -5551,9 +5559,6 @@
 (parse commandline [] with choices $)
 	Come again?
 
-(parse commandline [\* | $] with choices $)
-	%% By convention used by testers to put comments in a transcript.
-
 (parse commandline [undo] with choices $)
 	(try [undo])
 
@@ -5761,7 +5766,7 @@
 	(then)
 		Did you want to (describe action $ComplexAction)?
 		(par)
-		> (get input $Words)
+		(prompt and input $Words)
 		{
 			(now) (head noun is required)
 			(disambiguate by object name $Words $Template $ObjList $Result)
@@ -5779,7 +5784,7 @@
 			\( Type the corresponding number \)
 		(endif)
 		(par)
-		> (get input $Words)
+		(prompt and input $Words)
 		{
 			(understand $Words as number $N)
 			($N > 0)
@@ -5926,7 +5931,7 @@
 %% Asking a yes/no question:
 
 (yesno)
-	(space) > (get input $Words)
+	(space) (prompt and input $Words)
 	(if) ($Words = [yes]) (or) ($Words = [y]) (then)
 	(elseif) ($Words = [no]) (or) ($Words = [n]) (then)
 		(fail)
@@ -5940,7 +5945,7 @@
 (interface (get number from $<First to $<Last $>Number))
 
 (get number from $First to $Last $N)
-	$First - $Last > (get input $Input)
+	$First - $Last (prompt and input $Input)
 	(understand $Input as number $N)
 	~($N < $First)
 	~($N > $Last)
