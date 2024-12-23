@@ -1516,9 +1516,10 @@ struct astnode *parse_expr(int parsemode) {
 				exit(1);
 			}
 			an->children[0] = parse_expr(PMODE_BODY);
-			for(dest = &an->children[0]->next_in_body; *dest; dest = &(*dest)->next_in_body);
-			*dest = mkast(AN_RULE);
-			(*dest)->predicate = stoppred;
+			if(contains_just(an->children[0])) {
+				report(LVL_ERR, line, "(just) not allowed inside (stoppable).");
+				exit(1);
+			}
 		} else if(an->predicate->special == SP_STATUSBAR) {
 			sub = an->children[0];
 			an = mkast(AN_STATUSBAR);
@@ -1532,9 +1533,10 @@ struct astnode *parse_expr(int parsemode) {
 				exit(1);
 			}
 			an->children[1] = parse_expr(PMODE_BODY);
-			for(dest = &an->children[1]->next_in_body; *dest; dest = &(*dest)->next_in_body);
-			*dest = mkast(AN_RULE);
-			(*dest)->predicate = stoppred;
+			if(contains_just(an->children[1])) {
+				report(LVL_ERR, line, "(just) not allowed inside (status bar $).");
+				exit(1);
+			}
 		} else if(an->predicate->special == SP_IF) {
 			an = parse_if();
 		} else if(an->predicate->builtin == BI_REPEAT) {

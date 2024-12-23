@@ -1,6 +1,6 @@
 
 (library version)
-	Library version 0.15.
+	Library version 0.16.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -826,15 +826,15 @@
 
 (rewrite [throw away | $Words] into [throw | $Words])
 
-(understand [throw | $Words] as [throw $A at $B])
+(understand [throw/toss | $Words] as [throw $A at $B])
 	*(split $Words by [at on to in into onto] into $Left and $Right)
 	*(understand $Left as object $A preferably held)
 	*(understand $Right as single object $B)
 
-(understand [throw | $Words] as [throw $Obj])
+(understand [throw/toss | $Words] as [throw $Obj])
 	*(understand $Words as object $Obj preferably held)
 
-(understand [throw | $Words] as [throw $Obj $Dir])
+(understand [throw/toss | $Words] as [throw $Obj $Dir])
 	(last $Words $Last)
 	(parse direction [$Last] $Dir)
 	(reverse $Words [$ | $RevWords])

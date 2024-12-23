@@ -1,4 +1,4 @@
-This is version 0c/03 of the Dialog compiler, bundled with version 0.15 of its
+This is version 0c/04 of the Dialog compiler, bundled with version 0.16 of its
 standard library.
 
 Directory structure:
@@ -26,6 +26,15 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0c/04 Lib 0.16 (Manual revision 2):
+
+		Bugfix related to the allocation of a temporary register in a
+		'has parent' optimization.
+
+		Bugfix related to nested stoppable environments.
+
+		Library: Added a synonym ('toss' for 'throw').
 
 	0c/03 Lib 0.15 (Manual revision 2):
 

@@ -49,7 +49,7 @@ struct rtroutine rtroutines[] = {
 		(struct zinstr []) {
 			{Z_CATCH, {}, REG_FATALJMP},
 
-			{Z_CALL2N, {ROUTINE(R_TRY_ME_ELSE_0), VALUE(REG_CONT)}},
+			{Z_CALL2N, {ROUTINE(R_TRY_ME_ELSE_0), VALUE(REG_CONT)}}, // which is R_QUIT_PRED
 			{Z_CALL1N, {ROUTINE(R_PUSH_STOP)}},
 
 			{Z_CALL2N, {ROUTINE(R_INNERLOOP), VALUE(REG_A+1)}},
@@ -2900,6 +2900,7 @@ struct rtroutine rtroutines[] = {
 			{Z_STOREW, {VALUE(REG_LOCAL+0), SMALL(1), VALUE(REG_COLLCHK)}},
 			{Z_STOREW, {VALUE(REG_LOCAL+0), SMALL(2), VALUE(REG_CHOICE)}},
 			{Z_STORE, {SMALL(REG_STOP), VALUE(REG_LOCAL+1)}},
+			{Z_CALL2N, {ROUTINE(R_TRY_ME_ELSE_0), ROUTINE(R_STOP_PRED)}},
 			{Z_RFALSE},
 			{Z_END},
 		}

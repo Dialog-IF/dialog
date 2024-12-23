@@ -2716,7 +2716,7 @@ void compile_simple_builtin(struct routine *r, struct astnode *an, int for_words
 				zi->oper[0] = ROUTINE(R_DEREF_OBJ_FAIL);
 				zi->oper[1] = o2;
 				if(o1 == VALUE(REG_TEMP)) {
-					zi->store = next_temp++;
+					zi->store = REG_X + next_temp++;
 				} else {
 					zi->store = REG_TEMP;
 				}
@@ -3899,7 +3899,7 @@ void compile_trivial_condition(struct routine *r, struct astnode *an, uint16_t f
 			}
 			o2 = compile_ast_to_oper(r, an->children[1], vars);
 			if(an->children[1]->kind != AN_TAG) {
-				treg = (o1 == VALUE(REG_TEMP))? next_temp++ : REG_TEMP;
+				treg = (o1 == VALUE(REG_TEMP))? (REG_X + next_temp++) : REG_TEMP;
 				zi = append_instr(r, Z_CALL2S);
 				zi->oper[0] = ROUTINE(R_DEREF_OBJ);
 				zi->oper[1] = o2;
@@ -4631,7 +4631,7 @@ void compile_stoppable(struct astnode *an, struct routine **rptr, int for_words,
 	zi = append_instr(r, Z_CALL1N);
 	zi->oper[0] = ROUTINE(R_PUSH_STOP);
 
-	compile_body(an->children[0], rptr, for_words, envflags, vars, TAIL_CONT);
+	compile_body(an->children[0], rptr, for_words, envflags, vars, R_STOP_PRED);
 
 	clear_lingering(vars);
 
@@ -4652,7 +4652,7 @@ void compile_statusbar(struct astnode *an, struct routine **rptr, int for_words,
 	zi->oper[1] = o1;
 	zi->oper[2] = ROUTINE(endlab);
 
-	compile_body(an->children[1], rptr, 0, envflags, vars, TAIL_CONT);
+	compile_body(an->children[1], rptr, 0, envflags, vars, R_STOP_PRED);
 
 	clear_lingering(vars);
 
