@@ -1,4 +1,4 @@
-This archive contains version 0f/05 of the Dialog compiler and interactive
+This archive contains version 0f/06 of the Dialog compiler and interactive
 debugger, bundled with documentation and version 0.23 of the dialog Standard
 Library.
 
@@ -37,6 +37,11 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0f/06 Lib 0.23 (Manual revision 9):
+
+		Bugfix: Removed a case where the Z-machine backend would
+		attempt to set an undefined style bit.
 
 	0f/05 Lib 0.23 (Manual revision 9):
 
