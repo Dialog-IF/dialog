@@ -1697,8 +1697,10 @@ int frontend_visit_clauses(struct program *prg, struct arena *temp_arena, struct
 }
 
 static void frontend_reset_program(struct program *prg) {
-	int i;
+	int i, j;
 	struct predname *predname;
+	struct clause *cl;
+	struct astnode *sub;
 
 	for(i = 0; i < prg->npredicate; i++) {
 		predname = prg->predicates[i];
@@ -1717,6 +1719,35 @@ static void frontend_reset_program(struct program *prg) {
 		if(predname->builtin == BI_HASPARENT) {
 			assert(predname->dyn_id == DYN_HASPARENT);
 			predname->pred->dynamic = calloc(1, sizeof(struct dynamic));
+		}
+	}
+
+	predname = find_builtin(prg, BI_INVOKE_CLOSURE);
+	for(i = 0; i < prg->nclosurebody; i++) {
+		cl = arena_calloc(&predname->pred->arena, sizeof(*cl));
+		cl->predicate = predname;
+		cl->arena = &predname->pred->arena;
+		cl->line = 0;
+		cl->params = arena_alloc(cl->arena, predname->arity * sizeof(struct astnode *));
+		cl->params[0] = mkast(AN_INTEGER, 0, cl->arena, 0);
+		cl->params[0]->value = i;
+		cl->params[1] = mkast(AN_EMPTY_LIST, 0, cl->arena, 0);
+		cl->params[2] = mkast(AN_VARIABLE, 0, cl->arena, 0);
+		cl->params[2]->word = find_word(prg, "");
+		cl->body = deepcopy_astnode(prg->closurebodies[i], cl->arena, 0);
+		add_clause(cl, predname->pred);
+		analyse_clause(prg, cl);
+		assert(cl == predname->pred->clauses[i]);
+		for(j = 0; j < cl->nvar; j++) {
+			if(!strcmp(cl->varnames[j]->name, "_")) {
+				cl->params[2]->word = find_word(prg, "_");
+			} else {
+				sub = cl->params[1];
+				cl->params[1] = mkast(AN_PAIR, 2, cl->arena, 0);
+				cl->params[1]->children[0] = mkast(AN_VARIABLE, 0, cl->arena, 0);
+				cl->params[1]->children[0]->word = cl->varnames[j];
+				cl->params[1]->children[1] = sub;
+			}
 		}
 	}
 }
