@@ -80,7 +80,7 @@ struct builtinspec {
 	{BI_MODULO,		0, 0,				5,	{0, "modulo", 0, "into", 0}},
 	{BI_RANDOM,		0, 0,				7,	{"random", "from", 0, "to", 0, "into", 0}},
 	{BI_FAIL,		0, PREDF_FAIL,			1,	{"fail"}},
-	{BI_STOP,		0, PREDF_SUCCEEDS|PREDF_STOP,	1,	{"stop"}},
+	{BI_STOP,		0, PREDF_SUCCEEDS|PREDF_STOP|PREDF_MIGHT_STOP,	1,	{"stop"}},
 	{BI_REPEAT,		0, PREDF_SUCCEEDS,		2,	{"repeat", "forever"}},
 	{BI_NUMBER,		0, 0,				2,	{"number", 0}},
 	{BI_LIST,		0, 0,				2,	{"list", 0}},
@@ -696,12 +696,18 @@ void trace_invoke_pred(struct predname *predname, int flags, uint32_t unbound_in
 	if((pred->flags != (pred->flags | flags))
 	|| (pred->unbound_in != (pred->unbound_in | unbound_in))) {
 		for(i = 0; i < predname->arity; i++) {
-			if((unbound_in & (1 << i))
-			&& !(pred->unbound_in & (1 << i))) {
+			if(unbound_in & (1 << i)) {
+				if(!(pred->unbound_in & (1 << i))) {
 #if 0
-				printf("now, %s was called with parameter %d potentially unbound\n", pred->predname->printed_name, i);
+					printf("now, %s was called with parameter %d potentially unbound\n",
+						pred->predname->printed_name,
+						i);
 #endif
-				pred->unbound_in_due_to[i] = caller;
+				}
+				if(!pred->unbound_in_due_to[i]
+				&& caller->predicate != predname) {
+					pred->unbound_in_due_to[i] = caller;
+				}
 			}
 		}
 		pred->flags |= flags;
@@ -726,15 +732,16 @@ void trace_invocations(struct program *prg) {
 	trace_entrypoint(find_builtin(prg, BI_ERROR_ENTRY), prg, PREDF_INVOKED_BY_PROGRAM);
 	trace_entrypoint(find_builtin(prg, BI_OBJECT), prg, PREDF_INVOKED_BY_PROGRAM); // invoked by implicit object loops
 
-	trace_entrypoint(find_builtin(prg, BI_HASPARENT), prg, PREDF_INVOKED_BY_DEBUGGER); // invoked for initial values
-
 	for(i = 0; i < prg->npredicate; i++) {
 		predname = prg->predicates[i];
 		pred = predname->pred;
 		if(pred->flags & PREDF_DYNAMIC) {
-			pred->flags |= PREDF_INVOKED_SIMPLE; // for initial values
+			pred->flags |= PREDF_INVOKED_SIMPLE | PREDF_INVOKED_NORMALLY; // for initial values
 			if(pred->flags & PREDF_GLOBAL_VAR) {
 				pred->unbound_in |= 1; // when computing the initial value
+			}
+			if(predname->arity == 2) {
+				pred->unbound_in |= 2; // when computing the initial value
 			}
 			trace_invoke_pred(predname, PREDF_INVOKED_BY_DEBUGGER, 0, 0, prg);
 		}
@@ -1469,6 +1476,12 @@ int body_succeeds(struct astnode *an) {
 			if(!body_succeeds(an->children[2])) return 0;
 			// todo also consider conditions with known outcome
 			break;
+		case AN_COLLECT:
+			if(an->children[2]->kind != AN_VARIABLE) return 0;
+			break;
+		case AN_COLLECT_WORDS:
+			if(an->children[1]->kind != AN_VARIABLE) return 0;
+			break;
 		case AN_DETERMINE_OBJECT:
 			return 0;
 			break;
@@ -1483,6 +1496,86 @@ int body_succeeds(struct astnode *an) {
 		case AN_LINK:
 		case AN_LINK_RES:
 			if(!body_succeeds(an->children[1])) return 0;
+			break;
+		}
+		an = an->next_in_body;
+	}
+
+	return 1;
+}
+
+int body_might_stop(struct astnode *an) {
+	int i;
+
+	while(an) {
+		if(an->kind == AN_RULE || an->kind == AN_NEG_RULE) {
+			if(an->predicate->pred->flags & PREDF_MIGHT_STOP) {
+				return 1;
+			}
+		}
+		if(an->kind != AN_STOPPABLE) {
+			for(i = 0; i < an->nchild; i++) {
+				if(body_might_stop(an->children[i])) return 1;
+			}
+		}
+		an = an->next_in_body;
+	}
+
+	return 0;
+}
+
+int body_succeeds_at_most_once(struct astnode *an) {
+	int i;
+
+	while(an) {
+		switch(an->kind) {
+		case AN_BLOCK:
+			if(!body_succeeds_at_most_once(an->children[0])) return 0;
+			break;
+		case AN_RULE:
+			if(an->subkind == RULE_MULTI) return 0;
+			break;
+		case AN_OR:
+			if(an->nchild > 1
+			|| !body_succeeds_at_most_once(an->children[0])) {
+				return 0;
+			}
+			break;
+		case AN_IF:
+			if(!body_succeeds_at_most_once(an->children[1])
+			|| !body_succeeds_at_most_once(an->children[2])) {
+				return 0;
+			}
+			break;
+		case AN_DETERMINE_OBJECT:
+			return 0;
+		case AN_SELECT:
+			for(i = 0; i < an->nchild; i++) {
+				if(!body_succeeds_at_most_once(an->children[i])) {
+					return 0;
+				}
+			}
+			break;
+		case AN_NEG_BLOCK:
+		case AN_NEG_RULE:
+		case AN_BAREWORD:
+		case AN_DICTWORD:
+		case AN_TAG:
+		case AN_VARIABLE:
+		case AN_INTEGER:
+		case AN_PAIR:
+		case AN_EMPTY_LIST:
+		case AN_NOW:
+		case AN_JUST:
+		case AN_EXHAUST:
+		case AN_FIRSTRESULT:
+		case AN_COLLECT:
+		case AN_COLLECT_WORDS:
+		case AN_STOPPABLE:
+		case AN_STATUSBAR:
+		case AN_OUTPUTBOX:
+		case AN_LINK:
+		case AN_LINK_RES:
 			break;
 		}
 		an = an->next_in_body;
@@ -1863,6 +1956,12 @@ int frontend_visit_clauses(struct program *prg, struct arena *temp_arena, struct
 				temp_arena);
 			for(; an; an = an->next_in_body) {
 				if(an->kind == AN_RULE || an->kind == AN_NEG_RULE) {
+					if(an->predicate->builtin
+					&& an->predicate->builtin != BI_HASPARENT
+					&& !(an->predicate->nameflags & PREDNF_DEFINABLE_BI)) {
+						report(LVL_ERR, cl->line, "Access predicate may not expand into a redefinition of a builtin.");
+						return 0;
+					}
 					sub = arena_calloc(&an->predicate->pred->arena, sizeof(*sub));
 					sub->predicate = an->predicate;
 					sub->arena = &an->predicate->pred->arena;
@@ -2546,6 +2645,25 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 						}
 					}
 					if(contains_just(pred->clauses[j]->body)) break;
+				}
+			}
+		}
+	} while(flag);
+
+	do {
+		flag = 0;
+		for(i = 0; i < prg->npredicate; i++) {
+			predname = prg->predicates[i];
+			pred = predname->pred;
+			if((!predname->builtin || (predname->nameflags & PREDNF_DEFINABLE_BI))
+			&& !pred->dynamic
+			&& !(pred->flags & PREDF_MIGHT_STOP)) {
+				for(j = 0; j < pred->nclause; j++) {
+					if(body_might_stop(pred->clauses[j]->body)) {
+						pred->flags |= PREDF_MIGHT_STOP;
+						flag = 1;
+						break;
+					}
 				}
 			}
 		}

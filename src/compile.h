@@ -35,7 +35,7 @@ enum {
 	I_PUSH_CHOICE,		// -- number of args, routine
 	I_POP_CHOICE,		// -- number of args
 	I_CUT_CHOICE,		// --
-	I_SAVE_CHOICE,		// -- dest
+	I_SAVE_CHOICE,		// -- dest, subop = paired with single restore
 	I_RESTORE_CHOICE,	// -- value
 
 	I_SELECT,		// -- number of choices, select id (unless purely random), subop = select type

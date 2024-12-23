@@ -1846,6 +1846,31 @@ struct rtroutine rtroutines[] = {
 		}
 	},
 	{
+		R_SET_FLAG,
+		2,
+			// 0 (param): object (tagged reference)
+			// 1 (param): attribute number
+		(struct zinstr []) {
+			{Z_CALL2S, {ROUTINE(R_DEREF_OBJ_FORCE), VALUE(REG_LOCAL+0)}, REG_LOCAL+0},
+			{Z_SET_ATTR, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+1)}},
+			{Z_RFALSE},
+			{Z_END},
+		}
+	},
+	{
+		R_RESET_FLAG,
+		2,
+			// 0 (param): object (tagged reference)
+			// 1 (param): attribute number
+		(struct zinstr []) {
+			{Z_CALL2S, {ROUTINE(R_DEREF_OBJ), VALUE(REG_LOCAL+0)}, REG_LOCAL+0},
+			{Z_JZ, {VALUE(REG_LOCAL+0)}, 0, RFALSE},
+			{Z_CLEAR_ATTR, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+1)}},
+			{Z_RFALSE},
+			{Z_END},
+		}
+	},
+	{
 		R_SET_LISTFLAG,
 		3,
 			// 0 (param): object (tagged reference)
@@ -1913,6 +1938,32 @@ struct rtroutine rtroutines[] = {
 			{Z_JNZ, {VALUE(REG_LOCAL+3)}, 0, 1},
 
 			{Z_STORE, {VALUE(REG_LOCAL+1), SMALL(0)}},
+			{Z_RFALSE},
+			{Z_END},
+		}
+	},
+	{
+		R_SET_PARENT,
+		2,
+			// 0 (param): object (tagged reference)
+			// 1 (param): new parent (tagged reference)
+		(struct zinstr []) {
+			{Z_CALL2S, {ROUTINE(R_DEREF_OBJ_FORCE), VALUE(REG_LOCAL+0)}, REG_LOCAL+0},
+			{Z_CALL2S, {ROUTINE(R_DEREF_OBJ_FORCE), VALUE(REG_LOCAL+1)}, REG_LOCAL+1},
+			{Z_INSERT_OBJ, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+1)}},
+			{Z_RFALSE},
+			{Z_END},
+		}
+	},
+	{
+		R_RESET_PARENT,
+		1,
+			// 0 (param): object (tagged reference)
+		(struct zinstr []) {
+			{Z_CALL2S, {ROUTINE(R_DEREF_OBJ), VALUE(REG_LOCAL+0)}, REG_LOCAL+0},
+			{Z_JZ, {VALUE(REG_LOCAL+0)}, 0, RFALSE},
+
+			{Z_REMOVE_OBJ, {VALUE(REG_LOCAL+0)}},
 			{Z_RFALSE},
 			{Z_END},
 		}
@@ -3353,7 +3404,9 @@ struct rtroutine rtroutines[] = {
 			// 1 (param): index of long-term ref
 			// 2 (param): new value to serialize
 		(struct zinstr []) {
+			{Z_CALL2S, {ROUTINE(R_DEREF_OBJ), VALUE(REG_LOCAL+1)}, REG_LOCAL+1},
 			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_LOCAL+2)}, REG_LOCAL+2},
+			{Z_JZ, {VALUE(REG_LOCAL+1)}, 0, 6},
 
 			{Z_LOADW, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+1)}, REG_LOCAL+3},
 			{Z_JL, {VALUE(REG_LOCAL+3), SMALL(0)}, 0, 4},
@@ -3408,6 +3461,11 @@ struct rtroutine rtroutines[] = {
 
 			{OP_LABEL(5)},
 			{Z_THROW, {SMALL(FATAL_LTS), VALUE(REG_FATALJMP)}},
+
+			{OP_LABEL(6)},
+			{Z_JZ, {VALUE(REG_LOCAL+2)}, 0, RFALSE},
+
+			{Z_THROW, {SMALL(FATAL_EXPECTED_OBJ), VALUE(REG_FATALJMP)}},
 
 			{OP_LABEL(3)},
 

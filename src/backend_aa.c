@@ -60,16 +60,10 @@ struct textstring {
 	uint8_t			*chars;
 };
 
-enum {
-	SEGSTATE_UNREACHED,
-	SEGSTATE_ENQUEUED,
-	SEGSTATE_LINKED
-};
-
 struct segment {
 	int			ninstr;
 	struct aainstr		*instr;
-	uint8_t			state;
+	uint8_t			visited;
 };
 
 static struct charmap charmap[128];
@@ -91,8 +85,6 @@ static int n_dynlink;
 static uint16_t *initialparent;
 static uint16_t *initialsibling;
 static uint16_t *initialchild;
-static uint16_t *initial_tree_dfs;
-static int initial_tree_pos = 1;
 
 static int heap_sz, aux_sz, fixed_sz, longterm_sz;
 
@@ -427,13 +419,22 @@ static uint16_t tag_eval_value(value_t v, struct program *prg) {
 	assert(0); exit(1);
 }
 
-static int render_eval_value(uint16_t *buffer, int nword, value_t v, struct eval_state *es, struct predname *predname) {
+static int render_eval_value(uint16_t *buffer, int nword, value_t v, struct eval_state *es, struct predname *predname, int rec_depth) {
 	int count, size = 1, n;
 	uint16_t value;
 
 	// Simple elements (including the empty list) are serialised as themselves.
 	// Proper lists are serialised as the elements, followed by c000+n.
 	// Improper lists are serialised as the elements, followed by the improper tail element, followed by e000+n.
+
+	if(rec_depth > 8) {
+		report(
+			LVL_ERR,
+			0,
+			"Initial value of global variable %s is too complex.",
+			predname->printed_name);
+		exit(1);
+	}
 
 	switch(v.tag) {
 	case VAL_NUM:
@@ -445,7 +446,7 @@ static int render_eval_value(uint16_t *buffer, int nword, value_t v, struct eval
 	case VAL_PAIR:
 		count = 0;
 		for(;;) {
-			n = render_eval_value(buffer, nword, eval_gethead(v, es), es, predname);
+			n = render_eval_value(buffer, nword, eval_gethead(v, es), es, predname, rec_depth + 1);
 			size += n;
 			nword -= n;
 			buffer += n;
@@ -455,7 +456,7 @@ static int render_eval_value(uint16_t *buffer, int nword, value_t v, struct eval
 				value = 0xc000 | count;
 				break;
 			} else if(v.tag != VAL_PAIR) {
-				n = render_eval_value(buffer, nword, v, es, predname);
+				n = render_eval_value(buffer, nword, v, es, predname, rec_depth + 1);
 				size += n;
 				nword -= n;
 				buffer += n;
@@ -487,33 +488,16 @@ static int render_eval_value(uint16_t *buffer, int nword, value_t v, struct eval
 	return size;
 }
 
-static void visit_initial_tree(int onum, struct program *prg) {
-	int i;
-
-	if(initial_tree_dfs[onum]) {
-		report(
-			LVL_ERR,
-			0,
-			"Badly formed object tree! #%s is nested in itself.",
-			prg->worldobjnames[onum - 1]->name);
-		exit(1);
-	}
-	initial_tree_dfs[onum] = initial_tree_pos++;
-	for(i = initialchild[onum]; i; i = initialsibling[i - 1]) {
-		visit_initial_tree(i - 1, prg);
-	}
-}
-
 static void analyze_tree(struct program *prg) {
 	struct eval_state es;
 	value_t eval_args[2];
 	int i, j;
 	struct predname *predname = find_builtin(prg, BI_HASPARENT);
+	uint8_t seen[prg->nworldobj];
 
 	initialparent = arena_calloc(&aa_arena, prg->nworldobj * sizeof(uint16_t));
 	initialsibling = arena_calloc(&aa_arena, prg->nworldobj * sizeof(uint16_t));
 	initialchild = arena_calloc(&aa_arena, prg->nworldobj * sizeof(uint16_t));
-	initial_tree_dfs = arena_calloc(&aa_arena, prg->nworldobj * sizeof(uint16_t));
 
 	init_evalstate(&es, prg);
 	for(i = 0; i < prg->nworldobj; i++) {
@@ -526,6 +510,7 @@ static void analyze_tree(struct program *prg) {
 					LVL_ERR,
 					0,
 					"Initial value of ($ has parent $) must have objects in both parameters.");
+				exit(1);
 			}
 			initialparent[i] = eval_args[1].value + 1;
 		}
@@ -534,20 +519,24 @@ static void analyze_tree(struct program *prg) {
 	free_evalstate(&es);
 
 	for(i = 0; i < prg->nworldobj; i++) {
+		memset(seen, 0, prg->nworldobj);
+		for(j = i; j >= 0; j = initialparent[j] - 1) {
+			if(seen[j]) {
+				report(
+					LVL_ERR,
+					0,
+					"Badly formed object tree! #%s is nested in itself.",
+					prg->worldobjnames[j]->name);
+				exit(1);
+			}
+			seen[j] = 1;
+		}
 		j = initialparent[i];
 		if(j > 0) {
 			initialsibling[i] = initialchild[j - 1];
 			initialchild[j - 1] = i + 1;
 		}
 	}
-
-	for(i = 0; i < prg->nworldobj; i++) {
-		if(!initialparent[i]) {
-			visit_initial_tree(i, prg);
-		}
-	}
-
-	assert(initial_tree_pos == 1 + prg->nworldobj);
 }
 
 static int initial_values(struct program *prg, uint16_t *core, int ltt) {
@@ -582,6 +571,7 @@ static int initial_values(struct program *prg, uint16_t *core, int ltt) {
 								0,
 								"Initial value of global variable %s must be bound.",
 								predname->printed_name);
+							exit(1);
 						} else if(eval_args[0].tag == VAL_PAIR) {
 							core[AA_N_INITREG + addr] = 0x8000 | ltt;
 							core[AA_N_INITREG + ltt + 1] = addr;
@@ -590,7 +580,8 @@ static int initial_values(struct program *prg, uint16_t *core, int ltt) {
 								fixed_sz + longterm_sz - ltt - 2,
 								eval_args[0],
 								&es,
-								predname);
+								predname,
+								0);
 							core[AA_N_INITREG + ltt + 0] = size;
 							ltt += size;
 						} else {
@@ -646,7 +637,8 @@ static int initial_values(struct program *prg, uint16_t *core, int ltt) {
 								fixed_sz + longterm_sz - ltt - 2,
 								eval_args[0],
 								&es,
-								predname);
+								predname,
+								0);
 							core[AA_N_INITREG + ltt + 0] = size;
 							ltt += size;
 						} else {
@@ -726,10 +718,12 @@ static void chunk_init(FILE *f, struct program *prg, uint32_t *crc) {
 
 static aaoper_t encode_value(value_t v, struct program *prg) {
 	if(v.tag == OPER_VAR) {
+		assert(v.value < 64);
 		return (aaoper_t) {AAO_VAR, v.value};
 	} else if(v.tag == OPER_ARG) {
 		return (aaoper_t) {AAO_REG, REG_A + v.value};
 	} else if(v.tag == OPER_TEMP) {
+		assert(v.value < AA_MAX_TEMP);
 		return (aaoper_t) {AAO_REG, REG_X + v.value};
 	} else if(v.tag == VAL_NIL) {
 		return (aaoper_t) {AAO_REG, REG_NIL};
@@ -740,10 +734,12 @@ static aaoper_t encode_value(value_t v, struct program *prg) {
 
 static aaoper_t encode_dest(value_t v, struct program *prg, int unify) {
 	if(v.tag == OPER_VAR) {
+		assert(v.value < 64);
 		return (aaoper_t) {unify? AAO_VAR : AAO_STORE_VAR, v.value};
 	} else if(v.tag == OPER_ARG) {
 		return (aaoper_t) {unify? AAO_REG : AAO_STORE_REG, REG_A + v.value};
 	} else if(v.tag == OPER_TEMP) {
+		assert(v.value < AA_MAX_TEMP);
 		return (aaoper_t) {unify? AAO_REG : AAO_STORE_REG, REG_X + v.value};
 	} else if(v.tag == VAL_NIL && unify) {
 		return (aaoper_t) {AAO_REG, REG_NIL};
@@ -762,18 +758,70 @@ static void end_segment() {
 	segment[nsegment].ninstr = ninstr;
 	segment[nsegment].instr = arena_alloc(&aa_arena, ninstr * sizeof(struct aainstr));
 	memcpy(segment[nsegment].instr, aainstr, ninstr * sizeof(struct aainstr));
-	segment[nsegment].state = SEGSTATE_UNREACHED;
+	segment[nsegment].visited = 0;
 	nsegment++;
 	memset(aainstr, 0, ninstr * sizeof(struct aainstr));
 	ninstr = 0;
 }
 
-static void flatten_segments(struct program *prg) {
-	int segorder[nsegment], stack[nsegment];
-	int nsegorder = 0;
-	int s, sp = 0, target;
+static void flatten_segments_sub(int s, int *segorder, int *sp, int *symbols) {
+	int i, j, target;
 	struct aainstr *ai;
+	struct segment *seg = &segment[s];
+
+	if(!seg->visited) {
+		seg->visited = 1;
+
+		for(i = 0; i < seg->ninstr; i++) {
+			ai = &seg->instr[i];
+			if(ai->op == AA_SET_CONT
+			&& i == seg->ninstr - 2
+			&& ai->oper[0].type == AAO_CODE
+			&& ai->oper[0].value != AAFAIL
+			&& symbols[ai->oper[0].value] >= 0
+			&& (
+				seg->instr[i + 1].op == AA_JMP_MULTI ||
+				seg->instr[i + 1].op == AA_JMP_SIMPLE)
+			&& seg->instr[i + 1].oper[0].type == AAO_CODE
+			&& seg->instr[i + 1].oper[0].value != AAFAIL
+			&& symbols[seg->instr[i + 1].oper[0].value] >= 0) {
+				flatten_segments_sub(
+					symbols[seg->instr[i + 1].oper[0].value],
+					segorder,
+					sp,
+					symbols);
+				flatten_segments_sub(
+					symbols[ai->oper[0].value],
+					segorder,
+					sp,
+					symbols);
+				break;
+			} else {
+				for(j = 0; j < 4; j++) {
+					if(ai->oper[j].type == AAO_CODE
+					&& ai->oper[j].value != AAFAIL) {
+						target = symbols[ai->oper[j].value];
+						if(target >= 0) {
+							flatten_segments_sub(
+								target,
+								segorder,
+								sp,
+								symbols);
+						}
+					}
+				}
+			}
+		}
+
+		segorder[--(*sp)] = s;
+	}
+}
+
+static void flatten_segments(struct program *prg) {
+	int segorder[nsegment];
+	int sp;
 	int i, j;
+	struct segment *seg;
 	int symbols[nextlabel];
 
 	memset(symbols, 0xff, nextlabel * sizeof(int));
@@ -783,41 +831,41 @@ static void flatten_segments(struct program *prg) {
 		}
 	}
 
-	stack[sp++] = 0;
+	sp = nsegment;
+	flatten_segments_sub(0, segorder, &sp, symbols);
 
-	while(sp) {
-		s = stack[--sp];
-		if(segment[s].state != SEGSTATE_LINKED) {
-			segorder[nsegorder++] = s;
-			segment[s].state = SEGSTATE_LINKED;
-			for(i = 0; i < segment[s].ninstr; i++) {
-				ai = &segment[s].instr[i];
-				for(j = 0; j < 4; j++) {
-					if(ai->oper[j].type == AAO_CODE
-					&& ai->oper[j].value != AAFAIL) {
-						target = symbols[ai->oper[j].value];
-						if(target >= 0
-						&& segment[target].state == SEGSTATE_UNREACHED) {
-							stack[sp++] = target;
-							segment[target].state = SEGSTATE_ENQUEUED;
-						}
-					}
+	for(i = sp; i < nsegment - 1; i++) {
+		seg = &segment[segorder[i]];
+		if(seg->ninstr >= 2
+		&& (seg->instr[seg->ninstr - 1].op == AA_FAIL || (
+			seg->instr[seg->ninstr - 1].op == AA_JMP &&
+			seg->instr[seg->ninstr - 1].oper[0].value == AAFAIL))
+		&& (seg->instr[seg->ninstr - 2].op & 0x7f) >= 0x30
+		&& (seg->instr[seg->ninstr - 2].op & 0x7f) <= 0x4f) {
+			for(j = 0; j < 4; j++) {
+				if(seg->instr[seg->ninstr - 2].oper[j].type == AAO_CODE
+				&& seg->instr[seg->ninstr - 2].oper[j].value != AAFAIL
+				&& symbols[seg->instr[seg->ninstr - 2].oper[j].value] == segorder[i + 1]) {
+					seg->instr[seg->ninstr - 2].op ^= 0x30 ^ 0x40;
+					seg->instr[seg->ninstr - 2].oper[j].value = AAFAIL;
+					seg->instr[seg->ninstr - 1].op = AA_SKIP;
+					seg->instr[seg->ninstr - 1].oper[0] = (aaoper_t) {AAO_NONE};
+					break;
 				}
 			}
 		}
 	}
 
 	nalloc_instr = 0;
-	for(i = 0; i < nsegorder; i++) {
+	for(i = sp; i < nsegment; i++) {
 		nalloc_instr += segment[segorder[i]].ninstr;
 	}
 	aainstr = realloc(aainstr, nalloc_instr * sizeof(struct aainstr));
-
 	assert(ninstr == 0);
-	for(i = 0; i < nsegorder; i++) {
-		s = segorder[i];
-		memcpy(aainstr + ninstr, segment[s].instr, segment[s].ninstr * sizeof(struct aainstr));
-		ninstr += segment[s].ninstr;
+	for(i = sp; i < nsegment; i++) {
+		seg = &segment[segorder[i]];
+		memcpy(aainstr + ninstr, seg->instr, seg->ninstr * sizeof(struct aainstr));
+		ninstr += seg->ninstr;
 	}
 }
 
@@ -1106,6 +1154,17 @@ static void visit_reachable_routines(int rnum, struct predicate *pred, uint8_t *
 	}
 }
 
+static int only_lowercase(char *str) {
+	while(*str) {
+		if(*str < 'a' || *str > 'z') {
+			return 0;
+		}
+		str++;
+	}
+
+	return 1;
+}
+
 static void compile_routines(struct program *prg, struct predicate *pred, int first_r, uint32_t labelbase) {
 	int i, j, k, m, sub_r_id;
 	int sel, n, id, flag;
@@ -1377,7 +1436,17 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				break;
 			case I_COLLECT_END:
 				ai = add_instr(AA_AUX_POP_LIST);
-				ai->oper[0] = encode_dest(ci->oper[0], prg, 1);
+				if(ci->oper[0].tag == OPER_TEMP
+				|| ci->oper[0].tag == OPER_VAR
+				|| ci->oper[0].tag == OPER_ARG
+				|| ci->oper[0].tag == VAL_NIL) {
+					ai->oper[0] = encode_dest(ci->oper[0], prg, 1);
+				} else {
+					ai->oper[0] = (aaoper_t) {AAO_REG, REG_TMP};
+					ai = add_instr(AA_ASSIGN);
+					ai->oper[0] = encode_value(ci->oper[0], prg);
+					ai->oper[1] = (aaoper_t) {AAO_STORE_REG, REG_TMP};
+				}
 				break;
 			case I_COLLECT_MATCH_ALL:
 				ai = add_instr(AA_AUX_POP_LIST_MATCH);
@@ -1692,18 +1761,29 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				}
 				break;
 			case I_IF_MATCH:
-				ai = add_instr(AA_IF_EQ);
-				if(ci->subop) ai->op ^= AA_NEG_FLIP;
-				ai->oper[0] = (aaoper_t) {AAO_WORD, tag_eval_value(ci->oper[1], prg)};
-				if(ai->oper[0].value < 0x100) {
-					ai->op |= 0x80;
-					ai->oper[0].type = AAO_VBYTE;
-				}
-				ai->oper[1] = encode_value(ci->oper[0], prg);
-				if(ci->implicit == 0xffff) {
-					ai->oper[2] = (aaoper_t) {AAO_CODE, AAFAIL};
+				if(ci->oper[1].tag == VAL_NIL) {
+					ai = add_instr(AA_IF_EMPTY);
+					if(ci->subop) ai->op ^= AA_NEG_FLIP;
+					ai->oper[0] = encode_value(ci->oper[0], prg);
+					if(ci->implicit == 0xffff) {
+						ai->oper[1] = (aaoper_t) {AAO_CODE, AAFAIL};
+					} else {
+						ai->oper[1] = (aaoper_t) {AAO_CODE, labelbase + ci->implicit};
+					}
 				} else {
-					ai->oper[2] = (aaoper_t) {AAO_CODE, labelbase + ci->implicit};
+					ai = add_instr(AA_IF_EQ);
+					if(ci->subop) ai->op ^= AA_NEG_FLIP;
+					ai->oper[0] = (aaoper_t) {AAO_WORD, tag_eval_value(ci->oper[1], prg)};
+					if(ai->oper[0].value < 0x100) {
+						ai->op |= 0x80;
+						ai->oper[0].type = AAO_VBYTE;
+					}
+					ai->oper[1] = encode_value(ci->oper[0], prg);
+					if(ci->implicit == 0xffff) {
+						ai->oper[2] = (aaoper_t) {AAO_CODE, AAFAIL};
+					} else {
+						ai->oper[2] = (aaoper_t) {AAO_CODE, labelbase + ci->implicit};
+					}
 				}
 				break;
 			case I_IF_NIL:
@@ -1929,7 +2009,15 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				ai->oper[0] = encode_value(ci->oper[0], prg);
 				break;
 			case I_PRINT_WORDS:
-				if(ci->subop == 1) {
+				if(ci->oper[1].tag == VAL_NONE
+				&& ci->oper[0].tag == OPER_WORD
+				&& (w = prg->allwords[ci->oper[0].value])
+				&& (w->flags & WORDF_DICT)
+				&& only_lowercase(w->name)) {
+					ai = add_instr(AA_PRINT_VAL);
+					ai->oper[0] = (aaoper_t) {AAO_CONST, prg->dictmap[w->dict_id]};
+					n = 1;
+				} else if(ci->subop == 1) {
 					n = generate_output(prg, &cr->instr[i], 0, 1);
 				} else if(ci->subop == 0) {
 					// This can only happen for unreachable code.
@@ -2411,8 +2499,19 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				break;
 			case I_UNIFY:
 				ai = add_instr(AA_ASSIGN);
-				ai->oper[0] = encode_value(ci->oper[1], prg);
-				ai->oper[1] = encode_dest(ci->oper[0], prg, 1);
+				if(ci->oper[0].tag == OPER_VAR
+				|| ci->oper[0].tag == OPER_ARG
+				|| ci->oper[0].tag == OPER_TEMP) {
+					ai->oper[0] = encode_value(ci->oper[1], prg);
+					ai->oper[1] = encode_dest(ci->oper[0], prg, 1);
+				} else if(ci->oper[1].tag == OPER_VAR
+				|| ci->oper[1].tag == OPER_ARG
+				|| ci->oper[1].tag == OPER_TEMP) {
+					ai->oper[0] = encode_value(ci->oper[0], prg);
+					ai->oper[1] = encode_dest(ci->oper[1], prg, 1);
+				} else {
+					assert(0);
+				}
 				break;
 			default:
 				printf("unimplemented op %s in R%d of %s\n",
@@ -2467,9 +2566,8 @@ static void visit_reachable_instr(int inum, int *symbols) {
 		|| op == AA_JMP_TAIL
 		|| op == AA_POP_ENV_PROCEED
 		|| op == AA_STOP
-		|| (op == AA_EXT0 && (
-			aainstr[inum].oper[0].value == AAEXT0_QUIT ||
-			aainstr[inum].oper[0].value == AAEXT0_RESTORE)))
+		|| (op == AA_EXT0 &&
+			aainstr[inum].oper[0].value == AAEXT0_QUIT))
 		{
 			break;
 		}
@@ -3530,4 +3628,8 @@ void backend_aa(
 	if(!(prg->optflags & OPTF_NO_TRACE)) {
 		report(LVL_NOTE, 0, "In this build, the code has been instrumented to allow tracing.");
 	}
+}
+
+int aa_get_max_temp() {
+	return AA_MAX_TEMP;
 }

@@ -152,6 +152,8 @@
 #define REG_NIL			0x3e
 #define REG_IDX			0x3f
 
+#define AA_MAX_TEMP		(REG_TMP - REG_X)
+
 #define AASTYLE_REVERSE		1
 #define AASTYLE_BOLD		2
 #define AASTYLE_ITALIC		4

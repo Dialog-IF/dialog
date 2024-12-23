@@ -1360,13 +1360,22 @@ static uint16_t tag_eval_value(value_t v, struct program *prg) {
 	assert(0); exit(1);
 }
 
-static int render_eval_value(uint8_t *buffer, int nword, value_t v, struct eval_state *es, struct predname *predname) {
+static int render_eval_value(uint8_t *buffer, int nword, value_t v, struct eval_state *es, struct predname *predname, int rec_depth) {
 	int count, size = 1, n;
 	uint16_t value;
 
 	// Simple elements (including the empty list) are serialised as themselves.
 	// Proper lists are serialised as the elements, followed by c000+n.
 	// Improper lists are serialised as the elements, followed by the improper tail element, followed by e000+n.
+
+	if(rec_depth > 8) {
+		report(
+			LVL_ERR,
+			0,
+			"Initial value of global variable %s is too complex.",
+			predname->printed_name);
+		exit(1);
+	}
 
 	switch(v.tag) {
 	case VAL_NUM:
@@ -1378,7 +1387,7 @@ static int render_eval_value(uint8_t *buffer, int nword, value_t v, struct eval_
 	case VAL_PAIR:
 		count = 0;
 		for(;;) {
-			n = render_eval_value(buffer, nword, eval_gethead(v, es), es, predname);
+			n = render_eval_value(buffer, nword, eval_gethead(v, es), es, predname, rec_depth + 1);
 			size += n;
 			nword -= n;
 			buffer += 2 * n;
@@ -1388,7 +1397,7 @@ static int render_eval_value(uint8_t *buffer, int nword, value_t v, struct eval_
 				value = 0xc000 | count;
 				break;
 			} else if(v.tag != VAL_PAIR) {
-				n = render_eval_value(buffer, nword, v, es, predname);
+				n = render_eval_value(buffer, nword, v, es, predname, rec_depth + 1);
 				size += n;
 				nword -= n;
 				buffer += 2 * n;
@@ -3454,42 +3463,42 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 						zi->oper[1] = SMALL(id);
 					} else {
 						o1 = generate_value(r, ci->oper[1], prg, t1);
-						zi = append_instr(r, Z_CALL2S);
-						zi->oper[0] = ROUTINE(R_DEREF_OBJ_FORCE);
+						zi = append_instr(r, Z_CALLVN);
+						zi->oper[0] = ROUTINE(ci->subop? R_SET_FLAG : R_RESET_FLAG);
 						zi->oper[1] = o1;
-						zi->store = REG_TEMP;
-						zi = append_instr(r, ci->subop? Z_SET_ATTR : Z_CLEAR_ATTR);
-						zi->oper[0] = VALUE(REG_TEMP);
-						zi->oper[1] = SMALL(id);
+						zi->oper[2] = SMALL(id);
 					}
 				}
 				break;
 			case I_SET_OVAR:
 				assert(ci->oper[0].tag == OPER_OVAR);
-				o1 = generate_value(r, ci->oper[1], prg, t1);
-				if(ci->oper[1].tag != VAL_OBJ) {
-					zi = append_instr(r, Z_CALL2S);
-					zi->oper[0] = ROUTINE(R_DEREF_OBJ_FORCE);
-					zi->oper[1] = o1;
-					zi->store = REG_TEMP;
-					o1 = VALUE(REG_TEMP);
-				}
 				if(ci->oper[0].value == DYN_HASPARENT) {
+					o1 = generate_value(r, ci->oper[1], prg, t1);
 					if(ci->oper[2].tag == VAL_NONE) {
-						zi = append_instr(r, Z_REMOVE_OBJ);
-						zi->oper[0] = o1;
+						if(ci->oper[1].tag == VAL_OBJ) {
+							zi = append_instr(r, Z_REMOVE_OBJ);
+							zi->oper[0] = o1;
+						} else {
+							zi = append_instr(r, Z_CALL2N);
+							zi->oper[0] = ROUTINE(R_RESET_PARENT);
+							zi->oper[1] = o1;
+						}
 					} else {
 						o2 = generate_value(r, ci->oper[2], prg, t2);
-						zi = append_instr(r, Z_CALL2S);
-						zi->oper[0] = ROUTINE(R_DEREF_OBJ_FORCE);
-						zi->oper[1] = o2;
-						zi->store = REG_X + t2;
-						zi = append_instr(r, Z_INSERT_OBJ);
-						zi->oper[0] = o1;
-						zi->oper[1] = VALUE(REG_X + t2);
+						if(ci->oper[1].tag == VAL_OBJ && ci->oper[2].tag == VAL_OBJ) {
+							zi = append_instr(r, Z_INSERT_OBJ);
+							zi->oper[0] = o1;
+							zi->oper[1] = o2;
+						} else {
+							zi = append_instr(r, Z_CALLVN);
+							zi->oper[0] = ROUTINE(R_SET_PARENT);
+							zi->oper[1] = o1;
+							zi->oper[2] = o2;
+						}
 					}
 				} else {
 					id = ((struct backend_pred *) prg->objvarpred[ci->oper[0].value]->pred->backend)->propbase_label;
+					o1 = generate_value(r, ci->oper[1], prg, t1);
 					if(ci->oper[2].tag == VAL_NONE) {
 						o2 = SMALL(0);
 					} else {
@@ -3781,7 +3790,7 @@ static void initial_values(struct program *prg, uint8_t *zcore, uint16_t addr_gl
 							addr = addr_lts + lttop * 2;
 							zcore[addr + 2] = value >> 8;
 							zcore[addr + 3] = value & 0xff;
-							value = 2 + render_eval_value(zcore + addr + 4, ltssize - lttop - 2, eval_args[0], &es, predname);
+							value = 2 + render_eval_value(zcore + addr + 4, ltssize - lttop - 2, eval_args[0], &es, predname, 0);
 							zcore[addr + 0] = value >> 8;
 							zcore[addr + 1] = value & 0xff;
 							lttop += value;

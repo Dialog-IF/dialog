@@ -416,7 +416,7 @@ static struct astnode *parse_rule(struct lexer *lexer, struct arena *arena) {
 		if(lexer->kind == ')') break;
 
 		if(n >= MAXRULEWORDS) {
-			report(LVL_ERR, line, "Too many words in rule name.");
+			report(LVL_ERR, line, "Too many words in predicate name.");
 			lexer->errorflag = 1;
 			return 0;
 		}
@@ -430,6 +430,13 @@ static struct astnode *parse_rule(struct lexer *lexer, struct arena *arena) {
 			nparam++;
 		}
 	}
+
+	if(nparam > MAXPARAM) {
+		report(LVL_ERR, line, "Predicates can have a maximum of %d parameters. Put some of them in a list.", MAXPARAM);
+		lexer->errorflag = 1;
+		return 0;
+	}
+
 	an = mkast(AN_RULE, nparam, arena, line);
 	j = 0;
 	for(i = 0; i < n; i++) {
@@ -672,6 +679,22 @@ static struct astnode *parse_expr(int parsemode, struct lexer *lexer, struct are
 			}
 			an->children[0] = parse_expr(PMODE_BODY, lexer, arena);
 			if(!an->children[0]) return 0;
+			if(an->children[0]->kind == AN_NEG_RULE
+			&& an->children[0]->predicate->builtin == BI_HASPARENT
+			&& an->children[0]->children[0]->kind == AN_VARIABLE
+			&& !an->children[0]->children[0]->word->name[0]) {
+				// (now) ~($ has parent $)
+				sub = mkast(AN_BLOCK, 1, arena, line);
+				sub->children[0] = mkast(AN_RULE, 1, arena, line);
+				sub->children[0]->subkind = RULE_MULTI;
+				sub->children[0]->predicate = find_builtin(lexer->program, BI_OBJECT);
+				sub->children[0]->children[0] = mkast(AN_VARIABLE, 0, arena, line);
+				sub->children[0]->children[0]->word = fresh_word(lexer->program);
+				sub->children[0]->next_in_body = an;
+				an->children[0]->children[0] = deepcopy_astnode(sub->children[0]->children[0], arena, 0);
+				an = mkast(AN_EXHAUST, 1, arena, line);
+				an->children[0] = sub;
+			}
 		} else if(an->predicate->special == SP_EXHAUST) {
 			an = mkast(AN_EXHAUST, 1, arena, line);
 			status = next_token(lexer, PMODE_BODY);

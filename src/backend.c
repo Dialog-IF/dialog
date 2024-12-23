@@ -210,6 +210,9 @@ int main(int argc, char **argv) {
 		prg->optflags |= OPTF_NO_LINKS;
 	}
 	prg->optflags |= OPTF_NO_TRACE; // This gets cleared by the frontend if (trace on) is reachable.
+	if(aamachine) {
+		prg->max_temp = aa_get_max_temp();
+	}
 
 	if(!frontend(
 		prg,

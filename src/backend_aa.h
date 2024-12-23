@@ -13,3 +13,5 @@ void backend_aa(
 	struct program *prg,
 	struct arena *arena,
 	char *resdir);
+
+int aa_get_max_temp();

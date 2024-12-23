@@ -441,7 +441,7 @@ void pp_predicate(struct predname *predname, struct program *prg) {
 	int i;
 	struct predicate *pred = predname->pred;
 
-	printf("Predicate %c%c%c%c%c ",
+	printf("Predicate %c%c%c%c%c%c ",
 		(pred->flags & PREDF_INVOKED_BY_PROGRAM)? 'P' : '-',
 		(pred->flags & PREDF_INVOKED_NORMALLY)? 'N' : '-',
 		(pred->flags & PREDF_INVOKED_FOR_WORDS)? 'W' : '-',
@@ -449,7 +449,8 @@ void pp_predicate(struct predname *predname, struct program *prg) {
 		pred->dynamic? (
 			(pred->flags & PREDF_GLOBAL_VAR)? 'G' :
 			(pred->flags & PREDF_FIXED_FLAG)? 'F' : 'D'
-		) : '-');
+		) : '-',
+		(pred->flags & PREDF_MIGHT_STOP)? 'S' : '-');
 	printf("%s of arity %d\n", predname->printed_name, predname->arity);
 	if((prg->optflags & OPTF_BOUND_PARAMS) && !(pred->flags & PREDF_DYNAMIC)) {
 		for(i = 0; i < predname->arity; i++) {
@@ -569,6 +570,7 @@ struct program *new_program() {
 
 	arena_init(&prg->arena, 4096);
 	prg->nextfresh = 1;
+	prg->max_temp = 255;
 
 	return prg;
 }

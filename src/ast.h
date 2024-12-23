@@ -272,6 +272,7 @@ struct predicate {
 #define PREDF_DYN_LINKAGE		0x00020000
 #define PREDF_INVOKED_NORMALLY		0x00040000
 #define PREDF_NEEDS_LABEL		0x00080000
+#define PREDF_MIGHT_STOP		0x00100000
 
 #define PREDF_INVOKED (PREDF_INVOKED_NORMALLY | PREDF_INVOKED_FOR_WORDS | PREDF_INVOKED_BY_PROGRAM | PREDF_INVOKED_BY_DEBUGGER)
 
@@ -380,6 +381,7 @@ struct program {
 	char			*meta_serial;
 	char			*meta_reldate;
 	int			meta_release;
+	uint16_t		max_temp;
 };
 
 #define OPTF_BOUND_PARAMS	0x00000001

@@ -33,12 +33,22 @@ static value_t eval_deref(value_t v, struct eval_state *es) {
 	return v;
 }
 
-static void add_trail(struct eval_state *es, uint16_t index) {
+static int add_trail(struct eval_state *es, uint16_t index) {
 	if(es->trail >= es->nalloc_trail) {
-		es->nalloc_trail = 2 * es->nalloc_trail + 8;
+		int newsize = 2 * es->trail + 8;
+		if(newsize >= 0xffff) {
+			newsize = 0xffff;
+			if(es->trail >= newsize) {
+				report(LVL_ERR, 0, "Trail overflow (perhaps infinite recursion).");
+				return -1;
+			}
+		}
+		es->nalloc_trail = newsize;
 		es->trailstack = realloc(es->trailstack, es->nalloc_trail * sizeof(uint16_t));
 	}
 	es->trailstack[es->trail++] = index;
+
+	return 0;
 }
 
 static int alloc_heap_struct(struct eval_state *es, int n) {
@@ -215,15 +225,23 @@ static int push_choice(struct eval_state *es, int narg, struct predicate *pred, 
 	return 1;
 }
 
-static void push_aux(struct eval_state *es, value_t v) {
+static int push_aux(struct eval_state *es, value_t v) {
 	if(es->aux >= es->nalloc_aux) {
-		es->nalloc_aux = 2 * es->aux + 8;
+		int newsize = es->aux * 2 + 8;
+		if(newsize >= 0xffff) {
+			report(LVL_ERR, 0, "Aux stack overflow (perhaps infinite recursion).");
+			es->errorflag = 1;
+			return 0;
+		}
+		es->nalloc_aux = newsize;
 		es->auxstack = realloc(es->auxstack, es->nalloc_aux * sizeof(value_t));
 	}
 	es->auxstack[es->aux++] = v;
+
+	return 1;
 }
 
-static void collect_push(struct eval_state *es, value_t v) {
+static int collect_push(struct eval_state *es, value_t v) {
 	int count;
 
 	// Simple elements are serialised as themselves.
@@ -242,36 +260,47 @@ static void collect_push(struct eval_state *es, value_t v) {
 	case VAL_PAIR:
 		count = 0;
 		for(;;) {
-			collect_push(es, es->heap[v.value + 0]);
+			if(!collect_push(es, es->heap[v.value + 0])) {
+				return 0;
+			}
 			count++;
 			v = eval_deref(es->heap[v.value + 1], es);
 			if(v.tag == VAL_NIL) {
 				v = (value_t) {VAL_PAIR, count};
 				break;
 			} else if(v.tag != VAL_PAIR) {
-				collect_push(es, v);
+				if(!collect_push(es, v)) {
+					return 0;
+				}
 				v = (value_t) {VAL_PAIR, 0x8000 | count};
 				break;
 			}
 		}
 		break;
 	case VAL_DICTEXT:
-		collect_push(es, es->heap[v.value + 1]);
-		collect_push(es, es->heap[v.value + 0]);
+		assert(es->heap[v.value + 0].tag == VAL_PAIR || es->heap[v.value + 0].tag == VAL_DICT);
+		assert(es->heap[v.value + 1].tag == VAL_PAIR || es->heap[v.value + 1].tag == VAL_NIL);
+		if(!collect_push(es, es->heap[v.value + 1])) {
+			return 0;
+		}
+		if(!collect_push(es, es->heap[v.value + 0])) {
+			return 0;
+		}
 		v = (value_t) {VAL_DICTEXT, 0};
 		break;
 	case VAL_REF:
 		v = (value_t) {VAL_REF, 0};
 		break;
 	default:
+		fprintf(stderr, "%d\n", v.tag);
 		assert(0); exit(1);
 	}
 
-	push_aux(es, v);
+	return push_aux(es, v);
 }
 
 static value_t collect_pop(struct eval_state *es) {
-	value_t v, v1;
+	value_t v, v1, v2;
 	int count;
 
 	assert(es->aux);
@@ -294,8 +323,12 @@ static value_t collect_pop(struct eval_state *es) {
 	} else if(v.tag == VAL_DICTEXT) {
 		v = alloc_heap_pair(es);
 		if(v.tag == VAL_ERROR) return v;
-		es->heap[v.value + 0] = collect_pop(es);
-		es->heap[v.value + 1] = collect_pop(es);
+		v1 = collect_pop(es);
+		v2 = collect_pop(es);
+		assert(v1.tag == VAL_PAIR || v1.tag == VAL_DICT);
+		assert(v2.tag == VAL_PAIR || v2.tag == VAL_NIL);
+		es->heap[v.value + 0] = v1;
+		es->heap[v.value + 1] = v2;
 		v.tag = VAL_DICTEXT;
 	} else if(v.tag == VAL_REF) {
 		v = eval_makevar(es);
@@ -366,6 +399,9 @@ static void eval_push_undo(struct eval_state *es) {
 	memcpy(u->select, es->program->select, es->program->nselect);
 	u->nselect = es->program->nselect;
 
+	u->divsp = es->divsp;
+	memcpy(u->divstack, es->divstack, es->divsp * sizeof(uint16_t));
+
 	u->randomseed = es->randomseed;
 	u->arg0 = es->arg[0];
 
@@ -427,6 +463,19 @@ static int eval_pop_undo(struct eval_state *es) {
 	memcpy(es->choicestack, u->choicestack, (u->choice + 1) * sizeof(struct choice));
 	memcpy(es->envstack, u->envstack, etop * sizeof(struct env));
 
+	while(es->divsp--) o_end_box();
+	es->divsp = u->divsp;
+	memcpy(es->divstack, es->divstack, u->divsp * sizeof(uint16_t));
+	for(i = 0; i < es->divsp; i++) o_begin_box("box");
+	es->divstyle = STYLE_ROMAN;
+	o_set_style(STYLE_ROMAN);
+	if(es->divsp) {
+		if(es->program->boxclasses[es->divstack[es->divsp - 1]].style) {
+			es->divstyle = es->program->boxclasses[es->divstack[es->divsp - 1]].style & 0x7f;
+		}
+		o_set_style(es->divstyle);
+	}
+
 	arena_free(&u->arena);
 
 	return 1;
@@ -484,36 +533,44 @@ static void set_by_ref(value_t dest, value_t v, struct eval_state *es) {
 	}
 }
 
-static void set_heap_ref(struct eval_state *es, int ref, value_t v) {
+static int set_heap_ref(struct eval_state *es, int ref, value_t v) {
 	es->heap[ref] = v;
-	add_trail(es, ref);
+	return add_trail(es, ref);
 }
 
-static int unify(struct eval_state *es, value_t v1, value_t v2) {
+static int unify(struct eval_state *es, value_t v1, value_t v2, int rec_depth) {
+	if(rec_depth >= 8) {
+		report(
+			LVL_WARN,
+			0,
+			"Detected a very deeply nested (possibly cyclic) list structure.");
+		return 0;
+	}
+
 	v1 = eval_deref(v1, es);
 	v2 = eval_deref(v2, es);
 	for(;;) {
 		if(v1.tag == VAL_REF) {
 			if(v2.tag == VAL_REF) {
 				if(v1.value > v2.value) {
-					add_trail(es, v1.value);
+					if(add_trail(es, v1.value)) return 0;
 					es->heap[v1.value] = v2;
 				} else {
-					add_trail(es, v2.value);
+					if(add_trail(es, v2.value)) return 0;
 					es->heap[v2.value] = v1;
 				}
 			} else {
-				add_trail(es, v1.value);
+				if(add_trail(es, v1.value)) return 0;
 				es->heap[v1.value] = v2;
 			}
 			return 1;
 		} else if(v2.tag == VAL_REF) {
-			add_trail(es, v2.value);
+			if(add_trail(es, v2.value)) return 0;
 			es->heap[v2.value] = v1;
 			return 1;
 		} else if(v1.tag == VAL_PAIR) {
 			if(v2.tag != VAL_PAIR) return 0;
-			if(!unify(es, es->heap[v1.value], es->heap[v2.value])) return 0;
+			if(!unify(es, es->heap[v1.value], es->heap[v2.value], rec_depth + 1)) return 0;
 			v1 = eval_deref(es->heap[v1.value + 1], es);
 			v2 = eval_deref(es->heap[v2.value + 1], es);
 		} else if(v1.tag == VAL_DICTEXT && v2.tag == VAL_DICTEXT) {
@@ -527,7 +584,11 @@ static int unify(struct eval_state *es, value_t v1, value_t v2) {
 	}
 }
 
-static int would_unify(struct eval_state *es, value_t v1, value_t v2) {
+static int would_unify(struct eval_state *es, value_t v1, value_t v2, int rec_depth) {
+	int res;
+
+	if(rec_depth >= 8) return -1;
+
 	for(;;) {
 		v1 = eval_deref(v1, es);
 		v2 = eval_deref(v2, es);
@@ -535,12 +596,13 @@ static int would_unify(struct eval_state *es, value_t v1, value_t v2) {
 			return 1;
 		} else if(v1.tag == VAL_PAIR) {
 			if(v2.tag != VAL_PAIR) return 0;
-			if(!would_unify(
+			res = would_unify(
 				es,
 				es->heap[v1.value + 0],
-				es->heap[v2.value + 0]))
-			{
-				return 0;
+				es->heap[v2.value + 0],
+				rec_depth + 1);
+			if(res != 1) {
+				return res;
 			}
 			v1 = es->heap[v1.value + 1];
 			v2 = es->heap[v2.value + 1];
@@ -601,6 +663,9 @@ void pp_value(struct eval_state *es, value_t v, int with_at, int with_plus) {
 		if(es->heap[v.value + 0].tag == VAL_DICT) {
 			pp_value(es, es->heap[v.value + 0], 0, 0);
 		} else {
+			if(es->heap[v.value + 0].tag != VAL_PAIR) {
+				fprintf(stderr, "it is %d\n", es->heap[v.value + 0].tag);
+			}
 			assert(es->heap[v.value + 0].tag == VAL_PAIR);
 			first = 1;
 			for(sub = es->heap[v.value + 0]; sub.tag == VAL_PAIR; sub = es->heap[sub.value + 1]) {
@@ -994,6 +1059,13 @@ static int eval_run(struct eval_state *es) {
 			printf("%s %d\n", pp.pred->predname->printed_name, pp.routine);
 			assert(0);
 		}
+		if(es->max_eval) {
+			if(!--es->max_eval) {
+				report(LVL_ERR, 0, "Timeout while computing initial value. Infinite loop?");
+				pred_release(pp.pred);
+				return ESTATUS_QUIT;
+			}
+		}
 		ci = &pp.pred->routines[pp.routine].instr[pc];
 		pc++;
 		//printf("%s %d\n", pp.pred->predname->printed_name, ci->op);
@@ -1017,10 +1089,18 @@ static int eval_run(struct eval_state *es) {
 			break;
 		case I_BEGIN_BOX:
 			assert(ci->oper[0].tag == OPER_BOX);
+			if(es->divsp == EVAL_MAXDIV) {
+				pred_release(pp.pred);
+				return ESTATUS_ERR_DYN; // todo formalize this
+			}
+			es->divstack[es->divsp++] = ci->oper[0].value;
 			if(ci->subop == BOX_STATUS) {
 				o_begin_box("status");
 			} else {
-				push_aux(es, (value_t) {VAL_NUM, es->divstyle});
+				if(!push_aux(es, (value_t) {VAL_NUM, es->divstyle})) {
+					pred_release(pp.pred);
+					return ESTATUS_ERR_AUX;
+				}
 				o_par_n(es->program->boxclasses[ci->oper[0].value].margintop);
 				o_begin_box("box");
 				if(es->program->boxclasses[ci->oper[0].value].style) {
@@ -1083,7 +1163,10 @@ static int eval_run(struct eval_state *es) {
 					res = 0;
 				} else {
 					for(j = 0; j < map->map[i].count; j++) {
-						push_aux(es, (value_t) {VAL_OBJ, map->map[i].onumtable[j]});
+						if(!push_aux(es, (value_t) {VAL_OBJ, map->map[i].onumtable[j]})) {
+							pred_release(pp.pred);
+							return ESTATUS_ERR_AUX;
+						}
 					}
 					res = 1;
 				}
@@ -1145,7 +1228,10 @@ static int eval_run(struct eval_state *es) {
 			}
 			break;
 		case I_COLLECT_BEGIN:
-			push_aux(es, (value_t) {VAL_NONE});
+			if(!push_aux(es, (value_t) {VAL_NONE})) {
+				pred_release(pp.pred);
+				return ESTATUS_ERR_AUX;
+			}
 			break;
 		case I_COLLECT_CHECK:
 			res = 0;
@@ -1174,7 +1260,7 @@ static int eval_run(struct eval_state *es) {
 					return ESTATUS_ERR_HEAP;
 				}
 			}
-			if(!unify(es, v, value_of(ci->oper[0], es))) {
+			if(!unify(es, v, value_of(ci->oper[0], es), 0)) {
 				do_fail(es, &pp);
 				pc = 0;
 			}
@@ -1200,7 +1286,8 @@ static int eval_run(struct eval_state *es) {
 					v0 = es->heap[v0.value + 0];
 				}
 				for(v = v2; v.tag == VAL_PAIR; v = es->heap[v.value + 1]) {
-					if(would_unify(es, es->heap[v.value + 0], v0)) {
+					res = would_unify(es, es->heap[v.value + 0], v0, 0);
+					if(res == 1) {
 						break;
 					}
 				}
@@ -1216,7 +1303,10 @@ static int eval_run(struct eval_state *es) {
 			}
 			break;
 		case I_COLLECT_PUSH:
-			collect_push(es, value_of(ci->oper[0], es));
+			if(!collect_push(es, value_of(ci->oper[0], es))) {
+				pred_release(pp.pred);
+				return ESTATUS_ERR_AUX;
+			}
 			break;
 		case I_COMPUTE_R:
 			v0 = eval_deref(value_of(ci->oper[0], es), es);
@@ -1237,7 +1327,7 @@ static int eval_run(struct eval_state *es) {
 			if(v0.tag != VAL_NUM
 			|| v1.tag != VAL_NUM
 			|| !eval_compute(es, ci->subop, v0.value, v1.value, &res)
-			|| !unify(es, (value_t) {VAL_NUM, res}, v2)) {
+			|| !unify(es, (value_t) {VAL_NUM, res}, v2, 0)) {
 				do_fail(es, &pp);
 				pc = 0;
 			}
@@ -1268,6 +1358,11 @@ static int eval_run(struct eval_state *es) {
 			o_print_word("]");
 			break;
 		case I_END_BOX:
+			if(!es->divsp) {
+				pred_release(pp.pred);
+				return ESTATUS_ERR_DYN; // todo formalize this
+			}
+			es->divsp--;
 			o_end_box();
 			o_par_n(es->program->boxclasses[ci->oper[0].value].marginbottom);
 			if(ci->subop != BOX_STATUS) {
@@ -1355,7 +1450,7 @@ static int eval_run(struct eval_state *es) {
 				return ESTATUS_ERR_DYN;
 			}
 			if(v.tag == VAL_NONE
-			|| !unify(es, v, value_of(ci->oper[1], es))) {
+			|| !unify(es, v, value_of(ci->oper[1], es), 0)) {
 				do_fail(es, &pp);
 				pc = 0;
 			}
@@ -1421,7 +1516,7 @@ static int eval_run(struct eval_state *es) {
 					pred_release(pp.pred);
 					return ESTATUS_ERR_HEAP;
 				} else if(v2.tag == VAL_NONE
-				|| !unify(es, v2, value_of(ci->oper[2], es))) {
+				|| !unify(es, v2, value_of(ci->oper[2], es), 0)) {
 					do_fail(es, &pp);
 					pc = 0;
 				}
@@ -1435,7 +1530,10 @@ static int eval_run(struct eval_state *es) {
 					pred_release(pp.pred);
 					return ESTATUS_ERR_HEAP;
 				}
-				set_heap_ref(es, v0.value, v);
+				if(set_heap_ref(es, v0.value, v)) {
+					pred_release(pp.pred);
+					return ESTATUS_ERR_AUX;
+				}
 				es->heap[v.value + 0] = v1 = (value_t) {VAL_REF, v.value + 0};
 				set_by_ref(ci->oper[1], v1, es);
 				es->heap[v.value + 1] = v2 = (value_t) {VAL_REF, v.value + 1};
@@ -1458,13 +1556,16 @@ static int eval_run(struct eval_state *es) {
 					pred_release(pp.pred);
 					return ESTATUS_ERR_HEAP;
 				}
-				set_heap_ref(es, v0.value, v);
+				if(set_heap_ref(es, v0.value, v)) {
+					pred_release(pp.pred);
+					return ESTATUS_ERR_AUX;
+				}
 				es->heap[v.value + 0] = v1 = (value_t) {VAL_REF, v.value + 0};
 				set_by_ref(ci->oper[1], v1, es);
 				es->heap[v.value + 1] = value_of(ci->oper[2], es);
 			} else {
 				if(v0.tag != VAL_PAIR
-				|| !unify(es, es->heap[v0.value + 1], value_of(ci->oper[2], es))) {
+				|| !unify(es, es->heap[v0.value + 1], value_of(ci->oper[2], es), 0)) {
 					do_fail(es, &pp);
 					pc = 0;
 				} else {
@@ -1480,13 +1581,16 @@ static int eval_run(struct eval_state *es) {
 					pred_release(pp.pred);
 					return ESTATUS_ERR_HEAP;
 				}
-				set_heap_ref(es, v0.value, v);
+				if(set_heap_ref(es, v0.value, v)) {
+					pred_release(pp.pred);
+					return ESTATUS_ERR_AUX;
+				}
 				es->heap[v.value + 0] = value_of(ci->oper[1], es);
 				es->heap[v.value + 1] = v2 = (value_t) {VAL_REF, v.value + 1};
 				set_by_ref(ci->oper[2], v2, es);
 			} else {
 				if(v0.tag != VAL_PAIR
-				|| !unify(es, es->heap[v0.value + 0], value_of(ci->oper[1], es))) {
+				|| !unify(es, es->heap[v0.value + 0], value_of(ci->oper[1], es), 0)) {
 					do_fail(es, &pp);
 					pc = 0;
 				} else {
@@ -1502,13 +1606,16 @@ static int eval_run(struct eval_state *es) {
 					pred_release(pp.pred);
 					return ESTATUS_ERR_HEAP;
 				}
-				set_heap_ref(es, v0.value, v);
+				if(set_heap_ref(es, v0.value, v)) {
+					pred_release(pp.pred);
+					return ESTATUS_ERR_AUX;
+				}
 				es->heap[v.value + 0] = value_of(ci->oper[1], es);
 				es->heap[v.value + 1] = value_of(ci->oper[2], es);
 			} else {
 				if(v0.tag != VAL_PAIR
-				|| !unify(es, es->heap[v0.value + 0], value_of(ci->oper[1], es))
-				|| !unify(es, es->heap[v0.value + 1], value_of(ci->oper[2], es))) {
+				|| !unify(es, es->heap[v0.value + 0], value_of(ci->oper[1], es), 0)
+				|| !unify(es, es->heap[v0.value + 1], value_of(ci->oper[2], es), 0)) {
 					do_fail(es, &pp);
 					pc = 0;
 				}
@@ -1555,7 +1662,14 @@ static int eval_run(struct eval_state *es) {
 			if(ci->subop ^ res) perform_branch(ci->implicit, es, &pp, &pc);
 			break;
 		case I_IF_UNIFY:
-			res = would_unify(es, value_of(ci->oper[0], es), value_of(ci->oper[1], es));
+			res = would_unify(es, value_of(ci->oper[0], es), value_of(ci->oper[1], es), 0);
+			if(res < 0) {
+				report(
+					LVL_WARN,
+					0,
+					"Detected a very deeply nested (possibly cyclic) list structure.");
+				res = 0;
+			}
 			if(ci->subop ^ res) perform_branch(ci->implicit, es, &pp, &pc);
 			break;
 		case I_IF_NIL:
@@ -1590,7 +1704,11 @@ static int eval_run(struct eval_state *es) {
 				pred_release(pp.pred);
 				return ESTATUS_ERR_DYN;
 			}
-			res = es->dyn_callbacks->get_globalflag(es, es->dyn_callback_data, ci->oper[0].value);
+			if(es->dyn_callbacks) {
+				res = es->dyn_callbacks->get_globalflag(es, es->dyn_callback_data, ci->oper[0].value);
+			} else {
+				res = 0;
+			}
 			if(ci->subop ^ res) perform_branch(ci->implicit, es, &pp, &pc);
 			break;
 		case I_IF_OFLAG:
@@ -1881,7 +1999,10 @@ static int eval_run(struct eval_state *es) {
 		case I_PRINT_VAL:
 			v0 = value_of(ci->oper[0], es);
 			if(es->forwords) {
-				collect_push(es, v0);
+				if(!collect_push(es, v0)) {
+					pred_release(pp.pred);
+					return ESTATUS_ERR_AUX;
+				}
 			} else {
 				pp_value(es, v0, 0, 0);
 			}
@@ -1892,7 +2013,10 @@ static int eval_run(struct eval_state *es) {
 					w = es->program->allwords[ci->oper[i].value];
 					if(es->forwords) {
 						assert(w->flags & WORDF_DICT);
-						push_aux(es, (value_t) {VAL_DICT, w->dict_id});
+						if(!push_aux(es, (value_t) {VAL_DICT, w->dict_id})) {
+							pred_release(pp.pred);
+							return ESTATUS_ERR_AUX;
+						}
 					} else {
 						o_print_word(w->name);
 					}
@@ -1926,8 +2050,14 @@ static int eval_run(struct eval_state *es) {
 			break;
 		case I_PUSH_STOP:
 			assert(ci->oper[0].tag == OPER_RLAB);
-			push_aux(es, (value_t) {VAL_NUM, es->stopchoice});
-			push_aux(es, (value_t) {VAL_NUM, es->stopaux});
+			if(!push_aux(es, (value_t) {VAL_NUM, es->stopchoice})) {
+				pred_release(pp.pred);
+				return ESTATUS_ERR_AUX;
+			}
+			if(!push_aux(es, (value_t) {VAL_NUM, es->stopaux})) {
+				pred_release(pp.pred);
+				return ESTATUS_ERR_AUX;
+			}
 			es->stopaux = es->aux;
 			if(!push_choice(es, 0, pp.pred, ci->oper[0].value)) {
 				pred_release(pp.pred);
@@ -1974,7 +2104,7 @@ static int eval_run(struct eval_state *es) {
 				pred_release(pp.pred);
 				pp.pred = 0;
 				eval_push_undo(es);
-				if(!unify(es, es->arg[0], (value_t) {VAL_NUM, 0})) {
+				if(!unify(es, es->arg[0], (value_t) {VAL_NUM, 0}, 0)) {
 					do_fail(es, &pp);
 					pc = 0;
 				} else {
@@ -2068,21 +2198,23 @@ static int eval_run(struct eval_state *es) {
 		case I_SET_GFLAG:
 			assert(ci->oper[0].tag == OPER_GFLAG);
 			predname = es->program->globalflagpred[ci->oper[0].value];
-			if(!check_dyn_dependency(es, pp, predname)) {
-				pred_release(pp.pred);
-				return ESTATUS_ERR_DYN;
+			if(predname) {
+				if(!check_dyn_dependency(es, pp, predname)) {
+					pred_release(pp.pred);
+					return ESTATUS_ERR_DYN;
+				}
+				trace(
+					es,
+					ci->subop? TR_NOW : TR_NOTNOW,
+					predname,
+					0,
+					tr_line);
+				es->dyn_callbacks->set_globalflag(
+					es,
+					es->dyn_callback_data,
+					ci->oper[0].value,
+					ci->subop);
 			}
-			trace(
-				es,
-				ci->subop? TR_NOW : TR_NOTNOW,
-				predname,
-				0,
-				tr_line);
-			es->dyn_callbacks->set_globalflag(
-				es,
-				es->dyn_callback_data,
-				ci->oper[0].value,
-				ci->subop);
 			break;
 		case I_SET_GVAR:
 			assert(ci->oper[0].tag == OPER_GVAR);
@@ -2123,24 +2255,28 @@ static int eval_run(struct eval_state *es) {
 				&v,
 				tr_line);
 			if(v.tag != VAL_OBJ) {
-				report(
-					LVL_ERR,
-					tr_line,
-					"Attempting to set per-object flag %s for non-object.",
-					predname->printed_name);
-				pred_release(pp.pred);
-				return ESTATUS_ERR_OBJ;
+				if(ci->subop) {
+					report(
+						LVL_ERR,
+						tr_line,
+						"Attempting to set per-object flag %s for non-object.",
+						predname->printed_name);
+					pred_release(pp.pred);
+					return ESTATUS_ERR_OBJ;
+				}
+			} else {
+				es->dyn_callbacks->set_objflag(
+					es,
+					es->dyn_callback_data,
+					ci->oper[0].value,
+					v.value,
+					ci->subop);
 			}
-			es->dyn_callbacks->set_objflag(
-				es,
-				es->dyn_callback_data,
-				ci->oper[0].value,
-				v.value,
-				ci->subop);
 			break;
 		case I_SET_OVAR:
 			assert(ci->oper[0].tag == OPER_OVAR);
 			predname = es->program->objvarpred[ci->oper[0].value];
+			assert(predname);
 			if(!check_dyn_dependency(es, pp, predname)) {
 				pred_release(pp.pred);
 				return ESTATUS_ERR_DYN;
@@ -2154,23 +2290,26 @@ static int eval_run(struct eval_state *es) {
 				args,
 				tr_line);
 			if(v1.tag != VAL_OBJ) {
-				report(
-					LVL_ERR,
-					tr_line,
-					"Attempting to set per-object variable %s for non-object.",
-					predname->printed_name);
-				pred_release(pp.pred);
-				return ESTATUS_ERR_OBJ;
-			}
-			if(!es->dyn_callbacks->set_objvar(
-				es,
-				es->dyn_callback_data,
-				ci->oper[0].value,
-				v1.value,
-				v2))
-			{
-				pred_release(pp.pred);
-				return ESTATUS_ERR_DYN;
+				if(v2.tag != VAL_NONE) {
+					report(
+						LVL_ERR,
+						tr_line,
+						"Attempting to set per-object variable %s for non-object.",
+						predname->printed_name);
+					pred_release(pp.pred);
+					return ESTATUS_ERR_OBJ;
+				}
+			} else {
+				if(!es->dyn_callbacks->set_objvar(
+					es,
+					es->dyn_callback_data,
+					ci->oper[0].value,
+					v1.value,
+					v2))
+				{
+					pred_release(pp.pred);
+					return ESTATUS_ERR_DYN;
+				}
 			}
 			break;
 		case I_SPLIT_LIST:
@@ -2178,7 +2317,7 @@ static int eval_run(struct eval_state *es) {
 			v1 = eval_deref(value_of(ci->oper[1], es), es);
 			v2 = value_of(ci->oper[2], es);
 			if(v1.tag == VAL_NIL) {
-				if(!unify(es, v0, v2)) {
+				if(!unify(es, v0, v2, 0)) {
 					do_fail(es, &pp);
 					pc = 0;
 				}
@@ -2197,7 +2336,7 @@ static int eval_run(struct eval_state *es) {
 						}
 						es->heap[v.value + 0] = es->heap[v0.value + 0];
 						es->heap[v.value + 1] = (value_t) {VAL_REF, v.value + 1};
-						if(!unify(es, v, v2)) {
+						if(!unify(es, v, v2, 0)) {
 							do_fail(es, &pp);
 							pc = 0;
 							break;
@@ -2207,7 +2346,7 @@ static int eval_run(struct eval_state *es) {
 					}
 				}
 				if(v0.value == v1.value) {
-					if(!unify(es, (value_t) {VAL_NIL}, v2)) {
+					if(!unify(es, (value_t) {VAL_NIL}, v2, 0)) {
 						do_fail(es, &pp);
 						pc = 0;
 					}
@@ -2291,7 +2430,7 @@ static int eval_run(struct eval_state *es) {
 			if(eval_pop_undo(es)) {
 				assert(es->dyn_callbacks);
 				es->dyn_callbacks->pop_undo(es, es->dyn_callback_data);
-				if(!unify(es, es->arg[0], (value_t) {VAL_NUM, 1})) {
+				if(!unify(es, es->arg[0], (value_t) {VAL_NUM, 1}, 0)) {
 					do_fail(es, &pp);
 					pc = 0;
 				} else {
@@ -2306,7 +2445,7 @@ static int eval_run(struct eval_state *es) {
 			}
 			break;
 		case I_UNIFY:
-			if(!unify(es, value_of(ci->oper[0], es), value_of(ci->oper[1], es))) {
+			if(!unify(es, value_of(ci->oper[0], es), value_of(ci->oper[1], es), 0)) {
 				do_fail(es, &pp);
 				pc = 0;
 			}
@@ -2369,6 +2508,7 @@ int eval_initial(struct eval_state *es, struct predname *predname, value_t *args
 	trace(es, TR_QUERY, predname, args, 0);
 
 	interrupted = 0;
+	es->max_eval = 60000;
 	status = eval_run(es);
 
 	for(i = 0; i < predname->arity; i++) {
@@ -2399,7 +2539,7 @@ int eval_program_entry(struct eval_state *es, struct predname *predname, value_t
 }
 
 int eval_resume(struct eval_state *es, value_t arg) {
-	if(arg.tag != VAL_NONE && !unify(es, es->arg[0], arg)) {
+	if(arg.tag != VAL_NONE && !unify(es, es->arg[0], arg, 0)) {
 		do_fail(es, &es->resume);
 	}
 

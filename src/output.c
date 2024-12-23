@@ -206,9 +206,10 @@ void o_begin_box(char *boxclass) {
 
 void o_end_box() {
 	o_line();
-	assert(boxsp);
-	boxsp--;
-	sendstyle(boxstack[boxsp].style);
+	if(boxsp) {
+		boxsp--;
+		sendstyle(boxstack[boxsp].style);
+	}
 }
 
 void o_space() {

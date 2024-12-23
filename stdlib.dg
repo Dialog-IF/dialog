@@ -1,6 +1,6 @@
 
 (library version)
-	Library version 0.30.
+	Library version 0.31.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -3265,9 +3265,7 @@
 	}
 	($Action = [$Verb | $CleanList])
 	(try $Action)
-	(if) (command $Action) (then)
-		(now) (narrator's it is protected)
-	(else)
+	(if) ~(command $Action) (then)
 		(tick)
 	(endif)
 	(par)
@@ -3329,6 +3327,15 @@
 (on every tick)
 	(current room $Room)
 	*(on every tick in $Room)
+
+(on every tick)
+	(if) (narrator's it is protected) (then)
+		(now) ~(narrator's it is protected)
+	(elseif) (player's it refers to $) (then)
+		%% The narrator's it is short-lived, except when
+		%% 'it' unambiguously refers to it.
+		(now) ~(narrator's it refers to $)
+	(endif)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Numbers
@@ -3996,46 +4003,59 @@
 	(div @initial-spacer) {}
 	(update environment around player)
 	(stoppable) (intro)
-	(par)
-	*(repeat forever) (read-parse-act) (fail)
+	*(repeat forever) (par) (read-parse-act) (fail)
 
 (intro)
 	(banner)
 	(try [look])
 
+%% When the game asks a disambiguating question ("Did you ..."), and the player
+%% types an unrecognized response, this needs to be parsed as a regular action
+%% instead. If this happens several times in a row, the heap would fill up with
+%% half-finished parsing attempts, and eventually overflow. To prevent this, we
+%% store the unrecognized response in a global variable and backtrack (actually
+%% stop) to recover heap space.
+
+(global variable (deferred commandline $))
+
 (read-parse-act)
-	(stoppable) {
-		(if) (scoring enabled) (score notifications are on) (then)
-			(reported score is $Reported)
-			(current score $Score)
-			(if) ($Score < $Reported) (then)
-				($Reported minus $Score into $Diff)
-				\( Your score has gone down by (spell out $Diff)
-				point (if) ~(1 = $Diff) (then) (no space) s (endif)
-				. \)
-				(par)
-				(now) (reported score is $Score)
-			(elseif) ($Score > $Reported) (then)
-				($Score minus $Reported into $Diff)
-				\( Your score has gone up by (spell out $Diff)
-				point (if) ~(1 = $Diff) (then) (no space) s (endif)
-				. \)
-				(par)
-				(now) (reported score is $Score)
+	(if) (deferred commandline $Words) (then)
+		(now) ~(deferred commandline $)
+		(stoppable) {
+			(parse commandline $Words)
+		}
+	(else)
+		(stoppable) {
+			(if)
+				(scoring enabled)
+				(score notifications are on)
+			(then)
+				(report score change)
 			(endif)
-		(endif)
-		(redraw status bar)
-		> (get input $Words)
-		(parse commandline $Words)
-	}
-	(if) (narrator's it is protected) (then)
-		(now) ~(narrator's it is protected)
-	(elseif) (player's it refers to $) (then)
-		%% The narrator's it is short-lived, except when
-		%% 'it' unambiguously refers to it.
-		(now) ~(narrator's it refers to $)
+			(redraw status bar)
+			> (get input $Words)
+			(parse commandline $Words)
+		}
 	(endif)
-	(par)
+
+(report score change)
+	(reported score is $Reported)
+	(current score $Score)
+	(if) ($Score < $Reported) (then)
+		($Reported minus $Score into $Diff)
+		\( Your score has gone down by (spell out $Diff)
+		point (if) ~(1 = $Diff) (then) (no space) s (endif)
+		. \)
+		(par)
+		(now) (reported score is $Score)
+	(elseif) ($Score > $Reported) (then)
+		($Score minus $Reported into $Diff)
+		\( Your score has gone up by (spell out $Diff)
+		point (if) ~(1 = $Diff) (then) (no space) s (endif)
+		. \)
+		(par)
+		(now) (reported score is $Score)
+	(endif)
 
 (redraw status bar)
 	(status bar @status) {
@@ -4867,7 +4887,7 @@
 				(disambiguate by object name $Words $Template $ObjList $Result)
 			(endif)
 		(or)
-			(parse commandline $Words)
+			(now) (deferred commandline $Words)
 			(stop)
 		}
 	(else)
@@ -4883,7 +4903,7 @@
 			($N > 0)
 			(nth $AskList $N $Result)
 		(or)
-			(parse commandline $Words)
+			(now) (deferred commandline $Words)
 			(stop)
 		}
 	(endif)
@@ -5015,90 +5035,46 @@
 %% Finding the shortest path from one room to another, using obvious exits.
 
 (shortest path from $A to $B is $Path)
-	(find paths from $A)
-	($B has distance $ from start)
-	(build path from $A to $B [] $Path)
-
-(find paths from $Start)
-	(now) ~($ has distance $ from start)
-	(now) ~($ is to be considered)
-	(now) ($Start has distance 0 from start)
-	(now) ($Start is to be considered)
-	(stoppable) {
-		*(repeat forever)
-		(find paths subroutine)
-		(fail)
+	($B is visited)
+	(exhaust) {
+		*(room $R)
+		(now) ~(last hop before $R is $)
+	}
+	(now) (last hop before $A is [])
+	{
+		%% Explore the room graph starting from $A, set the last-hop
+		%% variables, and fail when there are no rooms left.
+		(elaborate paths from [$A])
+	(or)
+		(build path from $A to $B [] $Path)
 	}
 
-(find paths subroutine)
-	(if) ($First is to be considered) (then)
-		%% There's at least one room left to consider.
+(elaborate paths from $RoomList)
+	(nonempty $RoomList)
+	(collect $R)
+		*($Here is one of $RoomList)
+		*(from $Here go $ to room $R)
+		($R is visited)
+		~(last hop before $R is $)
+		(now) (last hop before $R is $Here)
+	(into $NextGen)
+	(elaborate paths from $NextGen)
 
-		%% Of all the rooms left to consider, pick the one with the
-		%% shortest known distance from the starting room:
+%% Rooms have no locations, so '($ has relation $)' is unused for rooms.
+%% We can repurpose it for path finding, to save RAM:
 
-		($First has distance $FirstDist from start)
-		(collect $Node)
-			*($Node is to be considered)
-		(into [$ | $Considered])
-		(find nearest $Considered $FirstDist $First into $Nearest)
-
-		%% Remove it from the set of rooms left to consider (because
-		%% we're considering it now):
-
-		(now) ~($Nearest is to be considered)
-
-		%% Obtain its shortest known distance from the starting room,
-		%% and add 1. This will be the distance to each of its
-		%% neighbours, if we go there via the room under consideration.
-
-		($Nearest has distance $D from start)
-		($D plus 1 into $Dp1)
-
-		%% Consider each neighbouring room (that the player has seen):
-
-		(exhaust) {
-			*(from $Nearest go $ to room $Dest)
-			($Dest is visited)
-
-			%% Only proceed if there is no known path to the
-			%% neighbouring room, or if the new path is shorter:
-
-			(if) ($Dest has distance $OldDist from start) (then)
-				($Dp1 < $OldDist)
-			(endif)
-
-			%% Store the new path and distance:
-
-			(now) ($Dest has distance $Dp1 from start)
-			(now) (last hop before $Dest is $Nearest)
-
-			%% We must consider the neighbours of this neighbour:
-
-			(now) ($Dest is to be considered)
-		}
-	(else)
-		(stop)
-	(endif)
-
-%% Run through the list of rooms, and return the one with the shortest distance
-%% from the starting room:
-
-(find nearest [] $ $ArgMin into $ArgMin)
-(find nearest [$Head | $Tail] $Min $ArgMin into $Output)
-	(if) ($Head has distance $D from start) ($D < $Min) (then)
-		(find nearest $Tail $D $Head into $Output)
-	(else)
-		(find nearest $Tail $Min $ArgMin into $Output)
-	(endif)
+@(last hop before $A is $B) ($A has relation $B)
 
 %% Reconstruct the full path from the 'last hop' links:
 
-(build path from $Start to $Start $SoFar $SoFar)
 (build path from $Start to $End $SoFar $Path)
 	(last hop before $End is $Last)
-	(from $Last go $Dir to room $End)
-	(build path from $Start to $Last [$Dir | $SoFar] $Path)
+	(if) (empty $Last) (then)
+		($Path = $SoFar)
+	(else)
+		(from $Last go $Dir to room $End)
+		(build path from $Start to $Last [$Dir | $SoFar] $Path)
+	(endif)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Updating and traversing the object tree

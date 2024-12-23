@@ -24,7 +24,7 @@
 #include "terminal.h"
 #include "unicode.h"
 
-#define MAXINPUT 256
+#define MAXINPUT 1024
 
 #define STOPCHARS ".,\";*"
 
@@ -230,7 +230,7 @@ static int render_complex_value(struct dyn_var *dv, value_t v, struct eval_state
 
 	if(dv->size >= dv->nalloc) {
 		new_size = dv->size * 2 + 1;
-		if(new_size > 0xffff) new_size = 0xffff;
+		if(new_size > 0x1fff) new_size = 0x1fff;
 		dv->nalloc = new_size;
 		dv->rendered = realloc(dv->rendered, new_size * sizeof(value_t));
 		if(dv->size >= dv->nalloc) {
@@ -1043,6 +1043,10 @@ static value_t parse_input_word(struct program *prg, struct eval_state *es, uint
 	value_t list;
 	long num;
 	int endpos = 0;
+
+	if(*str >= '0' && *str <= '9' && !str[1]) {
+		return (value_t) {VAL_NUM, (*str) - '0'};
+	}
 
 	w = find_word_nocreate(prg, str);
 	if(w && (w->flags & WORDF_DICT)) {

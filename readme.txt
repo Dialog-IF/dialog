@@ -1,5 +1,5 @@
-This archive contains version 0h/03 of the Dialog compiler and interactive
-debugger, bundled with documentation and version 0.30 of the dialog Standard
+This archive contains version 0h/04 of the Dialog compiler and interactive
+debugger, bundled with documentation and version 0.31 of the Dialog Standard
 Library.
 
 Directory structure:
@@ -37,6 +37,48 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0h/04 Lib 0.31 (Manual revision 16):
+
+		Library: Rewrote shortest-path algorithm to reduce memory
+		footprint.
+
+		Library: Reduced heap usage during nested disambiguation
+		questions.
+
+		Compiler: Improved information about unbound variables in -vvv
+		output.
+
+		Compiler: Added support for '(now) ~($ has parent $)', for
+		completeness.
+
+		Compiler: Reduced temporary register usage. Added a check to
+		report an error if we're running out of registers.
+
+		Compiler: Improved optimization of if-statements.
+
+		Compiler: Fixed additional corner-case bugs discovered through
+		fuzzing.
+
+		Z-backend: Allows dynamic predicates to be unset for
+		non-objects (nothing happens).
+
+		Aa-backend: Generates smaller and faster code.
+
+		Aa-backend: Collecting into a value (e.g. a list expression)
+		now works properly.
+
+		Aa-backend: Fixed a compiler error due to e.g. '(#a = $X)'.
+
+		Debugger: Allows dynamic predicates to be unset for non-objects
+		(nothing happens).
+
+		Debugger: Now handles auxiliary heap overflow gracefully.
+
+		Debugger: Correct handling of undo inside div, e.g. from the
+		runtime error handler.
+
+		Debugger: Fixed a bug related to single-digit input.
 
 	0h/03 Lib 0.30 (Manual revision 16):
 

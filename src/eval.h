@@ -1,6 +1,8 @@
 
 #define EVAL_MULTI 0xffff
 
+#define EVAL_MAXDIV 8
+
 typedef struct prgpoint {
 	struct predicate	*pred;
 	uint16_t		routine;
@@ -37,6 +39,7 @@ struct eval_undo {
 	uint16_t		*trailstack;
 	value_t			*heap;
 	uint8_t			*select;
+	uint16_t		divstack[EVAL_MAXDIV];
 	int			nselect;
 	long			randomseed;
 	prgpoint_t		cont;
@@ -47,6 +50,7 @@ struct eval_undo {
 	uint16_t		top;
 	uint16_t		stopchoice;
 	uint16_t		stopaux;
+	uint8_t			divsp;
 	value_t			arg0; // where to put the 1 for $ComingBack
 };
 
@@ -66,6 +70,7 @@ struct eval_state {
 	uint16_t		*trailstack;	// heap index
 	value_t			*heap;
 	value_t			*temp;
+	uint16_t		divstack[EVAL_MAXDIV];
 	value_t			arg[MAXPARAM + 1];
 	value_t			orig_arg0;	// for tracing an indexed argument
 	uint16_t		nalloc_env;
@@ -89,9 +94,12 @@ struct eval_state {
 	uint16_t		simple;		// choice index or EVAL_MULTI
 	value_t			index;
 
+	uint16_t		max_eval;
+
 	uint8_t			forwords;
 	uint8_t			trace;
 	uint8_t			divstyle;
+	uint8_t			divsp;
 	uint8_t			errorflag;	// set on e.g. heap overflow
 	uint8_t			hide_links;
 };
