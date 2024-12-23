@@ -1162,7 +1162,13 @@ static void generate_output_from_utf8(struct program *prg, struct routine *r, in
 			zi = append_instr(r, Z_CALL2N);
 			zi->oper[0] = ROUTINE(R_UNICODE);
 			zi->oper[1] = SMALL_OR_LARGE(uchar & 0xffff);
-			pre_space = 0;
+			pre_space = 1;
+			if(!utf8[pos + n]) {
+				/* String ended with a unicode character */
+				zi = append_instr(r, Z_STORE);
+				zi->oper[0] = SMALL(REG_SPACE);
+				zi->oper[1] = SMALL(0);
+			}
 		} else if(utf8[pos + n]) {
 			/* String too long (for runtime uppercase buffer) */
 			assert(n);

@@ -321,7 +321,7 @@ message.
 <p>A number of actions simply divert to other actions, possibly after asking the
 player for clarification. For instance, <span class="code">[give #money]</span> prints
 &ldquo;<span class="prgoutput">To whom?</span>&rdquo;, and sets up an <i>implicit action</i>, <span class="code">[give
-#money to&nbsp;$]</span>, with a blank for the missing noun. When the player
+#money to&nbsp;[]]</span>, with a blank for the missing noun. When the player
 responds e.g. <span class="prginput">CLERK</span>, that is understood as the complete action,
 <span class="code">[give #money to #clerk]</span>. This mechanism will be described in more
 detail in the chapter on <a href="understanding.html#askingforclar">understanding player input</a>.
@@ -444,60 +444,12 @@ point.
 &bull; Otherwise, prints a stock message.
 </p>
 <p>The <span class="code">ask</span> and <span class="code">tell</span> actions have a <i>topic
-parameter</i>. Topics can be objects, and indeed, objects in scope will be
-understood as topics by the default rules in the standard library. But a topic
-can be any Dialog value, and dictionary words can be used to represent abstract
-topics that do not correspond to tangible objects in the game world. A couple
-of rules such as these:
-</p>
-<textarea class="copyarea" id="copy3" readonly>
-(topic keyword @childhood)
-(topic keyword @youth implies @childhood)
-
-(describe topic @childhood)
-	your childhood
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="both" colspan="2">(topic keyword @childhood)</td></tr>
-<tr><td class="both" colspan="2">(topic keyword @youth implies @childhood)</td></tr>
-<tr><td class="blank" colspan="2"></td></tr>
-<tr><td class="both" colspan="2">(describe topic @childhood)</td></tr>
-<tr><td class="left"></td><td class="right">your childhood</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy3').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>will make the parser understand <span class="prginput">TELL DOCTOR ABOUT THE SHATTERED DREAMS
-OF CHILDHOOD</span> as <span class="code">[tell #doctor about childhood]</span> (recall
-that the <span class="code">@</span> character can be omitted inside list expressions). But
-if you also define:
-</p>
-<textarea class="copyarea" id="copy4" readonly>
-(topic keyword @dreams)
-
-(describe topic @dreams)
-	your dreams
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="both" colspan="2">(topic keyword @dreams)</td></tr>
-<tr><td class="blank" colspan="2"></td></tr>
-<tr><td class="both" colspan="2">(describe topic @dreams)</td></tr>
-<tr><td class="left"></td><td class="right">your dreams</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy4').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>then <span class="prginput">THE SHATTERED DREAMS OF CHILDHOOD</span> contains two valid
-keywords, and the game will ask, did you mean to tell the doctor about your
-childhood or your dreams?
-</p>
-<p>Looking for keywords is a rather crude approach to topic parsing. In the
-upcoming chapter on <a href="understanding.html#parsetopics">understanding player input</a>, we will see
-how to add arbitrarily complex parser rules for topics.
+parameter</i>. Topics can be ordinary objects, subject to normal scope rules.
+In addition, objects with the <span class="code">(topic&nbsp;$)</span> trait are always
+recognized where the grammar expects a topic, even if they are out of
+scope—such objects can be used to represent abstract topics that do not
+correspond to tangible objects in the game world. Topics are described in more
+detail in the upcoming chapter on <a href="npc.html#conversation">non-player characters</a>.
 </p>
 <a id="stdnav"></a><h2>Navigation</h2>
 <p>A number of standard actions are related to movement of the player character.
@@ -598,7 +550,7 @@ structure) and external representation (description) are printed.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="timeprogress.html">Chapter 8: Ticks, scenes, and progress</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 16, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 17, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

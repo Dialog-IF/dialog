@@ -4,11 +4,11 @@
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<link rel="StyleSheet" href="style.css" type="text/css" />
-	<title>Chapter 9: Understanding player input</title>
+	<title>Chapter 10: Understanding player input</title>
 </head>
 <body>
 	<div class="chapter">
-	<h1>Chapter 9: Understanding player input</h1>
+	<h1>Chapter 10: Understanding player input</h1>
 	<div class="navlinks">(<a href="#complexactions">Complex actions</a>&nbsp;&bull; <a href="#parsingprocess">The parsing process</a>&nbsp;&bull; <a href="#parsingactions">Parsing actions</a>&nbsp;&bull; <a href="#newactions">Defining new actions</a>&nbsp;&bull; <a href="#parsingobj">Parsing object names</a>&nbsp;&bull; <a href="#parsedir">Directions and numbers</a>&nbsp;&bull; <a href="#parsetopics">Topics</a>&nbsp;&bull; <a href="#unlikely">Adjusting the likelihood of actions</a>&nbsp;&bull; <a href="#rewrite">Synonyms</a>&nbsp;&bull; <a href="#askingforclar">Asking for clarification</a>&nbsp;&bull; <a href="#understandorder">Rule order</a>&nbsp;&bull; <a href="#newaction">Example: Defining a new action</a>&nbsp;&bull; <a href="#liblinks">Hyperlinks</a>)</div>
 <p>Actions originate from the <i>parser</i>, a central part of the standard
 library. The detailed inner workings of the parser are beyond the scope of this
@@ -160,7 +160,7 @@ case, a short form can be used instead:
 <a class="copybtn" href="" onClick="document.getElementById('copy5').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>So far, there is no code to handle the <span class="code">[yodel]</span> action. The
-fallback implementations of the five <a href="actions.html#actionprocess">action-handling
+fallback implementations of the six <a href="actions.html#actionprocess">action-handling
 predicates</a> will cause the action to succeed without printing anything at
 all. This is a no-no in parser games, so the story author should at least add a
 <span class="nobreak"><span class="code">perform</span>-</span>rule:
@@ -358,6 +358,11 @@ object-parsing predicates are:
 <span class="code">(understand $Words as single object $Output preferably supporter)</span><br />
 <span class="code">(understand $Words as single object $Output preferably container)</span>
 </p>
+<p>&bull; Predicates that accept any (single) object, even if it's currently out of scope, as long as it's located in a visited room and not <a href="scenery.html#hidden">hidden</a>:
+</p>
+<p class="indented"><span class="code">(understand $Words as any object $Output)</span><br />
+<span class="code">(understand $Words as any object $Output preferably animate)</span><br />
+</p>
 <p>Some of the variants above are primarily there to provide context for the word
 <span class="prginput">ALL</span>. For instance, <span class="prginput">TAKE ALL</span> should only select
 <i>takable</i> objects (items not already held), while <span class="prginput">DROP ALL</span>
@@ -366,11 +371,12 @@ also used to carry out some initial disambiguation, so that e.g. <span class="pr
 BIRD</span> might be understood as an intention to feed the bird (animate),
 but not the bird cage.
 </p>
-<p>Two further variants allow the story author to specify an arbitrary condition
+<p>Three further variants allow the story author to specify an arbitrary condition
 using a <a href="control.html#closures">closure</a>:
 </p>
-<p class="indented"><span class="code">(understand $Words as object $Obj preferably $Closure)</span><br />
-<span class="code">(understand $Words as single object $Obj preferably $Closure)</span><br />
+<p class="indented"><span class="code">(understand $Words as object $Output preferably $Closure)</span><br />
+<span class="code">(understand $Words as single object $Output preferably $Closure)</span><br />
+<span class="code">(understand $Words as any object $Output preferably $Closure)</span><br />
 </p>
 <p>The closure takes a candidate object as parameter. Here is an example of how to
 parse an object name while favouring objects that can be picked up, but not
@@ -452,9 +458,9 @@ to the range <span class="nobreak">0&ndash;16383</span>.
 <a id="parsetopics"></a><h2>Topics</h2>
 <p>Some actions, e.g. <span class="code">[ask $ about&nbsp;$]</span> and <span class="code">[tell $
 about&nbsp;$]</span>, involve <i>topics of conversation</i>. As we saw in the
-<a href="stdactions.html#stdcomm">Standard actions</a> chapter, topics can be regular objects, but
-sometimes it makes more sense to use dictionary words to represent abstract
-concepts. To parse a topic, use the predicate:
+chapter about <a href="npc.html#conversation">non-player characters</a>, topics can be regular
+objects, topic objects, or dictionary words. To parse a topic, use the
+predicate:
 </p>
 <textarea class="copyarea" id="copy16" readonly>
 (understand $Words as topic $Topic)
@@ -719,27 +725,22 @@ prevent that slightly surreal question, a negated rule can be defined:
 <div class="copycode">
 <a class="copybtn" href="" onClick="document.getElementById('copy28').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
+<h3>Very unlikely actions</h3>
 <p>In Dialog, the current room and its neighbours are in scope by default. But
 rooms are often named by some conspicuous object contained inside them, so that
 e.g. an engine might be located in the engine room. To avoid a lot of
-disambiguating questions, any action that expilitly mentions a room is
-considered unlikely by default. This is implemented in the library using a
-catch-all rule for <span class="code">(unlikely $Action)</span> that delegates to
-<span class="code">(unlikely due to room $Action)</span>. The latter checks that this isn't
-one of the few actions that are likely to involve rooms (<span class="code">[enter
-$Room]</span>, <span class="code">[leave $Room]</span>, and <span class="code">[go to $Room]</span>). If
-it isn't, and if the action contains a room object, the predicate succeeds and
-the action is considered unlikely.
+disambiguating questions, any action that explicitly mentions a room is
+considered <span class="code">(very unlikely&nbsp;$)</span> by default, unless it's one of the
+few actions that might involve a room (such as <span class="code">[enter&nbsp;$]</span> or
+<span class="code">[go to&nbsp;$]</span>).
 </p>
-<p>When the player's input can be understood as several actions, but all of those
-actions are deemed unlikely, there's still a chance to avoid a disambiguating
-question: In these situations, the library invokes <span class="code">(unlikely due to
-room&nbsp;$)</span> a second time, and discards any actions that were deemed
-unlikely due to rooms; they are considered extra unlikely.
+<p>Actions that involve the unrecognized topic (<span class="code">@?</span>) are also
+considered very unlikely by default.
 </p>
-<p>For this reason, if you ever add a new action that involves a room object
-directly, make sure to override <span class="code">(unlikely due to room&nbsp;$)</span> instead
-of just <span class="code">(unlikely&nbsp;$)<span class="code">.
+<p>This predicate rarely needs to be touched outside of library code. But if you
+ever add a new action that involves a room object directly, or a topic, make
+sure to modify the rules for <span class="code">(very unlikely&nbsp;$)</span> as well as
+<span class="code">(unlikely&nbsp;$)<span class="code">.
 </p>
 <a id="rewrite"></a><h2>Synonyms</h2>
 <p>Before the player's input is handed to the action-parsing predicate
@@ -1256,8 +1257,8 @@ example:
 <a class="copybtn" href="" onClick="document.getElementById('copy49').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 	<div class="footer">
-	<p class="nav">Onwards to &ldquo;<a href="miscfeat.html">Chapter 10: Miscellaneous features</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 16, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="nav">Onwards to &ldquo;<a href="miscfeat.html">Chapter 11: Miscellaneous features</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
+	<p class="tagline">The Dialog Manual, Revision 17, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

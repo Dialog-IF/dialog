@@ -1,6 +1,6 @@
 
 (library version)
-	Library version 0.31.
+	Library version 0.32.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -101,59 +101,81 @@
 (direction *)
 (name *)		north
 (dict *)		n northern
+(opposite of * is #south)
 
 #south
 (direction *)
 (name *)		south
 (dict *)		s southern
+(opposite of * is #north)
 
 #east
 (direction *)
 (name *)		east
 (dict *)		e eastern
+(opposite of * is #west)
 
 #west
 (direction *)
 (name *)		west
 (dict *)		w western
+(opposite of * is #east)
 
 #northeast
 (direction *)
 (name *)		northeast
 (dict *)		ne north-east
+(opposite of * is #southwest)
 
 #northwest
 (direction *)
 (name *)		northwest
 (dict *)		nw north-west
+(opposite of * is #southeast)
 
 #southwest
 (direction *)
 (name *)		southwest
 (dict *)		sw south-west
+(opposite of * is #northeast)
 
 #southeast
 (direction *)
 (name *)		southeast
 (dict *)		se south-east
+(opposite of * is #northwest)
 
 #up
 (direction *)
 (name *)		up
 (dict *)		u ceiling sky above
+(present-adverb *)	above
+(from-adverb *)		above
+(opposite of * is #down)
 
 #down
 (direction *)
 (name *)		down
 (dict *)		d below
+(present-adverb *)	below
+(from-adverb *)		below
+(opposite of * is #up)
 
 #in			%% Note: #in is also a relation
 (direction *)
+(present-adverb *)	inside
+(from-adverb *)		inside
+(opposite of * is #out)
 
 #out
 (direction *)
 (name *)		out
 (dict *)		outside outwards
+(present-adverb *)	outside
+(opposite of * is #in)
+
+(present-adverb $Dir)	to the (name $Dir)
+(from-adverb $Dir)	the (name $Dir)
 
 (proper (direction $))
 
@@ -226,7 +248,6 @@
 (out of reach $)	(fail)
 (pair $)		(fail)
 (potable $)		(fail)
-(proper $)		(fail)
 (pushable $)		(fail)
 (sharp $)		(fail)
 (singleton $)		(fail)
@@ -256,21 +277,29 @@
 (look (room $R))	You are here.
 
 %% Given a room and a direction, what room (if any) is reachable that way?
+%% Given a room and a target room, what direction (if any) leads there?
 
 (from $Here go $Dir to room $Room)
-	*(from $Here go $Dir to $Target)
-	(if) (room $Target) (then)
-		($Target = $Room)
-	(elseif) (direction $Target) (then)
-		(from $Here go $Target to room $Room)
+	(if) (bound $Dir) (then)
+		*(from $Here go $Dir to $Target)
+		(if) (room $Target) (then)
+			($Target = $Room)
+		(elseif) (direction $Target) (then)
+			(from $Here go $Target to room $Room)
+		(else)
+			(door $Target)
+			~($Target blocks passage)
+			(from $Here through $Target to $Room)
+		(endif)
 	(else)
-		(door $Target)
-		~($Target blocks passage)
-		(from $Here through $Target to $Room)
+		(from $Here go $Dir to $Room)
+		(or)
+		(from $Here through $Door to $Room)
+		(from $Here go $Dir to $Door)
 	(endif)
 
 %% Given a room and a direction, what object, door and/or room is visible
-%% that way?
+%% that way? (Usually multi-queried)
 
 (from $Room go $Dir to object $Obj)
 	(from $Room go $Dir to $Point)
@@ -338,7 +367,7 @@
 	($Obj has parent $Parent)
 	(visibility ceiling of $Parent is $Ceil)
 
-($Obj is visible to player)
+(player can see $Obj)
 	(current visibility ceiling $Ceil)
 	(if) (visibility ceiling of $Obj is $Ceil) (then)
 		{
@@ -991,9 +1020,7 @@
 	*(understand $Words as object $Obj preferably takable)
 
 (unlikely [take $Obj])
-	{ (current player $Actor) ($Obj is $Rel $Actor) ($Rel is one of [#heldby #wornby]) }
-	(or) ~(item $Obj)
-	(or) ($Obj has relation #partof)
+	~(item $Obj) (or) ($Obj has relation $Rel) ($Rel is one of [#partof #heldby #wornby])
 
 (unlikely [take $Obj from $Parent])
 	~($Obj has ancestor $Parent)
@@ -1027,6 +1054,8 @@
 	(when $Obj is already held)
 	(or) (when $Obj is fine where it is)
 	(or) (when $Obj is part of something)
+	(or) (when $Obj is held by someone)
+	(or) (when $Obj is worn by someone)
 	(or) (when $Obj can't be taken)
 
 (narrate taking $Obj)
@@ -1264,22 +1293,25 @@
 	take inventory
 
 (perform [inventory])
-	(current player $Actor)
-	(collect $C) *($C is #heldby $Actor) (into $HeldList)
-	(collect $C) *($C is #wornby $Actor) (into $WornList)
-	You have
+	(current player $Player)
+	(collect $C) *($C is #heldby $Player) (into $HeldList)
+	(collect $C) *($C is #wornby $Player) (into $WornList)
 	(if) (empty $HeldList) (then)
-		no possessions
+		(narrate holding nothing)
 	(else)
-		(a $HeldList)
+		You have (a $HeldList).
 	(endif)
-	. You're
 	(if) (empty $WornList) (then)
-		not wearing anything
+		(narrate wearing nothing)
 	(else)
-		wearing (a $WornList)
+		You're wearing (a $WornList).
 	(endif)
-	. (line)
+	(line)
+
+(narrate holding nothing)
+	You have no possessions.
+
+(narrate wearing nothing)
 
 %% EXITS
 
@@ -1898,6 +1930,12 @@
 (describe action [consult $Obj about $Topic])
 	consult (the full $Obj) about (describe topic $Topic)
 
+(unlikely [consult $Obj about $])
+	~(consultable $Obj)
+
+(very unlikely [consult $Obj about $Topic])
+	(just) ($Topic = @?)
+
 (refuse [consult $Obj about $])
 	(just) {
 		(when $Obj is not here)
@@ -1940,6 +1978,12 @@
 
 (describe action [tell $Person])
 	tell (the full $Person) something
+
+(unlikely [ask/tell $Obj about $])
+	~(animate $Obj)
+
+(very unlikely [ask/tell $ about $Topic])
+	(just) ($Topic = @?)
 
 %% Don't require reachability:
 
@@ -2112,6 +2156,12 @@
 (describe action [tell $Actor to | $Action])
 	tell (the full $Actor) to (describe action $Action)
 
+(unlikely [tell $Obj to | $])
+	~(animate $Obj)
+
+(very unlikely [tell $ to tell $ about $Topic])
+	(just) ($Topic = @?)
+
 (refuse [tell $NPC to | $])
 	(just) (when $NPC is not here)
 
@@ -2239,6 +2289,8 @@
 	(current player $Actor)
 	($Actor is nested #in $Obj)
 
+~(very unlikely [enter $])
+
 (describe action [enter $Obj])
 	get into (the full $Obj)
 
@@ -2359,6 +2411,8 @@
 		($Obj is nested #wornby $Actor)
 	}
 
+~(very unlikely [leave (current room $)])
+
 (refuse [leave (room $Room)])
 	~(current room $Room)
 	But you aren't in (the $Room).
@@ -2432,6 +2486,8 @@
 
 (unlikely [go to (current room $)])
 
+~(very unlikely [go to $])
+
 ~(refuse [go to $])
 
 (perform [go to $Room])
@@ -2465,26 +2521,7 @@
 (rewrite [look for | $Words] into [find | $Words])
 
 (understand [find | $Words] as [find $Obj])
-	{
-		(filter $Words into $Filtered)
-		(nonempty $Filtered)
-		(determine object $Obj)
-			*(object $Obj)
-			~(direction $Obj)
-			~(relation $Obj)
-			~($Obj is in scope) %% Prevent double matches due to next branch.
-			~($Obj is hidden)
-			($Obj is in room $Room)
-			($Room is visited)
-		(from words)
-			*(dict $Obj)
-		(matching all of $Filtered)
-	(or)
-		%% The purpose of this branch is to support pronouns, as well
-		%% as not-here objects that are in scope.
-		*(understand $Words as single object $Obj)
-		~(room $Obj)
-	}
+	*(understand $Words as any object $Obj)
 
 (unlikely [find $Obj])
 	($Obj is nowhere)
@@ -3222,10 +3259,13 @@
 (instead of $Action)
 	~{ (prevent $Action) (tick) (stop) }
 	(perform $Action)
+	(exhaust) *(after $Action)
 
 (prevent $)	(fail)
 
 (perform $)
+
+(after $)	(fail)
 
 (try-complex [$Verb | $ComplexObjects])
 	(if) ([] is one of $ComplexObjects) (then)
@@ -3294,19 +3334,18 @@
 	(strip decorations from $SimpleObjList into $Stripped)
 	(unlikely [$Verb | $Stripped])
 
-%% Current and nearby rooms are in scope, but they're rarely what the
-%% player means. The following rules ensure that most actions that mention
-%% rooms directly are considered unlikely.
+%% Current and nearby rooms are in scope, but they're rarely what the player
+%% means. The following rules ensure that most actions that mention rooms
+%% directly are considered unlikely.
+%% Unrecognized topics are also very unlikely.
 
 (unlikely $Action)
-	(unlikely due to room $Action)
+	(very unlikely $Action)
 
-(unlikely due to room $Action)
-	~($Action = [leave $])
-	~($Action = [go to $])
-	~($Action = [enter $])
-	*($Obj is one of $Action)
-	(room $Obj)
+(very unlikely [(room $) | $])
+(very unlikely [? | $])
+(very unlikely [$ | $More])
+	(very unlikely $More)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Daemons
@@ -3336,6 +3375,144 @@
 		%% 'it' unambiguously refers to it.
 		(now) ~(narrator's it refers to $)
 	(endif)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Non-player characters
+
+%% (let $NPC take $Obj)		(narrate $NPC taking $Obj)
+%% (let $NPC drop $Obj)		(narrate $NPC dropping $Obj)
+%% (let $NPC wear $Obj)		(narrate $NPC wearing $Obj)
+%% (let $NPC remove $Obj)	(narrate $NPC removing $Obj)
+%% (let $NPC put $A $Rel $B)	(narrate $NPC putting $A $Rel $B)
+%% (let $NPC open $Obj)		(narrate $NPC opening $Obj)
+%% (let $NPC close $Obj)	(narrate $NPC closing $Obj)
+
+%% (let $NPC climb $Obj)	(narrate $NPC climbing $Obj)
+%% (let $NPC enter $Obj)	(narrate $NPC entering $Obj)
+%% (let $NPC leave $Obj)	(narrate $NPC leaving $Obj)
+%% (let $NPC go $Dir)		(narrate $NPC leaving $Room $Dir to $NewRoom)
+%%				(narrate $NPC entering $Room from $OldRoom)
+
+%% No checks are carried out -- only attempt an NPC action if it makes sense!
+
+(let $NPC climb $Obj)
+	(if) (player can see $Obj) (then)
+		(narrate $NPC climbing $Obj)
+	(endif)
+	(now) ($NPC is #on $Obj)
+
+(narrate $NPC climbing $Obj)
+	(The $NPC) get(s $NPC) onto (the $Obj).
+
+(let $NPC close $Obj)
+	(if) (player can see $Obj) (then)
+		(narrate $NPC closing $Obj)
+	(endif)
+	(now) ($Obj is closed)
+
+(narrate $NPC closing $Obj)
+	(The $NPC) close(s $NPC) (the $Obj).
+
+(let $NPC drop $Obj)
+	(if) (player can see $NPC) (then)
+		(narrate $NPC dropping $Obj)
+	(endif)
+	($NPC is $Rel $Loc)
+	(now) ($Obj is $Rel $Loc)
+
+(narrate $NPC dropping $Obj)
+	(The $NPC) drop(s $NPC) (the $Obj).
+
+(let $NPC enter $Obj)
+	(if) (player can see $Obj) (then)
+		(narrate $NPC entering $Obj)
+	(endif)
+	(now) ($NPC is #in $Obj)
+
+(narrate $NPC entering $Obj)
+	(The $NPC) get(s $NPC) into (the $Obj).
+
+(let $NPC go $Dir)
+	($NPC is in room $OldRoom)
+	(from $OldRoom go $Dir to room $NewRoom)
+	(if) (player can see $NPC) (then)
+		(narrate $NPC leaving $OldRoom $Dir to $NewRoom)
+	(endif)
+	(now) ($NPC is #in $NewRoom)
+	(if) (player can see $NPC) (then)
+		(narrate $NPC entering $NewRoom from $OldRoom)
+	(endif)
+
+(narrate $Obj leaving $OldRoom $Dir to $NewRoom)
+	(The $Obj) disappear(s $Obj) (name $Dir) 
+	(if) ($NewRoom is visited) (then) to (the $NewRoom) (endif).
+
+(narrate $Obj entering $NewRoom from $OldRoom)
+	(if) (from $NewRoom go $InDir to room $OldRoom) (then)
+		(if) ($InDir = #in) (then)
+			(The $Obj) leaves (the $OldRoom).
+		(else)
+			(The $Obj) enter(s $Obj) from (from-adverb $InDir).
+		(endif)
+	(else)
+		(The $Obj) enter(s $Obj) from (the $OldRoom).
+	(endif)
+
+(let $NPC leave $Obj)
+	(if) (player can see $Obj) (then)
+		(narrate $NPC leaving $Obj)
+	(endif)
+	($Obj is $Rel $Loc)
+	(now) ($NPC is $Rel $Loc)
+
+(narrate $NPC leaving $Obj)
+	(The $NPC) leave(s $NPC) (the $Obj).
+
+(let $NPC open $Obj)
+	(if) (player can see $Obj) (then)
+		(narrate $NPC opening $Obj)
+	(endif)
+	(now) ($Obj is open)
+
+(narrate $NPC opening $Obj)
+	(The $NPC) open(s $NPC) (the $Obj).
+
+(let $NPC put $Obj $Rel $Dest)
+	(if) (player can see $NPC) (then)
+		(narrate $NPC putting $Obj $Rel $Dest)
+	(endif)
+	(now) ($Obj is $Rel $Dest)
+
+(narrate $NPC putting $Obj $Rel $Dest)
+	(The $NPC) put(s $NPC) (the $Obj) (name $Rel) (the $Dest).
+
+(let $NPC remove $Obj)
+	($Obj is #wornby $NPC)
+	(if) (player can see $NPC) (then)
+		(narrate $NPC removing $Obj)
+	(endif)
+	(now) ($Obj is #heldby $NPC)
+
+(narrate $NPC removing $Obj)
+	(The $NPC) take(s $NPC) off (the $Obj).
+
+(let $NPC take $Obj)
+	(if) (player can see $NPC) (then)
+		(narrate $NPC taking $Obj)
+	(endif)
+	(now) ($Obj is #heldby $NPC)
+
+(narrate $NPC taking $Obj)
+	(The $NPC) take(s $NPC) (the $Obj).
+
+(let $NPC wear $Obj)
+	(if) (player can see $NPC) (then)
+		(narrate $NPC wearing $Obj)
+	(endif)
+	(now) ($Obj is #wornby $NPC)
+
+(narrate $NPC wearing $Obj)
+	(The $NPC) put(s $NPC) on (the $Obj).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Numbers
@@ -3446,13 +3623,7 @@
 			(from $Room go $Dir to $Obj)
 			(direction $Dir)
 		(then)
-			(if) ($Dir = #down) (then)
-				below
-			(elseif) ($Dir = #up) (then)
-				above
-			(else)
-				to the (name $Dir)
-			(endif)
+			(present-adverb $Dir)
 		(elseif)
 			($Obj is $Rel $Loc)
 			~(room $Loc)
@@ -3901,7 +4072,7 @@
 %% Common complaints and prevent-checks
 
 (when $O is out of sight)
-	~($O is visible to player)
+	~(player can see $O)
 	(if) (player can see) (then)
 		You can't see any such thing.
 	(else)
@@ -3929,7 +4100,7 @@
 
 (when $O is out of reach)
 	~($O is reachable by player)
-	(if) ($O is visible to player) (then)
+	(if) (player can see $O) (then)
 		You can't reach (the $O).
 	(else)
 		(The $O) (isn't $O) here.
@@ -3941,6 +4112,14 @@
 (when $O is part of something)
 	($O is #partof $Parent)
 	(That's $O) part of (the $Parent).
+
+(when $O is held by someone)
+	($O is #heldby $Parent)
+	(That $O) belong(s $O) to (the $Parent).
+
+(when $O is worn by someone)
+	($O is #wornby $Parent)
+	(The $Parent is) wearing (that $O).
 
 (when $Obj is fine where it is)
 	(fine where it is $Obj)
@@ -4128,6 +4307,8 @@
 	(div @title) (story title or default)
 	(story noun) by (story author or default).
 	(line)
+	(additional banner text)
+	(line)
 	(story release $RelNum)
 	Release $RelNum.
 	Serial number (serial number).
@@ -4137,9 +4318,13 @@
 	(exhaust) { *(extension version) }
 	(par)
 
+%% Override to insert co-credits, dedications, etc. into the banner:
+
+(additional banner text)
+
 %% Library extensions can add their name and version number to the banner:
 
-(extension version)	(fail)
+(extension version)		(fail)
 
 %% The following predicates help to conserve space when a title or author is
 %% provided. The compiler is smart enough to eliminate the second rule if the
@@ -4387,13 +4572,18 @@
 (understand $Words as single object $Output preferably container)
 	*(parse $Words as single object $Output {(container $_)} [])
 
+(understand $Words as any object $Output)
+	*(parse $Words as any object $Output {} [])
+
+(understand $Words as any object $Output preferably animate)
+	*(parse $Words as any object $Output {(animate $_)} [1])
+
+(understand $Words as any object $Output preferably $Closure)
+	*(parse $Words as any object $Output $Closure [])
+
 (takable (item $Obj))
-	~($Obj has relation #partof)
-	~{
-		($Obj is $Rel $Parent)
-		($Rel is one of [#heldby #wornby])
-		(current actor $Parent)
-	}
+	($Obj has relation $Rel)
+	~($Rel is one of [#partof #heldby #wornby])
 
 (verify object policy (object $Policy) $Obj)
 	($Obj has parent $Policy)
@@ -4411,7 +4601,7 @@
 	*(parse noun list $Words as $ObjList $Policy $AllAllowed)
 	(mark multi-object $ObjList into $Output)
 
-(parse $ as object $Someone $Policy $Someone $)
+(parse $ as object $Someone $ $Someone $)
 	(allowing parse errors)
 
 (parse $Words as single object $Output $Policy $Someone)
@@ -4422,6 +4612,27 @@
 	(else)
 		($Output = $ObjList)
 	(endif)
+
+(parse $Words as any object $Obj $Policy $Someone)
+	(filter $Words into $Filtered)
+	(nonempty $Filtered)
+	(determine object $Obj)
+		*(object $Obj)
+		~(direction $Obj)
+		~(relation $Obj)
+		~($Obj is in scope) %% Prevent double matches due to next branch.
+		~($Obj is hidden)
+		($Obj is in room $Room)
+		($Room is visited)
+	(from words)
+		*(dict $Obj)
+	(matching all of $Filtered)
+
+(parse $Words as any object $Output $Policy $Someone)
+	%% The purpose of this branch is to support pronouns, as well
+	%% as not-here objects that are in scope.
+	*(understand $Words as single object $Output)
+	~(room $Output)
 
 (mark multi-object [$Single] into $Single)
 	~(word $Single)
@@ -4630,6 +4841,9 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Topics
 
+(describe topic @?)
+	that
+
 (describe topic $Topic)
 	($Topic = [, | $])
 	(the full $Topic)
@@ -4640,12 +4854,28 @@
 (describe topic $)
 	something
 
+(proper *(proper topic $))
+(topic *(proper topic $))
+
+(proper topic $)
+	(fail)
+
+(understand $Words as topic $Obj)
+	(filter $Words into $Filtered)
+	(determine object $Obj)
+		*(topic $Obj)
+	(from words)
+		*(dict $Obj)
+	(matching all of $Filtered)
+
 (understand $Words as topic $Obj)
 	*(understand $Words as single object $Obj)
 
 (understand $WordList as topic $Topic)
 	*($Word is one of $WordList)
 	(topic keyword $Word implies $Topic)
+
+(understand $ as topic @?)
 
 (topic keyword $Keyword implies $Keyword)
 	(topic keyword $Keyword)
@@ -4756,12 +4986,10 @@
 			(consider action candidates $LikelyCandidates $ActualWords)
 		(else)
 			%% All candidates were deemed unlikely, but some
-			%% candidates are more unlikely than others. Here, we
-			%% decide that most actions that involve rooms are
-			%% very unlikely.
+			%% candidates are more unlikely than others.
 			(collect $A)
 				*($A is one of $AllCandidates)
-				~(unlikely due to room $A)
+				~(very unlikely $A)
 			(into $SomewhatLikely)
 			(if) (nonempty $SomewhatLikely) (then)
 				(consider action candidates $SomewhatLikely $ActualWords)
@@ -4866,26 +5094,11 @@
 		(par)
 		> (get input $Words)
 		{
-			%% Since the player was given an explicit list of
-			%% '(the full $)' descriptions, we have to match
-			%% against those, instead of the normal dict rules.
-			%% However, we make a special case out of me/myself
-			%% (which is usually printed as 'yourself').
-
-			(current player $Player)
-			(if)
-				($Words = [$W])
-				($W is one of [me myself])
-				($Player is one of $ObjList)
-			(then)
-				(recover implicit action $Template $Player into $Result)
-			(else)
-				(now) (head noun is required)
-				(disambiguate by object name $Words $Template $ObjList $Result)
-			(or)
-				(now) ~(head noun is required)
-				(disambiguate by object name $Words $Template $ObjList $Result)
-			(endif)
+			(now) (head noun is required)
+			(disambiguate by object name $Words $Template $ObjList $Result)
+		(or)
+			(now) ~(head noun is required)
+			(disambiguate by object name $Words $Template $ObjList $Result)
 		(or)
 			(now) (deferred commandline $Words)
 			(stop)
@@ -4908,7 +5121,16 @@
 		}
 	(endif)
 
+(disambiguate by object name [me/myself] $Template $ObjList $Result)
+	(current player $Player)
+	($Player is one of $ObjList)
+	(recover implicit action $Template $Player into $Result)
+
 (disambiguate by object name $Words $Template $ObjList $Result)
+	%% Since the player was given an explicit list of '(the full $)'
+	%% descriptions, we have to match against those, in addition to the
+	%% normal dict rules.
+
 	(collect $A)
 		(determine object $Obj)
 			*($Obj is one of $ObjList)
@@ -4917,6 +5139,25 @@
 			(words $Words sufficiently specify $Obj)
 		(from words)
 			(the full $Obj)
+		(matching all of $Words)
+		(recover implicit action $Template $Obj into $A)
+	(into $Candidates)
+	(nonempty $Candidates) %% otherwise fail into the next rule
+	{
+		($Candidates = [$Result])
+	(or)
+		(disambiguate action $Candidates $Result)
+	}
+
+(disambiguate by object name $Words $Template $ObjList $Result)
+	(collect $A)
+		(determine object $Obj)
+			*($Obj is one of $ObjList)
+			~(direction $Obj)
+			~(relation $Obj)
+			(words $Words sufficiently specify $Obj)
+		(from words)
+			*(dict $Obj)
 		(matching all of $Words)
 		(recover implicit action $Template $Obj into $A)
 	(into $Candidates)
@@ -5036,24 +5277,37 @@
 
 (shortest path from $A to $B is $Path)
 	($B is visited)
+	(find paths starting at $A)
+	(build path from $A to $B [] $Path)
+
+(first step from $A to $B is $Dir)
+	($B is visited)
+	(find paths starting at $A)
+	(reconstruct first hop $Dir from $A to $B)
+
+(find paths starting at $Start)
 	(exhaust) {
 		*(room $R)
 		(now) ~(last hop before $R is $)
 	}
-	(now) (last hop before $A is [])
-	{
+	(now) (last hop before $Start is [])
+	(exhaust) {
 		%% Explore the room graph starting from $A, set the last-hop
 		%% variables, and fail when there are no rooms left.
-		(elaborate paths from [$A])
-	(or)
-		(build path from $A to $B [] $Path)
+		(elaborate paths from [$Start])
 	}
 
 (elaborate paths from $RoomList)
 	(nonempty $RoomList)
 	(collect $R)
 		*($Here is one of $RoomList)
-		*(from $Here go $ to room $R)
+		{
+			*(from $Here go $ to $R)
+			(room $R)
+		(or)
+			*(from $Here through $Door to $R)
+			~($Door blocks passage)
+		}
 		($R is visited)
 		~(last hop before $R is $)
 		(now) (last hop before $R is $Here)
@@ -5074,6 +5328,16 @@
 	(else)
 		(from $Last go $Dir to room $End)
 		(build path from $Start to $Last [$Dir | $SoFar] $Path)
+	(endif)
+
+%% Reconstruct just the first hop:
+
+(reconstruct first hop $Dir from $Start to $End)
+	(last hop before $End is $Last)
+	(if) ($Last = $Start) (then)
+		(from $Start go $Dir to room $End)
+	(else)
+		(reconstruct first hop $Dir from $Start to $Last)
 	(endif)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -5269,6 +5533,11 @@
 		*($Word is one of $List)
 		(uppercase) $Word
 	}
+
+(randomly select $Element from $List)
+	(length of $List into $N)
+	(random from 1 to $N into $Index)
+	(nth $List $Index $Element)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Get rid of some compiler warnings

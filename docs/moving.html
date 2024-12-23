@@ -17,6 +17,15 @@ connections are defined using the <span class="code">(from $ go $ to&nbsp;$)</sp
 The first parameter is the present room, the second parameter is a compass
 direction, and the third parameter is the neighbouring room in that direction.
 </p>
+<p>The standard library provides twelve pre-defined directions:
+<span class="code">#east</span>, <span class="code">#northeast</span>, <span class="code">#north</span>,
+<span class="code">#northwest</span>, <span class="code">#west</span>, <span class="code">#southwest</span>,
+<span class="code">#south</span>, <span class="code">#southeast</span>, <span class="code">#up</span>,
+<span class="code">#down</span>, <span class="code">#in</span>, and <span class="code">#out</span>. Story authors can
+add more directions (such as starboard and port) by copying the rule
+definitions for one of the standard directions from the library, and editing
+them.
+</p>
 <p>Here is a small, working game with three rooms:
 </p>
 <textarea class="copyarea" id="copy0" readonly>
@@ -497,10 +506,10 @@ succeeds when the current player character is illuminated.
 <p>An object is within <i>reach</i> of another object (such as the player
 character) when there is a path between them, via child-parent relations in the
 object tree, that doesn't pass through a closed object. An exception is if the
-object is defined to be <span class="code">(out of reach&nbsp;$)</span>. Reach does not extend
-across room boundaries, but doors and other objects that are located at the
-perimeter of the current room, using <span class="code">(from $ go $ to $)</span>, are
-automatically moved into the room.
+object is explicitly declared to be <span class="code">(out of reach&nbsp;$)</span>. Reach does
+not extend across room boundaries, but doors and other objects that are located
+at the perimeter of the current room, using <span class="code">(from $ go $ to $)</span>,
+are automatically moved into the room.
 </p>
 <p>An object is <i>visible</i> to another object (such as the player character)
 when they are both illuminated, and there is a path between them, via
@@ -508,6 +517,15 @@ child-parent relations in the object tree, that doesn't pass through a closed,
 opaque object. Visibility does not extend across room boundaries, but doors and
 other objects that are located at the perimeter of the current room, using
 <span class="code">(from $ go $ to $)</span>, are automatically moved into the room.
+</p>
+<p>To check whether an object is currently visible to the player, use
+<span class="code">(player can see&nbsp;$)</span>.
+</p>
+<p>There is currently no simple, generic way to check whether an object is visible
+to some other object (e.g. a non-player character), because of the way floating
+objects and moving light sources are handled. But for a given story, it is
+often sufficient to make a pragmatic approximation, such as whether the
+observer and the object are in the same room.
 </p>
 <p>Most actions require reachability. Of the ones that don't, some (e.g.
 <span class="prginput">LOOK IN)</span> explicitly require visibility. Normally, anything that
@@ -883,14 +901,21 @@ be useful to query this predicate directly from story code.
 <p>The standard library predicate <span class="code">(shortest path from $Room1 to $Room2 is
 $Path)</span> computes the shortest path from <span class="code">$Room1</span> to
 <span class="code">$Room2</span>, by considering the obvious exits listed in <span class="code">(from $
-go $ to&nbsp;$)</span>. The result is a list of directions.
+go $ to&nbsp;$)</span> and <span class="code">(from $ through $ to&nbsp;$)</span>. The result is a
+list of directions.
 </p>
-<p>The path only includes visited rooms, and doesn't pass through closed doors.
-But it is straightforward to modify the library to relax those conditions.
+<p>The predicate <span class="code">(first step from $Room1 to $Room2 is $Direction)</span>
+computes the same path, but returns only the first step. This is functionally
+equivalent to <span class="code">(shortest path from $Room1 to $Room2 is [$Direction |
+$])</span>, but slightly faster and more memory efficient.
+</p>
+<p>The computed path only includes visited rooms, and doesn't pass through closed
+doors. But it is straightforward to modify the library to relax those
+conditions.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="actions.html">Chapter 6: Actions</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 16, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 17, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

@@ -9,7 +9,7 @@
 <body>
 	<div class="chapter">
 	<h1>Chapter 8: Ticks, scenes, and progress</h1>
-	<div class="navlinks">(<a href="#timedevents">Timed code</a>&nbsp;&bull; <a href="#cutscenes">Cutscenes</a>&nbsp;&bull; <a href="#intro">The intro</a>&nbsp;&bull; <a href="#score">Keeping score</a>&nbsp;&bull; <a href="#part2status">The status bar</a>&nbsp;&bull; <a href="#gameover">Game over</a>)</div>
+	<div class="navlinks">(<a href="#timedevents">Timed code</a>&nbsp;&bull; <a href="#cutscenes">Cutscenes</a>&nbsp;&bull; <a href="#theintro">The intro</a>&nbsp;&bull; <a href="#score">Keeping score</a>&nbsp;&bull; <a href="#part2status">The status bar</a>&nbsp;&bull; <a href="#gameover">Game over</a>)</div>
 <a id="timedevents"></a><h2>Timed code</h2>
 <p>As we've seen earlier (<a href="actions.html#tickstop">Stopping and ticking</a>), the standard
 library measures time in <i>ticks</i>. One tick corresponds to one action. The
@@ -246,7 +246,7 @@ wish.
 <div class="copycode">
 <a class="copybtn" href="" onClick="document.getElementById('copy4').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
-<a id="intro"></a><h2>The intro</h2>
+<a id="theintro"></a><h2>The intro</h2>
 <p>When a story begins, the standard library queries the <span class="code">(intro)</span>
 predicate, which story authors are encouraged to override.
 </p>
@@ -280,6 +280,10 @@ community and to your future self, and it looks professional.
 <div class="copycode">
 <a class="copybtn" href="" onClick="document.getElementById('copy5').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
+<p>The <span class="code">(banner)</span> predicate calls out to <span class="code">(additional banner
+text)</span>, which is empty by default but can be overridden to include e.g. a
+subtitle, co-credit, or dedication.
+</p>
 <a id="score"></a><h2>Keeping score</h2>
 <p>The player's progress can be tracked by a global score variable. This feature
 needs to be enabled, by including the following rule definition somewhere in
@@ -506,8 +510,8 @@ supposed to end with a comma. For instance:
 <a class="copybtn" href="" onClick="document.getElementById('copy13').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 	<div class="footer">
-	<p class="nav">Onwards to &ldquo;<a href="understanding.html">Chapter 9: Understanding player input</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 16, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="nav">Onwards to &ldquo;<a href="npc.html">Chapter 9: Non-player characters</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
+	<p class="tagline">The Dialog Manual, Revision 17, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

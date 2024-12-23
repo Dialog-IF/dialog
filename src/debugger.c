@@ -1565,7 +1565,7 @@ int debugger(int argc, char **argv) {
 				i = term_getkey(0);
 				o_post_input(0);
 				if(i == '\n') i = '\r';
-				if(i == 127) i = 8;
+				if(i == 127 || i == TERM_DELETE) i = 8;
 				if(i >= 129 && i <= 132) {
 					i -= 129 - 16;
 				}

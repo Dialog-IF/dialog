@@ -2,6 +2,7 @@
 #define TERM_DOWN 130
 #define TERM_LEFT 131
 #define TERM_RIGHT 132
+#define TERM_DELETE 133
 
 typedef void (*term_int_callback_t)();
 

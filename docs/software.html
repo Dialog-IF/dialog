@@ -98,24 +98,29 @@ file by about 5%.
 <p>The Å-machine (pronounced &ldquo;awe machine&rdquo;) is a compact, binary story format
 designed to improve the performance of Dialog stories on vintage hardware
 beyond what is possible using the Z-machine. It also allows Dialog stories to
-be published on the web with support for CSS styles.
+be published on the web with support for hyperlinks and CSS styles.
 </p>
 <p>To compile for the Å-machine, add <span class="nobreak"><span class="tt">-t&nbsp;aa</span></span> to the command
 line:
 </p>
 <p><span class="tt">dialogc -t aa example.dg stdlib.dg</span>
 </p>
-<p>This will produce a file called <span class="tt">example.aastory</span>.
+<p>This will produce a file called <span class="tt">example.aastory</span>. The <span class="tt">.aastory</span>
+file may in turn be bundled with a javascript interpreter, or with an
+interpreter for the Commodore&nbsp;64, using the tool <span class="tt">aambundle</span> from
+<a href="https://linusakesson.net/dialog/aamachine/">the Å-machine release archive</a>.
 </p>
-<p>The <span class="tt">.aastory</span> file can then be bundled with a javascript interpreter,
-using the tool <span class="tt">aambundle</span> from <a href="https://linusakesson.net/dialog/aamachine/">the Å-machine release
-archive</a>. The following command:
+<p>The following command:
 </p>
 <p><span class="tt">aambundle -o my_game example.aastory</span>
 </p>
 <p>creates a directory called <span class="tt">my_game</span>, and populates it with all the
 necessary <span class="tt">html</span>, <span class="tt">css</span>, and <span class="tt">js</span> files. Simply point a
 web browser to the <span class="tt">play.html</span> file in this directory to run the game.
+</p>
+<p>To create a Commodore&nbsp;64 disk image, use the following command instead:
+</p>
+<p><span class="tt">aambundle -t c64 -o my_game example.aastory</span>
 </p>
 <h3>Other compiler flags</h3>
 <p>The <span class="nobreak"><span class="tt">-v</span></span> flag makes the compiler more verbose. Give it
@@ -320,7 +325,7 @@ system-wide location, type &ldquo;<span class="tt">sudo&nbsp;make&nbsp;install</
 </p>
 	<div class="footer">
 	<p class="nav">Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 16, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 17, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

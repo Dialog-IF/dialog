@@ -4,12 +4,12 @@
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<link rel="StyleSheet" href="style.css" type="text/css" />
-	<title>Chapter 10: Miscellaneous features</title>
+	<title>Chapter 11: Miscellaneous features</title>
 </head>
 <body>
 	<div class="chapter">
-	<h1>Chapter 10: Miscellaneous features</h1>
-	<div class="navlinks">(<a href="#pronouns">Pronouns</a>&nbsp;&bull; <a href="#listutil">List manipulation</a>&nbsp;&bull; <a href="#treeutil">Object tree manipulation</a>&nbsp;&bull; <a href="#libdebug">Predicates for debugging</a>&nbsp;&bull; <a href="#commoncomplaints">Common checks and complaints</a>&nbsp;&bull; <a href="#questions">Asking simple questions</a>&nbsp;&bull; <a href="#fungibility">Identical objects</a>)</div>
+	<h1>Chapter 11: Miscellaneous features</h1>
+	<div class="navlinks">(<a href="#pronouns">Pronouns</a>&nbsp;&bull; <a href="#listutil">List manipulation</a>&nbsp;&bull; <a href="#treeutil">Object tree manipulation</a>&nbsp;&bull; <a href="#dirutil">Directions</a>&nbsp;&bull; <a href="#libdebug">Predicates for debugging</a>&nbsp;&bull; <a href="#commoncomplaints">Common checks and complaints</a>&nbsp;&bull; <a href="#questions">Asking simple questions</a>&nbsp;&bull; <a href="#fungibility">Identical objects</a>)</div>
 <a id="pronouns"></a><h2>Pronouns</h2>
 <p>Dialog allows the player to refer to recently mentioned objects using the words
 <span class="prginput">IT</span>, <span class="prginput">HIM</span>, <span class="prginput">HER</span>, and
@@ -213,6 +213,9 @@ are numbered starting with&nbsp;1.
 <p class="noteline">Unifies <span class="code">$AB</span> with the concatenation of <span class="code">$A</span>
 <span class="nobreak">and&nbsp;<span class="code">$B</span>.</span>
 </p>
+<p class="codeline">(randomly select $Element from $List)</p>
+<p class="noteline">Retrieves one list element at random, or fails if the list is empty.
+</p>
 <p class="codeline">(reverse $Input $Output)</p>
 <p class="noteline">Reverses the order of the elements in a list.
 </p>
@@ -305,6 +308,19 @@ Attempt to remove <span class="code">$Obj</span> if it is worn, or part of somet
 <p class="noteline">While the player character is the direct child of an object that is
 neither a room nor a vehicle, make an attempt to leave that object.
 </p>
+<a id="dirutil"></a><h2>Directions</h2>
+<p>To print an adverb phrase corresponding to a direction, use
+<span class="code">(present-adverb&nbsp;$)</span> or <span class="code">(from-adverb&nbsp;$)</span>. Use
+<span class="code">(opposite of $ is&nbsp;$)</span> to find its opposite.
+</p>
+<table class="datatable">
+<tr><th>Direction</th><th>Present-adverb</th><th>From-adverb</th><th>Opposite</th></tr>
+<tr><td><span class="code">#up</span></td><td>above</td><td>above</td><td><span class="code">#down</span></td></tr>
+<tr><td><span class="code">#down</span></td><td>below</td><td>below</td><td><span class="code">#up</span></td></tr>
+<tr><td><span class="code">#in</span></td><td>inside</td><td>inside</td><td><span class="code">#out</span></td></tr>
+<tr><td><span class="code">#out</span></td><td>outside</td><td>the outside</td><td><span class="code">#in</span></td></tr>
+<tr><td><span class="code">#north</span> etc.</td><td>to the north</td><td>the north</td><td><span class="code">#south</span></td></tr>
+</table>
 <a id="libdebug"></a><h2>Predicates for debugging</h2>
 <p>The standard library offers a couple of predicates that are meant to be used
 from the interactive debugger.
@@ -336,6 +352,8 @@ self-explanatory.
 <p class="codeline">(when $Obj blocks passage)</p>
 <p class="codeline">(when $Obj is already $Rel $Parent)</p>
 <p class="codeline">(when $Obj is fine where it is)</p>
+<p class="codeline">(when $Obj is held by someone)</p>
+<p class="codeline">(when $Obj is worn by someone)</p>
 <p class="codeline">(when $Obj can't be taken)</p>
 <p class="noteline">Succeeds for non-items.
 </p>
@@ -801,7 +819,7 @@ It's your call.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="libref.html">Appendix: Predicate index</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 16, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 17, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

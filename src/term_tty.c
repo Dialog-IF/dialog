@@ -223,6 +223,7 @@ static int getkey() {
 	uint16_t accum = 0;
 	ssize_t ssz;
 	int state = STATE_BARE;
+	int param = 0;
 
 	for(;;) {
 		ssz = read(0, &inbuf, 1);
@@ -257,12 +258,21 @@ static int getkey() {
 		} else if(state == STATE_ESC && inbuf == '[') {
 			state = STATE_CSI;
 		} else if(state == STATE_CSI) {
-			state = STATE_BARE;
-			switch(inbuf) {
+			if(inbuf >= '0' && inbuf <= '9') {
+				param *= 10;
+				param += inbuf - '0';
+			} else {
+				state = STATE_BARE;
+				switch(inbuf) {
 				case 'A': return TERM_UP;
 				case 'B': return TERM_DOWN;
 				case 'C': return TERM_RIGHT;
 				case 'D': return TERM_LEFT;
+				case '~':
+					if(param == 3) {
+						return TERM_DELETE;
+					}
+				}
 			}
 		} else {
 			return inbuf;
@@ -425,6 +435,15 @@ int term_getline(const char *prompt, uint8_t *buffer, int bufsize, int is_filena
 				xpos--;
 				len--;
 				stepcursor(-1);
+				for(i = xpos; i < len; i++) charout(buf[i]);
+				charout(' ');
+				stepcursor(xpos - len - 1);
+			}
+			break;
+		case TERM_DELETE:
+			if(xpos != len) {
+				memmove(buf + xpos, buf + xpos + 1, (len - xpos - 1) * sizeof(uint16_t));
+				len--;
 				for(i = xpos; i < len; i++) charout(buf[i]);
 				charout(' ');
 				stepcursor(xpos - len - 1);

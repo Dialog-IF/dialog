@@ -9,7 +9,7 @@
 <body>
 	<div class="chapter">
 	<h1>Chapter 6: Actions</h1>
-	<div class="navlinks">(<a href="#actionsintro">Introduction to actions</a>&nbsp;&bull; <a href="#actionprocess">How actions are processed</a>&nbsp;&bull; <a href="#tickstop">Stopping and ticking</a>&nbsp;&bull; <a href="#preventperform">Instead of, prevent, and perform</a>&nbsp;&bull; <a href="#narrate">Narration predicates</a>&nbsp;&bull; <a href="#diversion">Diversion</a>&nbsp;&bull; <a href="#refusebefore">Refuse and before</a>)</div>
+	<div class="navlinks">(<a href="#actionsintro">Introduction to actions</a>&nbsp;&bull; <a href="#actionprocess">How actions are processed</a>&nbsp;&bull; <a href="#tickstop">Stopping and ticking</a>&nbsp;&bull; <a href="#preventperform">Instead of: Prevent, perform, after</a>&nbsp;&bull; <a href="#narrate">Narration predicates</a>&nbsp;&bull; <a href="#diversion">Diversion</a>&nbsp;&bull; <a href="#refusebefore">Refuse and before</a>)</div>
 <a id="actionsintro"></a><h2>Introduction to actions</h2>
 <p><i>Actions</i> are data structures that represent the player's intentions. They
 are constructed by a part of the Dialog standard library called the
@@ -50,7 +50,7 @@ the player input could equally well have been <span class="code">[i]</span> or <
 inventory]</span>, and the resulting action would still be
 <span class="code">[inventory]</span>.
 </p>
-<p>In <a href="understanding.html">Chapter&nbsp;9</a>, we will see how the parser produces
+<p>In <a href="understanding.html">Chapter&nbsp;10</a>, we will see how the parser produces
 actions in response to player input. For now, we will take the output of that
 process, i.e. the action data structures, as our starting point.
 </p>
@@ -133,6 +133,24 @@ predicates</i> that we can override:
 <div class="copycode">
 <a class="copybtn" href="" onClick="document.getElementById('copy3').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
+<p>Sometimes it makes more sense to keep the action processing just the way it is,
+and tack on new behaviour at the end:
+</p>
+<textarea class="copyarea" id="copy4" readonly>
+(after [open #box])
+	(par)
+	An inexplicable sense of dread comes over you.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(after [open #box])</td></tr>
+<tr><td class="left"></td><td class="right">(par)</td></tr>
+<tr><td class="left"></td><td class="right">An inexplicable sense of dread comes over you.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy4').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
 <p>Now, let's consider going between rooms. As we learned in the chapter on
 <a href="moving.html">moving around</a>, the predicate <span class="code">(from $ go $ to&nbsp;$)</span>
 defines obvious exits. This predicate is consulted by the default rules for
@@ -141,7 +159,7 @@ non-obvious exits, to block obvious exits, or to trigger cutscenes. In most
 situations, the action we want to intercept is <span class="code">[leave $Room $Dir]</span>:
 the action for leaving a room in a given direction.
 </p>
-<textarea class="copyarea" id="copy4" readonly>
+<textarea class="copyarea" id="copy5" readonly>
 #shed
 (room *)
 (your *)
@@ -186,7 +204,7 @@ the action for leaving a room in a given direction.
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy4').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy5').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>In that example, the only obvious exit is to the east, but it doesn't work.
 Going up, on the other hand, is reinterpreted as a different action:
@@ -204,31 +222,31 @@ several predicates, as illustrated by the following chart:
 <div class="img"><img src="actionprocessing.png" /></div>
 <p>Everything starts with <span class="code">(try&nbsp;$)</span>, which is a predicate provided by
 the standard library. The parameter is an action, and <span class="code">try</span> makes
-queries to <span class="code">(refuse $)</span>, <span class="code">*(before $)</span>, and <span class="code">(instead
-of $)</span>, passing the action along as a parameter. Briefly, the purpose of
-<span class="code">refuse</span> is to ensure that every object mentioned in the action is
-within reach of the player character, and the purpose of <span class="code">before</span> is
-to automatically carry out certain mundane actions for the player, such as
-opening doors before going through them. Refuse is invoked twice, just to make
-sure that <span class="code">before</span> didn't mess things up.
+queries to <span class="code">(refuse&nbsp;$)</span>, <span class="code">*(before&nbsp;$)</span>, and
+<span class="code">(instead of&nbsp;$)</span>, passing the action along as a parameter. Briefly,
+the purpose of <span class="code">refuse</span> is to ensure that every object mentioned in
+the action is within reach of the player character, and the purpose of
+<span class="code">before</span> is to automatically carry out certain mundane actions for
+the player, such as opening doors before going through them. Refuse is invoked
+twice, just to make sure that <span class="code">before</span> didn't mess things up.
 </p>
 <p><span class="code">(instead of&nbsp;$)</span> is responsible for looking at an action in detail,
 determining whether its particular prerequisites are met, and actually carrying
 it out. The default implementation of <span class="code">instead of</span> delegates these
-responsibilities to <span class="code">(prevent&nbsp;$)</span> and <span class="code">(perform&nbsp;$)</span>,
-again queried with the action as parameter. Finally, many of the standard
-<span class="code">(perform&nbsp;$)</span> rules make queries to action-specific predicates such
-as <span class="code">(descr&nbsp;$)</span>. But at this point, the parameters are usually
-objects.
+responsibilities to <span class="code">(prevent&nbsp;$)</span>, <span class="code">(perform&nbsp;$)</span>, and
+<span class="code">*(after&nbsp;$)</span>, again queried with the action as parameter. Finally,
+many of the standard <span class="code">(perform&nbsp;$)</span> rules make queries to
+action-specific predicates such as <span class="code">(descr&nbsp;$)</span>. But at this point,
+the parameters are usually objects.
 </p>
 <p>Together, <span class="code">refuse</span>, <span class="code">before</span>, <span class="code">instead of</span>,
-<span class="code">prevent</span>, and <span class="code">perform</span> are known as the five
-<i>action-handling predicates</i>. Stories typically define rules for them in
-order to extend, adjust, or override the default behaviour of the standard
-library. Each action-handling predicate can be intercepted to serve a variety
-of purposes. Before we dive into that, however, it is necessary to introduce
-two important mechanisms: <i>Stopping the action</i>, and <i>ticking</i>
-(advancing time).
+<span class="code">prevent</span>, <span class="code">perform</span>, and <span class="code">after</span> are known as
+the six <i>action-handling predicates</i>. Stories typically define rules for
+them in order to extend, adjust, or override the default behaviour of the
+standard library. Each action-handling predicate can be intercepted to serve a
+variety of purposes. Before we dive into that, however, it is necessary to
+introduce two important mechanisms: <i>Stopping the action</i>, and
+<i>ticking</i> (advancing time).
 </p>
 <a id="tickstop"></a><h2>Stopping and ticking</h2>
 <h3>(stop)</h3>
@@ -260,35 +278,37 @@ common design pattern in action handlers is
 <span class="nobreak"><span class="code">(tick)&nbsp;(stop)</span></span>, which causes time to pass as a result
 of the present action, but stops any subsequent actions.
 </p>
-<a id="preventperform"></a><h2>Instead of, prevent, and perform</h2>
-<p>Now we return to the five action-handling predicates. We will not consider them
+<a id="preventperform"></a><h2>Instead of: Prevent, perform, after</h2>
+<p>Now we return to the six action-handling predicates. We will not consider them
 in chronological order; instead we will start with <span class="code">instead&nbsp;of</span>,
-<span class="code">prevent</span>, and <span class="code">perform</span>, as these are of most interest
-to story authors.
+<span class="code">prevent</span>, <span class="code">perform</span>, and <span class="code">after</span> as these are
+of most interest to story authors.
 </p>
 <p>Let us begin by looking at the catch-all rule definition for <span class="code">(instead
 of&nbsp;$)</span>, as implemented in the standard library. There are more specific
 rule definitions preceding it in the library, but this is the base case:
 </p>
-<textarea class="copyarea" id="copy5" readonly>
+<textarea class="copyarea" id="copy6" readonly>
 (instead of $Action)
 	~{ (prevent $Action) (tick) (stop) }
 	(perform $Action)
+	(exhaust) *(after $Action)
 </textarea>
 <div class="blkcode">
 <table>
 <tr><td class="both" colspan="2">(instead of $Action)</td></tr>
 <tr><td class="left"></td><td class="right">~{ (prevent $Action) (tick) (stop) }</td></tr>
 <tr><td class="left"></td><td class="right">(perform $Action)</td></tr>
+<tr><td class="left"></td><td class="right">(exhaust) *(after $Action)</td></tr>
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy5').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy6').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>We see that if prevent succeeds, the action fails (after advancing time). Thus,
 a story author can easily prevent a particular action from succeeding:
 </p>
-<textarea class="copyarea" id="copy6" readonly>
+<textarea class="copyarea" id="copy7" readonly>
 (prevent [eat #apple])
 	You're not hungry.
 </textarea>
@@ -299,7 +319,7 @@ a story author can easily prevent a particular action from succeeding:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy6').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy7').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Since the story file appears before the standard library in source-code order,
 its rules take precedence: There could be other prevent-rules in the library,
@@ -307,7 +327,7 @@ but they will have no influence on eating the apple.
 </p>
 <p>Here's a variant where the rule is conditioned by a global flag:
 </p>
-<textarea class="copyarea" id="copy7" readonly>
+<textarea class="copyarea" id="copy8" readonly>
 (prevent [eat #apple])
 	~(the player is hungry)
 	You're not hungry.
@@ -320,30 +340,30 @@ but they will have no influence on eating the apple.
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy7').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy8').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>If no prevent-rule succeeds, control is passed to the <span class="code">(perform&nbsp;$)</span>
 predicate. This is where the action is carried out, as per the following
 example:
 </p>
-<textarea class="copyarea" id="copy8" readonly>
+<textarea class="copyarea" id="copy9" readonly>
 (perform [read #welcomesign])
-	The sign says "WELCOME".
+	The sign says “WELCOME”.
 
 (perform [read #loiteringplaque])
-	The plaque says "NO LOITERING".
+	The plaque says “NO LOITERING”.
 </textarea>
 <div class="blkcode">
 <table>
 <tr><td class="both" colspan="2">(perform [read #welcomesign])</td></tr>
-<tr><td class="left"></td><td class="right">The sign says "WELCOME".</td></tr>
+<tr><td class="left"></td><td class="right">The sign says “WELCOME”.</td></tr>
 <tr><td class="blank" colspan="2"></td></tr>
 <tr><td class="both" colspan="2">(perform [read #loiteringplaque])</td></tr>
-<tr><td class="left"></td><td class="right">The plaque says "NO LOITERING".</td></tr>
+<tr><td class="left"></td><td class="right">The plaque says “NO LOITERING”.</td></tr>
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy8').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy9').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>There are two important differences between <span class="code">prevent</span> and
 <span class="code">perform</span>: The first is that the sense of <span class="code">prevent</span> is
@@ -353,9 +373,9 @@ succeeds. Thus, the above example (with a bit of surrounding context) could
 lead to the following exchange:
 </p>
 <div class="blkoutput">&gt; READ ALL SIGNS<br />
-Trying to read the large sign: The sign says "WELCOME".<br />
+Trying to read the large sign: The sign says “WELCOME”.<br />
 <br />
-Trying to read the small brass plaque: The plaque says "NO LOITERING".</div><p>But the standard library contains a generic prevent-rule that causes
+Trying to read the small brass plaque: The plaque says “NO LOITERING”.</div><p>But the standard library contains a generic prevent-rule that causes
 <span class="code">[read&nbsp;$]</span> to fail when the player is in a dark location.
 Prevent-rules have precedence over perform-rules (this follows from the
 implementation of <span class="code">(instead of $)</span> that we saw earlier), so if the
@@ -367,7 +387,7 @@ Trying to read the large sign: It is too dark to read.</div><p>Recall that preve
 prevent-rules defined by the standard library. Sometimes this is not desirable.
 For instance, consider the following story-supplied rule:
 </p>
-<textarea class="copyarea" id="copy9" readonly>
+<textarea class="copyarea" id="copy10" readonly>
 (prevent [eat $])
 	~(the player is hungry)
 	You're not hungry.
@@ -380,7 +400,7 @@ For instance, consider the following story-supplied rule:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy9').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Now, if the player attempts to eat a kerosene lamp, the game might refuse with
 a message about the player not being hungry. It would be more natural, in this
@@ -388,7 +408,7 @@ case, to complain about the object not being edible, which is handled by a rule
 in the standard library. To get around this problem, we may wish to intercept
 perform instead of prevent:
 </p>
-<textarea class="copyarea" id="copy10" readonly>
+<textarea class="copyarea" id="copy11" readonly>
 (perform [eat $])
 	~(the player is hungry)
 	You're not hungry.
@@ -403,17 +423,34 @@ perform instead of prevent:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy11').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Likewise, a story might contain situations where the prevent-perform dichotomy
 breaks down, and it doesn't make sense to check for all the unsuccessful cases
-before moving on to the successful cases. In such situations, it often makes
-more sense to combine everything into a large
-<span class="nobreak"><a href="control.html#if">if/elseif-complex</a></span> in a <span class="code">perform</span> rule. As long
-as the unsuccessful branches end with <span class="nobreak"><span class="code">(tick)&nbsp;(stop)</span></span>,
-that's a perfectly valid and useful approach in story code. In library code,
-having separate prevent and perform stages is preferable, since that structure
-is easier to adapt and extend from the outside.
+before moving on to the successful cases. An alternative approach is to combine
+everything into a large <span class="nobreak"><a href="control.html#if">if/elseif-complex</a></span> in a
+<span class="code">perform</span> rule. As long as the unsuccessful branches end with
+<span class="nobreak"><span class="code">(tick)&nbsp;(stop)</span></span>, that's a perfectly valid and useful
+approach in story code. In library code, having separate prevent and perform
+stages is preferable, since that structure is easier to adapt and extend from
+the outside.
+</p>
+<p>After <span class="code">(perform&nbsp;$)</span> succeeds, the library makes a
+<a href="choicepoints.html#multiqueries">multi-query</a> to <span class="code">(after&nbsp;$)</span>. This allows the story
+author to schedule events, such as cutscenes or reactions from non-player
+characters, after specific actions. Because of the multi-query, every possible
+branch of the <span class="code">after</span> rule is exhausted, which means that
+several such rules can be attached to any given action.
+</p>
+<p>The library never does anything in the <span class="code">(after&nbsp;$)</span> stage—it's
+reserved for the story author.
+</p>
+<p>Be aware that some actions call out to other actions, using
+<span class="code">(try&nbsp;$)</span>, as part of their default <span class="code">perform</span> rule. For
+instance, <span class="code">[tell $ about $]</span> will fall back on <span class="code">[talk to
+$]</span> in this way. As a consequence, the <span class="code">after</span> rules of the
+inner action (talk to) are carried out before the <span class="code">after</span> rules of
+the outer action (tell about).
 </p>
 <a id="narrate"></a><h2>Narration predicates</h2>
 <p>We have seen how to override the <span class="code">perform</span> rule of a standard
@@ -427,7 +464,7 @@ predicate</i>, that you can intercept. Thus, for instance, the following saves
 you the trouble of updating the object tree to reflect the new location of the
 apple:
 </p>
-<textarea class="copyarea" id="copy11" readonly>
+<textarea class="copyarea" id="copy12" readonly>
 (narrate taking #apple)
 	(#apple is pristine)
 	You pluck the ripe fruit from the tree.
@@ -440,13 +477,13 @@ apple:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy11').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy12').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Likewise, some of the standard actions for exploring the game world call out to
 action-specific predicates, partly to save typing on the part of the story
 author, and partly to perform extra work before or afterwards:
 </p>
-<textarea class="copyarea" id="copy12" readonly>
+<textarea class="copyarea" id="copy13" readonly>
 (perform [examine #box])
 	It's a small, wooden box.
 	%% This works, but the rule head is cumbersome to type. It also
@@ -471,7 +508,7 @@ author, and partly to perform extra work before or afterwards:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy12').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy13').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <a id="diversion"></a><h2>Diversion</h2>
 <p>Quite often, the action as reported by the parser could be understood as a
@@ -487,7 +524,7 @@ desired action. This circumvents the normal prevent-checks, which is good:
 After all, we don't want the standard library to complain about the staircase
 not being an actor supporter.
 </p>
-<textarea class="copyarea" id="copy13" readonly>
+<textarea class="copyarea" id="copy14" readonly>
 (instead of [climb #staircase])
 	(current room #bottomOfStairs)
 	(try [go #up])
@@ -508,7 +545,7 @@ not being an actor supporter.
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy13').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy14').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>There is a subtlety here, related to how time is advanced in the game world:
 The general rule is that code that queries <span class="code">(try $)</span> is responsible
@@ -531,7 +568,7 @@ directly.
 rule definition for <span class="code">(try&nbsp;$)</span>, as it is given in the standard
 library:
 </p>
-<textarea class="copyarea" id="copy14" readonly>
+<textarea class="copyarea" id="copy15" readonly>
 (try $Action)
 	~{ (refuse $Action) (stop) }
 	(exhaust) *(before $Action)
@@ -552,7 +589,7 @@ library:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy14').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy15').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>If <span class="code">refuse</span> succeeds, all subsequent action handling stops. Time
 is not advanced. The default implementation of <span class="code">refuse</span> checks that
@@ -569,7 +606,7 @@ locked&rdquo;, which you wouldn't know if you couldn't reach it).
 way to modify <span class="code">refuse</span> is to add a <a href="control.html#negation">negated rule
 definition</a>. So, for instance, examining does not require reachability:
 </p>
-<textarea class="copyarea" id="copy15" readonly>
+<textarea class="copyarea" id="copy16" readonly>
 ~(refuse [examine $]) %% Don't refuse.
 </textarea>
 <div class="blkcode">
@@ -578,12 +615,12 @@ definition</a>. So, for instance, examining does not require reachability:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy15').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy16').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Another option is to require reachability for one object, but not the other.
 Here's a snippet from the standard library:
 </p>
-<textarea class="copyarea" id="copy16" readonly>
+<textarea class="copyarea" id="copy17" readonly>
 (refuse [throw $Obj at $Target])
 	(just)
 	{
@@ -604,11 +641,11 @@ Here's a snippet from the standard library:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy16').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy17').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>The above code makes queries to <i>when-predicates</i>; these check for common
 error conditions and print appropriate messages. The full set of
-when-predicates is documented in <a href="miscfeat.html#commoncomplaints">Chapter&nbsp;10</a>.
+when-predicates is documented in <a href="miscfeat.html#commoncomplaints">Chapter&nbsp;11</a>.
 </p>
 <p>Also note the <a href="choicepoints.html#just"><span class="code">(just)</span> keyword</a>, which turns off the
 default <span class="nobreak"><span class="code">refuse</span>-</span>rule that is defined later in the
@@ -620,7 +657,7 @@ player character's reach, But <span class="prginput">RAIN</span> would be unders
 referring to the cloud. In order to allow <span class="prginput">DRINK RAIN</span>, we might
 want to make an exception:
 </p>
-<textarea class="copyarea" id="copy17" readonly>
+<textarea class="copyarea" id="copy18" readonly>
 ~(refuse [drink #cloud])
 
 (instead of [drink #cloud])
@@ -635,7 +672,7 @@ want to make an exception:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy17').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy18').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Note that we also decided to bypass the normal prevent-checks by intercepting
 <span class="code">instead&nbsp;of</span> rather than <span class="code">perform</span>. Another option would
@@ -652,7 +689,7 @@ can be several before-rules for any given action.
 <p>By convention, before-rules should use <span class="code">(first try&nbsp;$)</span> to launch the
 prerequisite actions:
 </p>
-<textarea class="copyarea" id="copy18" readonly>
+<textarea class="copyarea" id="copy19" readonly>
 (before [remove #socks])
 	(#shoes is #wornby #hero)
 	(first try [remove #shoes])
@@ -665,7 +702,7 @@ prerequisite actions:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy18').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy19').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p><span class="code">(first try $)</span> prints the familiar &ldquo;(first attempting
 <span class="nobreak">to&nbsp;<i>...</i>)&rdquo;</span> message, before querying <span class="code">(try&nbsp;$)</span>,
@@ -675,7 +712,7 @@ action is triggered automatically by the game.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="stdactions.html">Chapter 7: The standard actions</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 16, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 17, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

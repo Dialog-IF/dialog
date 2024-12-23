@@ -80,7 +80,7 @@ and choose among them, or ignore them altogether.
 <a class="copybtn" href="" onClick="document.getElementById('copy1').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>The Å-machine backend copies all style definitions verbatim into the story
-file, whiche makes them available to interpreters at runtime. The official
+file, which makes them available to interpreters at runtime. The official
 javascript Å-machine interpreter in turn hands them over to the web browser.
 Thus, with this particular setup, the full set of CSS properties are supported.
 </p>
@@ -91,8 +91,8 @@ reader, or who prefer to play on vintage hardware. Never change the text colour
 without also changing the background colour, as the player may be using an
 interpreter with a dark or light default background.
 </p>
-<p>The Z-machine backend only supports a limited number of style attributes. For
-divs in the main text area, they are:
+<p>The Z-machine backend, and the 8-bit Å-machine interpreter, only support a
+limited number of style attributes. For divs in the main text area, they are:
 </p>
 <p class="codeline">font-style</p>
 <p class="noteline">Supported values are <span class="code">italic</span> and <span class="code">inherit</span>.
@@ -275,7 +275,8 @@ both refer to the width or height of a character, depending on context, and are
 interchangeable. But it is good practice to specify widths in <span class="code">ch</span>
 and heights in <span class="code">em</span>.
 </p>
-<p>The Z-machine obeys the following style attributes in the status bar area:
+<p>The Z-machine backend, and the 8-bit Å-machine interpreter, obey the following
+style attributes in the status bar area:
 </p>
 <p class="codeline">height</p>
 <p class="noteline">For the top-level <span class="code">(status bar&nbsp;$)</span> div only: The desired
@@ -303,9 +304,9 @@ the surrounding div. Must be either <span class="code">left</span> or
 <p>It is possible to invoke <span class="code">(status bar&nbsp;$)</span> with different style
 classes at different times, in order to vary the look of the status bar area
 during gameplay. When reducing the size of the status bar area (e.g. drawing a
-status bar of height 1em after having drawn one of height 2em), be aware that
-some interpreters hide the extraneous lines, while others regard them as being
-part of the main window.
+status bar of height <span class="code">1em</span> after having drawn one of height
+<span class="code">2em</span>), be aware that some interpreters hide the extraneous lines,
+while others regard them as being part of the main window.
 </p>
 <p>The Å-machine backend treats status bar styling like it does div styling in
 general: All style properties are passed to the interpreter, which is then free
@@ -903,7 +904,7 @@ unoptimized case.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="dynamic.html">Chapter 6: Dynamic predicates</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 16, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 17, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

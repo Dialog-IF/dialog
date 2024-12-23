@@ -1,5 +1,5 @@
-This archive contains version 0h/04 of the Dialog compiler and interactive
-debugger, bundled with documentation and version 0.31 of the Dialog Standard
+This archive contains version 0h/05 of the Dialog compiler and interactive
+debugger, bundled with documentation and version 0.32 of the Dialog Standard
 Library.
 
 Directory structure:
@@ -37,6 +37,53 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0h/05 Lib 0.32 (Manual revision 17):
+
+		Library: Facilities for implementing moving NPCs.
+
+		Library: Topic objects. The unrecognized topic.
+
+		Library: Added '(after $)' stage to action handling.
+
+		Library: Disallow taking other people's clothing and
+		possessions.
+
+		Library: Narration callbacks for holding or wearing nothing.
+
+		Library: New predicates for understanding words as any object
+		(which must be located in a visited room, and not marked as
+		hidden).
+
+		Library: Made it possible to use '(from $ go $ to room $)'
+		backwards, i.e. to specify the current and neighbouring rooms,
+		and obtain the direction.
+
+		Library: Adverbs for directions (e.g. above/below), and a
+		predicate for obtaining the opposite of a direction.
+
+		Library: Utility predicate to select a random element from a
+		list.
+
+		Library: Hook for inserting additional banner text.
+
+		Library: Disambiguation will consider '(dict $)' synonyms.
+
+		Library: Refinements to the path-finding algorithm. Added
+		'(first step from $ to $ is $)', for when the complete path
+		isn't needed.
+
+		Manual: Documentation of the new library features, including a
+		new NPC chapter.
+
+		Manual: Brief mention of the Aa-machine 6502 interpreter, and
+		an updated chart in the Software chapter.
+
+		Z-backend: Now correctly enables auto-whitespace after a word
+		that ends with a unicode character.
+
+		Debugger: Properly deals with Delete and some other special
+		keys.
 
 	0h/04 Lib 0.31 (Manual revision 16):
 

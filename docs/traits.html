@@ -545,7 +545,7 @@ these traits model one of the following three different aspects of an object:
 <li>What actions may be carried out on the object.</li>
 </ul>
 </p>
-<h3>Traits that determine where an object appears in the object tree:</h3>
+<h3>Traits that determine where an object may appear in the object tree:</h3>
 <p>Arrows indicate inheritance.
 </p>
 <div class="img"><img src="inheritance1.png" /></div>
@@ -639,6 +639,10 @@ can. The standard response when the player tries to pick up a non-item is:
 where it is&nbsp;$)</span>, that error message is replaced by: &ldquo;<span class="prgoutput">That's fine
 where it is.</span>&rdquo;
 </p>
+<p>Topic objects are recognized by the parser in certain grammatical contexts
+(e.g. <span class="prginput">ASK BOB ABOUT&nbsp;...</span> or <span class="prginput">LOOK UP ... IN THE
+MANUAL</span>), even if they are currently out of scope.
+</p>
 <h3>Traits that determine what actions may be carried out on an object:</h3>
 <div class="img"><img src="inheritance3.png" /></div>
 <p><i>Openable</i> objects can be opened (unless they are locked) and closed.
@@ -672,7 +676,7 @@ the diagram because of their inheritance relation to the animate trait.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="items.html">Chapter 4: Items</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 16, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 17, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

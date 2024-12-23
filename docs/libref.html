@@ -26,7 +26,9 @@ sections of the manual.
 <a href="miscfeat.html#libdebug"><span class="code">(actions on)</span></a><br />
 <a href="traits.html#categorytraits"><span class="code">(actor container $)</span></a><br />
 <a href="traits.html#categorytraits"><span class="code">(actor supporter $)</span></a><br />
+<a href="timeprogress.html#theintro"><span class="code">(additional banner text)</span></a><br />
 <a href="moving.html#scope"><span class="code">(add $ to scope)</span></a><br />
+<a href="actions.html#preventperform"><span class="code">(after $)</span></a><br />
 <a href="traits.html#fullnames"><span class="code">(a full $)</span></a><br />
 <a href="io.html#styles"><span class="code">(A full $)</span></a><br />
 <a href="timeprogress.html#gameover"><span class="code">(amusing)</span></a><br />
@@ -39,14 +41,13 @@ sections of the manual.
 <a href="understanding.html#askingforclar"><span class="code">(asking for direction in $)</span></a><br />
 <a href="understanding.html#askingforclar"><span class="code">(asking for object in $)</span></a><br />
 <a href="moving.html#floating"><span class="code">($ attracts $)</span></a><br />
-<a href="intro.html"><span class="code">(banner)</span></a><br />
+<a href="timeprogress.html#theintro"><span class="code">(banner)</span></a><br />
 <a href="actions.html#refusebefore"><span class="code">(before $)</span></a><br />
 <a href="moving.html#doors"><span class="code">($ blocks light)</span></a><br />
 <a href="moving.html#doors"><span class="code">($ blocks passage)</span></a><br />
 <a href="io.html#styles"><span class="code">(bold)</span></a><br />
 <a href="builtins.html#typechecks"><span class="code">(bound $)</span></a><br />
 <a href="builtins.html#trace"><span class="code">(breakpoint)</span></a><br />
-<a href="io.html#resources"><span class="code">(interpreter can embed $)</span></a><br />
 <a href="traits.html#fullnames"><span class="code">(clarify location of $)</span></a><br />
 <a href="io.html#clear"><span class="code">(clear)</span></a><br />
 <a href="io.html#clear"><span class="code">(clear all)</span></a><br />
@@ -67,7 +68,7 @@ sections of the manual.
 <a href="timeprogress.html#score"><span class="code">(decrease score by $)</span></a><br />
 <a href="scenery.html#descriptions"><span class="code">(descr $)</span></a><br />
 <a href="understanding.html#newactions"><span class="code">(describe action $)</span></a><br />
-<a href="stdactions.html#stdcomm"><span class="code">(describe topic $)</span></a><br />
+<a href="npc.html#conversation"><span class="code">(describe topic $)</span></a><br />
 <a href="scenery.html#descriptions"><span class="code">(dict $)</span></a><br />
 <a href="traits.html#categorytraits"><span class="code">(direction $)</span></a><br />
 <a href="builtins.html#system"><span class="code">(display memory statistics)</span></a><br />
@@ -87,10 +88,13 @@ sections of the manual.
 <a href="stdactions.html#stdreveal"><span class="code">(feel $)</span></a><br />
 <a href="traits.html#categorytraits"><span class="code">(female $)</span></a><br />
 <a href="traits.html#categorytraits"><span class="code">(fine where it is $)</span></a><br />
+<a href="moving.html#pathfinding"><span class="code">(first step from $ to $ is $)</span></a><br />
 <a href="actions.html#refusebefore"><span class="code">(first try $)</span></a><br />
 <a href="io.html#styles"><span class="code">(fixed pitch)</span></a><br />
+<a href="miscfeat.html#dirutil"><span class="code">(from-adverb $)</span></a><br />
 <a href="moving.html#doors"><span class="code">@(from $ go $ through $ to $)</span></a><br />
 <a href="moving.html#rooms"><span class="code">(from $ go $ to $)</span></a><br />
+<a href="npc.html#npcmove"><span class="code">(from $ go $ to room $)</span></a><br />
 <a href="moving.html#doors"><span class="code">(from $ through $ to $)</span></a><br />
 <a href="miscfeat.html#fungibility"><span class="code">(fungibility enabled)</span></a><br />
 <a href="miscfeat.html#fungibility"><span class="code">(fungible $ $)</span></a><br />
@@ -114,7 +118,7 @@ sections of the manual.
 <a href="io.html#hyperlinks"><span class="code">(interpreter supports links)</span></a><br />
 <a href="builtins.html#system"><span class="code">(interpreter supports quit)</span></a><br />
 <a href="builtins.html#system"><span class="code">(interpreter supports undo)</span></a><br />
-<a href="intro.html"><span class="code">(intro)</span></a><br />
+<a href="timeprogress.html#theintro"><span class="code">(intro)</span></a><br />
 <a href="traits.html#linguistictraits"><span class="code">(is $)</span></a><br />
 <a href="scenery.html#objlocations"><span class="code">@($ is $ $)</span></a><br />
 <a href="scenery.html#part2dynamic"><span class="code">($ is broken)</span></a><br />
@@ -150,6 +154,17 @@ sections of the manual.
 <a href="traits.html#linguistictraits"><span class="code">(itself $)</span></a><br />
 <a href="miscfeat.html#listutil"><span class="code">(last $ $)</span></a><br />
 <a href="miscfeat.html#listutil"><span class="code">(length of $ into $)</span></a><br />
+<a href="npc.html#npcaction"><span class="code">(let $ climb $)</span></a><br />
+<a href="npc.html#npcaction"><span class="code">(let $ close $)</span></a><br />
+<a href="npc.html#npcaction"><span class="code">(let $ drop $)</span></a><br />
+<a href="npc.html#npcaction"><span class="code">(let $ enter $)</span></a><br />
+<a href="npc.html#npcmove"><span class="code">(let $ go $)</span></a><br />
+<a href="npc.html#npcaction"><span class="code">(let $ leave $)</span></a><br />
+<a href="npc.html#npcaction"><span class="code">(let $ open $)</span></a><br />
+<a href="npc.html#npcaction"><span class="code">(let $ put $ $ $)</span></a><br />
+<a href="npc.html#npcaction"><span class="code">(let $ remove $)</span></a><br />
+<a href="npc.html#npcaction"><span class="code">(let $ take $)</span></a><br />
+<a href="npc.html#npcaction"><span class="code">(let $ wear $)</span></a><br />
 <a href="understanding.html#liblinks"><span class="code">(library links enabled)</span></a><br />
 <a href="execution.html#printing"><span class="code">(line)</span></a><br />
 <a href="builtins.html#typechecks"><span class="code">(list $)</span></a><br />
@@ -162,25 +177,37 @@ sections of the manual.
 <a href="moving.html#moveplayer"><span class="code">(move player to $ $)</span></a><br />
 <a href="scenery.html#objects"><span class="code">(name $)</span></a><br />
 <a href="stdactions.html#stdcore"><span class="code">(narrate climbing $)</span></a><br />
+<a href="npc.html#npcaction"><span class="code">(narrate $ climbing $)</span></a><br />
 <a href="stdactions.html#stdcore"><span class="code">(narrate closing $)</span></a><br />
+<a href="npc.html#npcaction"><span class="code">(narrate $ closing $)</span></a><br />
 <a href="stdactions.html#stdcore"><span class="code">(narrate dropping $)</span></a><br />
+<a href="npc.html#npcaction"><span class="code">(narrate $ dropping $)</span></a><br />
 <a href="stdactions.html#stdcore"><span class="code">(narrate eating $)</span></a><br />
 <a href="stdactions.html#stdcore"><span class="code">(narrate entering $)</span></a><br />
+<a href="npc.html#npcaction"><span class="code">(narrate $ entering $)</span></a><br />
+<a href="npc.html#npcmove"><span class="code">(narrate $ entering $ from $)</span></a><br />
 <a href="stdactions.html#stdcore"><span class="code">(narrate failing to leave $ $)</span></a><br />
 <a href="stdactions.html#stdreveal"><span class="code">(narrate failing to look $)</span></a><br />
 <a href="stdactions.html#stdcore"><span class="code">(narrate leaving $)</span></a><br />
 <a href="stdactions.html#stdcore"><span class="code">(narrate leaving $ $)</span></a><br />
+<a href="npc.html#npcaction"><span class="code">(narrate $ leaving $)</span></a><br />
+<a href="npc.html#npcmove"><span class="code">(narrate $ leaving $ $ to $)</span></a><br />
 <a href="stdactions.html#stdcore"><span class="code">(narrate leaving $ $ by $)</span></a><br />
 <a href="stdactions.html#stdcore"><span class="code">(narrate leaving $ $ with $)</span></a><br />
 <a href="stdactions.html#stdcore"><span class="code">(narrate locking $ with $)</span></a><br />
 <a href="stdactions.html#stdcore"><span class="code">(narrate opening $)</span></a><br />
+<a href="npc.html#npcaction"><span class="code">(narrate $ opening $)</span></a><br />
 <a href="stdactions.html#stdcore"><span class="code">(narrate putting $ $ $)</span></a><br />
+<a href="npc.html#npcaction"><span class="code">(narrate $ putting $ $ $)</span></a><br />
 <a href="stdactions.html#stdcore"><span class="code">(narrate removing $)</span></a><br />
+<a href="npc.html#npcaction"><span class="code">(narrate $ removing $)</span></a><br />
 <a href="stdactions.html#stdcore"><span class="code">(narrate switching off $)</span></a><br />
 <a href="stdactions.html#stdcore"><span class="code">(narrate switching on $)</span></a><br />
 <a href="stdactions.html#stdcore"><span class="code">(narrate taking $)</span></a><br />
+<a href="npc.html#npcaction"><span class="code">(narrate $ taking $)</span></a><br />
 <a href="stdactions.html#stdcore"><span class="code">(narrate unlocking $ with $)</span></a><br />
 <a href="stdactions.html#stdcore"><span class="code">(narrate wearing $)</span></a><br />
+<a href="npc.html#npcaction"><span class="code">(narrate $ wearing $)</span></a><br />
 <a href="builtins.html#typechecks"><span class="code">(nonempty $)</span></a><br />
 <a href="execution.html#printing"><span class="code">(no space)</span></a><br />
 <a href="traits.html#categorytraits"><span class="code">(not here $)</span></a><br />
@@ -193,17 +220,20 @@ sections of the manual.
 <a href="traits.html#categorytraits"><span class="code">(on-seat $)</span></a><br />
 <a href="traits.html#categorytraits"><span class="code">(openable $)</span></a><br />
 <a href="scenery.html#part2dynamic"><span class="code">(open or closed $)</span></a><br />
+<a href="miscfeat.html#dirutil"><span class="code">(opposite of $ is $)</span></a><br />
 <a href="traits.html#categorytraits"><span class="code">(out of reach $)</span></a><br />
 <a href="traits.html#linguistictraits"><span class="code">(pair $)</span></a><br />
 <a href="execution.html#printing"><span class="code">(par)</span></a><br />
 <a href="timeprogress.html#gameover"><span class="code">(parse game over $)</span></a><br />
 <a href="actions.html#preventperform"><span class="code">(perform $)</span></a><br />
 <a href="moving.html#light"><span class="code">(player can see)</span></a><br />
+<a href="moving.html#scope"><span class="code">(player can see $)</span></a><br />
 <a href="traits.html#linguistictraits"><span class="code">(plural $)</span></a><br />
 <a href="items.html#plursynonyms"><span class="code">(plural dict $)</span></a><br />
 <a href="miscfeat.html#fungibility"><span class="code">(plural name $)</span></a><br />
 <a href="builtins.html#arithmetic"><span class="code">($ plus $ into $)</span></a><br />
 <a href="traits.html#categorytraits"><span class="code">(potable $)</span></a><br />
+<a href="miscfeat.html#dirutil"><span class="code">(present-adverb $)</span></a><br />
 <a href="traits.html#categorytraits"><span class="code">(present-name $)</span></a><br />
 <a href="actions.html#preventperform"><span class="code">(prevent $)</span></a><br />
 <a href="stdactions.html#stdcore"><span class="code">(prevent entering $)</span></a><br />
@@ -212,12 +242,14 @@ sections of the manual.
 <a href="execution.html#predsrules"><span class="code">(program entry point)</span></a><br />
 <a href="io.html#progressbar"><span class="code">(progress bar $ of $)</span></a><br />
 <a href="traits.html#linguistictraits"><span class="code">(proper $)</span></a><br />
+<a href="npc.html#conversation"><span class="code">(proper topic $)</span></a><br />
 <a href="moving.html#light"><span class="code">($ provides light)</span></a><br />
 <a href="traits.html#categorytraits"><span class="code">(pushable $)</span></a><br />
 <a href="control.html#closures"><span class="code">(query $ $)</span></a><br />
 <a href="control.html#closures"><span class="code">(query $)</span></a><br />
 <a href="builtins.html#system"><span class="code">(quit)</span></a><br />
 <a href="builtins.html#arithmetic"><span class="code">(random from $ to $ into $)</span></a><br />
+<a href="miscfeat.html#listutil"><span class="code">(randomly select $ from $)</span></a><br />
 <a href="miscfeat.html#listutil"><span class="code">($ recursively contains $)</span></a><br />
 <a href="miscfeat.html#treeutil"><span class="code">(recursively leave non-vehicles)</span></a><br />
 <a href="timeprogress.html#part2status"><span class="code">(redraw status bar)</span></a><br />
@@ -277,8 +309,9 @@ sections of the manual.
 <a href="traits.html#linguistictraits"><span class="code">(them $)</span></a><br />
 <a href="actions.html#tickstop"><span class="code">(tick)</span></a><br />
 <a href="builtins.html#arithmetic"><span class="code">($ times $ into $)</span></a><br />
-<a href="stdactions.html#stdcomm"><span class="code">(topic keyword $)</span></a><br />
-<a href="stdactions.html#stdcomm"><span class="code">(topic keyword $ implies $)</span></a><br />
+<a href="npc.html#conversation"><span class="code">(topic $)</span></a><br />
+<a href="npc.html#conversation"><span class="code">(topic keyword $)</span></a><br />
+<a href="npc.html#conversation"><span class="code">(topic keyword $ implies $)</span></a><br />
 <a href="traits.html#categorytraits"><span class="code">(towards-name $)</span></a><br />
 <a href="builtins.html#trace"><span class="code">(trace off)</span></a><br />
 <a href="builtins.html#trace"><span class="code">(trace on)</span></a><br />
@@ -288,6 +321,9 @@ sections of the manual.
 <a href="traits.html#linguistictraits"><span class="code">(uncountable $)</span></a><br />
 <a href="understanding.html#newactions"><span class="code">(understand $)</span></a><br />
 <a href="understanding.html#parsingactions"><span class="code">(understand $ as $)</span></a><br />
+<a href="understanding.html#parsingobj"><span class="code">(understand $ as any object $)</span></a><br />
+<a href="understanding.html#parsingobj"><span class="code">(understand $ as any object $ preferably $)</span></a><br />
+<a href="understanding.html#parsingobj"><span class="code">(understand $ as any object $ preferably animate)</span></a><br />
 <a href="understanding.html#parsedir"><span class="code">(understand $ as direction $)</span></a><br />
 <a href="understanding.html#parsingobj"><span class="code">(understand $ as non-all object $)</span></a><br />
 <a href="understanding.html#parsedir"><span class="code">(understand $ as number $)</span></a><br />
@@ -307,13 +343,13 @@ sections of the manual.
 <a href="understanding.html#newactions"><span class="code">@(understand command $)</span></a><br />
 <a href="builtins.html#system"><span class="code">(undo)</span></a><br />
 <a href="understanding.html#unlikely"><span class="code">(unlikely $)</span></a><br />
-<a href="understanding.html#unlikely"><span class="code">(unlikely due to room $)</span></a><br />
 <a href="moving.html#doors"><span class="code">($ unlocks $)</span></a><br />
 <a href="io.html#styles"><span class="code">(unstyle)</span></a><br />
 <a href="moving.html#moveplayer"><span class="code">(update environment around player)</span></a><br />
 <a href="io.html#styles"><span class="code">(uppercase)</span></a><br />
 <a href="traits.html#categorytraits"><span class="code">(wearable $)</span></a><br />
 <a href="traits.html#categorytraits"><span class="code">(vehicle $)</span></a><br />
+<a href="understanding.html#unlikely"><span class="code">(very unlikely $)</span></a><br />
 <a href="miscfeat.html#commoncomplaints"><span class="code">(when $ blocks passage)</span></a><br />
 <a href="miscfeat.html#commoncomplaints"><span class="code">(when $ can't be taken)</span></a><br />
 <a href="miscfeat.html#commoncomplaints"><span class="code">(when $ is $ $)</span></a><br />
@@ -321,11 +357,13 @@ sections of the manual.
 <a href="miscfeat.html#commoncomplaints"><span class="code">(when $ is already held)</span></a><br />
 <a href="miscfeat.html#commoncomplaints"><span class="code">(when $ is closed)</span></a><br />
 <a href="miscfeat.html#commoncomplaints"><span class="code">(when $ is fine where it is)</span></a><br />
+<a href="miscfeat.html#commoncomplaints"><span class="code">(when $ is held by someone)</span></a><br />
 <a href="miscfeat.html#commoncomplaints"><span class="code">(when $ is not here)</span></a><br />
 <a href="miscfeat.html#commoncomplaints"><span class="code">(when $ isn't directly held)</span></a><br />
 <a href="miscfeat.html#commoncomplaints"><span class="code">(when $ is out of reach)</span></a><br />
 <a href="miscfeat.html#commoncomplaints"><span class="code">(when $ is out of sight)</span></a><br />
 <a href="miscfeat.html#commoncomplaints"><span class="code">(when $ is part of something)</span></a><br />
+<a href="miscfeat.html#commoncomplaints"><span class="code">(when $ is worn by someone)</span></a><br />
 <a href="miscfeat.html#commoncomplaints"><span class="code">(when $ won't accept $)</span></a><br />
 <a href="miscfeat.html#commoncomplaints"><span class="code">(when $ won't accept actor $)</span></a><br />
 <a href="builtins.html#typechecks"><span class="code">(word $)</span></a><br />
@@ -341,7 +379,7 @@ sections of the manual.
 </p>
 	<div class="footer">
 	<p class="nav">Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 16, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 17, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

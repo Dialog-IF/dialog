@@ -3060,7 +3060,7 @@ static void chunk_head(FILE *f, struct program *prg) {
 	if(prg->meta_ifid) size += 10 + strlen(prg->meta_ifid);
 	pad = chunkheader(f, "HEAD", size);
 	fputc(AAVM_FORMAT_MAJOR, f);
-	fputc(AAVM_FORMAT_MINOR, f);
+	fputc(2, f); // minimum required minor version of interpreter
 	fputc(2, f);
 	fputc(0, f);
 	putword(prg->meta_release, f);
