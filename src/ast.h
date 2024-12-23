@@ -4,14 +4,15 @@
 struct word {
 	struct word		*next_in_hash;
 	char			*name;
-	unsigned int		flags:2;
-	unsigned int		word_id:30;
+	unsigned int		flags:3;
+	unsigned int		word_id:29;
 	uint16_t		obj_id;
 	uint16_t		dict_id;
 };
 
 #define WORDF_DICT			1
 #define WORDF_TAG			2
+#define WORDF_OUTPUT			4
 
 enum {
 	AN_BLOCK,

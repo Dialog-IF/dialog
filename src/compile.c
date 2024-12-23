@@ -432,6 +432,7 @@ static value_t comp_tag_simple(struct astnode *an) {
 	case AN_EMPTY_LIST:
 		return (value_t) {VAL_NIL, 0};
 	default:
+		printf("%d: ", an->kind);
 		pp_expr(an);
 		printf("\n");
 		assert(0); exit(1);
@@ -679,6 +680,10 @@ static void comp_rev_lookup(struct program *prg, struct clause *cl, int mapnum) 
 	ci->oper[0] = (value_t) {OPER_ARG, 1};
 	ci->oper[1] = (value_t) {OPER_TEMP, 0};
 	ci->oper[2] = (value_t) {OPER_ARG, 1};
+
+	ci = add_instr(I_IF_NUM);
+	ci->oper[0] = (value_t) {OPER_TEMP, 0};
+	ci->implicit = labloop;
 
 	ci = add_instr(I_COLLECT_BEGIN);
 
@@ -1844,7 +1849,11 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 			if(an->children[0]->kind == AN_DICTWORD) {
 				box = find_boxclass(prg, an->children[0]->word);
 			} else {
-				report(LVL_ERR, an->line, "The parameter of %s must be a dictionary word.", an->predicate->printed_name);
+				report(
+					LVL_ERR,
+					an->line,
+					"The parameter of %s must be a dictionary word.",
+					an->subkind? "(status bar $)" : "(div $)");
 				prg->errorflag = 1;
 				box = -1;
 			}

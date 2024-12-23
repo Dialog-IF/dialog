@@ -10,6 +10,7 @@
 #include "ast.h"
 #include "parse.h"
 #include "report.h"
+#include "unicode.h"
 
 #define MAXWORDLENGTH 256
 #define MAXRULEWORDS 32
@@ -50,7 +51,17 @@ static int lexer_getc(struct lexer *lexer) {
 		}
 	}
 	if(lexer->file) {
-		return fgetc(lexer->file);
+		int ch = fgetc(lexer->file);
+		if(ch == 9
+		|| ch == 10
+		|| ch == 13
+		|| (ch >= 0x20 && ch < 0x7f)
+		|| ch >= 0x80
+		|| ch == EOF) {
+			return ch;
+		} else {
+			report(LVL_WARN, line, "Ignoring control character 0x%02x in source code file", ch);
+		}
 	}
 	return EOF;
 }
@@ -62,6 +73,7 @@ static void lexer_ungetc(char ch, struct lexer *lexer) {
 static int next_token(struct lexer *lexer, int parsemode) {
 	int ch;
 	char buf[MAXWORDLENGTH + 1];
+	uint16_t wbuf[MAXWORDLENGTH + 1];
 	int pos = 0, i;
 	int at_start;
 	long val;
@@ -113,12 +125,13 @@ static int next_token(struct lexer *lexer, int parsemode) {
 						column--;
 					}
 					buf[pos] = 0;
-					if(lexer->kind == TOK_TAG && !pos) {
-						report(LVL_ERR, line, "Invalid tag.");
+					utf8_to_unicode(wbuf, MAXWORDLENGTH + 1, (uint8_t *) buf);
+					if(lexer->kind == TOK_TAG && !wbuf[0]) {
+						report(LVL_ERR, line, "Invalid object name.");
 						lexer->errorflag = 1;
 						return 0;
 					}
-					if(lexer->kind == TOK_DICTWORD && !pos && !at_start) {
+					if(lexer->kind == TOK_DICTWORD && !wbuf[0] && !at_start) {
 						report(LVL_ERR, line, "Invalid dictionary word.");
 						lexer->errorflag = 1;
 						return 0;
@@ -190,6 +203,10 @@ static int next_token(struct lexer *lexer, int parsemode) {
 					report(LVL_ERR, line, "Backslash not allowed at end of file.");
 					lexer->errorflag = 1;
 					return 0;
+				} else if(ch < 0x20) {
+					report(LVL_ERR, line, "Invalid character after backslash.");
+					lexer->errorflag = 1;
+					return 0;
 				}
 			}
 			buf[pos++] = ch;
@@ -208,6 +225,10 @@ static int next_token(struct lexer *lexer, int parsemode) {
 						report(LVL_ERR, line, "Backslash not allowed at end of file.");
 						lexer->errorflag = 1;
 						return 0;
+					} else if(ch < 0x20) {
+						report(LVL_ERR, line, "Invalid character after backslash.");
+						lexer->errorflag = 1;
+						return 0;
 					}
 					if(pos >= MAXWORDLENGTH) {
 						report(LVL_ERR, line, "Word too long.");
@@ -221,6 +242,12 @@ static int next_token(struct lexer *lexer, int parsemode) {
 						column--;
 					}
 					buf[pos] = 0;
+					utf8_to_unicode(wbuf, MAXWORDLENGTH + 1, (uint8_t *) buf);
+					if(!wbuf[0]) {
+						report(LVL_ERR, line, "Syntax error.");
+						lexer->errorflag = 1;
+						return 0;
+					}
 					for(i = 0; i < pos; i++) {
 						if(buf[i] < '0' || buf[i] > '9') break;
 					}
@@ -292,7 +319,13 @@ static struct astnode *fold_disjunctions(struct astnode *body, struct lexer *lex
 			} else if(an->predicate->special == SP_ELSE
 			|| an->predicate->special == SP_ELSEIF
 			|| an->predicate->special == SP_ENDIF
-			|| an->predicate->special == SP_THEN) {
+			|| an->predicate->special == SP_THEN
+			|| an->predicate->special == SP_STOPPING
+			|| an->predicate->special == SP_RANDOM
+			|| an->predicate->special == SP_P_RANDOM
+			|| an->predicate->special == SP_T_RANDOM
+			|| an->predicate->special == SP_T_P_RANDOM
+			|| an->predicate->special == SP_CYCLING) {
 				report(LVL_ERR, an->line, "Unexpected %s.", an->predicate->printed_name);
 				lexer->errorflag = 1;
 			}
@@ -578,6 +611,7 @@ static struct astnode *parse_expr(int parsemode, struct lexer *lexer, struct are
 			if(parsemode == PMODE_BODY
 			&& (isalnum(lexer->word->name[0]) || lexer->word->name[1])) {
 				lexer->wordcount++;
+				lexer->word->flags |= WORDF_OUTPUT;
 			}
 		}
 		an->word = lexer->word;
@@ -591,6 +625,11 @@ static struct astnode *parse_expr(int parsemode, struct lexer *lexer, struct are
 		an->value = lexer->value;
 		break;
 	case TOK_STARPAREN:
+		if(parsemode != PMODE_BODY) {
+			report(LVL_ERR, line, "Nested rules are only allowed inside rule heads.");
+			lexer->errorflag = 1;
+			return 0;
+		}
 		an = parse_rule(lexer, arena);
 		if(!an) return 0;
 		if(an->predicate->special) {
@@ -689,6 +728,9 @@ static struct astnode *parse_expr(int parsemode, struct lexer *lexer, struct are
 					*dest = sub;
 					dest = &sub->next_in_body;
 				}
+			}
+			for(i = 0; i < an->nchild; i++) {
+				an->children[i] = fold_disjunctions(an->children[i], lexer, arena);
 			}
 		} else if(an->predicate->special == SP_COLLECT) {
 			sub = an;
@@ -954,6 +996,11 @@ static struct astnode *parse_expr(int parsemode, struct lexer *lexer, struct are
 		}
 		break;
 	case '~':
+		if(parsemode != PMODE_BODY) {
+			report(LVL_ERR, line, "Nested rules are only allowed inside rule heads.");
+			lexer->errorflag = 1;
+			return 0;
+		}
 		status = next_token(lexer, PMODE_BODY);
 		if(lexer->errorflag) return 0;
 		if(status != 1 || (lexer->kind != '(' && lexer->kind != '{')) {
@@ -1131,7 +1178,7 @@ static struct astnode *parse_expr_nested(
 					lexer->errorflag = 1;
 					return 0;
 				}
-				*dest = parse_expr_nested(nested_rules, nnested, PMODE_VALUE, 0, lexer, arena);
+				*dest = parse_expr_nested(nested_rules, nnested, PMODE_VALUE, nonvar_detected, lexer, arena);
 				if(!*dest) return 0;
 				status = next_token(lexer, PMODE_VALUE);
 				if(lexer->errorflag) return 0;
@@ -1143,7 +1190,7 @@ static struct astnode *parse_expr_nested(
 				break;
 			} else {
 				sub = mkast(AN_PAIR, 2, arena, line);
-				sub->children[0] = parse_expr_nested(nested_rules, nnested, PMODE_VALUE, 0, lexer, arena);
+				sub->children[0] = parse_expr_nested(nested_rules, nnested, PMODE_VALUE, nonvar_detected, lexer, arena);
 				if(!sub->children[0]) return 0;
 				*dest = sub;
 				dest = &sub->children[1];
@@ -1182,7 +1229,8 @@ static struct astnode *parse_expr_nested(
 				an = parse_expr(parsemode, lexer, arena);
 				if(!an) return 0;
 				if(an->kind == AN_VARIABLE
-				|| an->kind == AN_PAIR) {
+				|| an->kind == AN_PAIR
+				|| an->kind == AN_BAREWORD) {
 					report(LVL_ERR, an->line, "Invalid kind of value inside a slash-expression.");
 					lexer->errorflag = 1;
 					return 0;

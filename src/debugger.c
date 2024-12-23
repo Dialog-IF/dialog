@@ -1294,6 +1294,7 @@ static int recompile(struct program *prg, int argc, char **argv) {
 static int restart(struct debugger *dbg) {
 	struct timeval tv;
 	int old_trace = dbg->es.trace;
+	int old_hidelinks = dbg->es.hide_links;
 
 	free_dyn_state(&dbg->ds);
 	free_evalstate(&dbg->es);
@@ -1309,6 +1310,7 @@ static int restart(struct debugger *dbg) {
 	(void) init_dynstate(&dbg->ds, dbg->prg);
 	init_evalstate(&dbg->es, dbg->prg);
 	dbg->es.trace = old_trace;
+	dbg->es.hide_links = old_hidelinks;
 	dbg->es.dyn_callbacks = &dyn_callbacks;
 	dbg->es.dyn_callback_data = &dbg->ds;
 	if(dbg->randomseed) {
@@ -1344,6 +1346,7 @@ void usage(char *prgname) {
 	fprintf(stderr, "\n");
 	fprintf(stderr, "--width     -w    Specify output width, in characters.\n");
 	fprintf(stderr, "--seed      -s    Specify random seed.\n");
+	fprintf(stderr, "--no-links  -L    Don't show hyperlinks in the output.\n");
 	fprintf(stderr, "--dfquirks  -D    Activate the dumbfrotz-compatible quirks mode.\n");
 }
 
@@ -1357,6 +1360,7 @@ int debugger(int argc, char **argv) {
 		{"quit", 0, 0, 'q'},
 		{"width", 1, 0, 'w'},
 		{"seed", 1, 0, 's'},
+		{"no-links", 0, 0, 'L'},
 		{"dfquirks", 0, 0, 'D'},
 		{0, 0, 0, 0}
 	};
@@ -1372,7 +1376,7 @@ int debugger(int argc, char **argv) {
 	struct predname *predname;
 	int initial_trace = 0, no_entry = 0, quitopt = 0;
 	struct timeval tv;
-	int dfrotz_quirks = 0;
+	int dfrotz_quirks = 0, hide_links = 0;
 	char numbuf[8], chbuf[8];
 	struct word *w;
 	uint16_t unibuf[2];
@@ -1380,7 +1384,7 @@ int debugger(int argc, char **argv) {
 	dbg.timestamps = calloc(argc, sizeof(struct timespec));
 
 	do {
-		opt = getopt_long(argc, argv, "?hVvtnqw:s:D", longopts, 0);
+		opt = getopt_long(argc, argv, "?hVvtnqw:s:LD", longopts, 0);
 		switch(opt) {
 			case 0:
 			case '?':
@@ -1407,6 +1411,9 @@ int debugger(int argc, char **argv) {
 				break;
 			case 's':
 				dbg.randomseed = strtol(optarg, 0, 10);
+				break;
+			case 'L':
+				hide_links = 1;
 				break;
 			case 'D':
 				dfrotz_quirks = 1;
@@ -1461,6 +1468,7 @@ int debugger(int argc, char **argv) {
 	}
 	init_evalstate(&dbg.es, dbg.prg);
 	dbg.es.trace = initial_trace;
+	dbg.es.hide_links = hide_links;
 	dbg.es.dyn_callbacks = &dyn_callbacks;
 	dbg.es.dyn_callback_data = &dbg.ds;
 	if(dbg.randomseed) {

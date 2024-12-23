@@ -297,10 +297,11 @@ transparently. That command also performs an implicit undo, which is
 particularly useful for debugging games with timed puzzles.
 </p>
 <p>Finally, a word of warning: The interactive debugger does not try to emulate
-the Z-machine compiler backend. The Z-machine truncates dictionary words, but
-the debugger doesn't. The debugger allocates larger heap areas, but doesn't
-optimize tail calls. Always test the compiled version of your game thoroughly,
-in a Z-code interpreter, before releasing it.
+the Z-machine backend, nor the Å-machine backend. The Z-machine truncates
+dictionary words, but the debugger doesn't. The debugger allocates larger heap
+areas, but doesn't optimize tail calls. Always test the compiled version of
+your game thoroughly, preferably both in a Z-code interpreter and an Å-code
+interpreter, before releasing it.
 </p>
 <a id="buildtools"></a><h2>Building from source code</h2>
 <p>To build the Dialog compiler and debugger from source, you need a working
@@ -319,7 +320,7 @@ system-wide location, type &ldquo;<span class="tt">sudo&nbsp;make&nbsp;install</
 </p>
 	<div class="footer">
 	<p class="nav">Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 13, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 14, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

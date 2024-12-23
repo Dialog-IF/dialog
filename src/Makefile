@@ -1,5 +1,5 @@
 CC		= gcc
-CFLAGS		+= -O3 -Wall -DVERSION=\"0g/04\"
+CFLAGS		+= -O3 -Wall -DVERSION=\"0g/05\"
 WININCLUDE	= winglk
 WINLIB		= ../prebuilt/win32
 
@@ -38,7 +38,7 @@ frontend.o:		frontend.c compile.h arena.h ast.h frontend.h parse.h report.h eval
 ast.o:			ast.c ast.h arena.h report.h common.h Makefile
 			${CC} -c ${CFLAGS} -o $@ $<
 
-backend.o:		backend.c backend_z.h backend_aa.h common.h arena.h ast.h frontend.h compile.h report.h Makefile
+backend.o:		backend.c backend_z.h backend_aa.h common.h arena.h ast.h frontend.h compile.h report.h unicode.h Makefile
 			${CC} -c ${CFLAGS} -o $@ $<
 
 backend_z.o:		backend_z.c ast.h frontend.h zcode.h blorb.h report.h common.h compile.h eval.h Makefile
@@ -65,7 +65,7 @@ report.o:		report.c report.h output.h terminal.h common.h Makefile
 arena.o:		arena.c arena.h Makefile
 			${CC} -c ${CFLAGS} -o $@ $<
 
-parse.o:		parse.c arena.h ast.h parse.h common.h Makefile
+parse.o:		parse.c arena.h ast.h parse.h common.h unicode.h Makefile
 			${CC} -c ${CFLAGS} -o $@ $<
 
 compile.o:		compile.c arena.h ast.h eval.h compile.h common.h Makefile
@@ -86,7 +86,7 @@ fs_tty.o:		fs_tty.c fs.h terminal.h output.h report.h common.h Makefile
 accesspred.o:		accesspred.c arena.h ast.h accesspred.h common.h Makefile
 			${CC} -c ${CFLAGS} -o $@ $<
 
-output.o:		output.c output.h terminal.h Makefile
+output.o:		output.c output.h terminal.h unicode.h Makefile
 			${CC} -c ${CFLAGS} -o $@ $<
 
 unicode.o:		unicode.c unicode.h report.h common.h Makefile

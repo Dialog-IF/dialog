@@ -1,6 +1,6 @@
 
 (library version)
-	Library version 0.27.
+	Library version 0.28.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -3087,12 +3087,23 @@
 (understand $Words as $Action)
 	(default actions enabled)
 	*(understand $Words as non-all object $Obj)
-	(if) (object $Obj) (then)
-		(default action $Obj $Action)
-	(else)
-		($Obj = [a $RealObj])
+	~(empty $Obj)
+	~($Obj = [1])
+	(if) ($Obj = [a $RealObj]) (then)
 		(default action $RealObj $Action)
+	(else)
+		(default action $Obj $Action)
 	(endif)
+
+(understand $Words as $Action)
+	(implicit action is $Implicit)
+	(if) (implicit action wants direction) (then)
+		*(understand $Words as direction $O)
+	(else)
+		%% We don't know the correct policy, so fall back on 'non-all'.
+		*(understand $Words as non-all object $O)
+	(endif)
+	(recover implicit action $Implicit $O into $Action)
 
 (default action $Obj [examine $Obj])
 
@@ -4500,6 +4511,7 @@
 			*(from $Room go $Dir to object $Obj)
 			~(direction $Obj)
 			~(relation $Obj)
+			(words $Tail sufficiently specify $Obj)
 		(from words)
 			*(dict $Obj)
 		(matching all of $Tail)
@@ -4509,6 +4521,7 @@
 			*($Obj is in scope)
 			~(direction $Obj)
 			~(relation $Obj)
+			(words $Filtered sufficiently specify $Obj)
 		(from words)
 			*(dict $Obj)
 		(or)
@@ -4543,6 +4556,18 @@
 			*($Obj is one of $CleanList)
 			($Result = [$Obj])
 		(endif)
+	(endif)
+
+(words $ sufficiently specify $)
+	~(head noun is required)
+
+(words $Words sufficiently specify $Obj)
+	(collect words)
+		(heads $Obj)
+	(into $Heads)
+	(if) (nonempty $Heads) (then)
+		*($H is one of $Heads)
+		($H is one of $Words)
 	(endif)
 
 (filter [] into [])
@@ -4658,17 +4683,8 @@
 		%% Parse the action. Special treatment if we've asked for
 		%% clarification, and a noun was entered on its own:
 
+		(now) ~(head noun is required)
 		(collect $A)
-			(implicit action is $Implicit)
-			(if) (implicit action wants direction) (then)
-				*(understand $ActualWords as direction $O)
-			(else)
-				%% We don't know the correct policy, so
-				%% fall back on 'non-all'.
-				*(understand $ActualWords as non-all object $O)
-			(endif)
-			(recover implicit action $Implicit $O into $A)
-		(or)
 			*(understand $ActualWords as $A)
 		(into $AllCandidatesWithDup)
 
@@ -4695,7 +4711,7 @@
 		(into $LikelyCandidates)
 		(if) (nonempty $LikelyCandidates) (then)
 			%% Consider only the likely candidates.
-			(consider action candidates $LikelyCandidates)
+			(consider action candidates $LikelyCandidates $ActualWords)
 		(else)
 			%% All candidates were deemed unlikely, but some
 			%% candidates are more unlikely than others. Here, we
@@ -4706,9 +4722,9 @@
 				~(unlikely due to room $A)
 			(into $SomewhatLikely)
 			(if) (nonempty $SomewhatLikely) (then)
-				(consider action candidates $SomewhatLikely)
+				(consider action candidates $SomewhatLikely $ActualWords)
 			(else)
-				(consider action candidates $AllCandidates)
+				(consider action candidates $AllCandidates $ActualWords)
 			(endif)
 		(endif)
 	(elseif)
@@ -4758,13 +4774,28 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Disambiguation
 
-(consider action candidates $List)
+(consider action candidates $List $ActualWords)
 	(if) ($List = [$Single]) (then)
 		%% Optimize the common case.
 		(try-complex $Single)
 	(else)
-		(disambiguate action $List $ComplexAction)
-		(try-complex $ComplexAction)
+		%% Eliminate options where the head noun is missing.
+		(now) (head noun is required)
+		(collect $A)
+			*(understand $ActualWords as $A)
+			($A is one of $List)
+		(into $ShortListWithDup)
+		(remove duplicates $ShortListWithDup $ShortList)
+		(if) ($ShortList = [$Single]) (then)
+			(try-complex $Single)
+		(else)
+			(if) (empty $ShortList) (then)
+				(disambiguate action $List $ComplexAction)
+			(else)
+				(disambiguate action $ShortList $ComplexAction)
+			(endif)
+			(try-complex $ComplexAction)
+		(endif)
 	(endif)
 
 (disambiguate action $List $Result)
@@ -4807,24 +4838,11 @@
 			(then)
 				(recover implicit action $Template $Player into $Result)
 			(else)
-				(collect $A)
-					(determine object $Obj)
-						*($Obj is one of $ObjList)
-						~(direction $Obj)
-						~(relation $Obj)
-					(from words)
-						(the full $Obj)
-					(matching all of $Words)
-					(recover implicit action $Template $Obj into $A)
-				(into $Candidates)
-				(nonempty $Candidates)
-				{
-					($Candidates = [$Result])
-				(or)
-					(just)
-					(consider action candidates $Candidates)
-					(stop)
-				}
+				(now) (head noun is required)
+				(disambiguate by object name $Words $Template $ObjList $Result)
+			(or)
+				(now) ~(head noun is required)
+				(disambiguate by object name $Words $Template $ObjList $Result)
 			(endif)
 		(or)
 			(parse commandline $Words)
@@ -4847,6 +4865,25 @@
 			(stop)
 		}
 	(endif)
+
+(disambiguate by object name $Words $Template $ObjList $Result)
+	(collect $A)
+		(determine object $Obj)
+			*($Obj is one of $ObjList)
+			~(direction $Obj)
+			~(relation $Obj)
+			(words $Words sufficiently specify $Obj)
+		(from words)
+			(the full $Obj)
+		(matching all of $Words)
+		(recover implicit action $Template $Obj into $A)
+	(into $Candidates)
+	(nonempty $Candidates)
+	{
+		($Candidates = [$Result])
+	(or)
+		(disambiguate action $Candidates $Result)
+	}
 
 (rephrase as object disambiguation [$Head | $Tail] $Complex $Template $ObjList)
 	(all identical except object $Head $Tail $Pos [] $ObjList)
@@ -5250,6 +5287,7 @@
 (amusing)			(fail)
 (library links enabled)		(fail)
 (default actions enabled)	(fail)
+(heads $)			(fail)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Fatal runtime errors

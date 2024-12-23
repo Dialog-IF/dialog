@@ -719,6 +719,18 @@ void trace_invocations(struct program *prg) {
 
 	trace_entrypoint(find_builtin(prg, BI_HASPARENT), prg, PREDF_INVOKED_BY_DEBUGGER); // invoked for initial values
 
+	for(i = 0; i < prg->npredicate; i++) {
+		predname = prg->predicates[i];
+		pred = predname->pred;
+		if(pred->flags & PREDF_DYNAMIC) {
+			pred->flags |= PREDF_INVOKED_SIMPLE; // for initial values
+			if(pred->flags & PREDF_GLOBAL_VAR) {
+				pred->unbound_in |= 1; // when computing the initial value
+			}
+			trace_invoke_pred(predname, PREDF_INVOKED_BY_DEBUGGER, 0, 0, prg);
+		}
+	}
+
 	if(!(prg->optflags & OPTF_BOUND_PARAMS)) {
 		// in the debugger, all predicates are potential entry points, and all
 		// incoming parameters are potentially unbound
@@ -766,7 +778,10 @@ static int mark_all_dynamic(struct program *prg, struct astnode *an, line_t line
 	while(an) {
 		if(an->kind == AN_RULE
 		|| an->kind == AN_NEG_RULE) {
-			if(an->predicate->builtin && an->predicate->builtin != BI_HASPARENT) {
+			if(an->predicate->special) {
+				report(LVL_ERR, line, "(now) cannot be followed by special syntax.");
+				success = 0;
+			} else if(an->predicate->builtin && an->predicate->builtin != BI_HASPARENT) {
 				report(LVL_ERR, line, "(now) cannot be combined with this built-in predicate.");
 				success = 0;
 			} else if(an->subkind == RULE_MULTI && !allow_multi) {
@@ -1494,7 +1509,7 @@ static int add_ending(struct program *prg, char *utf8) {
 		if(i == pt->nway) {
 			pt->nway++;
 			ways = arena_alloc(&prg->endings_arena, pt->nway * sizeof(struct endings_way *));
-			memcpy(ways, pt->ways, i * sizeof(struct endings_way));
+			memcpy(ways, pt->ways, i * sizeof(struct endings_way *));
 			ways[i] = arena_calloc(&prg->endings_arena, sizeof(struct endings_way));
 			ways[i]->letter = ch;
 			pt->ways = ways;
@@ -1581,6 +1596,17 @@ int frontend_visit_clauses(struct program *prg, struct arena *temp_arena, struct
 	char buf[32];
 	struct predicate *pred;
 
+	for(i = 0; i < prg->npredicate; i++) {
+		pred = prg->predicates[i]->pred;
+		if(pred->flags & PREDF_MACRO) {
+			if(accesspred_has_cycle(pred)) {
+				report(LVL_ERR, pred->macrodef->line, "Cyclic definition of access predicate.");
+				return 0;
+			}
+		}
+	}
+
+	prg->errorflag = 0;
 	for(clause_dest = first_ptr; (cl = *clause_dest); ) {
 		if(cl->predicate->special == SP_GLOBAL_VAR) {
 			if(cl->body
@@ -1596,6 +1622,10 @@ int frontend_visit_clauses(struct program *prg, struct arena *temp_arena, struct
 				}
 				if(cl->body->predicate->builtin) {
 					report(LVL_ERR, cl->line, "Global variable declaration collides with built-in predicate.");
+					return 0;
+				}
+				if(cl->body->predicate->pred->flags & PREDF_MACRO) {
+					report(LVL_ERR, cl->line, "Global variable collides with access predicate of the same name.");
 					return 0;
 				}
 				if(cl->body->predicate->pred->flags & PREDF_GLOBAL_VAR) {
@@ -1707,7 +1737,7 @@ int frontend_visit_clauses(struct program *prg, struct arena *temp_arena, struct
 		pred->clauses[i]->body = expand_macros(pred->clauses[i]->body, prg, &pred->arena);
 	}
 
-	return 1;
+	return !prg->errorflag;
 }
 
 static void frontend_reset_program(struct program *prg) {
@@ -2203,6 +2233,18 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 
 	report(LVL_INFO, 0, "Total word count: %d", lexer.totalwords);
 
+	if(verbose >= 4) {
+		struct word *w;
+
+		for(i = 0; i < WORDBUCKETS; i++) {
+			for(w = prg->wordhash[i]; w; w = w->next_in_hash) {
+				if(w->flags & (WORDF_OUTPUT | WORDF_DICT)) {
+					printf("Output: %s\n", w->name);
+				}
+			}
+		}
+	}
+
 	if(!frontend_visit_clauses(prg, &lexer.temp_arena, &first_clause)) {
 		arena_free(&lexer.temp_arena);
 		frontend_reset_program(prg);
@@ -2542,6 +2584,7 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 		return 0;
 	}
 
+	success = 1;
 	init_evalstate(&es, prg);
 	//es.trace = 1;
 	for(i = 0; i < prg->npredicate; i++) {
@@ -2550,14 +2593,16 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 		predname->fixedvalues = 0;
 		predname->nfixedvalue = 0;
 		if(predname->pred->flags & PREDF_FIXED_FLAG) {
-			ensure_fixed_values(&es, prg, predname);
+			if(!ensure_fixed_values(&es, prg, predname)) {
+				success = 0;
+			}
 		}
 	}
 	free_evalstate(&es);
 
 	prg->totallines = lexer.totallines;
 
-	return 1;
+	return success;
 }
 
 int frontend_inject_query(struct program *prg, struct predname *predname, struct predname *tailpred, struct word *prompt, const uint8_t *str) {
@@ -2591,7 +2636,12 @@ int frontend_inject_query(struct program *prg, struct predname *predname, struct
 
 	find_dict_words(prg, body, 0);
 
+	prg->errorflag = 0;
 	body = expand_macros(body, prg, cl->arena);
+	if(prg->errorflag) {
+		arena_free(&lexer.temp_arena);
+		return 0;
+	}
 
 	cl->body = an = mkast(AN_EXHAUST, 1, cl->arena, 0);
 	an->children[0] = body;

@@ -1,5 +1,5 @@
-This archive contains version 0g/04 of the Dialog compiler and interactive
-debugger, bundled with documentation and version 0.27 of the dialog Standard
+This archive contains version 0g/05 of the Dialog compiler and interactive
+debugger, bundled with documentation and version 0.28 of the dialog Standard
 Library.
 
 Directory structure:
@@ -37,6 +37,29 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0g/05 Lib 0.28 (Manual revision 14):
+
+		Library and documentation: Added '(heads $)'.
+
+		Debugger: Commandline option -L to disable hyperlinks in the
+		output. This also affects '(interpreter supports links)'.
+
+		Aa-backend: Now obeys the -s option for stripping away internal
+		object names (hash tags) from the story file.
+
+		Compiler: The quadruple-verbose output (-vvvv) now includes a
+		list of all the words the story might print. With a bit of
+		scripting, these can be sent to an external spell checker.
+
+		Compiler: Fixed a bug where '(determine object $)' didn't
+		accept integers in the input.
+
+		Library: If parsing fails when default actions are enabled,
+		don't assume that a default action was intended.
+
+		Compiler: Fixed several corner-case bugs discovered through
+		fuzzing.
 
 	0g/04 Lib 0.27 (Manual revision 13):
 

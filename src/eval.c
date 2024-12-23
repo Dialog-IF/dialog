@@ -159,6 +159,7 @@ static int push_env(struct eval_state *es, int nvar, int ntrace) {
 		int newsize = top * 2 + 8;
 		if(newsize >= 0xffff) {
 			report(LVL_ERR, 0, "Env stack overflow (perhaps infinite recursion).");
+			es->errorflag = 1;
 			return 0;
 		}
 		es->nalloc_env = newsize;
@@ -188,6 +189,7 @@ static int push_choice(struct eval_state *es, int narg, struct predicate *pred, 
 		int newsize = es->choice * 2 + 8;
 		if(newsize >= 0xffff) {
 			report(LVL_ERR, 0, "Choice stack overflow (perhaps infinite recursion).");
+			es->errorflag = 1;
 			return 0;
 		}
 		es->nalloc_choice = newsize;
@@ -680,7 +682,9 @@ static void begin_link(struct eval_state *es, value_t v) {
 	}
 	buf[pos] = 0;
 
-	o_begin_link(buf);
+	if(!es->hide_links) {
+		o_begin_link(buf);
+	}
 }
 
 void trace(struct eval_state *es, int kind, struct predname *predname, value_t *args, line_t line) {
@@ -734,10 +738,11 @@ void trace(struct eval_state *es, int kind, struct predname *predname, value_t *
 	}
 }
 
-void ensure_fixed_values(struct eval_state *es, struct program *prg, struct predname *predname) {
+int ensure_fixed_values(struct eval_state *es, struct program *prg, struct predname *predname) {
 	struct eval_state my_es;
 	int j;
 	value_t eval_arg;
+	int retval = 1;
 
 	if(predname->nfixedvalue < prg->nworldobj) {
 		predname->fixedvalues = realloc(predname->fixedvalues, prg->nworldobj);
@@ -746,10 +751,13 @@ void ensure_fixed_values(struct eval_state *es, struct program *prg, struct pred
 			eval_reinitialize(es? es : &my_es);
 			eval_arg = (value_t) {VAL_OBJ, j};
 			predname->fixedvalues[j] = !!eval_initial(es? es : &my_es, predname, &eval_arg);
+			if((es? es : &my_es)->errorflag) retval = 0;
 		}
 		predname->nfixedvalue = j;
 		if(!es) free_evalstate(&my_es);
 	}
+
+	return retval;
 }
 
 static void do_fail(struct eval_state *es, prgpoint_t *pp) {
@@ -972,11 +980,14 @@ static int eval_run(struct eval_state *es) {
 	pc = 0;
 
 	while(pp.pred) {
-		assert(pp.routine < pp.pred->nroutine);
+		if(pp.routine >= pp.pred->nroutine) {
+			printf("%s %d\n", pp.pred->predname->printed_name, pp.routine);
+			assert(0);
+		}
 		if(pc >= pp.pred->routines[pp.routine].ninstr) {
 			printf("%s %d\n", pp.pred->predname->printed_name, pp.routine);
+			assert(0);
 		}
-		assert(pc < pp.pred->routines[pp.routine].ninstr);
 		ci = &pp.pred->routines[pp.routine].instr[pc];
 		pc++;
 		//printf("%s %d\n", pp.pred->predname->printed_name, ci->op);
@@ -1251,7 +1262,9 @@ static int eval_run(struct eval_state *es) {
 			o_set_style(es->divstyle);
 			break;
 		case I_END_LINK:
-			o_end_link();
+			if(!es->hide_links) {
+				o_end_link();
+			}
 			break;
 		case I_FIRST_CHILD:
 			predname = es->program->objvarpred[DYN_HASPARENT];
@@ -1502,7 +1515,7 @@ static int eval_run(struct eval_state *es) {
 			if(ci->subop ^ res) perform_branch(ci->implicit, es, &pp, &pc);
 			break;
 		case I_IF_HAVE_LINK:
-			res = 1;
+			res = !es->hide_links;
 			if(ci->subop ^ res) perform_branch(ci->implicit, es, &pp, &pc);
 			break;
 		case I_IF_HAVE_UNDO:

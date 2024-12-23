@@ -484,6 +484,7 @@ static int initial_values(struct program *prg, uint16_t *core, int ltt) {
 				if(eval_initial(&es, predname, 0)) {
 					core[AA_N_INITREG + 1 + prg->nworldobj + predname->dyn_id / 16] |= 0x8000 >> (predname->dyn_id & 15);
 				}
+				if(es.errorflag) exit(1);
 			} else if(predname->arity == 1) {
 				if(pred->flags & PREDF_GLOBAL_VAR) {
 					eval_reinitialize(&es);
@@ -511,6 +512,7 @@ static int initial_values(struct program *prg, uint16_t *core, int ltt) {
 							core[AA_N_INITREG + addr] = tag_eval_value(eval_args[0], prg);
 						}
 					}
+					if(es.errorflag) exit(1);
 				} else {
 					int last_wobj = 0;
 
@@ -522,6 +524,7 @@ static int initial_values(struct program *prg, uint16_t *core, int ltt) {
 							eval_reinitialize(&es);
 							eval_args[0] = (value_t) {VAL_OBJ, j};
 							status = eval_initial(&es, predname, eval_args);
+							if(es.errorflag) exit(1);
 						}
 						if(status) {
 							core[AA_N_INITREG + 1 + prg->nworldobj + n_glb_word + j * n_obj_word + 3 + predname->dyn_id / 16] |= 0x8000 >> (predname->dyn_id & 15);
@@ -577,6 +580,7 @@ static int initial_values(struct program *prg, uint16_t *core, int ltt) {
 							}
 						}
 					}
+					if(es.errorflag) exit(1);
 				}
 			}
 		}
@@ -1828,6 +1832,9 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 			case I_PRINT_WORDS:
 				if(ci->subop == 1) {
 					n = generate_output(prg, &cr->instr[i], 0, 1);
+				} else if(ci->subop == 0) {
+					// This can only happen for unreachable code.
+					n = 1;
 				} else {
 					n = generate_output(prg, &cr->instr[i], 1, 0);
 					if(ci->subop == 3) {
@@ -2519,6 +2526,13 @@ static void analyze_chars() {
 		node[0x80].occurrences++;
 	}
 
+	// The decoder table must have at least two nodes, since the root must be a choice.
+	// Every string has at least one character and one end-of-string marker.
+	if(!n_textstr) {
+		node[0x20].occurrences++;
+		node[0x80].occurrences++;
+	}
+
 	for(i = 0; i < nnode; i++) {
 		heap[1 + nheap++] = i;
 	}
@@ -2624,13 +2638,14 @@ static int compile_endings_check(uint8_t *dest, int org, struct endings_point *p
 
 void chunk_lang(FILE *f, struct program *prg, uint32_t *crc) {
 	int i, pad;
-	uint32_t size = (4 * 2) + (n_decodetable * 2) + (1 + ncharmap * 5) + (1 + NSTOPCHAR);
+	uint32_t size;
 	uint8_t endings[1024];
 	int endsz;
 
 	endings[0] = 0x01;
+	// the following call may increment n_decodetable
 	endsz = compile_endings_check(endings, 1, &prg->endings_root);
-	size += endsz;
+	size = (4 * 2) + (n_decodetable * 2) + (1 + ncharmap * 5) + endsz + (NSTOPCHAR + 1);
 
 	pad = chunkheader(f, "LANG", size);
 	putword_crc(4 * 2, f, crc);
@@ -3182,7 +3197,9 @@ void backend_aa(
 	chunk_meta(f, prg);
 	chunk_look(f, prg, &crc);
 
-	chunk_tags(f, prg);
+	if(!strip) {
+		chunk_tags(f, prg);
+	}
 
 	chunk_lang(f, prg, &crc);
 	chunk_maps(f, &crc);

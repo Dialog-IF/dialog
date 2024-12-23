@@ -889,7 +889,7 @@ void init_backend_wobj(struct program *prg, int id, struct backend_wobj *wobj, i
 			report(
 				LVL_ERR,
 				0,
-				"Unsupported character U+%04x in object name '#%s'\n",
+				"Unsupported character U+%04x in object name '#%s'",
 				uchar,
 				prg->worldobjnames[id]->name);
 			exit(1);
@@ -958,13 +958,16 @@ struct zinstr *append_instr(struct routine *r, uint16_t op) {
 	return zi;
 }
 
-uint16_t dict_id_tag(struct program *prg, uint16_t dict_id) {
+static uint16_t dict_id_tag(struct program *prg, uint16_t dict_id) {
 	assert(prg->dictmap[dict_id]);
 	return prg->dictmap[dict_id];
 }
 
-uint16_t dictword_tag(struct program *prg, struct word *w) {
-	assert(w->flags & WORDF_DICT);
+static uint16_t dictword_tag(struct program *prg, struct word *w) {
+	if(!(w->flags & WORDF_DICT)) {
+		printf("%s\n", w->name);
+		assert(0);
+	}
 	return dict_id_tag(prg, w->dict_id);
 }
 
@@ -3165,6 +3168,9 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 			case I_PRINT_WORDS:
 				if(ci->subop == 1) {
 					n = generate_output(prg, r, &cr->instr[i], 0, 1);
+				} else if(ci->subop == 0) {
+					// This can only happen for unreachable code.
+					n = 1;
 				} else {
 					if(ci->subop == 3) {
 						ll = r->next_label++;
@@ -3177,6 +3183,7 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 						zi->oper[0] = REL_LABEL(ll2);
 						zi = append_instr(r, OP_LABEL(ll));
 					} else {
+						assert(ci->subop == 2);
 						n = generate_output(prg, r, &cr->instr[i], 1, 0);
 						ll2 = 0; // prevent gcc warning
 					}
@@ -3721,6 +3728,7 @@ static void initial_values(struct program *prg, uint8_t *zcore, uint16_t addr_gl
 					zcore[addr_globals + 2 * (user_global_base + bp->user_global) + 0] |= bp->user_flag_mask >> 8;
 					zcore[addr_globals + 2 * (user_global_base + bp->user_global) + 1] |= bp->user_flag_mask & 0xff;
 				}
+				if(es.errorflag) exit(1);
 			} else if(predname->arity == 1) {
 				if(pred->flags & PREDF_GLOBAL_VAR) {
 					eval_reinitialize(&es);
@@ -3733,6 +3741,7 @@ static void initial_values(struct program *prg, uint8_t *zcore, uint16_t addr_gl
 								0,
 								"Initial value of global variable %s must be bound.",
 								predname->printed_name);
+							exit(1);
 						} else if(eval_args[0].tag == VAL_PAIR) {
 							value = 0x8000 | lttop;
 							zcore[addr + 0] = value >> 8;
@@ -3751,6 +3760,7 @@ static void initial_values(struct program *prg, uint8_t *zcore, uint16_t addr_gl
 							zcore[addr + 1] = value & 0xff;
 						}
 					}
+					if(es.errorflag) exit(1);
 				} else {
 					int last_wobj = 0;
 
@@ -3763,6 +3773,7 @@ static void initial_values(struct program *prg, uint8_t *zcore, uint16_t addr_gl
 							eval_reinitialize(&es);
 							eval_args[0] = (value_t) {VAL_OBJ, j};
 							status = eval_initial(&es, predname, eval_args);
+							if(es.errorflag) exit(1);
 						}
 						if(status) {
 							if(bp->object_flag >= NZOBJFLAG) {
@@ -3800,6 +3811,7 @@ static void initial_values(struct program *prg, uint8_t *zcore, uint16_t addr_gl
 									LVL_ERR,
 									0,
 									"Initial value of ($ has parent $) must have objects in both parameters.");
+								exit(1);
 							}
 							wobj->initialparent = eval_args[1].value;
 						} else {
@@ -3814,6 +3826,7 @@ static void initial_values(struct program *prg, uint8_t *zcore, uint16_t addr_gl
 									"Initial value of dynamic per-object variable %s, for #%s, must be bound.",
 									predname->printed_name,
 									prg->worldobjnames[j]->name);
+								exit(1);
 							} else if(eval_args[1].tag == VAL_PAIR) {
 								report(
 									LVL_ERR,
@@ -3821,6 +3834,7 @@ static void initial_values(struct program *prg, uint8_t *zcore, uint16_t addr_gl
 									"Too complex initial value of dynamic per-object variable %s, for #%s.",
 									predname->printed_name,
 									prg->worldobjnames[j]->name);
+								exit(1);
 							}
 							addr = global_labels[bp->propbase_label] + 2 + j * 2;
 							value = tag_eval_value(eval_args[1], prg);
@@ -3828,6 +3842,7 @@ static void initial_values(struct program *prg, uint8_t *zcore, uint16_t addr_gl
 							zcore[addr + 1] = value & 0xff;
 						}
 					}
+					if(es.errorflag) exit(1);
 				}
 			}
 		}

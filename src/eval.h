@@ -92,6 +92,8 @@ struct eval_state {
 	uint8_t			forwords;
 	uint8_t			trace;
 	uint8_t			divstyle;
+	uint8_t			errorflag;	// set on e.g. heap overflow
+	uint8_t			hide_links;
 };
 
 struct eval_dyn_cb {
@@ -135,7 +137,7 @@ enum {
 	ESTATUS_UNDO		// used internally by the debugger
 };
 
-void ensure_fixed_values(struct eval_state *es, struct program *prg, struct predname *predname);
+int ensure_fixed_values(struct eval_state *es, struct program *prg, struct predname *predname);
 void pp_value(struct eval_state *es, value_t v, int with_at, int with_plus);
 void init_evalstate(struct eval_state *es, struct program *prg);
 void free_evalstate(struct eval_state *es);

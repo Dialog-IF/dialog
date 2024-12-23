@@ -7,6 +7,8 @@
 #include "common.h"
 #include "arena.h"
 #include "ast.h"
+#include "report.h"
+#include "accesspred.h"
 
 static int macro_instance = 0;
 
@@ -148,3 +150,42 @@ struct astnode *expand_macros(struct astnode *an, struct program *prg, struct ar
 	return exp;
 }
 
+static int accesspred_body_has_cycle(struct astnode *an) {
+	int i;
+
+	while(an) {
+		if(an->kind == AN_RULE || an->kind == AN_NEG_RULE) {
+			if(an->predicate->pred->flags & PREDF_MACRO) {
+				if(accesspred_has_cycle(an->predicate->pred)) {
+					return 1;
+				}
+			}
+		} else {
+			for(i = 0; i < an->nchild; i++) {
+				if(accesspred_body_has_cycle(an->children[i])) {
+					return 1;
+				}
+			}
+		}
+		an = an->next_in_body;
+	}
+
+	return 0;
+}
+
+int accesspred_has_cycle(struct predicate *pred) {
+	assert(pred->flags & PREDF_MACRO);
+
+	if(pred->flags & PREDF_VISITED) {
+		return 1;
+	}
+
+	pred->flags |= PREDF_VISITED;
+	if(accesspred_body_has_cycle(pred->macrodef->body)) {
+		pred->flags &= ~PREDF_VISITED;
+		return 1;
+	}
+	pred->flags &= ~PREDF_VISITED;
+
+	return 0;
+}

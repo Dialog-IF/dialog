@@ -171,7 +171,12 @@ uint16_t unicode_to_lower(uint16_t ch) {
 }
 
 static void utf8_warning(const uint8_t *src, int pos) {
-	report(LVL_WARN, 0, "Invalid UTF-8 sequence in source code ('%s', at byte %d)", (const char *) src, pos);
+	report(
+		LVL_WARN,
+		0,
+		"Invalid UTF-8 sequence in source code ('%s', at byte offset %d)",
+		(const char *) src,
+		pos);
 }
 
 int utf8_to_unicode_n(uint16_t *dest, int ndest, const uint8_t *src, int nsrc) {
@@ -193,7 +198,7 @@ int utf8_to_unicode_n(uint16_t *dest, int ndest, const uint8_t *src, int nsrc) {
 			dest[outpos] = 0;
 			return inpos;
 		}
-		ch = src[inpos++];
+		ch = src[inpos];
 		if((ch & 0xf0) == 0xe0) {
 			if(nexpected) utf8_warning(src, inpos);
 			uchar = ch & 0x0f;
@@ -214,6 +219,7 @@ int utf8_to_unicode_n(uint16_t *dest, int ndest, const uint8_t *src, int nsrc) {
 			nexpected = 0;
 			dest[outpos++] = ch;
 		}
+		inpos++;
 	}
 }
 
