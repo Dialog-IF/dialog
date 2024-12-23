@@ -180,7 +180,10 @@ int body_can_be_fixed_flag(struct astnode *an, struct word *safevar) {
 				for(sub = an->children[1]; sub->kind == AN_PAIR; sub = sub->children[1]) {
 					if(sub->children[0]->kind != AN_TAG) break;
 				}
-				return sub->kind == AN_EMPTY_LIST;
+				if(sub->kind != AN_EMPTY_LIST) {
+					return 0;
+				}
+				have_constrained_safevar = 1;
 			} else if(predname->builtin) {
 				if(predname->builtin != BI_FAIL
 				&& predname->builtin != BI_OBJECT) {
@@ -216,7 +219,7 @@ int pred_can_be_fixed_flag(struct predname *predname) {
 	if(!predname->special
 	&& !predname->builtin
 	&& pred->nclause
-	&& !pred->dynamic
+	&& !(pred->flags & PREDF_DYNAMIC)
 	&& !(pred->flags & PREDF_MACRO)
 	&& (pred->flags & PREDF_INVOKED)
 	&& predname->arity == 1) {

@@ -3391,7 +3391,7 @@ struct rtroutine rtroutines[] = {
 			{Z_STORE, {SMALL(REG_XOFFSET), SMALL(1)}},
 			{Z_STORE, {SMALL(REG_YPOS), SMALL(1)}},
 			{Z_SET_CURSOR, {VALUE(REG_YPOS), VALUE(REG_XOFFSET)}},
-			{Z_STORE, {SMALL(REG_SPACE), SMALL(4)}},
+			{Z_STORE, {SMALL(REG_SPACE), SMALL(5)}},
 			{Z_RFALSE},
 			{Z_END},
 		}
@@ -3403,7 +3403,7 @@ struct rtroutine rtroutines[] = {
 			{Z_DEC, {SMALL(REG_STATUSBAR)}},
 			{Z_SET_WINDOW, {SMALL(0)}},
 			{Z_TEXTSTYLE, {SMALL(0)}},
-			{Z_STORE, {SMALL(REG_SPACE), SMALL(4)}},
+			{Z_STORE, {SMALL(REG_SPACE), SMALL(5)}},
 			{Z_RFALSE},
 			{Z_END},
 		}
@@ -3606,7 +3606,7 @@ struct rtroutine rtroutines[] = {
 			{OP_LABEL(1)},
 
 			{Z_SUB, {VALUE(REG_XREMSIZE), SMALL(2)}, REG_LOCAL+2},
-			{Z_JL, {VALUE(REG_LOCAL+2), SMALL(0)}, 0, RFALSE},
+			{Z_JL, {VALUE(REG_LOCAL+2), SMALL(0)}, 0, 9},
 
 			// reduce precision until signed multiplication cannot overflow
 			{Z_JLE, {VALUE(REG_LOCAL+0), SMALL(0x7f)}, 0, 3},
@@ -3626,21 +3626,23 @@ struct rtroutine rtroutines[] = {
 
 			{Z_PRINTLIT, {}, 0, 0, "["},
 
-			{Z_JL, {SMALL(REG_LOCAL+2), SMALL(1)}, 0, 6},
+			{Z_JL, {VALUE(REG_LOCAL+2), SMALL(1)}, 0, 6},
 			{OP_LABEL(5)},
 			{Z_PRINTLIT, {}, 0, 0, "="},
 			{Z_DEC_JGE, {SMALL(REG_LOCAL+2), SMALL(1)}, 0, 5},
 			{OP_LABEL(6)},
 
-			{Z_JL, {SMALL(REG_LOCAL+1), SMALL(1)}, 0, 8},
+			{Z_JL, {VALUE(REG_LOCAL+1), SMALL(1)}, 0, 8},
 			{OP_LABEL(7)},
 			{Z_PRINTLIT, {}, 0, 0, " "},
 			{Z_DEC_JGE, {SMALL(REG_LOCAL+1), SMALL(1)}, 0, 7},
 			{OP_LABEL(8)},
 
 			{Z_PRINTLIT, {}, 0, 0, "]"},
+			{Z_STORE, {SMALL(REG_SPACE), SMALL(0)}},
 			{Z_CALL1N, {ROUTINE(R_LINE)}},
 
+			{OP_LABEL(9)},
 			{Z_JNZ, {VALUE(REG_STATUSBAR)}, 0, RFALSE},
 			// not inside status box
 			{Z_BUFFER_MODE, {SMALL(1)}},

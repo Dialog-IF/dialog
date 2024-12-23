@@ -1201,6 +1201,11 @@ static int eval_builtin(struct eval_state *es, int builtin, value_t o1, value_t 
 		}
 		break;
 	case BI_MEMSTATS:
+		o_line();
+		o_print_str(
+			"Memory statistics are unavailable while debugging. "
+			"The code must be compiled.");
+		o_line();
 		break;
 	case BI_NOSPACE:
 		if(!es->forwords) {

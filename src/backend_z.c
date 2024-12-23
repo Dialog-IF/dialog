@@ -1153,10 +1153,14 @@ static void generate_output_from_utf8(struct program *prg, struct routine *r, in
 	for(pos = 0; utf8[pos]; pos += n) {
 		uchar = 0;
 		n = utf8_to_zscii(zbuf, sizeof(zbuf), utf8 + pos, &uchar);
-		stringlabel = find_global_string(zbuf)->global_label;
+		if(n && *zbuf) {
+			stringlabel = find_global_string(zbuf)->global_label;
+		} else {
+			stringlabel = 0;
+		}
 
 		if(uchar) {
-			if(n) {
+			if(stringlabel) {
 				zi = append_instr(r, Z_CALL2N);
 				zi->oper[0] = ROUTINE(pre_space? R_SPACE_PRINT_NOSPACE : R_NOSPACE_PRINT_NOSPACE);
 				zi->oper[1] = REF(stringlabel);
@@ -1172,11 +1176,12 @@ static void generate_output_from_utf8(struct program *prg, struct routine *r, in
 				/* String ended with a unicode character */
 				zi = append_instr(r, Z_STORE);
 				zi->oper[0] = SMALL(REG_SPACE);
-				zi->oper[1] = SMALL(0);
+				zi->oper[1] = SMALL(!post_space);
 			}
 		} else if(utf8[pos + n]) {
 			/* String too long (for runtime uppercase buffer) */
 			assert(n);
+			assert(stringlabel);
 			zi = append_instr(r, Z_CALL2N);
 			zi->oper[0] = ROUTINE(pre_space? R_SPACE_PRINT_NOSPACE : R_NOSPACE_PRINT_NOSPACE);
 			zi->oper[1] = REF(stringlabel);
@@ -1199,7 +1204,7 @@ static void generate_output_from_utf8(struct program *prg, struct routine *r, in
 				assert(!pre_space);
 				zi = append_instr(r, Z_STORE);
 				zi->oper[0] = SMALL(REG_SPACE);
-				zi->oper[1] = SMALL(0);
+				zi->oper[1] = SMALL(!post_space);
 			}
 		}
 	}

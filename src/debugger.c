@@ -653,11 +653,12 @@ static void set_globalflag(struct eval_state *es, void *userdata, int dyn_id, in
 
 static int get_objflag(struct eval_state *es, void *userdata, int dyn_id, int onum) {
 	struct dyn_state *ds = userdata;
-	struct dyn_flag *f = &ds->obj[onum].flag[dyn_id];
 
 	maybe_grow_dyn_state(ds, es->program);
+	assert(onum < ds->nobj);
+	assert(dyn_id < ds->nobjflag);
 
-	return !!(f->value & DF_ON);
+	return !!(ds->obj[onum].flag[dyn_id].value & DF_ON);
 }
 
 static void set_objflag(struct eval_state *es, void *userdata, int dyn_id, int onum, int val) {

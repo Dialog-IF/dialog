@@ -1,6 +1,6 @@
 
 (library version)
-	Library version 0.41.
+	Library version 0.42.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -101,6 +101,13 @@
 (interface (prevent $<Action))
 (interface (perform $<Action))
 (interface (after $<Action))
+
+(interface (group-before $<GroupAction))
+(interface (group-refuse $<GroupAction))
+(interface (group-instead of $<GroupAction))
+(interface (group-prevent $<GroupAction))
+(interface (group-perform $<GroupAction))
+(interface (group-after $<GroupAction))
 
 (interface (narrate taking $<Obj))
 (interface (narrate removing $<Obj))
@@ -3413,51 +3420,110 @@
 
 (interface (try-complex $<Action))
 
-(try-complex [$Verb | $ComplexObjects])
-	(if) ([] is one of $ComplexObjects) (then)
-		You're not aware of any such thing! (line) (fail)
-	(elseif) ([+ | $FirstMulti] is one of $ComplexObjects) (then)
-		%% If at least two actions are implied,
-		%% describe each one in turn.
-		(if) ~{ *($Obj is one of $FirstMulti) (direction $Obj) } (then)
-			(strip decorations from $FirstMulti into $Stripped)
-			(notice player's $Stripped) %% Set 'them'.
+(try-complex $ComplexAction)
+	(if) ~(allowed action $ComplexAction) (then)
+		(report disallowed action $ComplexAction)
+		(stop)
+	(elseif) ([] is one of $ComplexAction) (then)
+		You're not aware of any such thing!
+		(stop)
+	(else)
+		(strip decorations from $ComplexAction into $MultiAction)
+		%% Now we have something like:
+		%% [put [#marble1 #marble2 #marblefloor] #in #bowl]
+		(if)
+			*($Obj is one of $MultiAction)
+			{
+				(nonempty $Obj)
+			(or)
+				(object $Obj)
+				~(direction $Obj)
+				~(relation $Obj)
+				~(room $Obj)
+			}
+		(then)
+			(notice player's $Obj)
 		(endif)
 		(exhaust) {
-			*(expand complex objlist $ComplexObjects $ObjList $Obj)
-			(line) (The full $Obj):
-			(try-decorated $Verb $ObjList)
+			*(regroup stripped action $MultiAction of $MultiAction
+				into $Regrouped $Multi)
+			%% Assuming the marbles are fungible, now we are
+			%% backtracking over:
+			%% [put [#marble1 #marble2] #in #bowl]
+			%% [put #marblefloor #in #bowl]
+			(if)
+				~(empty $Multi)
+			(then)
+				%% If at least two multi-actions are implied,
+				%% describe each step.
+				(line) (The full $Multi):
+			(endif)
+			(exhaust) {
+				*($Regrouped recursively contains $O)
+				(object $O)
+				(now) ~($O is hidden)
+			}
+			(if) *($Elem is one of $Regrouped) (nonempty $Elem) (then)
+				(group-try $Regrouped)
+			(else)
+				(try $Regrouped)
+			(endif)
+			(if) ~(command $Regrouped) (then)
+				(tick)
+			(endif)
+			(par)
 		}
-	(else)
-		*(expand complex objlist $ComplexObjects $ObjList $)
-		(try-decorated $Verb $ObjList)
 	(endif)
 
-(try-decorated $Verb $ObjList)
-	(strip decorations from $ObjList into $CleanList)
-	(if)
-		*($Obj is one of $CleanList)
-		(object $Obj)
-		~(direction $Obj)
-		~(relation $Obj)
-		~(room $Obj)
-	(then)
-		(notice player's $Obj)
-	(endif)
-	($Action = [$Verb | $CleanList])
-	(if) ~(allowed action $Action) (then)
-		(report disallowed action $Action)
-		(stop)
-	(endif)
+%% Add rules to the following six predicates, and to
+%% '(action $ may group $ with $)', to deal with groups of objects.
+
+(group-refuse $MultiAction)
+	*(expand group-action $MultiAction into $Simple)
+	(refuse $Simple)
+
+(group-before $MultiAction)
+	*(expand group-action $MultiAction into $Simple)
+	*(before $Simple)
+
+(group-instead of $MultiAction)
+	~{ (group-prevent $MultiAction) (tick) (stop) }
+	(group-perform $MultiAction)
+	(exhaust) *(group-after $MultiAction)
+
+(group-prevent $MultiAction)
+	*(expand group-action $MultiAction into $Simple)
+	(prevent $Simple)
+
+(group-perform $MultiAction)
 	(exhaust) {
-		*($Obj is one of $CleanList)
-		(object $Obj)
-		(now) ~($Obj is hidden)
+		*(expand group-action $MultiAction into $Simple)
+		(perform $Simple)
 	}
-	(try $Action)
-	(if) ~(command $Action) (then)
-		(tick)
+
+(group-after $MultiAction)
+	*(expand group-action $MultiAction into $Simple)
+	*(after $Simple)
+
+(interface (group-try $<MultiAction))
+
+(group-try $MultiAction)
+	(if) (tracing actions) (then)
+		(line)
+		GROUP ACTION: $MultiAction \( (describe action $MultiAction) \)
+		(line)
 	(endif)
+	~{ (group-refuse $MultiAction) (stop) }
+	(exhaust) *(group-before $MultiAction)
+	~{ (group-refuse $MultiAction) (stop) }
+	(group-instead of $MultiAction)
+
+(interface (first group-try $<MultiAction))
+
+(first group-try $MultiAction)
+	(line) \( first attempting to (describe action $MultiAction) \) (line)
+	(group-try $MultiAction)
+	(tick)
 	(par)
 
 (strip decorations from [] into [])
@@ -3465,24 +3531,87 @@
 (strip decorations from [[a $Obj] | $MoreIn] into [$Obj | $MoreOut])
 	(strip decorations from $MoreIn into $MoreOut)
 
+(strip decorations from [[+ | $MultiIn] | $MoreIn] into [$MultiOut | $MoreOut])
+	(strip decorations from $MultiIn into $MultiOut)
+	(strip decorations from $MoreIn into $MoreOut)
+
 (strip decorations from [$Obj | $MoreIn] into [$Obj | $MoreOut])
 	(strip decorations from $MoreIn into $MoreOut)
 
-(expand complex objlist [] [] [])
-	(just)
+(expand group-action [] into [])
 
-(expand complex objlist [[+ | $ObjList] | $MoreIn] [$Obj | $MoreOut] $Obj)
-	(just)
-	*($Obj is one of $ObjList)
-	*(expand complex objlist $MoreIn $MoreOut $)
+(expand group-action [$HeadIn | $TailIn] into [$HeadOut | $TailOut])
+	(if) (nonempty $HeadIn) (then)
+		*($HeadOut is one of $HeadIn)
+	(else)
+		($HeadOut = $HeadIn)
+	(endif)
+	*(expand group-action $TailIn into $TailOut)
 
-(expand complex objlist [$Other | $MoreIn] [$Other | $MoreOut] $Obj)
-	*(expand complex objlist $MoreIn $MoreOut $Obj)
+%% If the input is [frob [#a #b] #c [#d #e #f] [#e #d]]
+%% and #d and #e can form a group, then we return four times:
+%% Action:                             Multi:
+%% [frob #a #c [#d #e] [#e #d]]        [#a [#d #e]]
+%% [frob #a #c #f [#e #d]]             [#a #f]
+%% [frob #b #c [#d #e] [#e #d]]        [#b [#d #e]]
+%% [frob #b #c #f [#e #d]]             [#b #f]
 
-(unlikely-complex [$Verb | $ComplexObjList] $VeryLevel)
-	*(expand complex objlist $ComplexObjList $SimpleObjList $)
-	(strip decorations from $SimpleObjList into $Stripped)
-	(level $VeryLevel unlikely [$Verb | $Stripped])
+(regroup stripped action [] of $ into [] [])
+
+(regroup stripped action [$HeadIn | $TailIn] of $Action into [$HeadOut | $TailOut] $Multi)
+	(if) (nonempty $HeadIn) (then)
+		(regroup objects $HeadIn of $Action into $GroupList)
+		(if) ($GroupList = [$Single]) (then)
+			%% All of the objects in this slot ended up in the
+			%% same group, like [#e #d] in the example.
+			($HeadOut = $Single)
+			*(regroup stripped action $TailIn of $Action into $TailOut $Multi)
+		(else)
+			%% Backtrack over the groups.
+			*($HeadOut is one of $GroupList)
+			*(regroup stripped action $TailIn of $Action into $TailOut $MultiTail)
+			($Multi = [$HeadOut | $MultiTail])
+		(endif)
+	(else)
+		%% This was a regular object or word, like @frob or #c.
+		($HeadOut = $HeadIn)
+		*(regroup stripped action $TailIn of $Action into $TailOut $Multi)
+	(endif)
+
+%% Transform e.g.:
+%% [#marble1 #marblefloor #marble2] into [[#marble1 #marble2] #marblefloor]
+%% [#foo #bar #bar #baz] into [#foo #bar #baz]
+
+(regroup objects [] of $ into [])
+
+(regroup objects [$HeadIn | $TailIn] of $Action into [$HeadOut | $TailOut])
+	(collect group members $TailIn $HeadIn $Action $Included $Excluded)
+	(if) (nonempty $Included) (then)
+		($HeadOut = [$HeadIn | $Included])
+	(else)
+		($HeadOut = $HeadIn)
+	(endif)
+	(regroup objects $Excluded of $Action into $TailOut)
+
+(collect group members $InputList $Key $Action $Included $Excluded)
+	(collect $Obj1)
+		*($Obj1 is one of $InputList)
+		(action $Action may group $Key with $Obj1)
+	(into $Included)
+	(collect $Obj2)
+		*($Obj2 is one of $InputList)
+		~(action $Action may group $Key with $Obj2)
+	(into $Excluded)
+
+(interface (action $<Action may group $<Obj1 with $<Obj2))
+
+(action $ may group $ with $)
+	(fail)
+
+(unlikely-complex $ComplexAction $VeryLevel)
+	(strip decorations from $ComplexAction into $Stripped)
+	*(expand group-action $Stripped into $Simple)
+	(level $VeryLevel unlikely $Simple)
 
 (level 0 unlikely $Action)
 	(unlikely $Action) (or)
@@ -4016,19 +4145,19 @@
 	(endif)
 
 (a-listing $List)
-	(listing $List {(a $_)} @and 0)
+	(listing $List {(a $_)} @and [] 0)
 (the-listing $List)
-	(listing $List {(the $_)} @and 0)
+	(listing $List {(the $_)} @and @the 0)
 (the-full-listing $List)
-	(listing $List {(the full $_)} @and 0)
+	(listing $List {(the full $_)} @and @the 0)
 (the-full-or-listing $List)
-	(listing $List {(maybe link $_ {(the full $_)})} @or 0)
+	(listing $List {(maybe link $_ {(the full $_)})} @or @the 0)
 (or-listing $List)
-	(listing $List {(the $_)} @or 0)
+	(listing $List {(the $_)} @or @the 0)
 
-(listing [] $ $ 0)
+(listing [] $ $ $ 0)
 	nothing
-(listing [$Head | $Tail] $PrintClosure $Conjunction $NPrinted)
+(listing [$Head | $Tail] $PrintClosure $Conjunction $The $NPrinted)
 	(if) (fungibility enabled) (then)
 		(combine-fungible $Tail $Head $NInc $Rest)
 	(else)
@@ -4041,6 +4170,9 @@
 		(if) ($NPrinted > 0) (then) , (endif)
 	(endif)
 	(if) (fungibility enabled) ($NInc > 1) (then)
+		(if) ($The = @the) (then)
+			the
+		(endif)
 		(spell out $NInc)
 		(if) (library links enabled) (interpreter supports links) (then)
 			(link) (plural name $Head)
@@ -4052,7 +4184,7 @@
 	(endif)
 	($NPrinted plus 1 into $NPp1)
 	(if) (nonempty $Rest) (then)
-		(listing $Rest $PrintClosure $Conjunction $NPp1)
+		(listing $Rest $PrintClosure $Conjunction $The $NPp1)
 	(endif)
 
 (list of objects $Rel $Loc)
@@ -4286,13 +4418,20 @@
 	($B is $Rel $Parent)
 
 (combine-fungible [] $ 1 [])
-(combine-fungible [$Head | $Tail] $Key $N $Excluded)
-	(if) (truly fungible $Head $Key) (then)
-		(combine-fungible $Tail $Key $NMore $Excluded)
-		($NMore plus 1 into $N)
+(combine-fungible $InputList $Key $N $Excluded)
+	(accumulate 1)
+		*($Obj1 is one of $InputList)
+		(truly fungible $Key $Obj1)
+	(into $Sum)
+	(if) ($Sum = 0) (then)
+		($N = 1)
+		($Excluded = $InputList)
 	(else)
-		(combine-fungible $Tail $Key $N $MoreExcl)
-		($Excluded = [$Head | $MoreExcl])
+		($Sum plus 1 into $N)
+		(collect $Obj2)
+			*($Obj2 is one of $InputList)
+			~(truly fungible $Key $Obj2)
+		(into $Excluded)
 	(endif)
 
 (strip-fungible [] [])
@@ -4978,7 +5117,12 @@
 	(split $Words by [, and] into $Left and $Right)
 	*(parse basic noun $Left as $LeftObj $Policy $AllAllowed)
 	*(parse noun list $Right as $RightObj $Policy $AllAllowed)
-	(append $LeftObj $RightObj $ObjList)
+	(if) ($RightObj = [$Head | $Tail]) (last $LeftObj $Head) (then)
+		%% ensure e.g. "black and white photo" is parsed as one thing
+		(append $LeftObj $Tail $ObjList)
+	(else)
+		(append $LeftObj $RightObj $ObjList)
+	(endif)
 
 (parse noun list $Words as $ObjList $Policy $AllAllowed)
 	*(parse basic noun $Words as $ObjList $Policy $AllAllowed)

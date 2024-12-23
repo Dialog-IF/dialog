@@ -1,5 +1,5 @@
-This archive contains version 0k/04 of the Dialog compiler and interactive
-debugger, bundled with documentation and version 0.41 of the Dialog Standard
+This archive contains version 0k/05 of the Dialog compiler and interactive
+debugger, bundled with documentation and version 0.42 of the Dialog Standard
 Library.
 
 Directory structure:
@@ -37,6 +37,38 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0k/05, Lib 0.42 (Manual revision 27):
+
+		Library: Added support for group actions.
+
+		Library: The parser now deals properly with 'and' and ','
+		inside object names, so that e.g. 'take black and white
+		photograph' does not result in two separate attempts to take
+		the same object.
+
+		Library: '(The $)' and friends now list fungible objects with a
+		definite article, i.e. 'the N items' instead of 'N items'.
+
+		Library: Improved memory performance when working with fungible
+		objects.
+
+		Debugger: An informative message is printed when attempting to
+		display memory statistics from within the debugger.
+
+		Debugger: Fixed a bug that would occasionally crash the
+		debugger when querying a dynamic flag for a new object.
+
+		Compiler: Fixed a bug in the part of the optimizer that
+		converts predicates to static flags.
+
+		Z-backend: Now triggers a paragraph break after updating the
+		status bar, which is consistent with other backends.
+
+		Z-backend: Fixed a bug where '(no space)' would be ignored
+		immediately after a unicode character.
+
+		Z-backend: Fixed an off-by-one error in the progress bar.
 
 	0k/04, Lib 0.41 (Manual revision 26):
 

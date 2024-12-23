@@ -9,7 +9,7 @@
 <body>
 	<div class="chapter">
 	<h1>Chapter 6: Actions</h1>
-	<div class="navlinks">(<a href="#actionsintro">Introduction to actions</a>&nbsp;&bull; <a href="#actionprocess">How actions are processed</a>&nbsp;&bull; <a href="#tickstop">Stopping and ticking</a>&nbsp;&bull; <a href="#preventperform">Instead of: Prevent, perform, after</a>&nbsp;&bull; <a href="#narrate">Narration predicates</a>&nbsp;&bull; <a href="#diversion">Diversion</a>&nbsp;&bull; <a href="#refusebefore">Refuse and before</a>)</div>
+	<div class="navlinks">(<a href="#actionsintro">Introduction to actions</a>&nbsp;&bull; <a href="#actionprocess">How actions are processed</a>&nbsp;&bull; <a href="#tickstop">Stopping and ticking</a>&nbsp;&bull; <a href="#preventperform">Instead of: Prevent, perform, after</a>&nbsp;&bull; <a href="#narrate">Narration predicates</a>&nbsp;&bull; <a href="#diversion">Diversion</a>&nbsp;&bull; <a href="#refusebefore">Refuse and before</a>&nbsp;&bull; <a href="#groupactions">Group actions</a>)</div>
 <a id="actionsintro"></a><h2>Introduction to actions</h2>
 <p><i>Actions</i> are data structures that represent the player's intentions. They
 are constructed by a part of the Dialog standard library called the
@@ -711,9 +711,184 @@ and then <span class="code">(tick)</span>. Ticking is important here, because op
 and entering the door should consume two units of time, even when the opening
 action is triggered automatically by the game.
 </p>
+<a id="groupactions"></a><h2>Group actions</h2>
+<p>This is an advanced topic. Feel free to skip this section and return to it
+later.
+</p>
+<p>When the player types something like <span class="prginput">EAT OYSTER, HAM AND CHEESE</span>,
+the usual outcome is that three separate actions are tried in sequence, i.e.
+<span class="code">[eat #oyster]</span>, <span class="code">[eat #ham]</span>, and <span class="code">[eat
+#cheese]</span>.
+</p>
+<p>It is possible to instruct the library to combine some of these actions into
+<i>group actions</i>. For instance, we could declare that ham and cheese, in
+that order, should form a group:
+</p>
+<textarea class="copyarea" id="copy20" readonly>
+(action [eat $] may group #ham with #cheese)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(action [eat $] may group #ham with #cheese)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy20').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The first action, <span class="code">[eat #oyster]</span>, is still passed through the usual
+action-handling predicates, but the remaining two are combined into <span class="code">[eat
+[#ham #cheese]]</span> which gets handed off to a set of <i>group-action
+handling predicates</i>:
+</p>
+<p class="codeline">(group-refuse $GroupAction)</p>
+<p class="noteline">By default, the group action is refused if <span class="code">(refuse&nbsp;$)</span>
+succeeds for any of the constituent actions, i.e. <span class="code">(refuse [eat
+#ham])</span> or <span class="code">(refuse [eat #cheese])</span>.
+</p>
+<p class="codeline">(group-before $GroupAction)</p>
+<p class="noteline">By default, this predicate invokes <span class="code">*(before&nbsp;$)</span> for each
+constituent action.
+</p>
+<p class="codeline">(group-instead of $GroupAction)</p>
+<p class="noteline">By default, this predicate invokes <span class="code">(group-prevent&nbsp;$)</span>,
+<span class="code">(group-perform&nbsp;$)</span>, and <span class="code">(group-after&nbsp;$)</span>, in
+the same way that the default rule for <span class="code">(instead of&nbsp;$)</span>
+invokes <span class="code">(prevent&nbsp;$)</span>, <span class="code">(perform&nbsp;$)</span>, and
+<span class="code">(after&nbsp;$)</span>.
+</p>
+<p class="codeline">(group-prevent $GroupAction)</p>
+<p class="noteline">By default, the group action is prevented if <span class="code">(prevent&nbsp;$)</span>
+succeeds for any of the constituent actions.
+</p>
+<p class="codeline">(group-perform $GroupAction)</p>
+<p class="noteline">By default, the group action is performed by querying
+<span class="code">(perform&nbsp;$)</span> for each constituent action in turn. But the
+story author will typically override this with some code that performs
+and reports everything in one go.
+</p>
+<p class="codeline">(group-after $GroupAction)</p>
+<p class="noteline">By default, this predicate invokes <span class="code">*(after&nbsp;$)</span> for each
+constituent action.
+</p>
+<p>Thus, we might define a rule for eating the ham and cheese in one go:
+</p>
+<textarea class="copyarea" id="copy21" readonly>
+(group-perform [eat [#ham #cheese]])
+	You savour the combination of ham and cheese.
+	(now) (#ham is nowhere)
+	(now) (#cheese is nowhere)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(group-perform [eat [#ham #cheese]])</td></tr>
+<tr><td class="left"></td><td class="right">You savour the combination of ham and cheese.</td></tr>
+<tr><td class="left"></td><td class="right">(now) (#ham is nowhere)</td></tr>
+<tr><td class="left"></td><td class="right">(now) (#cheese is nowhere)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy21').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>In many ways, the default behaviour of these rules is sensible and
+non-surprising, but there are two important gotchas:
+</p>
+<ul><li>The default group-action handling rules do not invoke <span class="code">(instead
+of&nbsp;$)</span> for any constituent action. If you wish to use
+<span class="code">(instead of&nbsp;$)</span> to redirect a particular action, and that
+action might be part of a group action, make sure to also define a
+corresponding <span class="code">(group-instead of&nbsp;$)</span> rule to deal with the
+group action.
+</li>
+<li>Each stage (e.g. prevent) is carried out in full, before the next stage
+is allowed to influence the world model. If performing the first
+constituent action would normally cause the second to be prevented,
+grouping them together might create a loophole. Suppose you have a rule
+to prevent the player from eating something when they're full.
+Normally, <span class="code">(perform [eat #ham])</span> might make the player full,
+and <span class="code">(prevent [eat #cheese])</span> would then notice that the
+player was full and prevent the cheese from being eaten. But
+<span class="code">(group-prevent [eat [#ham #cheese]])</span> would check
+<span class="code">(prevent [eat #ham])</span> and <span class="code">(prevent [eat
+#cheese])</span> first, before the player is full. Then,
+<span class="code">(group-perform [eat [#ham #cheese]])</span> would go ahead and
+eat both objects, even though the player only had room for one. To fix
+this problem, add a rule for <span class="code">(group-prevent [eat [#ham
+#cheese]])</span> that aborts the group action if the player has room
+for less than two items.
+</li>
+</ul><p>In the above example, we allowed two specific objects, <span class="code">#ham</span> and
+<span class="code">#cheese</span>, in that particular order, to form a group. The parser is
+allowed to rearrange objects to form groups, as long as their internal order is
+preserved. Thus, <span class="prginput">EAT HAM, OYSTER AND CHEESE</span> would result in the
+group action <span class="code">[eat [#ham #cheese]]</span> followed by the normal action
+<span class="code">[eat #oyster]</span>.
+</p>
+<p>It is also possible to allow entire classes of objects to be grouped together.
+Here we use the <span class="code">(edible&nbsp;$)</span> trait:
+</p>
+<textarea class="copyarea" id="copy22" readonly>
+(action [eat $] may group (edible $) with (edible $))
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(action [eat $] may group (edible $) with (edible $))</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy22').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Assuming the oyster, the ham, and the cheese are all marked as edible, this
+will cause the input <span class="prginput">EAT CHEESE, HAM, OYSTER</span> to resolve into the
+single group action <span class="code">[eat [#cheese #ham #oyster]]</span>. A corresponding
+group-perform rule could look like this:
+</p>
+<textarea class="copyarea" id="copy23" readonly>
+(group-perform [eat $List])
+	You savour the combination of (the $List).
+	(exhaust) {
+		*($Obj is one of $List)
+		(now) ($Obj is nowhere)
+	}
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(group-perform [eat $List])</td></tr>
+<tr><td class="left"></td><td class="right">You savour the combination of (the $List).</td></tr>
+<tr><td class="left"></td><td class="right">(exhaust) {</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>*($Obj is one of $List)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(now) ($Obj is nowhere)</td></tr>
+<tr><td class="left"></td><td class="right">}</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy23').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The predicates <span class="code">(group-try&nbsp;$)</span> and <span class="code">(first group-try&nbsp;$)</span>
+behave like <span class="code">(try&nbsp;$)</span> and <span class="code">(first try&nbsp;$)</span>, but for group
+actions. Thus, for instance:
+</p>
+<textarea class="copyarea" id="copy24" readonly>
+(group-instead of [eat [#cheese #ham]])
+	(group-try [eat [#ham #cheese]])
+
+(group-before [eat [#ham #cheese]])
+	(first group-try [put #salt #on [#ham #cheese]])
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(group-instead of [eat [#cheese #ham]])</td></tr>
+<tr><td class="left"></td><td class="right">(group-try [eat [#ham #cheese]])</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(group-before [eat [#ham #cheese]])</td></tr>
+<tr><td class="left"></td><td class="right">(first group-try [put #salt #on [#ham #cheese]])</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy24').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="stdactions.html">Chapter 7: The standard actions</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 26, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 27, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>
