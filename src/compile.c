@@ -10,6 +10,7 @@
 #include "compile.h"
 #include "eval.h"
 #include "report.h"
+#include "frontend.h"
 
 static struct cinstr *instrbuf;
 static int ninstr;
@@ -1517,9 +1518,7 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 			&& an->children[0]->kind == AN_RULE
 			&& (an->children[0]->predicate->pred->flags & PREDF_FAIL)) {
 				comp_body(prg, cl, an->children[2], seen, endlab, predflags);
-			} else if(an->children[0]
-			&& an->children[0]->kind == AN_RULE
-			&& (an->children[0]->predicate->pred->flags & PREDF_SUCCEEDS)) {
+			} else if(body_succeeds(an->children[0])) {
 				vnum = findvar(cl, an->word);
 				ci = add_instr(I_SAVE_CHOICE);
 				ci->oper[0] = (value_t) {OPER_VAR, vnum};
@@ -2526,45 +2525,45 @@ static int try_eliminate_choice(int rnum, int i, struct program *prg, uint8_t *v
 	int any = 0;
 	struct comp_routine *r = &routines[rnum];
 
-	if(r->instr[i].op == I_PUSH_CHOICE) {
-		assert(r->instr[i].oper[1].tag == OPER_RLAB);
-		fail_lab = r->instr[i].oper[1].value;
-		pop_instr = &routines[fail_lab].instr[0];
-		restore_instr = 0;
-		if(i
-		&& r->instr[i - 1].op == I_SAVE_CHOICE
-		&& (r->instr[i - 1].oper[0].tag == OPER_VAR || r->instr[i - 1].oper[0].tag == OPER_TEMP)) {
-			if(can_eliminate_choice(rnum, i + 1, r->instr[i - 1].oper[0], &pop_instr, &restore_instr, visited)) {
-				any = 1;
-				memset(visited, 0, nroutine);
-				do_eliminate_choice(r, i + 1, fail_lab, visited);
-				memset(visited, 0, nroutine);
-				r->instr[i - 1].op = I_NOP;
-				memset(r->instr[i - 1].oper, 0, sizeof(r->instr[i - 1].oper));
-				r->instr[i].op = I_NOP;
-				memset(r->instr[i].oper, 0, sizeof(r->instr[i].oper));
-				assert(pop_instr->op == I_POP_CHOICE);
-				pop_instr->op = I_NOP;
-				memset(pop_instr->oper, 0, sizeof(pop_instr->oper));
-				if(restore_instr) {
-					assert(restore_instr->op == I_RESTORE_CHOICE);
-					restore_instr->op = I_NOP;
-					memset(restore_instr->oper, 0, sizeof(restore_instr->oper));
-				}
+	assert(r->instr[i].op == I_PUSH_CHOICE);
+	assert(r->instr[i].oper[1].tag == OPER_RLAB);
+
+	fail_lab = r->instr[i].oper[1].value;
+	pop_instr = &routines[fail_lab].instr[0];
+	restore_instr = 0;
+	if(i
+	&& r->instr[i - 1].op == I_SAVE_CHOICE
+	&& (r->instr[i - 1].oper[0].tag == OPER_VAR || r->instr[i - 1].oper[0].tag == OPER_TEMP)) {
+		if(can_eliminate_choice(rnum, i + 1, r->instr[i - 1].oper[0], &pop_instr, &restore_instr, visited)) {
+			any = 1;
+			memset(visited, 0, nroutine);
+			do_eliminate_choice(r, i + 1, fail_lab, visited);
+			memset(visited, 0, nroutine);
+			r->instr[i - 1].op = I_NOP;
+			memset(r->instr[i - 1].oper, 0, sizeof(r->instr[i - 1].oper));
+			r->instr[i].op = I_NOP;
+			memset(r->instr[i].oper, 0, sizeof(r->instr[i].oper));
+			assert(pop_instr->op == I_POP_CHOICE);
+			pop_instr->op = I_NOP;
+			memset(pop_instr->oper, 0, sizeof(pop_instr->oper));
+			if(restore_instr) {
+				assert(restore_instr->op == I_RESTORE_CHOICE);
+				restore_instr->op = I_NOP;
+				memset(restore_instr->oper, 0, sizeof(restore_instr->oper));
 			}
-		} else {
-			if(can_eliminate_choice(rnum, i + 1, (value_t) {VAL_NONE}, &pop_instr, &restore_instr, visited)) {
-				any = 1;
-				memset(visited, 0, nroutine);
-				do_eliminate_choice(r, i + 1, fail_lab, visited);
-				memset(visited, 0, nroutine);
-				r->instr[i].op = I_NOP;
-				memset(r->instr[i].oper, 0, sizeof(r->instr[i].oper));
-				assert(pop_instr->op == I_POP_CHOICE);
-				pop_instr->op = I_NOP;
-				memset(pop_instr->oper, 0, sizeof(pop_instr->oper));
-				assert(!restore_instr);
-			}
+		}
+	} else {
+		if(can_eliminate_choice(rnum, i + 1, (value_t) {VAL_NONE}, &pop_instr, &restore_instr, visited)) {
+			any = 1;
+			memset(visited, 0, nroutine);
+			do_eliminate_choice(r, i + 1, fail_lab, visited);
+			memset(visited, 0, nroutine);
+			r->instr[i].op = I_NOP;
+			memset(r->instr[i].oper, 0, sizeof(r->instr[i].oper));
+			assert(pop_instr->op == I_POP_CHOICE);
+			pop_instr->op = I_NOP;
+			memset(pop_instr->oper, 0, sizeof(pop_instr->oper));
+			assert(!restore_instr);
 		}
 	}
 
@@ -2581,7 +2580,7 @@ static int optimize_choice_frames(struct program *prg) {
 	for(rnum = nroutine - 1; rnum >= 0; rnum--) {
 		r = &routines[rnum];
 		for(i = r->ninstr - 1; i >= 0; i--) {
-			if(r->instr[i].op == I_SAVE_CHOICE || r->instr[i].op == I_PUSH_CHOICE) {
+			if(r->instr[i].op == I_PUSH_CHOICE) {
 				any |= try_eliminate_choice(rnum, i, prg, visited);
 			}
 		}
