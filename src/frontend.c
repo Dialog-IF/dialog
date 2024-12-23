@@ -1231,7 +1231,7 @@ static int compute_wordmap(struct program *prg, struct astnode *generators, stru
 	(void) j;
 	(void) k;
 
-#if 0
+#if 1
 	for(i = 0; i < prg->ndictword; i++) {
 		if(tallies[i].count <= MAXWORDMAP) {
 			for(j = 0; j < tallies[i].count; ) {
@@ -2499,6 +2499,11 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 				} else if(1 == sscanf(str, "font-weight : %s", param)) {
 					if(!strcmp(param, "bold")) {
 						bc->style = STYLE_BOLD;
+					}
+				} else if(1 == sscanf(str, "font-family : %s", param)) {
+					// %s stops at first whitespace, so use str:
+					if(strstr(str, "monospace")) {
+						bc->style = STYLE_FIXED;
 					}
 				}
 

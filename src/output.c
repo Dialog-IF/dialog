@@ -276,9 +276,12 @@ void o_print_str(const char *utf8) {
 }
 
 void o_begin_link(const char *utf8) {
+	uint8_t saved_upper = boxstack[boxsp].upper;
+	boxstack[boxsp].upper = 0;
 	o_print_str("<[");
 	o_print_str(utf8);
 	o_print_str("] ");
+	boxstack[boxsp].upper = saved_upper;
 }
 
 void o_end_link() {

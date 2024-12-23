@@ -3142,6 +3142,8 @@ struct rtroutine rtroutines[] = {
 			// 2: size minus 2, then amount of fill
 		(struct zinstr []) {
 			{Z_CALL1N, {ROUTINE(R_LINE)}},
+			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_LOCAL+0)}, REG_LOCAL+0},
+			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_LOCAL+1)}, REG_LOCAL+1},
 			{Z_JL, {VALUE(REG_LOCAL+0), VALUE(REG_4000)}, 0, RFALSE},
 			{Z_JL, {VALUE(REG_LOCAL+1), VALUE(REG_4000)}, 0, RFALSE},
 			{Z_SUB, {VALUE(REG_LOCAL+0), VALUE(REG_4000)}, REG_LOCAL+0},

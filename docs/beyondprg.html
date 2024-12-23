@@ -321,18 +321,13 @@ A future version of Dialog might include more built-in predicates, and an
 extended numerical range. However, this must be balanced against the stated
 design goal of a small, elegant language.
 </p>
-<p>Dialog is designed to emit compact Z-code, and will be able to cram a
-substantial amount of content into the good old Z-machine. Nevertheless, there
-is an upper limit, and a backend for the <i>Glulx</i> platform should
-eventually be added to support larger stories.
-</p>
-<p>Closures could be added to the language to support callbacks. There are a
-handful of places in the standard library where this would make the code
-substantially cleaner and easier to extend from the outside.
+<p>A backend for the <i>Glulx</i> platform might be implemented, in addition to
+the Z-machine and Å-machine backends.
 </p>
 <p>There is currently no way to provide a fallback if the interpreter fails to
-print a particular unicode character. The missing character will come out as a
-question mark instead, but this is decidedly ugly. A future version of the
+print a particular unicode character, although the Z-machine backend provides
+built-in fallbacks for certain common characters. Unsupported characters come
+out as question marks, which is decidedly ugly. A future version of the
 language may introduce functionality for dealing with unsupported characters.
 </p>
 <p>The <span class="code">(uppercase)</span> built-in predicate is currently limited to English
@@ -343,7 +338,7 @@ characters is probably more trouble than it's worth.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="quickref.html">Appendix: Quick reference</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 11, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 12, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

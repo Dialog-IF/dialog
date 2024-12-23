@@ -1,4 +1,4 @@
-This archive contains version 0g/02 of the Dialog compiler and interactive
+This archive contains version 0g/03 of the Dialog compiler and interactive
 debugger, bundled with documentation and version 0.26 of the dialog Standard
 Library.
 
@@ -37,6 +37,21 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0g/03 Lib 0.26 (Manual revision 12):
+
+		Z-machine backend: Added support for selecting the fixed-width
+		font using CSS (font-family: monospace).
+
+		Compiler bugfix: '(determine object $)' would sometimes return
+		the same object twice.
+
+		Debugger bugfix: '(uppercase)' followed by '(link $)' now works
+		correctly.
+
+		Z-machine backend: Bugfix in '(progress bar $ of $)'.
+
+		Documentation: Minor updates.
 
 	0g/02 Lib 0.26 (Manual revision 11):
 
