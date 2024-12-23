@@ -27,10 +27,11 @@
 %% Manipulative actions
 
 (understand [teleport | $Words] as [teleport $Room])
-	*(room $Room)
-	(collect words)
+	(determine object $Room)
+		*(room $Room)
+	(from words)
 		*(dict $Room)
-	(and check $Words)
+	(matching all of $Words)
 
 (describe action [teleport $Room])
 	teleport to (the full $Room)
@@ -42,10 +43,11 @@
 	(enter $Room)
 
 (understand [purloin | $Words] as [purloin $Obj])
-	*(item $Obj)
-	(collect words)
+	(determine object $Obj)
+		*(item $Obj)
+	(from words)
 		*(dict $Obj)
-	(and check $Words)
+	(matching all of $Words)
 
 ~(refuse [purloin $])
 

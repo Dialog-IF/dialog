@@ -98,24 +98,25 @@ part of the story banner), by querying the following built-in predicates:
 <p>The serial number is the compilation date in <span class="tt">YYMMDD</span> format.
 </p>
 <a id="runtimeerror"></a><h2>Fatal runtime errors</h2>
-<p>Attempts to violate the constraints imposed on <a href="dynamic.html">Dynamic predicates</a>
+<p>Attempts to violate the constraints imposed on <a href="dynamic.html">dynamic predicates</a>
 will result in fatal runtime errors.
 </p>
-<p>On the Z-machine backend, such errors also occur if one of the heaps (the main
-heap or the auxiliary heap) is ever exhausted. The heaps are two relatively
-large memory arrays that the Dialog runtime system uses to keep track of local
-variables, lists, activation records, choice points and other transient data
-structures. When one of these arrays fills up&mdash;which could happen at any
-time, in the middle of any operation&mdash;there's not much Dialog can do, except
-abandon all hope and re-initialize itself.
+<p>Such errors can also occur if one of the heaps (main, auxiliary, and long-term)
+is ever exhausted. The heaps are three relatively large memory arrays that the
+Dialog runtime system uses to keep track of local variables, lists, activation
+records, choice points and other transient data structures. When one of these
+arrays fills up&mdash;which could happen at any time, in the middle of any
+operation&mdash;there's not much Dialog can do, except abandon all hope and
+re-initialize itself.
 </p>
-<p>By default, the heap and auxiliary heap occupy 1400 and 600&nbsp;words respectively,
-and this should be more than enough for most interactive stories. The size of
-each area can be adjusted by passing commandline options to the compiler. A
-built-in predicate, <span class="code">(display memory statistics)</span>, prints the peak
-usage of each memory area so far. During debugging and testing, you may wish to
-invoke this predicate just before quitting, as it will tell you how close you
-are to the limits.
+<p>For the Z-machine backend, the main heap, auxiliary heap, and long-term heap
+occupy 1000, 500, and 500&nbsp;words respectively by default, and this should be
+more than enough for most interactive stories. The size of each area can be
+adjusted by passing commandline options to the compiler. A built-in predicate,
+<span class="code">(display memory statistics)</span>, prints the peak usage of each memory
+area so far. During debugging and testing, you may wish to invoke this
+predicate just before quitting, as it will tell you how close you are to the
+limits.
 </p>
 <p>The main rationale for throwing runtime errors when an invalid
 <span class="code">(now)</span> operation is attempted, instead of merely failing, is that
@@ -132,9 +133,11 @@ The parameter is a small integer, representing the nature of the error:
 </p>
 <p>3: Type error: Expected object.
 </p>
-<p>4: Type error: Expected simple value.
+<p>4: Type error: Expected bound value.
 </p>
 <p>5: Invalid dynamic operation.
+</p>
+<p>6: Long-term heap space exhausted.
 </p>
 <p>After a fatal error, the game world could be in an inconsistent state, and
 there's not much one can do except print an error message and quit. Or is
@@ -214,7 +217,7 @@ of per-object variables used by your design, especially if they will remain
 unset for most objects.
 </p>
 <p>For instance, looking back at the <span class="code">(#troll wields #axe)</span> example
-from the chapter on <a href="dynamic.html">Dynamic predicates</a>, if the troll
+from the chapter on <a href="dynamic.html">dynamic predicates</a>, if the troll
 and the player are the only characters that wield weapons, it would be much
 better to use a pair of global variables:
 </p>
@@ -339,7 +342,7 @@ characters is probably more trouble than it's worth.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="quickref.html">Appendix: Quick reference</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 4, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 5, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

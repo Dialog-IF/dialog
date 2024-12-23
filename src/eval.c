@@ -41,48 +41,50 @@ static void add_trail(struct eval_state *es, uint16_t index) {
 	es->trailstack[es->trail++] = index;
 }
 
-static value_t alloc_heap_pair(struct eval_state *es) {
-	value_t v;
+static int alloc_heap_struct(struct eval_state *es, int n) {
+	int offs;
 
-	if(es->top + 2 > es->nalloc_heap) {
-		int newsize = es->top * 2 + 8;
+	if(es->top + n > es->nalloc_heap) {
+		int newsize = 2 * (es->top + n);
 		if(newsize >= 0xffff) {
 			newsize = 0xffff;
-			if(es->top + 2 > newsize) {
+			if(es->top + n > newsize) {
 				report(LVL_ERR, 0, "Heap overflow (perhaps infinite recursion).");
-				return (value_t) {VAL_ERROR, 0};
+				return -1;
 			}
 		}
 		es->nalloc_heap = newsize;
 		es->heap = realloc(es->heap, es->nalloc_heap * sizeof(value_t));
 	}
 
-	v = (value_t) {VAL_PAIR, es->top};
-	es->top += 2;
+	offs = es->top;
+	es->top += n;
 
-	return v;
+	return offs;
+}
+
+static value_t alloc_heap_pair(struct eval_state *es) {
+	int offs;
+
+	offs = alloc_heap_struct(es, 2);
+	if(offs < 0) {
+		return (value_t) {VAL_ERROR, 0};
+	} else {
+		return (value_t) {VAL_PAIR, offs};
+	}
 }
 
 value_t eval_makevar(struct eval_state *es) {
-	value_t v;
+	int offs;
 
-	if(es->top >= es->nalloc_heap) {
-		int newsize = es->top * 2 + 8;
-		if(newsize >= 0xffff) {
-			newsize = 0xffff;
-			if(es->top + 1 > newsize) {
-				report(LVL_ERR, 0, "Heap overflow (perhaps infinite recursion).");
-				return (value_t) {VAL_ERROR, 0};
-			}
-		}
-		es->nalloc_heap = newsize;
-		es->heap = realloc(es->heap, es->nalloc_heap * sizeof(value_t));
+	offs = alloc_heap_struct(es, 1);
+	if(offs < 0) {
+		return (value_t) {VAL_ERROR, 0};
+	} else {
+		value_t v = (value_t) {VAL_REF, offs};
+		es->heap[offs] = v;
+		return v;
 	}
-
-	v = (value_t) {VAL_REF, es->top};
-	es->heap[es->top++] = v;
-
-	return v;
 }
 
 value_t eval_makepair(value_t head, value_t tail, struct eval_state *es) {
@@ -201,6 +203,7 @@ static int push_choice(struct eval_state *es, int narg, struct predicate *pred, 
 	for(i = 0; i < narg; i++) {
 		cho->arg[i] = es->arg[i];
 	}
+	cho->orig_arg0 = es->orig_arg0;
 	cho->cont = es->cont;
 	pred_claim(cho->cont.pred);
 	cho->nextcase.pred = pred;
@@ -222,8 +225,9 @@ static void collect_push(struct eval_state *es, value_t v) {
 	int count;
 
 	// Simple elements are serialised as themselves.
-	// Proper lists are serialised as n elements, followed by VAL_PAIR(n).
-	// Improper lists are serialised as n elements, followed by the improper tail element, followed by VAL_PAIR(0x8000+n).
+	// Proper lists are serialized as n elements, followed by VAL_PAIR(n).
+	// Improper lists are serialized as n elements, followed by the improper tail element, followed by VAL_PAIR(0x8000+n).
+	// Extended dictionary words are serialized as the optional part, followed by the mandatory part, followed by VAL_DICTEXT(0).
 
 	v = eval_deref(v, es);
 
@@ -248,6 +252,11 @@ static void collect_push(struct eval_state *es, value_t v) {
 				break;
 			}
 		}
+		break;
+	case VAL_DICTEXT:
+		collect_push(es, es->heap[v.value + 1]);
+		collect_push(es, es->heap[v.value + 0]);
+		v = (value_t) {VAL_DICTEXT, 0};
 		break;
 	case VAL_REF:
 		v = (value_t) {VAL_REF, 0};
@@ -280,6 +289,12 @@ static value_t collect_pop(struct eval_state *es) {
 			v = eval_makepair(v1, v, es);
 			if(v.tag == VAL_ERROR) return v;
 		}
+	} else if(v.tag == VAL_DICTEXT) {
+		v = alloc_heap_pair(es);
+		if(v.tag == VAL_ERROR) return v;
+		es->heap[v.value + 0] = collect_pop(es);
+		es->heap[v.value + 1] = collect_pop(es);
+		v.tag = VAL_DICTEXT;
 	} else if(v.tag == VAL_REF) {
 		v = eval_makevar(es);
 	}
@@ -431,6 +446,7 @@ static value_t value_of(value_t v, struct eval_state *es) {
 	case VAL_NUM:
 	case VAL_OBJ:
 	case VAL_DICT:
+	case VAL_DICTEXT:
 	case VAL_NIL:
 	case VAL_PAIR:
 	case VAL_REF:
@@ -497,30 +513,64 @@ static int unify(struct eval_state *es, value_t v1, value_t v2) {
 			if(!unify(es, es->heap[v1.value], es->heap[v2.value])) return 0;
 			v1 = eval_deref(es->heap[v1.value + 1], es);
 			v2 = eval_deref(es->heap[v2.value + 1], es);
+		} else if(v1.tag == VAL_DICTEXT && v2.tag == VAL_DICTEXT) {
+			v1 = es->heap[v1.value + 0];
+			v2 = es->heap[v2.value + 0];
 		} else {
+			if(v1.tag == VAL_DICTEXT) v1 = es->heap[v1.value + 0];
+			if(v2.tag == VAL_DICTEXT) v2 = es->heap[v2.value + 0];
 			return (v1.tag == v2.tag) && (v1.value == v2.value);
 		}
 	}
 }
 
-void pp_tail(struct eval_state *es, value_t v) {
+static int would_unify(struct eval_state *es, value_t v1, value_t v2) {
+	// v1 and v2 are deref'd, and v1 only contains deref'd values
+	for(;;) {
+		if(v1.tag == VAL_REF || v2.tag == VAL_REF) {
+			return 1;
+		} else if(v1.tag == VAL_PAIR) {
+			if(v2.tag != VAL_PAIR) return 0;
+			if(!would_unify(
+				es,
+				es->heap[v1.value + 0],
+				eval_deref(es->heap[v2.value + 0], es)))
+			{
+				return 0;
+			}
+			v1 = es->heap[v1.value + 1];
+			v2 = eval_deref(es->heap[v2.value + 1], es);
+		} else if(v1.tag == VAL_DICTEXT && v2.tag == VAL_DICTEXT) {
+			v1 = es->heap[v1.value + 0];
+			v2 = es->heap[v2.value + 0];
+		} else {
+			if(v1.tag == VAL_DICTEXT) v1 = es->heap[v1.value + 0];
+			if(v2.tag == VAL_DICTEXT) v2 = es->heap[v2.value + 0];
+			return (v1.tag == v2.tag) && (v1.value == v2.value);
+		}
+	}
+}
+
+void pp_tail(struct eval_state *es, value_t v, int with_plus) {
 	v = eval_deref(v, es);
 	while(v.tag == VAL_PAIR) {
 		o_print_word(" ");
-		pp_value(es, es->heap[v.value], 0);
+		pp_value(es, es->heap[v.value], 0, with_plus);
 		v = eval_deref(es->heap[v.value + 1], es);
 	}
 	if(v.tag == VAL_NIL) {
 		o_print_word("]");
 	} else {
 		o_print_word(" | ");
-		pp_value(es, v, 0);
+		pp_value(es, v, 0, with_plus);
 		o_print_word("]");
 	}
 }
 
-void pp_value(struct eval_state *es, value_t v, int with_at) {
+void pp_value(struct eval_state *es, value_t v, int with_at, int with_plus) {
 	char buf[16];
+	value_t sub;
+	int first;
 
 	v = eval_deref(v, es);
 	switch(v.tag) {
@@ -550,13 +600,45 @@ void pp_value(struct eval_state *es, value_t v, int with_at) {
 			o_print_word(es->program->dictwordnames[v.value - 256]->name);
 		}
 		break;
+	case VAL_DICTEXT:
+		if(with_at) {
+			o_print_word("@");
+		}
+		if(es->heap[v.value + 0].tag == VAL_DICT) {
+			pp_value(es, es->heap[v.value + 0], 0, 0);
+		} else {
+			assert(es->heap[v.value + 0].tag == VAL_PAIR);
+			first = 1;
+			for(sub = es->heap[v.value + 0]; sub.tag == VAL_PAIR; sub = es->heap[sub.value + 1]) {
+				assert(es->heap[sub.value].tag == VAL_DICT);
+				assert(es->heap[sub.value].value < 256);
+				buf[0] = es->heap[sub.value].value;
+				buf[1] = 0;
+				if(!first) o_nospace();
+				o_print_word(buf);
+				first = 0;
+			}
+		}
+		if(with_plus) {
+			o_nospace();
+			o_print_word("+");
+		}
+		for(sub = es->heap[v.value + 1]; sub.tag == VAL_PAIR; sub = es->heap[sub.value + 1]) {
+			assert(es->heap[sub.value].tag == VAL_DICT);
+			assert(es->heap[sub.value].value < 256);
+			buf[0] = es->heap[sub.value].value;
+			buf[1] = 0;
+			o_nospace();
+			o_print_word(buf);
+		}
+		break;
 	case VAL_NIL:
 		o_print_word("[]");
 		break;
 	case VAL_PAIR:
 		o_print_word("[");
-		pp_value(es, es->heap[v.value], 0);
-		pp_tail(es, es->heap[v.value + 1]);
+		pp_value(es, es->heap[v.value], 0, with_plus);
+		pp_tail(es, es->heap[v.value + 1], with_plus);
 		break;
 	case VAL_REF:
 	case VAL_NONE: /* used when tracing negated now-statements */
@@ -576,7 +658,8 @@ void trace(struct eval_state *es, int kind, struct predname *predname, value_t *
 		"FOUND (",
 		"NOW (",
 		"NOW ~(",
-		"Query succeeded: ("
+		"Query succeeded: (",
+		"LOOKUP ",
 	};
 	char buf[128];
 
@@ -590,21 +673,27 @@ void trace(struct eval_state *es, int kind, struct predname *predname, value_t *
 			}
 		}
 		o_print_word(tracename[kind]);
-		j = 0;
-		for(i = 0; i < predname->nword; i++) {
-			if(i) o_print_word(" ");
-			if(predname->words[i]) {
-				o_print_word(predname->words[i]->name);
-			} else {
-				pp_value(es, args[j++], 1);
-			}
-		}
-		assert(j == predname->arity);
-		if(line) {
-			snprintf(buf, sizeof(buf), ") %s:%d", FILEPART(line), LINEPART(line));
-			o_print_word(buf);
+		if(kind == TR_DETOBJ) {
+			pp_value(es, args[1], 1, 1);
+			o_space();
+			o_print_word("-->");
+			pp_value(es, args[0], 1, 1);
 		} else {
+			j = 0;
+			for(i = 0; i < predname->nword; i++) {
+				if(i) o_print_word(" ");
+				if(predname->words[i]) {
+					o_print_word(predname->words[i]->name);
+				} else {
+					pp_value(es, args[j++], 1, 1);
+				}
+			}
+			assert(j == predname->arity);
 			o_print_word(")");
+		}
+		if(line) {
+			snprintf(buf, sizeof(buf), "%s:%d", FILEPART(line), LINEPART(line));
+			o_print_word(buf);
 		}
 		o_end_box();
 	}
@@ -832,7 +921,7 @@ static int eval_builtin(struct eval_state *es, int builtin, value_t o1, value_t 
 		return 1;
 	case BI_WORD:
 		o1 = eval_deref(o1, es);
-		return o1.tag == VAL_DICT;
+		return o1.tag == VAL_DICT || o1.tag == VAL_DICTEXT;
 	default:
 		printf("unimplemented builtin %d\n", builtin); exit(1);
 	}
@@ -870,10 +959,10 @@ static int eval_run(struct eval_state *es) {
 				pred_release(pp.pred);
 				return ESTATUS_ERR_HEAP;
 			}
-			if(ci->oper[1].value) {
+			if(ci->oper[1].value && ci->subop) {
 				es->envstack[es->env].tracevars[0] = es->orig_arg0;
 			}
-			for(i = 1; i < ci->oper[1].value; i++) {
+			for(i = ci->subop; i < ci->oper[1].value; i++) {
 				es->envstack[es->env].tracevars[i] = es->arg[i];
 			}
 			break;
@@ -962,6 +1051,20 @@ static int eval_run(struct eval_state *es) {
 		case I_COLLECT_BEGIN:
 			push_aux(es, (value_t) {VAL_NONE});
 			break;
+		case I_COLLECT_CHECK:
+			res = 0;
+			v0 = eval_deref(value_of(ci->oper[0], es), es);
+			while((v = collect_pop(es)).tag != VAL_NONE) {
+				if(v0.tag == v.tag
+				&& v0.value == v.value) {
+					res = 1;
+				}
+			}
+			if(!res) {
+				do_fail(es, &pp);
+				pc = 0;
+			}
+			break;
 		case I_COLLECT_END:
 			v = (value_t) {VAL_NIL, 0};
 			while((v1 = collect_pop(es)).tag != VAL_NONE) {
@@ -976,6 +1079,42 @@ static int eval_run(struct eval_state *es) {
 				}
 			}
 			if(!unify(es, v, value_of(ci->oper[0], es))) {
+				do_fail(es, &pp);
+				pc = 0;
+			}
+			break;
+		case I_COLLECT_MATCH_ALL:
+			i = es->top;
+			v2 = (value_t) {VAL_NIL, 0};
+			while((v1 = collect_pop(es)).tag != VAL_NONE) {
+				if(v1.tag == VAL_ERROR) {
+					pred_release(pp.pred);
+					return ESTATUS_ERR_HEAP;
+				}
+				v2 = eval_makepair(v1, v2, es);
+				if(v2.tag == VAL_ERROR) {
+					pred_release(pp.pred);
+					return ESTATUS_ERR_HEAP;
+				}
+			}
+			v1 = eval_deref(value_of(ci->oper[0], es), es);
+			while(v1.tag == VAL_PAIR) {
+				v0 = eval_deref(es->heap[v1.value + 0], es);
+				if(v0.tag == VAL_DICTEXT && es->heap[v0.value + 0].tag == VAL_DICT) {
+					v0 = es->heap[v0.value + 0];
+				}
+				for(v = v2; v.tag == VAL_PAIR; v = es->heap[v.value + 1]) {
+					if(would_unify(es, es->heap[v.value + 0], v0)) {
+						break;
+					}
+				}
+				if(v.tag != VAL_PAIR) {
+					break;
+				}
+				v1 = eval_deref(es->heap[v1.value + 1], es);
+			}
+			es->top = i;
+			if(v1.tag != VAL_NIL) {
 				do_fail(es, &pp);
 				pc = 0;
 			}
@@ -1014,8 +1153,10 @@ static int eval_run(struct eval_state *es) {
 		case I_DEALLOCATE:
 			assert(es->env > 0);
 			env = &es->envstack[es->env];
-			for(i = 0; i < env->ntracevar; i++) {
-				es->arg[i] = env->tracevars[i];
+			if(ci->subop) {
+				for(i = 0; i < env->ntracevar; i++) {
+					es->arg[i] = env->tracevars[i];
+				}
 			}
 			pred_release(es->cont.pred);
 			es->simple = env->simple;
@@ -1329,8 +1470,9 @@ static int eval_run(struct eval_state *es) {
 		case I_IF_MATCH:
 			v0 = eval_deref(value_of(ci->oper[0], es), es);
 			v1 = eval_deref(value_of(ci->oper[1], es), es);
-			if(v0.tag == v1.tag
-			&& v0.value == v1.value) {
+			if(v0.tag == VAL_DICTEXT) v0 = es->heap[v0.value + 0];
+			if(v1.tag == VAL_DICTEXT) v1 = es->heap[v1.value + 0];
+			if(v0.tag == v1.tag && v0.value == v1.value) {
 				if(ci->oper[2].tag == OPER_RLAB) {
 					pp.routine = ci->oper[2].value;
 					pc = 0;
@@ -1344,6 +1486,19 @@ static int eval_run(struct eval_state *es) {
 		case I_IF_NIL:
 			v = eval_deref(value_of(ci->oper[0], es), es);
 			if(v.tag == VAL_NIL) {
+				if(ci->oper[1].tag == OPER_RLAB) {
+					pp.routine = ci->oper[1].value;
+					pc = 0;
+				} else {
+					assert(ci->oper[1].tag == OPER_FAIL);
+					do_fail(es, &pp);
+					pc = 0;
+				}
+			}
+			break;
+		case I_IF_WORD:
+			v = eval_deref(value_of(ci->oper[0], es), es);
+			if(v.tag == VAL_DICT || v.tag == VAL_DICTEXT) {
 				if(ci->oper[1].tag == OPER_RLAB) {
 					pp.routine = ci->oper[1].value;
 					pc = 0;
@@ -1368,18 +1523,9 @@ static int eval_run(struct eval_state *es) {
 			} else {
 				pp.routine = pp.pred->normal_entry;
 			}
+			if(es->program->eval_ticker) es->program->eval_ticker();
 			if(pp.routine == 0xffff && !pp.pred->predname->builtin) {
 				do_fail(es, &pp);
-			} else {
-				if(es->program->eval_ticker) es->program->eval_ticker();
-				if(interrupted) {
-					if(!push_env(es, 0, 0)) {
-						pred_release(pp.pred);
-						return ESTATUS_ERR_HEAP;
-					}
-					es->resume = pp;
-					return ESTATUS_SUSPENDED;
-				}
 			}
 			pc = 0;
 			break;
@@ -1397,18 +1543,9 @@ static int eval_run(struct eval_state *es) {
 			} else {
 				pp.routine = pp.pred->normal_entry;
 			}
+			if(es->program->eval_ticker) es->program->eval_ticker();
 			if(pp.routine == 0xffff && !pp.pred->predname->builtin) {
 				do_fail(es, &pp);
-			} else {
-				if(es->program->eval_ticker) es->program->eval_ticker();
-				if(interrupted) {
-					if(!push_env(es, 0, 0)) {
-						pred_release(pp.pred);
-						return ESTATUS_ERR_HEAP;
-					}
-					es->resume = pp;
-					return ESTATUS_SUSPENDED;
-				}
 			}
 			pc = 0;
 			break;
@@ -1430,18 +1567,9 @@ static int eval_run(struct eval_state *es) {
 			} else {
 				pp.routine = pp.pred->normal_entry;
 			}
+			if(es->program->eval_ticker) es->program->eval_ticker();
 			if(pp.routine == 0xffff && !pp.pred->predname->builtin) {
 				do_fail(es, &pp);
-			} else {
-				if(es->program->eval_ticker) es->program->eval_ticker();
-				if(interrupted) {
-					if(!push_env(es, 0, 0)) {
-						pred_release(pp.pred);
-						return ESTATUS_ERR_HEAP;
-					}
-					es->resume = pp;
-					return ESTATUS_SUSPENDED;
-				}
 			}
 			pc = 0;
 			break;
@@ -1580,15 +1708,13 @@ static int eval_run(struct eval_state *es) {
 			for(i = 0; i < ci->oper[0].value; i++) {
 				es->arg[i] = cho->arg[i];
 			}
+			es->orig_arg0 = cho->orig_arg0;
 			es->choice--;
 			revert_env_to(es, cho->env);
 			break;
 		case I_POP_STOP:
 			es->aux = es->stopaux;
-			assert(es->aux >= 3);
-			v = es->auxstack[--es->aux];
-			assert(v.tag == VAL_NUM);
-			es->wordcheckaux = v.value;
+			assert(es->aux >= 2);
 			v = es->auxstack[--es->aux];
 			assert(v.tag == VAL_NUM);
 			es->stopaux = v.value;
@@ -1598,17 +1724,16 @@ static int eval_run(struct eval_state *es) {
 			break;
 		case I_PREPARE_INDEX:
 			es->index = eval_deref(value_of(ci->oper[0], es), es);
+			if(es->index.tag == VAL_DICTEXT) {
+				es->index = es->heap[es->index.value + 0];
+			}
 			break;
 		case I_PRINT_VAL:
 			v0 = value_of(ci->oper[0], es);
 			if(es->forwords) {
-				v0 = eval_deref(v0, es);
-				if(v0.tag == VAL_DICT
-				|| v0.tag == VAL_NUM) {
-					push_aux(es, v0);
-				}
+				collect_push(es, v0);
 			} else {
-				pp_value(es, v0, 0);
+				pp_value(es, v0, 0, 0);
 			}
 			break;
 		case I_PRINT_WORDS:
@@ -1653,7 +1778,6 @@ static int eval_run(struct eval_state *es) {
 			assert(ci->oper[0].tag == OPER_RLAB);
 			push_aux(es, (value_t) {VAL_NUM, es->stopchoice});
 			push_aux(es, (value_t) {VAL_NUM, es->stopaux});
-			push_aux(es, (value_t) {VAL_NUM, es->wordcheckaux});
 			es->stopaux = es->aux;
 			if(!push_choice(es, 0, pp.pred, ci->oper[0].value)) {
 				pred_release(pp.pred);
@@ -1986,6 +2110,13 @@ static int eval_run(struct eval_state *es) {
 						es->arg,
 						0);
 				}
+			} else if(ci->subop == TR_DETOBJ) {
+				trace(
+					es,
+					TR_DETOBJ,
+					0,
+					es->arg,
+					MKLINE(ci->oper[0].value, ci->oper[1].value));
 			} else {
 				assert(0);
 			}
@@ -2019,36 +2150,6 @@ static int eval_run(struct eval_state *es) {
 		case I_WIN_WIDTH:
 			set_by_ref(ci->oper[0], (value_t) {VAL_NUM, o_get_width()}, es);
 			break;
-		case I_WORDCHECK_BEGIN:
-			push_aux(es, (value_t) {VAL_NUM, es->wordcheckaux});
-			es->wordcheckaux = es->aux;
-			break;
-		case I_WORDCHECK_END:
-			n = es->aux - es->wordcheckaux;
-			v = eval_deref(value_of(ci->oper[0], es), es);
-			while(v.tag == VAL_PAIR) {
-				v1 = eval_deref(es->heap[v.value + 0], es);
-				for(i = 0; i < n; i++) {
-					if(v1.tag == es->auxstack[es->wordcheckaux + i].tag
-					&& v1.value == es->auxstack[es->wordcheckaux + i].value) {
-						break;
-					}
-				}
-				if(i == n) {
-					break;
-				}
-				v = eval_deref(es->heap[v.value + 1], es);
-			}
-			es->aux = es->wordcheckaux;
-			assert(es->aux);
-			v0 = es->auxstack[--es->aux];
-			assert(v0.tag == VAL_NUM);
-			es->wordcheckaux = v0.value;
-			if(v.tag != VAL_NIL) {
-				do_fail(es, &pp);
-				pc = 0;
-			}
-			break;
 		default:
 			printf("unimplemented cinstr! %d\n", ci->op);
 			cid = pp.pred->routines[pp.routine].clause_id;
@@ -2074,7 +2175,6 @@ void eval_reinitialize(struct eval_state *es) {
 	es->resume.pred = 0;
 
 	es->aux = 0;
-	es->wordcheckaux = 0;
 	es->trail = 0;
 	es->top = 0;
 	es->simple = EVAL_MULTI;

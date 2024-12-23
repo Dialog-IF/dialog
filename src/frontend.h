@@ -2,7 +2,6 @@
 struct dynamic {
 	uint8_t			linkage_flags;
 	line_t			linkage_due_to_line;
-	int			global_bufsize;
 };
 
 #define LINKF_SET	0x01

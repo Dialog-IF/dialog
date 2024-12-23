@@ -282,11 +282,15 @@ void pp_expr(struct astnode *an) {
 		pp_expr(an->children[1]);
 		printf(")");
 		break;
-	case AN_COLLECT_WORDS_CHECK:
-		printf("(collect words) ");
-		pp_body(an->children[0]);
-		printf(" (and check ");
-		pp_expr(an->children[1]);
+	case AN_DETERMINE_OBJECT:
+		printf("(determine object ");
+		pp_expr(an->children[0]);
+		printf(") ");
+		pp_body(an->children[1]);
+		printf(" (from words) ");
+		pp_body(an->children[2]);
+		printf(" (matching all of ");
+		pp_expr(an->children[3]);
 		printf(")");
 		break;
 	case AN_IF:
@@ -355,7 +359,7 @@ void pp_clause(struct clause *cl) {
 	printf(" ---> ");
 	pp_body(cl->body);
 	printf("\n");
-	printf("\tstructure: %s\n", cl->structure);
+	if(cl->structure) printf("\tstructure: %s\n", cl->structure);
 }
 
 void pp_predicate(struct predname *predname, struct program *prg) {
@@ -428,6 +432,7 @@ void pred_release(struct predicate *pred) {
 			arena_free(&pred->arena);
 			free(pred->dynamic);
 			free(pred->clauses);
+			free(pred->wordmaps);
 			free(pred);
 		}
 	}

@@ -33,21 +33,22 @@ struct specialspec {
 	int nword;
 	char *word[8];
 } specialspec[] = {
-	{SP_AND_CHECK,		0,				3,	{"and", "check", 0}},
 	{SP_RANDOM,		0,				2,	{"at", "random"}},
 	{SP_COLLECT,		0,				2,	{"collect", 0}},
 	{SP_COLLECT_WORDS,	0,				2,	{"collect", "words"}},
 	{SP_CYCLING,		0,				1,	{"cycling"}},
+	{SP_DETERMINE_OBJECT,	0,				3,	{"determine", "object", 0}},
 	{SP_ENDIF,		0,				1,	{"endif"}},
 	{SP_ELSE,		0,				1,	{"else"}},
 	{SP_ELSEIF,		0,				1,	{"elseif"}},
 	{SP_EXHAUST,		0,				1,	{"exhaust"}},
+	{SP_FROM_WORDS,		0,				2,	{"from", "words"}},
 	{SP_GENERATE,		PREDNF_META,			3,	{"generate", 0, 0}},
 	{SP_GLOBAL_VAR,		PREDNF_META,			3,	{"global", "variable", 0}},
-	{SP_GLOBAL_VAR_2,	PREDNF_META,			4,	{"global", "variable", 0, 0}},
 	{SP_IF,			0,				1,	{"if"}},
 	{SP_INTO,		0,				2,	{"into", 0}},
 	{SP_JUST,		0,				1,	{"just"}},
+	{SP_MATCHING_ALL_OF,	0,				4,	{"matching", "all", "of", 0}},
 	{SP_NOW,		0,				1,	{"now"}},
 	{SP_OR,			0,				1,	{"or"}},
 	{SP_P_RANDOM,		0,				3,	{"purely", "at", "random"}},
@@ -113,7 +114,7 @@ struct builtinspec {
 	{BI_WINDOWWIDTH,	0, 0,				4,	{"status", "bar", "width", 0}},
 	{BI_CURSORTO,		0, PREDF_SUCCEEDS,		6,	{"cursor", "to", "row", 0, "column", 0}},
 	{BI_GETINPUT,		0, 0,				3,	{"get", "input", 0}},
-	{BI_GETRAWINPUT,	0, 0,				4,	{"get", "raw", "input", 0}},
+	{BI_GETRAWINPUT,	0, 0,				5,	{"", "get", "raw", "input", 0}},	// disabled for now
 	{BI_GETKEY,		0, 0,				3,	{"get", "key", 0}},
 	{BI_SERIALNUMBER,	0, PREDF_SUCCEEDS,		2,	{"serial", "number"}},
 	{BI_COMPILERVERSION,	0, PREDF_SUCCEEDS,		2,	{"compiler", "version"}},
@@ -237,7 +238,7 @@ void find_fixed_flags(struct program *prg) {
 			if(!(predname->pred->flags & PREDF_FIXED_FLAG)
 			&& pred_can_be_fixed_flag(predname)) {
 #if 0
-				printf("candidate: %s\n", predname->printed_name);
+				printf("fixed flag: %s\n", predname->printed_name);
 #endif
 				predname->pred->flags |= PREDF_DYNAMIC | PREDF_FIXED_FLAG;
 				if(!predname->pred->dynamic) {
@@ -351,9 +352,7 @@ void trace_now_expression(struct astnode *an, uint8_t *bound, struct clause *cl,
 		for(i = 0; i < an->predicate->arity; i++) {
 			if(any_unbound(an->children[i], bound, cl)) {
 				an->children[i]->unbound = 1;
-				if((prg->optflags & OPTF_BOUND_PARAMS)
-				&& an->kind == AN_RULE
-				&& (!(an->predicate->pred->flags & PREDF_GLOBAL_VAR) || an->predicate->pred->dynamic->global_bufsize == 1)) {
+				if((prg->optflags & OPTF_BOUND_PARAMS) && an->kind == AN_RULE) {
 					report(
 						LVL_WARN,
 						an->line,
@@ -490,38 +489,23 @@ int trace_invocations_body(struct astnode **anptr, int flags, uint8_t *bound, st
 			break;
 		case AN_BLOCK:
 		case AN_FIRSTRESULT:
-			if(flags & PREDF_INVOKED_FOR_WORDS) {
-				flags |= PREDF_INVOKED_DEEP_WORDS;
-			}
 			failed = !trace_invocations_body(&an->children[0], flags, bound, cl, tail && !an->next_in_body, prg);
 			break;
 		case AN_STOPPABLE:
-			if(flags & PREDF_INVOKED_FOR_WORDS) {
-				flags |= PREDF_INVOKED_DEEP_WORDS;
-			}
 			memcpy(bound_sub, bound, cl->nvar);
 			(void) trace_invocations_body(&an->children[0], flags, bound_sub, cl, 1, prg);
 			break;
 		case AN_STATUSBAR:
-			if(flags & PREDF_INVOKED_FOR_WORDS) {
-				flags |= PREDF_INVOKED_DEEP_WORDS;
-			}
 			memcpy(bound_sub, bound, cl->nvar);
 			(void) trace_invocations_body(&an->children[1], flags, bound_sub, cl, 0, prg);
 			break;
 		case AN_NEG_BLOCK:
-			if(flags & PREDF_INVOKED_FOR_WORDS) {
-				flags |= PREDF_INVOKED_DEEP_WORDS;
-			}
 			for(i = 0; i < an->nchild; i++) {
 				memcpy(bound_sub, bound, cl->nvar);
 				(void) trace_invocations_body(&an->children[i], flags, bound_sub, cl, 0, prg);
 			}
 			break;
 		case AN_SELECT:
-			if(flags & PREDF_INVOKED_FOR_WORDS) {
-				flags |= PREDF_INVOKED_DEEP_WORDS;
-			}
 			/* drop through */
 		case AN_OR:
 			memset(bound_accum, 1, cl->nvar);
@@ -538,16 +522,10 @@ int trace_invocations_body(struct astnode **anptr, int flags, uint8_t *bound, st
 			if(!failed) memcpy(bound, bound_accum, cl->nvar);
 			break;
 		case AN_EXHAUST:
-			if(flags & PREDF_INVOKED_FOR_WORDS) {
-				flags |= PREDF_INVOKED_DEEP_WORDS;
-			}
 			memcpy(bound_sub, bound, cl->nvar);
 			(void) trace_invocations_body(&an->children[0], flags, bound_sub, cl, 0, prg);
 			break;
 		case AN_IF:
-			if(flags & PREDF_INVOKED_FOR_WORDS) {
-				flags |= PREDF_INVOKED_DEEP_WORDS;
-			}
 			failed = 1;
 			memset(bound_accum, 1, cl->nvar);
 			memcpy(bound_sub, bound, cl->nvar);
@@ -572,12 +550,13 @@ int trace_invocations_body(struct astnode **anptr, int flags, uint8_t *bound, st
 			break;
 		case AN_COLLECT_WORDS:
 			memcpy(bound_sub, bound, cl->nvar);
-			(void) trace_invocations_body(&an->children[0], PREDF_INVOKED_SHALLOW_WORDS, bound_sub, cl, 0, prg);
+			(void) trace_invocations_body(&an->children[0], PREDF_INVOKED_FOR_WORDS, bound_sub, cl, 0, prg);
 			add_bound_vars(an->children[1], bound, cl);
 			break;
-		case AN_COLLECT_WORDS_CHECK:
+		case AN_DETERMINE_OBJECT:
+			(void) trace_invocations_body(&an->children[1], flags, bound, cl, 0, prg);
 			memcpy(bound_sub, bound, cl->nvar);
-			(void) trace_invocations_body(&an->children[0], PREDF_INVOKED_SHALLOW_WORDS, bound_sub, cl, 0, prg);
+			(void) trace_invocations_body(&an->children[2], PREDF_INVOKED_FOR_WORDS, bound_sub, cl, 0, prg);
 			break;
 		}
 		anptr = &an->next_in_body;
@@ -914,8 +893,18 @@ void find_dict_words(struct program *prg, struct astnode *an, int include_barewo
 				an->word->dict_id = w->dict_id;
 			}
 		}
-		for(i = 0; i < an->nchild; i++) {
-			find_dict_words(prg, an->children[i], include_barewords);
+		if(an->kind == AN_COLLECT_WORDS) {
+			find_dict_words(prg, an->children[0], 1);
+			find_dict_words(prg, an->children[1], include_barewords);
+		} else if(an->kind == AN_DETERMINE_OBJECT) {
+			find_dict_words(prg, an->children[0], include_barewords);
+			find_dict_words(prg, an->children[1], include_barewords);
+			find_dict_words(prg, an->children[2], 1);
+			find_dict_words(prg, an->children[3], include_barewords);
+		} else {
+			for(i = 0; i < an->nchild; i++) {
+				find_dict_words(prg, an->children[i], include_barewords);
+			}
 		}
 		an = an->next_in_body;
 	}
@@ -937,6 +926,360 @@ void build_dictionary(struct program *prg) {
 				prg,
 				pred->clauses[j]->body,
 				!!(pred->flags & PREDF_INVOKED_FOR_WORDS));
+		}
+	}
+}
+
+static int query_known_to_fail(struct program *prg, struct astnode *an, struct word *objvar, int onum);
+static int query_known_to_succeed(struct program *prg, struct astnode *an, struct word *objvar, int onum);
+
+static int body_can_succeed(struct program *prg, struct astnode *an, struct word *objvar, int onum) {
+	while(an) {
+		if(an->kind == AN_RULE) {
+			if(query_known_to_fail(prg, an, objvar, onum)) {
+				return 0;
+			}
+		} else if(an->kind == AN_NEG_RULE) {
+			if(query_known_to_succeed(prg, an, objvar, onum)) {
+				return 0;
+			}
+		} else {
+			return 1;
+		}
+		an = an->next_in_body;
+	}
+
+	return 1;
+}
+
+static int body_must_succeed(struct program *prg, struct astnode *an, struct word *objvar, int onum) {
+	while(an) {
+		if(an->kind == AN_RULE) {
+			if(!query_known_to_succeed(prg, an, objvar, onum)) {
+				return 0;
+			}
+		} else if(an->kind == AN_NEG_RULE) {
+			if(!query_known_to_fail(prg, an, objvar, onum)) {
+				return 0;
+			}
+		} else {
+			return 0;
+		}
+		an = an->next_in_body;
+	}
+
+	return 1;
+}
+
+static int query_known_to_fail(struct program *prg, struct astnode *an, struct word *objvar, int onum) {
+	struct predname *predname;
+	struct astnode *sub;
+	int i;
+
+	predname = an->predicate;
+
+	if(predname->pred->flags & PREDF_FAIL) {
+		return 1;
+	}
+
+	if(predname->builtin == BI_IS_ONE_OF) {
+		if(an->children[0]->kind == AN_VARIABLE
+		&& an->children[0]->word == objvar) {
+			for(sub = an->children[1]; sub && sub->kind == AN_PAIR; sub = sub->children[1]) {
+				if(sub->children[0]->kind == AN_TAG
+				&& sub->children[0]->word->obj_id == onum) {
+					break;
+				}
+			}
+			if(sub->kind == AN_EMPTY_LIST) {
+				return 1;
+			}
+		}
+	} else if(predname->pred->flags & PREDF_FIXED_FLAG) {
+		if(an->children[0]->kind == AN_VARIABLE
+		&& an->children[0]->word == objvar) {
+			for(i = 0; i < predname->pred->nclause; i++) {
+				struct clause *cl = predname->pred->clauses[i];
+
+				if(cl->params[0]->kind == AN_TAG
+				&& cl->params[0]->word->obj_id == onum) {
+					if(body_can_succeed(prg, cl->body, 0, -1)) {
+						return 0;
+					}
+				} else if(cl->params[0]->kind == AN_VARIABLE) {
+					if(body_can_succeed(prg, cl->body, cl->params[0]->word, onum)) {
+						return 0;
+					}
+				}
+			}
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+static int query_known_to_succeed(struct program *prg, struct astnode *an, struct word *objvar, int onum) {
+	struct predname *predname;
+	struct astnode *sub;
+	int i;
+
+	predname = an->predicate;
+
+	if(predname->pred->flags & PREDF_FAIL) {
+		return 0;
+	}
+
+	if(predname->builtin == BI_IS_ONE_OF) {
+		if(an->children[0]->kind == AN_VARIABLE
+		&& an->children[0]->word == objvar) {
+			for(sub = an->children[1]; sub && sub->kind == AN_PAIR; sub = sub->children[1]) {
+				if(sub->children[0]->kind == AN_TAG
+				&& sub->children[0]->word->obj_id == onum) {
+					return 1;
+				}
+			}
+		}
+	} else if(predname->pred->flags & PREDF_FIXED_FLAG) {
+		if(an->children[0]->kind == AN_VARIABLE
+		&& an->children[0]->word == objvar) {
+			for(i = 0; i < predname->pred->nclause; i++) {
+				struct clause *cl = predname->pred->clauses[i];
+
+				if(cl->params[0]->kind == AN_TAG
+				&& cl->params[0]->word->obj_id == onum) {
+					if(body_must_succeed(prg, cl->body, 0, -1)) {
+						return 1;
+					}
+				} else if(cl->params[0]->kind == AN_VARIABLE) {
+					if(body_must_succeed(prg, cl->body, cl->params[0]->word, onum)) {
+						return 1;
+					}
+				} // We will not enter this clause.
+			}
+		}
+	}
+	return 0;
+}
+
+static void extract_wordmap_from_body(struct wordmap_tally *tallies, int tally_onum, struct program *prg, struct astnode *an, struct word *objvar, int onum, int max_depth);
+
+static void extract_wordmap_from_pred(struct wordmap_tally *tallies, int tally_onum, struct program *prg, struct predname *predname, int objarg, int onum, int max_depth) {
+	int i;
+	struct wordmap_tally *tally;
+
+	if(!max_depth) {
+		// Prevent infinite recursion, since we can't detect the base case. This must be an always-object.
+		tally = &tallies[256 + prg->ndictword];
+		for(i = 0; i < tally->count; i++) {
+			if(tally->onumtable[i] == tally_onum) break;
+		}
+		if(i == tally->count) {
+			if(tally->count < MAXWORDMAP) {
+				tally->onumtable[tally->count] = tally_onum;
+			}
+			tally->count++;
+		}
+	} else {
+		for(i = 0; i < predname->pred->nclause; i++) {
+			struct clause *cl = predname->pred->clauses[i];
+
+			if(objarg >= 0 && cl->params[objarg]->kind == AN_TAG) {
+				if(cl->params[objarg]->word == prg->worldobjnames[onum]) {
+					extract_wordmap_from_body(tallies, tally_onum, prg, cl->body, 0, -1, max_depth - 1);
+					if(cl->body && cl->body->kind == AN_JUST) break;
+				}
+			} else if(objarg >= 0 && cl->params[objarg]->kind == AN_VARIABLE) {
+				extract_wordmap_from_body(tallies, tally_onum, prg, cl->body, cl->params[objarg]->word, onum, max_depth - 1);
+				if(cl->body && cl->body->kind == AN_JUST) break;
+			} else {
+				extract_wordmap_from_body(tallies, tally_onum, prg, cl->body, 0, -1, max_depth - 1);
+				if(cl->body && cl->body->kind == AN_JUST) break;
+			}
+		}
+	}
+}
+
+static void extract_wordmap_from_body(struct wordmap_tally *tallies, int tally_onum, struct program *prg, struct astnode *an, struct word *objvar, int onum, int max_depth) {
+	int i;
+	struct wordmap_tally *tally;
+
+	while(an) {
+		switch(an->kind) {
+			case AN_RULE:
+			case AN_NEG_RULE:
+				if(an->kind == AN_RULE && query_known_to_fail(prg, an, objvar, onum)) {
+					return;
+				} else if(an->kind == AN_NEG_RULE && query_known_to_succeed(prg, an, objvar, onum)) {
+					return;
+				}
+				for(i = 0; i < an->predicate->arity; i++) {
+					if(an->children[i]->kind == AN_VARIABLE
+					&& an->children[i]->word == objvar) {
+						if(!(an->predicate->pred->flags & PREDF_DYNAMIC)) {
+							extract_wordmap_from_pred(tallies, tally_onum, prg, an->predicate, i, onum, max_depth);
+						}
+						break;
+					} else if(an->children[i]->kind == AN_TAG) {
+						if(!(an->predicate->pred->flags & PREDF_DYNAMIC)) {
+							extract_wordmap_from_pred(tallies, tally_onum, prg, an->predicate, i, an->children[i]->word->obj_id, max_depth);
+						}
+						break;
+					}
+				}
+				if(i == an->predicate->arity) {
+					extract_wordmap_from_pred(tallies, tally_onum, prg, an->predicate, -1, -1, max_depth);
+				}
+				break;
+			case AN_BAREWORD:
+			case AN_DICTWORD:
+			case AN_VARIABLE:
+				if(an->kind == AN_VARIABLE) {
+					tally = &tallies[256 + prg->ndictword];
+				} else {
+					assert(an->word->flags & WORDF_DICT);
+					tally = &tallies[an->word->dict_id];
+				}
+				for(i = 0; i < tally->count; i++) {
+					if(tally->onumtable[i] == tally_onum) break;
+				}
+				if(i == tally->count) {
+					if(tally->count < MAXWORDMAP) {
+						tally->onumtable[tally->count] = tally_onum;
+					}
+					tally->count++;
+				}
+				break;
+			case AN_BLOCK:
+			case AN_NEG_BLOCK:
+			case AN_FIRSTRESULT:
+			case AN_STOPPABLE:
+			case AN_STATUSBAR:
+			case AN_IF:
+			case AN_OR:
+			case AN_SELECT:
+			case AN_EXHAUST:
+			case AN_COLLECT:
+				for(i = 0; i < an->nchild; i++) {
+					extract_wordmap_from_body(tallies, tally_onum, prg, an->children[i], objvar, onum, max_depth);
+				}
+				break;
+			case AN_COLLECT_WORDS:
+			case AN_DETERMINE_OBJECT:
+			case AN_NOW:
+			case AN_JUST:
+			case AN_EMPTY_LIST:
+			case AN_PAIR:
+			case AN_INTEGER:
+			case AN_TAG:
+				break;
+			default:
+				assert(0); exit(1);
+		}
+		an = an->next_in_body;
+	}
+}
+
+static int compute_wordmap(struct program *prg, struct astnode *generators, struct astnode *collectbody, struct word *objvar, struct predicate *pred) {
+	int onum, i, n;
+	struct wordmap_tally tallies[256 + prg->ndictword + 1];
+
+	for(i = 0; i < 256 + prg->ndictword + 1; i++) {
+		tallies[i].count = 0;
+	}
+
+	for(onum = 0; onum < prg->nworldobj; onum++) {
+		if(body_can_succeed(prg, generators, objvar, onum)) {
+			extract_wordmap_from_body(tallies, onum, prg, collectbody, objvar, onum, 16);
+		}
+	}
+
+#if 0
+	printf("reverse wordmap, line %d:\n", LINEPART(collectbody->line));
+	for(i = 0; i < 256 + prg->ndictword + 1; i++) {
+		if(tallies[i].count) {
+			printf("  ");
+			if(i < 256) {
+				printf("%-20c", i);
+			} else if(i == 256 + prg->ndictword) {
+				printf("%-20s", "(always)");
+			} else {
+				printf("%-20s", prg->dictwordnames[i - 256]->name);
+			}
+			if(tallies[i].count > MAXWORDMAP) {
+				printf(" (many)");
+			} else {
+				int j;
+				for(j = 0; j < tallies[i].count; j++) {
+					printf(" #%s", prg->worldobjnames[tallies[i].onumtable[j]]->name);
+				}
+			}
+			printf("\n");
+		}
+	}
+#endif
+
+	if(tallies[256 + prg->ndictword].count > MAXWORDMAP) {
+		return -1;
+	}
+
+	pred->wordmaps = realloc(pred->wordmaps, (pred->nwordmap + 1) * sizeof(struct wordmap));
+	n = 0;
+	for(i = 0; i < 256 + prg->ndictword + 1; i++) {
+		if(tallies[i].count) n++;
+	}
+	pred->wordmaps[pred->nwordmap].nmap = n;
+	pred->wordmaps[pred->nwordmap].dict_ids = arena_alloc(&pred->arena, n * sizeof(uint16_t));
+	pred->wordmaps[pred->nwordmap].objects = arena_alloc(&pred->arena, n * sizeof(struct wordmap_tally));
+	n = 0;
+	for(i = 0; i < 256 + prg->ndictword + 1; i++) {
+		if(tallies[i].count) {
+			pred->wordmaps[pred->nwordmap].dict_ids[n] = i;
+			memcpy(&pred->wordmaps[pred->nwordmap].objects[n], &tallies[i], sizeof(struct wordmap_tally));
+			n++;
+		}
+	}
+	assert(pred->wordmaps[pred->nwordmap].nmap == n);
+	return pred->nwordmap++;
+}
+
+static void find_wordmaps(struct program *prg, struct astnode **anptr, int pred_id) {
+	int i;
+	struct astnode *an;
+
+	while((an = *anptr)) {
+		if(an->kind == AN_DETERMINE_OBJECT) {
+			assert(an->children[0]->kind == AN_VARIABLE);
+			assert(an->children[0]->word->name[0]);
+			if(an->children[3]->unbound) {
+				an->value = -1;
+			} else {
+				an->value = compute_wordmap(
+					prg,
+					an->children[1],
+					an->children[2],
+					an->children[0]->word,
+					prg->predicates[pred_id]->pred);
+			}
+		}
+		for(i = 0; i < an->nchild; i++) {
+			find_wordmaps(prg, &an->children[i], pred_id);
+		}
+		anptr = &an->next_in_body;
+	}
+}
+
+void build_reverse_wordmaps(struct program *prg) {
+	int i, j;
+	struct predicate *pred;
+
+	prg->nwordmappred = 0;
+	for(i = 0; i < prg->npredicate; i++) {
+		pred = prg->predicates[i]->pred;
+		if(pred->flags & PREDF_INVOKED) {
+			for(j = 0; j < pred->nclause; j++) {
+				find_wordmaps(prg, &pred->clauses[j]->body, i);
+			}
 		}
 	}
 }
@@ -1011,7 +1354,7 @@ int body_succeeds(struct astnode *an) {
 			if(!body_succeeds(an->children[2])) return 0;
 			// todo also consider conditions with known outcome
 			break;
-		case AN_COLLECT_WORDS_CHECK:
+		case AN_DETERMINE_OBJECT:
 			return 0;
 			break;
 		case AN_SELECT:
@@ -1142,8 +1485,7 @@ int frontend_visit_clauses(struct program *prg, struct arena *temp_arena, struct
 	char buf[32];
 
 	for(clause_dest = first_ptr; (cl = *clause_dest); ) {
-		if(cl->predicate->special == SP_GLOBAL_VAR
-		|| cl->predicate->special == SP_GLOBAL_VAR_2) {
+		if(cl->predicate->special == SP_GLOBAL_VAR) {
 			if(cl->body
 			&& cl->body->kind == AN_RULE
 			&& !cl->body->next_in_body
@@ -1171,17 +1513,6 @@ int frontend_visit_clauses(struct program *prg, struct arena *temp_arena, struct
 					}
 					if(!cl->body->predicate->pred->dynamic) {
 						cl->body->predicate->pred->dynamic = calloc(1, sizeof(struct dynamic));
-					}
-				}
-				if(cl->predicate->special == SP_GLOBAL_VAR) {
-					cl->body->predicate->pred->dynamic->global_bufsize = 1;
-				} else {
-					if(cl->params[1]->kind == AN_INTEGER
-					&& cl->params[1]->value >= 1) {
-						cl->body->predicate->pred->dynamic->global_bufsize = cl->params[1]->value;
-					} else {
-						report(LVL_ERR, cl->line, "The declared size of a global variable must be a positive integer.");
-						return 0;
 					}
 				}
 				if(cl->body->children[0]->kind != AN_VARIABLE) {
@@ -1751,12 +2082,10 @@ int frontend(struct program *prg, int nfile, char **fname) {
 	} while(flag);
 
 	recover_select_statements(prg);
-
 	trace_invocations(prg);
-
 	find_fixed_flags(prg);
-
 	build_dictionary(prg);
+	build_reverse_wordmaps(prg);
 
 	do {
 		flag = 0;
@@ -1904,6 +2233,8 @@ int frontend_inject_query(struct program *prg, struct predname *predname, struct
 		arena_free(&lexer.temp_arena);
 		return 0;
 	}
+
+	find_dict_words(prg, body, 0);
 
 	body = expand_macros(body, prg, cl->arena);
 

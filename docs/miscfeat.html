@@ -225,12 +225,15 @@ are numbered starting with&nbsp;1.
 without keywords; splits the list anywhere. Useful for parsing e.g.
 <span class="prginput">GIVE ATTILA THE HUN A COOKIE</span>.
 </p>
-<h3>Lists of characters</h3>
-<p class="codeline">(print raw input $List)</p>
-<p class="noteline">This is a handy predicate for printing back input obtained by the
-built-in predicate <span class="code">(get raw input $)</span>. It iterates through
-the given list, printing the elements with <span class="code">(no space)</span> in
-between.
+<h3>Lists of words</h3>
+<p class="codeline">(print words $List)</p>
+<p class="noteline">This is a handy predicate for printing back player input. It iterates
+through the given list, and prints each element in turn.
+</p>
+<p class="codeline">(Print Words $List)</p>
+<p class="noteline">This predicate iterates through the given list, and prints each element
+in turn, with the initial character converted to uppercase. It is
+useful for printing back names supplied by the player.
 </p>
 <a id="treeutil"></a><h2>Object tree manipulation</h2>
 <p>The Dialog standard library organizes objects into tree-like structures using a
@@ -795,7 +798,7 @@ It's your call.
 </p>
 	<div class="footer">
 	<p class="nav">Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 4, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 5, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

@@ -155,19 +155,25 @@ breaks are merged based on the maximum specified height, so
 <a class="copybtn" href="" onClick="document.getElementById('copy1').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <a id="input"></a><h2>Input</h2>
-<p>User input is represented by dictionary words. The Dialog compiler collects all
-dictionary words mentioned explicitly in the source code (with the
-<span class="nobreak"><span class="code">@</span>-prefix</span> or as bare words inside lists), as well as
-every literal word that can come out of a <span class="code">(collect words)</span>
-expression. In addition, the system makes sure to provide a single-letter
-dictionary word for every character supported by the underlying platform.
+<p>User input is represented by dictionary words.
 </p>
-<p>On a side note, don't worry about the Z-machine game dictionary getting bloated
-with every possible one-character word. It may appear so at the Dialog level,
-but the underlying runtime representation is different.
+<p>The Dialog compiler collects all dictionary words mentioned explicitly in the
+source code (with the <span class="nobreak"><span class="code">@</span>-prefix</span> or as bare words
+inside lists), as well as every literal word that can come out of a
+<span class="code">(collect words)</span> or <span class="code">(determine object $)</span> expression.
+In addition, the system makes sure to provide a single-letter dictionary word
+for every character supported by the underlying platform. Together, these words
+make up what's called the <i>game-wide dictionary</i>.
 </p>
-<p>There are three built-in predicates for obtaining input from the player. One
-waits for a single keypress, while the other two read a full line of input.
+<p>It may be helpful to know that there's a difference between dictionary words at
+the Dialog level, and the native, low-level words of the Z-machine. Dialog
+dictionary words are an abstraction over several different kinds of internal
+representation. That being said, it is the specific constraints of the
+low-level Z-machine dictionary that determine where the split occurs between
+the essential and optional parts of a given dictionary word.
+</p>
+<p>There are two built-in predicates for obtaining input from the player. One
+waits for a single keypress, while the other reads a full line of input.
 </p>
 <h3>Get key</h3>
 <textarea class="copyarea" id="copy2" readonly>
@@ -315,46 +321,37 @@ more word endings:
 </div>
 <p>The part that remains after removing the ending is referred to as the
 <i>stem</i> of the word. If the stem consists of at least two letters, and
-exists in the program-wide dictionary, then that dictionary word is returned.
+exists in the program-wide dictionary, then the resulting dictionary word will
+have the stem as its essential part, and the ending as its optional part.
+During comparison (unification with another bound value), only the essential
+part is considered. During printing, both the essential part and the optional
+part are printed.
 </p>
-<p>If all else fails, the word of input will be represented by a list of
-characters, each character itself a dictionary word.
+<p>During <a href="builtins.html#trace">tracing</a>, dictionary words are displayed with a plus sign (+)
+separating the essential and optional parts. Thus, if the German word
+&ldquo;klein&rdquo; is part of the game-wide dictionary, and the player enters
+<span class="prginput">KLEINES</span>, that word appears as <span class="tt">@klein+es</span> in the trace
+logs, and unifies successfully with <span class="code">@klein</span>.
+</p>
+<p>If a word of input isn't recognized at all, even after considering the
+removable word endings, then it's an <i>unrecognized</i> dictionary word. It
+can still be stored in a variable, retrieved, and printed back, and it will
+unify successfully with other instances of the same unrecognized word. When
+tracing is enabled, unrecognized dictionary words are displayed with a plus
+sign at the end.
 </p>
 <p>For instance, the input <span class="prginput">TAKE&nbsp;02&nbsp;UNKNOWNWORD,X&nbsp;BALL</span> may,
 depending on the contents of the dictionary, be represented by the list:
-<span class="nobreak"><span class="code">[take 2 [u n k n o w n w o r d] , x ball]</span></span>
-</p>
-<p>In practice, unknown words are ignored by most rules dealing with player input.
-The reason for providing such words as lists of characters is to allow programs
-to print them back, e.g. to complain that a particular word wasn't understood.
+<span class="nobreak"><span class="code">[take 2 unknownword , x ball]</span>.</span> As part of a trace,
+it might be displayed as
+<span class="nobreak"><span class="code">[take 2 unknownword+ , x ball]</span>.</span>
 </p>
 <p>Special gotcha: Recall that zero-prefixed numbers in the source code, as well
 as numbers that are out of range, are treated as words. If <span class="code">007</span>
 appears in the program in such a way that it becomes part of the program-wide
 dictionary, then it will show up as a dictionary word in the list returned by
-<span class="code">(get input)</span>. Otherwise, it will be represented by the numerical
+<span class="code">(get input&nbsp;$)</span>. Otherwise, it will be represented by the numerical
 value&nbsp;7.
-</p>
-<h3>Get raw input</h3>
-<textarea class="copyarea" id="copy7" readonly>
-	(get raw input $CharList)
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="left"></td><td class="right">(get raw input $CharList)</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy7').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>This query reads a line of input just like <span class="code">(get input $)</span>, but does
-not try to interpret it as a series of dictionary words or numbers.
-</p>
-<p>This is useful, for instance, for asking the player what their name is. It
-makes sense to treat the player's name as an opaque list of characters, just in
-case their first or last name is over nine letters long and happens to match a
-dictionary word: Recall that long dictionary words are truncated&mdash;and we
-generally do not want to truncate the player's name when we print it back.
 </p>
 <h3>Splitting input by keywords</h3>
 <p>During parsing, it is often necessary to scan a list for certain keywords, and
@@ -363,7 +360,7 @@ the matched keyword. It is straightforward to implement this using ordinary
 rules in Dialog. However, for performance reasons the language also provides a
 built-in predicate:
 </p>
-<textarea class="copyarea" id="copy8" readonly>
+<textarea class="copyarea" id="copy7" readonly>
 (split $Input by $Keywords into $Left and $Right)
 </textarea>
 <div class="blkcode">
@@ -372,20 +369,22 @@ built-in predicate:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy8').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy7').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
-<p><span class="code">$Keywords</span> must be a list of simple values (i.e. no unbound
-variables or sublists).  The <span class="code">$Input</span> list will be scanned, starting
-at its head, until the first element that also appears in
-<span class="code">$Keywords</span> is found. A list of the elements that came before the
-keyword is unified with <span class="code">$Left</span>, and a list of the elements that
-follow it is unified with <span class="code">$Right</span>. That is, neither
-<span class="code">$Left</span> nor <span class="code">$Right</span> includes the keyword itself.
+<p><span class="code">$Input</span> and <span class="code">$Keywords</span> must be lists of simple values,
+i.e. they mustn't contain sublists.
+</p>
+<p>The <span class="code">$Input</span> list will be scanned, starting at its head, until the
+first element that also appears in <span class="code">$Keywords</span> is found. A list of
+the elements that came before the keyword is unified with <span class="code">$Left</span>,
+and a list of the elements that follow it is unified with <span class="code">$Right</span>.
+That is, neither <span class="code">$Left</span> nor <span class="code">$Right</span> includes the
+keyword itself.
 </p>
 <p>When invoked as a multi-query, the predicate backtracks over each matching
 position. Thus:
 </p>
-<textarea class="copyarea" id="copy9" readonly>
+<textarea class="copyarea" id="copy8" readonly>
 	*(split [the good , the bad and the ugly]
 		by [and ,]
 		into $Left and $Right)
@@ -398,7 +397,7 @@ position. Thus:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy9').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy8').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>will succeed twice: First, binding <span class="code">$Left</span> to <span class="code">[the
 good]</span> and <span class="code">$Right</span> to <span class="code">[the bad and the ugly]</span>,
@@ -409,7 +408,7 @@ bad]</span> and <span class="code">$Right</span> to <span class="code">[the ugly
 more of a set of keywords. The standard library uses it that way in the
 following rule definition:
 </p>
-<textarea class="copyarea" id="copy10" readonly>
+<textarea class="copyarea" id="copy9" readonly>
 ($X contains one of $Y)
 	(split $X by $Y into $ and $)
 </textarea>
@@ -420,8 +419,81 @@ following rule definition:
 </table>
 </div>
 <div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy9').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<h3>Determining objects from words</h3>
+<p>This section is mainly of concern for library programmers, so story authors may
+safely skip it.
+</p>
+<p>Dialog has a special construct for matching player input against in-world
+object names in a very efficient way:
+</p>
+<textarea class="copyarea" id="copy10" readonly>
+	(determine object $Obj)
+		<i>object generator</i>
+	(from words)
+		<i>word generator</i>
+	(matching all of $Input)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">(determine object $Obj)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span><i>object generator</i></td></tr>
+<tr><td class="left"></td><td class="right">(from words)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span><i>word generator</i></td></tr>
+<tr><td class="left"></td><td class="right">(matching all of $Input)</td></tr>
+</table>
+</div>
+<div class="copycode">
 <a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
+<p>This statement will backtrack over every object <span class="code">$Obj</span> for which:<br />
+</p>
+<p class="indented">&bull; <i>object generator</i> succeeds, and<br />
+&bull; <i>word generator</i>, when exhausted, emits at least every word in the <span class="code">$Input</span> list.
+</p>
+<p>The variable <span class="code">$Obj</span> should appear both in the object generator and
+in the word generator, and the object generator should contain a multi-query to
+backtrack over a set of objects. A canonical example is:
+</p>
+<textarea class="copyarea" id="copy11" readonly>
+	(determine object $Obj)
+		*($Obj is in scope)
+	(from words)
+		*(dict $Obj)
+	(matching all of $Input)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">(determine object $Obj)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>*($Obj is in scope)</td></tr>
+<tr><td class="left"></td><td class="right">(from words)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>*(dict $Obj)</td></tr>
+<tr><td class="left"></td><td class="right">(matching all of $Input)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy11').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>A non-optimizing compiler could deal with this construct as follows: First,
+compile normal code for the object generator. Then, exhaust every branch of the
+word generator, collecting all its output into a temporary list of words.
+Finally, check that every word of <span class="code">$Input</span> appears in the temporary
+list.
+</p>
+<p>However, the Dialog compiler and debugger both perform the following
+optimization: At compile-time, they analyze the word generator statically, and
+construct a reverse lookup table, mapping words of input to objects. At
+runtime, this table is consulted first, based on <span class="code">$Input</span>, to
+determine what objects the player might be referring to. So, for instance, if
+the input is <span class="prginput">LARGE HAT</span>, and there are only two game objects for
+which <span class="code">(dict $Obj)</span> can produce both of those words, then
+<span class="code">$Obj</span> will now be bound to each of those two objects in turn. But
+if there are dozens of large hats, <span class="code">$Obj</span> may instead be left
+unbound; the compiler is allowed to make a trade-off between speed and memory
+footprint. Either way, after this step, the operation proceeds as in the
+unoptimized case.
+</p>
 <a id="trace"></a><h2>Debugging</h2>
 <p>The following built-in predicates are useful for debugging:
 </p>
@@ -517,15 +589,16 @@ fails.
 </p>
 <p class="codeline">(display memory statistics)</p>
 <p class="noteline">Prints a line of information specific to the compiler backend, about
-the peak memory usage in the heap and auxiliary heap areas. Currently,
-only the Z-machine backend does this. The size of these areas can be
-adjusted by passing commandline options to the compiler. During
-debugging and testing, you may wish to invoke this predicate just
-before quitting, as it will tell you how close you are to the limits.
+the peak memory usage in the heap, auxiliary heap, and long-term heap
+areas. Currently, only the Z-machine backend does this. The size of
+these areas can be adjusted by passing commandline options to the
+compiler. During debugging and testing, you may wish to invoke this
+predicate just before quitting, as it will tell you how close you are
+to the limits.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="beyondprg.html">Chapter 8: Beyond the program</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 4, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 5, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

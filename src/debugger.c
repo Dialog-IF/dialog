@@ -128,6 +128,11 @@ static int set_parent(struct eval_state *es, struct dyn_state *ds, uint16_t onum
 		return 0;
 	}
 
+	if(!v->nalloc) {
+		v->nalloc = 1;
+		v->rendered = calloc(1, sizeof(value_t));
+	}
+
 	if(keep_order
 	&& v->size
 	&& parent.tag == v->rendered[0].tag
@@ -168,56 +173,13 @@ static int set_parent(struct eval_state *es, struct dyn_state *ds, uint16_t onum
 	return 1;
 }
 
-static int update_ovar(struct eval_state *es, struct dyn_state *ds, int onum, int vnum) {
-	value_t args[2];
-	struct dyn_var *v = &ds->obj[onum].var[vnum];
+static int render_complex_value(struct dyn_var *dv, value_t v, struct eval_state *es, struct predname *predname) {
+	int count, new_size;
 
-	eval_reinitialize(es);
-	args[0] = (value_t) {VAL_OBJ, onum};
-	args[1] = eval_makevar(es);
-	if(eval_initial(es, es->program->objvarpred[vnum], args)) {
-		if(args[1].tag == VAL_REF) {
-			report(
-				LVL_ERR,
-				0,
-				"Attempting to set %s, for #%s, to an unbound value.",
-				es->program->objvarpred[vnum]->printed_name,
-				es->program->worldobjnames[onum]->name);
-			return 0;
-		} else if(args[1].tag == VAL_PAIR) {
-			report(
-				LVL_ERR,
-				0,
-				"Attempting to set %s, for #%s, to a value that is too complex.",
-				es->program->objvarpred[vnum]->printed_name,
-				es->program->worldobjnames[onum]->name);
-			return 0;
-		} else {
-			assert(v->nalloc);
-			if(vnum == DYN_HASPARENT) {
-				return set_parent(es, ds, onum, args[1], 1);
-			} else {
-				v->size = 1;
-				v->rendered[0] = args[1];
-				return 1;
-			}
-		}
-	} else {
-		if(vnum == DYN_HASPARENT) {
-			return set_parent(es, ds, onum, (value_t) {VAL_NONE, 0}, 1);
-		} else {
-			v->size = 0;
-			return 1;
-		}
-	}
-}
-
-static int render_complex_value(value_t *dest, int nword, value_t v, struct eval_state *es, struct predname *predname) {
-	int size = 1, count, n;
-
-	// Simple elements are serialised as themselves.
-	// Proper lists are serialised as the elements, followed by VAL_PAIR(n).
-	// Improper lists are serialised as the elements, followed by the improper tail element, followed by VAL_PAIR(0x8000+n).
+	// Simple elements are serialized as themselves.
+	// Proper lists are serialized as the elements, followed by VAL_PAIR(n).
+	// Improper lists are serialized as the elements, followed by the improper tail element, followed by VAL_PAIR(0x8000+n).
+	// Extended dictionary words are serialized as the optional part, followed by the mandatory part, followed by VAL_DICTEXT(0);
 
 	switch(v.tag) {
 	case VAL_NUM:
@@ -228,26 +190,31 @@ static int render_complex_value(value_t *dest, int nword, value_t v, struct eval
 	case VAL_PAIR:
 		count = 0;
 		for(;;) {
-			n = render_complex_value(dest, nword, eval_gethead(v, es), es, predname);
-			if(n < 0) return n;
-			size += n;
-			nword -= n;
-			dest += n;
+			if(!render_complex_value(dv, eval_gethead(v, es), es, predname)) {
+				return 0;
+			}
 			count++;
 			v = eval_gettail(v, es);
 			if(v.tag == VAL_NIL) {
 				v = (value_t) {VAL_PAIR, count};
 				break;
 			} else if(v.tag != VAL_PAIR) {
-				n = render_complex_value(dest, nword, v, es, predname);
-				if(n < 0) return n;
-				size += n;
-				nword -= n;
-				dest += n;
+				if(!render_complex_value(dv, v, es, predname)) {
+					return 0;
+				}
 				v = (value_t) {VAL_PAIR, 0x8000 | count};
 				break;
 			}
 		}
+		break;
+	case VAL_DICTEXT:
+		if(!render_complex_value(dv, es->heap[v.value + 1], es, predname)) {
+			return 0;
+		}
+		if(!render_complex_value(dv, es->heap[v.value + 0], es, predname)) {
+			return 0;
+		}
+		v.value = 0;
 		break;
 	case VAL_REF:
 		report(
@@ -255,22 +222,30 @@ static int render_complex_value(value_t *dest, int nword, value_t v, struct eval
 			0,
 			"Attempting to set %s to an unbound value.",
 			predname->printed_name);
-		return -1;
+		dv->size = 0;
+		return 0;
 	default:
 		assert(0); exit(1);
 	}
 
-	if(!nword) {
-		report(
-			LVL_ERR,
-			0,
-			"Attempting to set %s to a value that is too large.",
-			predname->printed_name);
-		return -1;
+	if(dv->size >= dv->nalloc) {
+		new_size = dv->size * 2 + 1;
+		if(new_size > 0xffff) new_size = 0xffff;
+		dv->nalloc = new_size;
+		dv->rendered = realloc(dv->rendered, new_size * sizeof(value_t));
+		if(dv->size >= dv->nalloc) {
+			report(
+				LVL_ERR,
+				0,
+				"Attempting to set %s to a value that is too large.",
+				predname->printed_name);
+			dv->size = 0;
+			return 0;
+		}
 	}
 
-	*dest = v;
-	return size;
+	dv->rendered[dv->size++] = v;
+	return 1;
 }
 
 static value_t rebuild_complex_value(value_t *src, int *pos, struct eval_state *es) {
@@ -298,8 +273,39 @@ static value_t rebuild_complex_value(value_t *src, int *pos, struct eval_state *
 			if(v.tag == VAL_ERROR) return v;
 		}
 		return v;
+	case VAL_DICTEXT:
+		v = rebuild_complex_value(src, pos, es);
+		v1 = rebuild_complex_value(src, pos, es);
+		v = eval_makepair(v, v1, es);
+		if(v.tag == VAL_ERROR) return v;
+		v.tag = VAL_DICTEXT;
+		return v;
 	default:
 		assert(0); exit(1);
+	}
+}
+
+static int update_ovar(struct eval_state *es, struct dyn_state *ds, int onum, int vnum) {
+	value_t args[2];
+	struct dyn_var *v = &ds->obj[onum].var[vnum];
+
+	eval_reinitialize(es);
+	args[0] = (value_t) {VAL_OBJ, onum};
+	args[1] = eval_makevar(es);
+	if(eval_initial(es, es->program->objvarpred[vnum], args)) {
+		if(vnum == DYN_HASPARENT) {
+			return set_parent(es, ds, onum, args[1], 1);
+		} else {
+			v->size = 0;
+			return render_complex_value(v, args[1], es, es->program->objvarpred[vnum]);
+		}
+	} else {
+		if(vnum == DYN_HASPARENT) {
+			return set_parent(es, ds, onum, (value_t) {VAL_NONE, 0}, 1);
+		} else {
+			v->size = 0;
+			return 1;
+		}
 	}
 }
 
@@ -307,7 +313,7 @@ static int grow_dyn_state(struct dyn_state *ds, struct program *prg) {
 	struct eval_state es;
 	struct dyn_obj *o;
 	struct dyn_var *v;
-	int onum, fnum, vnum, size;
+	int onum, fnum, vnum;
 	value_t arg;
 	int success = 1;
 
@@ -330,23 +336,14 @@ static int grow_dyn_state(struct dyn_state *ds, struct program *prg) {
 		while(ds->ngvar < prg->nglobalvar) {
 			v = &ds->gvar[ds->ngvar];
 			memset(v, 0, sizeof(*v));
-			v->nalloc = prg->globalvarpred[ds->ngvar]->pred->dynamic->global_bufsize;
-			v->rendered = calloc(v->nalloc, sizeof(value_t));
 			eval_reinitialize(&es);
 			arg = eval_makevar(&es);
 			if(eval_initial(&es, prg->globalvarpred[ds->ngvar], &arg)) {
-				size = render_complex_value(
-					v->rendered,
-					v->nalloc,
+				success &= render_complex_value(
+					v,
 					arg,
 					&es,
 					prg->globalvarpred[ds->ngvar]);
-				if(size < 0) {
-					success = 0;
-					v->size = 0;
-				} else {
-					v->size = size;
-				}
 			}
 			ds->ngvar++;
 		}
@@ -372,9 +369,6 @@ static int grow_dyn_state(struct dyn_state *ds, struct program *prg) {
 			if(ds->nobjvar) {
 				o->var = calloc(ds->nobjvar, sizeof(struct dyn_var));
 				for(vnum = 0; vnum < ds->nobjvar; vnum++) {
-					v = &o->var[vnum];
-					v->nalloc = 1;
-					v->rendered = calloc(1, sizeof(value_t));
 					success &= update_ovar(&es, ds, ds->nobj, vnum);
 				}
 			} else {
@@ -410,8 +404,6 @@ static int grow_dyn_state(struct dyn_state *ds, struct program *prg) {
 			for(vnum = ds->nobjvar; vnum < prg->nobjvar; vnum++) {
 				v = &o->var[vnum];
 				memset(v, 0, sizeof(*v));
-				v->nalloc = 1;
-				v->rendered = calloc(1, sizeof(value_t));
 			}
 		}
 		while(ds->nobjvar < prg->nobjvar) {
@@ -512,7 +504,7 @@ void dump_dyn_state(struct eval_state *orig_es, void *userdata) {
 		o_print_word(buf);
 		if(ds->gvar[i].size) {
 			pos = ds->gvar[i].size - 1;
-			pp_value(es, rebuild_complex_value(ds->gvar[i].rendered, &pos, es), 1);
+			pp_value(es, rebuild_complex_value(ds->gvar[i].rendered, &pos, es), 1, 1);
 		} else {
 			o_print_word("<unset>");
 		}
@@ -536,7 +528,7 @@ void dump_dyn_state(struct eval_state *orig_es, void *userdata) {
 				snprintf(buf, sizeof(buf), "                #%-30s ", prg->worldobjnames[onum]->name);
 				o_print_word(buf);
 				pos = v->size - 1;
-				pp_value(es, rebuild_complex_value(v->rendered, &pos, es), 1);
+				pp_value(es, rebuild_complex_value(v->rendered, &pos, es), 1, 1);
 				o_line();
 			}
 		}
@@ -584,29 +576,20 @@ static value_t get_globalvar(struct eval_state *es, void *userdata, int dyn_id) 
 static int set_globalvar(struct eval_state *es, void *userdata, int dyn_id, value_t val) {
 	struct dyn_state *ds = userdata;
 	struct dyn_var *v;
-	int size;
 
 	maybe_grow_dyn_state(ds, es->program);
 	v = &ds->gvar[dyn_id];
 	v->changed = 1;
+	v->size = 0;
 	if(val.tag == VAL_NONE) {
-		v->size = 0;
+		return 1;
 	} else {
-		size = render_complex_value(
-			v->rendered,
-			v->nalloc,
+		return render_complex_value(
+			v,
 			val,
 			es,
 			es->program->globalvarpred[dyn_id]);
-		if(size < 0) {
-			v->size = 0;
-			return 0;
-		} else {
-			v->size = size;
-		}
 	}
-
-	return 1;
 }
 
 static int get_globalflag(struct eval_state *es, void *userdata, int dyn_id) {
@@ -664,7 +647,6 @@ static value_t get_objvar(struct eval_state *es, void *userdata, int dyn_id, int
 static int set_objvar(struct eval_state *es, void *userdata, int dyn_id, int obj_id, value_t val) {
 	struct dyn_state *ds = userdata;
 	struct dyn_var *v;
-	int size;
 
 	maybe_grow_dyn_state(ds, es->program);
 	v = &ds->obj[obj_id].var[dyn_id];
@@ -672,23 +654,16 @@ static int set_objvar(struct eval_state *es, void *userdata, int dyn_id, int obj
 	if(dyn_id == DYN_HASPARENT) {
 		return set_parent(es, ds, obj_id, val, 0);
 	} else {
+		v->size = 0;
 		if(val.tag == VAL_NONE) {
-			v->size = 0;
+			return 1;
 		} else {
-			size = render_complex_value(
-				v->rendered,
-				v->nalloc,
+			return render_complex_value(
+				v,
 				val,
 				es,
 				es->program->objvarpred[dyn_id]);
-			if(size < 0) {
-				v->size = 0;
-				return 0;
-			} else {
-				v->size = size;
-			}
 		}
-		return 1;
 	}
 }
 
@@ -777,7 +752,6 @@ static int clrall_objvar(struct eval_state *es, void *userdata, int dyn_id) {
 static void update_initial_values(struct program *prg, struct dyn_state *ds) {
 	struct eval_state es;
 	int i;
-	int size, new_bufsize;
 	value_t arg;
 	struct dyn_var *v;
 	int onum;
@@ -800,29 +774,16 @@ static void update_initial_values(struct program *prg, struct dyn_state *ds) {
 	for(i = 0; i < ds->ngvar; i++) {
 		v = &ds->gvar[i];
 		assert(i < prg->nglobalvar);
-		new_bufsize = prg->globalvarpred[i]->pred->dynamic->global_bufsize;
-		if(v->size > new_bufsize) {
-			v->size = 0;
-			v->changed = 0; // force reinitialization in this case
-		}
-		v->nalloc = new_bufsize;
-		v->rendered = realloc(v->rendered, v->nalloc * sizeof(value_t));
 		if(!v->changed) {
 			v->size = 0;
 			eval_reinitialize(&es);
 			arg = eval_makevar(&es);
 			if(eval_initial(&es, prg->globalvarpred[i], &arg)) {
-				size = render_complex_value(
-					v->rendered,
-					v->nalloc,
+				(void) render_complex_value(
+					v,
 					arg,
 					&es,
 					prg->globalvarpred[i]);
-				if(size < 0) {
-					v->size = 0;
-				} else {
-					v->size = size;
-				}
 			}
 		}
 	}
@@ -844,9 +805,8 @@ static void update_initial_values(struct program *prg, struct dyn_state *ds) {
 }
 
 static void copy_var(struct dyn_var *dest, struct dyn_var *src) {
-	memcpy(dest->rendered, src->rendered, src->nalloc * sizeof(value_t));
+	memcpy(dest->rendered, src->rendered, src->size * sizeof(value_t));
 	dest->size = src->size;
-	dest->nalloc = src->nalloc;
 	dest->changed = src->changed;
 }
 
@@ -870,7 +830,8 @@ static void push_undo(void *userdata) {
 
 	u->gvar = arena_alloc(a, ds->ngvar * sizeof(struct dyn_var));
 	for(i = 0; i < ds->ngvar; i++) {
-		u->gvar[i].rendered = arena_alloc(a, ds->gvar[i].nalloc * sizeof(value_t));
+		u->gvar[i].rendered = arena_alloc(a, ds->gvar[i].size * sizeof(value_t));
+		u->gvar[i].nalloc = ds->gvar[i].size;
 		copy_var(&u->gvar[i], &ds->gvar[i]);
 	}
 
@@ -880,7 +841,8 @@ static void push_undo(void *userdata) {
 		memcpy(u->obj[i].flag, ds->obj[i].flag, ds->nobjflag * sizeof(struct dyn_flag));
 		u->obj[i].var = arena_alloc(a, ds->nobjvar * sizeof(struct dyn_var));
 		for(j = 0; j < ds->nobjvar; j++) {
-			u->obj[i].var[j].rendered = arena_alloc(a, ds->obj[i].var[j].nalloc * sizeof(value_t));
+			u->obj[i].var[j].rendered = arena_alloc(a, ds->obj[i].var[j].size * sizeof(value_t));
+			u->obj[i].var[j].nalloc = ds->obj[i].var[j].size;
 			copy_var(&u->obj[i].var[j], &ds->obj[i].var[j]);
 		}
 		u->obj[i].sibling = ds->obj[i].sibling;
@@ -927,7 +889,7 @@ static void pop_undo(struct eval_state *es, void *userdata) {
 	memset(ds->gflag + u->ngflag, 0, ds->ngflag - u->ngflag);
 
 	for(i = 0; i < u->ngvar; i++) {
-		ds->gvar[i].rendered = realloc(ds->gvar[i].rendered, u->gvar[i].nalloc * sizeof(value_t));
+		assert(ds->gvar[i].nalloc >= u->gvar[i].nalloc);
 		copy_var(&ds->gvar[i], &u->gvar[i]);
 	}
 	for(i = u->ngvar; i < ds->ngvar; i++) {
@@ -943,7 +905,7 @@ static void pop_undo(struct eval_state *es, void *userdata) {
 			ds->obj[i].flag[j].next = 0xffff;
 		}
 		for(j = 0; j < u->nobjvar; j++) {
-			ds->obj[i].var[j].rendered = realloc(ds->obj[i].var[j].rendered, u->obj[i].var[j].nalloc * sizeof(value_t));
+			assert(ds->obj[i].var[j].nalloc >= u->obj[i].var[j].nalloc);
 			copy_var(&ds->obj[i].var[j], &u->obj[i].var[j]);
 		}
 		for(j = u->nobjvar; j < ds->nobjvar; j++) {
@@ -1042,7 +1004,7 @@ struct word *consider_endings(struct program *prg, struct endings_point *ep, uin
 	struct word *w;
 	uint8_t utf8[128];
 
-	if(len) {
+	if(len > 1) {
 		for(i = 0; i < ep->nway; i++) {
 			if(ep->ways[i]->letter == str[len - 1]) {
 				if(ep->ways[i]->final) {
@@ -1073,6 +1035,7 @@ static value_t parse_input_word(struct program *prg, struct eval_state *es, uint
 	int j, len, ulen;
 	uint16_t unicode[64];
 	value_t list;
+	long num;
 
 	w = find_word_nocreate(prg, str);
 	if(w && (w->flags & WORDF_DICT)) {
@@ -1084,20 +1047,37 @@ static value_t parse_input_word(struct program *prg, struct eval_state *es, uint
 				break;
 			}
 		}
-		if(j < 0) {
-			return (value_t) {VAL_NUM, strtol(str, 0, 10)};
+		if(j < 0 && (num = strtol(str, 0, 10)) >= 0 && num < 16384) {
+			return (value_t) {VAL_NUM, num};
 		} else if(!input[utf8_to_unicode(unicode, sizeof(unicode) / sizeof(uint16_t), input)]) {
 			ulen = 0;
 			while(unicode[ulen]) ulen++;
 			w = consider_endings(prg, &prg->endings_root, unicode, ulen);
-			if(w) return (value_t) {VAL_DICT, w->dict_id};
+			if(w) {
+				list = (value_t) {VAL_NIL};
+				for(j = strlen(str) - 1; j >= strlen(w->name); j--) {
+					list = eval_makepair((value_t) {VAL_DICT, input[j]}, list, es);
+					if(list.tag == VAL_ERROR) return list;
+				}
+				list = eval_makepair((value_t) {VAL_DICT, w->dict_id}, list, es);
+				if(list.tag == VAL_ERROR) return list;
+				list.tag = VAL_DICTEXT;
+				return list;
+			}
 		}
-		list = (value_t) {VAL_NIL};
-		for(j = len - 1; j >= 0; j--) {
-			list = eval_makepair((value_t) {VAL_DICT, input[j]}, list, es);
+		if(len == 1) {
+			return (value_t) {VAL_DICT, input[0]};
+		} else {
+			list = (value_t) {VAL_NIL};
+			for(j = len - 1; j >= 0; j--) {
+				list = eval_makepair((value_t) {VAL_DICT, input[j]}, list, es);
+				if(list.tag == VAL_ERROR) return list;
+			}
+			list = eval_makepair(list, (value_t) {VAL_NIL, 0}, es);
 			if(list.tag == VAL_ERROR) return list;
+			list.tag = VAL_DICTEXT;
+			return list;
 		}
-		return list;
 	}
 }
 

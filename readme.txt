@@ -1,5 +1,5 @@
-This archive contains version 0d/02 of the Dialog compiler and interactive
-debugger, bundled with documentation and version 0.19 of the dialog Standard
+This archive contains version 0e/01 of the Dialog compiler and interactive
+debugger, bundled with documentation and version 0.20 of the dialog Standard
 Library.
 
 Directory structure:
@@ -37,6 +37,24 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0e/01 Lib 0.20 (Manual revision 5):
+
+		Long-term heap for complex values stored in global and
+		per-object variables. Removed the syntax for declaring a global
+		variable with a maximum size.
+
+		Removed '(collect words) / (and check $)'. Added
+		'(determine object $) / (from words) / (matching all of $)'.
+
+		Added support for dictionary words with essential and optional
+		parts. Removed '(get raw input $)'.
+
+		Library: Removed '(print raw input $)'. Added '(print words $)'
+		and '(Print Words $)'. Adapted the parser to the new
+		'(determine object $)' syntax.
+
+		Various bugfixes in the debugger and compiler.
 
 	0d/02 Lib 0.19 (Manual revision 4):
 

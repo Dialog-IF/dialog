@@ -426,7 +426,6 @@ static struct clause *parse_clause(int is_macro, struct lexer *lexer) {
 
 	if(nested_nonvar
 	&& predname->special != SP_GLOBAL_VAR
-	&& predname->special != SP_GLOBAL_VAR_2
 	&& predname->special != SP_GENERATE) {
 		report(LVL_ERR, an->line, "First parameter of nested rule must be a variable.");
 		lexer->errorflag = 1;
@@ -719,16 +718,59 @@ static struct astnode *parse_expr(int parsemode, struct lexer *lexer, struct are
 					*dest = 0;
 					an->children[1] = sub->children[0];
 					break;
-				} else if(sub->kind == AN_RULE && sub->predicate->special == SP_AND_CHECK) {
-					*dest = 0;
-					an->kind = AN_COLLECT_WORDS_CHECK;
-					an->children[1] = sub->children[0];
-					break;
 				}
 				*dest = sub;
 				dest = &sub->next_in_body;
 			}
 			an->children[0] = fold_disjunctions(an->children[0], arena);
+		} else if(an->predicate->special == SP_DETERMINE_OBJECT) {
+			sub = an->children[0];
+			if(sub->kind != AN_VARIABLE || !sub->word->name[0]) {
+				report(LVL_ERR, line, "Expected variable name in (determine object $).");
+				lexer->errorflag = 1;
+				return 0;
+			}
+			an = mkast(AN_DETERMINE_OBJECT, 4, arena, line);
+			an->children[0] = sub;
+			dest = &an->children[1];
+			for(;;) {
+				status = next_token(lexer, PMODE_BODY);
+				if(lexer->errorflag) return 0;
+				if(status != 1) {
+					report(LVL_ERR, line, "Unterminated (determine object $).");
+					lexer->errorflag = 1;
+					return 0;
+				}
+				sub = parse_expr(PMODE_BODY, lexer, arena);
+				if(!sub) return 0;
+				if(sub->kind == AN_RULE && sub->predicate->special == SP_FROM_WORDS) {
+					*dest = 0;
+					break;
+				}
+				*dest = sub;
+				dest = &sub->next_in_body;
+			}
+			an->children[1] = fold_disjunctions(an->children[1], arena);
+			dest = &an->children[2];
+			for(;;) {
+				status = next_token(lexer, PMODE_BODY);
+				if(lexer->errorflag) return 0;
+				if(status != 1) {
+					report(LVL_ERR, line, "Unterminated (determine object $).");
+					lexer->errorflag = 1;
+					return 0;
+				}
+				sub = parse_expr(PMODE_BODY, lexer, arena);
+				if(!sub) return 0;
+				if(sub->kind == AN_RULE && sub->predicate->special == SP_MATCHING_ALL_OF) {
+					*dest = 0;
+					an->children[3] = sub->children[0];
+					break;
+				}
+				*dest = sub;
+				dest = &sub->next_in_body;
+			}
+			an->children[2] = fold_disjunctions(an->children[2], arena);
 		} else if(an->predicate->special == SP_STOPPABLE) {
 			an = mkast(AN_STOPPABLE, 1, arena, line);
 			status = next_token(lexer, PMODE_BODY);

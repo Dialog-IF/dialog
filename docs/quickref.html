@@ -119,9 +119,10 @@ Values bound to <span class="code">$Element</span> are collected in order and un
 <p class="noteline">Backtracks over all solutions to the inner expression, grabbing all output.
 Printed words are diverted into <span class="code">$List</span>, possibly out of order.
 </p>
-<p class="codeline">(collect words) ... (and check $List)</p>
-<p class="noteline">Backtracks over all solutions to the inner expression, grabbing all output.
-Succeeds if every value in <span class="code">$List</span> appears in the grabbed output.
+<p class="codeline">(determine object $Obj) ... (from words) ... (matching all of $List)</p>
+<p class="noteline">Backtracks over every object <span class="code">$Obj</span> that makes the first
+inner expression succeed, and for which the second expression (when
+exhausted) emits at least every word in <span class="code">$List</span>.
 </p>
 <p class="codeline">(stoppable) <i>statement</i></p>
 <p class="noteline">The inner statement executes, succeeding at most once. The <span class="code">(stop)</span> built-in breaks out of
@@ -139,10 +140,6 @@ which is created if necessary.
 </p>
 <p class="codeline">(global variable (name of predicate $))</p>
 <p class="noteline">Declares a global variable for holding simple values.
-</p>
-<p class="codeline">(global variable (name of predicate $) $MaxSize)</p>
-<p class="noteline">Declares a global variable for holding complex values. The size requirements are:
-1&nbsp;for simple values, and <span class="nobreak">1 + <i>N</i></span> for lists, where <i>N</i> is the total storage required for the elements inside.
 </p>
 <p class="codeline">(generate $N (name of predicate $))</p>
 <p class="noteline">Creates <span class="code">$N</span> anonymous objects, for which the predicate will succeed.
@@ -197,9 +194,6 @@ which is created if necessary.
 </p>
 <p class="codeline">(get key $)</p>
 <p class="noteline">Waits for the player to press a key. Returns a single-character word.
-</p>
-<p class="codeline">(get raw input $)</p>
-<p class="noteline">Reads a line of input from the player. Returns a list of single-character words.
 </p>
 <p class="codeline">($X has parent $Y)</p>
 <p class="noteline">Dynamic predicate that succeeds when <span class="code">$X</span> is a direct child
@@ -374,7 +368,7 @@ successful restore.
 </p>
 	<div class="footer">
 	<p class="nav">Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 4, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 5, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

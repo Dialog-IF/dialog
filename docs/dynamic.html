@@ -207,8 +207,7 @@ the program.
 <a id="globalvars"></a><h2>Global variables</h2>
 <p><i>Global variables</i> are dynamic predicates with a single parameter. To
 distinguish them from per-object flags, global variables have to be
-<i>declared</i>, using special syntax. There are two forms of global variable
-declarations, and we'll start with the simplest one:
+<i>declared</i>, using special syntax. This is what it looks like:
 </p>
 <textarea class="copyarea" id="copy8" readonly>
 (global variable <i>(signature)</i>)
@@ -279,11 +278,6 @@ declaration itself:
 library, the predicate <span class="code">(select player&nbsp;$)</span> should be used to change
 the current player. But we'll get to that in Part&nbsp;II.
 </p>
-<p>A global variable declared in this way may only contain a <i>simple value</i>.
-Simple values are objects, numbers, dictionary words, and the empty list.
-Attempting to set the global variable to a non-empty list or an unbound
-variable will generate a fatal runtime error.
-</p>
 <p>It is also possible to <i>unset</i> the global variable, using <span class="code">~</span>,
 so that subsequent queries to the predicate will fail. The parameter must be an
 anonymous variable. The following line of code could be pronounced &ldquo;Now, the
@@ -309,37 +303,15 @@ global variable has that particular value), or with an unbound variable (to
 obtain the current value). Either query will fail if the global variable is
 unset.
 </p>
-<p>Occasionally, we need a global variable that can hold complex data. This is
-allowed, but we have to decide ahead of time what the maximum space
-requirements are:
-</p>
-<textarea class="copyarea" id="copy14" readonly>
-(global variable (my global list is $) 42) %% Allocate 42 words.
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="both" colspan="2">(global variable (my global list is $) 42) <span class="comment">&emsp;%% Allocate 42 words.</span></td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy14').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>A simple value occupies one word. A list occupies one word plus the space
-required for each of its members. A simple trick is to count the number of
-elements and opening brackets in the printed representation of the value: For
-instance, [a [b c]] occupies five words in total. It is legal to store unbound
-variables inside a global variable declared this way, but any hidden links
-between them will be gone when the global variable is read out. An unbound
-variable occupies one word.
-</p>
-<p>Attempting to store a too-large value in a complex global variable will result
-in a fatal runtime error.
+<p>The value that is stored in a global variable must be bound. Attempts to set a
+global variable to an unbound variable, or a list with an unbound variable
+inside, will result in a fatal runtime error.
 </p>
 <p>In the following example, a complex global variable is used to implement an
 <span class="prginput">AGAIN</span> command:
 </p>
-<textarea class="copyarea" id="copy15" readonly>
-(global variable (last input $) 64)
+<textarea class="copyarea" id="copy14" readonly>
+(global variable (last input $))
 
 (ask for command $Result)
 	&gt; (get input $Words)
@@ -352,7 +324,7 @@ in a fatal runtime error.
 </textarea>
 <div class="blkcode">
 <table>
-<tr><td class="both" colspan="2">(global variable (last input $) 64)</td></tr>
+<tr><td class="both" colspan="2">(global variable (last input $))</td></tr>
 <tr><td class="blank" colspan="2"></td></tr>
 <tr><td class="both" colspan="2">(ask for command $Result)</td></tr>
 <tr><td class="left"></td><td class="right">&gt; (get input $Words)</td></tr>
@@ -365,20 +337,19 @@ in a fatal runtime error.
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy15').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy14').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <a id="perobjvar"></a><h2>Per-object variables</h2>
 <p>A <i>per-object variable</i> (sometimes referred to as an object property) is a
 predicate with two parameters, and no side effects. The first parameter is
-always an object, and the second parameter is always a simple value (object,
-number, empty list, or dictionary word). A per-object variable can also be
-unset for a given object.
+always an object, and the second parameter can be any bound value. A per-object
+variable can also be unset for a given object.
 </p>
 <p>When a per-object variable is queried with the first parameter bound to an
 object, the second parameter will be unified with the current value of the
 variable. As usual, this can be used to check for a particular value:
 </p>
-<textarea class="copyarea" id="copy16" readonly>
+<textarea class="copyarea" id="copy15" readonly>
 	(if) (#troll wields #axe) (then) ... (endif)
 </textarea>
 <div class="blkcode">
@@ -387,11 +358,11 @@ variable. As usual, this can be used to check for a particular value:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy16').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy15').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>or to read the current value:
 </p>
-<textarea class="copyarea" id="copy17" readonly>
+<textarea class="copyarea" id="copy16" readonly>
 (narrate fight with $Enemy) %% Assume $Enemy is bound
 	($Enemy wields $Weapon)
 	(The $Enemy) swings (the $Weapon) at you.
@@ -404,7 +375,7 @@ variable. As usual, this can be used to check for a particular value:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy17').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy16').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>The query fails if the variable is unset.
 </p>
@@ -416,7 +387,7 @@ compiler will print a warning if you attempt to do it. To get rid of the
 warning, you can explicitly backtrack over all objects yourself, by querying
 <span class="code">*(object&nbsp;$)</span>, and then checking the property.
 </p>
-<textarea class="copyarea" id="copy18" readonly>
+<textarea class="copyarea" id="copy17" readonly>
 	($X wields #axe) The axe is currently in the hands of (the $X).
 </textarea>
 <div class="blkcode">
@@ -425,12 +396,12 @@ warning, you can explicitly backtrack over all objects yourself, by querying
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy18').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy17').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>To change the value of a per-object variable, use the <span class="code">(now)</span>
 keyword:
 </p>
-<textarea class="copyarea" id="copy19" readonly>
+<textarea class="copyarea" id="copy18" readonly>
 	(now) (#troll wields #club)
 </textarea>
 <div class="blkcode">
@@ -439,15 +410,15 @@ keyword:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy19').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy18').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Again, the first parameter must be an object, and the second parameter must be
-a simple value. If this is not the case, a fatal runtime error occurs.
+bound. If this is not the case, a fatal runtime error occurs.
 </p>
 <p>To unset the per-object variable, use the following syntax, where the second
 parameter must be an anonymous variable:
 </p>
-<textarea class="copyarea" id="copy20" readonly>
+<textarea class="copyarea" id="copy19" readonly>
 	(now) ~(#troll wields $)
 </textarea>
 <div class="blkcode">
@@ -456,12 +427,12 @@ parameter must be an anonymous variable:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy20').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy19').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>The following is also allowed, and faster than doing it explicitly for each
 object:
 </p>
-<textarea class="copyarea" id="copy21" readonly>
+<textarea class="copyarea" id="copy20" readonly>
 	(now) ~($ wields $) %% Nobody wields anything anymore.
 </textarea>
 <div class="blkcode">
@@ -470,12 +441,12 @@ object:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy21').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy20').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>As with the other dynamic predicates, the initial value of a per-object
 variable is defined with ordinary rules:
 </p>
-<textarea class="copyarea" id="copy22" readonly>
+<textarea class="copyarea" id="copy21" readonly>
 (#troll wields #club)
 </textarea>
 <div class="blkcode">
@@ -484,7 +455,7 @@ variable is defined with ordinary rules:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy22').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy21').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <a id="hasparent"></a><h2>Has parent</h2>
 <p>There is one built-in per-object variable with special properties. This is the
@@ -496,8 +467,8 @@ low-level Z-machine object tree operations.
 per-object variable: It is queried and modified in the same way, and when it is
 modified, the first parameter must always be an object. But it has the
 additional restriction that the second parameter must also be an object. The
-flip side of this restriction is that reverse lookup operations&mdash;backtracking
-over every child of a particular object&mdash;can be implemented very efficiently.
+benefit of this is that reverse lookup operations&mdash;backtracking over every
+child of a particular object&mdash;can be implemented very efficiently.
 </p>
 <p>The <span class="code">($&nbsp;has parent&nbsp;$)</span> property can be unset in order to detach an
 object from the object tree.
@@ -531,7 +502,7 @@ into a different part of the object tree.
 with a particular parent, and move them (or a subset of them) to a different
 part of the object tree:
 </p>
-<textarea class="copyarea" id="copy23" readonly>
+<textarea class="copyarea" id="copy22" readonly>
 (exhaust) {
 	*($Obj has parent #safe)
 	(now) ($Obj has parent #knapsack)
@@ -546,11 +517,11 @@ part of the object tree:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy23').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy22').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="sugar.html">Chapter 6: Syntactic sugar</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 4, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 5, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

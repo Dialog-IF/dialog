@@ -97,39 +97,42 @@ struct zinstr {
 #define REG_TOP			0x1a	/* top of heap (which grows upwards) */
 #define REG_STOP		0x1b
 #define REG_TRACING		0x1c
-#define REG_COLLCHK		0x1d
-#define REG_FAILJMP		0x1e	/* catch/throw reference for failing */
-#define REG_FATALJMP		0x1f	/* catch/throw reference for runtime errors */
-#define REG_MINAUX		0x20	/* for memory statistics */
-#define REG_UPPER		0x21	/* is an uppercase letter pending? */
-#define REG_FORWORDS		0x22	/* are we gathering words? */
+#define REG_FAILJMP		0x1d	/* catch/throw reference for failing */
+#define REG_FATALJMP		0x1e	/* catch/throw reference for runtime errors */
+#define REG_MINAUX		0x1f	/* for memory statistics */
+#define REG_UPPER		0x20	/* is an uppercase letter pending? */
+#define REG_FORWORDS		0x21	/* are we gathering words? */
+#define REG_LTTOP		0x22	/* top of long-term heap (which grows upwards) */
+#define REG_LTMAX		0x23	/* for memory statistics */
 
 /* useful constants */
 
-#define REG_2000		0x23
-#define REG_3FFF		0x24
-#define REG_4000		0x25
-#define REG_8000		0x26
-#define REG_C000		0x27
-#define REG_FFFF		0x28
-#define REG_AUXBASE		0x29
-#define REG_NIL			0x2a	/* 1fff */
-#define REG_R_SPA		0x2b	/* R_SPACE_PRINT_AUTO */
-#define REG_R_USIMPLE		0x2c	/* R_UNIFY_SIMPLE */
+#define REG_2000		0x24
+#define REG_3FFF		0x25
+#define REG_4000		0x26
+#define REG_8000		0x27
+#define REG_C000		0x28
+#define REG_E000		0x29
+#define REG_FFFF		0x2a
+#define REG_AUXBASE		0x2b
+#define REG_NIL			0x2c	/* 1fff */
+#define REG_R_SPA		0x2d	/* R_SPACE_PRINT_AUTO */
+#define REG_R_USIMPLE		0x2e	/* R_UNIFY_SIMPLE */
 
-#define REG_A			0x2d	/* need 13 registers, one more than max arity */
-#define REG_X			0x3a
+#define REG_A			0x2f	/* need 13 registers, one more than max arity */
+#define REG_X			0x3c
 
 #define REG_PUSH		0x100
 #define DEST_USERGLOBAL(x)	(0x200 | (x))
 
-#define LARGE(x)	(0x10000 | (x))
-#define REF(x)		(0x20000 | (x))
-#define ROUTINE(x)	(0x30000 | (x))
-#define REL_LABEL(x)	(0x40000 | (x))
-#define SMALL(x)	(0x50000 | (x))
-#define VALUE(x)	(0x60000 | (x))
-#define USERGLOBAL(x)	(0x70000 | (x))
+#define LARGE(x)		(0x10000 | (x))
+#define REF(x)			(0x20000 | (x))
+#define ROUTINE(x)		(0x30000 | (x))
+#define REL_LABEL(x)		(0x40000 | (x))
+#define SMALL(x)		(0x50000 | (x))
+#define VALUE(x)		(0x60000 | (x))
+#define USERGLOBAL(x)		(0x70000 | (x))
+#define SMALL_USERGLOBAL(x)	(0x80000 | (x))
 
 #define SMALL_OR_LARGE(x)	(((x) < 256)? SMALL(x) : LARGE(x))
 
@@ -287,14 +290,18 @@ extern const int nrtroutine;
 
 enum {
 	G_AUXBASE = 1,
+	G_AUXSIZE,
 	G_HEAPBASE,
 	G_HEAPSIZE,
 	G_HEAPEND,
-	G_AUXSIZE,
+	G_LTBASE,
+	G_LTBASE2,
+	G_LTSIZE,
 	G_INPBUF0,
 	G_INPBUF1,
 	G_ARG_REGISTERS,
 	G_TEMPSPACE_REGISTERS,
+	G_USER_GLOBALS,
 	G_DICT_TABLE,
 	G_OBJECT_ID_END,
 	G_SELTABLE,
@@ -322,8 +329,9 @@ enum {
 	R_PAR,
 	R_PAR_N,
 	R_SYNC_SPACE,
+	R_PRINT_OR_PUSH,
+	R_TRACE_VALUE,
 	R_PRINT_VALUE,
-	R_PRINT_LIST,
 	R_ENABLE_STYLE,
 	R_CURSORTO,
 
@@ -365,10 +373,10 @@ enum {
 	R_TRUST_ME_0,
 
 	R_DEREF,
+	R_DEREF_UNBOX,
 	R_DEREF_OBJ,
 	R_DEREF_OBJ_FAIL,
 	R_DEREF_OBJ_FORCE,
-	R_DEREF_SIMPLE,
 
 	R_GRAB_ARG1,
 
@@ -413,14 +421,14 @@ enum {
 	R_COLLECT_PUSH,
 	R_COLLECT_POP,
 	R_COLLECT_END,
-	R_COLLECTCHK_BEGIN,
-	R_COLLECTCHK_END,
+	R_COLLECT_CHECK,
+	R_COLLECT_MATCH_ALL,
+	R_WOULD_UNIFY,
 
 	R_AUX_ALLOC,
 	R_AUX_PUSH1,
 	R_AUX_PUSH2,
 	R_AUX_PUSH3,
-	R_PUSH_WORDTABLE,
 
 	R_BEGINSTATUS,
 	R_ENDSTATUS,
@@ -434,8 +442,10 @@ enum {
 	R_SEL_T_P_RANDOM,
 	R_SEL_CYCLING,
 
-	R_SET_COMPLEX_GLOBAL,
-	R_UNIFY_COMPLEX_GLOBAL,
+	R_SET_LONGTERM_VAR,
+	R_LONGTERM_PUSH,
+	R_GET_LONGTERM_VAR,
+	R_LONGTERM_POP,
 
 	R_PRINTNIBBLE,
 	R_PRINTHEX,
@@ -445,7 +455,7 @@ enum {
 	R_SERIALNUMBER_PRED,
 	R_COMPILERVERSION_PRED,
 	R_DUMP_GLOBALS,
-	R_DUMP_HEAP,
+	R_DUMP_MEM,
 	R_DUMP_COLL,
 	R_MEMINFO_PRED,
 	R_MEMSTATS_PRED,
@@ -463,5 +473,7 @@ enum {
 	FATAL_HEAP = 1,
 	FATAL_AUX,
 	FATAL_EXPECTED_OBJ,
-	FATAL_EXPECTED_SIMPLE
+	FATAL_UNBOUND,
+	FATAL_DYN,
+	FATAL_LTS
 };

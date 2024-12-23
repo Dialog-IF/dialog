@@ -6,7 +6,7 @@ enum {
 
 	I_ASSIGN,		// -- dest, value
 
-	I_ALLOCATE,		// -- number of variables, number of trace variables
+	I_ALLOCATE,		// -- number of variables, number of trace variables, subop = use orig_arg0
 	I_DEALLOCATE,		// -- subop = restore args flag
 	I_PROCEED,		// -E
 	I_SET_CONT,		// -- routine id
@@ -65,12 +65,13 @@ enum {
 
 	I_COLLECT_BEGIN,	// --
 	I_COLLECT_PUSH,		// -- value
-	I_COLLECT_END,		// F- dest value
-	I_WORDCHECK_BEGIN,	// --
-	I_WORDCHECK_END,	// F- dest value
+	I_COLLECT_END,		// F- dest value (pop all into list, then unify)
+	I_COLLECT_CHECK,	// F- value (pop all, all must be simple, fail if value not present)
+	I_COLLECT_MATCH_ALL,	// F- input list
 
 	I_IF_BOUND,		// -- value, routine
 	I_IF_NIL,		// -- value, routine
+	I_IF_WORD,		// -- value, routine
 	I_IF_MATCH,		// -- value, value, routine (must be simple values)
 
 	I_GET_GFLAG,		// R- global flag number
@@ -113,6 +114,7 @@ enum {
 	TR_NOW,
 	TR_NOTNOW,
 	TR_REPORT,
+	TR_DETOBJ,
 	TR_LINE,
 };
 
@@ -126,6 +128,7 @@ enum {
 	VAL_NUM,
 	VAL_OBJ,
 	VAL_DICT,
+	VAL_DICTEXT,
 	VAL_NIL,
 	VAL_PAIR,
 	VAL_REF,

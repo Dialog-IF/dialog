@@ -24,6 +24,7 @@ struct choice {
 	uint16_t		top;
 	uint16_t		simple;
 	value_t			arg[MAXPARAM + 1];
+	value_t			orig_arg0;
 	prgpoint_t		cont;
 	prgpoint_t		nextcase;
 };
@@ -81,7 +82,6 @@ struct eval_state {
 	int			env;
 	int			choice;
 	uint16_t		aux;
-	uint16_t		wordcheckaux;
 	uint16_t		trail;
 	uint16_t		top;		// heap index
 	uint16_t		stopchoice;	// choice index
@@ -135,7 +135,7 @@ enum {
 };
 
 void ensure_fixed_values(struct eval_state *es, struct program *prg, struct predname *predname);
-void pp_value(struct eval_state *es, value_t v, int with_at);
+void pp_value(struct eval_state *es, value_t v, int with_at, int with_plus);
 void init_evalstate(struct eval_state *es, struct program *prg);
 void free_evalstate(struct eval_state *es);
 void eval_reinitialize(struct eval_state *es);

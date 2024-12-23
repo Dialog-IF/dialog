@@ -695,9 +695,11 @@ parameter. Typically, a game has a rule for printing the name of an object.
 This construct makes it possible to gather all the words that make up that
 name, in order to match them against player input.
 </p>
-<p>For performance reasons, <span class="code">(collect words)</span> is allowed to return the
-words in any order, and duplicate elements may or may not be culled from the
-list.
+<p>It is assumed that words are collected for purposes of comparison. Thus, in the
+interest of performance, only the essential part of each dictionary word is
+reported. On the Z-machine, a long word such as <span class="code">north-west</span> will
+come out as <span class="code">@north-we</span>, but that will unify just fine with, say, a
+<span class="code">@north-west</span> obtained from the player's input.
 </p>
 <p>Example:
 </p>
@@ -749,29 +751,8 @@ list.
 <p>The output is:
 </p>
 <div class="blkoutput">The green apple can be referred to using the words [yummy green apple].<br />
-The mysterious door can be referred to using the words [oaken oak mysteriou door].</div><p>Finally, there is a special variant of the special variant. This one is
-particularly useful when implementing parsers:
-</p>
-<textarea class="copyarea" id="copy17" readonly>
-	(collect words)
-		...
-	(and check $Input)
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="left"></td><td class="right">(collect words)</td></tr>
-<tr><td class="left"></td><td class="right"><span class="tab"> </span>...</td></tr>
-<tr><td class="left"></td><td class="right">(and check $Input)</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy17').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>Here, Dialog executes the inner statements, collects the words, and then it
-checks whether every element of the given list (<span class="code">$Input</span>) is present
-in the collection. This is typically used for matching player input against
-in-world object names. Doing it this way is considerably faster and more memory
-efficient than using a <span class="code">(collect words) ... (into&nbsp;$)</span> statement.
+The mysterious door can be referred to using the words [oaken oak mysteriou door].</div><p>Printed values (numbers, lists, objects) also end up in the collection, as
+themselves.
 </p>
 <a id="just"></a><h2>Just</h2>
 <p>We have seen that the rules of a predicate work together as a disjunction. Each
@@ -796,7 +777,7 @@ example is the object that represents the player character inside the game
 world. Suppose (although this is not necessarily a good idea in practice) that
 you want this object to print as &ldquo;you&rdquo;, but parse only as &ldquo;me&rdquo;:
 </p>
-<textarea class="copyarea" id="copy18" readonly>
+<textarea class="copyarea" id="copy17" readonly>
 (name #player)	you
 (dict #player)	(just) me
 
@@ -819,7 +800,7 @@ you want this object to print as &ldquo;you&rdquo;, but parse only as &ldquo;me&
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy18').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy17').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Here, when a multi-query is made for <span class="code">*(dict #player)</span>, Dialog sets
 up a choice point as usual, and enters the first matching rule. But this rule
@@ -839,7 +820,7 @@ the second <span class="code">(just)</span> has no effect.
 supply of choice points. This can be used to create infinite loops (such as the
 main game loop or the game-over menu).
 </p>
-<textarea class="copyarea" id="copy19" readonly>
+<textarea class="copyarea" id="copy18" readonly>
 (program entry point)
 	*(repeat forever)
 	This gets printed over and over. (line)
@@ -854,7 +835,7 @@ main game loop or the game-over menu).
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy19').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy18').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>In the above example, the query to <span class="code">(fail)</span> makes Dialog backtrack
 to the multi-query to <span class="code">(repeat forever)</span>, which will keep on
@@ -867,7 +848,7 @@ created by <span class="code">(repeat forever)</span>. This can be done explicit
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="control.html">Chapter 4: More control structures</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 4, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 5, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

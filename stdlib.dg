@@ -1,6 +1,6 @@
 
 (library version)
-	Library version 0.19.
+	Library version 0.20.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -39,7 +39,7 @@
 
 (Name #partof)		As part of
 
-(dict #in)		inside into through
+(dict #in)		inside into through inwards
 (dict #on)		onto atop upon
 
 (dict #partof)		(just) (fail)
@@ -67,48 +67,55 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Directions
 
-%% Directions are given special treatment during parsing, so there is no need
-%% for (dict $) rules here. See (parse direction $ $).
-
 #north
 (direction *)
 (name *)		north
+(dict *)		n northern
 
 #south
 (direction *)
 (name *)		south
+(dict *)		s southern
 
 #east
 (direction *)
 (name *)		east
+(dict *)		e eastern
 
 #west
 (direction *)
 (name *)		west
+(dict *)		w western
 
 #northeast
 (direction *)
 (name *)		northeast
+(dict *)		ne north-east
 
 #northwest
 (direction *)
 (name *)		northwest
+(dict *)		nw north-west
 
 #southwest
 (direction *)
 (name *)		southwest
+(dict *)		sw south-west
 
 #southeast
 (direction *)
 (name *)		southeast
+(dict *)		se south-east
 
 #up
 (direction *)
 (name *)		up
+(dict *)		u ceiling sky above
 
 #down
 (direction *)
 (name *)		down
+(dict *)		d below
 
 #in			%% Note: #in is also a relation
 (direction *)
@@ -116,6 +123,7 @@
 #out
 (direction *)
 (name *)		out
+(dict *)		outside outwards
 
 (proper (direction $))
 
@@ -389,11 +397,18 @@
 
 (recursively add $Obj to scope)
 	(now) ($Obj is in scope)
-	(exhaust) {
-		*($Sub is $Rel $Obj)
-		~{ ($Obj is opaque) ($Obj is closed) ($Rel = #in) }
-		(recursively add $Sub to scope)
-	}
+	(if) ($Obj is closed) ($Obj is opaque) (then)
+		(exhaust) {
+			*($Sub has parent $Obj)
+			~($Sub has relation #in)
+			(recursively add $Sub to scope)
+		}
+	(else)
+		(exhaust) {
+			*($Sub has parent $Obj)
+			(recursively add $Sub to scope)
+		}
+	(endif)
 
 (scope)
 	(rebuild scope)
@@ -2360,11 +2375,12 @@
 (understand [go/approach | $Words] as [go to $Room])
 	(filter $Words into $Filtered)
 	(nonempty $Filtered)
-	*(room $Room)
-	($Room is visited)
-	(collect words)
+	(determine object $Room)
+		*(room $Room)
+		($Room is visited)
+	(from words)
 		*(dict $Room)
-	(and check $Filtered)
+	(matching all of $Filtered)
 
 (unlikely [go to (current room $)])
 
@@ -2404,14 +2420,15 @@
 	{
 		(filter $Words into $Filtered)
 		(nonempty $Filtered)
-		*(room $Room)
-		($Room is visited)
-		*($Obj has ancestor $Room)
-		~($Obj is in scope) %% Prevent double matches due to next branch.
-		~($Obj is hidden)
-		(collect words)
+		(determine object $Obj)
+			*(object $Obj)
+			~($Obj is in scope) %% Prevent double matches due to next branch.
+			~($Obj is hidden)
+			($Obj is in room $Room)
+			($Room is visited)
+		(from words)
 			*(dict $Obj)
-		(and check $Filtered)
+		(matching all of $Filtered)
 	(or)
 		%% The purpose of this branch is to support pronouns, as well
 		%% as not-here objects that are in scope.
@@ -3520,7 +3537,7 @@
 %% Generating dictionary words for objects
 
 (dict (your $))
-	my
+	my mine
 
 (dict (pair $))
 	pair
@@ -3542,13 +3559,10 @@
 		unlocked
 	(endif)
 
-(dict (room $Obj))
-	(if) (current room $Obj) (then)
-		wall walls room here this location surroundings area
-	(endif)
-	(if) (inherently dark $Obj) ~(light reaches ceiling $Obj) (then)
-		dark darkness
-	(endif)
+(dict (room $Room))
+	(inherently dark $Room)
+	~(light reaches ceiling $Room)
+	dark darkness
 
 %% By default, any word mentioned in the name rule is included:
 
@@ -3584,10 +3598,7 @@
 		(if) ($Obj = [$Single]) (then)
 			(notice $Single)
 		(else)
-			(length of $Obj into $N)
-			(if) ($N < 16) (then)
-				(now) (them refers to $Obj)
-			(endif)
+			(now) (them refers to $Obj)
 		(endif)
 	(endif)
 
@@ -3599,10 +3610,7 @@
 			(if) ($Obj = [$Single]) (then)
 				(notice player's $Single)
 			(else)
-				(length of $Obj into $N)
-				(if) ($N < 16) (then)
-					(now) (them refers to $Obj)
-				(endif)
+				(now) (them refers to $Obj)
 			(endif)
 		(elseif) (female $Obj) (then)
 			(now) (her refers to $Obj)
@@ -4079,14 +4087,14 @@
 %% Parser: Global variables
 
 (global variable (reported score is $))
-(global variable (last command was $) 128)
-(global variable (implicit action is $) 16)
+(global variable (last command was $))
+(global variable (implicit action is $))
 
 (global variable (player's it refers to $))
 (global variable (narrator's it refers to $))
 (global variable (her refers to $))
 (global variable (him refers to $))
-(global variable (them refers to $) 16)
+(global variable (them refers to $))
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Parser: Rewrite
@@ -4125,58 +4133,13 @@
 	(just)
 	*(parse direction $Words $Dir)
 
-%% Something like this would work, assuming the corresponding dict rules were
-%% added:
-%%
-%% (parse direction $Input $Dir)
-%% 	(nonempty $Input)
-%% 	*(direction $Dir)
-%% 	(collect words)
-%% 		*(dict $Dir)
-%% 	(and check $Input)
-%%
-%% But the following is faster, because of indexing:
-
-(parse direction [n] #north)
-(parse direction [north] #north)
-(parse direction [northern] #north)
-(parse direction [s] #south)
-(parse direction [south] #south)
-(parse direction [southern] #south)
-(parse direction [e] #east)
-(parse direction [east] #east)
-(parse direction [eastern] #east)
-(parse direction [w] #west)
-(parse direction [west] #west)
-(parse direction [western] #west)
-(parse direction [ne] #northeast)
-(parse direction [northeast] #northeast)
-(parse direction [north-east] #northeast)
-(parse direction [nw] #northwest)
-(parse direction [northwest] #northwest)
-(parse direction [north-west] #northwest)
-(parse direction [sw] #southwest)
-(parse direction [southwest] #southwest)
-(parse direction [south-west] #southwest)
-(parse direction [se] #southeast)
-(parse direction [southeast] #southeast)
-(parse direction [south-east] #southeast)
-(parse direction [u] #up)
-(parse direction [up] #up)
-(parse direction [ceiling] #up)
-(parse direction [sky] #up)
-(parse direction [above] #up)
-(parse direction [d] #down)
-(parse direction [down] #down)
-(parse direction [below] #down)
-(parse direction [in] #in)
-(parse direction [inside] #in)
-(parse direction [into] #in)
-(parse direction [inwards] #in)
-(parse direction [through] #in)
-(parse direction [out] #out)
-(parse direction [outside] #out)
-(parse direction [outwards] #out)
+(parse direction $Input $Dir)
+	(nonempty $Input)
+	(determine object $Dir)
+		*(direction $Dir)
+	(from words)
+		*(dict $Dir)
+	(matching all of $Input)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Parser: Objects
@@ -4220,16 +4183,29 @@
 (understand $Words as single object $Output preferably container)
 	*(parse $Words as single object $Output 6)
 
+(understand [the | $Words] as object $Obj from $List)
+	(just)
+	*(understand $Words as object $Obj from $List)
+
 (understand [me/myself/self/yourself/you] as object $Obj from $List)
 	(current player $Obj)
 	($Obj is one of $List)
 
+(understand [here/room/location/area/surroundings/wall/walls] as object $Obj from $List)
+	(current room $Obj)
+	($Obj is one of $List)
+
+(understand [this room/location/area] as object $Obj from $List)
+	(current room $Obj)
+	($Obj is one of $List)
+
 (understand $Words as object $Obj from $List)
 	(filter $Words into $Filtered)
-	*($Obj is one of $List)
-	(collect words)
+	(determine object $Obj)
+		*($Obj is one of $List)
+	(from words)
 		*(name $Obj)
-	(and check $Filtered)
+	(matching all of $Filtered)
 
 (understand [$Word] as object $Obj from $List)
 	(parse direction [$Word] $Dir)
@@ -4325,8 +4301,18 @@
 	*(parse object name $Words as $NegList 0 $BaseList [])
 	(remove from $BaseList matching $NegList into $Result)
 
+(parse basic noun [the | $Words] as $ObjList $Policy $ExcludeList $AllAllowed)
+	(just)
+	*(parse basic noun $Words as $ObjList $Policy $ExcludeList $AllAllowed)
+
 (parse basic noun [me/myself/self/yourself/you] as [$Obj] $ $ $)
 	(current player $Obj)
+
+(parse basic noun [here/room/location/area/surroundings/wall/walls] as [$Room] $ $ $)
+	(current room $Room)
+
+(parse basic noun [this room/location/area] as [$Room] $ $ $)
+	(current room $Room)
 
 (parse basic noun [it/that] as [$Obj] $ $ $)
 	{
@@ -4409,18 +4395,20 @@
 		(nonempty $Tail)
 		(parse direction [$Head] $Dir)
 		(current room $Room)
-		*(from $Room go $Dir to object $Obj)
-		(collect words)
+		(from $Room go $Dir to object $Obj)
+		(determine object $Obj)
+		(from words)
 			*(dict $Obj)
-		(and check $Tail)
+		(matching all of $Tail)
 	(or)
 		%% this is the normal case
-		*($Obj is in scope)
-		(collect words)
+		(determine object $Obj)
+			*($Obj is in scope)
+		(from words)
 			*(dict $Obj)
 		(or)
 			*(plural dict $Obj)
-		(and check $Filtered)
+		(matching all of $Filtered)
 	(into $Candidates)
 	(nonempty $Candidates)
 	(apply policy to $Candidates $Policy $ExcludeList $CleanList)
@@ -4433,10 +4421,11 @@
 	(or)
 		%% A plural word causes all matching objects to be returned.
 		*($PluralWord is one of $Filtered)
-		*($PObj is one of $CleanList)
-		(collect words)
+		(determine object $PObj)
+			*($PObj is one of $CleanList)
+		(from words)
 			*(plural dict $PObj)
-		(and check [$PluralWord])
+		(matching all of [$PluralWord])
 	(then)
 		($Result = $CleanList)
 	(else)
@@ -4692,7 +4681,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Disambiguation
 
-(global variable (implicit object list $) 11)
+(global variable (implicit object list $))
 
 (consider action candidates $List)
 	(if) ($List = [$Single]) (then)
@@ -4724,8 +4713,6 @@
 			$Result
 			$Template
 			$ObjList)
-		(length of $ObjList into $NObj)
-		($NObj < 11)
 	(then)
 		Did you want to (describe action $Result)?
 		(asking for one of $ObjList in $Template)
@@ -5121,13 +5108,16 @@
 	(nonempty $WordSet)
 	*(split $Input by $WordSet into $Left and $Right)
 
-(print raw input [])
-(print raw input [$First | $Rest])
-	$First
+(print words $List)
 	(exhaust) {
-		*($Char is one of $Rest)
-		(no space)
-		$Char
+		*($Word is one of $List)
+		$Word
+	}
+
+(Print Words $List)
+	(exhaust) {
+		*($Word is one of $List)
+		(uppercase) $Word
 	}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -5158,6 +5148,7 @@
 (report fatal error 1)	Heap space exhausted.
 (report fatal error 2)	Auxiliary heap space exhausted.
 (report fatal error 3)	Type error: Expected object.
-(report fatal error 4)	Type error: Expected simple value.
+(report fatal error 4)	Type error: Expected bound value.
 (report fatal error 5)	Invalid dynamic operation.
+(report fatal error 6)	Long-term heap space exhausted.
 (report fatal error $)	Invalid error code!

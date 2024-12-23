@@ -1,4 +1,5 @@
 #define MAXPARAM 12
+#define MAXWORDMAP 10
 
 struct word {
 	struct word		*next_in_hash;
@@ -34,7 +35,7 @@ enum {
 	AN_FIRSTRESULT,
 	AN_COLLECT,
 	AN_COLLECT_WORDS,
-	AN_COLLECT_WORDS_CHECK,
+	AN_DETERMINE_OBJECT,
 	AN_SELECT,
 	AN_STOPPABLE,
 	AN_STATUSBAR,
@@ -214,6 +215,8 @@ struct predicate {
 	uint16_t		unbound_out;
 	uint16_t		nselectclause;
 	uint16_t		*selectclauses;
+	uint16_t		nwordmap;
+	struct wordmap		*wordmaps;
 	void			*backend;
 	struct clause		**unbound_in_due_to;
 	struct predlist		*callers;
@@ -231,10 +234,9 @@ struct predicate {
 #define PREDF_MACRO			0x00000001
 #define PREDF_DYNAMIC			0x00000002
 #define PREDF_INVOKED_BY_PROGRAM	0x00000004
-#define PREDF_INVOKED_SHALLOW_WORDS	0x00000008
-#define PREDF_INVOKED_DEEP_WORDS	0x00000010
-#define PREDF_INVOKED_BY_DEBUGGER	0x00000020
-#define PREDF_VISITED			0x00000040
+#define PREDF_INVOKED_FOR_WORDS		0x00000008
+#define PREDF_INVOKED_BY_DEBUGGER	0x00000010
+#define PREDF_VISITED			0x00000020
 #define PREDF_FIXED_FLAG		0x00000080
 #define PREDF_FAIL			0x00000100
 #define PREDF_SUCCEEDS			0x00000200
@@ -247,8 +249,18 @@ struct predicate {
 #define PREDF_DEFINED			0x00010000
 
 #define PREDF_INVOKED_NORMALLY (PREDF_INVOKED_BY_PROGRAM | PREDF_INVOKED_BY_DEBUGGER)
-#define PREDF_INVOKED_FOR_WORDS (PREDF_INVOKED_SHALLOW_WORDS | PREDF_INVOKED_DEEP_WORDS)
 #define PREDF_INVOKED (PREDF_INVOKED_NORMALLY | PREDF_INVOKED_FOR_WORDS)
+
+struct wordmap_tally {
+	uint16_t		onumtable[MAXWORDMAP];
+	uint16_t		count;
+};
+
+struct wordmap {
+	int			nmap;
+	uint16_t		*dict_ids;
+	struct wordmap_tally	*objects;
+};
 
 struct endings_point {
 	int			nway;
@@ -297,6 +309,7 @@ struct program {
 	int			totallines;
 	int			errorflag;
 	program_ticker_t	eval_ticker;
+	int			nwordmappred;
 };
 
 #define OPTF_BOUND_PARAMS	0x00000001
