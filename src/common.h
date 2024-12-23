@@ -10,8 +10,11 @@ extern int nsourcefile;
 
 extern int verbose;
 
-#define NO_SPACE_BEFORE ".,:;!?)]}>-%/| \t"
-#define NO_SPACE_AFTER "([{<-/#@| \t"
+// Stop chars also appear in runtime_z.c, R_JOIN_WORDS_SUB.
+// See also R_PRINT_VALUE.
+#define STOPCHARS ".,;\"*()"
+#define NO_SPACE_BEFORE ".,:;!?)]}>%-"
+#define NO_SPACE_AFTER "([{<-"
 
 #define STYLE_ROMAN	0
 #define STYLE_REVERSE	1

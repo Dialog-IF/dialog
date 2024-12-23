@@ -38,6 +38,7 @@ struct specialspec {
 	{SP_COLLECT_WORDS,	0,				2,	{"collect", "words"}},
 	{SP_CYCLING,		0,				1,	{"cycling"}},
 	{SP_DETERMINE_OBJECT,	0,				3,	{"determine", "object", 0}},
+	{SP_DIV,		0,				2,	{"div", 0}},
 	{SP_ENDIF,		0,				1,	{"endif"}},
 	{SP_ELSE,		0,				1,	{"else"}},
 	{SP_ELSEIF,		0,				1,	{"elseif"}},
@@ -46,6 +47,7 @@ struct specialspec {
 	{SP_GENERATE,		PREDNF_META,			3,	{"generate", 0, 0}},
 	{SP_GLOBAL_VAR,		PREDNF_META,			3,	{"global", "variable", 0}},
 	{SP_IF,			0,				1,	{"if"}},
+	{SP_INTERFACE,		PREDNF_META,			2,	{"interface", 0}},
 	{SP_INTO,		0,				2,	{"into", 0}},
 	{SP_JUST,		0,				1,	{"just"}},
 	{SP_LINK,		0,				2,	{"link", 0}},
@@ -55,9 +57,9 @@ struct specialspec {
 	{SP_MATCHING_ALL_OF,	0,				4,	{"matching", "all", "of", 0}},
 	{SP_NOW,		0,				1,	{"now"}},
 	{SP_OR,			0,				1,	{"or"}},
-	{SP_OUTPUTBOX,		0,				2,	{"div", 0}},
 	{SP_P_RANDOM,		0,				3,	{"purely", "at", "random"}},
 	{SP_SELECT,		0,				1,	{"select"}},
+	{SP_SPAN,		0,				2,	{"span", 0}},
 	{SP_STATUSBAR,		0,				3,	{"status", "bar", 0}},
 	{SP_STOPPABLE,		0,				1,	{"stoppable"}},
 	{SP_STOPPING,		0,				1,	{"stopping"}},
@@ -89,6 +91,7 @@ struct builtinspec {
 	{BI_EMPTY,		0, 0,				2,	{"empty", 0}},
 	{BI_NONEMPTY,		0, 0,				2,	{"nonempty", 0}},
 	{BI_WORD,		0, 0,				2,	{"word", 0}},
+	{BI_UNKNOWN_WORD,	0, 0,				3,	{"unknown", "word", 0}},
 	{BI_OBJECT,		0, 0,				2,	{"object", 0}},
 	{BI_BOUND,		0, 0,				2,	{"bound", 0}},
 	{BI_QUIT,		0, PREDF_SUCCEEDS,		1,	{"quit"}},
@@ -117,6 +120,7 @@ struct builtinspec {
 	{BI_UPPER,		0, PREDF_SUCCEEDS,		1,	{"uppercase"}},
 	{BI_CLEAR,		0, PREDF_SUCCEEDS,		1,	{"clear"}},
 	{BI_CLEAR_ALL,		0, PREDF_SUCCEEDS,		2,	{"clear", "all"}},
+	{BI_CLEAR_LINKS,	0, PREDF_SUCCEEDS,		2,	{"clear", "links"}},
 	{BI_EMBEDRESOURCE,	0, 0,				3,	{"embed", "resource", 0}},
 	{BI_GETINPUT,		0, 0,				3,	{"get", "input", 0}},
 	{BI_GETRAWINPUT,	0, 0,				5,	{"", "get", "raw", "input", 0}},	// disabled for now
@@ -128,6 +132,9 @@ struct builtinspec {
 	{BI_UNIFY,		0, 0,				3,	{0, "=", 0}},
 	{BI_IS_ONE_OF,		0, 0,				5,	{0, "is", "one", "of", 0}},
 	{BI_SPLIT,		0, 0,				8,	{"split", 0, "by", 0, "into", 0, "and", 0}},
+	{BI_APPEND,		0, 0,				4,	{"append", 0, 0, 0}},
+	{BI_SPLIT_WORD,		0, 0,				5,	{"split", "word", 0, "into", 0}},
+	{BI_JOIN_WORDS,		0, 0,				5,	{"join", "words", 0, "into", 0}},
 	{BI_WORDREP_RETURN,	0, 0,				4,	{"word", "representing", "return", 0}},
 	{BI_WORDREP_SPACE,	0, 0,				4,	{"word", "representing", "space", 0}},
 	{BI_WORDREP_BACKSPACE,	0, 0,				4,	{"word", "representing", "backspace", 0}},
@@ -397,8 +404,8 @@ void trace_now_expression(struct astnode *an, uint8_t *bound, struct clause *cl,
 		for(i = 0; i < an->predicate->arity; i++) {
 			if(any_unbound(an->children[i], bound, cl)) {
 				an->children[i]->unbound = 1;
-				if((prg->optflags & OPTF_BOUND_PARAMS)
-				&& (an->kind == AN_RULE || an->children[i]->kind != AN_VARIABLE || an->children[i]->word->name[0])) {
+				if(/*(prg->optflags & OPTF_BOUND_PARAMS)
+				&& */(an->kind == AN_RULE || an->children[i]->kind != AN_VARIABLE || an->children[i]->word->name[0])) {
 					report(
 						LVL_WARN,
 						an->line,
@@ -473,18 +480,6 @@ int trace_invocations_body(struct astnode **anptr, int flags, uint8_t *bound, st
 								LVL_WARN,
 								an->line,
 								"Dynamic predicate with unbound first argument will loop over all objects.");
-							if(an->children[0]->kind != AN_VARIABLE
-							|| an->children[0]->word->name[0]) {
-								// won't be necessary when the backend uses
-								// the intermediate code
-								*anptr = mkast(AN_RULE, 1, cl->arena, an->line);
-								(*anptr)->subkind = RULE_MULTI;
-								(*anptr)->predicate = find_builtin(prg, BI_OBJECT);
-								(*anptr)->children[0] = deepcopy_astnode(an->children[0], cl->arena, an->line);
-								(*anptr)->unbound = 1;
-								(*anptr)->next_in_body = an;
-								an->children[0]->unbound = 0;
-							}
 						} else {
 							an->predicate->pred->flags |= PREDF_DYN_LINKAGE;
 							an->predicate->pred->dynamic->linkage_flags |= LINKF_LIST;
@@ -500,6 +495,14 @@ int trace_invocations_body(struct astnode **anptr, int flags, uint8_t *bound, st
 				for(i = 0; i < an->predicate->arity; i++) {
 					if(an->children[i]->unbound) {
 						unbound |= 1 << i;
+						if(an->predicate->pred->iface_bound_in & (1 << i)) {
+							report(LVL_WARN, an->line,
+								"Parameter #%d of %s can be (partially) unbound, which violates the interface declaration at %s:%d.",
+								i + 1,
+								an->predicate->printed_name,
+								FILEPART(an->predicate->pred->iface_decl->line),
+								LINEPART(an->predicate->pred->iface_decl->line));
+						}
 					}
 				}
 				if(!(cl->predicate->pred->flags & PREDF_VISITED)) {
@@ -520,6 +523,21 @@ int trace_invocations_body(struct astnode **anptr, int flags, uint8_t *bound, st
 							for(i = 0; i < 2; i++) {
 								add_bound_vars(an->children[i], bound, cl);
 							}
+						}
+					} else if(an->predicate->builtin == BI_SPLIT) {
+						if(!an->children[0]->unbound) {
+							add_bound_vars(an->children[2], bound, cl);
+							add_bound_vars(an->children[3], bound, cl);
+						}
+					} else if(an->predicate->builtin == BI_APPEND) {
+						if(!an->children[1]->unbound || !an->children[2]->unbound) {
+							for(i = 1; i < 3; i++) {
+								add_bound_vars(an->children[i], bound, cl);
+							}
+						}
+					} else if(an->predicate->builtin == BI_IS_ONE_OF) {
+						if(!an->children[1]->unbound) {
+							add_bound_vars(an->children[0], bound, cl);
 						}
 					} else {
 						for(i = 0; i < an->predicate->arity; i++) {
@@ -682,10 +700,18 @@ void trace_reconsider_pred(struct predicate *pred, struct program *prg) {
 
 		for(j = 0; j < pred->predname->arity; j++) {
 			if((unbound & ~old) & (1 << j)) {
+				assert(!pred->unbound_out_due_to[j]);
 				pred->unbound_out_due_to[j] = pred->clauses[i];
 #if 0
 				printf("now, parameter %d of %s can be left unbound\n", j, pred->predname->printed_name);
 #endif
+				if(pred->iface_bound_out & (1 << j)) {
+					report(LVL_WARN, pred->clauses[i]->line,
+						"Rule can leave parameter #%d (partially) unbound, which violates the interface declaration at %s:%d.",
+						j + 1,
+						FILEPART(pred->iface_decl->line),
+						LINEPART(pred->iface_decl->line));
+				}
 			}
 		}
 	}
@@ -744,6 +770,8 @@ void trace_invocations(struct program *prg) {
 	trace_entrypoint(find_builtin(prg, BI_ERROR_ENTRY), prg, PREDF_INVOKED_BY_PROGRAM);
 	trace_entrypoint(find_builtin(prg, BI_OBJECT), prg, PREDF_INVOKED_BY_PROGRAM); // invoked by implicit object loops
 
+	find_builtin(prg, BI_BOUND)->pred->unbound_out |= 1; // it might be a list with some unbound element
+
 	for(i = 0; i < prg->npredicate; i++) {
 		predname = prg->predicates[i];
 		pred = predname->pred;
@@ -763,14 +791,14 @@ void trace_invocations(struct program *prg) {
 	}
 
 	if(!(prg->optflags & OPTF_BOUND_PARAMS)) {
-		// in the debugger, all predicates are potential entry points, and all
-		// incoming parameters are potentially unbound
+		// In the debugger, all predicates are potential entry points.
+		// All incoming parameters are potentially unbound too,
+		// but we handle that in compile.c.
 
 		for(i = 0; i < prg->npredicate; i++) {
 			predname = prg->predicates[i];
 			if(!predname->special
 			&& !(predname->pred->flags & PREDF_DYNAMIC)) {
-				predname->pred->unbound_in = (1 << predname->arity) - 1;
 				trace_entrypoint(predname, prg, PREDF_INVOKED_BY_DEBUGGER);
 			}
 		}
@@ -920,7 +948,7 @@ void find_dict_words(struct program *prg, struct astnode *an, int include_barewo
 		} else if(an->kind == AN_OUTPUTBOX) {
 			find_dict_words(prg, an->children[1], include_barewords);
 		} else if(an->kind == AN_LINK_SELF) {
-			find_dict_words(prg, an->children[0], 1);
+			find_dict_words(prg, an->children[0], include_barewords);
 		} else if(an->kind == AN_LOG) {
 			if(!(prg->optflags & OPTF_NO_LOG)) {
 				find_dict_words(prg, an->children[0], include_barewords);
@@ -1975,6 +2003,34 @@ int frontend_visit_clauses(struct program *prg, struct arena *temp_arena, struct
 			sub->next_in_source = cl->next_in_source;
 			cl->next_in_source = sub;
 			clause_dest = &cl->next_in_source;
+		} else if(cl->predicate->special == SP_INTERFACE) {
+			if(!cl->body || cl->body->kind != AN_RULE || cl->body->predicate->special) {
+				report(LVL_ERR, cl->line, "Syntax error in interface declaration.");
+				return 0;
+			}
+			an = cl->body;
+			pred = an->predicate->pred;
+			if(pred->iface_decl) {
+				report(LVL_ERR, cl->line, "Interface already declared for '%s' at %s:%d.",
+					an->predicate->printed_name,
+					FILEPART(pred->iface_decl->line),
+					LINEPART(pred->iface_decl->line));
+				return 0;
+			}
+			pred->iface_decl = cl;
+			for(i = 0; i < an->nchild; i++) {
+				if(an->children[i]->kind != AN_VARIABLE) {
+					report(LVL_ERR, cl->line,
+						"Interface declaration parameters must be a variables.");
+					return 0;
+				}
+				if(an->children[i]->word->name[0] == '<') {
+					pred->iface_bound_in |= 1 << i;
+				} else if(an->children[i]->word->name[0] == '>') {
+					pred->iface_bound_out |= 1 << i;
+				}
+			}
+			clause_dest = &cl->next_in_source;
 		} else if(cl->predicate->pred->flags & PREDF_MACRO) {
 			cld = clause_dest;
 			an = expand_macro_body(
@@ -2080,7 +2136,7 @@ static void frontend_reset_program(struct program *prg) {
 		cl->params[2]->word = find_word(prg, "");
 		cl->body = deepcopy_astnode(prg->closurebodies[i], cl->arena, 0);
 		add_clause(cl, predname->pred);
-		analyse_clause(prg, cl);
+		analyse_clause(prg, cl, 1);
 		assert(cl == predname->pred->clauses[i]);
 		for(j = 0; j < cl->nvar; j++) {
 			if(!strcmp(cl->varnames[j]->name, "_")) {
@@ -2591,7 +2647,7 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 		predname = prg->predicates[i];
 		pred = predname->pred;
 		for(j = 0; j < pred->nclause; j++) {
-			analyse_clause(prg, pred->clauses[j]);
+			analyse_clause(prg, pred->clauses[j], 1);
 		}
 	}
 
@@ -2931,11 +2987,11 @@ int frontend_inject_query(struct program *prg, struct predname *predname, struct
 	an->children[0]->word = vname;
 
 	add_clause(cl, pred);
-	analyse_clause(prg, cl);
+	analyse_clause(prg, cl, 0);
 
 	arena_free(&lexer.temp_arena);
 
-	pred->unbound_in = 1;
+	//pred->unbound_in = 1;
 	trace_reconsider_pred(pred, prg);
 	//pp_predicate(predname, prg);
 

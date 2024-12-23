@@ -12,6 +12,7 @@
 #include "output.h"
 #include "terminal.h"
 #include "report.h"
+#include "unicode.h"
 
 static volatile int interrupted = 0;
 
@@ -466,7 +467,9 @@ static int eval_pop_undo(struct eval_state *es) {
 	while(es->divsp--) o_end_box();
 	es->divsp = u->divsp;
 	memcpy(es->divstack, es->divstack, u->divsp * sizeof(uint16_t));
-	for(i = 0; i < es->divsp; i++) o_begin_box("box");
+	for(i = 0; i < es->divsp; i++) {
+		o_begin_box("box");
+	}
 	es->divstyle = STYLE_ROMAN;
 	o_set_style(STYLE_ROMAN);
 	if(es->divsp) {
@@ -634,7 +637,7 @@ void pp_tail(struct eval_state *es, value_t v, int with_plus) {
 }
 
 void pp_value(struct eval_state *es, value_t v, int with_at, int with_plus) {
-	char buf[16];
+	char buf[16], *str;
 	value_t sub;
 	int first;
 
@@ -647,18 +650,26 @@ void pp_value(struct eval_state *es, value_t v, int with_at, int with_plus) {
 	case VAL_OBJ:
 		assert(v.value < es->program->nworldobj);
 		o_print_word("#");
+		o_nospace();
 		o_print_word(es->program->worldobjnames[v.value]->name);
 		break;
 	case VAL_DICT:
+		assert(v.value < es->program->ndictword);
+		str = es->program->dictwordnames[v.value]->name;
 		if(with_at) {
 			o_print_word("@");
+			o_nospace();
+			o_print_opaque_word(str);
+		} else if(str[1] || !strchr(STOPCHARS, str[0])) {
+			o_print_opaque_word(str);
+		} else {
+			o_print_word(str);
 		}
-		assert(v.value < es->program->ndictword);
-		o_print_word(es->program->dictwordnames[v.value]->name);
 		break;
 	case VAL_DICTEXT:
 		if(with_at) {
 			o_print_word("@");
+			o_nospace();
 		}
 		if(es->heap[v.value + 0].tag == VAL_DICT) {
 			pp_value(es, es->heap[v.value + 0], 0, 0);
@@ -671,18 +682,18 @@ void pp_value(struct eval_state *es, value_t v, int with_at, int with_plus) {
 			for(sub = es->heap[v.value + 0]; sub.tag == VAL_PAIR; sub = es->heap[sub.value + 1]) {
 				assert(es->heap[sub.value].tag == VAL_DICT);
 				if(!first) o_nospace();
-				o_print_word(es->program->dictwordnames[es->heap[sub.value].value]->name);
+				o_print_opaque_word(es->program->dictwordnames[es->heap[sub.value].value]->name);
 				first = 0;
 			}
 		}
 		if(with_plus) {
 			o_nospace();
-			o_print_word("+");
+			o_print_opaque_word("+");
 		}
 		for(sub = es->heap[v.value + 1]; sub.tag == VAL_PAIR; sub = es->heap[sub.value + 1]) {
 			assert(es->heap[sub.value].tag == VAL_DICT);
 			o_nospace();
-			o_print_word(es->program->dictwordnames[es->heap[sub.value].value]->name);
+			o_print_opaque_word(es->program->dictwordnames[es->heap[sub.value].value]->name);
 		}
 		break;
 	case VAL_NIL:
@@ -865,10 +876,214 @@ static int check_dyn_dependency(struct eval_state *es, prgpoint_t pp, struct pre
 		report(
 			LVL_ERR,
 			(cid == 0xffff)? 0 : pp.pred->clauses[cid]->line,
-			"Initial state of dynamic predicate depends on the state of another dynamic predicate, %s.",
+			"Initial state of dynamic predicate %s depends on the state of another dynamic predicate, %s.",
+			es->top_target? es->top_target->printed_name : "( unknown )",
 			target->printed_name);
 		return 0;
 	}
+}
+
+static struct word *consider_endings(struct program *prg, struct endings_point *ep, uint16_t *str, int len, int *endpos) {
+	int i;
+	struct word *w;
+	uint8_t utf8[128];
+	uint16_t saved;
+
+	if(len > 1) {
+		for(i = 0; i < ep->nway; i++) {
+			if(ep->ways[i]->letter == str[len - 1]) {
+				if(ep->ways[i]->final) {
+					saved = str[len - 1];
+					str[len - 1] = 0;
+					if(unicode_to_utf8(utf8, sizeof(utf8), str) != len - 1) {
+						str[len - 1] = saved;
+						return 0;
+					}
+					str[len - 1] = saved;
+					w = find_word_nocreate(prg, (char *) utf8);
+					if(w && (w->flags & WORDF_DICT)) {
+						*endpos = len - 1;
+						return w;
+					}
+				}
+				if(ep->ways[i]->more.nway) {
+					return consider_endings(prg, &ep->ways[i]->more, str, len - 1, endpos);
+				}
+				break;
+			}
+		}
+		return 0;
+	} else {
+		return 0;
+	}
+}
+
+value_t parse_input_word(struct eval_state *es, uint8_t *input) {
+	struct program *prg = es->program;
+	struct word *w, *w2;
+	char *str = (char *) input;
+	int j, len, ulen;
+	uint16_t unicode[64], unibuf[2];
+	char utfbuf[8];
+	value_t list;
+	long num;
+	int endpos = 0;
+
+	if(*str >= '0' && *str <= '9' && !str[1]) {
+		return (value_t) {VAL_NUM, (*str) - '0'};
+	}
+
+	w = find_word_nocreate(prg, str);
+	if(w && (w->flags & WORDF_DICT)) {
+		return (value_t) {VAL_DICT, w->dict_id};
+	} else {
+		len = strlen(str);
+		for(j = len - 1; j >= 0; j--) {
+			if(str[j] < '0' || str[j] > '9') {
+				break;
+			}
+		}
+		if(j < 0 && (num = strtol(str, 0, 10)) >= 0 && num < 16384) {
+			return (value_t) {VAL_NUM, num};
+		} else if(!input[utf8_to_unicode(unicode, sizeof(unicode) / sizeof(uint16_t), input)]) {
+			ulen = 0;
+			while(unicode[ulen]) ulen++;
+			if(ulen == 1) {
+				w = find_word(prg, str);
+				ensure_dict_word(prg, w);
+				return (value_t) {VAL_DICT, w->dict_id};
+			} else {
+				w = consider_endings(prg, &prg->endings_root, unicode, ulen, &endpos);
+				if(w) {
+					list = (value_t) {VAL_NIL};
+					for(j = ulen - 1; j >= endpos; j--) {
+						unibuf[0] = unicode[j];
+						unibuf[1] = 0;
+						if(unicode_to_utf8((uint8_t *) utfbuf, sizeof(utfbuf), unibuf) == 1) {
+							w2 = find_word(prg, utfbuf);
+							ensure_dict_word(prg, w2);
+							list = eval_makepair((value_t) {VAL_DICT, w2->dict_id}, list, es);
+							if(list.tag == VAL_ERROR) return list;
+						} else {
+							return (value_t) {VAL_ERROR};
+						}
+					}
+					list = eval_makepair((value_t) {VAL_DICT, w->dict_id}, list, es);
+					if(list.tag == VAL_ERROR) return list;
+					list.tag = VAL_DICTEXT;
+					return list;
+				} else {
+					list = (value_t) {VAL_NIL};
+					for(j = ulen - 1; j >= 0; j--) {
+						unibuf[0] = unicode[j];
+						unibuf[1] = 0;
+						if(unicode_to_utf8((uint8_t *) utfbuf, sizeof(utfbuf), unibuf) == 1) {
+							w2 = find_word(prg, utfbuf);
+							ensure_dict_word(prg, w2);
+							list = eval_makepair((value_t) {VAL_DICT, w2->dict_id}, list, es);
+							if(list.tag == VAL_ERROR) return list;
+						} else {
+							return (value_t) {VAL_ERROR};
+						}
+					}
+					list = eval_makepair(list, (value_t) {VAL_NIL, 0}, es);
+					if(list.tag == VAL_ERROR) return list;
+					list.tag = VAL_DICTEXT;
+					return list;
+				}
+			}
+		} else {
+			return (value_t) {VAL_ERROR};
+		}
+	}
+}
+
+static value_t join_words(value_t list, struct eval_state *es) {
+	char buf[1024];
+	int pos = 0;
+	struct word *w;
+	value_t v, part1;
+
+	if(list.tag != VAL_PAIR) return (value_t) {VAL_NONE};
+
+	if(eval_deref(es->heap[list.value + 1], es).tag == VAL_NIL) {
+		v = eval_deref(es->heap[list.value + 0], es);
+		if(v.tag == VAL_DICT) {
+			w = es->program->dictwordnames[v.value];
+			if(!w->name[1]) {
+				return v;
+			}
+		}
+	}
+
+	while(list.tag == VAL_PAIR) {
+		v = eval_deref(es->heap[list.value + 0], es);
+		if(v.tag == VAL_DICT) {
+			w = es->program->dictwordnames[v.value];
+			if(!w->name[1]
+			&& (w->name[0] <= 0x20 || strchr(STOPCHARS, w->name[0]))) {
+				return (value_t) {VAL_NONE};
+			}
+			if(pos + strlen(w->name) + 1 >= sizeof(buf)) {
+				return (value_t) {VAL_NONE};
+			}
+			strcpy(buf + pos, w->name);
+			pos += strlen(buf + pos);
+		} else if(v.tag == VAL_DICTEXT) {
+			part1 = es->heap[v.value + 0];
+			if(part1.tag == VAL_PAIR) {
+				v = part1;
+			}
+			do {
+				assert(v.tag == VAL_PAIR || v.tag == VAL_DICTEXT);
+				assert(es->heap[v.value + 0].tag == VAL_DICT);
+				w = es->program->dictwordnames[es->heap[v.value + 0].value];
+				if(pos + strlen(w->name) + 1 >= sizeof(buf)) {
+					return (value_t) {VAL_NONE};
+				}
+				strcpy(buf + pos, w->name);
+				pos += strlen(buf + pos);
+				v = es->heap[v.value + 1];
+			} while(v.tag != VAL_NIL);
+		} else if(v.tag == VAL_NUM) {
+			if(pos + 5 + 1 >= sizeof(buf)) {
+				return (value_t) {VAL_NONE};
+			}
+			pos += snprintf(buf + pos, sizeof(buf) - pos, "%d", v.value);
+		} else {
+			return (value_t) {VAL_NONE};
+		}
+		list = eval_deref(es->heap[list.value + 1], es);
+	}
+
+	if(list.tag != VAL_NIL) return (value_t) {VAL_NONE};
+
+	return parse_input_word(es, (uint8_t *) buf);
+}
+
+static value_t prepend_word_chars(char *utf8, int bufsize, value_t tail, struct eval_state *es) {
+	uint16_t unibuf[bufsize];
+	char utfbuf[16];
+	struct word *chw;
+	int i, n;
+
+	utf8_to_unicode(unibuf, bufsize, (uint8_t *) utf8);
+	for(n = 0; unibuf[n]; n++);
+	for(i = n - 1; i >= 0; i--) {
+		if(unibuf[i] >= '0' && unibuf[i] <= '9') {
+			tail = eval_makepair((value_t) {VAL_NUM, unibuf[i] - '0'}, tail, es);
+		} else {
+			unicode_to_utf8_n((uint8_t *) utfbuf, 16, unibuf + i, 1);
+			chw = find_word(es->program, utfbuf);
+			ensure_dict_word(es->program, chw);
+			tail = eval_makepair((value_t) {VAL_DICT, chw->dict_id}, tail, es);
+		}
+		if(tail.tag == VAL_ERROR) {
+			break;
+		}
+	}
+
+	return tail;
 }
 
 static int compatible_random(struct eval_state *es, int from, int to) {
@@ -930,7 +1145,7 @@ static int eval_compute(struct eval_state *es, int op, int a, int b, int *res) {
 	return 0;
 }
 
-static void eval_builtin(struct eval_state *es, int builtin, value_t o1, value_t o2) {
+static int eval_builtin(struct eval_state *es, int builtin, value_t o1, value_t o2) {
 	assert(builtin);
 	switch(builtin) {
 	case BI_BOLD:
@@ -939,10 +1154,18 @@ static void eval_builtin(struct eval_state *es, int builtin, value_t o1, value_t
 		}
 		break;
 	case BI_CLEAR:
+		if(es->inStatus || es->nSpan) {
+			return ESTATUS_ERR_IO;
+		}
 		o_clear(0);
 		break;
 	case BI_CLEAR_ALL:
+		if(es->inStatus || es->nSpan) {
+			return ESTATUS_ERR_IO;
+		}
 		o_clear(1);
+		break;
+	case BI_CLEAR_LINKS:
 		break;
 	case BI_COMPILERVERSION:
 		if(!es->forwords) {
@@ -1029,6 +1252,8 @@ static void eval_builtin(struct eval_state *es, int builtin, value_t o1, value_t
 	default:
 		printf("unimplemented builtin %d\n", builtin); exit(1);
 	}
+
+	return 0;
 }
 
 static int eval_run(struct eval_state *es) {
@@ -1091,18 +1316,33 @@ static int eval_run(struct eval_state *es) {
 			assert(ci->oper[0].tag == OPER_BOX);
 			if(es->divsp == EVAL_MAXDIV) {
 				pred_release(pp.pred);
-				return ESTATUS_ERR_DYN; // todo formalize this
+				return ESTATUS_ERR_IO;
 			}
 			es->divstack[es->divsp++] = ci->oper[0].value;
 			if(ci->subop == BOX_STATUS) {
-				o_begin_box("status");
+				if(es->inStatus || es->nSpan) {
+					pred_release(pp.pred);
+					return ESTATUS_ERR_IO;
+				} else {
+					o_begin_box("status");
+					es->inStatus = 1;
+				}
+			} else if(ci->subop == BOX_DIV && es->nSpan) {
+				pred_release(pp.pred);
+				return ESTATUS_ERR_IO;
 			} else {
 				if(!push_aux(es, (value_t) {VAL_NUM, es->divstyle})) {
 					pred_release(pp.pred);
 					return ESTATUS_ERR_AUX;
 				}
-				o_par_n(es->program->boxclasses[ci->oper[0].value].margintop);
-				o_begin_box("box");
+				if(ci->subop == BOX_SPAN) {
+					o_sync();
+					o_begin_box("span");
+					es->nSpan++;
+				} else {
+					o_par_n(es->program->boxclasses[ci->oper[0].value].margintop);
+					o_begin_box("box");
+				}
 				if(es->program->boxclasses[ci->oper[0].value].style) {
 					es->divstyle = es->program->boxclasses[ci->oper[0].value].style & 0x7f;
 				}
@@ -1111,15 +1351,32 @@ static int eval_run(struct eval_state *es) {
 			}
 			break;
 		case I_BEGIN_LINK:
-			begin_link(es, value_of(ci->oper[0], es));
+			if(!es->nLink) {
+				begin_link(es, value_of(ci->oper[0], es));
+			}
+			es->nLink++;
+			es->nSpan++;
 			break;
 		case I_BEGIN_LINK_RES:
-			v = eval_deref(value_of(ci->oper[0], es), es);
-			assert(v.tag == VAL_NUM);
-			begin_link_res(es, v.value);
+			if(!es->nLink) {
+				v = eval_deref(value_of(ci->oper[0], es), es);
+				assert(v.tag == VAL_NUM);
+				begin_link_res(es, v.value);
+			}
+			es->nLink++;
+			es->nSpan++;
 			break;
 		case I_BEGIN_LOG:
 			o_begin_box("debugger");
+			break;
+		case I_BEGIN_SELF_LINK:
+			if(!es->nLink) {
+				if(!es->hide_links) {
+					o_begin_self_link();
+				}
+			}
+			es->nLink++;
+			es->nSpan++;
 			break;
 		case I_BREAKPOINT:
 			if(!ci->subop && tr_line) {
@@ -1131,11 +1388,15 @@ static int eval_run(struct eval_state *es) {
 			return ci->subop? ESTATUS_DEBUGGER : ESTATUS_SUSPENDED;
 		case I_BUILTIN:
 			assert(ci->oper[2].tag == OPER_PRED);
-			eval_builtin(
+			res = eval_builtin(
 				es,
 				es->program->predicates[ci->oper[2].value]->builtin,
 				value_of(ci->oper[0], es),
 				value_of(ci->oper[1], es));
+			if(res) {
+				pred_release(pp.pred);
+				return res;
+			}
 			break;
 		case I_CHECK_INDEX:
 			if(es->index.tag == ci->oper[0].tag
@@ -1363,12 +1624,18 @@ static int eval_run(struct eval_state *es) {
 		case I_END_BOX:
 			if(!es->divsp) {
 				pred_release(pp.pred);
-				return ESTATUS_ERR_DYN; // todo formalize this
+				return ESTATUS_ERR_IO;
 			}
 			es->divsp--;
 			o_end_box();
-			o_par_n(es->program->boxclasses[ci->oper[0].value].marginbottom);
-			if(ci->subop != BOX_STATUS) {
+			if(ci->subop == BOX_STATUS) {
+				es->inStatus = 0;
+			} else {
+				if(ci->subop == BOX_SPAN) {
+					es->nSpan--;
+				} else {
+					o_par_n(es->program->boxclasses[ci->oper[0].value].marginbottom);
+				}
 				assert(es->aux);
 				v = es->auxstack[--es->aux];
 				assert(v.tag == VAL_NUM);
@@ -1379,12 +1646,25 @@ static int eval_run(struct eval_state *es) {
 			break;
 		case I_END_LINK:
 		case I_END_LINK_RES:
-			if(!es->hide_links) {
-				o_end_link();
+			es->nLink--;
+			es->nSpan--;
+			if(!es->nLink) {
+				if(!es->hide_links) {
+					o_end_link();
+				}
 			}
 			break;
 		case I_END_LOG:
 			o_end_box();
+			break;
+		case I_END_SELF_LINK:
+			es->nLink--;
+			es->nSpan--;
+			if(!es->nLink) {
+				if(!es->hide_links) {
+					o_end_self_link();
+				}
+			}
 			break;
 		case I_FIRST_CHILD:
 			predname = es->program->objvarpred[DYN_HASPARENT];
@@ -1703,6 +1983,11 @@ static int eval_run(struct eval_state *es) {
 			res = (v.tag == VAL_DICT || v.tag == VAL_DICTEXT);
 			if(ci->subop ^ res) perform_branch(ci->implicit, es, &pp, &pc);
 			break;
+		case I_IF_UNKNOWN_WORD:
+			v = eval_deref(value_of(ci->oper[0], es), es);
+			res = (v.tag == VAL_DICTEXT) && (es->heap[v.value + 0].tag == VAL_PAIR);
+			if(ci->subop ^ res) perform_branch(ci->implicit, es, &pp, &pc);
+			break;
 		case I_IF_GFLAG:
 			assert(ci->oper[0].tag == OPER_GFLAG);
 			predname = es->program->globalflagpred[ci->oper[0].value];
@@ -1847,6 +2132,19 @@ static int eval_run(struct eval_state *es) {
 				do_fail(es, &pp);
 			}
 			pc = 0;
+			break;
+		case I_JOIN_WORDS:
+			v0 = eval_deref(value_of(ci->oper[0], es), es);
+			v1 = join_words(v0, es);
+			if(v1.tag == VAL_NONE) {
+				do_fail(es, &pp);
+				pc = 0;
+			} else if(v1.tag == VAL_ERROR) {
+				pred_release(pp.pred);
+				return ESTATUS_ERR_HEAP;
+			} else {
+				set_by_ref(ci->oper[1], v1, es);
+			}
 			break;
 		case I_JUMP:
 			if(ci->oper[0].tag == OPER_RLAB) {
@@ -2091,6 +2389,10 @@ static int eval_run(struct eval_state *es) {
 			cut_to(es, v.value);
 			break;
 		case I_SAVE:
+			if(es->inStatus || es->nSpan) {
+				pred_release(pp.pred);
+				return ESTATUS_ERR_IO;
+			}
 			if(es->dyn_callbacks) {
 				pred_release(pp.pred);
 				es->resume = es->cont;
@@ -2105,6 +2407,10 @@ static int eval_run(struct eval_state *es) {
 			set_by_ref(ci->oper[0], (value_t) {VAL_NUM, es->choice}, es);
 			break;
 		case I_SAVE_UNDO:
+			if(es->inStatus || es->nSpan) {
+				pred_release(pp.pred);
+				return ESTATUS_ERR_IO;
+			}
 			if(es->dyn_callbacks) {
 				es->dyn_callbacks->push_undo(es->dyn_callback_data);
 				pred_release(pp.pred);
@@ -2359,6 +2665,53 @@ static int eval_run(struct eval_state *es) {
 				}
 			}
 			break;
+		case I_SPLIT_WORD:
+			v0 = eval_deref(value_of(ci->oper[0], es), es);
+			if(v0.tag == VAL_DICT) {
+				w = es->program->dictwordnames[v0.value];
+				n = strlen(w->name);
+				v = prepend_word_chars(w->name, n + 1, (value_t) {VAL_NIL}, es);
+				if(v.tag == VAL_ERROR) {
+					pred_release(pp.pred);
+					return ESTATUS_ERR_HEAP;
+				}
+				set_by_ref(ci->oper[1], v, es);
+			} else if(v0.tag == VAL_DICTEXT) {
+				v1 = es->heap[v0.value + 0];
+				if(v1.tag == VAL_PAIR) {
+					set_by_ref(ci->oper[1], v1, es);
+				} else {
+					assert(v1.tag == VAL_DICT);
+					w = es->program->dictwordnames[v1.value];
+					n = strlen(w->name);
+					v = prepend_word_chars(w->name, n + 1, es->heap[v0.value + 1], es);
+					if(v.tag == VAL_ERROR) {
+						pred_release(pp.pred);
+						return ESTATUS_ERR_HEAP;
+					}
+					set_by_ref(ci->oper[1], v, es);
+				}
+			} else if(v0.tag == VAL_NUM) {
+				i = v0.value;
+				v = (value_t) {VAL_NIL};
+				while(i) {
+					v = eval_makepair((value_t) {VAL_NUM, i % 10}, v, es);
+					if(v.tag == VAL_ERROR) break;
+					i /= 10;
+				}
+				if(v.tag == VAL_NIL) {
+					v = eval_makepair((value_t) {VAL_NUM, 0}, v, es);
+				}
+				if(v.tag == VAL_ERROR) {
+					pred_release(pp.pred);
+					return ESTATUS_ERR_HEAP;
+				}
+				set_by_ref(ci->oper[1], v, es);
+			} else {
+				do_fail(es, &pp);
+				pc = 0;
+			}
+			break;
 		case I_STOP:
 			cut_to(es, es->stopchoice);
 			do_fail(es, &pp);
@@ -2485,19 +2838,25 @@ void eval_reinitialize(struct eval_state *es) {
 	es->trail = 0;
 	es->top = 0;
 	es->simple = EVAL_MULTI;
-
 	es->forwords = 0;
+	es->top_target = 0;
 
 	(void) push_env(es, 0, 0);
 	(void) push_choice(es, 0, 0, 0);
 	es->stopchoice = es->choice;
 	es->stopaux = es->aux;
+
+	o_leave_all();
+	es->inStatus = 0;
+	es->nSpan = 0;
+	es->nLink = 0;
 }
 
 int eval_initial(struct eval_state *es, struct predname *predname, value_t *args) {
 	int i, status;
 
 	assert(!es->dyn_callbacks);
+	es->top_target = predname;
 
 	pred_claim(predname->pred);
 	es->resume.pred = predname->pred;

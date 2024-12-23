@@ -50,6 +50,8 @@ enum {
 	I_COMPUTE_V,		// F- value 1, value 2, dest value, subop = BI_*
 	I_COMPUTE_R,		// F- value 1, value 2, dest ref, subop = BI_*
 	I_BUILTIN,		// -- optional value 1, optional value 2, predicate id
+	I_SPLIT_WORD,		// F- value, dest ref
+	I_JOIN_WORDS,		// F- value, dest ref
 
 	I_QUIT,			// -E
 	I_RESTART,		// -E
@@ -77,6 +79,7 @@ enum {
 	I_IF_OBJ,		// -- value, implicit routine, subop = negate
 	I_IF_PAIR,		// -- value, implicit routine, subop = negate
 	I_IF_WORD,		// -- value, implicit routine, subop = negate
+	I_IF_UNKNOWN_WORD,	// -- value, implicit routine, subop = negate
 	I_IF_MATCH,		// -- value, simple value, implicit routine, subop = negate (derefs and unboxes first, doesn't handle lists)
 	I_IF_UNIFY,		// -- value, value, implicit routine, subop = negate (derefs both, doesn't bind variables)
 	I_IF_GREATER,		// -- value, value, implicit routine, subop = negate
@@ -117,6 +120,8 @@ enum {
 	I_END_LINK_RES,		// --
 	I_BEGIN_LOG,		// --
 	I_END_LOG,		// --
+	I_BEGIN_SELF_LINK,	// --
+	I_END_SELF_LINK,	// --
 
 	I_EMBED_RES,		// -- value
 

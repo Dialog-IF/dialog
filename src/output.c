@@ -26,6 +26,7 @@ enum {
 	CLA_DEBUG,
 	CLA_DEBUGIN,
 	CLA_TRACE,
+	CLA_SPAN,
 	CLA_UNKNOWN
 };
 
@@ -168,8 +169,6 @@ void o_par() {
 }
 
 void o_begin_box(char *boxclass) {
-	o_line();
-
 	if(boxsp == nalloc_box - 1) {
 		nalloc_box = 2 * boxsp + 8;
 		boxstack = realloc(boxstack, nalloc_box * sizeof(struct boxstate));
@@ -180,35 +179,44 @@ void o_begin_box(char *boxclass) {
 	boxstack[boxsp].style = 0;
 	boxstack[boxsp].upper = 0;
 	boxstack[boxsp].wrap = !term_handles_wrapping();
-	if(!strcmp(boxclass, "status")) {
-		boxstack[boxsp].boxclass = CLA_STATUS;
-		boxstack[boxsp].visible = 0;
-		boxstack[boxsp].wrap = 0;
-	} else if(!strcmp(boxclass, "trace")) {
-		boxstack[boxsp].boxclass = CLA_TRACE;
-		boxstack[boxsp].wrap = 0;
-	} else if(!strcmp(boxclass, "debugger")) {
-		boxstack[boxsp].boxclass = CLA_DEBUG;
-		boxstack[boxsp].visible = 1;
-		boxstack[boxsp].style = STYLE_DEBUG;
-	} else if(!strcmp(boxclass, "intdebugger")) {
-		boxstack[boxsp].boxclass = CLA_INTDEBUG;
-		boxstack[boxsp].visible = term_is_interactive();
-		boxstack[boxsp].style = STYLE_DEBUG;
-	} else if(!strcmp(boxclass, "debuginput")) {
-		boxstack[boxsp].boxclass = CLA_DEBUGIN;
-		boxstack[boxsp].visible = 1;
+	if(!strcmp(boxclass, "span")) {
+		boxstack[boxsp].boxclass = CLA_SPAN;
 	} else {
-		boxstack[boxsp].boxclass = CLA_UNKNOWN;
+		o_line();
+		if(!strcmp(boxclass, "status")) {
+			boxstack[boxsp].boxclass = CLA_STATUS;
+			boxstack[boxsp].visible = 0;
+			boxstack[boxsp].wrap = 0;
+		} else if(!strcmp(boxclass, "trace")) {
+			boxstack[boxsp].boxclass = CLA_TRACE;
+			boxstack[boxsp].wrap = 0;
+		} else if(!strcmp(boxclass, "debugger")) {
+			boxstack[boxsp].boxclass = CLA_DEBUG;
+			boxstack[boxsp].visible = 1;
+			boxstack[boxsp].style = STYLE_DEBUG;
+		} else if(!strcmp(boxclass, "intdebugger")) {
+			boxstack[boxsp].boxclass = CLA_INTDEBUG;
+			boxstack[boxsp].visible = term_is_interactive();
+			boxstack[boxsp].style = STYLE_DEBUG;
+		} else if(!strcmp(boxclass, "debuginput")) {
+			boxstack[boxsp].boxclass = CLA_DEBUGIN;
+			boxstack[boxsp].visible = 1;
+		} else {
+			boxstack[boxsp].boxclass = CLA_UNKNOWN;
+		}
 	}
 	sendstyle(boxstack[boxsp].style);
 }
 
 void o_end_box() {
-	o_line();
 	if(boxsp) {
+		if(boxstack[boxsp].boxclass != CLA_SPAN) {
+			o_line();
+		}
 		boxsp--;
 		sendstyle(boxstack[boxsp].style);
+	} else {
+		o_line();
 	}
 }
 
@@ -259,16 +267,24 @@ void o_print_word_n(const char *utf8, int n) {
 	if(n) {
 		if(space == SP_SPACE) {
 			sendspace();
-		} else if(space == SP_AUTO && !strchr(NO_SPACE_BEFORE, *utf8)) {
+		} else if(space == SP_AUTO && !strchr(NO_SPACE_BEFORE " ", *utf8)) {
 			sendspace();
 		}
 		sendstr_n(utf8, n);
-		space = strchr(NO_SPACE_AFTER, utf8[n - 1])? SP_INHIBIT : SP_AUTO;
+		space = strchr(NO_SPACE_AFTER " ", utf8[n - 1])? SP_INHIBIT : SP_AUTO;
 	}
 }
 
 void o_print_word(const char *utf8) {
 	o_print_word_n(utf8, strlen(utf8));
+}
+
+void o_print_opaque_word(const char *utf8) {
+	if(space == SP_SPACE || space == SP_AUTO) {
+		sendspace();
+	}
+	sendstr_n(utf8, strlen(utf8));
+	space = SP_AUTO;
 }
 
 void o_print_str(const char *utf8) {
@@ -298,6 +314,14 @@ void o_begin_link(const char *utf8) {
 }
 
 void o_end_link() {
+	o_print_str(">");
+}
+
+void o_begin_self_link() {
+	o_print_str("<");
+}
+
+void o_end_self_link() {
 	o_print_str(">");
 }
 
@@ -360,6 +384,16 @@ void o_reset(int force_w, int quirks) {
 	boxstack[boxsp].visible = 1;
 	boxstack[boxsp].wrap = !term_handles_wrapping();
 	dfrotz_quirks = quirks;
+}
+
+void o_leave_all() {
+	o_sync();
+	boxsp = 0;
+	boxstack[boxsp].boxclass = CLA_MAIN;
+	boxstack[boxsp].style = STYLE_ROMAN;
+	boxstack[boxsp].upper = 0;
+	boxstack[boxsp].visible = 1;
+	boxstack[boxsp].wrap = !term_handles_wrapping();
 }
 
 void o_cleanup() {

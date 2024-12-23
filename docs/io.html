@@ -9,25 +9,27 @@
 <body>
 	<div class="chapter">
 	<h1>Chapter 5: Input and output</h1>
-	<div class="navlinks">(<a href="#div">Divisions and style classes</a>&nbsp;&bull; <a href="#styles">Inline styles and formatting</a>&nbsp;&bull; <a href="#statusbar">The status bar</a>&nbsp;&bull; <a href="#progressbar">Visualizing progress</a>&nbsp;&bull; <a href="#clear">Clearing the screen</a>&nbsp;&bull; <a href="#input">Input</a>&nbsp;&bull; <a href="#hyperlinks">Hyperlinks</a>&nbsp;&bull; <a href="#resources">Resources</a>&nbsp;&bull; <a href="#split">Splitting input by keywords</a>&nbsp;&bull; <a href="#detobj">Determining objects from words</a>)</div>
-<a id="div"></a><h2>Divisions and style classes</h2>
+	<div class="navlinks">(<a href="#div">Divs, spans, and style classes</a>&nbsp;&bull; <a href="#styles">Case conversion and inline styles</a>&nbsp;&bull; <a href="#statusbar">The status bar</a>&nbsp;&bull; <a href="#progressbar">Visualizing progress</a>&nbsp;&bull; <a href="#clear">Clearing the screen</a>&nbsp;&bull; <a href="#input">Input</a>&nbsp;&bull; <a href="#hyperlinks">Hyperlinks</a>&nbsp;&bull; <a href="#resources">Resources</a>&nbsp;&bull; <a href="#split">Splitting input by keywords</a>&nbsp;&bull; <a href="#detobj">Determining objects from words</a>)</div>
+<a id="div"></a><h2>Divs, spans, and style classes</h2>
 <p>As we saw in the <a href="execution.html#printing">introductory chapter</a>, text inside rule bodies
 gets printed. The text is treated as a sequence of words and punctuation.
 Furthermore, the <span class="code">(par)</span> built-in predicate produces paragraph
 breaks, and <span class="code">(line)</span> produces line breaks.
 </p>
-<p>Output can be further organized into <i>divisions</i>, or <i>divs</i> for
-short. Divisions are rectangular areas of text, often spanning the full width
-of the containing window, to which style hints can be applied.
+<p>Output can be further organized into <i>divs</i> (divisions) and <i>spans</i>.
+Divs are rectangular areas of text, usually extending to the full width of the
+containing window, to which style hints can be applied. Spans allow style hints
+to be applied to a stretch of text without breaking it out into a separate
+rectangle.
 </p>
-<p>The purpose of divisions and style hints is to allow the same story to run on
-many different platforms, with varying support for advanced presentation
-techniques. Furthermore, divisions promote a clean source code structure, by
-isolating the presentation aspects from the text and logic of the story.
+<p>The purpose of divs, spans, and style classes is to allow the same story to run
+on many different platforms, with varying support for advanced presentation
+techniques. Furthermore, these mechanisms promote a clean source code
+structure, by isolating the presentation aspects from the text and logic of the
+story.
 </p>
-<p>The syntax for creating a division is <span class="code">(div&nbsp;$)</span> followed by a
-statement. The parameter is a style class, and the statement is usually a
-block. Example:
+<p>The syntax for creating a div is <span class="code">(div&nbsp;$)</span> followed by a statement.
+The parameter is a style class, and the statement is usually a block. Example:
 </p>
 <textarea class="copyarea" id="copy0" readonly>
 	(div @quote) {
@@ -48,7 +50,25 @@ block. Example:
 <div class="copycode">
 <a class="copybtn" href="" onClick="document.getElementById('copy0').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
-<p>Style classes are identified by words, but these words don't end up in the game
+<p>Likewise, a span is created by <span class="code">(span&nbsp;$)</span> followed by a statement.
+The following example assumes that style classes <span class="code">@bold</span> and
+<span class="code">@italic</span> have been defined:
+</p>
+<textarea class="copyarea" id="copy1" readonly>
+	(span @italic) { Lorem Ipsum }, he (span @bold) emphasized .
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">(span @italic) { Lorem Ipsum }, he (span @bold) emphasized .</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy1').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The output, depending on which hints appear in the style class definitions and
+to what extent they are supported by the interpreter, could be:
+</p>
+<div class="blkoutput"><i>Lorem Ipsum</i>, he <b>emphasized</b>.</div><p>Style classes are identified by words, but these words don't end up in the game
 dictionary (unless they're also used elsewhere, of course). This is
 particularly relevant if removable word endings are used (see the <a href="io.html#input">input
 section</a> below).
@@ -62,7 +82,7 @@ and choose among them, or ignore them altogether.
 </p>
 <p>Here is an example style definition:
 </p>
-<textarea class="copyarea" id="copy1" readonly>
+<textarea class="copyarea" id="copy2" readonly>
 (style class @quote)
 	font-style: italic;
 	margin-top: 2em;
@@ -77,7 +97,7 @@ and choose among them, or ignore them altogether.
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy1').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy2').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>The Å-machine backend copies all style definitions verbatim into the story
 file, which makes them available to interpreters at runtime. The official
@@ -92,7 +112,8 @@ without also changing the background colour, as the player may be using an
 interpreter with a dark or light default background.
 </p>
 <p>The Z-machine backend, and the 8-bit Å-machine interpreter, only support a
-limited number of style attributes. For divs in the main text area, they are:
+limited number of style attributes. For divs and spans in the main text area,
+they are:
 </p>
 <p class="codeline">font-style</p>
 <p class="noteline">Supported values are <span class="code">italic</span> and <span class="code">inherit</span>.
@@ -105,49 +126,48 @@ limited number of style attributes. For divs in the main text area, they are:
 <span class="code">monospace</span>.
 </p>
 <p class="codeline">margin-top</p>
-<p class="noteline">The value must be an integer followed by the keyword <span class="code">em</span>,
-with no whitespace in between. The size of the resulting margin is the
-given number of blank lines.
+<p class="noteline">This attribute only affects divs. The value must be an integer followed
+by the keyword <span class="code">em</span>, with no whitespace in between. The size
+of the resulting margin is the given number of blank lines.
 </p>
 <p class="codeline">margin-bottom</p>
-<p class="noteline">The value must be an integer followed by the keyword <span class="code">em</span>,
-with no whitespace in between. The size of the resulting margin is the
-given number of blank lines.
+<p class="noteline">This attribute only affects divs. The value must be an integer followed
+by the keyword <span class="code">em</span>, with no whitespace in between. The size
+of the resulting margin is the given number of blank lines.
 </p>
-<p>There is currently no support for the combined <span class="code">margin</span> attribute.
+<p>There is currently no support for the combined <span class="code">margin</span> and
+<span class="code">font</span> attributes.
 </p>
-<h3>Divs and the flow of execution</h3>
-<p>Divisions can be nested, but only in a strict tree-like structure. There are
-three ways to leave a div during normal program execution:
+<h3>Nested style contexts and the flow of execution</h3>
+<p>Divs and spans can be nested, but only in a strict tree-like structure. Divs
+may not appear inside spans. If this is attempted, a runtime error is
+generated.
+</p>
+<p>There are three ways to leave a div or span during normal program execution:
 </p>
 <ul><li>The inner statement might succeed. In this case, any remaining choice
-points are discarded, and the <span class="code">(div&nbsp;$)</span> expression itself
-succeeds. The choice points must be discarded to prevent the same div
-from being exited more than once.
+points are discarded, and the <span class="code">(div&nbsp;$)</span> or
+<span class="code">(span&nbsp;$)</span> expression itself succeeds. The choice points
+must be discarded to prevent the same div or span from being exited
+more than once.
 </li>
 <li>The inner statement might fail. In this case, the <span class="code">(div&nbsp;$)</span>
-expression also fails.
+or <span class="code">(span&nbsp;$)</span> expression also fails.
 </li>
 <li>The inner statement might invoke <span class="code">(stop)</span> to break out of
 a surrounding stoppable environment.
 </li>
-</ul><p>Regardless of how the inner statement terminates, the div rectangle is
-concluded, its bottom margin takes effect, and the style attributes of the
-surrounding div are restored on the fly.
+</ul><p>Regardless of how the inner statement terminates, the div or span is concluded
+as usual, and the style attributes of the surrounding context are restored on
+the fly. In case of a div, for instance, this means that the bottom margin
+takes effect.
 </p>
-<a id="styles"></a><h2>Inline styles and formatting</h2>
-<p>To change the current text style without entering a new division, use the
-built-in predicates <span class="code">(bold)</span>, <span class="code">(italic)</span>,
-<span class="code">(reverse)</span>, and <span class="code">(fixed pitch)</span> to enable each
-respective style, and <span class="code">(roman)</span> to disable all four. The predicate
-<span class="code">(unstyle)</span> reverts to the default style of the current division,
-which is usually roman.
-</p>
+<a id="styles"></a><h2>Case conversion and inline styles</h2>
 <p>The built-in predicate <span class="code">(uppercase)</span> forces the next character to be
 printed in uppercase. The standard library uses this to define the following
 convenient predicates:
 </p>
-<textarea class="copyarea" id="copy2" readonly>
+<textarea class="copyarea" id="copy3" readonly>
 (A full $Obj)	(uppercase) (a full $Obj)
 (A $Obj)	(uppercase) (a $Obj)
 (It $Obj)	(uppercase) (it $Obj)
@@ -170,10 +190,17 @@ convenient predicates:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy2').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy3').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>The built-in predicate <span class="code">(space&nbsp;$)</span> prints a given number of space
 characters in succession.
+</p>
+<p>In addition to spans and divs, it is possible to change the current text style
+on the fly. Use the built-in predicates <span class="code">(bold)</span>,
+<span class="code">(italic)</span>, <span class="code">(reverse)</span>, and <span class="code">(fixed pitch)</span>
+to enable each respective style, and <span class="code">(roman)</span> to disable all four.
+The predicate <span class="code">(unstyle)</span> reverts to the default style of the
+current div or span, which is roman by default.
 </p>
 <a id="statusbar"></a><h2>The status bar</h2>
 <p>The special syntax <span class="code">(status bar $Class)</span>, followed by a statement,
@@ -184,7 +211,7 @@ appearance of this <i>status bar area</i> is controlled using style hints.
 <span class="code">em</span> units. The Z-machine backend will reserve this many lines at
 the top of the screen.
 </p>
-<textarea class="copyarea" id="copy3" readonly>
+<textarea class="copyarea" id="copy4" readonly>
 (style class @status)
 	height: 1em;
 
@@ -205,12 +232,15 @@ the top of the screen.
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy3').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy4').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>On the Z-machine, text inside the status bar is always rendered in a
 fixed-pitch font. When entering the status bar environment, Dialog fills the
 status bar area with reverse space characters, enables reverse video, and
 positions the cursor in the top left corner.
+</p>
+<p>Spans and inline style changes (bold, italic, reverse, fixed pitch, and roman)
+are ignored in the status bar area.
 </p>
 <p>The status bar area can be split into multiple segments horizontally. These
 segments are described using nested so called <i>floating</i> divs. These have
@@ -226,7 +256,7 @@ divs, or vertically using ordinary divs (or simply with line breaks).
 <p>Let's extend our simple status bar with a score display in the upper right
 corner:
 </p>
-<textarea class="copyarea" id="copy4" readonly>
+<textarea class="copyarea" id="copy5" readonly>
 (current score 0)
 
 (style class @status)
@@ -267,7 +297,7 @@ corner:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy4').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy5').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>In CSS, <span class="code">em</span> represents the height of a capital M, while
 <span class="code">ch</span> represents the width of the digit zero. On the Z-machine, they
@@ -317,7 +347,8 @@ interpreter that obeys all style hints.
 </p>
 <p>It is not possible to save the game state (to a file or undo buffer) from
 within the status bar area, or to enter a nested <span class="code">(status bar&nbsp;$)</span>
-from within the status bar area. Such operations will fail.
+from within the status bar area. Such operations will result in a runtime
+error.
 </p>
 <a id="progressbar"></a><h2>Visualizing progress</h2>
 <p>The built-in predicate <span class="code">(progress bar $ of&nbsp;$)</span> draws a progress bar
@@ -327,8 +358,11 @@ graphics on the Z-machine backend.
 <a id="clear"></a><h2>Clearing the screen</h2>
 <p>To clear the screen below the status bar area, use <span class="code">(clear)</span>. To
 clear the entire screen and disable the status bar, use <span class="code">(clear
-all)</span>. Be aware that on some interpreters, clearing interferes with the
-player's ability to scroll back and review earlier parts of the play session.
+all)</span>. These predicates may not be queried from within a span, a link, or
+the status bar area. Such operations will result in a runtime error.
+</p>
+<p>Be aware that on some interpreters, clearing interferes with the player's
+ability to scroll back and review earlier parts of the play session.
 </p>
 <a id="input"></a><h2>Input</h2>
 <p>User input is represented by dictionary words.
@@ -352,7 +386,7 @@ the essential and optional parts of a given dictionary word.
 waits for a single keypress, while the other reads a full line of input.
 </p>
 <h3>Get key</h3>
-<textarea class="copyarea" id="copy5" readonly>
+<textarea class="copyarea" id="copy6" readonly>
 	(get key $Char)
 </textarea>
 <div class="blkcode">
@@ -361,7 +395,7 @@ waits for a single keypress, while the other reads a full line of input.
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy5').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy6').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>This predicate waits for the player to type a character.
 </p>
@@ -379,7 +413,7 @@ whether the player was holding shift or not.
 directly in Dialog source code. The dictionary words for these keys can be
 obtained at runtime, by querying the following built-in predicates:
 </p>
-<textarea class="copyarea" id="copy6" readonly>
+<textarea class="copyarea" id="copy7" readonly>
 (word representing return $Char)
 (word representing space $Char)
 (word representing backspace $Char)
@@ -400,11 +434,11 @@ obtained at runtime, by querying the following built-in predicates:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy6').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy7').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>A simple keypress dispatcher might look like this:
 </p>
-<textarea class="copyarea" id="copy7" readonly>
+<textarea class="copyarea" id="copy8" readonly>
 (program entry point)
 	(get key $Key)
 	(handle keypress $Key)
@@ -435,10 +469,10 @@ obtained at runtime, by querying the following built-in predicates:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy7').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy8').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <h3>Get input</h3>
-<textarea class="copyarea" id="copy8" readonly>
+<textarea class="copyarea" id="copy9" readonly>
 	(get input $WordList)
 </textarea>
 <div class="blkcode">
@@ -447,7 +481,7 @@ obtained at runtime, by querying the following built-in predicates:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy8').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy9').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>This query blocks execution until the player types a line of input, followed by
 return. Different interpreters provide different levels of line-editing
@@ -456,11 +490,11 @@ history and spell checking.
 </p>
 <p>The parameter, <span class="code">$WordList</span>, is unified with a list where each
 element represents a word typed by the player. The punctuation characters full
-stop, comma, double quote, semicolon, and asterisk are treated as individual
-words; the remaining text is separated into words by whitespace. If a word is
-recognized as one that appears in the program-wide dictionary, then the element
-will be that dictionary word. Else, if the word is a decimal number in the
-range <span class="nobreak">0&ndash;16383</span>, the element will be that number.
+stop, comma, double quote, semicolon, asterisk, and parentheses are treated as
+individual words; the remaining text is separated into words by whitespace. If
+a word is recognized as one that appears in the program-wide dictionary, then
+the element will be that dictionary word. Else, if the word is a decimal number
+in the range <span class="nobreak">0&ndash;16383</span>, the element will be that number.
 </p>
 <p>If the word was neither recognized, nor found to be a decimal number, then
 Dialog will attempt to remove certain word endings, and check whether the
@@ -472,7 +506,7 @@ not require it.
 <span class="code">(removable word endings)</span>. Each rule body should consist of one or
 more word endings:
 </p>
-<textarea class="copyarea" id="copy9" readonly>
+<textarea class="copyarea" id="copy10" readonly>
 (removable word endings)
 	%% German adjective endings
 	en es em e
@@ -493,7 +527,7 @@ more word endings:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy9').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>The part that remains after removing the ending is referred to as the
 <i>stem</i> of the word. If the stem consists of at least two letters, and
@@ -533,7 +567,7 @@ value&nbsp;7.
 <p>The Å-machine backend supports a form of <i>hyperlinks</i>, for the purpose of
 simplifying text entry on mobile devices. The syntax is:
 </p>
-<textarea class="copyarea" id="copy10" readonly>
+<textarea class="copyarea" id="copy11" readonly>
 	(link $Target) <i>statement</i>
 </textarea>
 <div class="blkcode">
@@ -542,13 +576,13 @@ simplifying text entry on mobile devices. The syntax is:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy11').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>The following example creates a piece of text, &ldquo;clickable&rdquo;. Clicking on
 the text has the same effect as typing the words <span class="prginput">THE LINKED TEXT</span>
 and pressing return.
 </p>
-<textarea class="copyarea" id="copy11" readonly>
+<textarea class="copyarea" id="copy12" readonly>
 	Here is some (link [the linked text]) { clickable } text.
 </textarea>
 <div class="blkcode">
@@ -557,7 +591,7 @@ and pressing return.
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy11').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy12').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Note that the words are appended to the end of the current contents of the
 input buffer, so that the player might type a verb, and then complete the
@@ -566,11 +600,9 @@ sentence by clicking on e.g. a noun from a room description.
 <p>The link target must be a flat list of words and/or integers, like the ones
 obtained from <span class="code">(get input&nbsp;$)</span>. It can be computed at runtime.
 </p>
-<p>When the target is identical to the clickable text, a short form is available.
-The following syntax only works if the clickable text is a single word, or a
-single block of words:
+<p>When the target is identical to the clickable text, a short form is available:
 </p>
-<textarea class="copyarea" id="copy12" readonly>
+<textarea class="copyarea" id="copy13" readonly>
 	Why don't you (link) {open the drawer}?
 </textarea>
 <div class="blkcode">
@@ -579,8 +611,13 @@ single block of words:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy12').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy13').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
+<p>A query to <span class="code">(clear links)</span> transforms earlier hyperlinks into
+regular, non-clickable text. This is useful after a substantial scope change,
+such as when the player has moved to a different room. Links in the status bar
+area are not affected.
+</p>
 <p>Å-machine interpreters are not required to support hyperlinks at all, and some
 may provide an option to turn them off for players who find them distracting.
 The built-in predicate <span class="code">(interpreter supports links)</span> can be used to
@@ -594,7 +631,7 @@ would-be-clickable text shows up as normal text.
 web sites, using a common mechanism. A <i>resource</i> is defined with the
 following syntax:
 </p>
-<textarea class="copyarea" id="copy13" readonly>
+<textarea class="copyarea" id="copy14" readonly>
 (define resource <i>id</i>) <i>location</i>
 </textarea>
 <div class="blkcode">
@@ -603,7 +640,7 @@ following syntax:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy13').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy14').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>The <i>id</i> is any bound Dialog-value, such as an integer, a dictionary word,
 an object, or even a list.
@@ -617,7 +654,7 @@ into the <span class="tt">.aastory</span> file, and this is the recommended way 
 <p>When a resource has been defined, it's possible to link to it using the following
 syntax:
 </p>
-<textarea class="copyarea" id="copy14" readonly>
+<textarea class="copyarea" id="copy15" readonly>
 	(link resource $Id) <i>statement</i>
 </textarea>
 <div class="blkcode">
@@ -626,11 +663,11 @@ syntax:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy14').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy15').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Here is an example:
 </p>
-<textarea class="copyarea" id="copy15" readonly>
+<textarea class="copyarea" id="copy16" readonly>
 (define resource @manual)
 	feelies/manual.pdf
 
@@ -671,7 +708,7 @@ syntax:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy15').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy16').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Not every interpreter or backend supports links. Use <span class="code">(interpreter
 supports links)</span> to check for this feature at runtime. Alternatively,
@@ -691,7 +728,7 @@ resource. When defining a resource, it is possible to add an <i>alt-text</i>
 that can be displayed instead of the resource. The alt-text appears at the end
 of the resource definition, separated from the location by a semicolon:
 </p>
-<textarea class="copyarea" id="copy16" readonly>
+<textarea class="copyarea" id="copy17" readonly>
 (define resource <i>id</i>) <i>location</i>; <i>alt-text</i>
 </textarea>
 <div class="blkcode">
@@ -700,7 +737,7 @@ of the resource definition, separated from the location by a semicolon:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy16').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy17').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>If no alt-text is specified, the filename (i.e. location) is used as a default
 value. Only the actual filename is used as alt-text, not the full path.
@@ -711,7 +748,7 @@ the current interpreter is capable of displaying a given resource. If not,
 </p>
 <p>Example:
 </p>
-<textarea class="copyarea" id="copy17" readonly>
+<textarea class="copyarea" id="copy18" readonly>
 (define resource #lighthouse)
 	media/lighthouse.png; A small model of a lighthouse.
 
@@ -752,7 +789,7 @@ the current interpreter is capable of displaying a given resource. If not,
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy17').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy18').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>In the above example, the <span class="code">(div&nbsp;$)</span> splits the text into two
 paragraphs if the interpreter is able to embed <span class="tt">png</span> files. Otherwise,
@@ -783,7 +820,7 @@ the matched keyword. It is straightforward to implement this using ordinary
 rules in Dialog. However, for performance reasons the language also provides a
 built-in predicate:
 </p>
-<textarea class="copyarea" id="copy18" readonly>
+<textarea class="copyarea" id="copy19" readonly>
 (split $Input by $Keywords into $Left and $Right)
 </textarea>
 <div class="blkcode">
@@ -792,7 +829,7 @@ built-in predicate:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy18').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy19').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p><span class="code">$Input</span> and <span class="code">$Keywords</span> must be lists of simple values,
 i.e. they mustn't contain sublists.
@@ -807,7 +844,7 @@ keyword itself.
 <p>When invoked as a multi-query, the predicate backtracks over each matching
 position. Thus:
 </p>
-<textarea class="copyarea" id="copy19" readonly>
+<textarea class="copyarea" id="copy20" readonly>
 	*(split [the good , the bad and the ugly]
 		by [and ,]
 		into $Left and $Right)
@@ -820,7 +857,7 @@ position. Thus:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy19').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy20').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>will succeed twice: First, binding <span class="code">$Left</span> to <span class="code">[the
 good]</span> and <span class="code">$Right</span> to <span class="code">[the bad and the ugly]</span>,
@@ -831,7 +868,7 @@ bad]</span> and <span class="code">$Right</span> to <span class="code">[the ugly
 more of a set of keywords. The standard library uses it that way in the
 following rule definition:
 </p>
-<textarea class="copyarea" id="copy20" readonly>
+<textarea class="copyarea" id="copy21" readonly>
 ($X contains one of $Y)
 	(split $X by $Y into $ and $)
 </textarea>
@@ -842,7 +879,7 @@ following rule definition:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy20').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy21').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <a id="detobj"></a><h2>Determining objects from words</h2>
 <p>This section is mainly of concern for library programmers, so story authors may
@@ -851,7 +888,7 @@ safely skip it.
 <p>Dialog has a special construct for matching player input against in-world
 object names in a very efficient way:
 </p>
-<textarea class="copyarea" id="copy21" readonly>
+<textarea class="copyarea" id="copy22" readonly>
 	(determine object $Obj)
 		<i>object generator</i>
 	(from words)
@@ -868,7 +905,7 @@ object names in a very efficient way:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy21').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy22').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>This statement will backtrack over every object <span class="code">$Obj</span> for which:<br />
 </p>
@@ -879,7 +916,7 @@ object names in a very efficient way:
 in the word generator, and the object generator should contain a multi-query to
 backtrack over a set of objects. A canonical example is:
 </p>
-<textarea class="copyarea" id="copy22" readonly>
+<textarea class="copyarea" id="copy23" readonly>
 	(determine object $Obj)
 		*($Obj is in scope)
 	(from words)
@@ -896,7 +933,7 @@ backtrack over a set of objects. A canonical example is:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy22').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy23').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>A non-optimizing compiler could deal with this construct as follows: First,
 compile normal code for the object generator. Then, exhaust every branch of the
@@ -919,7 +956,7 @@ unoptimized case.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="dynamic.html">Chapter 6: Dynamic predicates</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 20, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 21, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

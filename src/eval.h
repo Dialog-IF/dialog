@@ -82,6 +82,7 @@ struct eval_state {
 	long			randomseed;
 
 	prgpoint_t		resume;		// between calls to eval_run
+	struct predname		*top_target;
 
 	prgpoint_t		cont;
 	int			env;
@@ -102,6 +103,10 @@ struct eval_state {
 	uint8_t			divsp;
 	uint8_t			errorflag;	// set on e.g. heap overflow
 	uint8_t			hide_links;
+
+	uint8_t			inStatus;
+	uint8_t			nSpan;
+	uint8_t			nLink;
 };
 
 struct eval_dyn_cb {
@@ -131,7 +136,8 @@ enum {
 	ESTATUS_ERR_OBJ = 3,
 	ESTATUS_ERR_SIMPLE = 4,
 	ESTATUS_ERR_DYN = 5,
-	ESTATUS_SUCCESS,
+	ESTATUS_ERR_IO = 7,
+	ESTATUS_SUCCESS = 128,
 	ESTATUS_QUIT,
 	ESTATUS_RESTART,
 	ESTATUS_SAVE,
@@ -155,6 +161,7 @@ value_t eval_makevar(struct eval_state *es);
 value_t eval_makepair(value_t head, value_t tail, struct eval_state *es);
 value_t eval_gethead(value_t v, struct eval_state *es);
 value_t eval_gettail(value_t v, struct eval_state *es);
+value_t parse_input_word(struct eval_state *es, uint8_t *input);
 int eval_initial(struct eval_state *es, struct predname *predname, value_t *args);
 int eval_initial_multi(struct eval_state *es, struct predname *predname, value_t *args);
 int eval_initial_next(struct eval_state *es);

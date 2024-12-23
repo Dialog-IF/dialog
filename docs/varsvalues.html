@@ -142,7 +142,8 @@ Pencil: It seems harmless.</div><p>The scope of a local variable is limited to t
 </p>
 <a id="values"></a><h2>Values</h2>
 <p>So far, we have seen one kind of value: the object. There are three more kinds
-of value in the Dialog programming language: Number, dictionary word, and list.
+of value in the Dialog programming language: <i>Number</i>, <i>dictionary
+word</i>, and <i>list</i>.
 </p>
 <h3>Number</h3>
 <p>A number is a non-negative integer in the range <span class="nobreak">0&ndash;16383</span>
@@ -155,7 +156,7 @@ and not a parameter.
 </p>
 <h3>Dictionary word</h3>
 <p>While objects represent elements of the game world, dictionary words represent
-words typed by the player. Dictionary words are prefixed with <span class="code">@</span>
+input typed by the player. Dictionary words are prefixed with <span class="code">@</span>
 instead of <span class="code">#</span>. Unlike object names, they are case-insensitive.
 </p>
 <p>A dictionary word is internally separated into two parts: an <i>essential
@@ -180,8 +181,14 @@ separating the essential part from the optional part.
 </p>
 <p>Dictionary words may contain any characters supported by the underlying
 platform, e.g. the <i>ZSCII character set</i> in the case of the Z-machine.
-Special characters such as parentheses are allowed, but they must be escaped by
-a backslash:
+</p>
+<p>A handful of characters are used to separate words when parsing input. These
+cannot appear together with other characters in a dictionary word—they have to
+stand on their own, as a single-character word. They are: <span class="code">. , ; * " (
+)</span>
+</p>
+<p>Characters that have special significance in Dialog source code, such as
+parentheses, can be escaped by a backslash:
 </p>
 <textarea class="copyarea" id="copy3" readonly>
 	@\(
@@ -623,7 +630,7 @@ You see an apple.<br />
 You see an apple.<br />
 You don't see any more fruit.</div>	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="choicepoints.html">Chapter 3: Choice points</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 20, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 21, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

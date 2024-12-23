@@ -162,24 +162,8 @@ You open the safe, revealing a pearl necklace.<br />
 <br />
 &gt; CLOSE IT<br />
 You close the safe.</div><a id="listutil"></a><h2>List manipulation</h2>
-<h3>Built-in predicates</h3>
-<p>The Dialog programming language provides two useful <a href="quickref.html">built-in
-predicates</a> for working with lists. They are:
-</p>
-<p class="codeline">($Element is one of $List)</p>
-<p class="noteline">Succeeds if <span class="code">$Element</span> appears in the <span class="code">$List</span>. If
-a multi-query is made, and <span class="code">$Element</span> is unbound, the
-predicate will backtrack over each member of the list.
-</p>
-<p class="codeline">(split $List by $Keywords into $Left and $Right)</p>
-<p class="noteline">If one of the values in the list <span class="code">$Keywords</span> occurs in
-<span class="code">$List</span>, <span class="code">$List</span> is split into a left and a right
-half at that occurrence. A multi-query will find each occurrence in
-turn.
-</p>
-<h3>Library predicates</h3>
-<p>In addition to the built-in predicates, the Dialog standard library provides
-the following predicates for working with lists:
+<p>In addition to a handful of <a href="builtins.html#listbuiltins">built-in predicates</a>, the Dialog
+standard library provides the following predicates for working with lists:
 </p>
 <p class="codeline">($List contains one of $Keys)</p>
 <p class="noteline">Succeeds if <span class="code">$List</span> contains any element from the list
@@ -206,10 +190,6 @@ are numbered starting with&nbsp;1.
 </p>
 <p class="codeline">(take $N from $List into $Prefix)</p>
 <p class="noteline">Takes the first <span class="code">$N</span> elements from a list.
-</p>
-<p class="codeline">(append $A $B $AB)</p>
-<p class="noteline">Unifies <span class="code">$AB</span> with the concatenation of <span class="code">$A</span>
-<span class="nobreak">and&nbsp;<span class="code">$B</span>.</span>
 </p>
 <p class="codeline">(randomly select $Element from $List)</p>
 <p class="noteline">Retrieves one list element at random, or fails if the list is empty.
@@ -815,7 +795,7 @@ It's your call.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="libref.html">Appendix: Predicate index</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 20, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 21, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

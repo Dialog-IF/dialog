@@ -754,7 +754,44 @@ come out as <span class="code">@north-we</span>, but that will unify just fine w
 The mysterious door can be referred to using the words [oaken oak mysteriou door].</div><p>Printed values (numbers, lists, objects) also end up in the collection, as
 themselves.
 </p>
-<a id="just"></a><h2>Just</h2>
+<p>Just as when parsing player input, certain punctuation characters are treated
+as separate words. They are: <span class="code">. , ; * " ( )</span> When printed back,
+<span class="code">. , ;</span> and <span class="code">)</span> inhibit whitespace on their left, and
+<span class="code">(</span> inhibits whitespace on its right:
+</p>
+<textarea class="copyarea" id="copy17" readonly>
+(program entry point)
+	(collect words)
+		Hello, world!
+	(into $List)
+	The list is: $List (line)
+	Printing each word:
+	(exhaust) {
+		*($Word is one of $List)
+		$Word
+	}
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">(collect words)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>Hello, world!</td></tr>
+<tr><td class="left"></td><td class="right">(into $List)</td></tr>
+<tr><td class="left"></td><td class="right">The list is: $List (line)</td></tr>
+<tr><td class="left"></td><td class="right">Printing each word:</td></tr>
+<tr><td class="left"></td><td class="right">(exhaust) {</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>*($Word is one of $List)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>$Word</td></tr>
+<tr><td class="left"></td><td class="right">}</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy17').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>produces the output:
+</p>
+<div class="blkoutput">The list is: [hello , world!]<br />
+Printing each word: hello, world!</div><a id="just"></a><h2>Just</h2>
 <p>We have seen that the rules of a predicate work together as a disjunction. Each
 rule is tried in turn, and failure causes Dialog to backtrack and resume with
 the next rule. When a rule succeeds, the backtracking may or may not stop: This
@@ -777,7 +814,7 @@ example is the object that represents the player character inside the game
 world. Suppose (although this is not necessarily a good idea in practice) that
 you want this object to print as &ldquo;you&rdquo;, but parse only as &ldquo;me&rdquo;:
 </p>
-<textarea class="copyarea" id="copy17" readonly>
+<textarea class="copyarea" id="copy18" readonly>
 (name #player)	you
 (dict #player)	(just) me
 
@@ -800,7 +837,7 @@ you want this object to print as &ldquo;you&rdquo;, but parse only as &ldquo;me&
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy17').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy18').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Here, when a multi-query is made for <span class="code">*(dict #player)</span>, Dialog sets
 up a choice point as usual, and enters the first matching rule. But this rule
@@ -820,7 +857,7 @@ the second <span class="code">(just)</span> has no effect.
 supply of choice points. This can be used to create infinite loops (such as the
 main game loop or the game-over menu).
 </p>
-<textarea class="copyarea" id="copy18" readonly>
+<textarea class="copyarea" id="copy19" readonly>
 (program entry point)
 	*(repeat forever)
 	This gets printed over and over. (line)
@@ -835,7 +872,7 @@ main game loop or the game-over menu).
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy18').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy19').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>In the above example, the query to <span class="code">(fail)</span> makes Dialog backtrack
 to the multi-query to <span class="code">(repeat forever)</span>, which will keep on
@@ -848,7 +885,7 @@ created by <span class="code">(repeat forever)</span>. This can be done explicit
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="control.html">Chapter 4: More control structures</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 20, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 21, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

@@ -9,7 +9,7 @@
 <body>
 	<div class="chapter">
 	<h1>Chapter 8: More built-in predicates</h1>
-	<div class="navlinks">(<a href="#typechecks">Checking the type of a value</a>&nbsp;&bull; <a href="#arithmetic">Numbers and arithmetic</a>&nbsp;&bull; <a href="#trace">Debugging</a>&nbsp;&bull; <a href="#system">System control</a>)</div>
+	<div class="navlinks">(<a href="#typechecks">Checking the type of a value</a>&nbsp;&bull; <a href="#arithmetic">Numbers and arithmetic</a>&nbsp;&bull; <a href="#listbuiltins">List-related predicates</a>&nbsp;&bull; <a href="#sploin">Manipulating dictionary words</a>&nbsp;&bull; <a href="#trace">Debugging</a>&nbsp;&bull; <a href="#system">System control</a>)</div>
 <a id="typechecks"></a><h2>Checking the type of a value</h2>
 <p>Dialog contains a set of built-in predicates for checking if a value is of a
 particular type. They are:
@@ -19,6 +19,9 @@ particular type. They are:
 </p>
 <p class="codeline">(word $X)</p>
 <p class="noteline">Succeeds if and only if <span class="code">$X</span> is bound to a dictionary word.
+</p>
+<p class="codeline">(unknown word $X)</p>
+<p class="noteline">Succeeds if and only if <span class="code">$X</span> is bound to a word that wasn't found in the game dictionary.
 </p>
 <p class="codeline">(empty $X)</p>
 <p class="noteline">Succeeds if and only if <span class="code">$X</span> is bound to an empty list.
@@ -102,7 +105,111 @@ PIN codes. Pocket money should be fairly straightforward to implement by
 counting in cents; story authors (or library developers) that require more
 sophisticated number crunching will have to get creative.
 </p>
-<a id="trace"></a><h2>Debugging</h2>
+<a id="listbuiltins"></a><h2>List-related predicates</h2>
+<p>The Dialog programming language provides the following built-in predicates for
+working with lists:
+</p>
+<p class="codeline">($Element is one of $List)</p>
+<p class="noteline">Succeeds if <span class="code">$Element</span> appears in the <span class="code">$List</span>. If
+a multi-query is made, and <span class="code">$Element</span> is unbound, the
+predicate will backtrack over each member of the list.
+</p>
+<p class="codeline">(split $List by $Keywords into $Left and $Right)</p>
+<p class="noteline">If one of the values in the list <span class="code">$Keywords</span> occurs in
+<span class="code">$List</span>, <span class="code">$List</span> is split into a left and a right
+half at that occurrence. A multi-query will find each occurrence in
+turn.
+</p>
+<p class="codeline">(append $A $B $AB)</p>
+<p class="noteline">Unifies <span class="code">$AB</span> with the concatenation of <span class="code">$A</span>
+<span class="nobreak">and&nbsp;<span class="code">$B</span>.</span> The first parameter (<span class="code">$A</span>)
+must be bound.
+</p>
+<a id="sploin"></a><h2>Manipulating dictionary words</h2>
+<p>Dictionary words are usually treated as atomic units, but it is possible to
+extract their constituent characters using the built-in predicate <span class="code">(split
+word $ into $)</span>. The output is a list of single-character dictionary
+words. Thus:
+</p>
+<textarea class="copyarea" id="copy0" readonly>
+	(split word @fission into $List)
+	$List
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">(split word @fission into $List)</td></tr>
+<tr><td class="left"></td><td class="right">$List</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy0').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>will print:
+</p>
+<div class="blkoutput">[f i s s i o n]</div><p>Conversely, it is possible to construct a dictionary word from a list of words
+(single-character or otherwise), using <span class="code">(join words $ into&nbsp;$)</span>:
+</p>
+<textarea class="copyarea" id="copy1" readonly>
+	(join words [f u s i o n] into $Word)
+	$Word
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">(join words [f u s i o n] into $Word)</td></tr>
+<tr><td class="left"></td><td class="right">$Word</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy1').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>will print:
+</p>
+<div class="blkoutput">fusion</div><p>The join-words predicate fails if any of the following is true:
+</p>
+<ul><li>The input is anything other than a list of dictionary words and/or
+numbers.
+</li>
+<li>The input consists of more than a single character, and one of those
+characters is either a word representing a special keystroke (like
+backspace), or one of the word-separating characters (see
+<a href="io.html#input">Input</a>): <span class="code">. , ; " * ( )</span>
+</li>
+<li>The resulting word would exceed a backend- or interpreter-imposed
+length limit. If there is a limit, it is guaranteed to be at least 64
+characters.
+</li>
+</ul><p>It is possible to split and join numbers as though they were words:
+</p>
+<textarea class="copyarea" id="copy2" readonly>
+	&gt; (get input [$W])
+	(split word $W into $Chars)
+	(split $Chars by [5] into $LeftChars and $RightChars)
+	$LeftChars, $RightChars. (line)
+	(join words $LeftChars into $Left)
+	(join words $RightChars into $Right)
+	($Left plus $Right into $Sum)
+	The sum is $Sum.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">&gt; (get input [$W])</td></tr>
+<tr><td class="left"></td><td class="right">(split word $W into $Chars)</td></tr>
+<tr><td class="left"></td><td class="right">(split $Chars by [5] into $LeftChars and $RightChars)</td></tr>
+<tr><td class="left"></td><td class="right">$LeftChars, $RightChars. (line)</td></tr>
+<tr><td class="left"></td><td class="right">(join words $LeftChars into $Left)</td></tr>
+<tr><td class="left"></td><td class="right">(join words $RightChars into $Right)</td></tr>
+<tr><td class="left"></td><td class="right">($Left plus $Right into $Sum)</td></tr>
+<tr><td class="left"></td><td class="right">The sum is $Sum.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy2').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>This could result in the following interaction:
+</p>
+<div class="blkoutput">&gt; 11522<br />
+[1 1], [2 2].<br />
+The sum is 33.</div><a id="trace"></a><h2>Debugging</h2>
 <p>The following built-in predicates are useful for debugging:
 </p>
 <p class="codeline">(log) <i>statement</i></p>
@@ -219,7 +326,7 @@ to the limits.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="beyondprg.html">Chapter 9: Beyond the program</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 20, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 21, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

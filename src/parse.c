@@ -34,10 +34,16 @@ static int valid_varname_char(uint8_t ch) {
 		|| (ch >= '0' && ch <= '9')
 		|| ch >= 128
 		|| ch == '_'
+		|| ch == '<'
+		|| ch == '>'
 		|| ch == '-';
 }
 
 static int lexer_getc(struct lexer *lexer) {
+	if(lexer->ungetbackslash) {
+		lexer->ungetbackslash = 0;
+		return '\\';
+	}
 	if(lexer->ungetcbuf) {
 		int ch = lexer->ungetcbuf;
 		lexer->ungetcbuf = 0;
@@ -78,6 +84,14 @@ static int next_token(struct lexer *lexer, int parsemode) {
 	int at_start;
 	long val;
 
+	if(lexer->pending_nospace) {
+		lexer->pending_nospace = 0;
+		if(parsemode == PMODE_BODY) {
+			lexer->kind = TOK_NOSPACE;
+			return 1;
+		}
+	}
+
 	for(;;) {
 		ch = lexer_getc(lexer);
 		column++;
@@ -102,13 +116,17 @@ static int next_token(struct lexer *lexer, int parsemode) {
 				column++;
 				if(ch != EOF && (
 					valid_varname_char((uint8_t) ch)
-					|| (lexer->kind == TOK_DICTWORD && !strchr("\n\r\t $#[|](){}@~*%", ch))))
+					|| (lexer->kind == TOK_DICTWORD && !strchr("\n\r\t ()[]{}~*|%", ch))))
 				{
 					if(ch == '\\') {
 						ch = lexer_getc(lexer);
 						column++;
 						if(ch == EOF) {
 							report(LVL_ERR, line, "Backslash not allowed at end of file.");
+							lexer->errorflag = 1;
+							return 0;
+						} else if(ch < 0x20) {
+							report(LVL_ERR, line, "Invalid character after backslash.");
 							lexer->errorflag = 1;
 							return 0;
 						}
@@ -136,6 +154,17 @@ static int next_token(struct lexer *lexer, int parsemode) {
 						lexer->errorflag = 1;
 						return 0;
 					}
+					if(lexer->kind == TOK_DICTWORD && wbuf[0] && wbuf[1]) {
+						for(i = 0; wbuf[i]; i++) {
+							if(wbuf[i] < 0x80 && strchr(STOPCHARS, wbuf[i])) {
+								report(LVL_ERR, line,
+									"Stop-character \"%c\" cannot appear inside a multi-character dictionary word.",
+									(char) wbuf[i]);
+								lexer->errorflag = 1;
+								return 0;
+							}
+						}
+					}
 					lexer->word = find_word(lexer->program, buf);
 					if(lexer->kind == TOK_TAG) {
 						create_worldobj(lexer->program, lexer->word);
@@ -147,16 +176,9 @@ static int next_token(struct lexer *lexer, int parsemode) {
 			at_start = (column == 1);
 			lexer->kind = ch;
 			return 1 + at_start;
-		} else if(ch == '/') {
+		} else if(ch == '/' && parsemode != PMODE_BODY) {
 			at_start = (column == 1);
-			if(parsemode == PMODE_BODY) {
-				buf[pos++] = '/';
-				buf[pos] = 0;
-				lexer->kind = TOK_BAREWORD;
-				lexer->word = find_word(lexer->program, buf);
-			} else {
-				lexer->kind = ch;
-			}
+			lexer->kind = ch;
 			return 1 + at_start;
 		} else if(ch == '*') {
 			at_start = (column == 1);
@@ -209,10 +231,44 @@ static int next_token(struct lexer *lexer, int parsemode) {
 					return 0;
 				}
 			}
+			if(strchr(STOPCHARS, ch)) {
+				buf[0] = ch;
+				buf[1] = 0;
+				lexer->kind = TOK_BAREWORD;
+				lexer->word = find_word(lexer->program, buf);
+				ch = lexer_getc(lexer);
+				if(ch != EOF) {
+					if(!strchr("\n\r\t ()[]{}~%*|", ch)) {
+						if(parsemode == PMODE_VALUE) {
+							report(LVL_ERR, line,
+								"Stop-character \"%c\" cannot appear inside a multi-character dictionary word.",
+								buf[0]);
+							lexer->errorflag = 1;
+							return 0;
+						}
+						if(!strchr(NO_SPACE_AFTER, buf[0])
+						&& !strchr(NO_SPACE_BEFORE, ch)) {
+							lexer->pending_nospace = 1;
+						}
+					}
+					lexer_ungetc(ch, lexer);
+				}
+				return 1 + at_start;
+			}
 			buf[pos++] = ch;
 			for(;;) {
 				ch = lexer_getc(lexer);
 				column++;
+				if(ch == EOF
+				|| strchr("\n\r\t ()[]{}~%*$@#", ch)
+				|| (parsemode == PMODE_VALUE && ch == '|')
+				|| (parsemode != PMODE_BODY && ch == '/')) {
+					if(ch != EOF) {
+						lexer_ungetc(ch, lexer);
+						column--;
+					}
+					break;
+				}
 				if(ch == '\\') {
 					ch = lexer_getc(lexer);
 					if(ch == '\n') {
@@ -235,50 +291,74 @@ static int next_token(struct lexer *lexer, int parsemode) {
 						lexer->errorflag = 1;
 						return 0;
 					}
-					buf[pos++] = ch;
-				} else if(ch == EOF || strchr("\n\r\t $#[|](){}@~*%/", ch)) {
-					if(ch != EOF) {
-						lexer_ungetc(ch, lexer);
-						column--;
-					}
-					buf[pos] = 0;
-					utf8_to_unicode(wbuf, MAXWORDLENGTH + 1, (uint8_t *) buf);
-					if(!wbuf[0]) {
-						report(LVL_ERR, line, "Syntax error.");
-						lexer->errorflag = 1;
-						return 0;
-					}
-					for(i = 0; i < pos; i++) {
-						if(buf[i] < '0' || buf[i] > '9') break;
-					}
-					if(i == pos && (pos == 1 || buf[0] != '0')) {
-						val = strtol(buf, 0, 10);
-						if(val < 0 || val > 0x3fff) {
-							if(parsemode != PMODE_BODY) {
-								report(LVL_ERR, line, "Integer out of range (%ld)", val);
-								lexer->errorflag = 1;
-								return 0;
-							}
-							lexer->kind = TOK_BAREWORD;
-							lexer->word = find_word(lexer->program, buf);
-						} else {
-							lexer->kind = TOK_INTEGER;
-							lexer->value = val;
+					if(strchr(STOPCHARS, ch)) {
+						if(parsemode == PMODE_VALUE) {
+							report(LVL_ERR, line,
+								"Stop-character \"%c\" cannot appear inside a multi-character dictionary word.",
+								ch);
+							lexer->errorflag = 1;
+							return 0;
 						}
-					} else {
-						lexer->kind = TOK_BAREWORD;
-						lexer->word = find_word(lexer->program, buf);
+						if(!strchr(NO_SPACE_BEFORE, ch)) {
+							lexer->pending_nospace = 1;
+						}
+						lexer_ungetc(ch, lexer);
+						lexer->ungetbackslash = 1;
+						column--;
+						break;
 					}
-					return 1 + at_start;
-				} else {
-					if(pos >= MAXWORDLENGTH) {
-						report(LVL_ERR, line, "Word too long.");
+				}
+				if(strchr(STOPCHARS, ch)) {
+					if(parsemode == PMODE_VALUE) {
+						report(LVL_ERR, line,
+							"Stop-character \"%c\" cannot appear inside a multi-character dictionary word.",
+							ch);
 						lexer->errorflag = 1;
 						return 0;
 					}
-					buf[pos++] = ch;
+					if(!strchr(NO_SPACE_BEFORE, ch)) {
+						lexer->pending_nospace = 1;
+					}
+					lexer_ungetc(ch, lexer);
+					column--;
+					break;
 				}
+				if(pos >= MAXWORDLENGTH) {
+					report(LVL_ERR, line, "Word too long.");
+					lexer->errorflag = 1;
+					return 0;
+				}
+				buf[pos++] = ch;
 			}
+			buf[pos] = 0;
+			utf8_to_unicode(wbuf, MAXWORDLENGTH + 1, (uint8_t *) buf);
+			if(!wbuf[0]) {
+				report(LVL_ERR, line, "Syntax error.");
+				lexer->errorflag = 1;
+				return 0;
+			}
+			for(i = 0; i < pos; i++) {
+				if(buf[i] < '0' || buf[i] > '9') break;
+			}
+			if(i == pos && (pos == 1 || buf[0] != '0')) {
+				val = strtol(buf, 0, 10);
+				if(val < 0 || val > 0x3fff) {
+					if(parsemode != PMODE_BODY) {
+						report(LVL_ERR, line, "Integer out of range (%ld)", val);
+						lexer->errorflag = 1;
+						return 0;
+					}
+					lexer->kind = TOK_BAREWORD;
+					lexer->word = find_word(lexer->program, buf);
+				} else {
+					lexer->kind = TOK_INTEGER;
+					lexer->value = val;
+				}
+			} else {
+				lexer->kind = TOK_BAREWORD;
+				lexer->word = find_word(lexer->program, buf);
+			}
+			return 1 + at_start;
 		}
 	}
 }
@@ -456,7 +536,7 @@ static struct astnode *parse_rule(struct lexer *lexer, struct arena *arena) {
 }
 
 static struct clause *parse_clause(int is_macro, struct lexer *lexer) {
-	struct astnode *an, **dest, **folddest;
+	struct astnode *an, *sub, **dest, **folddest;
 	struct astnode *nestednodes[MAXNESTEDEXPR];
 	int nnested = 0, nested_nonvar = 0;
 	struct clause *cl;
@@ -476,6 +556,18 @@ static struct clause *parse_clause(int is_macro, struct lexer *lexer) {
 		report(LVL_ERR, line, "Maximum number of arguments exceeded.");
 		lexer->errorflag = 1;
 		return 0;
+	}
+
+	if(predname->special != SP_INTERFACE) {
+		for(i = 0; i < nnested; i++) {
+			sub = nestednodes[i];
+			assert(sub->kind == AN_RULE || sub->kind == AN_NEG_RULE);
+			if(!sub->nchild) {
+				report(LVL_ERR, sub->line, "Nested rule must have at least one parameter.");
+				lexer->errorflag = 1;
+				return 0;
+			}
+		}
 	}
 
 	if(nested_nonvar
@@ -650,6 +742,10 @@ static struct astnode *parse_expr(int parsemode, struct lexer *lexer, struct are
 			return 0;
 		}
 		an->subkind = RULE_MULTI;
+		break;
+	case TOK_NOSPACE:
+		an = mkast(AN_RULE, 0, arena, line);
+		an->predicate = find_builtin(lexer->program, BI_NOSPACE);
 		break;
 	case '*':
 		if(!starword) {
@@ -889,22 +985,25 @@ static struct astnode *parse_expr(int parsemode, struct lexer *lexer, struct are
 				lexer->errorflag = 1;
 				return 0;
 			}
-		} else if(an->predicate->special == SP_OUTPUTBOX) {
+		} else if(an->predicate->special == SP_DIV || an->predicate->special == SP_SPAN) {
+			predname = an->predicate;
 			sub = an->children[0];
 			an = mkast(AN_OUTPUTBOX, 2, arena, line);
-			an->subkind = BOX_DIV;
+			an->subkind = (predname->special == SP_DIV)? BOX_DIV : BOX_SPAN;
 			an->children[0] = sub;
 			status = next_token(lexer, PMODE_BODY);
 			if(lexer->errorflag) return 0;
 			if(status != 1) {
-				report(LVL_ERR, line, "Expected expression after (div $).");
+				report(LVL_ERR, line, "Expected expression after %s.",
+					predname->printed_name);
 				lexer->errorflag = 1;
 				return 0;
 			}
 			an->children[1] = parse_expr(PMODE_BODY, lexer, arena);
 			if(!an->children[1]) return 0;
 			if(contains_just(an->children[1])) {
-				report(LVL_ERR, line, "(just) not allowed inside (div $).");
+				report(LVL_ERR, line, "(just) not allowed inside %s.",
+					predname->printed_name);
 				lexer->errorflag = 1;
 				return 0;
 			}
@@ -923,20 +1022,6 @@ static struct astnode *parse_expr(int parsemode, struct lexer *lexer, struct are
 				report(LVL_ERR, line, "(just) not allowed inside (link).");
 				lexer->errorflag = 1;
 				return 0;
-			}
-			if(an->children[0]->kind != AN_BAREWORD) {
-				sub = an->children[0];
-				if(sub->kind == AN_BLOCK && sub->children[0]) {
-					sub = sub->children[0];
-					while(sub && sub->kind == AN_BAREWORD) {
-						sub = sub->next_in_body;
-					}
-				}
-				if(sub) {
-					report(LVL_ERR, line, "(link) may only be followed by a block of words or a single word.");
-					lexer->errorflag = 1;
-					return 0;
-				}
 			}
 		} else if(an->predicate->special == SP_LINK) {
 			sub = an->children[0];
@@ -1076,7 +1161,7 @@ static struct astnode *parse_expr(int parsemode, struct lexer *lexer, struct are
 				cl->params[2]->word = find_word(lexer->program, "");
 				cl->body = deepcopy_astnode(body, cl->arena, 0);
 				add_clause(cl, predname->pred);
-				analyse_clause(lexer->program, cl);
+				analyse_clause(lexer->program, cl, 0);
 				assert(cl == predname->pred->clauses[id]);
 			} else {
 				cl = predname->pred->clauses[id];
@@ -1238,15 +1323,17 @@ static struct astnode *parse_expr_nested(
 			return 0;
 		}
 		if(negated) an->kind = AN_NEG_RULE;
-		if(!an->nchild) {
-			report(LVL_ERR, line, "Nested rule must have at least one parameter.");
-			lexer->errorflag = 1;
-			return 0;
-		}
 		if(*nnested >= MAXNESTEDEXPR) {
 			report(LVL_ERR, an->line, "Too many nested expressions in rule head.");
 			lexer->errorflag = 1;
 			return 0;
+		}
+		if(!an->nchild) {
+			// Nested rule has no parameter. Allowed for (interface $).
+			nested_rules[(*nnested)++] = an;
+			an = mkast(AN_VARIABLE, 0, arena, line);
+			an->word = find_word(lexer->program, "");
+			return an;
 		}
 		if(an->children[0]->kind == AN_VARIABLE) {
 			var = an->children[0];

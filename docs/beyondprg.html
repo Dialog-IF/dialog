@@ -9,7 +9,7 @@
 <body>
 	<div class="chapter">
 	<h1>Chapter 9: Beyond the program</h1>
-	<div class="navlinks">(<a href="#metadata">Story metadata</a>&nbsp;&bull; <a href="#runtimeerror">Fatal runtime errors</a>&nbsp;&bull; <a href="#performance">Some notes on performance</a>&nbsp;&bull; <a href="#future">Limitations and the future of Dialog</a>)</div>
+	<div class="navlinks">(<a href="#metadata">Story metadata</a>&nbsp;&bull; <a href="#interface">Interfaces</a>&nbsp;&bull; <a href="#runtimeerror">Runtime errors</a>&nbsp;&bull; <a href="#performance">Some notes on performance</a>&nbsp;&bull; <a href="#future">Limitations and the future of Dialog</a>)</div>
 <a id="metadata"></a><h2>Story metadata</h2>
 <p>When an interactive story is released into the wild, the community takes over,
 cataloguing it, preserving it for posterity, and making it available via
@@ -97,7 +97,84 @@ part of the story banner), by querying the following built-in predicates:
 </p>
 <p>The serial number is the compilation date in <span class="tt">YYMMDD</span> format.
 </p>
-<a id="runtimeerror"></a><h2>Fatal runtime errors</h2>
+<a id="interface"></a><h2>Interfaces</h2>
+<p>Predicates are versatile building blocks, with many potential usage patterns.
+Their parameters can be inputs, outputs, or both, and they can be bound,
+unbound, or partially bound (i.e. lists with unbound variables inside).
+</p>
+<p>Furthermore, the behaviour of a predicate can depend on multiple rule
+definitions, and some of the rules that deal with special cases might rely on
+pattern matching in the rule heads. Thus, even with access to source code, it
+may not be obvious how a predicate is supposed to be used. To alleviate this
+problem, Dialog lets you document the intended use of a predicate with an
+<i>interface declaration</i>:
+</p>
+<textarea class="copyarea" id="copy1" readonly>
+(interface (<i>predicate name</i>))
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(interface (<i>predicate name</i>))</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy1').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>In an interface declaration, all parameters should be variables with sensible,
+self-explaining names. Furthermore, the first character of the variable name
+has special significance:
+</p>
+<p class="codeline">&lt;</p>
+<p class="noteline">This parameter is supposed to be fully bound <b>before</b> querying the predicate.
+</p>
+<p class="codeline">&gt;</p>
+<p class="noteline">This parameter is supposed to be fully bound <b>after</b> the query succeeds.
+</p>
+<p>Here is an example:
+</p>
+<textarea class="copyarea" id="copy2" readonly>
+(interface (understand $&lt;Words as $&gt;Action))
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(interface (understand $&lt;Words as $&gt;Action))</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy2').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>From the above declaration, we learn that the predicate is supposed to be
+queried with a bound value—some words, presumably in a list—as the first parameter. When it
+succeeds, it will have unified the second parameter with a bound value, representing an
+action.
+</p>
+<p>Note that <span class="code">&lt;</span> and <span class="code">&gt;</span> have no special significance
+in variable names in ordinary rule definitions, only in interface declarations.
+</p>
+<p>Being bound before or after a query is subtly different from being an input
+parameter or an output parameter. For instance, the library provides a
+predicated called <span class="code">(length of $ into&nbsp;$)</span> that counts the elements in
+a list. The list is allowed to contain unbound values, so the first parameter
+of the interface declaration cannot begin with a <span class="code">&lt;</span>, even though
+it is an input. The actual declaration is:
+</p>
+<textarea class="copyarea" id="copy3" readonly>
+(interface (length of $List into $&gt;Number))
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(interface (length of $List into $&gt;Number))</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy3').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Interface declarations are machine-readable documentation. They do not affect
+the generated story file in any way. However, the compiler will check the
+program for interface violations—unbound values the could end up in the wrong
+place at the wrong time—and warn you about them at compile-time.
+</p>
+<a id="runtimeerror"></a><h2>Runtime errors</h2>
 <p>Attempts to violate the constraints imposed on <a href="dynamic.html">dynamic predicates</a>
 will result in fatal runtime errors.
 </p>
@@ -139,6 +216,8 @@ The parameter is a small integer, representing the nature of the error:
 </p>
 <p>6: Long-term heap space exhausted.
 </p>
+<p>7: Invalid output state.
+</p>
 <p>After a fatal error, the game world could be in an inconsistent state, and
 there's not much one can do except print an error message and quit. Or is
 there? The standard library attempts to bring the game back to a known state
@@ -169,7 +248,7 @@ $Target)</span> from the standard library, which is always queried with a known
 said to be in tail position. Making a query in tail position is cheaper than
 making it elsewhere. Thus, the following implementation:
 </p>
-<textarea class="copyarea" id="copy1" readonly>
+<textarea class="copyarea" id="copy4" readonly>
 (say it with $Obj)	My hovercraft is full of (name $Obj).
 (stash $Obj)		(say it with $Obj) (now) ($Obj is #in #hovercraft)
 </textarea>
@@ -180,11 +259,11 @@ making it elsewhere. Thus, the following implementation:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy1').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy4').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>is not as efficient as this one:
 </p>
-<textarea class="copyarea" id="copy2" readonly>
+<textarea class="copyarea" id="copy5" readonly>
 (say it with $Obj)	My hovercraft is full of (name $Obj).
 (stash $Obj)		(now) ($Obj is #in #hovercraft) (say it with $Obj)
 </textarea>
@@ -195,7 +274,7 @@ making it elsewhere. Thus, the following implementation:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy2').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy5').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>In the first version, the code for <span class="code">(stash&nbsp;$)</span> needs to create an
 activation record, and set things up so that execution can resume at the
@@ -221,7 +300,7 @@ from the chapter on <a href="dynamic.html">dynamic predicates</a>, if the troll
 and the player are the only characters that wield weapons, it would be much
 better to use a pair of global variables:
 </p>
-<textarea class="copyarea" id="copy3" readonly>
+<textarea class="copyarea" id="copy6" readonly>
 (global variable (troll wields $))
 (global variable (player wields $))
 </textarea>
@@ -232,12 +311,12 @@ better to use a pair of global variables:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy3').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy6').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>If desired, wrapper predicates could be defined for querying or updating those
 variables as though they were per-object variables:
 </p>
-<textarea class="copyarea" id="copy4" readonly>
+<textarea class="copyarea" id="copy7" readonly>
 (#troll wields $Weapon)
 	(troll wields $Weapon)
 
@@ -266,14 +345,14 @@ variables as though they were per-object variables:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy4').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy7').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>To conserve heap memory, use backtracking whenever possible. Identify places in
 the code where you can implement loops with backtracking instead of recursion.
 For instance, to iterate over a list and print something for each element, use
 exhaust:
 </p>
-<textarea class="copyarea" id="copy5" readonly>
+<textarea class="copyarea" id="copy8" readonly>
 	(exhaust) {
 		*($X is one of $List)
 		(report on $X)
@@ -288,7 +367,7 @@ exhaust:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy5').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy8').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Tail-call optimization is backend-dependent. This means that infinite loops
 must be implemented using <span class="code">(repeat forever)</span>. If they are
@@ -336,7 +415,7 @@ the debugger have full support.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="quickref.html">Appendix: Quick reference</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 20, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 21, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

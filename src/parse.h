@@ -6,7 +6,8 @@ enum {
 	TOK_TAG,
 	TOK_VARIABLE,
 	TOK_INTEGER,
-	TOK_STARPAREN
+	TOK_STARPAREN,
+	TOK_NOSPACE
 };
 
 enum {
@@ -36,7 +37,8 @@ enum {
 	SP_MATCHING_ALL_OF,
 
 	SP_STOPPABLE,
-	SP_OUTPUTBOX,
+	SP_DIV,
+	SP_SPAN,
 	SP_STATUSBAR,
 	SP_LINK_SELF,
 	SP_LINK,
@@ -47,13 +49,16 @@ enum {
 
 	SP_GLOBAL_VAR,
 	SP_GENERATE,
+	SP_INTERFACE,
 };
 
 struct lexer {
 	struct program		*program;
 	FILE			*file;
 	const uint8_t		*string;
+	uint8_t			ungetbackslash;
 	uint8_t			ungetcbuf;
+	uint8_t			pending_nospace;
 	uint8_t			kind;	// TOK_*
 	struct word		*word;
 	int			value;

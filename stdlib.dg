@@ -1,6 +1,6 @@
 
 (library version)
-	Library version 0.34.
+	Library version 0.35.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -48,6 +48,84 @@
 	margin-top: .3em;
 	font-family: Geneva, sans-serif;
 
+(style class @bold)
+	font-weight: bold;
+
+(style class @italic)
+	font-style: italic;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Interface declarations for predicates typically defined in story code
+
+(interface (name $<Obj))
+(interface (descr $<Obj))
+(interface (appearance $<Obj))
+(interface (appearance $<Obj $<Rel $<Loc))
+(interface (feel $<Obj))
+(interface (room header $<Obj))
+(interface (look $<Obj))
+
+(interface (dict $<Obj))
+(interface (plural dict $<Obj))
+(interface (heads $<Obj))
+
+(interface (from $<Room go $>Dir to $>Obj))
+(interface (from $<Room through $>Door to $>Obj))
+
+(interface (add $>Obj to scope))
+(interface ($<Room attracts $>Obj))
+
+(interface (maximum score $>Number))
+
+(interface (clarify location of $<Obj))
+(interface ($>Obj provides light))
+(interface ($<Key unlocks $<Door))
+
+(interface ($<Door blocks passage))
+(interface ($<Door blocks light))
+
+(interface (fungible $<Obj1 $<Obj2))
+
+(interface (on every tick in $<Room))
+
+(interface (understand $<Words as $>Action))
+(interface (understand $<Words))
+
+(interface (describe action $<Action))
+(interface (unlikely $<Action))
+(interface (very unlikely $<Action))
+
+(interface (before $<Action))
+(interface (refuse $<Action))
+(interface (instead of $<Action))
+(interface (prevent $<Action))
+(interface (perform $<Action))
+(interface (after $<Action))
+
+(interface (narrate taking $<Obj))
+(interface (narrate removing $<Obj))
+(interface (narrate wearing $<Obj))
+(interface (narrate putting $<Obj $<Rel $<Dest))
+(interface (narrate dropping $<Obj))
+(interface (narrate opening $<Obj))
+(interface (narrate closing $<Obj))
+(interface (narrate unlocking $<Obj with $<Key))
+(interface (narrate locking $<Obj with $<Key))
+(interface (narrate switching on $<Obj))
+(interface (narrate switching off $<Obj))
+(interface (narrate eating $<Obj))
+(interface (narrate climbing $<Obj))
+(interface (narrate entering $<Obj))
+(interface (narrate leaving $<Obj))
+(interface (narrate leaving $<Room $<Dir))
+(interface (narrate leaving $<Room $<Dir with $<Obj))
+(interface (narrate leaving $<Room $<Dir by $<Vehicle))
+(interface (narrate failing to look $<Dir))
+
+(interface (describe topic $<Topic))
+
+(interface (default action $<Obj $>Action))
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Relations
 
@@ -76,13 +154,19 @@
 (dict #heldby)		(just) (fail)
 (dict #wornby)		(just) (fail)
 
+(interface (present-name $<Rel))
+
 (present-name #in)	inside
 (present-name #on)	on top of
 (present-name $Rel)	(name $Rel)
 
+(interface (towards-name $<Rel))
+
 (towards-name #in)	into
 (towards-name #on)	onto
 (towards-name $Rel)	(name $Rel)
+
+(interface (reverse-name $<Rel))
 
 (reverse-name #in)	out of
 (reverse-name #on)	off
@@ -96,6 +180,11 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Directions
+
+(interface (opposite of $<Dir1 is $>Dir2))
+
+(interface (present-adverb $<Dir))
+(interface (from-adverb $<Dir))
 
 #north
 (direction *)
@@ -221,6 +310,8 @@
 
 %% Convenience predicate:
 
+(interface (reveal $<Obj))
+
 (reveal $Obj)
 	(now) ($Obj is revealed)
 
@@ -276,6 +367,8 @@
 (room header $Room)	(Name $Room)
 (look (room $R))	You are here.
 
+(interface (from $<Room go $>Dir to room $>Obj))
+
 %% Given a room and a direction, what room (if any) is reachable that way?
 %% Given a room and a target room, what direction (if any) leads there?
 
@@ -297,6 +390,8 @@
 		(from $Here through $Door to $Room)
 		(from $Here go $Dir to $Door)
 	(endif)
+
+(interface (from $<Room go $<Dir to object $>Obj))
 
 %% Given a room and a direction, what object, door and/or room is visible
 %% that way? (Usually multi-queried)
@@ -349,12 +444,16 @@
 (recompute visibility)
 	%% E.g. if there is no current player.
 
+(interface (light reaches ceiling $<Ceil))
+
 (light reaches ceiling (room $Ceil))
 	~(inherently dark $Ceil)
 
 (light reaches ceiling $Ceil)
 	*($Obj provides light)
 	(visibility ceiling of $Obj is $Ceil)
+
+(interface (visibility ceiling of $<Obj is $>Ceil))
 
 (visibility ceiling of $Obj is $Ceil)
 	(if) ($Obj has parent $Parent) (then)
@@ -370,6 +469,8 @@
 	(else)
 		($Ceil = $Obj)
 	(endif)
+
+(interface (player can see $<Obj))
 
 (player can see $Obj)
 	(current visibility ceiling $Ceil)
@@ -392,6 +493,8 @@
 		}
 	(endif)
 
+(interface (reachability ceiling of $<Obj is $>Ceil))
+
 (reachability ceiling of $O is $Ceil)
 	(if) ($O is $Rel $Parent) (then)
 		(if) ($Rel = #in) ($Parent is closed) (then)
@@ -403,17 +506,26 @@
 		($O = $Ceil)
 	(endif)
 
+(interface (trace reachability $<Obj to $<Player or $<Ceil))
+
 (trace reachability $Obj to $Obj or $)
 (trace reachability $Obj to $ or $Obj)
 (trace reachability $Obj to $Ceil1 or $Ceil2)
 	($Obj is $Rel $Parent)
-	~{ ($Rel = #in) ($Parent is closed) }
-	(trace reachability $Parent to $Ceil1 or $Ceil2)
+	(if) ($Rel = #in) ($Parent is closed) (then)
+		($Parent = $Ceil2)
+	(else)
+		(trace reachability $Parent to $Ceil1 or $Ceil2)
+	(endif)
+
+(interface ($<Obj is reachable by $<Actor))
 
 ($Obj is reachable by $Actor)
 	~(out of reach $Obj)
 	(reachability ceiling of $Actor is $Ceil)
 	(reachability ceiling of $Obj is $Ceil)
+
+(interface ($<Obj is reachable by player))
 
 ($Obj is reachable by player)
 	~(out of reach $Obj)
@@ -434,6 +546,8 @@
 (rebuild scope)
 	(recompute visibility)
 	(forget pronouns out of scope)
+
+(interface ($>Obj is in scope))
 
 ($Obj is in scope)
 	*(add $Obj to scope)
@@ -461,6 +575,8 @@
 			*($Obj is visible up to $Player)
 		}
 	(endif)
+
+(interface ($>Obj is visible up to $<Ceil))
 
 ($Obj is visible up to $Obj)
 
@@ -502,19 +618,27 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Select player, enter a room or other location, move floating objects
 
+(interface (select player $<Player))
+
 (select player $Player)
 	(clear all pronouns)
 	(now) (current player $Player)
 	(update environment around player)
+
+(interface (move player to $<Rel $<Loc))
 
 (move player to $Rel $Loc)
 	(current player $Player)
 	(now) ($Player is $Rel $Loc)
 	(update environment around player)
 
+(interface (enter $<Room))
+
 (enter $Room)
 	(move player to #in $Room)
 	(narrate entering $Room)
+
+(interface (enter $<Room by $<Vehicle))
 
 (enter $Room by $Vehicle)
 	(now) ($Vehicle is #in $Room)
@@ -542,8 +666,12 @@
 (narrate entering $Obj)
 	You get into (the $Obj).
 
+(interface (prevent entering $<Obj))
+
 (prevent entering $Obj)
 	(when $Obj won't accept actor #in)
+
+(interface (narrate failing to leave $<Obj $<Dir))
 
 (narrate failing to leave $ $)
 	There doesn't appear to be an exit in that direction.
@@ -3002,6 +3130,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Commands
 
+(interface (command $<Action))
+
 @(understand command $Action)
 	(understand $Action)
 	(command $Action)
@@ -3267,6 +3397,8 @@
 (actions off)
 	(now) ~(tracing actions)
 
+(interface (try $<Action))
+
 (try $Action)
 	(if) (tracing actions) (then)
 		(line) ACTION: $Action \( (describe action $Action) \) (line)
@@ -3278,6 +3410,8 @@
 
 (try $)
 	%% Try always succeeds; this prevents accidental double-triggers.
+
+(interface (first try $<Action))
 
 (first try $Action)
 	(line) \( first attempting to (describe action $Action) \) (line)
@@ -3307,6 +3441,8 @@
 (perform $)
 
 (after $)	(fail)
+
+(interface (try-complex $<Action))
 
 (try-complex [$Verb | $ComplexObjects])
 	(if) ([] is one of $ComplexObjects) (then)
@@ -3397,6 +3533,8 @@
 
 %% Only report the unrecognized topic (@?) as a last resort.
 
+(interface (very very unlikely $<Action))
+
 (very very unlikely [? | $])
 (very very unlikely [$ | $More])
 	(very very unlikely $More)
@@ -3449,6 +3587,9 @@
 
 %% No checks are carried out -- only attempt an NPC action if it makes sense!
 
+(interface (let $<NPC climb $<Obj))
+(interface (narrate $<NPC climbing $<Obj))
+
 (let $NPC climb $Obj)
 	(if) (player can see $Obj) (then)
 		(narrate $NPC climbing $Obj)
@@ -3458,6 +3599,9 @@
 (narrate $NPC climbing $Obj)
 	(The $NPC) get(s $NPC) onto (the $Obj).
 
+(interface (let $<NPC close $<Obj))
+(interface (narrate $<NPC closing $<Obj))
+
 (let $NPC close $Obj)
 	(if) (player can see $Obj) (then)
 		(narrate $NPC closing $Obj)
@@ -3466,6 +3610,9 @@
 
 (narrate $NPC closing $Obj)
 	(The $NPC) close(s $NPC) (the $Obj).
+
+(interface (let $<NPC drop $<Obj))
+(interface (narrate $<NPC dropping $<Obj))
 
 (let $NPC drop $Obj)
 	(if) (player can see $NPC) (then)
@@ -3477,6 +3624,9 @@
 (narrate $NPC dropping $Obj)
 	(The $NPC) drop(s $NPC) (the $Obj).
 
+(interface (let $<NPC enter $<Obj))
+(interface (narrate $<NPC entering $<Obj))
+
 (let $NPC enter $Obj)
 	(if) (player can see $Obj) (then)
 		(narrate $NPC entering $Obj)
@@ -3485,6 +3635,10 @@
 
 (narrate $NPC entering $Obj)
 	(The $NPC) get(s $NPC) into (the $Obj).
+
+(interface (let $<NPC go $<Dir))
+(interface (narrate $<NPC leaving $<OldRoom $<Dir to $<NewRoom))
+(interface (narrate $<NPC entering $<NewRoom from $<OldRoom))
 
 (let $NPC go $Dir)
 	($NPC is in room $OldRoom)
@@ -3497,7 +3651,7 @@
 		(narrate $NPC entering $NewRoom from $OldRoom)
 	(endif)
 
-(narrate $Obj leaving $OldRoom $Dir to $NewRoom)
+(narrate $Obj leaving $ $Dir to $NewRoom)
 	(The $Obj) disappear(s $Obj) (name $Dir) 
 	(if) ($NewRoom is visited) (then) to (the $NewRoom) (endif).
 
@@ -3512,6 +3666,9 @@
 		(The $Obj) enter(s $Obj) from (the $OldRoom).
 	(endif)
 
+(interface (let $<NPC leave $<Obj))
+(interface (narrate $<NPC leaving $<Obj))
+
 (let $NPC leave $Obj)
 	(if) (player can see $Obj) (then)
 		(narrate $NPC leaving $Obj)
@@ -3522,6 +3679,9 @@
 (narrate $NPC leaving $Obj)
 	(The $NPC) leave(s $NPC) (the $Obj).
 
+(interface (let $<NPC open $<Obj))
+(interface (narrate $<NPC opening $<Obj))
+
 (let $NPC open $Obj)
 	(if) (player can see $Obj) (then)
 		(narrate $NPC opening $Obj)
@@ -3531,6 +3691,9 @@
 (narrate $NPC opening $Obj)
 	(The $NPC) open(s $NPC) (the $Obj).
 
+(interface (let $<NPC put $<Obj $<Rel $<Dest))
+(interface (narrate $<NPC putting $<Obj $<Rel $<Dest))
+
 (let $NPC put $Obj $Rel $Dest)
 	(if) (player can see $NPC) (then)
 		(narrate $NPC putting $Obj $Rel $Dest)
@@ -3539,6 +3702,9 @@
 
 (narrate $NPC putting $Obj $Rel $Dest)
 	(The $NPC) put(s $NPC) (the $Obj) (name $Rel) (the $Dest).
+
+(interface (let $<NPC remove $<Obj))
+(interface (narrate $<NPC removing $<Obj))
 
 (let $NPC remove $Obj)
 	($Obj is #wornby $NPC)
@@ -3550,6 +3716,9 @@
 (narrate $NPC removing $Obj)
 	(The $NPC) take(s $NPC) off (the $Obj).
 
+(interface (let $<NPC take $<Obj))
+(interface (narrate $<NPC taking $<Obj))
+
 (let $NPC take $Obj)
 	(if) (player can see $NPC) (then)
 		(narrate $NPC taking $Obj)
@@ -3558,6 +3727,9 @@
 
 (narrate $NPC taking $Obj)
 	(The $NPC) take(s $NPC) (the $Obj).
+
+(interface (let $<NPC wear $<Obj))
+(interface (narrate $<NPC wearing $<Obj))
 
 (let $NPC wear $Obj)
 	(if) (player can see $NPC) (then)
@@ -3570,6 +3742,8 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Numbers
+
+(interface (parse numeral $<Word into $>Number))
 
 (parse numeral @zero into 0)
 (parse numeral @one into 1)
@@ -3593,8 +3767,12 @@
 (parse numeral @nineteen into 19)
 (parse numeral $N into $N) (number $N)
 
+(interface (understand $<Words as number $>Number))
+
 (understand [$Word] as number $N)
 	(parse numeral $Word into $N)
+
+(interface (spell out $<Number))
 
 (spell out 0)		zero
 (spell out 1)		one
@@ -3620,6 +3798,14 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Printing the names of objects and object lists
+
+(interface (a $<Obj))
+(interface (the $<Obj))
+(interface (the full $<Obj))
+(interface (A $<Obj))
+(interface (Name $<Obj))
+(interface (The $<Obj))
+(interface (The full $<Obj))
 
 (a [])			nothing
 (a (list $List))	(a-listing $List)
@@ -3669,6 +3855,8 @@
 (a full $Obj)
 	(a $Obj)
 	(add location information for $Obj)
+
+(interface (add location information for $<Obj))
 
 (add location information for $Obj)
 	(if) (clarify location of $Obj) ~(direction $Obj) ~(relation $Obj) (then)
@@ -3799,8 +3987,12 @@
 (The $Obj is)		(uppercase) (the $Obj is)
 (That $Obj)		(uppercase) (that $Obj)
 
+(interface ($<Obj))
+
 ($Obj)
-	($Obj {(name $Obj)})
+	(link) (name $Obj)
+
+(interface ($<Obj $<Text))
 
 ($Obj $Text)
 	(if) (interpreter supports links) (then)
@@ -3813,21 +4005,24 @@
 	(endif)
 
 (maybe link $Obj)
-	(maybe link $Obj {(name $_)})
+	(if) (library links enabled) (then)
+		(link) (name $Obj)
+	(else)
+		(name $Obj)
+	(endif)
 
 (maybe link $Obj $Closure)
 	(if) (library links enabled) (then)
 		(if) (current player $Obj) (then)
-			($Words = [myself])
+			(link [myself]) (query $Closure $Obj)
 		(else)
-			(collect words)
-				(query $Closure $Obj)
-			(into $Words)
+			(link) (query $Closure $Obj)
 		(endif)
-		(link $Words) (query $Closure $Obj)
 	(else)
 		(query $Closure $Obj)
 	(endif)
+
+(interface (open or closed $<Obj))
 
 (open or closed $Obj)
 	(if) ($Obj is open) (then)
@@ -3864,7 +4059,7 @@
 	(if) (fungibility enabled) ($NInc > 1) (then)
 		(spell out $NInc)
 		(if) (library links enabled) (interpreter supports links) (then)
-			($Head {(plural name $Head)})
+			(link) (plural name $Head)
 		(else)
 			(plural name $Head)
 		(endif)
@@ -3926,6 +4121,8 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Setting the pronouns from an object
+
+(interface (notice $<Obj))
 
 (notice $Obj)
 	(if) (object $Obj) (then)
@@ -4080,6 +4277,8 @@
 			(notice $Object)
 		}
 	(endif)
+
+(interface (list objects $<Rel $<Loc))
 
 (list objects $Rel $Loc)
 	(collect $Obj)
@@ -4324,13 +4523,13 @@
 	(current player $Player)
 	(if) (player can see) (then)
 		(current room $Room)
-		(bold) (room header $Room) (unstyle)
+		(span @bold) (room header $Room)
 		($Player is $Rel $Loc)
 		(if) ~{ ($Rel = #in) ($Loc = $Room) } (then)
 			\( (name $Rel) (the $Loc) \)
 		(endif)
 	(else)
-		(bold) (darkness headline) (unstyle)
+		(span @bold) (darkness headline)
 	(endif)
 
 (darkness headline)
@@ -4347,10 +4546,14 @@
 (score notifications are on)
 	(scoring enabled)
 
+(interface (increase score by $<Delta))
+
 (increase score by $Delta)
 	(current score $Old)
 	($Old plus $Delta into $New)
 	(now) (current score $New)
+
+(interface (decrease score by $<Delta))
 
 (decrease score by $Delta)
 	(current score $Old)
@@ -4439,10 +4642,12 @@
 	(endif)
 	*(repeat forever) (game over menu) (fail)
 
+(interface (game over $<Closure))
+
 (game over $Message)
 	(par)
 	(space 5)
-	(bold) \*\*\* (query $Message) \*\*\* (unstyle)
+	(span @bold) { \*\*\* (query $Message) \*\*\* }
 	(game over)
 
 (game over status bar)
@@ -4457,7 +4662,7 @@
 	(if) (interpreter supports undo) (then)
 		(line) (space 5)
 		(if) (library links enabled) (then)
-			(link [undo]) UNDO
+			(link) UNDO
 		(else)
 			UNDO
 		(endif)
@@ -4465,7 +4670,7 @@
 	(endif)
 	(line) (space 5)
 	(if) (library links enabled) (then)
-		(link [restore]) RESTORE a saved position,
+		(link) RESTORE a saved position,
 	(else)
 		RESTORE a saved position,
 	(endif)
@@ -4476,7 +4681,7 @@
 	}
 	(if) (interpreter supports quit) (then)
 		(if) (library links enabled) (then)
-			(link [quit]) QUIT
+			(link) QUIT
 		(else)
 			QUIT
 		(endif)
@@ -4485,7 +4690,7 @@
 	(endif)
 	or
 	(if) (library links enabled) (then)
-		(link [restart]) RESTART
+		(link) RESTART
 	(else)
 		RESTART
 	(endif)
@@ -4498,11 +4703,13 @@
 	(amusing enabled)
 	see a list of
 	(if) (library links enabled) (then)
-		(link [amusing]) AMUSING
+		(link) AMUSING
 	(else)
 		AMUSING
 	(endif)
 	things to do,
+
+(interface (parse game over $<Words))
 
 (parse game over [restart])
 	(restart)
@@ -4543,6 +4750,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Parser: Rewrite
 
+(interface (rewrite $<WordsIn into $>WordsOut))
+
 %% Fallback rewrite rule does nothing.
 
 (rewrite $A into $A)
@@ -4552,6 +4761,8 @@
 
 %% Directions are treated separately from other objects for performance
 %% reasons. They are not in scope.
+
+(interface (understand $<Words as direction $>DirList))
 
 (understand $Words as direction $Output)
 	(parse direction list $Words $ObjList)
@@ -4593,6 +4804,23 @@
 %% No output or other side effects are produced by the following rules.
 %% Policy/ExcludeList are ignored when there's just one matching object.
 %% Ambiguous expressions result in backtracking.
+
+(interface (understand $<Words as non-all object $>ObjList))
+(interface (understand $<Words as single object $>Obj))
+(interface (understand $<Words as object $>ObjList preferably $<Closure))
+(interface (understand $<Words as single object $>Obj preferably $<Closure))
+(interface (understand $<Words as object $>ObjList preferably child of $<Parent))
+(interface (understand $<Words as object $>ObjList preferably takable))
+(interface (understand $<Words as object $>ObjList preferably held))
+(interface (understand $<Words as single object $>Obj preferably held))
+(interface (understand $<Words as object $>ObjList preferably held excluding $<ExcludeObj))
+(interface (understand $<Words as single object $>Obj preferably animate))
+(interface (understand $<Words as object $>ObjList preferably worn))
+(interface (understand $<Words as single object $>Obj preferably supporter))
+(interface (understand $<Words as single object $>Obj preferably container))
+(interface (understand $<Words as any object $>Obj))
+(interface (understand $<Words as any object $>Obj preferably animate))
+(interface (understand $<Words as any object $>Obj preferably $<Closure))
 
 (understand $Words as non-all object $Output)
 	*(parse $Words as object $Output {} [] 0)
@@ -4650,15 +4878,21 @@
 (understand $Words as any object $Output preferably $Closure)
 	*(parse $Words as any object $Output $Closure [])
 
+(interface (takable $<Obj))
+
 (takable (item $Obj))
 	($Obj has relation $Rel)
 	~($Rel is one of [#partof #heldby #wornby])
+
+(interface (verify object policy $Policy $<Obj))
 
 (verify object policy (object $Policy) $Obj)
 	($Obj has parent $Policy)
 
 (verify object policy (nonempty $Policy) $Obj)
 	(query $Policy $Obj)
+
+(interface (parse $<Words as object $>ObjList $Policy $<FailObj $<AllAllowed))
 
 (parse $Words as object $Output $Policy $ $AllAllowed)
 	*(split $Words by [but except] into $Left and $Right)
@@ -4673,6 +4907,8 @@
 (parse $ as object $Someone $ $Someone $)
 	(allowing parse errors)
 
+(interface (parse $<Words as single object $>Obj $Policy $<FailObj))
+
 (parse $Words as single object $Output $Policy $Someone)
 	*(parse $Words as object $ObjList $Policy $Someone 0)
 	(if) ($ObjList = [+ | $]) (then)
@@ -4682,26 +4918,34 @@
 		($Output = $ObjList)
 	(endif)
 
-(parse $Words as any object $Obj $Policy $Someone)
+(interface (parse $<Words as any object $>Obj $Policy $<FailObj))
+
+(parse $Words as any object $Output $Policy $)
 	(filter $Words into $Filtered)
 	(nonempty $Filtered)
-	(determine object $Obj)
-		*(object $Obj)
-		~(direction $Obj)
-		~(relation $Obj)
-		~($Obj is in scope) %% Prevent double matches due to next branch.
-		~($Obj is hidden)
-		($Obj is in room $Room)
-		($Room is visited)
-	(from words)
-		*(dict $Obj)
-	(matching all of $Filtered)
+	(collect $Obj)
+		(determine object $Obj)
+			*(object $Obj)
+			~(direction $Obj)
+			~(relation $Obj)
+			~($Obj is in scope) %% Prevent double matches due to next branch.
+			~($Obj is hidden)
+			($Obj is in room $Room)
+			($Room is visited)
+		(from words)
+			*(dict $Obj)
+		(matching all of $Filtered)
+	(into $Candidates)
+	(apply policy to $Candidates $Policy $ObjList)
+	*($Output is one of $ObjList)
 
 (parse $Words as any object $Output $Policy $Someone)
 	%% The purpose of this branch is to support pronouns, as well
 	%% as not-here objects that are in scope.
-	*(understand $Words as single object $Output)
+	*(parse $Words as single object $Output $Policy $Someone)
 	~(room $Output)
+
+(interface (mark multi-object $<ObjList into $>ComplexObj))
 
 (mark multi-object [$Single] into $Single)
 	~(word $Single)
@@ -4736,6 +4980,8 @@
 (parse negative noun $Words from $BaseList into $Result)
 	*(parse object name $Words as $NegList 0 $BaseList [])
 	(remove from $BaseList matching $NegList into $Result)
+
+(interface (parse basic noun $<Words as $>ObjList $Policy $<AllAllowed))
 
 (parse basic noun [the | $Words] as $ObjList $Policy $AllAllowed)
 	(just)
@@ -4816,6 +5062,8 @@
 		(nonempty $Result)
 	(endif)
 
+(interface (parse object name $<Words as $>ObjList $<AllFlag $Policy))
+
 (parse object name $Words as $Result $All $Policy)
 	(filter $Words into $Filtered)
 	(nonempty $Filtered)
@@ -4879,6 +5127,8 @@
 (words $ sufficiently specify $)
 	~(head noun is required)
 
+(interface (words $<Words sufficiently specify $<Obj))
+
 (words $Words sufficiently specify $Obj)
 	(collect words)
 		(heads $Obj)
@@ -4887,6 +5137,8 @@
 		*($H is one of $Heads)
 		($H is one of $Words)
 	(endif)
+
+(interface (filter $<WordsIn into $>WordsOut))
 
 (filter [] into [])
 	(just)
@@ -4897,6 +5149,8 @@
 
 (filter [$Other | $MoreIn] into [$Other | $MoreOut])
 	(filter $MoreIn into $MoreOut)
+
+(interface (apply policy to $<ObjsIn $Policy $>ObjsOut))
 
 (apply policy to $Input $Policy $Output)
 	(collect $Obj)
@@ -4929,6 +5183,8 @@
 (proper topic $)
 	(fail)
 
+(interface (understand $<Words as topic $>Topic))
+
 (understand $Words as topic $Obj)
 	(filter $Words into $Filtered)
 	(determine object $Obj)
@@ -4946,6 +5202,8 @@
 
 (understand $ as topic @?)
 
+(interface (topic keyword $<Word implies $>Topic))
+
 (topic keyword $Keyword implies $Keyword)
 	(topic keyword $Keyword)
 
@@ -4958,6 +5216,8 @@
 
 (global variable (current actor $))
 
+(interface (parse commandline $<Words))
+
 (parse commandline [])
 	Come again?
 
@@ -4969,6 +5229,8 @@
 	(rebuild scope)
 	(parse action sequence $Words)
 
+(interface (parse action sequence $<Words))
+
 (parse action sequence $Words)
 	(if) (split $Words by [. ; then] into $Left and $Right) (then)
 		(parse action $Left)
@@ -4977,6 +5239,8 @@
 	(else)
 		(parse action $Words)
 	(endif)
+
+(interface (parse action $<Words))
 
 (parse action [])
 
@@ -5008,7 +5272,7 @@
 		(current player $Player)
 		(now) (current actor $Player)
 
-		%% Handle AGAIN and rewriting:
+		%% Handle AGAIN, OOPS, and rewriting:
 
 		(if)
 			($Words = [$W])
@@ -5016,6 +5280,17 @@
 			(last command was $LastCmd)
 		(then)
 			(rewrite $LastCmd into $ActualWords)
+		(elseif) ($Words = [oops $GoodWord]) (then)
+			(if)
+				(last command was $LastCmd)
+				(correct $LastCmd with $GoodWord into $GoodCmd)
+			(then)
+				(now) (last command was $GoodCmd)
+				(rewrite $GoodCmd into $ActualWords)
+			(else)
+				\( Sorry, I don't know what to fix. \)
+				(stop)
+			(endif)
 		(else)
 			(now) (last command was $Words)
 			(rewrite $Words into $ActualWords)
@@ -5067,6 +5342,11 @@
 			(sieve action candidates $AllCandidates $ActualWords 0)
 		(endif)
 	(endif)
+
+(correct [$BadWord | $More] with $GoodWord into [$GoodWord | $More])
+	(unknown word $BadWord)
+(correct [$Head | $TailIn] with $GoodWord into [$Head | $TailOut])
+	(correct $TailIn with $GoodWord into $TailOut)
 
 (parse partial action $Words)
 	%% The multi-query inside the if-condition is unnecessary
@@ -5297,10 +5577,14 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Asking for clarification
 
+(interface (asking for object in $<Action))
+
 (asking for object in $Action)
 	(now) (implicit action is $Action)
 	(now) ~(implicit action wants direction)
 	(stop)
+
+(interface (asking for direction in $<Action))
 
 (asking for direction in $Action)
 	(now) (implicit action is $Action)
@@ -5331,6 +5615,8 @@
 
 %% Asking for a number:
 
+(interface (get number from $<First to $<Last $>Number))
+
 (get number from $First to $Last $N)
 	$First - $Last > (get input $Input)
 	(understand $Input as number $N)
@@ -5345,10 +5631,14 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Finding the shortest path from one room to another, using obvious exits.
 
+(interface (shortest path from $<Room1 to $<Room2 is $>DirList))
+
 (shortest path from $A to $B is $Path)
 	($B is visited)
 	(find paths starting at $A)
 	(build path from $A to $B [] $Path)
+
+(interface (first step from $<Room1 to $<Room2 is $>Dir))
 
 (first step from $A to $B is $Dir)
 	($B is visited)
@@ -5423,6 +5713,8 @@
 
 %% Determine what room ultimately surrounds a particular object:
 
+(interface ($<Obj is in room $>Room))
+
 ((room $Room) is in room $Room)
 
 ($Obj is in room $Room)
@@ -5431,6 +5723,8 @@
 
 %% The following three predicates may be called with either parameter unbound.
 %% They will traverse the object tree in the most efficient way for each case.
+
+(interface ($>Obj has ancestor $>Ancestor))
 
 ($Obj has ancestor $Ancestor)
 	(if) (bound $Obj) (then)
@@ -5446,6 +5740,8 @@
 			*($Obj has ancestor $Sub)
 		}
 	(endif)
+
+(interface ($>Obj is nested $>Rel $>Loc))
 
 ($Obj is nested $Rel $Loc)
 	(if) (bound $Obj) (then)
@@ -5464,6 +5760,8 @@
 		}
 	(endif)
 
+(interface ($>Obj is part of $>Ancestor))
+
 ($Obj is part of $Ancestor)
 	(if) (bound $Obj) (then)
 		($Obj is #partof $Parent)
@@ -5479,6 +5777,8 @@
 		}
 	(endif)
 
+(interface ($<Obj is recursively worn by $<Actor))
+
 ($Obj is recursively worn by $Actor)
 	($Obj is #wornby $Actor)
 
@@ -5487,6 +5787,8 @@
 	($OtherObj is recursively worn by $Actor)
 
 %% The following predicates are useful when writing before-rules:
+
+(interface (ensure $<Obj is held))
 
 (ensure $Obj is held)
 	(current player $Actor)
@@ -5514,10 +5816,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% List manipulation
 
-(append [] $A $A)
-(append [$A | $MoreA] $B [$A | $C])
-	(append $MoreA $B $C)
-
 (remove from [] matching $ into [])
 	(just)
 (remove from [$In | $MoreIn] matching $Keys into $MoreOut)
@@ -5526,6 +5824,8 @@
 	(remove from $MoreIn matching $Keys into $MoreOut)
 (remove from [$In | $MoreIn] matching $Keys into [$In | $MoreOut])
 	(remove from $MoreIn matching $Keys into $MoreOut)
+
+(interface (remove duplicates $<Input $>Output))
 
 (remove duplicates [] [])
 	(just)
@@ -5536,10 +5836,14 @@
 (remove duplicates [$Head | $MoreIn] [$Head | $MoreOut])
 	(remove duplicates $MoreIn $MoreOut)
 
+(interface (length of $List into $>Number))
+
 (length of [] into 0)
 (length of [$ | $More] into $Np1)
 	(length of $More into $N)
 	($N plus 1 into $Np1)
+
+(interface (nth $List $<Index $Element))
 
 (nth [$Head | $] 1 $Head)
 (nth [$ | $Tail] $N $Result)
@@ -5555,8 +5859,12 @@
 	($N minus 1 into $Nm1)
 	(take $Nm1 from $MoreIn into $MoreOut)
 
+(interface ($<List1 contains one of $<List2))
+
 ($X contains one of $Y)
 	(split $X by $Y into $ and $)
+
+(interface ($<List1 contains sublist $<List2))
 
 ($ contains sublist [])
 ($List contains sublist [$Head | $Tail])
@@ -5583,6 +5891,8 @@
 (split [$First | $More] anywhere into [$First | $Left] and $Right)
 	*(split $More anywhere into $Left and $Right)
 
+(interface (split $<Words by relation $>Rel into $>Left and $>Right))
+
 (split $Input by relation $Rel into $Left and $Right)
 	(nonempty $Input)
 	*(relation $Rel)
@@ -5592,11 +5902,15 @@
 	(nonempty $WordSet)
 	*(split $Input by $WordSet into $Left and $Right)
 
+(interface (print words $<Words))
+
 (print words $List)
 	(exhaust) {
 		*($Word is one of $List)
 		$Word
 	}
+
+(interface (Print Words $<Words))
 
 (Print Words $List)
 	(exhaust) {
@@ -5625,6 +5939,7 @@
 (library links enabled)		(fail)
 (default actions enabled)	(fail)
 (heads $)			(fail)
+(room $)			(fail)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Fatal runtime errors
@@ -5643,4 +5958,5 @@
 (report fatal error 4)	Type error: Expected bound value.
 (report fatal error 5)	Invalid dynamic operation.
 (report fatal error 6)	Long-term heap space exhausted.
+(report fatal error 7)	Invalid output state.
 (report fatal error $)	Invalid error code!

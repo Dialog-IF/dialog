@@ -27,8 +27,7 @@
 
 #define COMPILERVERSION ("Dialog compiler version " VERSION)
 
-#define NSTOPCHAR 5
-#define STOPCHARS ",.\";*"
+#define NSTOPCHAR strlen(STOPCHARS)
 
 struct charmap {
 	uint32_t	glyph;
@@ -104,6 +103,7 @@ static struct arena aa_arena;
 static struct textstring *textstrings;
 static int n_textstr, nalloc_textstr;
 static int writ_size;
+static int decode_esc_bits, decode_esc_boundary;
 
 static char *tracelabels[N_TR_KIND];
 
@@ -968,8 +968,9 @@ static int cmp_index_slot(const void *a, const void *b) {
 
 static void binary_search(struct index_slot *table, int n, uint32_t endlab) {
 	uint32_t ll;
-	int i, pos;
+	int i, j, pos;
 	struct aainstr *ai;
+	uint8_t handled[TWEAK_BINSEARCH];
 
 	if(n >= TWEAK_BINSEARCH) {
 		pos = n / 2;
@@ -987,15 +988,38 @@ static void binary_search(struct index_slot *table, int n, uint32_t endlab) {
 		add_label(ll);
 		binary_search(table + pos + 1, n - pos - 1, endlab);
 	} else {
+		memset(handled, 0, TWEAK_BINSEARCH);
 		for(i = 0; i < n; i++) {
-			ai = add_instr(AA_CHECK_EQ);
-			if(table[i].key < 0x100) {
-				ai->op |= 0x80;
-				ai->oper[0] = (aaoper_t) {AAO_VBYTE, table[i].key};
-			} else {
-				ai->oper[0] = (aaoper_t) {AAO_WORD, table[i].key};
+			if(!handled[i]) {
+				for(j = i + 1; j < n; j++) {
+					if(table[i].label == table[j].label
+					&& (table[i].key < 0x100) == (table[j].key < 0x100)) {
+						break;
+					}
+				}
+				if(j < n) {
+					if(table[i].key < 0x100) {
+						ai = add_instr(AA_CHECK_EQ_2B);
+						ai->oper[0] = (aaoper_t) {AAO_VBYTE, table[i].key};
+						ai->oper[1] = (aaoper_t) {AAO_VBYTE, table[j].key};
+					} else {
+						ai = add_instr(AA_CHECK_EQ_2A);
+						ai->oper[0] = (aaoper_t) {AAO_WORD, table[i].key};
+						ai->oper[1] = (aaoper_t) {AAO_WORD, table[j].key};
+					}
+					ai->oper[2] = (aaoper_t) {AAO_CODE, table[i].label};
+					handled[j] = 1;
+				} else {
+					ai = add_instr(AA_CHECK_EQ);
+					if(table[i].key < 0x100) {
+						ai->op |= 0x80;
+						ai->oper[0] = (aaoper_t) {AAO_VBYTE, table[i].key};
+					} else {
+						ai->oper[0] = (aaoper_t) {AAO_WORD, table[i].key};
+					}
+					ai->oper[1] = (aaoper_t) {AAO_CODE, table[i].label};
+				}
 			}
-			ai->oper[1] = (aaoper_t) {AAO_CODE, table[i].label};
 		}
 		ai = add_instr(AA_JMP);
 		ai->oper[0] = (aaoper_t) {AAO_CODE, endlab};
@@ -1201,14 +1225,22 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				}
 				break;
 			case I_ASSIGN:
-				ai = add_instr(AA_ASSIGN);
-				ai->oper[0] = encode_value(ci->oper[1], prg);
+				if(ci->oper[1].tag == VAL_OBJ && ci->oper[1].value < 0xff) {
+					ai = add_instr(AA_ASSIGN | 0x80);
+					ai->oper[0] = (aaoper_t) {AAO_VBYTE, 1 + ci->oper[1].value};
+				} else {
+					ai = add_instr(AA_ASSIGN);
+					ai->oper[0] = encode_value(ci->oper[1], prg);
+				}
 				ai->oper[1] = encode_dest(ci->oper[0], prg, 0);
 				break;
 			case I_BEGIN_BOX:
 				assert(ci->oper[0].tag == OPER_BOX);
 				if(ci->subop == BOX_STATUS) {
 					ai = add_instr(AA_ENTER_STATUS);
+					ai->oper[0] = (aaoper_t) {AAO_INDEX, ci->oper[0].value};
+				} else if(ci->subop == BOX_SPAN) {
+					ai = add_instr(AA_ENTER_SPAN);
 					ai->oper[0] = (aaoper_t) {AAO_INDEX, ci->oper[0].value};
 				} else {
 					ai = add_instr(AA_ENTER_DIV);
@@ -1222,6 +1254,9 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 			case I_BEGIN_LINK_RES:
 				ai = add_instr(AA_ENTER_LINK_RES);
 				ai->oper[0] = encode_value(ci->oper[0], prg);
+				break;
+			case I_BEGIN_SELF_LINK:
+				ai = add_instr(AA_ENTER_SELF_LINK);
 				break;
 			case I_BUILTIN:
 				assert(ci->oper[2].tag == OPER_PRED);
@@ -1238,6 +1273,10 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				case BI_CLEAR_ALL:
 					ai = add_instr(AA_EXT0);
 					ai->oper[0] = (aaoper_t) {AAO_BYTE, AAEXT0_CLEAR_ALL};
+					break;
+				case BI_CLEAR_LINKS:
+					ai = add_instr(AA_EXT0);
+					ai->oper[0] = (aaoper_t) {AAO_BYTE, AAEXT0_CLEAR_LINKS};
 					break;
 				case BI_COMPILERVERSION:
 					ai = add_instr(AA_PRINT_A_STR_A);
@@ -1539,6 +1578,8 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				assert(ci->oper[0].tag == OPER_BOX);
 				if(ci->subop == BOX_STATUS) {
 					ai = add_instr(AA_LEAVE_STATUS);
+				} else if(ci->subop == BOX_SPAN) {
+					ai = add_instr(AA_LEAVE_SPAN);
 				} else {
 					ai = add_instr(AA_LEAVE_DIV);
 				}
@@ -1548,6 +1589,9 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				break;
 			case I_END_LINK_RES:
 				ai = add_instr(AA_LEAVE_LINK_RES);
+				break;
+			case I_END_SELF_LINK:
+				ai = add_instr(AA_LEAVE_SELF_LINK);
 				break;
 			case I_FIRST_CHILD:
 				ai = add_instr(AA_LOAD_VAL);
@@ -1704,11 +1748,16 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				break;
 			case I_IF_GVAR_EQ:
 				assert(ci->oper[0].tag == OPER_GVAR);
-				ai = add_instr(AA_IF_MEM_EQ | 0x80);
+				if(ci->oper[1].tag == VAL_OBJ && ci->oper[1].value < 0xff) {
+					ai = add_instr(AA_IF_MEM_EQ_2 | 0x80);
+					ai->oper[2] = (aaoper_t) {AAO_VBYTE, 1 + ci->oper[1].value};
+				} else {
+					ai = add_instr(AA_IF_MEM_EQ_1 | 0x80);
+					ai->oper[2] = encode_value(ci->oper[1], prg);
+				}
 				if(ci->subop) ai->op ^= AA_NEG_FLIP;
 				ai->oper[0] = (aaoper_t) {AAO_ZERO};
 				ai->oper[1] = (aaoper_t) {AAO_INDEX, first_gvar + ci->oper[0].value};
-				ai->oper[2] = encode_value(ci->oper[1], prg);
 				if(ci->implicit == 0xffff) {
 					ai->oper[3] = (aaoper_t) {AAO_CODE, AAFAIL};
 				} else {
@@ -1827,7 +1876,13 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				break;
 			case I_IF_OVAR_EQ:
 				assert(ci->oper[0].tag == OPER_OVAR);
-				ai = add_instr(AA_IF_MEM_EQ);
+				if(ci->oper[2].tag == VAL_OBJ && ci->oper[2].value < 0xff) {
+					ai = add_instr(AA_IF_MEM_EQ_2);
+					ai->oper[2] = (aaoper_t) {AAO_VBYTE, 1 + ci->oper[2].value};
+				} else {
+					ai = add_instr(AA_IF_MEM_EQ_1);
+					ai->oper[2] = encode_value(ci->oper[2], prg);
+				}
 				if(ci->subop) ai->op ^= AA_NEG_FLIP;
 				ai->oper[0] = encode_value(ci->oper[1], prg);
 				if(ci->oper[0].value == DYN_HASPARENT) {
@@ -1835,7 +1890,6 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				} else {
 					ai->oper[1] = (aaoper_t) {AAO_INDEX, first_ovar + (ci->oper[0].value - 1)};
 				}
-				ai->oper[2] = encode_value(ci->oper[2], prg);
 				if(ci->implicit == 0xffff) {
 					ai->oper[3] = (aaoper_t) {AAO_CODE, AAFAIL};
 				} else {
@@ -1873,6 +1927,16 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 					ai->oper[1] = (aaoper_t) {AAO_CODE, labelbase + ci->implicit};
 				}
 				break;
+			case I_IF_UNKNOWN_WORD:
+				ai = add_instr(AA_IF_UWORD);
+				if(ci->subop) ai->op ^= AA_NEG_FLIP;
+				ai->oper[0] = encode_value(ci->oper[0], prg);
+				if(ci->implicit == 0xffff) {
+					ai->oper[1] = (aaoper_t) {AAO_CODE, AAFAIL};
+				} else {
+					ai->oper[1] = (aaoper_t) {AAO_CODE, labelbase + ci->implicit};
+				}
+				break;
 			case I_INVOKE_MULTI:
 				assert(ci->oper[0].tag == OPER_PRED);
 				ai = add_instr(AA_JMP_MULTI);
@@ -1892,6 +1956,11 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				assert(ci->oper[0].tag == OPER_PRED);
 				ai = add_instr(AA_JMP_TAIL);
 				ai->oper[0] = (aaoper_t) {AAO_CODE, ci->oper[0].value};
+				break;
+			case I_JOIN_WORDS:
+				ai = add_instr(AA_JOIN_WORDS);
+				ai->oper[0] = encode_value(ci->oper[0], prg);
+				ai->oper[1] = encode_dest(ci->oper[1], prg, 0);
 				break;
 			case I_JUMP:
 				if(ci->oper[0].tag == OPER_FAIL) {
@@ -1929,8 +1998,8 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 			case I_NEXT_OBJ_PUSH:
 				ll = nextlabel++;
 				if(ci->oper[0].tag == VAL_OBJ && ci->oper[0].value == 0) {
-					ai = add_instr(AA_ASSIGN);
-					ai->oper[0] = (aaoper_t) {AAO_CONST, 2};
+					ai = add_instr(AA_ASSIGN | 0x80);
+					ai->oper[0] = (aaoper_t) {AAO_VBYTE, 2};
 					ai->oper[1] = (aaoper_t) {AAO_STORE_REG, REG_A + 1};
 				} else {
 					ai = add_instr(AA_INC_RAW);
@@ -2259,8 +2328,8 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 						ai->oper[0] = (aaoper_t) {AAO_CODE, ll3};
 
 						add_label(ll2);
-						ai = add_instr(AA_ASSIGN);
-						ai->oper[0] = (aaoper_t) {AAO_CONST, n + (n - 1)};
+						ai = add_instr(AA_ASSIGN | 0x80);
+						ai->oper[0] = (aaoper_t) {AAO_VBYTE, n + (n - 1)};
 						ai->oper[1] = (aaoper_t) {AAO_STORE_REG, REG_TMP};
 						ai = add_instr(AA_JMP);
 						ai->oper[0] = (aaoper_t) {AAO_CODE, ll3};
@@ -2335,8 +2404,8 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 						ai->oper[0] = (aaoper_t) {AAO_VBYTE, n};
 						ai->oper[1] = (aaoper_t) {AAO_REG, REG_TMP};
 						ai->oper[2] = (aaoper_t) {AAO_CODE, ll};
-						ai = add_instr(AA_ASSIGN);
-						ai->oper[0] = (aaoper_t) {AAO_CONST, 0};
+						ai = add_instr(AA_ASSIGN | 0x80);
+						ai->oper[0] = (aaoper_t) {AAO_VBYTE, 0};
 						ai->oper[1] = (aaoper_t) {AAO_STORE_REG, REG_TMP};
 
 						add_label(ll);
@@ -2459,6 +2528,11 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				ai->oper[0] = encode_value(ci->oper[0], prg);
 				ai->oper[1] = encode_value(ci->oper[1], prg);
 				ai->oper[2] = encode_dest(ci->oper[2], prg, 1);
+				break;
+			case I_SPLIT_WORD:
+				ai = add_instr(AA_SPLIT_WORD);
+				ai->oper[0] = encode_value(ci->oper[0], prg);
+				ai->oper[1] = encode_dest(ci->oper[1], prg, 0);
 				break;
 			case I_STOP:
 				ai = add_instr(AA_STOP);
@@ -2629,7 +2703,7 @@ static void compile_program(struct program *prg) {
 			symbols[aainstr[i].oper[0].value] = j;
 		}
 	}
-	for(i = 0; i < ninstr; i++) {
+	for(i = ninstr - 1; i >= 0; i--) {
 		if(aainstr[i].op == AA_JMP
 		&& aainstr[i].oper[0].value != AAFAIL) {
 			j = symbols[aainstr[i].oper[0].value];
@@ -2783,8 +2857,36 @@ static void build_decoder_tree(struct decodernode *node, int i, uint32_t prefix,
 	}
 }
 
+static int find_dict_prefix(uint8_t *aastr) {
+	int i, best = 2, argbest = -1;
+	int begin, end, mid;
+	struct dictentry *de;
+
+	if(*aastr++ != ' ') return -1;
+	begin = 0;
+	end = ndict;
+	while(begin < end) {
+		mid = (begin + end) / 2;
+		de = &dictionary[mid];
+		for(i = 0; de->chars[i] && aastr[i] == de->chars[i]; i++);
+		if(!de->chars[i]) {
+			if(i > best) {
+				best = i;
+				argbest = mid;
+			}
+			begin = mid + 1;
+		} else if(de->chars[i] > aastr[i]) {
+			end = mid - 1;
+		} else {
+			begin = mid + 1;
+		}
+	}
+
+	return argbest;
+}
+
 static void analyze_chars() {
-	int i, j, nnode, nheap = 0;
+	int i, j, dnum, nnode, nheap = 0;
 	struct decodernode node[257];
 	uint16_t heap[130];
 	uint8_t rootref;
@@ -2806,12 +2908,22 @@ static void analyze_chars() {
 #if 0
 		printf("%7d \"%s\"\n", i, textstrings[i].chars);
 #endif
-		for(j = 0; j < textstrings[i].length; j++) {
-			if(textstrings[i].chars[j] >= 0x20
-			&& textstrings[i].chars[j] < 0xa0) {
-				node[textstrings[i].chars[j] - 0x20].occurrences++;
-			} else {
+		for(j = 0; j < textstrings[i].length; ) {
+			dnum = find_dict_prefix(textstrings[i].chars + j);
+			if(dnum >= 0) {
+#if 0
+				printf("    %7d \"%s\"\n", j, dictionary[dnum].word->name);
+#endif
 				node[0x5f].occurrences++;
+				j += 1 + strlen((char *) dictionary[dnum].chars);
+			} else {
+				if(textstrings[i].chars[j] >= 0x20
+				&& textstrings[i].chars[j] < 0xa0) {
+					node[textstrings[i].chars[j] - 0x20].occurrences++;
+				} else {
+					node[0x5f].occurrences++;
+				}
+				j++;
 			}
 		}
 		node[0x80].occurrences++;
@@ -2854,6 +2966,19 @@ static void analyze_chars() {
 
 	build_decoder_tree(node, heap[1], 0, 0, &rootref);
 	assert(rootref == 0x80);
+
+	decode_esc_boundary = ncharmap - 32;
+	if(decode_esc_boundary < 0) decode_esc_boundary = 0;
+	decode_esc_bits = 0;
+	i = decode_esc_boundary + ndict - 1;;
+	while(i > 0) {
+		i >>= 1;
+		decode_esc_bits++;
+	}
+#if 0
+	printf("decode_esc_boundary: %d\n", decode_esc_boundary);
+	printf("decode_esc_bits: %d\n", decode_esc_bits);
+#endif
 }
 
 static int cmp_stringref(const void *a, const void *b) {
@@ -2865,7 +2990,7 @@ static int cmp_stringref(const void *a, const void *b) {
 }
 
 static void analyze_strings() {
-	int i, j, n;
+	int i, j, n, dnum, len;
 	uint32_t bits;
 	uint8_t charcost[129];
 	uint8_t ch;
@@ -2884,15 +3009,23 @@ static void analyze_strings() {
 	}
 
 	for(i = 0; i < n_textstr; i++) {
-		textstrings[i].bitlength = charcost[128];
-		for(j = 0; j < textstrings[i].length; j++) {
-			ch = textstrings[i].chars[j];
-			if(ch >= 0x20 && ch < 0xa0) {
-				textstrings[i].bitlength += charcost[ch - 0x20];
+		len = charcost[0x80];
+		for(j = 0; j < textstrings[i].length; ) {
+			dnum = find_dict_prefix(textstrings[i].chars + j);
+			if(dnum >= 0) {
+				len += charcost[0x5f] + decode_esc_bits;
+				j += 1 + strlen((char *) dictionary[dnum].chars);
 			} else {
-				textstrings[i].bitlength += charcost[0x5f] + 7;
+				ch = textstrings[i].chars[j];
+				if(ch >= 0x20 && ch < 0xa0) {
+					len += charcost[ch - 0x20];
+				} else {
+					len += charcost[0x5f] + decode_esc_bits;
+				}
+				j++;
 			}
 		}
+		textstrings[i].bitlength = len;
 		refs[i] = i;
 	}
 
@@ -2931,12 +3064,29 @@ void chunk_lang(FILE *f, struct program *prg, uint32_t *crc) {
 	int i, pad;
 	uint32_t size;
 	uint8_t endings[1024];
-	int endsz;
+	int endsz, stopsz;
+	char stopdata[3 * (NSTOPCHAR + 1)];
 
 	endings[0] = 0x01;
 	// the following call may increment n_decodetable
 	endsz = compile_endings_check(endings, 1, &prg->endings_root);
-	size = (4 * 2) + (n_decodetable * 2) + (1 + ncharmap * 5) + endsz + (NSTOPCHAR + 1);
+
+	strcpy(stopdata, STOPCHARS);
+	stopsz = strlen(stopdata) + 1;
+	for(i = 0; STOPCHARS[i]; i++) {
+		if(strchr(NO_SPACE_BEFORE, STOPCHARS[i])) {
+			stopdata[stopsz++] = STOPCHARS[i];
+		}
+	}
+	stopdata[stopsz++] = 0;
+	for(i = 0; STOPCHARS[i]; i++) {
+		if(strchr(NO_SPACE_AFTER, STOPCHARS[i])) {
+			stopdata[stopsz++] = STOPCHARS[i];
+		}
+	}
+	stopdata[stopsz++] = 0;
+
+	size = (4 * 2) + (n_decodetable * 2) + (1 + ncharmap * 5) + endsz + stopsz;
 
 	pad = chunkheader(f, "LANG", size);
 	putword_crc(4 * 2, f, crc);
@@ -2958,15 +3108,14 @@ void chunk_lang(FILE *f, struct program *prg, uint32_t *crc) {
 	for(i = 0; i < endsz; i++) {
 		putbyte_crc(endings[i], f, crc);
 	}
-	for(i = 0; i < NSTOPCHAR; i++) {
-		putbyte_crc(STOPCHARS[i], f, crc);
+	for(i = 0; i < stopsz; i++) {
+		putbyte_crc(stopdata[i], f, crc);
 	}
-	putbyte_crc(0, f, crc);
 	if(pad) fputc(0, f);
 }
 
 void chunk_writ(FILE *f, uint32_t *crc) {
-	int i, j, k, pad, nprefix = 0;
+	int i, j, k, pad, nprefix = 0, dnum;
 	uint8_t data[writ_size];
 	uint8_t ch;
 	uint32_t code, bitaddr;
@@ -2980,20 +3129,34 @@ void chunk_writ(FILE *f, uint32_t *crc) {
 	memset(data, 0, writ_size);
 	for(i = 0; i < n_textstr; i++) {
 		bitaddr = textstrings[i].address << 3;
-		for(j = 0; j <= textstrings[i].length; j++) {
-			ch = textstrings[i].chars[j];
-			if(ch == 0) {
-				code = charbits[0x80];
-			} else if(ch >= 0x20 && ch < 0xa0) {
-				code = charbits[ch - 0x20];
-			} else {
+		for(j = 0; j <= textstrings[i].length; ) {
+			dnum = find_dict_prefix(textstrings[i].chars + j);
+			if(dnum >= 0) {
 				code = charbits[0x5f] ^ (1 << nprefix);
-				for(k = 0; k < 7; k++) {
-					if(ch & (0x40 >> k)) {
+				for(k = 0; k < decode_esc_bits; k++) {
+					if((decode_esc_boundary + dnum) & (1 << (decode_esc_bits - 1 - k))) {
 						code |= 1 << (nprefix + k);
 					}
 				}
-				code |= 1 << (nprefix + 7);
+				code |= 1 << (nprefix + decode_esc_bits);
+				j += 1 + strlen((char *) dictionary[dnum].chars);
+			} else {
+				ch = textstrings[i].chars[j];
+				if(ch == 0) {
+					code = charbits[0x80];
+				} else if(ch >= 0x20 && ch < 0xa0) {
+					code = charbits[ch - 0x20];
+				} else {
+					assert(ch >= 0xa0);
+					code = charbits[0x5f] ^ (1 << nprefix);
+					for(k = 0; k < decode_esc_bits; k++) {
+						if((ch - 0xa0) & (1 << (decode_esc_bits - 1 - k))) {
+							code |= 1 << (nprefix + k);
+						}
+					}
+					code |= 1 << (nprefix + decode_esc_bits);
+				}
+				j++;
 			}
 			while(code > 1) {
 				if(code & 1) {
@@ -3057,7 +3220,7 @@ static void chunk_head(FILE *f, struct program *prg) {
 	if(prg->meta_ifid) size += 10 + strlen(prg->meta_ifid);
 	pad = chunkheader(f, "HEAD", size);
 	fputc(AAVM_FORMAT_MAJOR, f);
-	fputc(2, f); // minimum required minor version of interpreter
+	fputc(4, f); // minimum required minor version of interpreter
 	fputc(2, f);
 	fputc(0, f);
 	putword(prg->meta_release, f);

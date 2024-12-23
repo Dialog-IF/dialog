@@ -26,8 +26,6 @@
 
 #define MAXINPUT 1024
 
-#define STOPCHARS ".,\";*"
-
 #define DEBUGGERNAME "Dialog Interactive Debugger (dgdebug) version " VERSION
 
 struct debugger {
@@ -476,6 +474,7 @@ static void dump_obj_tree(struct dyn_state *ds, struct program *prg, uint16_t on
 	o_line();
 	o_space_n(6 * tabs);
 	o_print_word("#");
+	o_nospace();
 	o_print_word(prg->worldobjnames[onum]->name);
 	o_line();
 
@@ -529,6 +528,7 @@ void dump_dyn_state(struct eval_state *orig_es, void *userdata) {
 					any = 1;
 				}
 				o_print_word("#");
+				o_nospace();
 				o_print_word(prg->worldobjnames[onum]->name);
 			}
 			o_line();
@@ -1044,120 +1044,6 @@ static struct eval_dyn_cb dyn_callbacks = {
 	.pop_undo = pop_undo,
 };
 
-struct word *consider_endings(struct program *prg, struct endings_point *ep, uint16_t *str, int len, int *endpos) {
-	int i;
-	struct word *w;
-	uint8_t utf8[128];
-	uint16_t saved;
-
-	if(len > 1) {
-		for(i = 0; i < ep->nway; i++) {
-			if(ep->ways[i]->letter == str[len - 1]) {
-				if(ep->ways[i]->final) {
-					saved = str[len - 1];
-					str[len - 1] = 0;
-					if(unicode_to_utf8(utf8, sizeof(utf8), str) != len - 1) {
-						str[len - 1] = saved;
-						return 0;
-					}
-					str[len - 1] = saved;
-					w = find_word_nocreate(prg, (char *) utf8);
-					if(w && (w->flags & WORDF_DICT)) {
-						*endpos = len - 1;
-						return w;
-					}
-				}
-				if(ep->ways[i]->more.nway) {
-					return consider_endings(prg, &ep->ways[i]->more, str, len - 1, endpos);
-				}
-				break;
-			}
-		}
-		return 0;
-	} else {
-		return 0;
-	}
-}
-
-static value_t parse_input_word(struct program *prg, struct eval_state *es, uint8_t *input) {
-	struct word *w, *w2;
-	char *str = (char *) input;
-	int j, len, ulen;
-	uint16_t unicode[64], unibuf[2];
-	char utfbuf[8];
-	value_t list;
-	long num;
-	int endpos = 0;
-
-	if(*str >= '0' && *str <= '9' && !str[1]) {
-		return (value_t) {VAL_NUM, (*str) - '0'};
-	}
-
-	w = find_word_nocreate(prg, str);
-	if(w && (w->flags & WORDF_DICT)) {
-		return (value_t) {VAL_DICT, w->dict_id};
-	} else {
-		len = strlen(str);
-		for(j = len - 1; j >= 0; j--) {
-			if(str[j] < '0' || str[j] > '9') {
-				break;
-			}
-		}
-		if(j < 0 && (num = strtol(str, 0, 10)) >= 0 && num < 16384) {
-			return (value_t) {VAL_NUM, num};
-		} else if(!input[utf8_to_unicode(unicode, sizeof(unicode) / sizeof(uint16_t), input)]) {
-			ulen = 0;
-			while(unicode[ulen]) ulen++;
-			if(ulen == 1) {
-				w = find_word(prg, str);
-				ensure_dict_word(prg, w);
-				return (value_t) {VAL_DICT, w->dict_id};
-			} else {
-				w = consider_endings(prg, &prg->endings_root, unicode, ulen, &endpos);
-				if(w) {
-					list = (value_t) {VAL_NIL};
-					for(j = ulen - 1; j >= endpos; j--) {
-						unibuf[0] = unicode[j];
-						unibuf[1] = 0;
-						if(unicode_to_utf8((uint8_t *) utfbuf, sizeof(utfbuf), unibuf) == 1) {
-							w2 = find_word(prg, utfbuf);
-							ensure_dict_word(prg, w2);
-							list = eval_makepair((value_t) {VAL_DICT, w2->dict_id}, list, es);
-							if(list.tag == VAL_ERROR) return list;
-						} else {
-							return (value_t) {VAL_ERROR};
-						}
-					}
-					list = eval_makepair((value_t) {VAL_DICT, w->dict_id}, list, es);
-					if(list.tag == VAL_ERROR) return list;
-					list.tag = VAL_DICTEXT;
-					return list;
-				} else {
-					list = (value_t) {VAL_NIL};
-					for(j = ulen - 1; j >= 0; j--) {
-						unibuf[0] = unicode[j];
-						unibuf[1] = 0;
-						if(unicode_to_utf8((uint8_t *) utfbuf, sizeof(utfbuf), unibuf) == 1) {
-							w2 = find_word(prg, utfbuf);
-							ensure_dict_word(prg, w2);
-							list = eval_makepair((value_t) {VAL_DICT, w2->dict_id}, list, es);
-							if(list.tag == VAL_ERROR) return list;
-						} else {
-							return (value_t) {VAL_ERROR};
-						}
-					}
-					list = eval_makepair(list, (value_t) {VAL_NIL, 0}, es);
-					if(list.tag == VAL_ERROR) return list;
-					list.tag = VAL_DICTEXT;
-					return list;
-				}
-			}
-		} else {
-			return (value_t) {VAL_ERROR};
-		}
-	}
-}
-
 static void inject_input_line(struct debugger *dbg, char *line) {
 	if(dbg->pending_wpos >= dbg->nalloc_pend) {
 		dbg->nalloc_pend = 2 * dbg->pending_wpos + 8;
@@ -1583,6 +1469,7 @@ int debugger(int argc, char **argv) {
 		case ESTATUS_ERR_OBJ:
 		case ESTATUS_ERR_SIMPLE:
 		case ESTATUS_ERR_DYN:
+		case ESTATUS_ERR_IO:
 			o_begin_box("debugger");
 			o_print_str("Restarting program from: (error");
 			snprintf(numbuf, sizeof(numbuf), "%d", dbg.status);
@@ -1734,7 +1621,7 @@ int debugger(int argc, char **argv) {
 						i--;
 						if(i < 0 || strchr(STOPCHARS " ", termbuf[i])) {
 							if(termbuf[i + 1]) {
-								v = parse_input_word(dbg.prg, &dbg.es, termbuf + i + 1);
+								v = parse_input_word(&dbg.es, termbuf + i + 1);
 								if(v.tag == VAL_ERROR) break;
 								tail = eval_makepair(v, tail, &dbg.es);
 								if(tail.tag == VAL_ERROR) break;

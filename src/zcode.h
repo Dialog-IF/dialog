@@ -109,23 +109,24 @@ struct zinstr {
 #define REG_XREMSIZE		0x29	/* remaining box width when in status bar */
 #define REG_CURRSPLIT		0x2a	/* current split amount */
 #define REG_STYLE		0x2b	/* default style for current div */
+#define REG_NSPAN		0x2c	/* current number of nested span elements */
 
 /* useful constants */
 
-#define REG_2000		0x2c
-#define REG_3FFF		0x2d
-#define REG_4000		0x2e
-#define REG_8000		0x2f
-#define REG_C000		0x30
-#define REG_E000		0x31
-#define REG_FFFF		0x32
-#define REG_AUXBASE		0x33
-#define REG_NIL			0x34	/* 1fff */
-#define REG_R_SPA		0x35	/* R_SPACE_PRINT_AUTO */
-#define REG_R_USIMPLE		0x36	/* R_UNIFY_SIMPLE */
+#define REG_2000		0x2d
+#define REG_3FFF		0x2e
+#define REG_4000		0x2f
+#define REG_8000		0x30
+#define REG_C000		0x31
+#define REG_E000		0x32
+#define REG_FFFF		0x33
+#define REG_AUXBASE		0x34
+#define REG_NIL			0x35	/* 1fff */
+#define REG_R_SPA		0x36	/* R_SPACE_PRINT_AUTO */
+#define REG_R_USIMPLE		0x37	/* R_UNIFY_SIMPLE */
 
-#define REG_A			0x37	/* need 13 registers, one more than max arity */
-#define REG_X			0x44
+#define REG_A			0x38	/* need 13 registers, one more than max arity */
+#define REG_X			0x45
 
 #define REG_PUSH		0x100
 #define DEST_USERGLOBAL(x)	(0x200 | (x))
@@ -308,6 +309,7 @@ enum {
 	G_OBJECT_ID_END,
 	G_MAINSTYLE,
 	G_SELTABLE,
+	G_SCRATCH,
 	G_PROGRAM_ENTRY,
 	G_ERROR_ENTRY,
 
@@ -340,6 +342,7 @@ enum {
 	R_SET_STYLE,
 
 	R_IS_WORD,
+	R_IS_UNKNOWN_WORD,
 
 	R_UNIFY,
 	R_UNIFY_SIMPLE,
@@ -414,10 +417,14 @@ enum {
 	R_SCRIPT_ON,
 	R_GET_KEY,
 	R_GET_INPUT,
+	R_PARSE_INPUT,
 	R_TRY_STEMMING,
 	R_COPY_INPUT_WORD,
 
 	R_SPLIT_LIST,
+	R_SPLIT_WORD,
+	R_JOIN_WORDS,
+	R_JOIN_WORDS_SUB,
 
 	R_COLLECT_BEGIN,
 	R_COLLECT_PUSH,
@@ -440,10 +447,13 @@ enum {
 	R_BEGIN_BOX,
 	R_BEGIN_BOX_LEFT,
 	R_BEGIN_BOX_RIGHT,
+	R_BEGIN_SPAN,
+	R_END_SPAN,
 	R_END_BOX_FLOAT,
 	R_END_BOX,
 	R_PROGRESS_BAR,
 	R_EMBED_RES,
+	R_CLEAR,
 
 	R_SEL_STOPPING,
 	R_SEL_RANDOM,
@@ -486,5 +496,6 @@ enum {
 	FATAL_EXPECTED_OBJ,
 	FATAL_UNBOUND,
 	FATAL_DYN,
-	FATAL_LTS
+	FATAL_LTS,
+	FATAL_IO
 };

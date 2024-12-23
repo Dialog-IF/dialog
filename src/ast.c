@@ -462,8 +462,25 @@ void pp_predicate(struct predname *predname, struct program *prg) {
 			(pred->flags & PREDF_FIXED_FLAG)? 'F' : 'D'
 		) : '-',
 		(pred->flags & PREDF_MIGHT_STOP)? 'S' : '-');
-	printf("%s of arity %d\n", predname->printed_name, predname->arity);
-	if((prg->optflags & OPTF_BOUND_PARAMS) && !(pred->flags & PREDF_DYNAMIC)) {
+	printf("%s of arity %d", predname->printed_name, predname->arity);
+	if(pred->iface_decl) {
+		printf(" (interface");
+		if(predname->arity) printf(" ");
+		for(i = 0; i < predname->arity; i++) {
+			if(pred->iface_bound_in & (1 << i)) {
+				printf("<");
+			} else if(pred->iface_bound_out & (1 << i)) {
+				printf(">");
+			} else {
+				printf("$");
+			}
+		}
+		printf(" declared at %s:%d)",
+			FILEPART(pred->iface_decl->line),
+			LINEPART(pred->iface_decl->line));
+	}
+	printf("\n");
+	if(!(pred->flags & PREDF_DYNAMIC)) {
 		for(i = 0; i < predname->arity; i++) {
 			if((pred->unbound_in & (1 << i))
 			&& pred->unbound_in_due_to[i]) {
@@ -507,15 +524,22 @@ static int resolve_clause_var(struct program *prg, struct word *w) {
 	int i;
 
 	for(i = 0; i < prg->nclausevar; i++) {
-		if(w == prg->clausevars[i]) return i;
+		if(w == prg->clausevars[i]) {
+			prg->clausevarcounts[i]++;
+			return i;
+		}
 	}
 
 	if(i == prg->nclausevar) {
-		if(prg->nclausevar >= prg->nalloc_var) {
-			prg->nalloc_var = prg->nclausevar * 2 + 8;
+		if(i >= prg->nalloc_var) {
+			prg->nalloc_var = i * 2 + 8;
 			prg->clausevars = realloc(prg->clausevars, prg->nalloc_var * sizeof(struct word *));
+			prg->clausevarcounts = realloc(prg->clausevarcounts, prg->nalloc_var * sizeof(int));
+			memset(prg->clausevarcounts + i, 0, (prg->nalloc_var - i) * sizeof(int));
 		}
-		prg->clausevars[prg->nclausevar++] = w;
+		prg->clausevarcounts[i] = 1;
+		prg->clausevars[i] = w;
+		prg->nclausevar++;
 	}
 
 	return i;
@@ -553,7 +577,7 @@ static void find_clause_vars(struct program *prg, struct clause *cl, struct astn
 	}
 }
 
-void analyse_clause(struct program *prg, struct clause *cl) {
+void analyse_clause(struct program *prg, struct clause *cl, int report_singletons) {
 	int i;
 
 	prg->nclausevar = 0;
@@ -567,6 +591,17 @@ void analyse_clause(struct program *prg, struct clause *cl) {
 		find_clause_vars(prg, cl, cl->params[i]);
 	}
 	find_clause_vars(prg, cl, cl->body);
+
+	if(report_singletons) {
+		for(i = 0; i < prg->nclausevar; i++) {
+			if(prg->clausevarcounts[i] == 1
+			&& prg->clausevars[i]->name[0] != '*') {
+				report(LVL_WARN, cl->line,
+					"Possible typo: Local variable $%s only appears once.",
+					prg->clausevars[i]->name);
+			}
+		}
+	}
 
 	cl->nvar = prg->nclausevar;
 	cl->varnames = arena_alloc(&cl->predicate->pred->arena, prg->nclausevar * sizeof(struct word *));
@@ -635,6 +670,7 @@ void free_program(struct program *prg) {
 	free(prg->boxclasses);
 	free(prg->closurebodies);
 	free(prg->clausevars);
+	free(prg->clausevarcounts);
 	arena_free(&prg->arena);
 	arena_free(&prg->endings_arena);
 	free(prg);

@@ -65,6 +65,7 @@ enum {
 
 enum {
 	BOX_DIV,
+	BOX_SPAN,
 	BOX_STATUS
 };
 
@@ -87,6 +88,7 @@ enum {
 	BI_EMPTY,
 	BI_NONEMPTY,
 	BI_WORD,
+	BI_UNKNOWN_WORD,
 	BI_BOUND,
 
 	BI_QUIT,
@@ -98,9 +100,9 @@ enum {
 	BI_UNDO,
 	BI_SCRIPT_ON,
 	BI_SCRIPT_OFF,
-
 	BI_TRACE_ON,
 	BI_TRACE_OFF,
+
 	BI_NOSPACE,
 	BI_SPACE,
 	BI_SPACE_N,
@@ -115,6 +117,7 @@ enum {
 	BI_UPPER,
 	BI_CLEAR,
 	BI_CLEAR_ALL,
+	BI_CLEAR_LINKS,
 	BI_PROGRESS_BAR,
 
 	BI_OBJECT,
@@ -126,6 +129,10 @@ enum {
 	BI_UNIFY,
 	BI_IS_ONE_OF,
 	BI_SPLIT,
+	BI_APPEND,
+
+	BI_SPLIT_WORD,
+	BI_JOIN_WORDS,
 
 	BI_SERIALNUMBER,
 	BI_COMPILERVERSION,
@@ -255,6 +262,9 @@ struct predicate {
 	int			normal_entry;
 	int			initial_value_entry;
 	struct predname		*predname;
+	struct clause		*iface_decl;
+	uint16_t		iface_bound_in;
+	uint16_t		iface_bound_out;
 };
 
 #define PREDF_MACRO			0x00000001
@@ -375,6 +385,7 @@ struct program {
 	program_ticker_t	eval_ticker;
 	int			nwordmappred;
 	struct word		**clausevars;
+	int			*clausevarcounts;
 	int			nclausevar;
 	int			nalloc_var;
 	char			*meta_author;
@@ -410,7 +421,7 @@ void pred_clear(struct predname *predname);
 struct predname *find_predicate(struct program *prg, int nword, struct word **words);
 struct predname *find_builtin(struct program *prg, int id);
 int find_closurebody(struct program *prg, struct astnode *an, int *did_create);
-void analyse_clause(struct program *prg, struct clause *cl);
+void analyse_clause(struct program *prg, struct clause *cl, int report_singletons);
 void add_clause(struct clause *cl, struct predicate *pred);
 void pp_expr(struct astnode *an);
 void pp_body(struct astnode *an);

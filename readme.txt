@@ -1,5 +1,5 @@
-This archive contains version 0i/03 of the Dialog compiler and interactive
-debugger, bundled with documentation and version 0.34 of the Dialog Standard
+This archive contains version 0j/01 of the Dialog compiler and interactive
+debugger, bundled with documentation and version 0.35 of the Dialog Standard
 Library.
 
 Directory structure:
@@ -37,6 +37,52 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0j/01, Lib 0.35 (Manual revision 21):
+
+		Language: '(link)' can now be followed by any kind of
+		statement, not just a plain list of words.
+
+		Language: A new builtin, '(clear links)', turns old hyperlinks
+		into plain text, which is useful when the scope changes
+		drastically, e.g. when moving to a different room.
+
+		Language: Added spans as an inline complement to divs.
+
+		Language: There are new builtins for splitting and joining
+		words, and for checking if a word is listed in the game
+		dictionary.
+
+		Language: The word-separating characters are now ". , ; * ( )"
+		and double-quote. These characters are treated as individual
+		words during input parsing, and from now on also during
+		'(collect words)' operations, even when they appear as part of
+		larger words in the source code. When these single-character
+		words are printed back as values, whitespace is inhibited
+		before ". , ; )" and after "(".
+
+		Language: '(append $A $B $AB)' is now built into the language,
+		rather than defined by the library, for performance reasons.
+
+		Language: Added support for interface declarations.
+
+		Library: Added OOPS command, for fixing typos.
+
+		Library: Fixed a bug in how reachability is determined.
+
+		Library: Fixed a bug where understand-as-any-object didn't take
+		the specified policy into account.
+
+		Compiler: Added warnings about singleton variables.
+
+		Compiler: Improved ability to trace unbound values, and warn
+		about potential interface violations.
+
+		Aa-backend: Improved performance thanks to new Aa-machine 0.4
+		features.
+
+		Manual: Moved the section about the pristineness of nested
+		objects to the end of the Items chapter.
 
 	0i/03 Lib 0.34 (Manual revision 20):
 

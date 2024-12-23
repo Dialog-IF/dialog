@@ -100,8 +100,7 @@ uint16_t extended_zscii[69] = {
 
 #define TAIL_CONT	0xffff
 
-#define NSTOPCHAR 5
-#define STOPCHARS ",.\";*"
+#define NSTOPCHAR strlen(STOPCHARS)
 
 #define BUCKETS 512
 
@@ -1819,6 +1818,10 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 						prg->boxclasses[ci->oper[0].value].height |
 						((prg->boxclasses[ci->oper[0].value].flags & BOXF_RELHEIGHT)? 0x8000 : 0));
 					zi->oper[2] = SMALL(prg->boxclasses[ci->oper[0].value].style);
+				} else if(ci->subop == BOX_SPAN) {
+					zi = append_instr(r, Z_CALL2N);
+					zi->oper[0] = ROUTINE(R_BEGIN_SPAN);
+					zi->oper[1] = SMALL(prg->boxclasses[ci->oper[0].value].style);
 				} else {
 					zi = append_instr(r, Z_CALLVN);
 					if(prg->boxclasses[ci->oper[0].value].flags & BOXF_FLOATLEFT) {
@@ -1843,6 +1846,10 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				}
 				break;
 			case I_BEGIN_LINK:
+			case I_BEGIN_LINK_RES:
+			case I_BEGIN_SELF_LINK:
+				zi = append_instr(r, Z_INC);
+				zi->oper[0] = SMALL(REG_NSPAN);
 				break;
 			case I_BUILTIN:
 				assert(ci->oper[2].tag == OPER_PRED);
@@ -1854,18 +1861,16 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 					zi->oper[1] = SMALL(2);
 					break;
 				case BI_CLEAR:
-					zi = append_instr(r, Z_ERASE_WINDOW);
-					zi->oper[0] = SMALL(0);
-					zi = append_instr(r, Z_STORE);
-					zi->oper[0] = SMALL(REG_SPACE);
-					zi->oper[1] = SMALL(4);
+					zi = append_instr(r, Z_CALL2N);
+					zi->oper[0] = ROUTINE(R_CLEAR);
+					zi->oper[1] = SMALL(0);
 					break;
 				case BI_CLEAR_ALL:
-					zi = append_instr(r, Z_ERASE_WINDOW);
-					zi->oper[0] = VALUE(REG_FFFF);
-					zi = append_instr(r, Z_STORE);
-					zi->oper[0] = SMALL(REG_SPACE);
-					zi->oper[1] = SMALL(4);
+					zi = append_instr(r, Z_CALL2N);
+					zi->oper[0] = ROUTINE(R_CLEAR);
+					zi->oper[1] = VALUE(REG_FFFF);
+					break;
+				case BI_CLEAR_LINKS:
 					break;
 				case BI_COMPILERVERSION:
 					zi = append_instr(r, Z_CALL1N);
@@ -2168,6 +2173,9 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				if(ci->subop == BOX_STATUS) {
 					zi = append_instr(r, Z_CALL1N);
 					zi->oper[0] = ROUTINE(R_END_STATUS);
+				} else if(ci->subop == BOX_SPAN) {
+					zi = append_instr(r, Z_CALL1N);
+					zi->oper[0] = ROUTINE(R_END_SPAN);
 				} else if(prg->boxclasses[ci->oper[0].value].flags & (BOXF_FLOATLEFT | BOXF_FLOATRIGHT)) {
 					zi = append_instr(r, Z_CALL2N);
 					zi->oper[0] = ROUTINE(R_END_BOX_FLOAT);
@@ -2179,6 +2187,10 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				}
 				break;
 			case I_END_LINK:
+			case I_END_LINK_RES:
+			case I_END_SELF_LINK:
+				zi = append_instr(r, Z_DEC);
+				zi->oper[0] = SMALL(REG_NSPAN);
 				break;
 			case I_FIRST_CHILD:
 				o1 = generate_value(r, ci->oper[0], prg, t1);
@@ -2848,6 +2860,32 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 					zi = append_instr(r, OP_LABEL(ll));
 				}
 				break;
+			case I_IF_UNKNOWN_WORD:
+				o1 = generate_value(r, ci->oper[0], prg, t1);
+				zi = append_instr(r, Z_CALL2S);
+				zi->oper[0] = ROUTINE(R_IS_UNKNOWN_WORD);
+				zi->oper[1] = o1;
+				zi->store = REG_TEMP;
+				zi = append_instr(r, Z_JNZ);
+				zi->oper[0] = VALUE(REG_TEMP);
+				if(ci->subop) zi->op ^= OP_NOT;
+				if(ci->implicit == 0xffff) {
+					zi->branch = RFALSE;
+				} else if(pred->routines[ci->implicit].reftrack == r_id) {
+					zi->branch = llabel[ci->implicit];
+					if(!encountered[ci->implicit]) {
+						rstack[rsp++] = ci->implicit;
+						encountered[ci->implicit] = 1;
+					}
+				} else {
+					ll = r->next_label++;
+					zi->op ^= OP_NOT;
+					zi->branch = ll;
+					zi = append_instr(r, Z_RET);
+					zi->oper[0] = ROUTINE(rlabel[ci->implicit]);
+					zi = append_instr(r, OP_LABEL(ll));
+				}
+				break;
 			case I_INVOKE_MULTI:
 				assert(ci->oper[0].tag == OPER_PRED);
 				id = ((struct backend_pred *) prg->predicates[ci->oper[0].value]->pred->backend)->global_label;
@@ -2915,6 +2953,24 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				}
 				zi = append_instr(r, Z_RET);
 				zi->oper[0] = ROUTINE(id);
+				break;
+			case I_JOIN_WORDS:
+				o0 = generate_value(r, ci->oper[0], prg, t1);
+				zi = append_instr(r, Z_CALL2S);
+				zi->oper[0] = ROUTINE(R_JOIN_WORDS);
+				zi->oper[1] = o0;
+				if(ci->oper[1].tag == OPER_VAR) {
+					zi->store = REG_TEMP;
+					zi = append_instr(r, Z_STOREW);
+					zi->oper[0] = VALUE(REG_ENV);
+					zi->oper[1] = SMALL(3 + ci->oper[1].value);
+					zi->oper[2] = VALUE(REG_TEMP);
+				} else if(ci->oper[1].tag == OPER_TEMP) {
+					zi->store = REG_X + ci->oper[1].value;
+				} else {
+					assert(ci->oper[1].tag == OPER_ARG);
+					zi->store = REG_A + ci->oper[1].value;
+				}
 				break;
 			case I_JUMP:
 				if(ci->oper[0].tag == OPER_FAIL) {
@@ -3527,6 +3583,24 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				zi->oper[2] = o1;
 				zi->oper[3] = o2;
 				break;
+			case I_SPLIT_WORD:
+				o0 = generate_value(r, ci->oper[0], prg, t1);
+				zi = append_instr(r, Z_CALL2S);
+				zi->oper[0] = ROUTINE(R_SPLIT_WORD);
+				zi->oper[1] = o0;
+				if(ci->oper[1].tag == OPER_VAR) {
+					zi->store = REG_TEMP;
+					zi = append_instr(r, Z_STOREW);
+					zi->oper[0] = VALUE(REG_ENV);
+					zi->oper[1] = SMALL(3 + ci->oper[1].value);
+					zi->oper[2] = VALUE(REG_TEMP);
+				} else if(ci->oper[1].tag == OPER_TEMP) {
+					zi->store = REG_X + ci->oper[1].value;
+				} else {
+					assert(ci->oper[1].tag == OPER_ARG);
+					zi->store = REG_A + ci->oper[1].value;
+				}
+				break;
 			case I_STOP:
 				zi = append_instr(r, Z_STORE);
 				zi->oper[0] = SMALL(REG_CHOICE);
@@ -3957,7 +4031,8 @@ void backend_z(
 	struct arena *arena)
 {
 	int nglobal;
-	uint16_t addr_abbrevtable, addr_abbrevstr, addr_objtable, addr_globals, addr_static, addr_heap, addr_heapend, addr_aux, addr_lts, addr_dictionary, addr_seltable;
+	uint16_t addr_abbrevtable, addr_abbrevstr, addr_objtable, addr_globals, addr_static;
+	uint16_t addr_scratch, addr_heap, addr_heapend, addr_aux, addr_lts, addr_dictionary, addr_seltable;
 	uint32_t org;
 	uint32_t filesize;
 	int i, j, k;
@@ -4276,6 +4351,9 @@ void backend_z(
 	addr_abbrevtable = org;
 	org += 96 * 2;
 
+	addr_scratch = org;	// 12 bytes of scratch area for decoding dictionary words etc.
+	org += 12;
+
 	if(org < addr_globals + 2*240) {
 		// Gargoyle complains if there isn't room for 240 globals in dynamic memory.
 		org = addr_globals + 2*240;
@@ -4320,6 +4398,7 @@ void backend_z(
 	set_global_label(G_OBJECT_ID_END, prg->nworldobj);
 	set_global_label(G_MAINSTYLE, 0x80);
 	set_global_label(G_SELTABLE, addr_seltable);
+	set_global_label(G_SCRATCH, addr_scratch);
 
 	assert(REG_SPACE == REG_TEMP + 1);
 

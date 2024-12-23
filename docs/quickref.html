@@ -131,6 +131,10 @@ exhausted) emits at least every word in <span class="code">$List</span>.
 <p class="noteline">The inner statement executes, succeeding at most once. The <span class="code">(stop)</span> built-in breaks out of
 the innermost stoppable environment. The stoppable environment itself always succeeds.
 </p>
+<p class="codeline">(span $Class) <i>statement</i></p>
+<p class="noteline">The inner statement executes, succeeding at most once. All output is
+rendered according to the given style class.
+</p>
 <p class="codeline">(div $Class) <i>statement</i></p>
 <p class="noteline">The inner statement executes, succeeding at most once. All output is
 rendered into a rectangular area according to the given style class.
@@ -144,7 +148,6 @@ area, which is created if necessary.
 displays the output, optionally in the form of a hyperlink. If the
 hyperlink is selected by the player, the output from the inner
 statement is appended to the current input buffer, which is submitted.
-The statement must be a single word, or a single block of words.
 </p>
 <p class="codeline">(link $Words) <i>statement</i></p>
 <p class="noteline">The inner statement executes, succeeding at most once. The interpreter
@@ -171,6 +174,9 @@ style.
 <p class="codeline">(global variable (name of predicate $))</p>
 <p class="noteline">Declares a global variable for holding simple values.
 </p>
+<p class="codeline">(interface (name of predicate))</p>
+<p class="noteline">Declares an <a href="beyondprg.html#interface">interface</a>, i.e. the intended use of a predicate.
+</p>
 <p class="codeline">(generate $N (name of predicate $))</p>
 <p class="noteline">Creates <span class="code">$N</span> anonymous objects, for which the predicate will succeed.
 </p>
@@ -186,6 +192,10 @@ style.
 <p class="codeline">($X &gt; $Y)</p>
 <p class="noteline">Succeeds if <span class="code">$X</span> and <span class="code">$Y</span> are numbers, and <span class="code">$X</span> is strictly greater than <span class="code">$Y</span>.
 </p>
+<p class="codeline">(append $A $B $AB)</p>
+<p class="noteline">Unifies <span class="code">$AB</span> with the concatenation of <span class="code">$A</span>
+(which must be bound) <span class="nobreak">and&nbsp;<span class="code">$B</span>.</span>
+</p>
 <p class="codeline">(bold)</p>
 <p class="noteline">Enables bold text.
 </p>
@@ -200,6 +210,9 @@ style.
 </p>
 <p class="codeline">(clear all)</p>
 <p class="noteline">Clears the screen and disables the status bar.
+</p>
+<p class="codeline">(clear links)</p>
+<p class="noteline">Transforms all hyperlinks into plain text, except in the status bar area.
 </p>
 <p class="codeline">(compiler version)</p>
 <p class="noteline">Prints the name and version of the compiler.
@@ -258,6 +271,9 @@ restored on a different interpreter.
 </p>
 <p class="codeline">(italic)</p>
 <p class="noteline">Enables italic text.
+</p>
+<p class="codeline">(join words $List into $Word)</p>
+<p class="noteline">Concatenates the dictionary words (or numbers) in <span class="code">$List</span> into a new dictionary word (or number), and unifies the result with <span class="code">$Word</span>.
 </p>
 <p class="codeline">(line)</p>
 <p class="noteline">Requests a line break.
@@ -341,6 +357,9 @@ successful restore.
 <p class="codeline">(split $X by $Y into $Left and $Right)</p>
 <p class="noteline">Splits <span class="code">$X</span> into two halves around each occurrence of a keyword from <span class="code">$Y</span>.
 </p>
+<p class="codeline">(split word $Word into $List)</p>
+<p class="noteline">Converts the dictionary word (or number) <span class="code">$Word</span> into a list of its constituent characters, and unifies the result with <span class="code">$List</span>.
+</p>
 <p class="codeline">(stop)</p>
 <p class="noteline">Breaks out of the innermost <span class="code">(stoppable)</span> environment.
 </p>
@@ -355,6 +374,9 @@ successful restore.
 </p>
 <p class="codeline">(undo)</p>
 <p class="noteline">Restores the program state at the time of the latest <span class="code">(save undo 0)</span>.
+</p>
+<p class="codeline">(unknown word $X)</p>
+<p class="noteline">Succeeds if <span class="code">$X</span> is bound to a word that wasn't found in the game dictionary.
 </p>
 <p class="codeline">(unstyle)</p>
 <p class="noteline">Select the default text style for the current division.
@@ -422,7 +444,7 @@ successful restore.
 </p>
 	<div class="footer">
 	<p class="nav">Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 20, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 21, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>
