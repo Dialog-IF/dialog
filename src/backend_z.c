@@ -6189,6 +6189,15 @@ void backend(char *filename, char *format, char *coverfname, char *coveralt, int
 	uint16_t *extflagarrays = 0;
 	struct routine *r;
 	struct zinstr *zi;
+	int zversion, packfactor;
+
+	if(!strcmp(format, "z5")) {
+		zversion = 5;
+		packfactor = 4;
+	} else {
+		zversion = 8;
+		packfactor = 8;
+	}
 
 	assert(!next_routine_num);
 	assert(nrtroutine == R_FIRST_FREE);
@@ -6669,17 +6678,17 @@ void backend(char *filename, char *format, char *coverfname, char *coveralt, int
 		if(routines[i]->actual_routine == routines[R_FAIL_PRED]->actual_routine) {
 			routines[i]->address = 0;
 		} else if(routines[i]->actual_routine == i) {
-			assert((org & 7) == 0);
-			routines[i]->address = org / 8;
+			assert((org & (packfactor - 1)) == 0);
+			routines[i]->address = org / packfactor;
 			org += pass1(routines[i], org);
-			org = (org + 7) & ~7;
+			org = (org + packfactor - 1) & ~(packfactor - 1);
 		}
 	}
 
-	assert((org & 7) == 0);
-	routines[R_TERPTEST]->address = org / 8;
+	assert((org & (packfactor - 1)) == 0);
+	routines[R_TERPTEST]->address = org / packfactor;
 	org += pass1(routines[R_TERPTEST], org);
-	org = (org + 7) & ~7;
+	org = (org + packfactor - 1) & ~(packfactor - 1);
 
 #if 0
 	printf("pass 1 complete\n");
@@ -6694,21 +6703,21 @@ void backend(char *filename, char *format, char *coverfname, char *coveralt, int
 			uint16_t words[MAXSTRING];
 			int n;
 
-			set_global_label(gs->global_label, org / 8);
+			set_global_label(gs->global_label, org / packfactor);
 
 			n = encode_chars(pentets, sizeof(pentets), 0, gs->zscii);
 			assert(n <= sizeof(pentets));
 			n = pack_pentets(words, pentets, n);
 
 			org += n * 2;
-			org = (org + 7) & ~7;
+			org = (org + packfactor - 1) & ~(packfactor - 1);
 		}
 	}
 
 	filesize = org;
 	zcore = calloc(1, filesize);
 
-	zcore[0x00] = 8;
+	zcore[0x00] = zversion;
 	zcore[0x02] = release >> 8;
 	zcore[0x03] = release & 0xff;
 	zcore[0x04] = himem >> 8;
@@ -6726,8 +6735,8 @@ void backend(char *filename, char *format, char *coverfname, char *coveralt, int
 	zcore[0x11] = 0x10;	// flags2: need undo
 	zcore[0x18] = addr_abbrevtable >> 8;
 	zcore[0x19] = addr_abbrevtable & 0xff;
-	zcore[0x1a] = (filesize / 8) >> 8;
-	zcore[0x1b] = (filesize / 8) & 0xff;
+	zcore[0x1a] = (filesize / packfactor) >> 8;
+	zcore[0x1b] = (filesize / packfactor) & 0xff;
 	//zcore[0x2e] = addr_termchar >> 8;
 	//zcore[0x2f] = addr_termchar & 0xff;
 	zcore[0x39] = 'D';
@@ -6915,7 +6924,7 @@ void backend(char *filename, char *format, char *coverfname, char *coveralt, int
 		if(routines[i]->actual_routine == routines[R_FAIL_PRED]->actual_routine) {
 			/* skip */
 		} else if(routines[i]->actual_routine == i) {
-			uint32_t addr = routines[i]->address * 8;
+			uint32_t addr = routines[i]->address * packfactor;
 			zcore[addr++] = routines[i]->nlocal;
 			assemble(addr, routines[i]);
 		}
@@ -6926,7 +6935,7 @@ void backend(char *filename, char *format, char *coverfname, char *coveralt, int
 			uint8_t pentets[MAXSTRING * 3];
 			uint16_t words[MAXSTRING];
 			int n;
-			uint32_t addr = global_labels[gs->global_label] * 8;
+			uint32_t addr = global_labels[gs->global_label] * packfactor;
 
 			n = encode_chars(pentets, sizeof(pentets), 0, gs->zscii);
 			assert(n <= sizeof(pentets));
@@ -6955,7 +6964,7 @@ void backend(char *filename, char *format, char *coverfname, char *coveralt, int
 		report(LVL_DEBUG, 0, "Flags used: %d native", next_flag);
 	}
 
-	if(!strcmp(format, "z8")) {
+	if(!strcmp(format, "z8") || !strcmp(format, "z5")) {
 		FILE *f = fopen(filename, "wb");
 		if(!f) {
 			report(LVL_ERR, 0, "Error opening \"%s\" for output: %s", filename, strerror(errno));
@@ -6970,7 +6979,7 @@ void backend(char *filename, char *format, char *coverfname, char *coveralt, int
 		fclose(f);
 
 		if(coverfname || coveralt) {
-			report(LVL_WARN, 0, "Ignoring cover image options for the z8 output format.");
+			report(LVL_WARN, 0, "Ignoring cover image options for the %s output format.", format);
 		}
 	} else if(!strcmp(format, "zblorb")) {
 		emit_blorb(filename, zcore, filesize, ifid, compiletime, author, title, noun, blurb, release, reldate, coverfname, coveralt);
@@ -6997,7 +7006,7 @@ void usage(char *prgname) {
 	fprintf(stderr, "--verbose   -v    Increase verbosity (may be used multiple times).\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "--output    -o    Set output filename.\n");
-	fprintf(stderr, "--format    -t    Set output format (zblorb or z8).\n");
+	fprintf(stderr, "--format    -t    Set output format (zblorb, z8, or z5).\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "--heap      -H    Set main heap size (default 1400 words).\n");
 	fprintf(stderr, "--aux       -A    Set aux heap size (default 600 words).\n");
@@ -7087,7 +7096,9 @@ int main(int argc, char **argv) {
 		}
 	} while(opt >= 0);
 
-	if(strcmp(format, "zblorb") && strcmp(format, "z8")) {
+	if(strcmp(format, "zblorb")
+	&& strcmp(format, "z8")
+	&& strcmp(format, "z5")) {
 		report(LVL_ERR, 0, "Unsupported output format \"%s\".", format);
 		exit(1);
 	}

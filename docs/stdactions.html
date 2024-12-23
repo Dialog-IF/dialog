@@ -80,11 +80,15 @@ position of the cart and player:
 <div class="copycode">
 <a class="copybtn" href="" onClick="document.getElementById('copy1').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
-<p>Again, narration predicates are only queried from the eighteen core actions, as
-part of their default <span class="nobreak"><span class="code">perform</span>-rules</span>. The remaining
-standard actions essentially just print messages; their performance <b>is</b>
-an act of narration. To add flavour to those actions, you must intercept
-<span class="code">(perform&nbsp;$)</span> directly.
+<p>As a rule of thumb, narration predicates are only queried from the eighteen
+core actions, as part of their default <span class="nobreak"><span class="code">perform</span>-rules</span>.
+Most other standard actions essentially just print messages; their performance
+<b>is</b> an act of narration. To add flavour to those actions, you must
+intercept <span class="code">(perform&nbsp;$)</span> directly.
+</p>
+<p>An exception is the action <span class="code">[look $Dir]</span>, for looking in a
+direction. It calls out to <span class="code">(narrate failing to look $Dir)</span> when
+there's no obvious exit in the given direction.
 </p>
 <p>In order to present a robust and self-consistent world to the player, the story
 author will want to consider how each of the eighteen core actions might affect
@@ -251,7 +255,8 @@ object names, e.g. <span class="code">(a&nbsp;$)</span> and <span class="code">(
 <p class="noteline">&bull; Displays information from <span class="code">(from $ go $ to $)</span>.
 </p>
 <p class="codeline">[look $Dir]</p>
-<p class="noteline">&bull; Displays information from <span class="code">(from $ go $ to&nbsp;$)</span>.
+<p class="noteline">&bull; Displays information from <span class="code">(from $ go $ to&nbsp;$)</span>.<br />
+&bull; If there's no exit in that direction, makes a query to <span class="code">(narrate failing to look $Dir)</span>.
 </p>
 <p class="codeline">[look $Rel $Obj]</p>
 <p class="noteline">&bull; Lists children of <span class="code">$Obj</span> having relation <span class="code">$Rel</span>.
@@ -595,7 +600,7 @@ current and neighbouring rooms.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="timeprogress.html">Chapter 8: Ticks, scenes, and progress</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 2, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 3, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

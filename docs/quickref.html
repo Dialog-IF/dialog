@@ -265,11 +265,15 @@ of <span class="code">$Y</span> in the object tree. Either parameter can be unbo
 <p class="codeline">(roman)</p>
 <p class="noteline">Disables all text styles (bold, italic, reverse, and fixed pitch).
 </p>
-<p class="codeline">(save)</p>
-<p class="noteline">Saves the current game (the interpreter asks for a filename).
+<p class="codeline">(save $ComingBack)</p>
+<p class="noteline">Saves the current game (the interpreter asks for a filename). Unifies
+<span class="code">$ComingBack</span> with 0 after a successful save, 1 after a
+successful restore.
 </p>
-<p class="codeline">(save undo)</p>
-<p class="noteline">Saves the current program state in memory.
+<p class="codeline">(save undo $ComingBack)</p>
+<p class="noteline">Saves the current program state in memory. Unifies
+<span class="code">$ComingBack</span> with 0 after a successful save, 1 after a
+successful restore.
 </p>
 <p class="codeline">(script off)</p>
 <p class="noteline">Disables transcription.
@@ -308,7 +312,10 @@ of <span class="code">$Y</span> in the object tree. Either parameter can be unbo
 <p class="noteline">Succeeds if <span class="code">$X</span> is currently unbound.
 </p>
 <p class="codeline">(undo)</p>
-<p class="noteline">Restores the program state at the time of the latest <span class="code">(save undo)</span>.
+<p class="noteline">Restores the program state at the time of the latest <span class="code">(save undo 0)</span>.
+</p>
+<p class="codeline">(uppercase)</p>
+<p class="noteline">Convert the next printed character to uppercase.
 </p>
 <p class="codeline">(word $X)</p>
 <p class="noteline">Succeeds if <span class="code">$X</span> is bound to a dictionary word.
@@ -364,7 +371,7 @@ of <span class="code">$Y</span> in the object tree. Either parameter can be unbo
 </p>
 	<div class="footer">
 	<p class="nav">Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 2, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 3, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

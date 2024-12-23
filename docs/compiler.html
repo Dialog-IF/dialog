@@ -11,10 +11,10 @@
 	<h1>The Dialog compiler</h1>
 <p>Dialog is a compiled language. Source code is stored in text files with the
 filename extension <span class="tt">.dg</span>. When international characters are used, they
-must be encoded in UTF-8. The compiler delivers its output in <span class="tt">.z8</span> or
-<span class="tt">.zblorb</span> format. When the zblorb format is chosen, the compiler can
-optionally include cover art with the story, but this feature is not regarded
-as a part of the Dialog language itself.
+must be encoded in UTF-8. The compiler delivers its output in <span class="tt">.zblorb</span>,
+<span class="tt">.z8</span>, or <span class="tt">.z5</span> format. When the zblorb format is chosen, the
+compiler can optionally include cover art with the story, but this feature is
+not regarded as a part of the Dialog language itself.
 </p>
 <div class="img"><img src="overview.png" /></div>
 <p>An archive containing the latest version of Dialog can be found here:
@@ -72,8 +72,8 @@ first source code file.
 </p>
 <p>The example games in this manual do not declare IFIDs, which is mandatory when
 the zblorb output format is used. To compile the examples, you must ask the
-compiler to emit raw z8 code by adding <span class="nobreak"><span class="tt">-t&nbsp;z8</span></span> to the
-command line:
+compiler to emit raw z8 (or&nbsp;z5) code by adding <span class="nobreak"><span class="tt">-t&nbsp;z8</span></span>
+<span class="nobreak">(or <span class="tt">-t&nbsp;z5</span>)</span> to the command line:
 </p>
 <p><span class="tt">dialogc -t z8 example.dg stdlib.dg</span>
 </p>
@@ -83,6 +83,11 @@ command line:
 are compiled like this:
 </p>
 <p><span class="tt">dialogc -t z8 example.dg</span>
+</p>
+<p>It's also possible to select the <span class="tt">z5</span> output format. Version&nbsp;5 story
+files are limited to 256&nbsp;KiB, compared to 512&nbsp;KiB for Version&nbsp;8. However, the
+<span class="tt">z5</span> format is more compact, and switching to this format can reduce
+your filesize by about 5%.
 </p>
 <p>The <span class="nobreak"><span class="tt">-v</span></span> flag makes the compiler more verbose. Give it
 once, and the compiler will print the wordcount for your story, as well as some
@@ -95,7 +100,7 @@ will dump additional information that can be useful for debugging.
 </p>
 	<div class="footer">
 	<p class="nav">Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 2, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 3, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

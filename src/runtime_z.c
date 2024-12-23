@@ -296,9 +296,11 @@ struct rtroutine rtroutines[] = {
 	},
 	{
 		R_PRINT_VALUE,
-		2,
+		4,
 			// 0 (param): what to print, reference
 			// 1: temp
+			// 2: saved REG_CALL
+			// 3: string length
 		(struct zinstr []) {
 			{Z_CALL1N, {ROUTINE(R_SYNC_SPACE)}},
 			{Z_STORE, {SMALL(REG_SPACE), SMALL(0)}},
@@ -318,11 +320,13 @@ struct rtroutine rtroutines[] = {
 			// integer
 			{Z_AND, {VALUE(REG_LOCAL+0), VALUE(REG_3FFF)}, REG_LOCAL+0},
 			{Z_PRINTNUM, {VALUE(REG_LOCAL+0)}},
+			{Z_STORE, {SMALL(REG_UPPER), SMALL(0)}},
 			{Z_RFALSE},
 
 			{OP_LABEL(2)},
 			// unbound variable
 			{Z_PRINTLIT, {}, 0, 0, "$"},
+			{Z_STORE, {SMALL(REG_UPPER), SMALL(0)}},
 			{Z_RFALSE},
 
 			{OP_LABEL(4)},
@@ -330,6 +334,7 @@ struct rtroutine rtroutines[] = {
 
 			// list
 			{Z_PRINTLIT, {}, 0, 0, "["},
+			{Z_STORE, {SMALL(REG_UPPER), SMALL(0)}},
 			{Z_STORE, {SMALL(REG_SPACE), SMALL(1)}},
 			{Z_CALL2N, {ROUTINE(R_PRINT_LIST), VALUE(REG_LOCAL+0)}},
 			{Z_PRINTLIT, {}, 0, 0, "]"},
@@ -345,12 +350,24 @@ struct rtroutine rtroutines[] = {
 			{Z_SUB, {VALUE(REG_LOCAL+0), VALUE(REG_2000)}, REG_LOCAL+0},
 			{Z_MUL, {VALUE(REG_LOCAL+0), SMALL(6)}, REG_LOCAL+0},
 			{Z_ADD, {VALUE(REG_LOCAL+0), REF(G_DICT_TABLE)}, REG_LOCAL+0},
+
+			{Z_JNZ, {VALUE(REG_UPPER)}, 0, 10},
+
 			{Z_PRINTADDR, {VALUE(REG_LOCAL+0)}},
 			{Z_RFALSE},
 
 			{OP_LABEL(8)},
 			// single-char dictionary word
 			{Z_AND, {VALUE(REG_LOCAL+0), SMALL(0xff)}, REG_LOCAL+0},
+			{Z_JZ, {VALUE(REG_UPPER)}, 0, 9},
+
+			// convert to uppercase
+			{Z_STORE, {SMALL(REG_UPPER), SMALL(0)}},
+			{Z_JL, {VALUE(REG_LOCAL+0), SMALL(0x61)}, 0, 9},
+			{Z_JGE, {VALUE(REG_LOCAL+0), SMALL(0x7b)}, 0, 9},
+			{Z_AND, {VALUE(REG_LOCAL+0), SMALL(0xdf)}, REG_LOCAL+0},
+
+			{OP_LABEL(9)},
 			{Z_PRINTCHAR, {VALUE(REG_LOCAL+0)}},
 			{Z_RFALSE},
 
@@ -360,11 +377,44 @@ struct rtroutine rtroutines[] = {
 			// object id
 			{Z_PRINTLIT, {}, 0, 0, "#"},
 			{Z_PRINTOBJ, {VALUE(REG_LOCAL+0)}},
+			{Z_STORE, {SMALL(REG_UPPER), SMALL(0)}},
 			{Z_RFALSE},
 
 			{OP_LABEL(7)},
 			// empty list
 			{Z_PRINTLIT, {}, 0, 0, "[]"},
+			{Z_STORE, {SMALL(REG_UPPER), SMALL(0)}},
+			{Z_RFALSE},
+
+			{OP_LABEL(10)},
+			// capitalized dictionary word
+			{Z_STORE, {SMALL(REG_LOCAL+2), VALUE(REG_COLL)}},
+			/* One word for storing the length, 5 for the chars. */
+			{Z_CALL2S, {ROUTINE(R_AUX_ALLOC), SMALL(6)}, REG_LOCAL+1},
+			{Z_JL, {VALUE(REG_COLL), VALUE(REG_MINAUX)}, 0, 11},
+			{Z_STORE, {SMALL(REG_MINAUX), VALUE(REG_COLL)}},
+			{OP_LABEL(11)},
+
+			{Z_OUTPUT_STREAM, {SMALL(3), VALUE(REG_LOCAL+1)}},
+			{Z_PRINTADDR, {VALUE(REG_LOCAL+0)}},
+			{Z_OUTPUT_STREAM, {LARGE(0x10000-3)}},
+
+			{Z_LOADW, {VALUE(REG_LOCAL+1), SMALL(0)}, REG_LOCAL+3},
+			{Z_LOADB, {VALUE(REG_LOCAL+1), SMALL(2)}, REG_LOCAL+0},
+
+			{Z_JL, {VALUE(REG_LOCAL+0), SMALL(0x61)}, 0, 13},
+			{Z_JGE, {VALUE(REG_LOCAL+0), SMALL(0x7b)}, 0, 13},
+			{Z_AND, {VALUE(REG_LOCAL+0), SMALL(0xdf)}, REG_LOCAL+0},
+			{Z_PRINTCHAR, {VALUE(REG_LOCAL+0)}},
+			{Z_ADD, {VALUE(REG_LOCAL+1), SMALL(3)}, REG_LOCAL+1},
+			{Z_DEC, {SMALL(REG_LOCAL+3)}},
+
+			{OP_LABEL(13)},
+			{Z_CALLVN, {ROUTINE(R_PRINT_N_ZSCII), VALUE(REG_LOCAL+3), VALUE(REG_LOCAL+1)}},
+
+			{OP_LABEL(12)},
+			{Z_STORE, {SMALL(REG_COLL), VALUE(REG_LOCAL+2)}},
+			{Z_STORE, {SMALL(REG_UPPER), SMALL(0)}},
 			{Z_RFALSE},
 			{Z_END},
 		}

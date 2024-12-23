@@ -1,6 +1,6 @@
 
 (library version)
-	Library version 0.16.
+	Library version 0.17.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -486,15 +486,23 @@
 			(Name $Dir) from here (is $Target) (a $Target).
 		(endif)
 	(else)
-		You see nothing unexpected
-		(if) ($Dir = #up) (then)
-			above.
-		(elseif) ($Dir = #down) (then)
-			below.
-		(else)
-			in that direction.
-		(endif)
+		(narrate failing to look $Dir)
 	(endif)
+
+(narrate failing to look #up)
+	You see nothing unexpected above.
+
+(narrate failing to look #down)
+	You see nothing unexpected below.
+
+(narrate failing to look #in)
+	Your introspection reveals nothing.
+
+(narrate failing to look #out)
+	There's no obvious way out of here.
+
+(narrate failing to look $)
+	You see nothing unexpected in that direction.
 
 %% LOOK <rel> <obj>
 
@@ -3317,7 +3325,12 @@
 			($Obj is $Rel $Loc)
 			~(room $Loc)
 		(then)
-			that's (name $Rel) (the full $Loc)
+			(if) (plural $Obj) (then)
+				that are
+			(else)
+				that's
+			(endif)
+			(name $Rel) (the full $Loc)
 		(endif)
 	(endif)
 
@@ -3366,6 +3379,8 @@
 (isn't (plural $))	aren't
 (has (plural $))	have
 (does (plural $))	do
+(that (plural $))	those
+(that's (plural $))	those are
 
 (a (an $Obj))		an (name $Obj)
 
@@ -3392,6 +3407,8 @@
 (does $)		does
 (the $O is)		(the $O) (is $O)
 (it $O is)		(it $O) (is $O)
+(that $)		that
+(that's $)		that's
 
 (doesn't $Obj)		(does $Obj) (no space) n't
 
@@ -3404,6 +3421,8 @@
 (The full $Obj)		(uppercase) (the full $Obj)
 (It $Obj)		(uppercase) (it $Obj)
 (The $Obj is)		(uppercase) (the $Obj is)
+(That $Obj)		(uppercase) (that $Obj)
+(That's $Obj)		(uppercase) (that's $Obj)
 
 (open or closed $Obj)
 	(if) ($Obj is open) (then)
@@ -3741,16 +3760,14 @@
 
 (when $O is part of something)
 	($O is #partof $Parent)
-	That's part of (the $Parent).
+	(That's $O) part of (the $Parent).
 
 (when $Obj is fine where it is)
 	(fine where it is $Obj)
 	(if) (animate $Obj) (then)
 		(uppercase) (it $Obj is)
-	(elseif) (plural $Obj) (then)
-		Those are
 	(else)
-		That's
+		(That's $Obj)
 	(endif)
 	fine where (it $Obj) (is $Obj).
 
@@ -3811,6 +3828,7 @@
 
 (intro)
 	(banner)
+	(try [look])
 
 (read-parse-act)
 	(stoppable) {
@@ -4288,8 +4306,8 @@
 		(narrator's it refers to $Obj)
 	}
 
-(parse basic noun [some] as [$Obj] $ $ $)
-	(parse basic noun [it] as [$Obj] $ $ $)
+(parse basic noun [some] as [$Obj] $Policy $ExcludeList $AllAllowed)
+	(parse basic noun [it] as [$Obj] $Policy $ExcludeList $AllAllowed)
 	(uncountable $Obj)
 
 (parse basic noun [her] as [$Obj] $ $ $)

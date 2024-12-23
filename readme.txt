@@ -1,4 +1,4 @@
-This is version 0c/04 of the Dialog compiler, bundled with version 0.16 of its
+This is version 0c/05 of the Dialog compiler, bundled with version 0.17 of its
 standard library.
 
 Directory structure:
@@ -26,6 +26,15 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0c/05 Lib 0.17 (Manual revision 3):
+
+		Added support for the .z5 output format.
+
+		Bugfix: '(uppercase)' now works properly with dictionary words.
+
+		Library: Improved a few default responses. Added '(narrate
+		failing to look $Dir)'.
 
 	0c/04 Lib 0.16 (Manual revision 2):
 
