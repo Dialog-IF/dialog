@@ -48,12 +48,12 @@ struct opinfosrc {
 	{I_CHECK_WORDMAP,	0, 0,					"CHECK_WORDMAP"},
 	{I_CLRALL_OFLAG,	0, 0,					"CLRALL_OFLAG"},
 	{I_CLRALL_OVAR,		0, 0,					"CLRALL_OVAR"},
-	{I_COLLECT_BEGIN,	0, 0,					"COLLECT_BEGIN"},
+	{I_COLLECT_BEGIN,	0, OPF_SUBOP,				"COLLECT_BEGIN"},
 	{I_COLLECT_CHECK,	0, OPF_CAN_FAIL,			"COLLECT_CHECK"},
-	{I_COLLECT_END_R,	1, 0,					"COLLECT_END_R"},
-	{I_COLLECT_END_V,	0, OPF_CAN_FAIL,			"COLLECT_END_V"},
+	{I_COLLECT_END_R,	1, OPF_SUBOP|OPF_CAN_FAIL,		"COLLECT_END_R"},
+	{I_COLLECT_END_V,	0, OPF_SUBOP|OPF_CAN_FAIL,		"COLLECT_END_V"},
 	{I_COLLECT_MATCH_ALL,	0, OPF_CAN_FAIL,			"COLLECT_MATCH_ALL"},
-	{I_COLLECT_PUSH,	0, 0,					"COLLECT_PUSH"},
+	{I_COLLECT_PUSH,	0, OPF_SUBOP,				"COLLECT_PUSH"},
 	{I_COMPUTE_R,		4, OPF_CAN_FAIL|OPF_SUBOP,		"COMPUTE_R"},
 	{I_COMPUTE_V,		0, OPF_CAN_FAIL|OPF_SUBOP,		"COMPUTE_V"},
 	{I_CUT_CHOICE,		0, 0,					"CUT_CHOICE"},
@@ -382,17 +382,6 @@ void comp_dump_predicate(struct program *prg, struct predname *predname) {
 		cid = pred->routines[i].clause_id;
 		comp_dump_routine(prg, (cid == 0xffff)? 0 : pred->clauses[cid], &pred->routines[i]);
 	}
-}
-
-static int findvar(struct clause *cl, struct word *w) {
-	int i;
-
-	for(i = 0; i < cl->nvar; i++) {
-		if(cl->varnames[i] == w) return i;
-	}
-
-	assert(0);
-	return -1;
 }
 
 static int variable_mentioned_in(struct word *w, struct astnode *an) {
@@ -929,17 +918,15 @@ static void comp_rev_lookup(struct program *prg, struct clause *cl, int mapnum) 
 	begin_routine(labend2);
 }
 
-static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an, uint8_t *seen, int tail, uint32_t predflags, struct astnode **known_args, int max_inline) {
+static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an, uint8_t *seen, int tail, uint32_t predflags, struct astnode **known_args) {
 	int i;
 	struct cinstr *ci;
 	int lab, labloop, labmatch;
 	value_t v1, v2, v3;
 	int t1, t2;
 	int vnum;
-	char chbuf[2];
 	struct astnode *sub;
 	int do_trace = !(prg->optflags & OPTF_NO_TRACE), force_tail = 0;
-	struct word *w;
 
 	// returns non-zero if we handled the tail case
 
@@ -949,26 +936,6 @@ static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an,
 		// force a tail-call here, otherwise the trace indentation will keep increasing
 		do_trace = 0;
 		force_tail = 1;
-	}
-
-	if((prg->optflags & OPTF_INLINE)
-	&& max_inline
-	&& (an->predicate->pred->flags & PREDF_MAY_INLINE)
-	&& !(an->predicate->pred->flags & PREDF_DYNAMIC)) {
-		//printf("%s\n", an->predicate->printed_name);
-		sub = expand_macro_body(
-			an->predicate->pred->clauses[0]->body,
-			an->predicate->pred->clauses[0],
-			an->children,
-			0,
-			an->line,
-			prg,
-			cl->arena);
-		assert(sub->kind == AN_RULE);
-		if(an->subkind == RULE_SIMPLE) {
-			sub->subkind = RULE_SIMPLE;
-		}
-		return comp_rule(prg, cl, sub, seen, tail, predflags, known_args, max_inline - 1);
 	}
 
 	if(do_trace) {
@@ -1234,7 +1201,10 @@ static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an,
 	if(an->predicate->builtin == BI_SPLIT
 	&& (prg->optflags & OPTF_BOUND_PARAMS)
 	&& !an->children[0]->unbound
-	&& comp_simple_constant_list(an->children[1])) {
+	&& (
+		(an->children[1]->kind == AN_PAIR && comp_simple_constant_list(an->children[1])) ||
+		comp_simple_constant(an->children[1])))
+	{
 		// a0 = input list
 		// a1 = repurposed as list iterator
 		// a2 = left output
@@ -1270,7 +1240,12 @@ static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an,
 		ci->oper[0] = (value_t) {OPER_TEMP, t2};
 		ci->oper[1] = (value_t) {OPER_TEMP, t1};
 		ci->oper[2] = (value_t) {OPER_ARG, i};
-		if(an->children[1]->children[1]->kind == AN_EMPTY_LIST) {
+		if(an->children[1]->kind != AN_PAIR) {
+			ci = add_instr(I_IF_MATCH);
+			ci->implicit = labmatch;
+			ci->oper[0] = (value_t) {OPER_TEMP, t1};
+			ci->oper[1] = comp_tag_simple(an->children[1]);
+		} else if(an->children[1]->children[1]->kind == AN_EMPTY_LIST) {
 			ci = add_instr(I_IF_MATCH);
 			ci->implicit = labmatch;
 			ci->oper[0] = (value_t) {OPER_TEMP, t1};
@@ -1421,50 +1396,6 @@ static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an,
 		return 0;
 	}
 
-	if(an->predicate->builtin == BI_WORDREP_RETURN
-	|| an->predicate->builtin == BI_WORDREP_SPACE
-	|| an->predicate->builtin == BI_WORDREP_BACKSPACE
-	|| an->predicate->builtin == BI_WORDREP_UP
-	|| an->predicate->builtin == BI_WORDREP_DOWN
-	|| an->predicate->builtin == BI_WORDREP_LEFT
-	|| an->predicate->builtin == BI_WORDREP_RIGHT) {
-		chbuf[0] =
-			(an->predicate->builtin == BI_WORDREP_RETURN)? 13 :
-			(an->predicate->builtin == BI_WORDREP_SPACE)? 32 :
-			(an->predicate->builtin == BI_WORDREP_BACKSPACE)? 8 :
-			(an->predicate->builtin == BI_WORDREP_UP)? 16 :
-			(an->predicate->builtin == BI_WORDREP_DOWN)? 17 :
-			(an->predicate->builtin == BI_WORDREP_LEFT)? 18 :
-			(an->predicate->builtin == BI_WORDREP_RIGHT)? 19 :
-			0;
-		chbuf[1] = 0;
-		w = find_word(prg, chbuf);
-		ensure_dict_word(prg, w);
-		if(!do_trace && an->children[0]->kind == AN_VARIABLE) {
-			if(an->children[0]->word->name[0]) {
-				if(seen[(vnum = findvar(cl, an->children[0]->word))]) {
-					ci = add_instr(I_UNIFY);
-				} else {
-					ci = add_instr(I_ASSIGN);
-					seen[vnum] = 1;
-				}
-				ci->oper[0] = (value_t) {OPER_VAR, vnum};
-				ci->oper[1] = (value_t) {VAL_DICT, w->dict_id};
-			}
-		} else {
-			if(do_trace) {
-				v1 = (value_t) {OPER_ARG, 0};
-			} else {
-				v1 = comp_value(cl, an->children[0], seen, known_args);
-			}
-			ci = add_instr(I_UNIFY);
-			ci->oper[0] = v1;
-			ci->oper[1] = (value_t) {VAL_DICT, w->dict_id};
-		}
-		post_rule_trace(prg, cl, an, seen);
-		return 0;
-	}
-
 	if(an->predicate->builtin == BI_PROGRESS_BAR) {
 		if(do_trace) {
 			v1 = (value_t) {OPER_ARG, 0};
@@ -1604,7 +1535,20 @@ static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an,
 
 	if(!do_trace) {
 		for(i = 0; i < an->nchild; i++) {
-			comp_value_into(cl, an->children[i], (value_t) {OPER_ARG, i}, seen, known_args);
+			if(comp_simple_constant_list(an->children[i])
+			&& an->children[i]->kind == AN_PAIR
+			&& an->children[i]->children[1]->kind == AN_PAIR
+			&& an->children[i]->children[1]->children[1]->kind == AN_PAIR) {
+				ci = add_instr(I_COLLECT_BEGIN);
+				for(sub = an->children[i]; sub->kind == AN_PAIR; sub = sub->children[1]) {
+					ci = add_instr(I_COLLECT_PUSH);
+					ci->oper[0] = comp_tag_simple(sub->children[0]);
+				}
+				ci = add_instr(I_COLLECT_END_R);
+				ci->oper[0] = (value_t) {OPER_ARG, i};
+			} else {
+				comp_value_into(cl, an->children[i], (value_t) {OPER_ARG, i}, seen, known_args);
+			}
 			known_args[i] = an->children[i];
 		}
 	}
@@ -1756,7 +1700,7 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 		at_tail = (tail != NO_TAIL && !an->next_in_body);
 		switch(an->kind) {
 		case AN_RULE:
-			if(comp_rule(prg, cl, an, seen, at_tail? tail : NO_TAIL, predflags, known_args, 2)) {
+			if(comp_rule(prg, cl, an, seen, at_tail? tail : NO_TAIL, predflags, known_args)) {
 				return;
 			}
 			break;
@@ -1927,7 +1871,7 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 					comp_body(prg, cl, an->children[0], seen_sub, NO_TAIL, predflags, known_args);
 				} else {
 					assert(an->subkind != RULE_MULTI);
-					comp_rule(prg, cl, an, seen_sub, NO_TAIL, predflags, known_args, 2);
+					comp_rule(prg, cl, an, seen_sub, NO_TAIL, predflags, known_args);
 				}
 				ci = add_instr(I_CUT_CHOICE);
 			} else {
@@ -2061,8 +2005,10 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 			ci->oper[0] = (value_t) {OPER_VAR, vnum};
 			break;
 		case AN_COLLECT:
+		case AN_ACCUMULATE:
 			endlab = make_routine_id();
 			ci = add_instr(I_COLLECT_BEGIN);
+			ci->subop = (an->kind == AN_ACCUMULATE);
 			ci = add_instr(I_PUSH_CHOICE);
 			ci->oper[0] = (value_t) {OPER_NUM, 0};
 			ci->oper[1] = (value_t) {OPER_RLAB, endlab};
@@ -2071,6 +2017,7 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 			comp_body(prg, cl, an->children[0], seen_sub, NO_TAIL, predflags, known_args);
 			v1 = comp_value(cl, an->children[1], seen_sub, known_args);
 			ci = add_instr(I_COLLECT_PUSH);
+			ci->subop = (an->kind == AN_ACCUMULATE);
 			ci->oper[0] = v1;
 			ci = add_instr(I_JUMP);
 			ci->oper[0] = (value_t) {OPER_FAIL};
@@ -2084,11 +2031,13 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 			&& (vnum = findvar(cl, an->children[2]->word)) >= 0
 			&& !seen[vnum]) {
 				ci = add_instr(I_COLLECT_END_R);
+				ci->subop = (an->kind == AN_ACCUMULATE);
 				ci->oper[0] = (value_t) {OPER_VAR, vnum};
 				seen[vnum] = 1;
 			} else {
 				v2 = comp_value(cl, an->children[2], seen, known_args);
 				ci = add_instr(I_COLLECT_END_V);
+				ci->subop = (an->kind == AN_ACCUMULATE);
 				ci->oper[0] = v2;
 			}
 			break;
@@ -2586,6 +2535,31 @@ static void comp_clause(struct program *prg, struct predicate *pred, struct inde
 	struct astnode *an, *body;
 	int all_seen_are_bound;
 	struct astnode *known_args[MAXPARAM];
+	struct clause_code *cc;
+
+	for(cc = cl->entrypoints; cc; cc = cc->next) {
+		if(entry->n_drop_from_arg0 == cc->ndrop_arg0
+		&& entry->n_drop_from_body == cc->ndrop_body
+		&& !!ignore_arg0 == cc->ignore_arg0) {
+			ci = add_instr(I_JUMP);
+			ci->oper[0] = (value_t) {OPER_RLAB, cc->routine_id};
+			end_routine_cl(cl);
+			return;
+		}
+	}
+
+	cc = arena_alloc(cl->arena, sizeof(*cc));
+	cc->ndrop_arg0 = entry->n_drop_from_arg0;
+	cc->ndrop_body = entry->n_drop_from_body;
+	cc->routine_id = make_routine_id();
+	cc->ignore_arg0 = !!ignore_arg0;
+	cc->next = cl->entrypoints;
+	cl->entrypoints = cc;
+	ci = add_instr(I_JUMP);
+	ci->oper[0] = (value_t) {OPER_RLAB, cc->routine_id};
+	end_routine_cl(cl);
+
+	begin_routine(cc->routine_id);
 
 	memset(seen, 0, cl->nvar);
 	ntemp = 0;
@@ -3711,7 +3685,7 @@ void comp_builtin(struct program *prg, int builtin) {
 	struct predname *predname = find_builtin(prg, builtin);
 	struct predicate *pred = predname->pred;
 	struct cinstr *ci;
-	int lab, labloop, labcheck, labnext, labmatch;
+	int lab, labloop, labcheck, labnext, labmatch, labend;
 	int i;
 
 	memset(routines, 0, nroutine * sizeof(struct comp_routine));
@@ -3768,7 +3742,7 @@ void comp_builtin(struct program *prg, int builtin) {
 		break;
 	case BI_SPLIT:
 		// v0 = input list
-		// v1 = keyword list
+		// v1 = keyword or keyword list
 		// v2 = left output
 		// v3 = right output
 		// v4 = input list next
@@ -3824,14 +3798,19 @@ void comp_builtin(struct program *prg, int builtin) {
 		ci = add_instr(I_ASSIGN);
 		ci->oper[0] = (value_t) {OPER_TEMP, 0};
 		ci->oper[1] = (value_t) {OPER_VAR, 1};
+		ci = add_instr(I_IF_PAIR);
+		ci->oper[0] = (value_t) {OPER_TEMP, 0};
+		ci->implicit = labcheck;
+		ci = add_instr(I_IF_UNIFY);
+		ci->subop = 1;
+		ci->oper[0] = (value_t) {OPER_TEMP, 0};
+		ci->oper[1] = (value_t) {OPER_TEMP, 1};
+		ci->implicit = labloop;
 		ci = add_instr(I_JUMP);
-		ci->oper[0] = (value_t) {OPER_RLAB, labcheck};
+		ci->oper[0] = (value_t) {OPER_RLAB, labmatch};
 		end_routine(0xffff, &pred->arena);
 
 		begin_routine(labcheck);
-		ci = add_instr(I_IF_NIL);
-		ci->oper[0] = (value_t) {OPER_TEMP, 0};
-		ci->implicit = labloop;
 		ci = add_instr(I_GET_PAIR_RR);
 		ci->oper[0] = (value_t) {OPER_TEMP, 0};
 		ci->oper[1] = (value_t) {OPER_TEMP, 2};
@@ -3840,8 +3819,12 @@ void comp_builtin(struct program *prg, int builtin) {
 		ci->oper[0] = (value_t) {OPER_TEMP, 1};
 		ci->oper[1] = (value_t) {OPER_TEMP, 2};
 		ci->implicit = labmatch;
+		ci = add_instr(I_IF_NIL);
+		ci->subop = 1;
+		ci->oper[0] = (value_t) {OPER_TEMP, 0};
+		ci->implicit = labcheck;
 		ci = add_instr(I_JUMP);
-		ci->oper[0] = (value_t) {OPER_RLAB, labcheck};
+		ci->oper[0] = (value_t) {OPER_RLAB, labloop};
 		end_routine(0xffff, &pred->arena);
 
 		begin_routine(labmatch);
@@ -4003,6 +3986,65 @@ void comp_builtin(struct program *prg, int builtin) {
 			ci->oper[0] = (value_t) {OPER_FAIL};
 			end_routine(0xffff, &pred->arena);
 		}
+		break;
+	case BI_FULLY_BOUND:
+		labloop = make_routine_id();
+		lab = make_routine_id();
+		labend = make_routine_id();
+
+		ci = add_instr(I_ALLOCATE);
+		ci->subop = 1;
+		ci->oper[0] = (value_t) {OPER_NUM, 1};
+		ci->oper[1] = (value_t) {OPER_NUM, 1};
+		ci = add_instr(I_JUMP);
+		ci->oper[0] = (value_t) {OPER_RLAB, labloop};
+		end_routine(0xffff, &pred->arena);
+
+		begin_routine(labloop);
+		ci = add_instr(I_IF_BOUND);
+		ci->oper[0] = (value_t) {OPER_ARG, 0};
+		ci->subop = 1;
+		ci = add_instr(I_IF_PAIR);
+		ci->oper[0] = (value_t) {OPER_ARG, 0};
+		ci->subop = 1;
+		ci->implicit = labend;
+		ci = add_instr(I_GET_PAIR_RR);
+		ci->oper[0] = (value_t) {OPER_ARG, 0};
+		ci->oper[1] = (value_t) {OPER_TEMP, 0};
+		ci->oper[2] = (value_t) {OPER_ARG, 0};
+		ci = add_instr(I_IF_BOUND);
+		ci->oper[0] = (value_t) {OPER_TEMP, 0};
+		ci->subop = 1;
+		ci = add_instr(I_IF_PAIR);
+		ci->oper[0] = (value_t) {OPER_TEMP, 0};
+		ci->subop = 1;
+		ci->implicit = labloop;
+		ci = add_instr(I_ASSIGN);
+		ci->oper[0] = (value_t) {OPER_VAR, 0};
+		ci->oper[1] = (value_t) {OPER_ARG, 0};
+		ci = add_instr(I_ASSIGN);
+		ci->oper[0] = (value_t) {OPER_ARG, 0};
+		ci->oper[1] = (value_t) {OPER_TEMP, 0};
+		ci = add_instr(I_SET_CONT);
+		ci->oper[0] = (value_t) {OPER_RLAB, lab};
+		ci = add_instr(I_INVOKE_ONCE);
+		ci->oper[0] = (value_t) {OPER_PRED, predname->pred_id};
+		end_routine(0xffff, &pred->arena);
+
+		begin_routine(lab);
+		ci = add_instr(I_ASSIGN);
+		ci->oper[0] = (value_t) {OPER_ARG, 0};
+		ci->oper[1] = (value_t) {OPER_VAR, 0};
+		ci = add_instr(I_JUMP);
+		ci->oper[0] = (value_t) {OPER_RLAB, labloop};
+		end_routine(0xffff, &pred->arena);
+
+		begin_routine(labend);
+		ci = add_instr(I_DEALLOCATE);
+		ci->subop = 1;
+		ci = add_instr(I_PROCEED);
+		ci->subop = 0;
+		end_routine(0xffff, &pred->arena);
 		break;
 	case BI_BREAKPOINT:
 	case BI_BREAKPOINT_AGAIN:
@@ -4528,6 +4570,7 @@ void comp_builtins(struct program *prg) {
 	comp_builtin(prg, BI_GETRAWINPUT);
 	comp_builtin(prg, BI_GETKEY);
 	comp_builtin(prg, BI_OBJECT);
+	comp_builtin(prg, BI_FULLY_BOUND);
 	comp_builtin(prg, BI_BREAKPOINT);
 	comp_builtin(prg, BI_BREAKPOINT_AGAIN);
 	comp_builtin(prg, BI_BREAK_GETKEY);

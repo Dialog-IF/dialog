@@ -687,6 +687,37 @@ label while the node is unexposed:
 <p>The default implementation of <span class="code">(initial label&nbsp;$)</span> simply passes
 control to <span class="code">(label&nbsp;$)</span>.
 </p>
+<h3>Conditional labels</h3>
+<p>The currently active node is indicated by the global variable <span class="code">(current
+node&nbsp;$)</span>. In parser mode, <span class="code">(current node&nbsp;$)</span> is unset. You
+shouldn't update this variable directly—use <span class="code">(activate node&nbsp;$)</span> and
+<span class="code">(activate parser)</span>—but you may query it.
+</p>
+<p>Labels can have conditions. In particular, they can depend on the current node:
+</p>
+<textarea class="copyarea" id="copy17" readonly>
+(label #poppies)	(current node #rosebush)
+			Leave the rosebush and follow a scent of poppies.
+
+(label #poppies)	(current node #pond)
+			Leave the pond and return to the poppies.
+
+(label #poppies)	Follow a scent of poppies.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left">(label #poppies)</td><td class="right">(current node #rosebush)</td></tr>
+<tr><td class="left"></td><td class="right">Leave the rosebush and follow a scent of poppies.</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left">(label #poppies)</td><td class="right">(current node #pond)</td></tr>
+<tr><td class="left"></td><td class="right">Leave the pond and return to the poppies.</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left">(label #poppies)</td><td class="right">Follow a scent of poppies.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy17').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
 <h3>Dead ends and sticky nodes</h3>
 <p>A <i>dead end</i> is a node that doesn't offer any further choices. When the
 current node is a dead end, control flows back to the most recent node by
@@ -694,7 +725,7 @@ default. In addition, the dead-end node becomes <i>unavailable</i>. Unavailable
 nodes do not show up in option lists, even if they are declared using
 <span class="code">($&nbsp;offers&nbsp;$)</span>.
 </p>
-<textarea class="copyarea" id="copy17" readonly>
+<textarea class="copyarea" id="copy18" readonly>
 #poppies-collect
 (#poppies offers *)
 (label *)		Collect nectar from the poppies.
@@ -709,7 +740,7 @@ nodes do not show up in option lists, even if they are declared using
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy17').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy18').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <div class="img"><img src="choice1a.png" /></div>
 <div class="blkoutput">You extend your wings. A warm, buzzy feeling spreads through your body as you<br />
@@ -737,7 +768,7 @@ You circle a patch of poppies by the pondside.<br />
 &gt;</div><p>Sometimes you'll want a dead-end node that remains available in choice-listings
 even after it has been exposed. Just mark the node as <i>sticky</i>:
 </p>
-<textarea class="copyarea" id="copy18" readonly>
+<textarea class="copyarea" id="copy19" readonly>
 #poppies-collect
 (sticky *)
 </textarea>
@@ -748,13 +779,13 @@ even after it has been exposed. Just mark the node as <i>sticky</i>:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy18').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy19').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <h3>Flow and converging paths</h3>
 <p>It is possible to specify a different target for a dead-end node using
 <span class="code">($&nbsp;flows to&nbsp;$)</span>:
 </p>
-<textarea class="copyarea" id="copy19" readonly>
+<textarea class="copyarea" id="copy20" readonly>
 #poppies-collect
 (#poppies offers *)
 (label *)		Collect nectar from the poppies.
@@ -775,7 +806,7 @@ even after it has been exposed. Just mark the node as <i>sticky</i>:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy19').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy20').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <div class="img"><img src="choice1b.png" /></div>
 <p>This mechanism can be used to implement <i>converging paths</i>, where a single
@@ -789,7 +820,7 @@ an anonymous bag of subsequent choices:
 becoming unwinnable if the player revisits a plant after collecting both kinds
 of nectar.
 </p>
-<textarea class="copyarea" id="copy20" readonly>
+<textarea class="copyarea" id="copy21" readonly>
 (intro)		(activate node #start)
 
 #start
@@ -878,7 +909,7 @@ of nectar.
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy20').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy21').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>The default behaviour of automatically returning to the previous node is
 actually implemented as a fallback rule for the <span class="code">($&nbsp;flows to&nbsp;$)</span>
@@ -900,7 +931,7 @@ exposed so far.
 and needs at least some nectar in order to proceed with the landing:
 </p>
 <div class="img"><img src="choicehub.png" /></div>
-<textarea class="copyarea" id="copy21" readonly>
+<textarea class="copyarea" id="copy22" readonly>
 (intro)		You extend your wings. A warm, buzzy feeling spreads through your body
 		as you leave the hive.
 		(activate node #hub)
@@ -977,14 +1008,14 @@ and needs at least some nectar in order to proceed with the landing:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy21').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy22').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <h3>Choice/parser integration</h3>
 <p>A <i>terminating</i> dead-end node has the side-effect of leaving choice mode.
 This is handy when integrating choice-based sequences into a larger game:
 </p>
 <div class="img"><img src="choiceterm.png" /></div>
-<textarea class="copyarea" id="copy22" readonly>
+<textarea class="copyarea" id="copy23" readonly>
 (current player #player)
 (#player is #in #beehive)
 
@@ -1051,7 +1082,7 @@ This is handy when integrating choice-based sequences into a larger game:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy22').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy23').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Terminating nodes are implicitly sticky.
 </p>
@@ -1063,7 +1094,7 @@ multiple choice-based sequences that are triggered in a similar way. For
 instance, conversations with non-player characters could be launched with a
 generic rule, such as:
 </p>
-<textarea class="copyarea" id="copy23" readonly>
+<textarea class="copyarea" id="copy24" readonly>
 (perform [talk to (animate $NPC)])
 	(activate node $NPC)
 </textarea>
@@ -1074,7 +1105,7 @@ generic rule, such as:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy23').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy24').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>When the player types a number during choice mode, a query is made to
 <span class="code">(choose&nbsp;$)</span>. The default behaviour of this predicate—feel free to
@@ -1083,7 +1114,7 @@ and then make a query to <span class="code">(activate node&nbsp;$)</span>. This 
 turn, performs some internal housekeeping, and <i>displays</i> the node using a
 predicate called <span class="code">(display&nbsp;$)</span>:
 </p>
-<textarea class="copyarea" id="copy24" readonly>
+<textarea class="copyarea" id="copy25" readonly>
 (display $Obj)
 	(exhaust) { *(before disp $Obj) }
 	(disp $Obj)
@@ -1098,7 +1129,7 @@ predicate called <span class="code">(display&nbsp;$)</span>:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy24').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy25').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>So as a complement to the normal <span class="code">(disp&nbsp;$)</span> rules, story authors can
 put header and footer material in <span class="code">(before disp&nbsp;$)</span> and <span class="code">(after
@@ -1111,7 +1142,7 @@ the node as exposed, and invokes <span class="code">(stop)</span>. But no query 
 <p>To change this, just add an <span class="code">(after disp&nbsp;$)</span> rule with an explicit
 query to <span class="code">(tick)</span>:
 </p>
-<textarea class="copyarea" id="copy25" readonly>
+<textarea class="copyarea" id="copy26" readonly>
 (after disp $)	(tick)
 </textarea>
 <div class="blkcode">
@@ -1120,12 +1151,12 @@ query to <span class="code">(tick)</span>:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy25').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy26').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Sometimes, it is more natural to advance time only at terminating nodes, i.e.
 just before the game transitions from choice mode to parser mode:
 </p>
-<textarea class="copyarea" id="copy26" readonly>
+<textarea class="copyarea" id="copy27" readonly>
 (after disp (terminating $))
 	(tick)
 </textarea>
@@ -1136,12 +1167,12 @@ just before the game transitions from choice mode to parser mode:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy26').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy27').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>And here is a variant that also prints the current room description, sending a
 signal to the player that the game is now in parser mode:
 </p>
-<textarea class="copyarea" id="copy27" readonly>
+<textarea class="copyarea" id="copy28" readonly>
 (after disp (terminating $))
 	(par)
 	(try [look])
@@ -1156,7 +1187,7 @@ signal to the player that the game is now in parser mode:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy27').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy28').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <h3>Hybrid modes</h3>
 <p>The library also supports parser/choice hybrid modes, where certain actions are
@@ -1167,7 +1198,7 @@ to allow <span class="prginput">SHOW X TO Y</span> from within a choice-based co
 allowed in choice mode. Change this by adding rules to <span class="code">(allowed
 action&nbsp;$)</span>, e.g.:
 </p>
-<textarea class="copyarea" id="copy28" readonly>
+<textarea class="copyarea" id="copy29" readonly>
 (allowed action [look])
 </textarea>
 <div class="blkcode">
@@ -1176,15 +1207,12 @@ action&nbsp;$)</span>, e.g.:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy28').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy29').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
-<p>The currently active node is indicated by the global variable <span class="code">(current
-node&nbsp;$)</span>. In parser mode, <span class="code">(current node&nbsp;$)</span> is unset. You
-shouldn't update this variable directly—use <span class="code">(activate node&nbsp;$)</span> and
-<span class="code">(activate parser)</span>—but you may query it. As an arbitrary example,
-you could allow <span class="prginput">LOOK</span> from a subset of the nodes:
+<p>As an arbitrary example, you could allow <span class="prginput">LOOK</span> from a subset of
+the nodes:
 </p>
-<textarea class="copyarea" id="copy29" readonly>
+<textarea class="copyarea" id="copy30" readonly>
 (allowed action [look])
 	(current node $Node)
 	($Node is one of [#rosebush #poppies])
@@ -1197,11 +1225,11 @@ you could allow <span class="prginput">LOOK</span> from a subset of the nodes:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy29').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy30').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="npc.html">Chapter 9: Non-player characters</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 23, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 24, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

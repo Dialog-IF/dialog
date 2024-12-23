@@ -9,7 +9,7 @@
 <body>
 	<div class="chapter">
 	<h1>Chapter 5: Input and output</h1>
-	<div class="navlinks">(<a href="#div">Divs, spans, and style classes</a>&nbsp;&bull; <a href="#styles">Case conversion and inline styles</a>&nbsp;&bull; <a href="#statusbar">The status bar</a>&nbsp;&bull; <a href="#progressbar">Visualizing progress</a>&nbsp;&bull; <a href="#clear">Clearing the screen</a>&nbsp;&bull; <a href="#input">Input</a>&nbsp;&bull; <a href="#hyperlinks">Hyperlinks</a>&nbsp;&bull; <a href="#resources">Resources</a>&nbsp;&bull; <a href="#split">Splitting input by keywords</a>&nbsp;&bull; <a href="#detobj">Determining objects from words</a>)</div>
+	<div class="navlinks">(<a href="#div">Divs, spans, and style classes</a>&nbsp;&bull; <a href="#styles">Case conversion and inline styles</a>&nbsp;&bull; <a href="#statusbar">The status bar</a>&nbsp;&bull; <a href="#progressbar">Visualizing progress</a>&nbsp;&bull; <a href="#clear">Clearing the screen</a>&nbsp;&bull; <a href="#input">Input</a>&nbsp;&bull; <a href="#hyperlinks">Hyperlinks</a>&nbsp;&bull; <a href="#resources">Resources</a>&nbsp;&bull; <a href="#debugging">Debugging</a>&nbsp;&bull; <a href="#detobj">Determining objects from words</a>)</div>
 <a id="div"></a><h2>Divs, spans, and style classes</h2>
 <p>As we saw in the <a href="execution.html#printing">introductory chapter</a>, text inside rule bodies
 gets printed. The text is treated as a sequence of words and punctuation.
@@ -409,36 +409,26 @@ representing the character that was typed, e.g. <span class="code">@e</span> if 
 case-insensitive, so for letters of the alphabet there is no way to tell
 whether the player was holding shift or not.
 </p>
-<p>Some special keys correspond to dictionary words that can't be represented
-directly in Dialog source code. The dictionary words for these keys can be
-obtained at runtime, by querying the following built-in predicates:
+<p>A few non-printable keys are recognized, and reported using special dictionary
+words:
+</p>
+<table class="datatable">
+<tr><th>Key</th><th>Special dictionary word</th></tr>
+<tr><td>Return</td><td><span class="code">@\n</span></td></tr>
+<tr><td>Space</td><td><span class="code">@\s</span></td></tr>
+<tr><td>Backspace</td><td><span class="code">@\b</span></td></tr>
+<tr><td>Up</td><td><span class="code">@\u</span></td></tr>
+<tr><td>Down</td><td><span class="code">@\d</span></td></tr>
+<tr><td>Left</td><td><span class="code">@\l</span></td></tr>
+<tr><td>Right</td><td><span class="code">@\r</span></td></tr>
+</table>
+<p>These special dictionary words aren't supposed to be printed. In the debugger,
+they will come out as their source-code representation, which is useful during
+tracing. Other interpreters may print them differently, or not at all.
+</p>
+<p>A simple keypress dispatcher can look like this:
 </p>
 <textarea class="copyarea" id="copy7" readonly>
-(word representing return $Char)
-(word representing space $Char)
-(word representing backspace $Char)
-(word representing up $Char)
-(word representing down $Char)
-(word representing left $Char)
-(word representing right $Char)
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="both" colspan="2">(word representing return $Char)</td></tr>
-<tr><td class="both" colspan="2">(word representing space $Char)</td></tr>
-<tr><td class="both" colspan="2">(word representing backspace $Char)</td></tr>
-<tr><td class="both" colspan="2">(word representing up $Char)</td></tr>
-<tr><td class="both" colspan="2">(word representing down $Char)</td></tr>
-<tr><td class="both" colspan="2">(word representing left $Char)</td></tr>
-<tr><td class="both" colspan="2">(word representing right $Char)</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy7').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>A simple keypress dispatcher might look like this:
-</p>
-<textarea class="copyarea" id="copy8" readonly>
 (program entry point)
 	(get key $Key)
 	(handle keypress $Key)
@@ -449,7 +439,7 @@ obtained at runtime, by querying the following built-in predicates:
 (handle keypress @b)
 	'B' was pressed.
 
-(handle keypress (word representing return $))
+(handle keypress @\n)
 	RETURN was pressed.
 </textarea>
 <div class="blkcode">
@@ -464,15 +454,15 @@ obtained at runtime, by querying the following built-in predicates:
 <tr><td class="both" colspan="2">(handle keypress @b)</td></tr>
 <tr><td class="left"></td><td class="right">'B' was pressed.</td></tr>
 <tr><td class="blank" colspan="2"></td></tr>
-<tr><td class="both" colspan="2">(handle keypress (word representing return $))</td></tr>
+<tr><td class="both" colspan="2">(handle keypress @\n)</td></tr>
 <tr><td class="left"></td><td class="right">RETURN was pressed.</td></tr>
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy8').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy7').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <h3>Get input</h3>
-<textarea class="copyarea" id="copy9" readonly>
+<textarea class="copyarea" id="copy8" readonly>
 	(get input $WordList)
 </textarea>
 <div class="blkcode">
@@ -481,7 +471,7 @@ obtained at runtime, by querying the following built-in predicates:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy9').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy8').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>This query blocks execution until the player types a line of input, followed by
 return. Different interpreters provide different levels of line-editing
@@ -506,7 +496,7 @@ not require it.
 <span class="code">(removable word endings)</span>. Each rule body should consist of one or
 more word endings:
 </p>
-<textarea class="copyarea" id="copy10" readonly>
+<textarea class="copyarea" id="copy9" readonly>
 (removable word endings)
 	%% German adjective endings
 	en es em e
@@ -527,7 +517,7 @@ more word endings:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy9').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>The part that remains after removing the ending is referred to as the
 <i>stem</i> of the word. If the stem consists of at least two letters, and
@@ -537,7 +527,7 @@ During comparison (unification with another bound value), only the essential
 part is considered. During printing, both the essential part and the optional
 part are printed.
 </p>
-<p>During <a href="builtins.html#trace">tracing</a>, dictionary words are displayed with a plus sign (+)
+<p>During <a href="io.html#debugging">tracing</a>, dictionary words are displayed with a plus sign (+)
 separating the essential and optional parts. Thus, if the German word
 &ldquo;klein&rdquo; is part of the game-wide dictionary, and the player enters
 <span class="prginput">KLEINES</span>, that word appears as <span class="tt">@klein+es</span> in the trace
@@ -567,7 +557,7 @@ value&nbsp;7.
 <p>The Å-machine backend supports a form of <i>hyperlinks</i>, for the purpose of
 simplifying text entry on mobile devices. The syntax is:
 </p>
-<textarea class="copyarea" id="copy11" readonly>
+<textarea class="copyarea" id="copy10" readonly>
 	(link $Target) <i>statement</i>
 </textarea>
 <div class="blkcode">
@@ -576,13 +566,13 @@ simplifying text entry on mobile devices. The syntax is:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy11').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>The following example creates a piece of text, &ldquo;clickable&rdquo;. Clicking on
 the text has the same effect as typing the words <span class="prginput">THE LINKED TEXT</span>
 and pressing return.
 </p>
-<textarea class="copyarea" id="copy12" readonly>
+<textarea class="copyarea" id="copy11" readonly>
 	Here is some (link [the linked text]) { clickable } text.
 </textarea>
 <div class="blkcode">
@@ -591,7 +581,7 @@ and pressing return.
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy12').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy11').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Note that the words are appended to the end of the current contents of the
 input buffer, so that the player might type a verb, and then complete the
@@ -602,7 +592,7 @@ obtained from <span class="code">(get input&nbsp;$)</span>. It can be computed a
 </p>
 <p>When the target is identical to the clickable text, a short form is available:
 </p>
-<textarea class="copyarea" id="copy13" readonly>
+<textarea class="copyarea" id="copy12" readonly>
 	Why don't you (link) {open the drawer}?
 </textarea>
 <div class="blkcode">
@@ -611,7 +601,7 @@ obtained from <span class="code">(get input&nbsp;$)</span>. It can be computed a
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy13').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy12').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>A query to <span class="code">(clear links)</span> transforms earlier hyperlinks into
 regular, non-clickable text. This is useful after a substantial scope change,
@@ -631,7 +621,7 @@ would-be-clickable text shows up as normal text.
 web sites, using a common mechanism. A <i>resource</i> is defined with the
 following syntax:
 </p>
-<textarea class="copyarea" id="copy14" readonly>
+<textarea class="copyarea" id="copy13" readonly>
 (define resource <i>id</i>) <i>location</i>
 </textarea>
 <div class="blkcode">
@@ -640,7 +630,7 @@ following syntax:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy14').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy13').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>The <i>id</i> is any bound Dialog-value, such as an integer, a dictionary word,
 an object, or even a list.
@@ -654,7 +644,7 @@ into the <span class="tt">.aastory</span> file, and this is the recommended way 
 <p>When a resource has been defined, it's possible to link to it using the following
 syntax:
 </p>
-<textarea class="copyarea" id="copy15" readonly>
+<textarea class="copyarea" id="copy14" readonly>
 	(link resource $Id) <i>statement</i>
 </textarea>
 <div class="blkcode">
@@ -663,11 +653,11 @@ syntax:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy15').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy14').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Here is an example:
 </p>
-<textarea class="copyarea" id="copy16" readonly>
+<textarea class="copyarea" id="copy15" readonly>
 (define resource @manual)
 	feelies/manual.pdf
 
@@ -708,7 +698,7 @@ syntax:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy16').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy15').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Not every interpreter or backend supports links. Use <span class="code">(interpreter
 supports links)</span> to check for this feature at runtime. Alternatively,
@@ -728,7 +718,7 @@ resource. When defining a resource, it is possible to add an <i>alt-text</i>
 that can be displayed instead of the resource. The alt-text appears at the end
 of the resource definition, separated from the location by a semicolon:
 </p>
-<textarea class="copyarea" id="copy17" readonly>
+<textarea class="copyarea" id="copy16" readonly>
 (define resource <i>id</i>) <i>location</i>; <i>alt-text</i>
 </textarea>
 <div class="blkcode">
@@ -737,7 +727,7 @@ of the resource definition, separated from the location by a semicolon:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy17').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy16').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>If no alt-text is specified, the filename (i.e. location) is used as a default
 value. Only the actual filename is used as alt-text, not the full path.
@@ -748,7 +738,7 @@ the current interpreter is capable of displaying a given resource. If not,
 </p>
 <p>Example:
 </p>
-<textarea class="copyarea" id="copy18" readonly>
+<textarea class="copyarea" id="copy17" readonly>
 (define resource #lighthouse)
 	media/lighthouse.png; A small model of a lighthouse.
 
@@ -789,7 +779,7 @@ the current interpreter is capable of displaying a given resource. If not,
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy18').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy17').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>In the above example, the <span class="code">(div&nbsp;$)</span> splits the text into two
 paragraphs if the interpreter is able to embed <span class="tt">png</span> files. Otherwise,
@@ -813,74 +803,73 @@ filenames, regardless of their path. Thus, you can't define one resource with
 the filename &ldquo;hero/face.png&rdquo; and another with the filename
 &ldquo;heroine/face.png&rdquo;. This restriction might be relaxed in future versions.
 </p>
-<a id="split"></a><h2>Splitting input by keywords</h2>
-<p>During parsing, it is often necessary to scan a list for certain keywords, and
-then split it into two sublists, representing the elements on either side of
-the matched keyword. It is straightforward to implement this using ordinary
-rules in Dialog. However, for performance reasons the language also provides a
-built-in predicate:
+<a id="debugging"></a><h2>Debugging</h2>
+<p>If the program is currently running inside the interactive debugger,
+<span class="nobreak"><span class="code">(log) <i>statement</i></span></span> will execute the inner
+statement—usually a block—in a stoppable environment. Output from the statement
+will appear between line breaks, in a distinct style. This is useful for adding
+temporary printouts to the code. For instance:
 </p>
-<textarea class="copyarea" id="copy19" readonly>
-(split $Input by $Keywords into $Left and $Right)
+<textarea class="copyarea" id="copy18" readonly>
+(program entry point)
+	(log) { Program started. X = $X }
+	($X = 42)
+	Hello,
+	(log) $X
+	world!
 </textarea>
 <div class="blkcode">
 <table>
-<tr><td class="both" colspan="2">(split $Input by $Keywords into $Left and $Right)</td></tr>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">(log) { Program started. X = $X }</td></tr>
+<tr><td class="left"></td><td class="right">($X = 42)</td></tr>
+<tr><td class="left"></td><td class="right">Hello,</td></tr>
+<tr><td class="left"></td><td class="right">(log) $X</td></tr>
+<tr><td class="left"></td><td class="right">world!</td></tr>
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy19').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy18').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
-<p><span class="code">$Input</span> and <span class="code">$Keywords</span> must be lists of simple values,
-i.e. they mustn't contain sublists.
+<p>looks like this in the debugger:
 </p>
-<p>The <span class="code">$Input</span> list will be scanned, starting at its head, until the
-first element that also appears in <span class="code">$Keywords</span> is found. A list of
-the elements that came before the keyword is unified with <span class="code">$Left</span>,
-and a list of the elements that follow it is unified with <span class="code">$Right</span>.
-That is, neither <span class="code">$Left</span> nor <span class="code">$Right</span> includes the
-keyword itself.
+<div class="blkoutput"><b>Program started. X = $</b><br />
+Hello,<br />
+<b>42</b><br />
+world!</div><p>but like this when the code is compiled:
 </p>
-<p>When invoked as a multi-query, the predicate backtracks over each matching
-position. Thus:
+<div class="blkoutput">Hello, world!</div><p>The following built-in predicates are also useful for debugging:
 </p>
-<textarea class="copyarea" id="copy20" readonly>
-	*(split [the good , the bad and the ugly]
-		by [and ,]
-		into $Left and $Right)
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="left"></td><td class="right">*(split [the good , the bad and the ugly]</td></tr>
-<tr><td class="left"></td><td class="right"><span class="tab"> </span>by [and ,]</td></tr>
-<tr><td class="left"></td><td class="right"><span class="tab"> </span>into $Left and $Right)</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy20').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>will succeed twice: First, binding <span class="code">$Left</span> to <span class="code">[the
-good]</span> and <span class="code">$Right</span> to <span class="code">[the bad and the ugly]</span>,
-and then a second time binding <span class="code">$Left</span> to <span class="code">[the good , the
-bad]</span> and <span class="code">$Right</span> to <span class="code">[the ugly]</span>.
+<p class="codeline">(breakpoint)</p>
+<p class="noteline">If the program is currently running inside the interactive debugger,
+suspend execution and print the current source code filename and line
+number. When execution resumes, this query succeeds.
 </p>
-<p>The split-by predicate can also be used to check whether a list contains one or
-more of a set of keywords. The standard library uses it that way in the
-following rule definition:
+<p class="noteline">Outside of the debugger, the query simply succeeds.
 </p>
-<textarea class="copyarea" id="copy21" readonly>
-($X contains one of $Y)
-	(split $X by $Y into $ and $)
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="both" colspan="2">($X contains one of $Y)</td></tr>
-<tr><td class="left"></td><td class="right">(split $X by $Y into $ and $)</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy21').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
+<p class="codeline">(trace on)</p>
+<p class="noteline">Enables tracing. Following this, debugging information will be printed
+when queries are made, and when rule bodies are entered. The
+interactive debugger will also report when solutions are found, and
+when dynamic predicates are updated.
+</p>
+<p class="codeline">(trace off)</p>
+<p class="noteline">Disables tracing.
+</p>
+<p>If the program source code contains a query to <span class="code">(trace on)</span>
+anywhere, the compiler backend will insert extra instructions all over the
+generated code, to deal with tracing. This is known as <i>instrumenting</i> the
+code, and it makes the program slower and larger. Thus, you'll only want to use
+these predicates temporarily, during debugging. The compiler prints a warning
+when it adds the extra instructions.
+</p>
+<p>Please be aware that the Dialog compiler and debugger do optimize your program,
+and you will be tracing the optimized code, so certain queries and rules will
+be missing from the debug printouts. You will generally want to do all your
+tracing in the debugger, which mercifully turns off some of the more confusing
+optimizations. That being said, tracing the optimized Z- or Å-code can be
+useful when trying to speed up a program.
+</p>
 <a id="detobj"></a><h2>Determining objects from words</h2>
 <p>This section is mainly of concern for library programmers, so story authors may
 safely skip it.
@@ -888,7 +877,7 @@ safely skip it.
 <p>Dialog has a special construct for matching player input against in-world
 object names in a very efficient way:
 </p>
-<textarea class="copyarea" id="copy22" readonly>
+<textarea class="copyarea" id="copy19" readonly>
 	(determine object $Obj)
 		<i>object generator</i>
 	(from words)
@@ -905,7 +894,7 @@ object names in a very efficient way:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy22').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy19').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>This statement will backtrack over every object <span class="code">$Obj</span> for which:<br />
 </p>
@@ -916,7 +905,7 @@ object names in a very efficient way:
 in the word generator, and the object generator should contain a multi-query to
 backtrack over a set of objects. A canonical example is:
 </p>
-<textarea class="copyarea" id="copy23" readonly>
+<textarea class="copyarea" id="copy20" readonly>
 	(determine object $Obj)
 		*($Obj is in scope)
 	(from words)
@@ -933,7 +922,7 @@ backtrack over a set of objects. A canonical example is:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy23').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy20').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>A non-optimizing compiler could deal with this construct as follows: First,
 compile normal code for the object generator. Then, exhaust every branch of the
@@ -956,7 +945,7 @@ unoptimized case.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="dynamic.html">Chapter 6: Dynamic predicates</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 23, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 24, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

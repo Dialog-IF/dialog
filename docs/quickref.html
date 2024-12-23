@@ -45,6 +45,14 @@ and braces. Prefix by <span class="code">\</span> to print.
 </p>
 <p class="codeline">@abc</p>
 <p class="noteline">Dictionary word. The <span class="code">@</span> is optional inside list expressions.
+Special words to represent non-printable keys:
+<span class="code">@\n</span>,
+<span class="code">@\b</span>,
+<span class="code">@\s</span>,
+<span class="code">@\u</span>,
+<span class="code">@\d</span>,
+<span class="code">@\l</span>,
+<span class="code">@\r</span>.
 </p>
 <p class="codeline">$abc</p>
 <p class="noteline">Variable.
@@ -122,6 +130,10 @@ Values bound to <span class="code">$Element</span> are collected in order and un
 <p class="noteline">Backtracks over all solutions to the inner expression, grabbing all output.
 Printed words are diverted into <span class="code">$List</span>, possibly out of order.
 </p>
+<p class="codeline">(accumulate $Element) ... (into $Sum)</p>
+<p class="noteline">Backtracks over all solutions to the inner expression.
+Values bound to <span class="code">$Element</span> are added and their sum is unified with <span class="code">$Sum</span>.
+</p>
 <p class="codeline">(determine object $Obj) ... (from words) ... (matching all of $List)</p>
 <p class="noteline">Backtracks over every object <span class="code">$Obj</span> that makes the first
 inner expression succeed, and for which the second expression (when
@@ -172,13 +184,17 @@ style.
 <p class="noteline">Removes choice-points created since the current predicate was queried.
 </p>
 <p class="codeline">(global variable (name of predicate $))</p>
-<p class="noteline">Declares a global variable for holding simple values.
+<p class="noteline">Declares a global variable.
 </p>
 <p class="codeline">(interface (name of predicate))</p>
 <p class="noteline">Declares an <a href="beyondprg.html#interface">interface</a>, i.e. the intended use of a predicate.
 </p>
 <p class="codeline">(generate $N (name of predicate $))</p>
 <p class="noteline">Creates <span class="code">$N</span> anonymous objects, for which the predicate will succeed.
+</p>
+<p class="codeline">@(...) ...</p>
+<p class="noteline">Defines an access predicate. Queries or definitions matching the rule head are
+transformed into the rule body at compile-time.
 </p>
 <h3>Built-in predicates</h3>
 <p>The list is sorted alphabetically, considering just the non-parameter words.
@@ -234,6 +250,9 @@ style.
 </p>
 <p class="codeline">(fixed pitch)</p>
 <p class="noteline">Enables fixed-pitch text.
+</p>
+<p class="codeline">(fully bound $X)</p>
+<p class="noteline">Succeeds if <span class="code">$X</span> is bound to a value, and—in case of a list—contains only fully bound elements.
 </p>
 <p class="codeline">(get input $)</p>
 <p class="noteline">Reads a line of input from the player. Returns a list of words.
@@ -355,7 +374,7 @@ successful restore.
 <p class="noteline">Prints <span class="code">$N</span> space characters.
 </p>
 <p class="codeline">(split $X by $Y into $Left and $Right)</p>
-<p class="noteline">Splits <span class="code">$X</span> into two halves around each occurrence of a keyword from <span class="code">$Y</span>.
+<p class="noteline">Splits <span class="code">$X</span> into two halves around each occurrence of <span class="code">$Y</span> or any member of <span class="code">$Y</span>.
 </p>
 <p class="codeline">(split word $Word into $List)</p>
 <p class="noteline">Converts the dictionary word (or number) <span class="code">$Word</span> into a list of its constituent characters, and unifies the result with <span class="code">$List</span>.
@@ -386,27 +405,6 @@ successful restore.
 </p>
 <p class="codeline">(word $X)</p>
 <p class="noteline">Succeeds if <span class="code">$X</span> is bound to a dictionary word.
-</p>
-<p class="codeline">(word representing backspace $Char)</p>
-<p class="noteline">Unifies <span class="code">$Char</span> with the single-character word that represents the backspace key.
-</p>
-<p class="codeline">(word representing down $Char)</p>
-<p class="noteline">Unifies <span class="code">$Char</span> with the single-character word that represents the down arrow key.
-</p>
-<p class="codeline">(word representing left $Char)</p>
-<p class="noteline">Unifies <span class="code">$Char</span> with the single-character word that represents the left arrow key.
-</p>
-<p class="codeline">(word representing return $Char)</p>
-<p class="noteline">Unifies <span class="code">$Char</span> with the single-character word that represents the return key.
-</p>
-<p class="codeline">(word representing right $Char)</p>
-<p class="noteline">Unifies <span class="code">$Char</span> with the single-character word that represents the right arrow key.
-</p>
-<p class="codeline">(word representing space $Char)</p>
-<p class="noteline">Unifies <span class="code">$Char</span> with the single-character word that represents the space key.
-</p>
-<p class="codeline">(word representing up $Char)</p>
-<p class="noteline">Unifies <span class="code">$Char</span> with the single-character word that represents the up arrow key.
 </p>
 <h3>Entry points and metadata predicates</h3>
 <p class="codeline">(error $ErrorCode entry point)</p>
@@ -444,7 +442,7 @@ successful restore.
 </p>
 	<div class="footer">
 	<p class="nav">Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 23, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 24, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

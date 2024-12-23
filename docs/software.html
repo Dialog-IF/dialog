@@ -34,7 +34,7 @@ the directory that contains them.
 <div class="blkoutput">dialogc --version<br />
 dgdebug --version</div><p>Each of them should print the current version number of the Dialog software.
 The first two characters (a digit and a letter) identify the language version,
-which is currently <b>0j</b>. Following that is a slash, and then the software
+which is currently <b>0k</b>. Following that is a slash, and then the software
 revision number.
 </p>
 <p>The archive also contains the latest version of the Dialog standard library,
@@ -244,7 +244,7 @@ debugging commands.
 </p>
 <p>To resume execution, type a blank line at this prompt.
 </p>
-<p>Suspending is useful when you've enabled <a href="builtins.html#trace">tracing</a> and found that you
+<p>Suspending is useful when you've enabled <a href="io.html#debugging">tracing</a> and found that you
 got a bit more than you bargained for. At the <span class="tt">[More]</span> prompt, simply
 hit Control-C, type <span class="code">(trace&nbsp;off)</span>, and press return a second time.
 </p>
@@ -257,6 +257,9 @@ recursive calls.
 <p>Use queries to inspect the state of the running program, e.g. type
 <span class="code">*($&nbsp;has parent #box)</span> into the game to get a list of every object
 that's currently a direct child of the <span class="code">#box</span> object.
+</p>
+<p>Insert <span class="code">(log) ...</span> statements to print variables and other
+information while debugging.
 </p>
 <p>The standard library provides <span class="code">(actions&nbsp;on)</span> and
 <span class="code">(actions&nbsp;off)</span>, for controlling <i>action tracing</i>. When
@@ -276,7 +279,8 @@ running game:
 <p class="noteline">to purloin an object, and
 </p>
 <p class="codeline">(try <i>Action</i>)</p>
-<p class="noteline">to temporarily sidestep a parser problem.
+<p class="noteline">to temporarily sidestep a parser problem, or to trace an action without
+also tracing the parser.
 </p>
 <p>Query tracing can be enabled interactively with <span class="code">(trace&nbsp;on)</span>, and
 disabled with <span class="code">(trace&nbsp;off)</span>. Tracing a complete player command will
@@ -325,7 +329,7 @@ system-wide location, type &ldquo;<span class="tt">sudo&nbsp;make&nbsp;install</
 </p>
 	<div class="footer">
 	<p class="nav">Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 23, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 24, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

@@ -1506,7 +1506,12 @@ int debugger(int argc, char **argv) {
 					running = 0;
 				} else if(i == 3) {
 					dbg.status = eval_injected_query(&dbg.es, find_builtin(dbg.prg, BI_BREAK_GETKEY));
-				} else {
+				} else if(i == 8 || i == 13 || (i >= 16 && i <= 19) || i >= 32) {
+					if(i >= 'A' && i <= 'Z') {
+						i = i - 'A' + 'a';
+					} else if(i >= 0x80) {
+						i = unicode_to_lower(i);
+					}
 					unibuf[0] = i;
 					unibuf[1] = 0;
 					if(unicode_to_utf8((uint8_t *) chbuf, sizeof(chbuf), unibuf) == 1) {

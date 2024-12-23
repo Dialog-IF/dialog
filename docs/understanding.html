@@ -9,21 +9,904 @@
 <body>
 	<div class="chapter">
 	<h1>Chapter 10: Understanding player input</h1>
-	<div class="navlinks">(<a href="#complexactions">Complex actions</a>&nbsp;&bull; <a href="#parsingprocess">The parsing process</a>&nbsp;&bull; <a href="#parsingactions">Parsing actions</a>&nbsp;&bull; <a href="#newactions">Defining new actions</a>&nbsp;&bull; <a href="#parsingobj">Parsing object names</a>&nbsp;&bull; <a href="#parsedir">Directions and numbers</a>&nbsp;&bull; <a href="#parsetopics">Topics</a>&nbsp;&bull; <a href="#unlikely">Adjusting the likelihood of actions</a>&nbsp;&bull; <a href="#rewrite">Synonyms</a>&nbsp;&bull; <a href="#askingforclar">Asking for clarification</a>&nbsp;&bull; <a href="#understandorder">Rule order</a>&nbsp;&bull; <a href="#newaction">Example: Defining a new action</a>&nbsp;&bull; <a href="#liblinks">Hyperlinks</a>)</div>
+	<div class="navlinks">(<a href="#grammar">Grammar definitions</a>&nbsp;&bull; <a href="#newactions">Adding actions</a>&nbsp;&bull; <a href="#unlikely">Adjusting the likelihood of actions</a>&nbsp;&bull; <a href="#liblinks">Links and default actions</a>&nbsp;&bull; <a href="#newaction">Example: Defining a new action</a>&nbsp;&bull; <a href="#howparser">How the parser works</a>)</div>
 <p>Actions originate from the <i>parser</i>, a central part of the standard
-library. The detailed inner workings of the parser are beyond the scope of this
-manual (but interested readers are encouraged to look at the source code of the
-standard library). What story authors should know, though, is that the parser
-makes queries to <i>understand-predicates</i>, which are defined by the
-standard library and the story author together. These predicates can make
-queries to the parser in turn. To see how this back-and-forth is supposed to
-work, we must first introduce a new data structure:
+library. This chapter describes how to extend the parser to understand new
+kinds of sentences.
 </p>
-<a id="complexactions"></a><h2>Complex actions</h2>
+<a id="grammar"></a><h2>Grammar definitions</h2>
+<p>Player input is mapped to actions using <span class="code">(grammar $ for&nbsp;$)</span>.
+For instance, the following definition causes <span class="prginput">TAKE A NAP</span> to be
+recognized as an attempt to perform the <span class="code">[sleep]</span> action:
+</p>
+<textarea class="copyarea" id="copy0" readonly>
+(grammar [take a nap] for [sleep])
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(grammar [take a nap] for [sleep])</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy0').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>There is no automatic rule for recognizing the words that make up the
+internal name of the action, so the following definition is probably also
+desired:
+</p>
+<textarea class="copyarea" id="copy1" readonly>
+(grammar [sleep] for [sleep])
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(grammar [sleep] for [sleep])</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy1').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>But in this case, there is also a shorthand form:
+</p>
+<textarea class="copyarea" id="copy2" readonly>
+(grammar [sleep] for itself)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(grammar [sleep] for itself)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy2').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p><a href="sugar.html#slash">Slash-expressions</a> are useful:
+</p>
+<textarea class="copyarea" id="copy3" readonly>
+(grammar [sleep/nap/dream] for [sleep])
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(grammar [sleep/nap/dream] for [sleep])</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy3').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The left-hand side of a grammar definition may contain special <i>tokens</i>,
+standing in for objects. Thus, <span class="code">[object]</span> represents an arbitrary
+object in scope, or even many objects (separated by commas or
+<span class="prginput">AND</span>). On the right-hand side, a wildcard (<span class="code">$</span>)
+indicates the place in the action where the object is supposed to go:
+</p>
+<textarea class="copyarea" id="copy4" readonly>
+(grammar [buy/purchase [object]] for [buy $])
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(grammar [buy/purchase [object]] for [buy $])</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy4').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Alternatively, <span class="code">[single]</span> represents a single object in scope.
+Attempts to specify multiple objects are then rejected with:
+</p>
+<div class="blkoutput">(You're not allowed to use multiple objects in that context.)</div><p>A grammar definition can contain multiple tokens, which are then mapped to the
+wildcards in left-to-right order. It is recommended to restrict all except one
+of them to a single object, to prevent combinatorial explosion. Thus:
+</p>
+<textarea class="copyarea" id="copy5" readonly>
+(grammar [read [object] to [single]] for [read $ to $])
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(grammar [read [object] to [single]] for [read $ to $])</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy5').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>or:
+</p>
+<textarea class="copyarea" id="copy6" readonly>
+(grammar [read [single] to [object]] for [read $ to $])
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(grammar [read [single] to [object]] for [read $ to $])</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy6').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Sometimes you want the tokens mapped to wildcards in right-to-left order. Use
+<span class="code">(grammar $ for $ reversed)</span> for that:
+</p>
+<textarea class="copyarea" id="copy7" readonly>
+(grammar [lend [object] to [single]] for [lend $ to $])
+(grammar [lend [single] [object]] for [lend $ to $] reversed)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(grammar [lend [object] to [single]] for [lend $ to $])</td></tr>
+<tr><td class="both" colspan="2">(grammar [lend [single] [object]] for [lend $ to $] reversed)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy7').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The basic set of grammar tokens are:
+</p>
+<p class="codeline">[object]</p>
+<p class="noteline">One or more objects in scope.
+</p>
+<p class="codeline">[single]</p>
+<p class="noteline">A single object in scope.
+</p>
+<p class="codeline">[any]</p>
+<p class="noteline">A single object, not necessarily in scope. The object must be located
+in a visited room, and cannot be marked as hidden.
+</p>
+<p class="codeline">[direction]</p>
+<p class="noteline">One or more directions, such as <span class="prginput">NORTH</span>,
+<span class="prginput">DOWN</span>, or <span class="prginput">OUT</span>.
+</p>
+<p class="codeline">[number]</p>
+<p class="noteline">A number, such as <span class="prginput">FIVE</span> or <span class="prginput">1981</span>.
+</p>
+<p class="codeline">[topic]</p>
+<p class="noteline">A topic (see <a href="npc.html#asktell">Ask and tell</a>).
+</p>
+<p>In addition to the above, you can guide the parser towards certain classes of
+objects, to help resolve ambiguities as well as decide what the word
+<span class="prginput">ALL</span> refers to. The following constraints are not enforced
+strictly—you must use <span class="code">(prevent&nbsp;$)</span> rules for that.
+</p>
+<p class="codeline">[animate]</p>
+<p class="noteline">A single, animate object in scope.
+</p>
+<p class="codeline">[any animate]</p>
+<p class="noteline">A single, animate object, not necessarily in scope. For e.g.
+<span class="prginput">CALL MOTHER</span>.
+</p>
+<p class="codeline">[single held]</p>
+<p class="noteline">A single object currently in the player's inventory.
+</p>
+<p class="codeline">[held]</p>
+<p class="noteline">One or more objects currently in the player's inventory. Special
+feature: If the player supplies <span class="prginput">ALL</span> here, then the
+single object matched by the <i>next</i> grammar token (if any) is
+excluded from the set of objects.
+</p>
+<p class="codeline">[worn]</p>
+<p class="noteline">One or more objects currently worn by the player.
+</p>
+<p class="codeline">[takable]</p>
+<p class="noteline">One or more objects in scope, whose relation to their parent is neither
+<span class="code">#heldby</span>, <span class="code">#wornby</span>, or <span class="code">#partof</span>.
+</p>
+<p>Finally, a list of words that isn't recognized as a special token will match
+any of the words in the list. This results in slightly faster and more compact
+code than a slash expression, but either syntax is fine, really. The following
+two definitions are functionally equivalent:
+</p>
+<textarea class="copyarea" id="copy8" readonly>
+(grammar [throw/toss [held] at/on/to/in/into/onto [single]] for [throw $ at $])
+(grammar [throw/toss [held] [at on to in into onto] [single]] for [throw $ at $])
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(grammar [throw/toss [held] at/on/to/in/into/onto [single]] for [throw $ at $])</td></tr>
+<tr><td class="both" colspan="2">(grammar [throw/toss [held] [at on to in into onto] [single]] for [throw $ at $])</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy8').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Grammar rules must start with a regular word, typically a verb. Tokens and
+other lists are allowed everywhere else, just not at the very beginning.
+</p>
+<a id="newactions"></a><h2>Adding actions</h2>
+<textarea class="copyarea" id="copy9" readonly>
+(grammar [yodel] for itself)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(grammar [yodel] for itself)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy9').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Here the story author has introduced a new action, <span class="code">[yodel]</span>,
+triggered when the player types <span class="prginput">YODEL</span>. But so far, there is no
+code to handle the action. The fallback implementations of the six
+<a href="actions.html#actionprocess">action-handling predicates</a> will cause the action to succeed
+without printing anything at all. This is a no-no in parser games, so the story
+author should at least add a <span class="nobreak"><span class="code">perform</span>-</span>rule:
+</p>
+<textarea class="copyarea" id="copy10" readonly>
+(perform [yodel])
+	Your voice soars over the mountain tops, bringing tears to many eyes.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(perform [yodel])</td></tr>
+<tr><td class="left"></td><td class="right">Your voice soars over the mountain tops, bringing tears to many eyes.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<h3>Action descriptions</h3>
+<p>The standard library might have to print the name of an action, perhaps as part
+of a disambiguation question, or during debugging if the
+<span class="prginput">ACTIONS&nbsp;ON</span> command has been issued. This is done with a query to
+the predicate <span class="code">(describe action&nbsp;$)</span>.
+</p>
+<p>Usually, there is no need to add an explicit rule for describing every new
+action; the default implementation of <span class="code">(describe action&nbsp;$)</span> simply
+visits each element of the action (which is a list) in turn, printing
+dictionary words verbatim, and calling <span class="code">(the full&nbsp;$)</span> for anything
+else. But sometimes a better wording is desirable:
+</p>
+<textarea class="copyarea" id="copy11" readonly>
+(describe action [switch on $Obj])
+	switch (the full $Obj) on
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(describe action [switch on $Obj])</td></tr>
+<tr><td class="left"></td><td class="right">switch (the full $Obj) on</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy11').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<h3>Commands</h3>
+<p><i>Commands</i> are system-level actions, such as <span class="prginput">SAVE</span> or
+<span class="prginput">TRANSCRIPT&nbsp;OFF</span>, that do not consume any time in the game world.
+The predicate <span class="code">(command&nbsp;$)</span> decides whether an action is a command
+or not. Thus, to define a new command called <span class="prginput">HINT</span>, we could
+write:
+</p>
+<textarea class="copyarea" id="copy12" readonly>
+(grammar [hint] for itself)
+(command [hint])
+(perform [hint])
+	Try yodeling a lot.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(grammar [hint] for itself)</td></tr>
+<tr><td class="both" colspan="2">(command [hint])</td></tr>
+<tr><td class="both" colspan="2">(perform [hint])</td></tr>
+<tr><td class="left"></td><td class="right">Try yodeling a lot.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy12').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>There is also a short form that combines the first two rule definitions into
+one:
+</p>
+<textarea class="copyarea" id="copy13" readonly>
+(understand command [hint])
+(perform [hint])
+	Try yodeling a lot.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(understand command [hint])</td></tr>
+<tr><td class="both" colspan="2">(perform [hint])</td></tr>
+<tr><td class="left"></td><td class="right">Try yodeling a lot.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy13').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<h3>Asking for clarification</h3>
+<p>Some actions are designed to require objects, but it makes grammatical sense to
+use the verb alone (intransitively), or with fewer objects than the author had
+in mind. For instance, a grammar definition could be added to recognize
+<span class="prginput">PLAY VIOLIN WITH BOW</span> as the action <span class="code">[play #violin with
+#bow]</span>:
+</p>
+<textarea class="copyarea" id="copy14" readonly>
+(grammar [play [single] with/using [held]] for [play $ with $])
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(grammar [play [single] with/using [held]] for [play $ with $])</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy14').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>But now, players who type <span class="prginput">PLAY VIOLIN</span> (or just
+<span class="prginput">PLAY</span>) will be met by an unhelpful message about not
+understanding what they wanted to do. In this case, it's a good idea to add
+partial actions that nudge the player towards the full sentence. These actions
+can ask the player for clarification, and set up an <i>implicit action</i>
+using one of the predicates <span class="code">(asking for object in&nbsp;$)</span> and
+<span class="code">(asking for direction in&nbsp;$)</span>. The parameter is an action, with an
+empty list <span class="code">[]</span> marking the position of a blank slot. If the player
+now types in the name of an object (or, optionally, <span class="prginput">USE</span> followed
+by the name of an object), this will be understood as the implicit action, with
+that object in the slot. Thus:
+</p>
+<textarea class="copyarea" id="copy15" readonly>
+(grammar [play [single]] for [play $])
+
+(perform [play $Obj])
+	With what?
+	(asking for object in [play $Obj with []])
+
+(grammar [play] for itself)
+
+(perform [play])
+	Play what?
+	(asking for object in [play []])
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(grammar [play [single]] for [play $])</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(perform [play $Obj])</td></tr>
+<tr><td class="left"></td><td class="right">With what?</td></tr>
+<tr><td class="left"></td><td class="right">(asking for object in [play $Obj with []])</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(grammar [play] for itself)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(perform [play])</td></tr>
+<tr><td class="left"></td><td class="right">Play what?</td></tr>
+<tr><td class="left"></td><td class="right">(asking for object in [play []])</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy15').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Be aware that <span class="code">(asking for object in&nbsp;$)</span> and <span class="code">(asking for
+direction in&nbsp;$)</span> will automatically invoke <span class="code">(stop)</span> to prevent
+any subsequent actions: We've asked the player a question, so we have to give
+them an opportunity to respond.
+</p>
+<p>Of course, it is also possible to override your own action-handling rules for
+this kind of intermediate actions, in specific situations where no additional
+object is required:
+</p>
+<textarea class="copyarea" id="copy16" readonly>
+(perform [play #piano])
+	You plink away at the Maple Leaf Rag, only to get stuck in the trio.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(perform [play #piano])</td></tr>
+<tr><td class="left"></td><td class="right">You plink away at the Maple Leaf Rag, only to get stuck in the trio.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy16').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Just remember that rules are tried in program order, so the rule for playing
+the piano must appear before the generic perform-rule that asks for a second
+object. One approach is to organize the story file as a large bulk of
+object-specific rule definitions, followed by a smaller section at the end
+where new actions are defined.
+</p>
+<h3>A note on rule ordering</h3>
+<p>You are encouraged to define plenty of synonyms using slash-expressions and
+multiple grammar definitions. Here is an example from the library:
+</p>
+<textarea class="copyarea" id="copy17" readonly>
+(grammar [leave/exit [single]] for [leave $])
+(grammar [get/jump/go [out off] of [single]] for [leave $])
+(grammar [get/jump/go off [single]] for [leave $])
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(grammar [leave/exit [single]] for [leave $])</td></tr>
+<tr><td class="both" colspan="2">(grammar [get/jump/go [out off] of [single]] for [leave $])</td></tr>
+<tr><td class="both" colspan="2">(grammar [get/jump/go off [single]] for [leave $])</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy17').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Such definitions can appear in any order. However, if you define multiple
+grammar rules that begin with the same words, but produce distinct actions,
+then you should put the longest rule first:
+</p>
+<textarea class="copyarea" id="copy18" readonly>
+%% Understand PLAY VIOLIN WITH BOW, or PLAY VIOLIN, or PLAY:
+
+(grammar [play [single] with/using [held]] for [play $ with $])
+(grammar [play [single]] for [play $])
+(grammar [play] for itself)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2"><span class="comment">%% Understand PLAY VIOLIN WITH BOW, or PLAY VIOLIN, or PLAY:</span></td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(grammar [play [single] with/using [held]] for [play $ with $])</td></tr>
+<tr><td class="both" colspan="2">(grammar [play [single]] for [play $])</td></tr>
+<tr><td class="both" colspan="2">(grammar [play] for itself)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy18').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>This makes a difference when the player has typed something that the parser
+doesn't understand. When that happens, the library constructs an error message
+from the <b>first</b> grammar rule that is a partial match. Given the above
+code, if the player types <span class="prginput">PLAY SPICCATO WITH BOW</span>, the response
+will be:
+</p>
+<div class="blkoutput">(I only understood you as far as wanting to play something with the bow.)</div><p>But if the first two rules were swapped, the parser would match <span class="prginput">SPICCATO
+WITH BOW</span> with the sole parameter of <span class="code">[play&nbsp;$]</span>, and the
+following message would be printed instead:
+</p>
+<div class="blkoutput">(I only understood you as far as wanting to play something.)</div><a id="unlikely"></a><h2>Adjusting the likelihood of actions</h2>
+<p>When the player's input can be understood in multiple ways, it is up to the
+game to weigh the different interpretations against each other, and select the
+one most probably intended by the player. This is achieved by looking at the
+actions from a semantical point of view, and discarding the unlikely ones, as
+determined by the predicate <span class="code">(unlikely&nbsp;$)</span>:
+</p>
+<textarea class="copyarea" id="copy19" readonly>
+(unlikely [open $Object])
+	~(openable $Object)
+
+(unlikely [open $Object])
+	($Object is open)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(unlikely [open $Object])</td></tr>
+<tr><td class="left"></td><td class="right">~(openable $Object)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(unlikely [open $Object])</td></tr>
+<tr><td class="left"></td><td class="right">($Object is open)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy19').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>If that's not enough, and several equally likely (or unlikely) interpretations
+remain, the library will ask the player a disambiguating question.
+</p>
+<p>Thus, if the player is located in a room with a wooden door (open), and holds a
+wooden box (closed), and attempts to <span class="prginput">OPEN WOODEN</span>, that will be
+understood as a request to <span class="code">[open #woodenbox]</span>. The alternative,
+<span class="code">[open #woodendoor]</span>, gets discarded due to the second rule above.
+But if both the door and the box are open, both actions are deemed equally
+unlikely, and the game resorts to asking the player what they meant.
+</p>
+<p>Story authors may override <span class="code">(unlikely&nbsp;$)</span> to influence this
+proceduce. For instance, if a room contains a red lever and a red indicator
+light, it's up to the author to specify:
+</p>
+<textarea class="copyarea" id="copy20" readonly>
+(unlikely [pull #redlight])
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(unlikely [pull #redlight])</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy20').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>which makes <span class="prginput">PULL RED</span> do the expected thing.
+</p>
+<p>Sometimes it is necessary to override <span class="code">(unlikely&nbsp;$)</span> with a negated
+rule, when a more general rule would identify it as unlikely by default. For
+instance, suppose a location contains a wall-mounted ladder, and the story
+author wants the game to understand <span class="prginput">CLIMB LADDER</span> as going up.
+The functionality itself is implemented by redirecting <span class="code">[climb
+#ladder]</span> to <span class="code">[go #up]</span>:
+</p>
+<textarea class="copyarea" id="copy21" readonly>
+(instead of [climb #ladder])
+	(current room #ladderroom)
+	(try [go #up])
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(instead of [climb #ladder])</td></tr>
+<tr><td class="left"></td><td class="right">(current room #ladderroom)</td></tr>
+<tr><td class="left"></td><td class="right">(try [go #up])</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy21').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>But <span class="code">[climb #ladder]</span> is still considered unlikely by the parser,
+because (we assume) the ladder is not an actor supporter, i.e. it is not
+possible to be located <span class="code">#on</span> the ladder. Now, if the player were to
+attempt to <span class="prginput">CLIMB LADDER</span> while also holding the ladder
+instruction manual, the game would ask which one of the objects to climb. To
+prevent that slightly surreal question, a negated rule can be defined:
+</p>
+<textarea class="copyarea" id="copy22" readonly>
+~(unlikely [climb #ladder]) %% Climbing the ladder is not unlikely after all.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">~(unlikely [climb #ladder]) <span class="comment">&emsp;%% Climbing the ladder is not unlikely after all.</span></td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy22').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<h3>Very unlikely actions</h3>
+<p>In Dialog, the current room and its neighbours are in scope by default. But
+rooms are often named by some conspicuous object contained inside them, so that
+e.g. an engine might be located in the engine room. To avoid a lot of
+disambiguating questions, any action that explicitly mentions a room is
+considered <span class="code">(very unlikely&nbsp;$)</span> by default, unless it's one of the
+few actions that might involve a room (such as <span class="code">[enter&nbsp;$]</span> or
+<span class="code">[go to&nbsp;$]</span>).
+</p>
+<p>This predicate rarely needs to be touched outside of library code. But if you
+ever add a new action that involves a room object directly, make sure to adjust
+the rules for <span class="code">(very unlikely&nbsp;$)</span> as well as
+<span class="code">(unlikely&nbsp;$)<span class="code">.
+</p>
+<a id="liblinks"></a><h2>Links and default actions</h2>
+<p>When a Dialog program is compiled to run on the Å-machine, the text may contain
+<a href="io.html#hyperlinks">clickable links</a> that resolve into text input. Selecting a link
+has the same effect as typing the words of the link target and pressing return.
+This can simplify text entry on mobile devices.
+</p>
+<p>Links are created using the special <span class="code">(link&nbsp;$)&nbsp;...</span> syntax:
+</p>
+<textarea class="copyarea" id="copy23" readonly>
+	In the bowl a (link [red marble]) { red marble } glistens in the sunlight.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">In the bowl a (link [red marble]) { red marble } glistens in the sunlight.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy23').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Often, as above, we want both the link target and the clickable text to be the
+same. In this case a short form is available:
+</p>
+<textarea class="copyarea" id="copy24" readonly>
+	In the bowl a (link) { red marble } glistens in the sunlight.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">In the bowl a (link) { red marble } glistens in the sunlight.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy24').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>If we want both the link target and the clickable text to be the printed name
+of an object, we can use the tersely named predicate <span class="code">($)</span> from the
+standard library:
+</p>
+<textarea class="copyarea" id="copy25" readonly>
+	In the bowl a (#redmarble) glistens in the sunlight.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">In the bowl a (#redmarble) glistens in the sunlight.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy25').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The same predicate can be used for exits:
+</p>
+<textarea class="copyarea" id="copy26" readonly>
+	An exit leads (#north).
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">An exit leads (#north).</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy26').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>To use the printed name of an object as a link target, but supply a different
+text, use the predicate <span class="code">($&nbsp;$)</span>. The first parameter is an object,
+and the second is a <a href="control.html#closures">closure</a>:
+</p>
+<textarea class="copyarea" id="copy27" readonly>
+	In the bowl (#redmarble {something red}) glistens in the sunlight.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">In the bowl (#redmarble {something red}) glistens in the sunlight.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy27').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Be aware, however, that hyperlinks are an optional feature of the Å-machine,
+and not every interpreter will support them. While it can be tempting to create
+a jarring effect by having links resolve into unexpected input text, some
+players will simply not see it.
+</p>
+<p>By default, library-generated messages never contain hyperlinks. The behaviour
+of the library should be consistent with the rest of the story, and whether or
+not to sprinkle room descriptions with clickable links is a decision best left
+to the author.
+</p>
+<p>To enable clickable links in disambiguation messages, the game over menu,
+default <a href="items.html#appearance">appearances</a>, and queries to <span class="code">(a&nbsp;$)</span> and
+<span class="code">(A&nbsp;$)</span>, add the following rule definition to the source code:
+</p>
+<textarea class="copyarea" id="copy28" readonly>
+(library links enabled)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(library links enabled)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy28').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Since link targets are appended to the current line of input, readers who are
+playing on a touchscreen device can type a verb using the on-screen keyboard,
+and then complete the sentence by tapping on a recently printed object name.
+Compass directions can of course be used directly as commands.
+</p>
+<p>However, when we turn our nouns into hyperlinks, players will (understandably)
+attempt to click on them without first typing a verb. To handle this situation,
+the standard library provides an optional feature called <i>default
+actions</i>. It is enabled like this:
+</p>
+<textarea class="copyarea" id="copy29" readonly>
+(default actions enabled)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(default actions enabled)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy29').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>When this feature is enabled, the parser will understand noun-only input as a
+request for the default action, which is <span class="code">examine</span>. The default
+action can be changed, and may depend on the object, as in the following
+example:
+</p>
+<textarea class="copyarea" id="copy30" readonly>
+(default action (animate $Obj) [talk to $Obj])
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(default action (animate $Obj) [talk to $Obj])</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy30').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<a id="newaction"></a><h2>Example: Defining a new action</h2>
+<p>Story-specific actions are typically defined towards the end of the source code
+file. This allows object-specific rules, defined earlier in the file, to
+override them.
+</p>
+<p>The following example relies on a special property of the <span class="code">[held]</span>
+token: When the first token of a grammar rule is <span class="code">[held]</span> and the
+player uses <span class="prginput">ALL</span> in that position, then whatever matches the
+second token is excluded from the set of objects. Thus, if the player types
+<span class="prginput">PEEL ALL WITH PEELER</span>, the <span class="prginput">ALL</span> will expand to
+every held object except the peeler. Note that this may still not be what the
+player intended (because in addition to fruit, they might be holding a brass
+key and a lamp), but at this stage we are primarily interested in grammar, not
+semantics.
+</p>
+<p>Remember, put the longest grammar definition first:
+</p>
+<textarea class="copyarea" id="copy31" readonly>
+(grammar [peel [held] with/using [single]] for [peel $ with $])
+(grammar [peel [held]] for [peel $])
+
+(perform [peel $Obj])
+	With what?
+	(asking for object in [peel $Obj with []])
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(grammar [peel [held] with/using [single]] for [peel $ with $])</td></tr>
+<tr><td class="both" colspan="2">(grammar [peel [held]] for [peel $])</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(perform [peel $Obj])</td></tr>
+<tr><td class="left"></td><td class="right">With what?</td></tr>
+<tr><td class="left"></td><td class="right">(asking for object in [peel $Obj with []])</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy31').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Either variant is deemed unlikely for non-edible objects:
+</p>
+<textarea class="copyarea" id="copy32" readonly>
+(unlikely [peel $Obj | $]) %% Match both variants.
+	~(edible $Obj)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(unlikely [peel $Obj | $]) <span class="comment">&emsp;%% Match both variants.</span></td></tr>
+<tr><td class="left"></td><td class="right">~(edible $Obj)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy32').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The likelihood of an action helps resolve ambiguities, but it won't prevent the
+action from being attempted: If the player unambiguously tries to peel the
+kitchen floor, that request is going to go through, unlikely or not. Thus we
+also need:
+</p>
+<textarea class="copyarea" id="copy33" readonly>
+(prevent [peel $Obj | $])
+	~(edible $Obj)
+	That's not something you can peel.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(prevent [peel $Obj | $])</td></tr>
+<tr><td class="left"></td><td class="right">~(edible $Obj)</td></tr>
+<tr><td class="left"></td><td class="right">That's not something you can peel.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy33').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Likewise, because we specified <span class="code">[held]</span>, the library will try to
+satisfy the parser rules using objects that are held by the player, so that
+e.g. <span class="prginput">PEEL FRUIT</span> will prioritize held fruit over non-held fruit.
+But an unambiguous <span class="prginput">PEEL BANANA</span> will be understood even when the
+banana isn't held.
+</p>
+<p>Thus, we need a rule to prevent the peeling of a non-held object. The standard
+library provides a number of handy <a href="miscfeat.html#commoncomplaints">when-predicates</a> that
+check for common conditions, and print appropriate responses when the
+conditions are met.
+</p>
+<textarea class="copyarea" id="copy34" readonly>
+(prevent [peel $Obj | $])
+	(when $Obj isn't directly held)
+
+(prevent [peel $ with $Obj])
+	(when $Obj isn't directly held)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(prevent [peel $Obj | $])</td></tr>
+<tr><td class="left"></td><td class="right">(when $Obj isn't directly held)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(prevent [peel $ with $Obj])</td></tr>
+<tr><td class="left"></td><td class="right">(when $Obj isn't directly held)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy34').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>But, out of the kindness of our hearts, we might decide to pick up the
+mentioned objects automatically before attempting the peel action:
+</p>
+<textarea class="copyarea" id="copy35" readonly>
+(before [peel $Obj | $])
+	%% This will invoke (first try [take $Obj]) if necessary:
+	(ensure $Obj is held)
+
+(before [peel $ with $Obj])
+	(ensure $Obj is held)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(before [peel $Obj | $])</td></tr>
+<tr><td class="left"></td><td class="right"><span class="comment">%% This will invoke (first try [take $Obj]) if necessary:</span></td></tr>
+<tr><td class="left"></td><td class="right">(ensure $Obj is held)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(before [peel $ with $Obj])</td></tr>
+<tr><td class="left"></td><td class="right">(ensure $Obj is held)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy35').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Finally, there needs to be a default response for the <span class="code">[peel $
+with&nbsp;$]</span> action (we already have one for the <span class="code">[peel&nbsp;$]</span>
+action):
+</p>
+<textarea class="copyarea" id="copy36" readonly>
+(perform [peel $Obj with $Tool])
+	After an extended period of fumbling, you conclude that you don't know
+	how to peel (the $Obj) with (the $Tool).
+	(tick) (stop)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(perform [peel $Obj with $Tool])</td></tr>
+<tr><td class="left"></td><td class="right">After an extended period of fumbling, you conclude that you don't know</td></tr>
+<tr><td class="left"></td><td class="right">how to peel (the $Obj) with (the $Tool).</td></tr>
+<tr><td class="left"></td><td class="right">(tick) (stop)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy36').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Of course, the story should also contain a couple of objects that would make
+the peel action succeed. The following object-specific rules must be defined
+before the generic rules described above, otherwise they will never match:
+</p>
+<textarea class="copyarea" id="copy37" readonly>
+(edible #apple)
+(edible #peeled-apple)
+
+(perform [peel #apple with #peeler])
+	You peel the apple without cutting yourself even once.
+	(#apple is $Rel $Loc)
+	(now) (#apple is nowhere)
+	(now) (#peeled-apple is $Rel $Loc)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(edible #apple)</td></tr>
+<tr><td class="both" colspan="2">(edible #peeled-apple)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(perform [peel #apple with #peeler])</td></tr>
+<tr><td class="left"></td><td class="right">You peel the apple without cutting yourself even once.</td></tr>
+<tr><td class="left"></td><td class="right">(#apple is $Rel $Loc)</td></tr>
+<tr><td class="left"></td><td class="right">(now) (#apple is nowhere)</td></tr>
+<tr><td class="left"></td><td class="right">(now) (#peeled-apple is $Rel $Loc)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy37').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Finally, we could smoothen gameplay by implicitly assuming that if the player
+is holding the peeler, that's probably their tool of choice for peeling:
+</p>
+<textarea class="copyarea" id="copy38" readonly>
+(instead of [peel $Obj])
+	(current player $Player)
+	(#peeler is #heldby $Player)
+	\( with the peeler \) (line) %% Tell the player what's going on.
+	(try [peel $Obj with #peeler])
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(instead of [peel $Obj])</td></tr>
+<tr><td class="left"></td><td class="right">(current player $Player)</td></tr>
+<tr><td class="left"></td><td class="right">(#peeler is #heldby $Player)</td></tr>
+<tr><td class="left"></td><td class="right">\( with the peeler \) (line) <span class="comment">&emsp;%% Tell the player what's going on.</span></td></tr>
+<tr><td class="left"></td><td class="right">(try [peel $Obj with #peeler])</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy38').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<a id="howparser"></a><h2>How the parser works</h2>
+<p>This section provides an outline of how the parser works, and describes
+advanced techniques for understanding arbitrary turns of phrase that cannot be
+represented by ordinary grammar definitions. Most story authors do not need to
+dig this deeply, and can safely skip ahead to the next chapter.
+</p>
+<p>The parser makes queries to <span class="code">(understand $ as&nbsp;$)</span>, a predicate that
+is normally defined by the library, but which can also be extended by the story
+author. One of the library-defined rules for this predicate is responsible for
+querying the table of grammar definitions. But there are also rules for special
+cases like <span class="prginput">GO TO <i>ROOM</i></span>, or <span class="prginput"><i>ACTOR</i>,
+<i>COMMAND</i></span>. We will discuss how to add such special cases.
+</p>
 <p>During parsing, the standard library works with an intermediate representation
-of actions, called complex actions. Like regular actions, complex actions are
-lists of dictionary words and objects, but the following subexpressions are
-also allowed in them:
+of actions, called <i>complex actions</i>. Like regular actions, complex
+actions are lists of dictionary words and objects, but the following
+subexpressions are also allowed in them:
 </p>
 <p class="codeline">[+ #object1 #object2 ...]</p>
 <p class="noteline">The player referred to multiple objects here.
@@ -53,7 +936,7 @@ illegal place.
 </p>
 <p>Thus, a complex action might be:
 </p>
-<textarea class="copyarea" id="copy0" readonly>
+<textarea class="copyarea" id="copy39" readonly>
 	[give [+ [a #apple] #peeler] to [1]]
 </textarea>
 <div class="blkcode">
@@ -62,12 +945,12 @@ illegal place.
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy0').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy39').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>and its printed representation makes an appearance in the following message:
 </p>
 <div class="blkoutput">(I only understood you as far as wanting to give an apple and the peeler to<br />
-someone.)</div><a id="parsingprocess"></a><h2>The parsing process</h2>
+someone.)</div><h3>The parsing process</h3>
 <p>The following chart illustrates the overall parsing process, starting with the
 player input as a list of words, and ending with a set of actions. The list of
 words is first split into a sequence of sublists by the word
@@ -77,31 +960,20 @@ to type multiple commands on one line, such as: <span class="prginput">N, U THEN
 D.</span>
 </p>
 <div class="img"><img src="parsingprocess.png" /></div>
-<a id="parsingactions"></a><h2>Parsing actions</h2>
+<h3>Parsing actions</h3>
 <p>When the library needs to parse an action, it makes a
-<a href="choicepoints.html#multiqueries">multi-query</a> to the predicate:
-</p>
-<textarea class="copyarea" id="copy1" readonly>
-	(understand $Words as $ComplexAction)
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="left"></td><td class="right">(understand $Words as $ComplexAction)</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy1').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>A multi-query is made in order to collect every possible interpretation of the
+<a href="choicepoints.html#multiqueries">multi-query</a> to <span class="code">(understand $ as&nbsp;$)</span>. A
+multi-query is made in order to collect every possible interpretation of the
 player's input, which could be ambiguous.
 </p>
 <p>The first parameter is the input: a list of dictionary words. The second
 parameter is the output: a complex action.
 </p>
 <p>Story authors can easily add rule definitions to this predicate, in order to
-add support for new verbs or set phrases:
+add support for new verbs or set phrases (although in this case, a normal
+grammar definition would also work):
 </p>
-<textarea class="copyarea" id="copy2" readonly>
+<textarea class="copyarea" id="copy40" readonly>
 (understand [take a break] as [wait])
 </textarea>
 <div class="blkcode">
@@ -110,7 +982,7 @@ add support for new verbs or set phrases:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy2').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy40').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Note that the multi-query to <span class="code">(understand $ as&nbsp;$)</span> may backtrack
 over several possible interpretations, e.g. <span class="code">[wait]</span> and <span class="code">[take
@@ -119,7 +991,7 @@ over several possible interpretations, e.g. <span class="code">[wait]</span> and
 </p>
 <p>Understand-rules may of course have rule bodies:
 </p>
-<textarea class="copyarea" id="copy3" readonly>
+<textarea class="copyarea" id="copy41" readonly>
 (understand [who am i] as [examine $Player])
 	(current player $Player)
 </textarea>
@@ -130,114 +1002,16 @@ over several possible interpretations, e.g. <span class="code">[wait]</span> and
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy3').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy41').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
-<a id="newactions"></a><h2>Defining new actions</h2>
-<textarea class="copyarea" id="copy4" readonly>
-(understand [yodel] as [yodel])
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="both" colspan="2">(understand [yodel] as [yodel])</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy4').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>Here the story author has introduced a new action, <span class="code">[yodel]</span>. When
-the name of the action is identical to the matched input, as in this particular
-case, a short form can be used instead:
-</p>
-<textarea class="copyarea" id="copy5" readonly>
-(understand [yodel])
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="both" colspan="2">(understand [yodel])</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy5').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>So far, there is no code to handle the <span class="code">[yodel]</span> action. The
-fallback implementations of the six <a href="actions.html#actionprocess">action-handling
-predicates</a> will cause the action to succeed without printing anything at
-all. This is a no-no in parser games, so the story author should at least add a
-<span class="nobreak"><span class="code">perform</span>-</span>rule:
-</p>
-<textarea class="copyarea" id="copy6" readonly>
-(perform [yodel])
-	Your voice soars over the mountain tops, bringing tears to many eyes.
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="both" colspan="2">(perform [yodel])</td></tr>
-<tr><td class="left"></td><td class="right">Your voice soars over the mountain tops, bringing tears to many eyes.</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy6').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>The standard library might have to print the name of an action, perhaps as part
-of a disambiguation question, or during debugging if the
-<span class="prginput">ACTIONS&nbsp;ON</span> command has been issued. This is done with a query to
-the predicate <span class="code">(describe action&nbsp;$)</span>. The parameter is a complex
-action, so it may contain <span class="nobreak"><span class="code">[+ <i>...</i>]</span></span> and other
-special subexpressions. Usually, there is no need to add an explicit rule for
-describing every new action; the default implementation of <span class="code">(describe
-action&nbsp;$)</span> simply visits each element of the action (which is a list) in
-turn, printing dictionary words verbatim, and calling <span class="code">(the full&nbsp;$)</span>
-for anything else.
-</p>
-<p><i>Commands</i> are system-level actions, such as <span class="prginput">SAVE</span> or
-<span class="prginput">TRANSCRIPT&nbsp;OFF</span>, that do not consume any time in the game world.
-The predicate <span class="code">(command&nbsp;$)</span> decides whether an action is a command
-or not. Thus, to define a new command called <span class="prginput">HINT</span>, we could
-write:
-</p>
-<textarea class="copyarea" id="copy7" readonly>
-(understand [hint])
-(command [hint])
-(perform [hint])
-	Try yodeling a lot.
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="both" colspan="2">(understand [hint])</td></tr>
-<tr><td class="both" colspan="2">(command [hint])</td></tr>
-<tr><td class="both" colspan="2">(perform [hint])</td></tr>
-<tr><td class="left"></td><td class="right">Try yodeling a lot.</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy7').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>There is also a short form that combines the first two rule definitions into
-one:
-</p>
-<textarea class="copyarea" id="copy8" readonly>
-(understand command [hint])
-(perform [hint])
-	Try yodeling a lot.
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="both" colspan="2">(understand command [hint])</td></tr>
-<tr><td class="both" colspan="2">(perform [hint])</td></tr>
-<tr><td class="left"></td><td class="right">Try yodeling a lot.</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy8').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<a id="parsingobj"></a><h2>Parsing object names</h2>
+<h3>Parsing object names</h3>
 <p>Many actions involve objects. The rule for understanding such an action will
 typically query a library-provided predicate for parsing a list of words as an
 object. There are several to choose from, but the most basic one is
 <span class="code">(understand $Words as non-all object $Object)</span>, which can be used
 like this:
 </p>
-<textarea class="copyarea" id="copy9" readonly>
+<textarea class="copyarea" id="copy42" readonly>
 (understand [transmogrify | $Words] as [transmogrify $Object])
 	*(understand $Words as non-all object $Object)
 </textarea>
@@ -248,7 +1022,7 @@ like this:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy9').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy42').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Note that a <a href="choicepoints.html#multiqueries">multi-query</a> must be used, because the words may
 be ambiguous. Suppose a red box and a blue box are in scope.
@@ -267,7 +1041,7 @@ a list for a set of keywords, and splitting the list at the position where a
 match was found. Consider the following example, where a new &ldquo;read something
 to somebody&rdquo; action is created:
 </p>
-<textarea class="copyarea" id="copy10" readonly>
+<textarea class="copyarea" id="copy43" readonly>
 #book
 (proper *)
 (name *)		To Kill A Mockingbird
@@ -298,7 +1072,7 @@ to somebody&rdquo; action is created:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy43').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Again, the consistent use of multi-queries helps with disambiguation. If the
 player attempts to <span class="prginput">READ TO KILL A MOCKINGBIRD TO MOCKINGBIRD</span>,
@@ -317,7 +1091,7 @@ twice. The parser will end up asking the player whether they wanted to read the
 book to the bird, or the book to the book. One way to address this problem is
 to indicate that the second noun is supposed to be animate:
 </p>
-<textarea class="copyarea" id="copy11" readonly>
+<textarea class="copyarea" id="copy44" readonly>
 (understand [read | $Words] as [read $Object to $Person])
 	*(split $Words by [to] into $Left and $Right)
 	*(understand $Left as non-all object $Object)
@@ -332,7 +1106,7 @@ to indicate that the second noun is supposed to be animate:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy11').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy44').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>The library provides a set of object-parsing predicates that favour objects
 with certain common traits, or limit the selection in some other way. The
@@ -382,7 +1156,7 @@ using a <a href="control.html#closures">closure</a>:
 parse an object name while favouring objects that can be picked up, but not
 eaten:
 </p>
-<textarea class="copyarea" id="copy12" readonly>
+<textarea class="copyarea" id="copy45" readonly>
 	(understand $Words as object $Obj preferably {
 		(item $_)
 		~(edible $_)
@@ -397,7 +1171,7 @@ eaten:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy12').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy45').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>The output of all of these object-parsing predicates is either an object or a
 list that represents a complex object (e.g. <span class="code">[+&nbsp;$Obj1 $Obj2 $Obj3]</span>,
@@ -405,12 +1179,12 @@ or <span class="code">[a&nbsp;$Obj1]</span>, or <span class="code">[]</span>) Fo
 object</span> rules, the output is guaranteed to be either an object or one of
 the values that indicate a parse error.
 </p>
-<a id="parsedir"></a><h2>Directions and numbers</h2>
+<h3>Directions, numbers, and topics</h3>
 <p>Some actions involve a named direction, such as <span class="prginput">SOUTHWEST</span>,
 <span class="prginput">OUT</span>, or <span class="prginput">UP</span>. To parse a direction, use the
 predicate:
 </p>
-<textarea class="copyarea" id="copy13" readonly>
+<textarea class="copyarea" id="copy46" readonly>
 (understand $Words as direction $Dir)
 </textarea>
 <div class="blkcode">
@@ -419,7 +1193,7 @@ predicate:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy13').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy46').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>As when parsing objects, <span class="code">$Dir</span> is potentially a complex expression:
 When the player types <span class="prginput">PUSH CART SOUTHWEST, OUT AND UP</span>, the words
@@ -428,7 +1202,7 @@ direction <span class="code">[+ #southwest #out #up]</span>.
 </p>
 <p>To parse a number, typed using decimal digits or spelled out as a word, use:
 </p>
-<textarea class="copyarea" id="copy14" readonly>
+<textarea class="copyarea" id="copy47" readonly>
 (understand $Words as number $N)
 </textarea>
 <div class="blkcode">
@@ -437,32 +1211,19 @@ direction <span class="code">[+ #southwest #out #up]</span>.
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy14').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy47').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>The output parameter <span class="code">$N</span> is a <a href="varsvalues.html#values">number</a>, and thus limited
 to the range <span class="nobreak">0&ndash;16383</span>.
 </p>
-<p>To go the other way, printing a numeric value with words, use:
-</p>
-<textarea class="copyarea" id="copy15" readonly>
-(spell out $N)
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="both" colspan="2">(spell out $N)</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy15').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<a id="parsetopics"></a><h2>Topics</h2>
+<h3>Topics</h3>
 <p>Some actions, e.g. <span class="code">[ask $ about&nbsp;$]</span> and <span class="code">[tell $
 about&nbsp;$]</span>, involve <i>topics of conversation</i>. As we saw in the
 chapter about <a href="npc.html#asktell">non-player characters</a>, topics can be regular
 objects, topic objects, or dictionary words. To parse a topic, use the
 predicate:
 </p>
-<textarea class="copyarea" id="copy16" readonly>
+<textarea class="copyarea" id="copy48" readonly>
 (understand $Words as topic $Topic)
 </textarea>
 <div class="blkcode">
@@ -471,12 +1232,12 @@ predicate:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy16').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy48').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>It is possible to add rules to that predicate in order to add new topics to a
 game:
 </p>
-<textarea class="copyarea" id="copy17" readonly>
+<textarea class="copyarea" id="copy49" readonly>
 (understand [my childhood] as topic @childhood)
 (understand [growing up on planet zyx] as topic @childhood)
 </textarea>
@@ -487,13 +1248,13 @@ game:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy17').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy49').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>However, that would result in a parser that is very picky about the exact
 wording of ask/tell commands, so it is not generally recommended. A better (but
 potentially slower) approach is to look for keywords or key phrases like this:
 </p>
-<textarea class="copyarea" id="copy18" readonly>
+<textarea class="copyarea" id="copy50" readonly>
 (understand $Words as topic @childhood)
 	($Words contains sublist [growing up])
 	(or) ($Words contains one of [childhood planet zyx])
@@ -506,14 +1267,14 @@ potentially slower) approach is to look for keywords or key phrases like this:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy18').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy50').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>The default implementation of <span class="code">(understand $ as topic&nbsp;$)</span> tries to
 strike a balance between performance and flexibility by using a system of
 simple keywords. Keywords are defined with <span class="code">(topic keyword $
 implies&nbsp;$)</span>:
 </p>
-<textarea class="copyarea" id="copy19" readonly>
+<textarea class="copyarea" id="copy51" readonly>
 (topic keyword @childhood implies @childhood)
 (topic keyword @zyx implies @childhood)
 </textarea>
@@ -524,11 +1285,11 @@ implies&nbsp;$)</span>:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy19').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy51').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>A short form is available when the keyword equals the topic value:
 </p>
-<textarea class="copyarea" id="copy20" readonly>
+<textarea class="copyarea" id="copy52" readonly>
 (topic keyword @childhood)
 </textarea>
 <div class="blkcode">
@@ -537,14 +1298,14 @@ implies&nbsp;$)</span>:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy20').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy52').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>All of these variants can of course be combined. For instance, the keyword
 approach could be employed as a fall-back that often works well enough, and
 specific understand-rules could use the <a href="choicepoints.html#just"><span class="code">(just)</span> keyword</a>
 to overrule the keyword system when it would otherwise misfire:
 </p>
-<textarea class="copyarea" id="copy21" readonly>
+<textarea class="copyarea" id="copy53" readonly>
 (understand [your childhood] as topic #doctor)
 	(just)
 (topic keyword @childhood)
@@ -559,7 +1320,7 @@ to overrule the keyword system when it would otherwise misfire:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy21').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy53').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>The <span class="code">(just)</span> keyword can also be used to selectively disable the
 behaviour where objects in scope are understood as topics. For instance, in an
@@ -570,7 +1331,7 @@ to the general subject of fish. That is, suppose we don't want the game to ask
 the player if they meant to ask about fish in general, the zebrafish, or the
 neon tetra. To obtain the desired behaviour, we just have to:
 </p>
-<textarea class="copyarea" id="copy22" readonly>
+<textarea class="copyarea" id="copy54" readonly>
 (understand [fish] as topic @fish)
 	(current room #aquarium)
 	(just)
@@ -583,16 +1344,16 @@ neon tetra. To obtain the desired behaviour, we just have to:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy22').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy54').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
-<h3>Printed representation</h3>
-<p>Topics are supposed to have a printed representation, accessible via the
+<h3>Printed representations of topics</h3>
+<p>Topics are supposed to have printed representations, accessible via the
 <span class="code">(describe topic&nbsp;$)</span> predicate. The default implementation of this
 predicate delegates to <span class="code">(the full&nbsp;$)</span> when the topic is an object;
 otherwise it just prints the word &ldquo;something&rdquo;. Story authors are strongly
 recommended to override this predicate for non-object topics:
 </p>
-<textarea class="copyarea" id="copy23" readonly>
+<textarea class="copyarea" id="copy55" readonly>
 (describe topic @childhood)
 	your childhood
 </textarea>
@@ -603,7 +1364,7 @@ recommended to override this predicate for non-object topics:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy23').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy55').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>When you add new actions that involve topics, remember to add corresponding
 <span class="code">(describe action&nbsp;$)</span> rules as well. That's because the default
@@ -613,7 +1374,7 @@ printing dictionary words as they appear. But if the dictionary word happens to
 be a topic, the proper thing to do is to query <span class="code">(describe topic&nbsp;$)</span>
 to print it. Thus:
 </p>
-<textarea class="copyarea" id="copy24" readonly>
+<textarea class="copyarea" id="copy56" readonly>
 (understand [complain about | $Words] as [complain about $Topic])
 	*(understand $Words as topic $Topic)
 
@@ -630,646 +1391,32 @@ to print it. Thus:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy24').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy56').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
-<a id="unlikely"></a><h2>Adjusting the likelihood of actions</h2>
-<p>When the player's input can be understood in multiple ways, it is up to the
-library to weigh the different interpretetions against each other, and select
-the one most probably intended by the player. This is achieved by looking at
-the actions from a semantical point of view, and discarding the unlikely ones, as
-determined by the predicate <span class="code">(unlikely&nbsp;$)</span>:
-</p>
-<textarea class="copyarea" id="copy25" readonly>
-(unlikely [open $Object])
-	~(openable $Object)
-
-(unlikely [open $Object])
-	($Object is open)
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="both" colspan="2">(unlikely [open $Object])</td></tr>
-<tr><td class="left"></td><td class="right">~(openable $Object)</td></tr>
-<tr><td class="blank" colspan="2"></td></tr>
-<tr><td class="both" colspan="2">(unlikely [open $Object])</td></tr>
-<tr><td class="left"></td><td class="right">($Object is open)</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy25').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>If that's not enough, and several equally likely (or unlikely) interpretations
-remain, the library will ask the player a disambiguating question.
-</p>
-<p>Thus, if the player is located in a room with a wooden door (open), and holds a
-wooden box (closed), and attempts to <span class="prginput">OPEN WOODEN</span>, that will be
-understood as a request to <span class="code">[open #woodenbox]</span>. The alternative,
-<span class="code">[open #woodendoor]</span>, gets discarded due to the second rule above.
-But if both the door and the box are open, both actions are deemed equally
-unlikely, and the game resorts to asking the player what they meant.
-</p>
-<p>Story authors may override <span class="code">(unlikely&nbsp;$)</span> to influence this
-proceduce. For instance, if a room contains a red lever and a red indicator
-light, it's up to the author to specify:
-</p>
-<textarea class="copyarea" id="copy26" readonly>
-(unlikely [pull #redlight])
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="both" colspan="2">(unlikely [pull #redlight])</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy26').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>which makes <span class="prginput">PULL RED</span> do the expected thing.
-</p>
-<p>Sometimes it is necessary to override <span class="code">(unlikely&nbsp;$)</span> with a negated
-rule, when a more general rule would identify it as unlikely by default. For
-instance, suppose a location contains a wall-mounted ladder, and the story
-author wants the game to understand <span class="prginput">CLIMB LADDER</span> as going up.
-The functionality itself is implemented by redirecting <span class="code">[climb
-#ladder]</span> to <span class="code">[go #up]</span>:
-</p>
-<textarea class="copyarea" id="copy27" readonly>
-(instead of [climb #ladder])
-	(current room #ladderroom)
-	(try [go #up])
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="both" colspan="2">(instead of [climb #ladder])</td></tr>
-<tr><td class="left"></td><td class="right">(current room #ladderroom)</td></tr>
-<tr><td class="left"></td><td class="right">(try [go #up])</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy27').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>But <span class="code">[climb #ladder]</span> is still considered unlikely by the parser,
-because (we assume) the ladder is not an actor supporter, i.e. it is not
-possible to be located <span class="code">#on</span> the ladder. Now, if the player were to
-attempt to <span class="prginput">CLIMB LADDER</span> while also holding the ladder
-instruction manual, the game would ask which one of the objects to climb. To
-prevent that slightly surreal question, a negated rule can be defined:
-</p>
-<textarea class="copyarea" id="copy28" readonly>
-~(unlikely [climb #ladder]) %% Climbing the ladder is not unlikely after all.
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="both" colspan="2">~(unlikely [climb #ladder]) <span class="comment">&emsp;%% Climbing the ladder is not unlikely after all.</span></td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy28').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<h3>Very unlikely actions</h3>
-<p>In Dialog, the current room and its neighbours are in scope by default. But
-rooms are often named by some conspicuous object contained inside them, so that
-e.g. an engine might be located in the engine room. To avoid a lot of
-disambiguating questions, any action that explicitly mentions a room is
-considered <span class="code">(very unlikely&nbsp;$)</span> by default, unless it's one of the
-few actions that might involve a room (such as <span class="code">[enter&nbsp;$]</span> or
-<span class="code">[go to&nbsp;$]</span>).
-</p>
-<p>This predicate rarely needs to be touched outside of library code. But if you
-ever add a new action that involves a room object directly, make sure to adjust
-the rules for <span class="code">(very unlikely&nbsp;$)</span> as well as
-<span class="code">(unlikely&nbsp;$)<span class="code">.
-</p>
-<a id="rewrite"></a><h2>Synonyms</h2>
+<h3>Rewriting</h3>
 <p>Before the player's input is handed to the action-parsing predicate
 <span class="code">(understand $ as&nbsp;$)</span>, it undergoes <i>rewriting</i>: The predicate
 <span class="code">(rewrite $Input into $Output)</span> is queried once (i.e. neither
 iteratively nor with a multi-query), and may transform the list of words in any
-way it sees fit before parsing. This can be used to define multi-word
-synonyms for verbs:
+way it sees fit before parsing.
 </p>
-<textarea class="copyarea" id="copy29" readonly>
-(rewrite [pick up | $Words] into [take | $Words])
-
-(rewrite [let go of | $Words] into [drop | $Words])
+<textarea class="copyarea" id="copy57" readonly>
+(rewrite [please | $Words] into $Words)
 </textarea>
 <div class="blkcode">
 <table>
-<tr><td class="both" colspan="2">(rewrite [pick up | $Words] into [take | $Words])</td></tr>
-<tr><td class="blank" colspan="2"></td></tr>
-<tr><td class="both" colspan="2">(rewrite [let go of | $Words] into [drop | $Words])</td></tr>
+<tr><td class="both" colspan="2">(rewrite [please | $Words] into $Words)</td></tr>
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy29').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy57').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
-<p>Word-for-word replacements should preferably be handled directly in the heads
-of the understand-rules, using <a href="sugar.html#slash">slash expressions</a>:
+<p>Rewriting is not used by the library itself, but it offers a powerful way for
+story authors to override the default behaviour of the parser.
 </p>
-<textarea class="copyarea" id="copy30" readonly>
-(understand [drink/sip/quaff | $Words] as [drink $Obj])
-	*(understand $Words as non-all object $Obj)
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="both" colspan="2">(understand [drink/sip/quaff | $Words] as [drink $Obj])</td></tr>
-<tr><td class="left"></td><td class="right">*(understand $Words as non-all object $Obj)</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy30').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<a id="askingforclar"></a><h2>Asking for clarification</h2>
-<p>Some actions are designed to require objects, but it makes grammatical sense to
-use the verb alone (intransitively), or with fewer objects than the author had
-in mind. For instance, an understand-rule could be added to recognize
-<span class="prginput">PLAY VIOLIN WITH BOW</span> as the action <span class="code">[play #violin with
-#bow]</span>:
-</p>
-<textarea class="copyarea" id="copy31" readonly>
-(understand [play | $Words] as [play $Obj1 with $Obj2])
-	*(split $Words by [with using] into $Left and $Right)
-	*(understand $Left as single object $Obj1)
-	*(understand $Right as single object $Obj2 preferably held)
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="both" colspan="2">(understand [play | $Words] as [play $Obj1 with $Obj2])</td></tr>
-<tr><td class="left"></td><td class="right">*(split $Words by [with using] into $Left and $Right)</td></tr>
-<tr><td class="left"></td><td class="right">*(understand $Left as single object $Obj1)</td></tr>
-<tr><td class="left"></td><td class="right">*(understand $Right as single object $Obj2 preferably held)</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy31').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>But now, players who enter <span class="prginput">PLAY VIOLIN</span> (or just
-<span class="prginput">PLAY</span>) will be met by an unhelpful message about not
-understanding what they wanted to do. In this case, it's a good idea to add
-partial actions that nudge the player towards the full sentence. These actions
-can ask the player for clarification, and set up an <i>implicit action</i>
-using one of the predicates <span class="code">(asking for object in&nbsp;$)</span> and
-<span class="code">(asking for direction in&nbsp;$)</span>. The parameter is a simple action,
-with an empty list <span class="code">[]</span> marking the position of a blank slot. If the
-player now types in the name of an object (or, optionally, <span class="prginput">USE</span>
-followed by the name of an object), this will be understood as the implicit
-action, with that object in the slot. Thus:
-</p>
-<textarea class="copyarea" id="copy32" readonly>
-(understand [play | $Words] as [play $Obj])
-	*(understand $Words as single object $Obj)
-
-(perform [play $Obj])
-	With what?
-	(asking for object in [play $Obj with []])
-
-(understand [play])
-
-(perform [play])
-	Play what?
-	(asking for object in [play []])
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="both" colspan="2">(understand [play | $Words] as [play $Obj])</td></tr>
-<tr><td class="left"></td><td class="right">*(understand $Words as single object $Obj)</td></tr>
-<tr><td class="blank" colspan="2"></td></tr>
-<tr><td class="both" colspan="2">(perform [play $Obj])</td></tr>
-<tr><td class="left"></td><td class="right">With what?</td></tr>
-<tr><td class="left"></td><td class="right">(asking for object in [play $Obj with []])</td></tr>
-<tr><td class="blank" colspan="2"></td></tr>
-<tr><td class="both" colspan="2">(understand [play])</td></tr>
-<tr><td class="blank" colspan="2"></td></tr>
-<tr><td class="both" colspan="2">(perform [play])</td></tr>
-<tr><td class="left"></td><td class="right">Play what?</td></tr>
-<tr><td class="left"></td><td class="right">(asking for object in [play []])</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy32').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>Note that <span class="code">(asking for object in&nbsp;$)</span> and <span class="code">(asking for direction
-in&nbsp;$)</span> will automatically invoke <span class="code">(stop)</span> to prevent any
-subsequent actions: We've asked the player a question, so we have to give them
-an opportunity to respond.
-</p>
-<p>Of course, it is also possible to override your own action-handling rules for
-this kind of intermediate actions, in specific situations where no additional
-object is required:
-</p>
-<textarea class="copyarea" id="copy33" readonly>
-(perform [play #piano])
-	You plink away at the Maple Leaf Rag, only to get stuck in the trio.
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="both" colspan="2">(perform [play #piano])</td></tr>
-<tr><td class="left"></td><td class="right">You plink away at the Maple Leaf Rag, only to get stuck in the trio.</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy33').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>Just remember that rules are tried in program order, so the rule for playing
-the piano must appear before the generic perform-rule that asks for a second
-object. One approach is to organize the story file as a large bulk of
-object-specific rule definitions, followed by a smaller section at the end
-where new actions are defined.
-</p>
-<a id="understandorder"></a><h2>Rule order</h2>
-<p>The order of understand-rules has another, more subtle implication. The library
-usually parses actions in a strict mode, where every word of the player's input
-must be accounted for. If that fails, the library sets a global flag that makes
-the <span class="code">understand <i>...</i> as object</span> rules more lenient, and tries
-to parse the input a second time. Now, unparseable input is represented by
-special markers (<span class="code">[]</span>, <span class="code">[1]</span>, <span class="code">[,]</span>, or
-<span class="code">[all]</span>) in the resulting complex action, and a description of that
-incomplete action is printed. Thus, <span class="prginput">PLAY SPICCATO WITH BOW</span> might
-result in the response &ldquo;<span class="prgoutput">I only understood you as far as wanting to play
-something with the bow</span>&rdquo;. But here's the subtlety: Only the first
-incomplete action will be described in that message. So if the rules were
-defined in this order:
-</p>
-<textarea class="copyarea" id="copy34" readonly>
-(understand [play | $Words] as [play $Obj])
-	*(understand $Words as single object $Obj)
-
-(understand [play | $Words] as [play $Obj1 with $Obj2])
-	*(split $Words by [with using] into $Left and $Right)
-	*(understand $Left as single object $Obj1)
-	*(understand $Right as single object $Obj2 preferably held)
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="both" colspan="2">(understand [play | $Words] as [play $Obj])</td></tr>
-<tr><td class="left"></td><td class="right">*(understand $Words as single object $Obj)</td></tr>
-<tr><td class="blank" colspan="2"></td></tr>
-<tr><td class="both" colspan="2">(understand [play | $Words] as [play $Obj1 with $Obj2])</td></tr>
-<tr><td class="left"></td><td class="right">*(split $Words by [with using] into $Left and $Right)</td></tr>
-<tr><td class="left"></td><td class="right">*(understand $Left as single object $Obj1)</td></tr>
-<tr><td class="left"></td><td class="right">*(understand $Right as single object $Obj2 preferably held)</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy34').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>then the entire subexpression <span class="prginput">SPICCATO WITH BOW</span> would be
-interpreted as a badly formed object reference, and the error message would
-just be: &ldquo;<span class="prgoutput">I only understood you as far as wanting to play
-something.</span>&rdquo;
-</p>
-<p>Thus, in the interest of providing as informative error messages as possible to
-the player, authors are encouraged to always put the longest understand-rule
-first, i.e. the one that involves the most objects.
-</p>
-<a id="newaction"></a><h2>Example: Defining a new action</h2>
-<p>Story-specific actions are typically defined towards the end of the source code
-file. This allows object-specific rules, defined earlier in the file, to
-override them.
-</p>
-<p>In this example, we first split the player's input by either of the keywords
-<span class="prginput">WITH</span> and <span class="prginput">USING</span>. Then we parse the right-hand side
-first, obtaining a tool object. We then exclude the tool when parsing the
-left-hand side: If the player types <span class="prginput">PEEL ALL WITH PEELER</span>, the
-<span class="prginput">ALL</span> will expand to every held object except the peeler. Note
-that this may still not be what the player intended (because in addition to
-fruit, they might be holding a brass key and a lamp), but at this stage we are
-primarily interested in grammar, not semantics.
-</p>
-<p>Remember, put the longest understand-rule first:
-</p>
-<textarea class="copyarea" id="copy35" readonly>
-(understand [peel | $Words] as [peel $Object with $Tool])
-	*(split $Words by [with using] into $Left and $Right)
-	*(understand $Right as single object $Tool preferably held)
-	*(understand $Left as object $Object preferably held excluding $Tool)
-
-(understand [peel | $Words] as [peel $Object])
-	*(understand $Words as object $Object preferably held)
-
-(perform [peel $Obj])
-	With what?
-	(asking for object in [peel $Obj with []])
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="both" colspan="2">(understand [peel | $Words] as [peel $Object with $Tool])</td></tr>
-<tr><td class="left"></td><td class="right">*(split $Words by [with using] into $Left and $Right)</td></tr>
-<tr><td class="left"></td><td class="right">*(understand $Right as single object $Tool preferably held)</td></tr>
-<tr><td class="left"></td><td class="right">*(understand $Left as object $Object preferably held excluding $Tool)</td></tr>
-<tr><td class="blank" colspan="2"></td></tr>
-<tr><td class="both" colspan="2">(understand [peel | $Words] as [peel $Object])</td></tr>
-<tr><td class="left"></td><td class="right">*(understand $Words as object $Object preferably held)</td></tr>
-<tr><td class="blank" colspan="2"></td></tr>
-<tr><td class="both" colspan="2">(perform [peel $Obj])</td></tr>
-<tr><td class="left"></td><td class="right">With what?</td></tr>
-<tr><td class="left"></td><td class="right">(asking for object in [peel $Obj with []])</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy35').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>Either variant is deemed unlikely for non-edible objects:
-</p>
-<textarea class="copyarea" id="copy36" readonly>
-(unlikely [peel $Obj | $]) %% Match both variants.
-	~(edible $Obj)
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="both" colspan="2">(unlikely [peel $Obj | $]) <span class="comment">&emsp;%% Match both variants.</span></td></tr>
-<tr><td class="left"></td><td class="right">~(edible $Obj)</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy36').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>The likelihood of an action helps resolve ambiguities, but it won't prevent the
-action from being attempted: If the player unambiguously tries to peel the
-kitchen floor, that request is going to go through, unlikely or not. Thus we
-also need:
-</p>
-<textarea class="copyarea" id="copy37" readonly>
-(prevent [peel $Obj | $])
-	~(edible $Obj)
-	That's not something you can peel.
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="both" colspan="2">(prevent [peel $Obj | $])</td></tr>
-<tr><td class="left"></td><td class="right">~(edible $Obj)</td></tr>
-<tr><td class="left"></td><td class="right">That's not something you can peel.</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy37').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>Likewise, because we specified <span class="code">preferably held</span>, the library will
-try to satisfy the parser rules using objects that are held by the player, so
-that e.g. <span class="prginput">PEEL FRUIT</span> will prioritize held fruit over non-held
-fruit. But an unambiguous <span class="prginput">PEEL BANANA</span> will be understood even
-when the banana isn't held.
-</p>
-<p>Thus, we need a rule to prevent the peeling of a non-held object. The standard
-library provides a number of handy <a href="miscfeat.html#commoncomplaints">when-predicates</a> that
-check for common conditions, and print appropriate responses when the
-conditions are met.
-</p>
-<textarea class="copyarea" id="copy38" readonly>
-(prevent [peel $Obj | $])
-	(when $Obj isn't directly held)
-
-(prevent [peel $ with $Obj])
-	(when $Obj isn't directly held)
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="both" colspan="2">(prevent [peel $Obj | $])</td></tr>
-<tr><td class="left"></td><td class="right">(when $Obj isn't directly held)</td></tr>
-<tr><td class="blank" colspan="2"></td></tr>
-<tr><td class="both" colspan="2">(prevent [peel $ with $Obj])</td></tr>
-<tr><td class="left"></td><td class="right">(when $Obj isn't directly held)</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy38').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>But, out of the kindness of our hearts, we might decide to pick up the
-mentioned objects automatically before attempting the peel action:
-</p>
-<textarea class="copyarea" id="copy39" readonly>
-(before [peel $Obj | $])
-	%% This will invoke (first try [take $Obj]) if necessary:
-	(ensure $Obj is held)
-
-(before [peel $ with $Obj])
-	(ensure $Obj is held)
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="both" colspan="2">(before [peel $Obj | $])</td></tr>
-<tr><td class="left"></td><td class="right"><span class="comment">%% This will invoke (first try [take $Obj]) if necessary:</span></td></tr>
-<tr><td class="left"></td><td class="right">(ensure $Obj is held)</td></tr>
-<tr><td class="blank" colspan="2"></td></tr>
-<tr><td class="both" colspan="2">(before [peel $ with $Obj])</td></tr>
-<tr><td class="left"></td><td class="right">(ensure $Obj is held)</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy39').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>Finally, there needs to be a default response for the <span class="code">[peel $
-with&nbsp;$]</span> action (we already have one for the <span class="code">[peel&nbsp;$]</span>
-action):
-</p>
-<textarea class="copyarea" id="copy40" readonly>
-(perform [peel $Obj with $Tool])
-	After an extended period of fumbling, you conclude that you don't know
-	how to peel (the $Obj) with (the $Tool).
-	(tick) (stop)
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="both" colspan="2">(perform [peel $Obj with $Tool])</td></tr>
-<tr><td class="left"></td><td class="right">After an extended period of fumbling, you conclude that you don't know</td></tr>
-<tr><td class="left"></td><td class="right">how to peel (the $Obj) with (the $Tool).</td></tr>
-<tr><td class="left"></td><td class="right">(tick) (stop)</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy40').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>Of course, the story should also contain a couple of objects that would make
-the peel action succeed. The following object-specific rules must be defined
-before the generic rules described above, otherwise they will never match:
-</p>
-<textarea class="copyarea" id="copy41" readonly>
-(edible #apple)
-(edible #peeled-apple)
-
-(perform [peel #apple with #peeler])
-	You peel the apple without cutting yourself even once.
-	(#apple is $Rel $Loc)
-	(now) (#apple is nowhere)
-	(now) (#peeled-apple is $Rel $Loc)
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="both" colspan="2">(edible #apple)</td></tr>
-<tr><td class="both" colspan="2">(edible #peeled-apple)</td></tr>
-<tr><td class="blank" colspan="2"></td></tr>
-<tr><td class="both" colspan="2">(perform [peel #apple with #peeler])</td></tr>
-<tr><td class="left"></td><td class="right">You peel the apple without cutting yourself even once.</td></tr>
-<tr><td class="left"></td><td class="right">(#apple is $Rel $Loc)</td></tr>
-<tr><td class="left"></td><td class="right">(now) (#apple is nowhere)</td></tr>
-<tr><td class="left"></td><td class="right">(now) (#peeled-apple is $Rel $Loc)</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy41').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>Finally, we could smoothen gameplay by implicitly assuming that if the player
-is holding the peeler, that's probably their tool of choice for peeling:
-</p>
-<textarea class="copyarea" id="copy42" readonly>
-(instead of [peel $Obj])
-	(current player $Player)
-	(#peeler is #heldby $Player)
-	\( with the peeler \) (line) %% Tell the player what's going on.
-	(try [peel $Obj with #peeler])
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="both" colspan="2">(instead of [peel $Obj])</td></tr>
-<tr><td class="left"></td><td class="right">(current player $Player)</td></tr>
-<tr><td class="left"></td><td class="right">(#peeler is #heldby $Player)</td></tr>
-<tr><td class="left"></td><td class="right">\( with the peeler \) (line) <span class="comment">&emsp;%% Tell the player what's going on.</span></td></tr>
-<tr><td class="left"></td><td class="right">(try [peel $Obj with #peeler])</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy42').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<a id="liblinks"></a><h2>Hyperlinks</h2>
-<p>When a Dialog program is compiled to run on the Å-machine, the text may contain
-<a href="io.html#hyperlinks">clickable links</a> that resolve into text input. Selecting a link
-has the same effect as typing the words of the link target and pressing return.
-This can simplify text entry on mobile devices.
-</p>
-<p>Links are created using the special <span class="code">(link&nbsp;$)&nbsp;...</span> syntax:
-</p>
-<textarea class="copyarea" id="copy43" readonly>
-	In the bowl a (link [red marble]) { red marble } glistens in the sunlight.
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="left"></td><td class="right">In the bowl a (link [red marble]) { red marble } glistens in the sunlight.</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy43').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>Often, as above, we want both the link target and the clickable text to be the
-same. In this case a short form is available:
-</p>
-<textarea class="copyarea" id="copy44" readonly>
-	In the bowl a (link) { red marble } glistens in the sunlight.
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="left"></td><td class="right">In the bowl a (link) { red marble } glistens in the sunlight.</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy44').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>If we want both the link target and the clickable text to be the printed name
-of an object, we can use the tersely named predicate <span class="code">($)</span> from the
-standard library:
-</p>
-<textarea class="copyarea" id="copy45" readonly>
-	In the bowl a (#redmarble) glistens in the sunlight.
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="left"></td><td class="right">In the bowl a (#redmarble) glistens in the sunlight.</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy45').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>The same predicate can be used for exits:
-</p>
-<textarea class="copyarea" id="copy46" readonly>
-	An exit leads (#north).
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="left"></td><td class="right">An exit leads (#north).</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy46').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>To use the printed name of an object as a link target, but supply a different
-text, use the predicate <span class="code">($&nbsp;$)</span>. The first parameter is an object,
-and the second is a <a href="control.html#closures">closure</a>:
-</p>
-<textarea class="copyarea" id="copy47" readonly>
-	In the bowl (#redmarble {something red}) glistens in the sunlight.
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="left"></td><td class="right">In the bowl (#redmarble {something red}) glistens in the sunlight.</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy47').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>Be aware, however, that hyperlinks are an optional feature of the Å-machine,
-and not every interpreter will support them. While it can be tempting to create
-a jarring effect by having links resolve into unexpected input text, some
-players will simply not see it.
-</p>
-<p>By default, library-generated messages never contain hyperlinks. The behaviour
-of the library should be consistent with the rest of the story, and whether or
-not to sprinkle room descriptions with clickable links is a decision best left
-to the author.
-</p>
-<p>To enable clickable links in disambiguation messages, the game over menu,
-default <a href="items.html#appearance">appearances</a>, and queries to <span class="code">(a&nbsp;$)</span> and
-<span class="code">(A&nbsp;$)</span>, add the following rule definition to the source code:
-</p>
-<textarea class="copyarea" id="copy48" readonly>
-(library links enabled)
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="both" colspan="2">(library links enabled)</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy48').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>Since link targets are appended to the current line of input, readers who are
-playing on a touchscreen device can type a verb using the on-screen keyboard,
-and then complete the sentence by tapping on a recently printed object name.
-Compass directions can of course be used directly as commands.
-</p>
-<p>However, when we turn our nouns into hyperlinks, players will (understandably)
-attempt to click on them without first typing a verb. To handle this situation,
-the standard library provides an optional feature called <i>default
-actions</i>. It is enabled like this:
-</p>
-<textarea class="copyarea" id="copy49" readonly>
-(default actions enabled)
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="both" colspan="2">(default actions enabled)</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy49').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>When this feature is enabled, the parser will understand noun-only input as a
-request for the default action, which is <span class="code">examine</span>. The default
-action can be changed, and may depend on the object, as in the following
-example:
-</p>
-<textarea class="copyarea" id="copy50" readonly>
-(default action (animate $Obj) [talk to $Obj])
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="both" colspan="2">(default action (animate $Obj) [talk to $Obj])</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy50').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="miscfeat.html">Chapter 11: Miscellaneous features</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 23, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 24, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

@@ -9,7 +9,7 @@
 <body>
 	<div class="chapter">
 	<h1>Chapter 8: More built-in predicates</h1>
-	<div class="navlinks">(<a href="#typechecks">Checking the type of a value</a>&nbsp;&bull; <a href="#arithmetic">Numbers and arithmetic</a>&nbsp;&bull; <a href="#listbuiltins">List-related predicates</a>&nbsp;&bull; <a href="#sploin">Manipulating dictionary words</a>&nbsp;&bull; <a href="#trace">Debugging</a>&nbsp;&bull; <a href="#system">System control</a>)</div>
+	<div class="navlinks">(<a href="#typechecks">Checking the type of a value</a>&nbsp;&bull; <a href="#arithmetic">Numbers and arithmetic</a>&nbsp;&bull; <a href="#listbuiltins">List-related predicates</a>&nbsp;&bull; <a href="#sploin">Manipulating dictionary words</a>&nbsp;&bull; <a href="#system">System control</a>)</div>
 <a id="typechecks"></a><h2>Checking the type of a value</h2>
 <p>Dialog contains a set of built-in predicates for checking if a value is of a
 particular type. They are:
@@ -37,6 +37,11 @@ particular type. They are:
 the predicate only fails if <span class="code">$X</span> is an unbound variable. It
 succeeds for numbers, dictionary words, and lists, including lists with
 one or more unbound variables inside.
+</p>
+<p class="codeline">(fully bound $X)</p>
+<p class="noteline">Like <span class="code">(bound&nbsp;$)</span>, but performs a full recursive check. It
+succeeds if and only if <span class="code">$X</span> is bound, and—in case of a
+list—contains only fully bound elements.
 </p>
 <p>The last one comes with an extra feature:
 </p>
@@ -114,24 +119,90 @@ working with lists:
 a multi-query is made, and <span class="code">$Element</span> is unbound, the
 predicate will backtrack over each member of the list.
 </p>
-<p class="codeline">(split $List by $Keywords into $Left and $Right)</p>
-<p class="noteline">If one of the values in the list <span class="code">$Keywords</span> occurs in
-<span class="code">$List</span>, <span class="code">$List</span> is split into a left and a right
-half at that occurrence. A multi-query will find each occurrence in
-turn.
-</p>
 <p class="codeline">(append $A $B $AB)</p>
 <p class="noteline">Unifies <span class="code">$AB</span> with the concatenation of <span class="code">$A</span>
 <span class="nobreak">and&nbsp;<span class="code">$B</span>.</span> The first parameter (<span class="code">$A</span>)
 must be bound.
 </p>
+<p class="codeline">(split $List by $Keyword into $Left and $Right)</p>
+<p class="noteline">See below.
+</p>
+<h3>Splitting input by keywords</h3>
+<p>During parsing, it is often necessary to scan a list for certain keywords, and
+then split it into two sublists, representing the elements on either side of
+the matched keyword. It is straightforward to implement this using ordinary
+rules in Dialog. However, for performance reasons the language also provides a
+built-in predicate:
+</p>
+<textarea class="copyarea" id="copy0" readonly>
+(split $Input by $Keyword into $Left and $Right)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(split $Input by $Keyword into $Left and $Right)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy0').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p><span class="code">$Input</span> must be a list of simple values, i.e. it mustn't contain
+sublists. <span class="code">$Keyword</span> must be a simple value, or a list of simple
+values.
+</p>
+<p>The <span class="code">$Input</span> list will be scanned, starting at its head, until the
+first element that is equal to (or appears in) <span class="code">$Keyword</span> is found.
+A list of the elements that came before the keyword is unified with
+<span class="code">$Left</span>, and a list of the elements that follow it is unified with
+<span class="code">$Right</span>. That is, neither <span class="code">$Left</span> nor
+<span class="code">$Right</span> includes the keyword itself.
+</p>
+<p>When invoked as a multi-query, the predicate backtracks over each matching
+position. Thus:
+</p>
+<textarea class="copyarea" id="copy1" readonly>
+	*(split [the good , the bad and the ugly]
+		by [and ,]
+		into $Left and $Right)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">*(split [the good , the bad and the ugly]</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>by [and ,]</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>into $Left and $Right)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy1').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>will succeed twice: First, binding <span class="code">$Left</span> to <span class="code">[the
+good]</span> and <span class="code">$Right</span> to <span class="code">[the bad and the ugly]</span>,
+and then a second time binding <span class="code">$Left</span> to <span class="code">[the good , the
+bad]</span> and <span class="code">$Right</span> to <span class="code">[the ugly]</span>.
+</p>
+<p>The split-by predicate can also be used to check whether a list contains one or
+more of a set of keywords. The standard library uses it that way in the
+following rule definition:
+</p>
+<textarea class="copyarea" id="copy2" readonly>
+($X contains one of $Y)
+	(split $X by $Y into $ and $)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">($X contains one of $Y)</td></tr>
+<tr><td class="left"></td><td class="right">(split $X by $Y into $ and $)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy2').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
 <a id="sploin"></a><h2>Manipulating dictionary words</h2>
 <p>Dictionary words are usually treated as atomic units, but it is possible to
 extract their constituent characters using the built-in predicate <span class="code">(split
 word $ into $)</span>. The output is a list of single-character dictionary
 words. Thus:
 </p>
-<textarea class="copyarea" id="copy0" readonly>
+<textarea class="copyarea" id="copy3" readonly>
 	(split word @fission into $List)
 	$List
 </textarea>
@@ -142,14 +213,14 @@ words. Thus:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy0').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy3').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>will print:
 </p>
 <div class="blkoutput">[f i s s i o n]</div><p>Conversely, it is possible to construct a dictionary word from a list of words
 (single-character or otherwise), using <span class="code">(join words $ into&nbsp;$)</span>:
 </p>
-<textarea class="copyarea" id="copy1" readonly>
+<textarea class="copyarea" id="copy4" readonly>
 	(join words [f u s i o n] into $Word)
 	$Word
 </textarea>
@@ -160,7 +231,7 @@ words. Thus:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy1').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy4').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>will print:
 </p>
@@ -180,10 +251,10 @@ characters.
 </li>
 </ul><p>It is possible to split and join numbers as though they were words:
 </p>
-<textarea class="copyarea" id="copy2" readonly>
+<textarea class="copyarea" id="copy5" readonly>
 	&gt; (get input [$W])
 	(split word $W into $Chars)
-	(split $Chars by [5] into $LeftChars and $RightChars)
+	(split $Chars by 5 into $LeftChars and $RightChars)
 	$LeftChars, $RightChars. (line)
 	(join words $LeftChars into $Left)
 	(join words $RightChars into $Right)
@@ -194,7 +265,7 @@ characters.
 <table>
 <tr><td class="left"></td><td class="right">&gt; (get input [$W])</td></tr>
 <tr><td class="left"></td><td class="right">(split word $W into $Chars)</td></tr>
-<tr><td class="left"></td><td class="right">(split $Chars by [5] into $LeftChars and $RightChars)</td></tr>
+<tr><td class="left"></td><td class="right">(split $Chars by 5 into $LeftChars and $RightChars)</td></tr>
 <tr><td class="left"></td><td class="right">$LeftChars, $RightChars. (line)</td></tr>
 <tr><td class="left"></td><td class="right">(join words $LeftChars into $Left)</td></tr>
 <tr><td class="left"></td><td class="right">(join words $RightChars into $Right)</td></tr>
@@ -203,53 +274,13 @@ characters.
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy2').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy5').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>This could result in the following interaction:
 </p>
 <div class="blkoutput">&gt; 11522<br />
 [1 1], [2 2].<br />
-The sum is 33.</div><a id="trace"></a><h2>Debugging</h2>
-<p>The following built-in predicates are useful for debugging:
-</p>
-<p class="codeline">(log) <i>statement</i></p>
-<p class="noteline">If the program is currently running inside the interactive debugger,
-execute the statement—usually a block—in a stoppable environment.
-Output from the statement will appear between line breaks, in a
-distinct style. This is useful for adding temporary printouts to the
-code.
-</p>
-<p class="codeline">(breakpoint)</p>
-<p class="noteline">If the program is currently running inside the interactive debugger,
-suspend execution and print the current source code filename and line
-number. When execution resumes, this query succeeds.
-</p>
-<p class="noteline">If the program is running on the Z-machine, the query simply succeeds.
-</p>
-<p class="codeline">(trace on)</p>
-<p class="noteline">Enables tracing. Following this, debugging information will be printed
-when queries are made, and when rule bodies are entered. The
-interactive debugger will also report when solutions are found, and
-when dynamic predicates are updated.
-</p>
-<p class="codeline">(trace off)</p>
-<p class="noteline">Disables tracing.
-</p>
-<p>If your program source code contains a query to <span class="code">(trace on)</span>
-anywhere, the Z-machine backend will insert extra instructions all over the
-generated code, to deal with tracing. This is known as <i>instrumenting</i> the
-code, and it makes the program slower and larger. Thus, you'll only want to use
-these predicates temporarily, during debugging. The compiler prints a warning
-when it adds the extra instructions.
-</p>
-<p>Please be aware that the Dialog compiler and debugger do optimize your program,
-and you will be tracing the optimized code, so certain queries and rules will
-be missing from the debug printouts. You will generally want to do all your
-tracing in the debugger, which mercifully turns off some of the more confusing
-optimizations. That being said, tracing the optimized Z-code is highly useful
-when trying to speed up a program.
-</p>
-<a id="system"></a><h2>System control</h2>
+The sum is 33.</div><a id="system"></a><h2>System control</h2>
 <p>The following built-in predicates offer low-level control over the interpreter
 and the Dialog runtime. This is decidedly in the domain of library code, so
 story authors rarely need to worry about these predicates.
@@ -326,7 +357,7 @@ to the limits.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="beyondprg.html">Chapter 9: Beyond the program</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 23, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 24, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

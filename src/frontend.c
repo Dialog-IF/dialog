@@ -36,6 +36,7 @@ struct specialspec {
 	{SP_RANDOM,		0,				2,	{"at", "random"}},
 	{SP_COLLECT,		0,				2,	{"collect", 0}},
 	{SP_COLLECT_WORDS,	0,				2,	{"collect", "words"}},
+	{SP_ACCUMULATE,		0,				2,	{"accumulate", 0}},
 	{SP_CYCLING,		0,				1,	{"cycling"}},
 	{SP_DETERMINE_OBJECT,	0,				3,	{"determine", "object", 0}},
 	{SP_DIV,		0,				2,	{"div", 0}},
@@ -94,6 +95,7 @@ struct builtinspec {
 	{BI_UNKNOWN_WORD,	0, 0,				3,	{"unknown", "word", 0}},
 	{BI_OBJECT,		0, 0,				2,	{"object", 0}},
 	{BI_BOUND,		0, 0,				2,	{"bound", 0}},
+	{BI_FULLY_BOUND,	0, 0,				3,	{"fully", "bound", 0}},
 	{BI_QUIT,		0, PREDF_SUCCEEDS,		1,	{"quit"}},
 	{BI_RESTART,		0, PREDF_SUCCEEDS,		1,	{"restart"}},
 	{BI_BREAKPOINT,		0, PREDF_SUCCEEDS,		1,	{"breakpoint"}},
@@ -135,13 +137,6 @@ struct builtinspec {
 	{BI_APPEND,		0, 0,				4,	{"append", 0, 0, 0}},
 	{BI_SPLIT_WORD,		0, 0,				5,	{"split", "word", 0, "into", 0}},
 	{BI_JOIN_WORDS,		0, 0,				5,	{"join", "words", 0, "into", 0}},
-	{BI_WORDREP_RETURN,	0, 0,				4,	{"word", "representing", "return", 0}},
-	{BI_WORDREP_SPACE,	0, 0,				4,	{"word", "representing", "space", 0}},
-	{BI_WORDREP_BACKSPACE,	0, 0,				4,	{"word", "representing", "backspace", 0}},
-	{BI_WORDREP_UP,		0, 0,				4,	{"word", "representing", "up", 0}},
-	{BI_WORDREP_DOWN,	0, 0,				4,	{"word", "representing", "down", 0}},
-	{BI_WORDREP_LEFT,	0, 0,				4,	{"word", "representing", "left", 0}},
-	{BI_WORDREP_RIGHT,	0, 0,				4,	{"word", "representing", "right", 0}},
 	{BI_HAVE_UNDO,		0, 0,				3,	{"interpreter", "supports", "undo"}},
 	{BI_HAVE_LINK,		0, 0,				3,	{"interpreter", "supports", "links"}},
 	{BI_HAVE_QUIT,		0, 0,				3,	{"interpreter", "supports", "quit"}},
@@ -624,9 +619,13 @@ int trace_invocations_body(struct astnode **anptr, int flags, uint8_t *bound, st
 			if(!failed) memcpy(bound, bound_accum, cl->nvar);
 			break;
 		case AN_COLLECT:
+		case AN_ACCUMULATE:
 			memcpy(bound_sub, bound, cl->nvar);
-			(void) trace_invocations_body(&an->children[0], flags, bound_sub, cl, 0, prg);
-			add_bound_vars(an->children[2], bound, cl);
+			if(!trace_invocations_body(&an->children[0], flags, bound_sub, cl, 0, prg)
+			|| an->kind == AN_ACCUMULATE
+			|| !any_unbound(an->children[1], bound_sub, cl)) {
+				add_bound_vars(an->children[2], bound, cl);
+			}
 			break;
 		case AN_COLLECT_WORDS:
 			memcpy(bound_sub, bound, cl->nvar);
@@ -1270,6 +1269,7 @@ static void extract_wordmap_from_body(struct wordmap_tally *tallies, int tally_o
 			case AN_SELECT:
 			case AN_EXHAUST:
 			case AN_COLLECT:
+			case AN_ACCUMULATE:
 				for(i = 0; i < an->nchild; i++) {
 					extract_wordmap_from_body(tallies, tally_onum, prg, an->children[i], objvar, onum, max_depth - 1);
 				}
@@ -1509,6 +1509,7 @@ int body_succeeds(struct astnode *an) {
 		switch(an->kind) {
 		case AN_BLOCK:
 		case AN_FIRSTRESULT:
+		case AN_LINK_SELF:
 			if(!body_succeeds(an->children[0])) return 0;
 			break;
 		case AN_NEG_BLOCK:
@@ -1531,28 +1532,20 @@ int body_succeeds(struct astnode *an) {
 			if(!body_succeeds(an->children[2])) return 0;
 			// todo also consider conditions with known outcome
 			break;
-		case AN_COLLECT:
-			if(an->children[2]->kind != AN_VARIABLE) return 0;
-			break;
-		case AN_COLLECT_WORDS:
-			if(an->children[1]->kind != AN_VARIABLE) return 0;
-			break;
-		case AN_DETERMINE_OBJECT:
-			return 0;
-			break;
 		case AN_SELECT:
 			for(i = 0; i < an->nchild; i++) {
 				if(!body_succeeds(an->children[i])) return 0;
 			}
 			break;
-		case AN_OUTPUTBOX:
+		case AN_COLLECT:
+		case AN_COLLECT_WORDS:
+		case AN_ACCUMULATE:
+		case AN_DETERMINE_OBJECT:
 			return 0;
-			break;
-		case AN_LINK_SELF:
-			if(!body_succeeds(an->children[0])) return 0;
 			break;
 		case AN_LINK:
 		case AN_LINK_RES:
+		case AN_OUTPUTBOX:
 			if(!body_succeeds(an->children[1])) return 0;
 			break;
 		}
@@ -1629,6 +1622,7 @@ int body_succeeds_at_most_once(struct astnode *an) {
 		case AN_FIRSTRESULT:
 		case AN_COLLECT:
 		case AN_COLLECT_WORDS:
+		case AN_ACCUMULATE:
 		case AN_STOPPABLE:
 		case AN_STATUSBAR:
 		case AN_OUTPUTBOX:
@@ -1840,22 +1834,44 @@ static int decode_output(char **bufptr, struct astnode *an, int *p_space, int *p
 	return 1;
 }
 
-int frontend_visit_clauses(struct program *prg, struct arena *temp_arena, struct clause **first_ptr) {
-	struct clause *cl, *sub, **clause_dest, **cld;
-	struct astnode *an;
-	int i, j, k;
-	char buf[32];
-	struct predicate *pred;
+static void frontend_inline(struct astnode **anptr, struct program *prg, struct clause *container) {
+	struct astnode *an, *sub;
 
-	for(i = 0; i < prg->npredicate; i++) {
-		pred = prg->predicates[i]->pred;
-		if(pred->flags & PREDF_MACRO) {
-			if(accesspred_has_cycle(pred)) {
-				report(LVL_ERR, pred->macrodef->line, "Cyclic definition of access predicate.");
-				return 0;
+	while((an = *anptr)) {
+		if(an->kind == AN_RULE
+		&& (an->predicate->pred->flags & PREDF_MAY_INLINE)) {
+			struct clause *def = an->predicate->pred->clauses[0];
+			struct astnode *bindings[def->nvar];
+
+			memset(bindings, 0, def->nvar * sizeof(struct astnode *));
+			accesspred_bind_vars(def, an->children, bindings, prg, container->arena);
+			sub = expand_macro_body(
+				def->body,
+				def,
+				bindings,
+				0,
+				an->line,
+				prg,
+				container);
+			assert(sub->kind == AN_RULE);
+			if(an->subkind == RULE_SIMPLE) {
+				sub->subkind = RULE_SIMPLE;
 			}
+			*anptr = sub;
+			sub->next_in_body = an->next_in_body;
+			anptr = &sub->next_in_body;
+		} else {
+			anptr = &an->next_in_body;
 		}
 	}
+}
+
+int frontend_visit_clauses(struct program *prg, struct arena *temp_arena, struct clause **first_ptr) {
+	struct clause *cl, *sub, **clause_dest, **cld, *def;
+	struct astnode *an;
+	int i, j;
+	char buf[32];
+	struct predicate *pred;
 
 	prg->errorflag = 0;
 	for(clause_dest = first_ptr; (cl = *clause_dest); ) {
@@ -2033,84 +2049,59 @@ int frontend_visit_clauses(struct program *prg, struct arena *temp_arena, struct
 			clause_dest = &cl->next_in_source;
 		} else if(cl->predicate->pred->flags & PREDF_MACRO) {
 			cld = clause_dest;
-			an = expand_macro_body(
-				cl->predicate->pred->macrodef->body,
-				cl->predicate->pred->macrodef,
-				cl->params,
-				0,
-				cl->line,
-				prg,
-				temp_arena);
-			for(; an; an = an->next_in_body) {
-				if(an->kind == AN_RULE || an->kind == AN_NEG_RULE) {
-					if(an->predicate->builtin
-					&& an->predicate->builtin != BI_HASPARENT
-					&& !(an->predicate->nameflags & PREDNF_DEFINABLE_BI)) {
-						report(LVL_ERR, cl->line, "Access predicate may not expand into a redefinition of a builtin.");
+			def = accesspred_find_def(cl->predicate->pred, cl->params);
+			if(!def) {
+				report(LVL_ERR, cl->line, "Couldn't find a matching access predicate rule for @%s.", cl->predicate->printed_name);
+				prg->errorflag = 1;
+				clause_dest = &cl->next_in_source;
+			} else {
+				struct astnode *bindings[def->nvar];
+				memset(bindings, 0, def->nvar * sizeof(struct astnode *));
+				accesspred_bind_vars(def, cl->params, bindings, prg, temp_arena);
+				an = expand_macro_body(
+					def->body,
+					def,
+					bindings,
+					0,
+					cl->line,
+					prg,
+					cl);
+				for(; an; an = an->next_in_body) {
+					if(an->kind == AN_RULE || an->kind == AN_NEG_RULE) {
+						if(an->predicate->builtin
+						&& an->predicate->builtin != BI_HASPARENT
+						&& !(an->predicate->nameflags & PREDNF_DEFINABLE_BI)) {
+							report(LVL_ERR, cl->line, "Access predicate may not expand into a redefinition of a builtin.");
+							return 0;
+						}
+						sub = mkclause(an->predicate->pred);
+						for(i = 0; i < sub->predicate->arity; i++) {
+							sub->params[i] = deepcopy_astnode(an->children[i], sub->arena, cl->line);
+						}
+						sub->body = deepcopy_astnode(cl->body, sub->arena, cl->line);
+						sub->line = cl->line;
+						sub->negated = (an->kind == AN_NEG_RULE);
+						sub->macro_instance = ++cl->macro_instance;
+						*cld = sub;
+						cld = &sub->next_in_source;
+					} else {
+						report(LVL_ERR, cl->line, "Access predicate must expand into a conjunction of queries.");
 						return 0;
 					}
-					sub = arena_calloc(&an->predicate->pred->arena, sizeof(*sub));
-					sub->predicate = an->predicate;
-					sub->arena = &an->predicate->pred->arena;
-					sub->params = arena_alloc(sub->arena, sub->predicate->arity * sizeof(struct astnode *));
-					for(i = 0; i < sub->predicate->arity; i++) {
-						sub->params[i] = deepcopy_astnode(an->children[i], sub->arena, cl->line);
-					}
-					sub->body = deepcopy_astnode(cl->body, sub->arena, cl->line);
-					sub->line = cl->line;
-					sub->negated = (an->kind == AN_NEG_RULE);
-					*cld = sub;
-					cld = &sub->next_in_source;
-				} else {
-					report(LVL_ERR, cl->line, "Access predicate must expand into a conjunction of queries.");
-					return 0;
 				}
+				*cld = cl->next_in_source;
 			}
-			*cld = cl->next_in_source;
 		} else {
 			cl->predicate->pred->flags |= PREDF_DEFINED;
 			add_clause(cl, cl->predicate->pred);
-			cl->body = expand_macros(cl->body, prg, cl->arena);
+			cl->body = expand_macros(cl->body, prg, cl);
 			clause_dest = &cl->next_in_source;
 		}
 	}
 
 	pred = find_builtin(prg, BI_INVOKE_CLOSURE)->pred;
 	for(i = 0; i < pred->nclause; i++) {
-		pred->clauses[i]->body = expand_macros(pred->clauses[i]->body, prg, &pred->arena);
-	}
-
-	for(i = 0; i < prg->npredicate; i++) {
-		pred = prg->predicates[i]->pred;
-		if(pred->nclause == 1) {
-			cl = pred->clauses[0];
-			for(j = 0; j < pred->predname->arity; j++) {
-				if(cl->params[j]->kind != AN_VARIABLE) break;
-			}
-			if(j == pred->predname->arity
-			&& (an = cl->body)
-			&& an->kind == AN_RULE
-			&& !(an->predicate->builtin == BI_FAIL)
-			&& !an->next_in_body) {
-				for(j = 0; j < an->nchild; j++) {
-					if(an->children[j]->kind != AN_VARIABLE) {
-						break;
-					}
-					for(k = 0; k < pred->predname->arity; k++) {
-						if(an->children[j]->word == cl->params[k]->word) {
-							break;
-						}
-					}
-					if(an->children[j]->word->name[0]
-					&& k == pred->predname->arity) {
-						break;
-					}
-				}
-				if(j == an->nchild) {
-					pred->flags |= PREDF_MAY_INLINE;
-				}
-			}
-		}
+		pred->clauses[i]->body = expand_macros(pred->clauses[i]->body, prg, pred->clauses[i]);
 	}
 
 	if(verbose >= 3) {
@@ -2157,11 +2148,8 @@ static void frontend_reset_program(struct program *prg) {
 
 	predname = find_builtin(prg, BI_INVOKE_CLOSURE);
 	for(i = 0; i < prg->nclosurebody; i++) {
-		cl = arena_calloc(&predname->pred->arena, sizeof(*cl));
-		cl->predicate = predname;
-		cl->arena = &predname->pred->arena;
+		cl = mkclause(predname->pred);
 		cl->line = 0;
-		cl->params = arena_alloc(cl->arena, predname->arity * sizeof(struct astnode *));
 		cl->params[0] = mkast(AN_INTEGER, 0, cl->arena, 0);
 		cl->params[0]->value = i;
 		cl->params[1] = mkast(AN_EMPTY_LIST, 0, cl->arena, 0);
@@ -2555,10 +2543,7 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 	}
 
 	predname = find_builtin(prg, BI_QUERY);
-	cl = arena_calloc(&predname->pred->arena, sizeof(*cl));
-	cl->predicate = predname;
-	cl->arena = &predname->pred->arena;
-	cl->params = arena_alloc(cl->arena, predname->arity * sizeof(struct astnode *));
+	cl = mkclause(predname->pred);
 	cl->params[0] = mkast(AN_PAIR, 2, cl->arena, 0);
 	cl->params[0]->children[0] = mkast(AN_VARIABLE, 0, cl->arena, 0);
 	cl->params[0]->children[0]->word = find_word(prg, "Head");
@@ -2573,10 +2558,7 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 	add_clause(cl, predname->pred);
 
 	predname = find_builtin(prg, BI_QUERY_ARG);
-	cl = arena_calloc(&predname->pred->arena, sizeof(*cl));
-	cl->predicate = predname;
-	cl->arena = &predname->pred->arena;
-	cl->params = arena_alloc(cl->arena, predname->arity * sizeof(struct astnode *));
+	cl = mkclause(predname->pred);
 	cl->params[0] = mkast(AN_PAIR, 2, cl->arena, 0);
 	cl->params[0]->children[0] = mkast(AN_VARIABLE, 0, cl->arena, 0);
 	cl->params[0]->children[0]->word = find_word(prg, "Head");
@@ -2593,10 +2575,7 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 	add_clause(cl, predname->pred);
 
 	predname = find_builtin(prg, BI_EMBEDRESOURCE);
-	cl = arena_calloc(&predname->pred->arena, sizeof(*cl));
-	cl->predicate = predname;
-	cl->arena = &predname->pred->arena;
-	cl->params = arena_alloc(cl->arena, predname->arity * sizeof(struct astnode *));
+	cl = mkclause(predname->pred);
 	cl->params[0] = mkast(AN_VARIABLE, 0, cl->arena, 0);
 	cl->params[0]->word = find_word(prg, "Id");
 	cl->body = mkast(AN_RULE, 2, cl->arena, 0);
@@ -2612,10 +2591,7 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 	add_clause(cl, predname->pred);
 
 	predname = find_builtin(prg, BI_CAN_EMBED);
-	cl = arena_calloc(&predname->pred->arena, sizeof(*cl));
-	cl->predicate = predname;
-	cl->arena = &predname->pred->arena;
-	cl->params = arena_alloc(cl->arena, predname->arity * sizeof(struct astnode *));
+	cl = mkclause(predname->pred);
 	cl->params[0] = mkast(AN_VARIABLE, 0, cl->arena, 0);
 	cl->params[0]->word = find_word(prg, "Id");
 	cl->body = mkast(AN_RULE, 2, cl->arena, 0);
@@ -2681,6 +2657,57 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 		pred = predname->pred;
 		for(j = 0; j < pred->nclause; j++) {
 			analyse_clause(prg, pred->clauses[j], 1);
+		}
+	}
+
+	if(prg->optflags & OPTF_INLINE) {
+		for(i = 0; i < prg->npredicate; i++) {
+			pred = prg->predicates[i]->pred;
+			if(pred->nclause == 1
+			&& !(pred->flags & PREDF_DYNAMIC)) {
+				cl = pred->clauses[0];
+				for(j = 0; j < pred->predname->arity; j++) {
+					if(cl->params[j]->kind != AN_VARIABLE) break;
+					if(cl->params[j]->word->name[0]) {
+						for(k = 0; k < j; k++) {
+							if(cl->params[j]->word == cl->params[k]->word) {
+								break;
+							}
+						}
+						if(k < j) break;
+					}
+				}
+				if(j == pred->predname->arity
+				&& (an = cl->body)
+				&& an->kind == AN_RULE
+				&& !(an->predicate->builtin == BI_FAIL)
+				&& !an->next_in_body) {
+					for(j = 0; j < an->nchild; j++) {
+						if(an->children[j]->kind != AN_VARIABLE) {
+							break;
+						}
+						for(k = 0; k < pred->predname->arity; k++) {
+							if(an->children[j]->word == cl->params[k]->word) {
+								break;
+							}
+						}
+						if(an->children[j]->word->name[0]
+						&& k == pred->predname->arity) {
+							break;
+						}
+					}
+					if(j == an->nchild) {
+						pred->flags |= PREDF_MAY_INLINE;
+					}
+				}
+			}
+		}
+
+		for(i = 0; i < prg->npredicate; i++) {
+			pred = prg->predicates[i]->pred;
+			for(j = 0; j < pred->nclause; j++) {
+				frontend_inline(&pred->clauses[j]->body, prg, pred->clauses[j]);
+			}
 		}
 	}
 
@@ -2979,12 +3006,9 @@ int frontend_inject_query(struct program *prg, struct predname *predname, struct
  	lexer.program = prg;
 	lexer.string = str;
 
-	cl = arena_calloc(&pred->arena, sizeof(*cl));
-	cl->predicate = predname;
-	cl->arena = &pred->arena;
+	cl = mkclause(pred);
 	cl->line = 0;
-
-	cl->params = arena_alloc(cl->arena, sizeof(struct astnode *));
+	assert(predname->arity == 1);
 	cl->params[0] = mkast(AN_VARIABLE, 0, cl->arena, 0);
 	cl->params[0]->word = vname;
 
@@ -2997,7 +3021,7 @@ int frontend_inject_query(struct program *prg, struct predname *predname, struct
 	find_dict_words(prg, body, 0);
 
 	prg->errorflag = 0;
-	body = expand_macros(body, prg, cl->arena);
+	body = expand_macros(body, prg, cl);
 	if(prg->errorflag) {
 		arena_free(&lexer.temp_arena);
 		return 0;

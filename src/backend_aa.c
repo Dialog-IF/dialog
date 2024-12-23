@@ -1465,27 +1465,49 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 			case I_COLLECT_BEGIN:
 				ai = add_instr(AA_AUX_PUSH_RAW | 0x80);
 				ai->oper[0] = (aaoper_t) {AAO_VBYTE, 0};
+				if(ci->subop) {
+					ai = add_instr(AA_AUX_PUSH_VAL);
+					ai->oper[0] = (aaoper_t) {AAO_CONST, tag_eval_value((value_t) {VAL_NUM, 0}, prg)};
+				}
 				break;
 			case I_COLLECT_CHECK:
 				ai = add_instr(AA_AUX_POP_LIST_CHK);
 				ai->oper[0] = encode_value(ci->oper[0], prg);
 				break;
 			case I_COLLECT_END_R:
-				ai = add_instr(AA_AUX_POP_LIST);
-				ai->oper[0] = encode_dest(ci->oper[0], prg, 0);
+				if(ci->subop) {
+					ai = add_instr(AA_AUX_POP_LIST);
+					ai->oper[0] = (aaoper_t) {AAO_STORE_REG, REG_TMP};
+					ai = add_instr(AA_MAKE_PAIR_D);
+					ai->oper[0] = encode_dest(ci->oper[0], prg, 0);
+					ai->oper[1] = (aaoper_t) {AAO_REG, REG_NIL};
+					ai->oper[2] = (aaoper_t) {AAO_REG, REG_TMP};
+				} else {
+					ai = add_instr(AA_AUX_POP_LIST);
+					ai->oper[0] = encode_dest(ci->oper[0], prg, 0);
+				}
 				break;
 			case I_COLLECT_END_V:
-				ai = add_instr(AA_AUX_POP_LIST);
-				if(ci->oper[0].tag == OPER_TEMP
-				|| ci->oper[0].tag == OPER_VAR
-				|| ci->oper[0].tag == OPER_ARG
-				|| ci->oper[0].tag == VAL_NIL) {
-					ai->oper[0] = encode_dest(ci->oper[0], prg, 1);
-				} else {
+				if(ci->subop) {
+					ai = add_instr(AA_AUX_POP_LIST);
 					ai->oper[0] = (aaoper_t) {AAO_STORE_REG, REG_TMP};
-					ai = add_instr(AA_ASSIGN);
-					ai->oper[0] = encode_value(ci->oper[0], prg);
-					ai->oper[1] = (aaoper_t) {AAO_REG, REG_TMP};
+					ai = add_instr(AA_MAKE_PAIR_D);
+					ai->oper[0] = encode_dest(ci->oper[0], prg, 1);
+					ai->oper[1] = (aaoper_t) {AAO_REG, REG_NIL};
+					ai->oper[2] = (aaoper_t) {AAO_REG, REG_TMP};
+				} else {
+					ai = add_instr(AA_AUX_POP_LIST);
+					if(ci->oper[0].tag == OPER_TEMP
+					|| ci->oper[0].tag == OPER_VAR
+					|| ci->oper[0].tag == OPER_ARG
+					|| ci->oper[0].tag == VAL_NIL) {
+						ai->oper[0] = encode_dest(ci->oper[0], prg, 1);
+					} else {
+						ai->oper[0] = (aaoper_t) {AAO_STORE_REG, REG_TMP};
+						ai = add_instr(AA_ASSIGN);
+						ai->oper[0] = encode_value(ci->oper[0], prg);
+						ai->oper[1] = (aaoper_t) {AAO_REG, REG_TMP};
+					}
 				}
 				break;
 			case I_COLLECT_MATCH_ALL:
@@ -1493,7 +1515,28 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				ai->oper[0] = encode_value(ci->oper[0], prg);
 				break;
 			case I_COLLECT_PUSH:
-				if(ci->oper[0].tag == VAL_OBJ) {
+				if(ci->subop) {
+					ai = add_instr(AA_AUX_POP_LIST);
+					ai->oper[0] = (aaoper_t) {AAO_STORE_REG, REG_TMP};
+					ai = add_instr(AA_AUX_PUSH_RAW | 0x80);
+					ai->oper[0] = (aaoper_t) {AAO_VBYTE, 0};
+					ai = add_instr(AA_MAKE_PAIR_D);
+					ai->oper[0] = (aaoper_t) {AAO_STORE_REG, REG_TMP};
+					ai->oper[1] = (aaoper_t) {AAO_REG, REG_NIL};
+					ai->oper[2] = (aaoper_t) {AAO_REG, REG_TMP};
+					if(ci->oper[0].tag == VAL_NUM && ci->oper[0].value == 1) {
+						ai = add_instr(AA_INC_NUM);
+						ai->oper[0] = (aaoper_t) {AAO_REG, REG_TMP};
+						ai->oper[1] = (aaoper_t) {AAO_STORE_REG, REG_TMP};
+					} else {
+						ai = add_instr(AA_ADD_NUM);
+						ai->oper[0] = (aaoper_t) {AAO_REG, REG_TMP};
+						ai->oper[1] = encode_value(ci->oper[0], prg);
+						ai->oper[2] = (aaoper_t) {AAO_STORE_REG, REG_TMP};
+					}
+					ai = add_instr(AA_AUX_PUSH_VAL);
+					ai->oper[0] = (aaoper_t) {AAO_REG, REG_TMP};
+				} else if(ci->oper[0].tag == VAL_OBJ) {
 					ai = add_instr(AA_AUX_PUSH_RAW);
 					if(ci->oper[0].value < 0xff) {
 						ai->op |= 0x80;

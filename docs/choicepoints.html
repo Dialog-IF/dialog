@@ -9,7 +9,7 @@
 <body>
 	<div class="chapter">
 	<h1>Chapter 3: Choice points</h1>
-	<div class="navlinks">(<a href="#disjunctions">Disjunctions</a>&nbsp;&bull; <a href="#backtracking">Backtracking</a>&nbsp;&bull; <a href="#multiqueries">Multi-queries</a>&nbsp;&bull; <a href="#exhaust">Visiting all solutions</a>&nbsp;&bull; <a href="#collect">Collecting values</a>&nbsp;&bull; <a href="#collectwords">Collecting words</a>&nbsp;&bull; <a href="#just">Just</a>&nbsp;&bull; <a href="#repeat">Infinite loops</a>)</div>
+	<div class="navlinks">(<a href="#disjunctions">Disjunctions</a>&nbsp;&bull; <a href="#backtracking">Backtracking</a>&nbsp;&bull; <a href="#multiqueries">Multi-queries</a>&nbsp;&bull; <a href="#exhaust">Visiting all solutions</a>&nbsp;&bull; <a href="#collect">Collecting values</a>&nbsp;&bull; <a href="#collectwords">Collecting words</a>&nbsp;&bull; <a href="#accumulate">Accumulating numbers</a>&nbsp;&bull; <a href="#just">Just</a>&nbsp;&bull; <a href="#repeat">Infinite loops</a>)</div>
 <a id="disjunctions"></a><h2>Disjunctions</h2>
 <p>So far, we have seen that rule bodies can contain text and values to be
 printed, as well as queries to be made to predicates. As soon as a query fails,
@@ -791,7 +791,63 @@ as separate words. They are: <span class="code">. , ; * " ( )</span> When printe
 <p>produces the output:
 </p>
 <div class="blkoutput">The list is: [hello , world!]<br />
-Printing each word: hello, world!</div><a id="just"></a><h2>Just</h2>
+Printing each word: hello, world!</div><a id="accumulate"></a><h2>Accumulating numbers</h2>
+<p>Instead of returning the collected values as a list, it is possible to add them
+together:
+</p>
+<textarea class="copyarea" id="copy18" readonly>
+	(accumulate $Element)
+		...
+	(into $Sum)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">(accumulate $Element)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>...</td></tr>
+<tr><td class="left"></td><td class="right">(into $Sum)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy18').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The elements have to be numbers, and the resulting sum must be within the valid
+range of numbers (i.e. no more than 16383). If that is not the case, then the
+inner expression is still exhausted (including any side-effects), before the
+whole accumulate-statement fails.
+</p>
+<p>The <span class="code">$Element</span> can be a constant. If it is 1, the resulting sum will
+be the number of ways the inner expression succeeded. Thus:
+</p>
+<textarea class="copyarea" id="copy19" readonly>
+(program entry point)
+	(accumulate 1)
+		*(fruit $)
+	(into $Num)
+	I know of $Num pieces of fruit.
+
+(fruit #apple)
+(fruit #orange)
+(fruit #banana)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">(accumulate 1)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>*(fruit $)</td></tr>
+<tr><td class="left"></td><td class="right">(into $Num)</td></tr>
+<tr><td class="left"></td><td class="right">I know of $Num pieces of fruit.</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(fruit #apple)</td></tr>
+<tr><td class="both" colspan="2">(fruit #orange)</td></tr>
+<tr><td class="both" colspan="2">(fruit #banana)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy19').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>would produce the output:
+</p>
+<div class="blkoutput">I know of 3 pieces of fruit.</div><a id="just"></a><h2>Just</h2>
 <p>We have seen that the rules of a predicate work together as a disjunction. Each
 rule is tried in turn, and failure causes Dialog to backtrack and resume with
 the next rule. When a rule succeeds, the backtracking may or may not stop: This
@@ -814,7 +870,7 @@ example is the object that represents the player character inside the game
 world. Suppose (although this is not necessarily a good idea in practice) that
 you want this object to print as &ldquo;you&rdquo;, but parse only as &ldquo;me&rdquo;:
 </p>
-<textarea class="copyarea" id="copy18" readonly>
+<textarea class="copyarea" id="copy20" readonly>
 (name #player)	you
 (dict #player)	(just) me
 
@@ -837,7 +893,7 @@ you want this object to print as &ldquo;you&rdquo;, but parse only as &ldquo;me&
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy18').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy20').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Here, when a multi-query is made for <span class="code">*(dict #player)</span>, Dialog sets
 up a choice point as usual, and enters the first matching rule. But this rule
@@ -857,7 +913,7 @@ the second <span class="code">(just)</span> has no effect.
 supply of choice points. This can be used to create infinite loops (such as the
 main game loop or the game-over menu).
 </p>
-<textarea class="copyarea" id="copy19" readonly>
+<textarea class="copyarea" id="copy21" readonly>
 (program entry point)
 	*(repeat forever)
 	This gets printed over and over. (line)
@@ -872,7 +928,7 @@ main game loop or the game-over menu).
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy19').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy21').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>In the above example, the query to <span class="code">(fail)</span> makes Dialog backtrack
 to the multi-query to <span class="code">(repeat forever)</span>, which will keep on
@@ -885,7 +941,7 @@ created by <span class="code">(repeat forever)</span>. This can be done explicit
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="control.html">Chapter 4: More control structures</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 23, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 24, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

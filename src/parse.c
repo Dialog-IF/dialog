@@ -11,6 +11,7 @@
 #include "parse.h"
 #include "report.h"
 #include "unicode.h"
+#include "accesspred.h"
 
 #define MAXWORDLENGTH 256
 #define MAXRULEWORDS 32
@@ -36,6 +37,7 @@ static int valid_varname_char(uint8_t ch) {
 		|| ch == '_'
 		|| ch == '<'
 		|| ch == '>'
+		|| ch == '+'
 		|| ch == '-';
 }
 
@@ -116,6 +118,7 @@ static int next_token(struct lexer *lexer, int parsemode) {
 				column++;
 				if(ch != EOF && (
 					valid_varname_char((uint8_t) ch)
+					|| ch == '\\'
 					|| (lexer->kind == TOK_DICTWORD && !strchr("\n\r\t ()[]{}~*|%/", ch))))
 				{
 					if(ch == '\\') {
@@ -129,6 +132,17 @@ static int next_token(struct lexer *lexer, int parsemode) {
 							report(LVL_ERR, line, "Invalid character after backslash.");
 							lexer->errorflag = 1;
 							return 0;
+						}
+						if(lexer->kind == TOK_DICTWORD) {
+							switch(ch) {
+							case 'b': ch = 8; break;
+							case 'n': ch = 13; break;
+							case 'u': ch = 16; break;
+							case 'd': ch = 17; break;
+							case 'l': ch = 18; break;
+							case 'r': ch = 19; break;
+							case 's': ch = 32; break;
+							}
 						}
 					}
 					if(pos >= MAXWORDLENGTH) {
@@ -156,7 +170,12 @@ static int next_token(struct lexer *lexer, int parsemode) {
 					}
 					if(lexer->kind == TOK_DICTWORD && wbuf[0] && wbuf[1]) {
 						for(i = 0; wbuf[i]; i++) {
-							if(wbuf[i] < 0x80 && strchr(STOPCHARS, wbuf[i])) {
+							if(wbuf[i] <= 0x20) {
+								report(LVL_ERR, line,
+									"Keypress character cannot appear inside a multi-character dictionary word.");
+								lexer->errorflag = 1;
+								return 0;
+							} else if(wbuf[i] < 0x80 && strchr(STOPCHARS, wbuf[i])) {
 								report(LVL_ERR, line,
 									"Stop-character \"%c\" cannot appear inside a multi-character dictionary word.",
 									(char) wbuf[i]);
@@ -583,11 +602,8 @@ static struct clause *parse_clause(int is_macro, struct lexer *lexer) {
 		lexer->errorflag = 1;
 		return 0;
 	} else {
-		cl = arena_calloc(&predname->pred->arena, sizeof(*cl));
-		cl->predicate = predname;
-		cl->arena = &predname->pred->arena;
+		cl = mkclause(predname->pred);
 		cl->line = line;
-		cl->params = arena_alloc(cl->arena, predname->arity * sizeof(struct astnode *));
 		for(i = 0; i < an->nchild; i++) {
 			assert(an->children[i]->kind != AN_BAREWORD);
 			cl->params[i] = deepcopy_astnode(an->children[i], cl->arena, 0);
@@ -902,6 +918,30 @@ static struct astnode *parse_expr(int parsemode, struct lexer *lexer, struct are
 				dest = &sub->next_in_body;
 			}
 			an->children[0] = fold_disjunctions(an->children[0], lexer, arena);
+		} else if(an->predicate->special == SP_ACCUMULATE) {
+			sub = an;
+			an = mkast(AN_ACCUMULATE, 3, arena, line);
+			an->children[1] = sub->children[0];
+			dest = &an->children[0];
+			for(;;) {
+				status = next_token(lexer, PMODE_BODY);
+				if(lexer->errorflag) return 0;
+				if(status != 1) {
+					report(LVL_ERR, line, "Unterminated (accumulate $).");
+					lexer->errorflag = 1;
+					return 0;
+				}
+				sub = parse_expr(PMODE_BODY, lexer, arena);
+				if(!sub) return 0;
+				if(sub->kind == AN_RULE && sub->predicate->special == SP_INTO) {
+					*dest = 0;
+					an->children[2] = sub->children[0];
+					break;
+				}
+				*dest = sub;
+				dest = &sub->next_in_body;
+			}
+			an->children[0] = fold_disjunctions(an->children[0], lexer, arena);
 		} else if(an->predicate->special == SP_DETERMINE_OBJECT) {
 			sub = an->children[0];
 			if(sub->kind != AN_VARIABLE || !sub->word->name[0]) {
@@ -1149,11 +1189,8 @@ static struct astnode *parse_expr(int parsemode, struct lexer *lexer, struct are
 			an->children[1] = mkast(AN_EMPTY_LIST, 0, arena, orig_line);
 			predname = find_builtin(lexer->program, BI_INVOKE_CLOSURE);
 			if(did_create) {
-				cl = arena_calloc(&predname->pred->arena, sizeof(*cl));
-				cl->predicate = predname;
-				cl->arena = &predname->pred->arena;
+				cl = mkclause(predname->pred);
 				cl->line = orig_line;
-				cl->params = arena_alloc(cl->arena, predname->arity * sizeof(struct astnode *));
 				cl->params[0] = mkast(AN_INTEGER, 0, cl->arena, orig_line);
 				cl->params[0]->value = id;
 				cl->params[1] = mkast(AN_EMPTY_LIST, 0, cl->arena, orig_line); // placeholder
@@ -1450,8 +1487,7 @@ static struct astnode *parse_expr_nested(
 
 int parse_file(struct lexer *lexer, int filenum, struct clause ***clause_dest_ptr) {
 	struct clause *clause;
-	struct astnode *an;
-	int i;
+	struct predicate *pred;
 
 	line = MKLINE(filenum, 1);
 	column = 0;
@@ -1489,53 +1525,13 @@ int parse_file(struct lexer *lexer, int filenum, struct clause ***clause_dest_pt
 				return 0;
 			}
 			clause = parse_clause(1, lexer);
-			if(!clause) {
-				return 0;
-			}
-			if(clause->predicate->builtin) {
-				report(
-					LVL_ERR,
-					line,
-					"Access predicate definition collides with built-in predicate: %s",
-					clause->predicate->printed_name);
-				return 0;
-			}
-			if(clause->predicate->pred->macrodef) {
-				report(
-					LVL_ERR,
-					line,
-					"Multiple access predicate definitions with the same name: @%s",
-					clause->predicate->printed_name);
-				return 0;
-			}
-			for(i = 0; i < clause->predicate->arity; i++) {
-				if(clause->params[i]->kind != AN_VARIABLE) {
-					report(
-						LVL_ERR,
-						clause->line,
-						"Parameters of access predicate heads must be variables (parameter #%d).",
-						i + 1);
-					break;
-				}
-			}
-			if(i < clause->predicate->arity) {
-				return 0;
-			}
-			for(an = clause->body; an; an = an->next_in_body) {
-				if(an->kind != AN_RULE
-				&& an->kind != AN_NEG_RULE) {
-					report(
-						LVL_ERR,
-						clause->line,
-						"Access predicate body must be a simple conjunction of queries.");
-					break;
-				}
-			}
-			if(an) {
-				return 0;
-			}
-			clause->predicate->pred->macrodef = clause;
-			clause->predicate->pred->flags |= PREDF_MACRO;
+			if(!clause) return 0;
+			if(!accesspred_valid_def(clause, lexer->program)) return 0;
+			pred = clause->predicate->pred;
+			pred->nmacrodef++;
+			pred->macrodefs = realloc(pred->macrodefs, pred->nmacrodef * sizeof(struct clause *));
+			pred->macrodefs[pred->nmacrodef - 1] = clause;
+			pred->flags |= PREDF_MACRO;
 		} else {
 			if(lexer->kind == '~') {
 				status = next_token(lexer, PMODE_RULE);

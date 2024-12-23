@@ -173,6 +173,17 @@ struct predname *find_builtin(struct program *prg, int id) {
 	assert(0); exit(1);
 }
 
+struct clause *mkclause(struct predicate *pred) {
+	struct clause *cl;
+
+	cl = arena_calloc(&pred->arena, sizeof(*cl));
+	cl->predicate = pred->predname;
+	cl->arena = &pred->arena;
+	cl->params = arena_alloc(cl->arena, pred->predname->arity * sizeof(struct astnode *));
+
+	return cl;
+}
+
 struct astnode *mkast(int kind, int nchild, struct arena *arena, line_t line) {
 	struct astnode *an = arena_calloc(arena, sizeof(*an));
 	an->kind = kind;
@@ -363,6 +374,15 @@ void pp_expr(struct astnode *an) {
 		pp_body(an->children[0]);
 		printf(" (into ");
 		pp_expr(an->children[1]);
+		printf(")");
+		break;
+	case AN_ACCUMULATE:
+		printf("(accumulate ");
+		pp_expr(an->children[1]);
+		printf(") ");
+		pp_body(an->children[0]);
+		printf(" (into ");
+		pp_expr(an->children[2]);
 		printf(")");
 		break;
 	case AN_DETERMINE_OBJECT:
@@ -608,6 +628,18 @@ void analyse_clause(struct program *prg, struct clause *cl, int report_singleton
 	memcpy(cl->varnames, prg->clausevars, prg->nclausevar * sizeof(struct word *));
 }
 
+int findvar(struct clause *cl, struct word *w) {
+	int i;
+
+	for(i = 0; i < cl->nvar; i++) {
+		if(cl->varnames[i] == w) return i;
+	}
+
+	printf("%s\n", w->name);
+	assert(0);
+	return -1;
+}
+
 void add_clause(struct clause *cl, struct predicate *pred) {
 	pred->clauses = realloc(pred->clauses, (pred->nclause + 1) * sizeof(struct clause *));
 	pred->clauses[pred->nclause++] = cl;
@@ -638,6 +670,7 @@ void pred_release(struct predicate *pred) {
 			arena_free(&pred->arena);
 			free(pred->dynamic);
 			free(pred->clauses);
+			free(pred->macrodefs);
 			free(pred->wordmaps);
 			free(pred);
 		}

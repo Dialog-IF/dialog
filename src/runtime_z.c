@@ -419,6 +419,15 @@ struct rtroutine rtroutines[] = {
 			{Z_AND, {VALUE(REG_LOCAL+4), SMALL(0xdf)}, REG_LOCAL+4},
 
 			{OP_LABEL(14)},
+			{Z_JLE, {VALUE(REG_LOCAL+4), SMALL(32)}, 0, 25},
+			{Z_JL, {VALUE(REG_LOCAL+4), SMALL(129)}, 0, 24},
+			{Z_JG, {VALUE(REG_LOCAL+4), SMALL(132)}, 0, 24},
+
+			{OP_LABEL(25)},
+			{Z_PRINTCHAR, {SMALL('\\')}},
+			{Z_STORE, {SMALL(REG_LOCAL+4), SMALL('?')}},
+
+			{OP_LABEL(24)},
 			{Z_PRINTCHAR, {VALUE(REG_LOCAL+4)}},
 
 			{Z_STORE, {SMALL(REG_SPACE), SMALL(0)}},
@@ -2252,11 +2261,21 @@ struct rtroutine rtroutines[] = {
 			// returns single-char dictionary word
 		(struct zinstr []) {
 			{Z_CALL1N, {ROUTINE(R_SYNC_SPACE)}},
+
+			{OP_LABEL(2)},
 			{Z_READCHAR, {SMALL(1)}, REG_LOCAL+0},
 			{Z_AND, {VALUE(REG_LOCAL+0), SMALL(0xff)}, REG_LOCAL+0},
+			{Z_JE, {VALUE(REG_LOCAL+0), SMALL(8), SMALL(13), SMALL(129)}, 0, 1},
+			{Z_JL, {VALUE(REG_LOCAL+0), SMALL(32)}, 0, 2},
 			{Z_JL, {VALUE(REG_LOCAL+0), SMALL(0x41)}, 0, 1},
-			{Z_JGE, {VALUE(REG_LOCAL+0), SMALL(0x5b)}, 0, 1},
+			{Z_JL, {VALUE(REG_LOCAL+0), SMALL(0x5b)}, 0, 3},
+			{Z_JL, {VALUE(REG_LOCAL+0), SMALL(127)}, 0, 1},
+			{Z_JE, {VALUE(REG_LOCAL+0), SMALL(130), SMALL(131), SMALL(132)}, 0, 1},
+			{Z_JL, {VALUE(REG_LOCAL+0), SMALL(155)}, 0, 2},
+			{Z_JL, {VALUE(REG_LOCAL+0), SMALL(252)}, 0, 1},
+			{Z_JUMP, {REL_LABEL(2)}},
 
+			{OP_LABEL(3)},
 			// convert to lowercase
 			{Z_OR, {VALUE(REG_LOCAL+0), SMALL(0x20)}, REG_LOCAL+0},
 
@@ -3076,6 +3095,72 @@ struct rtroutine rtroutines[] = {
 			{Z_INC, {SMALL(REG_LOCAL+0)}},					// second var ref
 			{Z_INC, {SMALL(REG_LOCAL+1)}},					// second var ref
 			{Z_JUMP, {REL_LABEL(2)}},
+			{Z_END},
+		}
+	},
+	{
+		R_ACCUM_BEGIN,
+		0,
+		(struct zinstr []) {
+			{Z_JL, {VALUE(REG_COLL), VALUE(REG_TRAIL)}, 0, 1},
+
+			{Z_THROW, {SMALL(FATAL_AUX), VALUE(REG_FATALJMP)}},
+
+			{OP_LABEL(1)},
+			{Z_STOREW, {VALUE(REG_AUXBASE), VALUE(REG_COLL), VALUE(REG_4000)}},
+			{Z_INC, {SMALL(REG_COLL)}},
+			{Z_RFALSE},
+			{Z_END},
+		}
+	},
+	{
+		R_ACCUM_INC,
+		0,
+		(struct zinstr []) {
+			{Z_CALL2N, {ROUTINE(R_ACCUM_ADD), LARGE(0x4001)}},
+			{Z_RFALSE},
+			{Z_END},
+		}
+	},
+	{
+		R_ACCUM_ADD,
+		2,
+			// 0 (param): value to accumulate
+			// 1: sum
+		(struct zinstr []) {
+			{Z_CALL1S, {ROUTINE(R_COLLECT_POP)}, REG_LOCAL+1},
+			{Z_JZ, {VALUE(REG_LOCAL+1)}, 0, 1},
+
+			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_LOCAL+0)}, REG_LOCAL+0},
+			{Z_JL, {VALUE(REG_LOCAL+0), VALUE(REG_4000)}, 0, 2},
+
+			{Z_AND, {VALUE(REG_LOCAL+1), VALUE(REG_3FFF)}, REG_LOCAL+1},
+			{Z_ADD, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+1)}, REG_LOCAL+1},
+			{Z_JGE, {VALUE(REG_LOCAL+1), VALUE(REG_4000)}, 0, 1},
+
+			{OP_LABEL(2)},
+			{Z_STORE, {SMALL(REG_LOCAL+1), SMALL(0)}},
+
+			{OP_LABEL(1)},
+			{Z_STOREW, {VALUE(REG_AUXBASE), VALUE(REG_COLL), VALUE(REG_LOCAL+1)}},
+			{Z_INC, {SMALL(REG_COLL)}},
+			{Z_RFALSE},
+			{Z_END},
+		}
+	},
+	{
+		R_ACCUM_END,
+		1,
+			// 0: popped value
+			// returns value
+		(struct zinstr []) {
+			{Z_CALL1S, {ROUTINE(R_COLLECT_POP)}, REG_LOCAL+0},
+			{Z_JNZ, {VALUE(REG_LOCAL+0)}, 0, 1},
+
+			{Z_THROW, {SMALL(0), VALUE(REG_FAILJMP)}},
+
+			{OP_LABEL(1)},
+			{Z_RET, {VALUE(REG_LOCAL+0)}},
 			{Z_END},
 		}
 	},

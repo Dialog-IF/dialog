@@ -9,7 +9,7 @@
 <body>
 	<div class="chapter">
 	<h1>Chapter 11: Miscellaneous features</h1>
-	<div class="navlinks">(<a href="#pronouns">Pronouns</a>&nbsp;&bull; <a href="#listutil">List manipulation</a>&nbsp;&bull; <a href="#treeutil">Object tree manipulation</a>&nbsp;&bull; <a href="#dirutil">Directions</a>&nbsp;&bull; <a href="#libdebug">Predicates for debugging</a>&nbsp;&bull; <a href="#commoncomplaints">Common checks and complaints</a>&nbsp;&bull; <a href="#questions">Asking simple questions</a>&nbsp;&bull; <a href="#fungibility">Identical objects</a>)</div>
+	<div class="navlinks">(<a href="#pronouns">Pronouns</a>&nbsp;&bull; <a href="#listutil">List manipulation</a>&nbsp;&bull; <a href="#treeutil">Object tree manipulation</a>&nbsp;&bull; <a href="#dirutil">Directions and numbers</a>&nbsp;&bull; <a href="#libdebug">Predicates for debugging</a>&nbsp;&bull; <a href="#commoncomplaints">Common checks and complaints</a>&nbsp;&bull; <a href="#questions">Asking simple questions</a>&nbsp;&bull; <a href="#fungibility">Identical objects</a>)</div>
 <a id="pronouns"></a><h2>Pronouns</h2>
 <p>Dialog allows the player to refer to recently mentioned objects using the words
 <span class="prginput">IT</span>, <span class="prginput">HIM</span>, <span class="prginput">HER</span>, and
@@ -286,7 +286,7 @@ Attempt to remove <span class="code">$Obj</span> if it is worn, or part of somet
 <p class="noteline">While the player character is the direct child of an object that is
 neither a room nor a vehicle, make an attempt to leave that object.
 </p>
-<a id="dirutil"></a><h2>Directions</h2>
+<a id="dirutil"></a><h2>Directions and numbers</h2>
 <p>To print an adverb phrase corresponding to a direction, use
 <span class="code">(present-adverb&nbsp;$)</span> or <span class="code">(from-adverb&nbsp;$)</span>. Use
 <span class="code">(opposite of $ is&nbsp;$)</span> to find its opposite.
@@ -299,6 +299,19 @@ neither a room nor a vehicle, make an attempt to leave that object.
 <tr><td><span class="code">#out</span></td><td>outside</td><td>the outside</td><td><span class="code">#in</span></td></tr>
 <tr><td><span class="code">#north</span> etc.</td><td>to the north</td><td>the north</td><td><span class="code">#south</span></td></tr>
 </table>
+<p>To print a numeric value with words, use:
+</p>
+<textarea class="copyarea" id="copy3" readonly>
+(spell out $N)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(spell out $N)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy3').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
 <a id="libdebug"></a><h2>Predicates for debugging</h2>
 <p>The standard library offers a couple of predicates that are meant to be used
 from the interactive debugger.
@@ -350,7 +363,7 @@ per-object basis, without editing the standard library code. Just remember that
 the when-rule needs to check the appropriate condition before printing the
 response:
 </p>
-<textarea class="copyarea" id="copy3" readonly>
+<textarea class="copyarea" id="copy4" readonly>
 (when #knight blocks passage)
 	(#knight is alive)
 	"None shall pass!" booms the Black Knight.
@@ -363,7 +376,7 @@ response:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy3').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy4').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <a id="questions"></a><h2>Asking simple questions</h2>
 <p>The standard library provides the following three utility predicates for
@@ -405,7 +418,7 @@ affect how they are printed in object lists, and how player input is
 disambiguated. For performance reasons, the fungibility feature is disabled by
 default; it is enabled with the following rule definition:
 </p>
-<textarea class="copyarea" id="copy4" readonly>
+<textarea class="copyarea" id="copy5" readonly>
 (fungibility enabled)
 </textarea>
 <div class="blkcode">
@@ -414,12 +427,12 @@ default; it is enabled with the following rule definition:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy4').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy5').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>To create many identical objects, you would normally invent a common trait for
 them, and then define rules in terms of the trait:
 </p>
-<textarea class="copyarea" id="copy5" readonly>
+<textarea class="copyarea" id="copy6" readonly>
 (marble #marble1)
 (marble #marble2)
 (marble #marble3)
@@ -448,12 +461,12 @@ them, and then define rules in terms of the trait:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy5').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy6').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>To save typing, Dialog provides a mechanism for <a href="sugar.html#generate">generating such
 object definitions automatically</a>. The following is mostly equivalent:
 </p>
-<textarea class="copyarea" id="copy6" readonly>
+<textarea class="copyarea" id="copy7" readonly>
 (generate 5 (marble $))
 
 (name (marble $))
@@ -474,7 +487,7 @@ object definitions automatically</a>. The following is mostly equivalent:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy6').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy7').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>The only difference is that the internal names (hashtags) of the objects are
 now numbers instead of source-code names. This can potentially make debugging
@@ -484,7 +497,7 @@ harder.
 that these objects are fungible, i.e. completely interchangeable. Fungibility
 is expressed as a pairwise relation:
 </p>
-<textarea class="copyarea" id="copy7" readonly>
+<textarea class="copyarea" id="copy8" readonly>
 (fungible (marble $) (marble $)) %% Any two marbles are fungible.
 </textarea>
 <div class="blkcode">
@@ -493,7 +506,7 @@ is expressed as a pairwise relation:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy7').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy8').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Now, in response to <span class="prginput">LOOK IN BOWL</span>, the library might print:
 </p>
@@ -511,7 +524,7 @@ bowl, or the marble that's held by yourself?
 <p>To ensure that such disambiguating questions work properly, we have to instruct
 the library to mention the location of each fungible object when printing actions:
 </p>
-<textarea class="copyarea" id="copy8" readonly>
+<textarea class="copyarea" id="copy9" readonly>
 (clarify location of (marble $))
 </textarea>
 <div class="blkcode">
@@ -520,7 +533,7 @@ the library to mention the location of each fungible object when printing action
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy8').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy9').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Otherwise it would just ask: Did you want to eat a marble, or the marble?
 </p>
@@ -530,7 +543,7 @@ library takes care of the location, but it is up to the story author to check
 any other properties that might differ, and to modify the full name of the
 object as appropriate. Thus:
 </p>
-<textarea class="copyarea" id="copy9" readonly>
+<textarea class="copyarea" id="copy10" readonly>
 (generate 3 (box $))
 (name (box $))
 	box
@@ -597,7 +610,7 @@ object as appropriate. Thus:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy9').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Finally, recall that handled items are narrated by the standard library using a
 predicate called <span class="code">(appearance $ $&nbsp;$)</span>. This mechanism is extended to
@@ -607,7 +620,7 @@ first parameter of <span class="code">appearance</span> will be bound to a list.
 strongly recommended that all fungible objects are marked as handled from the
 start:
 </p>
-<textarea class="copyarea" id="copy10" readonly>
+<textarea class="copyarea" id="copy11" readonly>
 (*(marble $) is handled)
 (*(box $) is handled)
 </textarea>
@@ -618,11 +631,11 @@ start:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy11').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Here is a complete example of fungible marbles inside fungible boxes:
 </p>
-<textarea class="copyarea" id="copy11" readonly>
+<textarea class="copyarea" id="copy12" readonly>
 (fungibility enabled)
 
 (box #box1)
@@ -773,7 +786,7 @@ start:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy11').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy12').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Try to <span class="prginput">TAKE TWO MARBLES</span>, <span class="prginput">DROP THEM</span>, <span class="prginput">EAT
 THE MARBLE</span>, <span class="prginput">EAT A MARBLE</span>, <span class="prginput">GET BOXES</span>, etc.
@@ -795,7 +808,7 @@ It's your call.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="libref.html">Appendix: Predicate index</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 23, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 24, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

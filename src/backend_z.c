@@ -261,6 +261,9 @@ static uint8_t unicode_to_zscii(uint16_t uchar) {
 	int i;
 
 	if(uchar < 128) {
+		if(uchar >= 16 && uchar <= 19) {
+			uchar += 129 - 16;
+		}
 		return uchar;
 	} else {
 		for(i = 0; i < sizeof(extended_zscii) / 2; i++) {
@@ -318,6 +321,9 @@ static int utf8_to_zscii(uint8_t *dest, int ndest, char *src, uint32_t *special)
 			uchar = ch;
 		}
 		if(uchar < 128) {
+			if(uchar >= 16 && uchar <= 19) {
+				uchar += 129 - 16;
+			}
 			dest[outpos++] = uchar;
 		} else {
 			for(i = 0; i < sizeof(extended_zscii) / 2; i++) {
@@ -2046,7 +2052,7 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				break;
 			case I_COLLECT_BEGIN:
 				zi = append_instr(r, Z_CALL1N);
-				zi->oper[0] = ROUTINE(R_COLLECT_BEGIN);
+				zi->oper[0] = ROUTINE(ci->subop? R_ACCUM_BEGIN : R_COLLECT_BEGIN);
 				break;
 			case I_COLLECT_CHECK:
 				o1 = generate_value(r, ci->oper[0], prg, t1);
@@ -2056,7 +2062,7 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				break;
 			case I_COLLECT_END_R:
 				zi = append_instr(r, Z_CALL1S);
-				zi->oper[0] = ROUTINE(R_COLLECT_END);
+				zi->oper[0] = ROUTINE(ci->subop? R_ACCUM_END : R_COLLECT_END);
 				if(ci->oper[0].tag == OPER_VAR) {
 					zi->store = REG_TEMP;
 					zi = append_instr(r, Z_STOREW);
@@ -2073,7 +2079,7 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 			case I_COLLECT_END_V:
 				o1 = generate_value(r, ci->oper[0], prg, t1);
 				zi = append_instr(r, Z_CALL1S);
-				zi->oper[0] = ROUTINE(R_COLLECT_END);
+				zi->oper[0] = ROUTINE(ci->subop? R_ACCUM_END : R_COLLECT_END);
 				zi->store = REG_TEMP;
 				zi = append_instr(r, Z_CALLVN);
 				zi->oper[0] = ROUTINE(R_UNIFY);
@@ -2087,7 +2093,17 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				zi->oper[1] = o1;
 				break;
 			case I_COLLECT_PUSH:
-				if(ci->oper[0].tag == VAL_OBJ) {
+				if(ci->subop) {
+					if(ci->oper[0].tag == VAL_NUM && ci->oper[0].value == 1) {
+						zi = append_instr(r, Z_CALL1N);
+						zi->oper[0] = ROUTINE(R_ACCUM_INC);
+					} else {
+						o1 = generate_value(r, ci->oper[0], prg, t1);
+						zi = append_instr(r, Z_CALL2N);
+						zi->oper[0] = ROUTINE(R_ACCUM_ADD);
+						zi->oper[1] = o1;
+					}
+				} else if(ci->oper[0].tag == VAL_OBJ) {
 					if(cr->instr[i + 1].op == I_COLLECT_PUSH
 					&& cr->instr[i + 1].oper[0].tag == VAL_OBJ) {
 						if(cr->instr[i + 2].op == I_COLLECT_PUSH

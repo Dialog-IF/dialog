@@ -324,7 +324,7 @@ player for clarification. For instance, <span class="code">[give #money]</span> 
 #money to&nbsp;[]]</span>, with a blank for the missing noun. When the player
 responds e.g. <span class="prginput">CLERK</span>, that is understood as the complete action,
 <span class="code">[give #money to #clerk]</span>. This mechanism will be described in more
-detail in the chapter on <a href="understanding.html#askingforclar">understanding player input</a>.
+detail in the chapter on <a href="understanding.html#newactions">understanding player input</a>.
 </p>
 <p>In some situations, it will be clear from context who is the intended recipient
 of a <span class="code">[give&nbsp;$]</span> action. Story authors can add rules like the
@@ -376,6 +376,10 @@ noun, and set up an implicit action that will receive it:
 <p class="noteline">&bull; Diverts to <span class="code">[attack $Obj]</span> if <span class="code">$Obj</span> is animate.<br />
 &bull; Otherwise diverts to <span class="code">[eat $Obj]</span>.
 </p>
+<p class="codeline">[switch $Obj]</p>
+<p class="noteline">&bull; Diverts to <span class="code">[switch on $Obj]</span> or <span class="code">[switch off $Obj]</span> if <span class="code">$Obj</span> is switchable.<br />
+&bull; Otherwise prints a stock message.
+</p>
 <p class="codeline">[lock $Obj]</p>
 <p class="noteline">&bull; Asks for clarification, unless the correct key is already held.<br />
 &bull; Diverts to <span class="code">[lock $ with&nbsp;$]</span>.
@@ -390,7 +394,7 @@ implementation diverts to the core action <span class="code">[take&nbsp;$]</span
 </p>
 <p class="codeline">[take $Obj from $OtherObj]</p>
 <p class="noteline">&bull; Diverts to <span class="code">[take $Obj]</span> or <span class="code">[remove $Obj]</span> if <span class="code">$Obj</span> is a child of <span class="code">$OtherObj</span>.<br />
-&bull; Otherwise, prints a stock message.
+&bull; Otherwise prints a stock message.
 </p>
 <p><span class="prginput">LISTEN</span> (without a noun) diverts to an action for listening to
 the current room, although story authors may wish to override it if a noisy
@@ -519,7 +523,7 @@ refer to the library source code for details about what these actions do.
 <p class="codeline">[undo]</p>
 <p class="codeline">[verbose]</p>
 <p class="codeline">[version]</p>
-<p><span class="prginput">AGAIN</span> (<span class="prginput">G</span>), and <span class="prginput">OOPS</span> are treated as
+<p><span class="prginput">AGAIN</span> (<span class="prginput">G</span>) and <span class="prginput">OOPS</span> are treated as
 special cases by the parser. They are not actions.
 </p>
 <a id="debuglib"></a><h2>Debugging actions</h2>
@@ -554,7 +558,7 @@ structure) and external representation (description) are printed.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="timeprogress.html">Chapter 8: Ticks, scenes, and progress</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 23, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 24, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

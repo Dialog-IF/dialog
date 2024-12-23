@@ -36,6 +36,7 @@ enum {
 	AN_FIRSTRESULT,
 	AN_COLLECT,
 	AN_COLLECT_WORDS,
+	AN_ACCUMULATE,
 	AN_DETERMINE_OBJECT,
 	AN_SELECT,
 	AN_STOPPABLE,
@@ -90,6 +91,7 @@ enum {
 	BI_WORD,
 	BI_UNKNOWN_WORD,
 	BI_BOUND,
+	BI_FULLY_BOUND,
 
 	BI_QUIT,
 	BI_RESTART,
@@ -137,14 +139,6 @@ enum {
 	BI_SERIALNUMBER,
 	BI_COMPILERVERSION,
 	BI_MEMSTATS,
-
-	BI_WORDREP_RETURN,
-	BI_WORDREP_SPACE,
-	BI_WORDREP_BACKSPACE,
-	BI_WORDREP_UP,
-	BI_WORDREP_DOWN,
-	BI_WORDREP_LEFT,
-	BI_WORDREP_RIGHT,
 
 	BI_HAVE_UNDO,
 	BI_HAVE_LINK,
@@ -197,21 +191,31 @@ struct astnode {
 	uint8_t			unbound;	// set if this expression can contain unbound variable(s) at runtime
 };
 
+struct clause_code {
+	struct clause_code	*next;
+	int16_t			ndrop_arg0;
+	int16_t			ndrop_body;
+	int			routine_id:31;
+	int			ignore_arg0:1;
+};
+
 struct clause {
 	struct predname		*predicate;
 	struct arena		*arena;
 	struct astnode		**params;
 	struct astnode		*body;
-	line_t			line;
-	int			negated;
 	struct clause		*next_in_source;
 	void			*backend;
 	struct word		**varnames;
+	char			*structure;
+	struct clause_code	*entrypoints;
+	line_t			line;
 	uint16_t		nvar;
 	uint16_t		next_temp;
 	uint16_t		clause_id;
+	uint16_t		macro_instance;
 	uint8_t			max_call_arity;
-	char			*structure;
+	uint8_t			negated;
 };
 
 struct predname {
@@ -240,14 +244,16 @@ struct predname {
 
 struct predicate {
 	struct clause		**clauses;
-	struct clause		*macrodef;
+	struct clause		**macrodefs;
 	uint32_t		flags;
 	uint16_t		nclause;
+	uint16_t		nmacrodef;
 	uint16_t		unbound_in;
 	uint16_t		unbound_out;
 	uint16_t		nselectclause;
 	uint16_t		*selectclauses;
 	uint16_t		nwordmap;
+	uint16_t		nroutine;
 	struct wordmap		*wordmaps;
 	void			*backend;
 	struct clause		**unbound_in_due_to;
@@ -258,7 +264,6 @@ struct predicate {
 	int			refcount;
 	struct comp_routine	*routines;
 	struct arena		arena;
-	int			nroutine;
 	int			normal_entry;
 	int			initial_value_entry;
 	struct predname		*predname;
@@ -414,6 +419,7 @@ typedef void (*word_visitor_t)(struct word *);
 struct program *new_program(void);
 struct astnode *mkast(int kind, int nchild, struct arena *arena, line_t line);
 struct astnode *deepcopy_astnode(struct astnode *an, struct arena *arena, line_t line);
+struct clause *mkclause(struct predicate *pred);
 int astnode_equals(struct astnode *a, struct astnode *b);
 struct word *find_word(struct program *prg, char *name);
 struct word *find_word_nocreate(struct program *prg, char *name);
@@ -425,6 +431,7 @@ struct predname *find_predicate(struct program *prg, int nword, struct word **wo
 struct predname *find_builtin(struct program *prg, int id);
 int find_closurebody(struct program *prg, struct astnode *an, int *did_create);
 void analyse_clause(struct program *prg, struct clause *cl, int report_singletons);
+int findvar(struct clause *cl, struct word *w);
 void add_clause(struct clause *cl, struct predicate *pred);
 void pp_expr(struct astnode *an);
 void pp_body(struct astnode *an);

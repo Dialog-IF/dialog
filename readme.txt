@@ -1,5 +1,5 @@
-This archive contains version 0j/04 of the Dialog compiler and interactive
-debugger, bundled with documentation and version 0.38 of the Dialog Standard
+This archive contains version 0k/01 of the Dialog compiler and interactive
+debugger, bundled with documentation and version 0.39 of the Dialog Standard
 Library.
 
 Directory structure:
@@ -37,6 +37,49 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0k/01, Lib 0.39 (Manual revision 24):
+
+		Language: Structural matching of access predicate heads.
+
+		Language: (accumulate $) ... (into $)
+
+		Language: Added builtin '(fully bound $)' to check if a value
+		is bound and, in case of a list, contains only fully bound
+		elements.
+
+		Language: The '(split $ by $ into $ and $)' built-in predicate
+		now accepts a single keyword as its second parameter (or a list
+		of keywords, as before).
+
+		Language: The character '+' may now be used in the source-code
+		names of objects and local variables.
+
+		Language: Added special keypress words @\u, @\d, @\l, @\r, @\n,
+		@\s, and @\b. Removed '(word representing up $)' and friends.
+
+		Library: Simplified grammar rules, i.e. '(grammar $ for $)' as
+		a complement to '(understand $ as $)'.
+
+		Library: Remove duplicates from the list of choices in
+		choice-mode.
+
+		Library: Added intermediate action [switch $] that delegates to
+		[switch on $] or [switch off $].
+
+		Library: Relation objects (#on etc.) no longer have dictionary
+		words. They appear directly inside action grammar rules
+		instead, e.g. [put [held] on/onto [single]].
+
+		Manual: Rewrote large parts of "Understanding player input".
+
+		Manual: Clarified the use of conditional labels in choice mode.
+
+		Manual: Reorganized some material, e.g. Debugging has moved to
+		the "Input and output" chapter, and '(spell out $)' is now
+		under "Miscellaneous features".
+
+		Compiler: Bugfixes and improvements to the optimizer.
 
 	0j/04, Lib 0.38 (Manual revision 23):
 

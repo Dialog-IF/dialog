@@ -257,6 +257,7 @@ static int collect_push(struct eval_state *es, value_t v) {
 	case VAL_OBJ:
 	case VAL_DICT:
 	case VAL_NIL:
+	case VAL_NONE:
 		break;
 	case VAL_PAIR:
 		count = 0;
@@ -656,7 +657,19 @@ void pp_value(struct eval_state *es, value_t v, int with_at, int with_plus) {
 	case VAL_DICT:
 		assert(v.value < es->program->ndictword);
 		str = es->program->dictwordnames[v.value]->name;
-		if(with_at) {
+		if(((uint8_t) str[0]) <= 32) {
+			assert(!str[1]);
+			switch(str[0]) {
+				case 8: o_print_word("@\\b"); break;
+				case 13: o_print_word("@\\n"); break;
+				case 16: o_print_word("@\\u"); break;
+				case 17: o_print_word("@\\d"); break;
+				case 18: o_print_word("@\\l"); break;
+				case 19: o_print_word("@\\r"); break;
+				case 32: o_print_word("@\\s"); break;
+				default: o_print_word("@\\?"); break;
+			}
+		} else if(with_at) {
 			o_print_word("@");
 			o_nospace();
 			o_print_opaque_word(str);
@@ -1492,7 +1505,7 @@ static int eval_run(struct eval_state *es) {
 			}
 			break;
 		case I_COLLECT_BEGIN:
-			if(!push_aux(es, (value_t) {VAL_NONE})) {
+			if(!push_aux(es, (value_t) {ci->subop? VAL_NUM : VAL_NONE, 0})) {
 				pred_release(pp.pred);
 				return ESTATUS_ERR_AUX;
 			}
@@ -1512,36 +1525,33 @@ static int eval_run(struct eval_state *es) {
 			}
 			break;
 		case I_COLLECT_END_R:
-			v = (value_t) {VAL_NIL, 0};
-			while((v1 = collect_pop(es)).tag != VAL_NONE) {
-				if(v1.tag == VAL_ERROR) {
-					pred_release(pp.pred);
-					return ESTATUS_ERR_HEAP;
-				}
-				v = eval_makepair(v1, v, es);
-				if(v.tag == VAL_ERROR) {
-					pred_release(pp.pred);
-					return ESTATUS_ERR_HEAP;
-				}
-			}
-			set_by_ref(ci->oper[0], v, es);
-			break;
 		case I_COLLECT_END_V:
-			v = (value_t) {VAL_NIL, 0};
-			while((v1 = collect_pop(es)).tag != VAL_NONE) {
-				if(v1.tag == VAL_ERROR) {
-					pred_release(pp.pred);
-					return ESTATUS_ERR_HEAP;
-				}
-				v = eval_makepair(v1, v, es);
-				if(v.tag == VAL_ERROR) {
-					pred_release(pp.pred);
-					return ESTATUS_ERR_HEAP;
+			if(ci->subop) {
+				v = collect_pop(es);
+			} else {
+				v = (value_t) {VAL_NIL, 0};
+				while((v1 = collect_pop(es)).tag != VAL_NONE) {
+					if(v1.tag == VAL_ERROR) {
+						pred_release(pp.pred);
+						return ESTATUS_ERR_HEAP;
+					}
+					v = eval_makepair(v1, v, es);
+					if(v.tag == VAL_ERROR) {
+						pred_release(pp.pred);
+						return ESTATUS_ERR_HEAP;
+					}
 				}
 			}
-			if(!unify(es, v, value_of(ci->oper[0], es), 0)) {
+			if(v.tag == VAL_NONE) {
 				do_fail(es, &pp);
 				pc = 0;
+			} else if(ci->op == I_COLLECT_END_R) {
+				set_by_ref(ci->oper[0], v, es);
+			} else {
+				if(!unify(es, v, value_of(ci->oper[0], es), 0)) {
+					do_fail(es, &pp);
+					pc = 0;
+				}
 			}
 			break;
 		case I_COLLECT_MATCH_ALL:
@@ -1582,7 +1592,20 @@ static int eval_run(struct eval_state *es) {
 			}
 			break;
 		case I_COLLECT_PUSH:
-			if(!collect_push(es, value_of(ci->oper[0], es))) {
+			if(ci->subop) {
+				v0 = eval_deref(value_of(ci->oper[0], es), es);
+				v1 = collect_pop(es);
+				if(v0.tag == VAL_NUM
+				&& v1.tag == VAL_NUM
+				&& eval_compute(es, BI_PLUS, v0.value, v1.value, &res)) {
+					v = (value_t) {VAL_NUM, res};
+				} else {
+					v = (value_t) {VAL_NONE};
+				}
+			} else {
+				v = value_of(ci->oper[0], es);
+			}
+			if(!collect_push(es, v)) {
 				pred_release(pp.pred);
 				return ESTATUS_ERR_AUX;
 			}

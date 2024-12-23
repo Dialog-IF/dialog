@@ -43,8 +43,8 @@ sections of the manual.
 <a href="scenery.html#descriptions"><span class="code">(appearance $)</span></a><br />
 <a href="items.html#appearance"><span class="code">(appearance $ $ $)</span></a><br />
 <a href="builtins.html#listbuiltins"><span class="code">(append $ $ $)</span></a><br />
-<a href="understanding.html#askingforclar"><span class="code">(asking for direction in $)</span></a><br />
-<a href="understanding.html#askingforclar"><span class="code">(asking for object in $)</span></a><br />
+<a href="understanding.html#newactions"><span class="code">(asking for direction in $)</span></a><br />
+<a href="understanding.html#newactions"><span class="code">(asking for object in $)</span></a><br />
 <a href="moving.html#floating"><span class="code">($ attracts $)</span></a><br />
 <a href="timeprogress.html#theintro"><span class="code">(banner)</span></a><br />
 <a href="actions.html#refusebefore"><span class="code">(before $)</span></a><br />
@@ -53,7 +53,7 @@ sections of the manual.
 <a href="moving.html#doors"><span class="code">($ blocks passage)</span></a><br />
 <a href="io.html#styles"><span class="code">(bold)</span></a><br />
 <a href="builtins.html#typechecks"><span class="code">(bound $)</span></a><br />
-<a href="builtins.html#trace"><span class="code">(breakpoint)</span></a><br />
+<a href="io.html#debugging"><span class="code">(breakpoint)</span></a><br />
 <a href="timeprogress.html#choicemode"><span class="code">(choose $)</span></a><br />
 <a href="traits.html#fullnames"><span class="code">(clarify location of $)</span></a><br />
 <a href="io.html#clear"><span class="code">(clear)</span></a><br />
@@ -109,6 +109,7 @@ sections of the manual.
 <a href="moving.html#rooms"><span class="code">(from $ go $ to $)</span></a><br />
 <a href="npc.html#npcmove"><span class="code">(from $ go $ to room $)</span></a><br />
 <a href="moving.html#doors"><span class="code">(from $ through $ to $)</span></a><br />
+<a href="builtins.html#typechecks"><span class="code">(fully bound $)</span></a><br />
 <a href="miscfeat.html#fungibility"><span class="code">(fungibility enabled)</span></a><br />
 <a href="miscfeat.html#fungibility"><span class="code">(fungible $ $)</span></a><br />
 <a href="timeprogress.html#gameover"><span class="code">(game over $)</span></a><br />
@@ -117,6 +118,9 @@ sections of the manual.
 <a href="io.html#input"><span class="code">(get input $)</span></a><br />
 <a href="io.html#input"><span class="code">(get key $)</span></a><br />
 <a href="miscfeat.html#questions"><span class="code">(get number from $ to $ $)</span></a><br />
+<a href="understanding.html#grammar"><span class="code">@(grammar $ for $)</span></a><br />
+<a href="understanding.html#grammar"><span class="code">@(grammar $ for itself)</span></a><br />
+<a href="understanding.html#grammar"><span class="code">@(grammar $ for $ reversed)</span></a><br />
 <a href="traits.html#linguistictraits"><span class="code">(has $)</span></a><br />
 <a href="miscfeat.html#treeutil"><span class="code">($ has ancestor $)</span></a><br />
 <a href="dynamic.html#hasparent"><span class="code">($ has parent $)</span></a><br />
@@ -286,7 +290,7 @@ sections of the manual.
 <a href="io.html#styles"><span class="code">(reverse)</span></a><br />
 <a href="miscfeat.html#listutil"><span class="code">(reverse $ $)</span></a><br />
 <a href="traits.html#categorytraits"><span class="code">(reverse-name $)</span></a><br />
-<a href="understanding.html#rewrite"><span class="code">(rewrite $ into $)</span></a><br />
+<a href="understanding.html#howparser"><span class="code">(rewrite $ into $)</span></a><br />
 <a href="io.html#styles"><span class="code">(roman)</span></a><br />
 <a href="traits.html#categorytraits"><span class="code">(room $)</span></a><br />
 <a href="moving.html#rooms"><span class="code">(room header $)</span></a><br />
@@ -303,7 +307,7 @@ sections of the manual.
 <a href="traits.html#linguistictraits"><span class="code">(singleton $)</span></a><br />
 <a href="execution.html#printing"><span class="code">(space)</span></a><br />
 <a href="io.html#styles"><span class="code">(space $)</span></a><br />
-<a href="understanding.html#parsedir"><span class="code">(spell out $)</span></a><br />
+<a href="miscfeat.html#dirutil"><span class="code">(spell out $)</span></a><br />
 <a href="miscfeat.html#listutil"><span class="code">(split $ anywhere into $ and $)</span></a><br />
 <a href="builtins.html#listbuiltins"><span class="code">(split $ by $ into $ and $)</span></a><br />
 <a href="builtins.html#sploin"><span class="code">(split word $ into $)</span></a><br />
@@ -337,33 +341,33 @@ sections of the manual.
 <a href="npc.html#asktell"><span class="code">(topic keyword $)</span></a><br />
 <a href="npc.html#asktell"><span class="code">(topic keyword $ implies $)</span></a><br />
 <a href="traits.html#categorytraits"><span class="code">(towards-name $)</span></a><br />
-<a href="builtins.html#trace"><span class="code">(trace off)</span></a><br />
-<a href="builtins.html#trace"><span class="code">(trace on)</span></a><br />
+<a href="io.html#debugging"><span class="code">(trace off)</span></a><br />
+<a href="io.html#debugging"><span class="code">(trace on)</span></a><br />
 <a href="builtins.html#system"><span class="code">(transcript off)</span></a><br />
 <a href="builtins.html#system"><span class="code">(transcript on)</span></a><br />
 <a href="actions.html#actionprocess"><span class="code">(try $)</span></a><br />
 <a href="traits.html#linguistictraits"><span class="code">(uncountable $)</span></a><br />
 <a href="understanding.html#newactions"><span class="code">(understand $)</span></a><br />
-<a href="understanding.html#parsingactions"><span class="code">(understand $ as $)</span></a><br />
-<a href="understanding.html#parsingobj"><span class="code">(understand $ as any object $)</span></a><br />
-<a href="understanding.html#parsingobj"><span class="code">(understand $ as any object $ preferably $)</span></a><br />
-<a href="understanding.html#parsingobj"><span class="code">(understand $ as any object $ preferably animate)</span></a><br />
-<a href="understanding.html#parsedir"><span class="code">(understand $ as direction $)</span></a><br />
-<a href="understanding.html#parsingobj"><span class="code">(understand $ as non-all object $)</span></a><br />
-<a href="understanding.html#parsedir"><span class="code">(understand $ as number $)</span></a><br />
-<a href="understanding.html#parsingobj"><span class="code">(understand $ as object $ preferably $)</span></a><br />
-<a href="understanding.html#parsingobj"><span class="code">(understand $ as object $ preferably child of $)</span></a><br />
-<a href="understanding.html#parsingobj"><span class="code">(understand $ as object $ preferably held)</span></a><br />
-<a href="understanding.html#parsingobj"><span class="code">(understand $ as object $ preferably held excluding $)</span></a><br />
-<a href="understanding.html#parsingobj"><span class="code">(understand $ as object $ preferably takable)</span></a><br />
-<a href="understanding.html#parsingobj"><span class="code">(understand $ as object $ preferably worn)</span></a><br />
-<a href="understanding.html#parsingobj"><span class="code">(understand $ as single object $)</span></a><br />
-<a href="understanding.html#parsingobj"><span class="code">(understand $ as single object $ preferably $)</span></a><br />
-<a href="understanding.html#parsingobj"><span class="code">(understand $ as single object $ preferably animate)</span></a><br />
-<a href="understanding.html#parsingobj"><span class="code">(understand $ as single object $ preferably container)</span></a><br />
-<a href="understanding.html#parsingobj"><span class="code">(understand $ as single object $ preferably held)</span></a><br />
-<a href="understanding.html#parsingobj"><span class="code">(understand $ as single object $ preferably supporter)</span></a><br />
-<a href="understanding.html#parsetopics"><span class="code">(understand $ as topic $)</span></a><br />
+<a href="understanding.html#howparser"><span class="code">(understand $ as $)</span></a><br />
+<a href="understanding.html#howparser"><span class="code">(understand $ as any object $)</span></a><br />
+<a href="understanding.html#howparser"><span class="code">(understand $ as any object $ preferably $)</span></a><br />
+<a href="understanding.html#howparser"><span class="code">(understand $ as any object $ preferably animate)</span></a><br />
+<a href="understanding.html#howparser"><span class="code">(understand $ as direction $)</span></a><br />
+<a href="understanding.html#howparser"><span class="code">(understand $ as non-all object $)</span></a><br />
+<a href="understanding.html#howparser"><span class="code">(understand $ as number $)</span></a><br />
+<a href="understanding.html#howparser"><span class="code">(understand $ as object $ preferably $)</span></a><br />
+<a href="understanding.html#howparser"><span class="code">(understand $ as object $ preferably child of $)</span></a><br />
+<a href="understanding.html#howparser"><span class="code">(understand $ as object $ preferably held)</span></a><br />
+<a href="understanding.html#howparser"><span class="code">(understand $ as object $ preferably held excluding $)</span></a><br />
+<a href="understanding.html#howparser"><span class="code">(understand $ as object $ preferably takable)</span></a><br />
+<a href="understanding.html#howparser"><span class="code">(understand $ as object $ preferably worn)</span></a><br />
+<a href="understanding.html#howparser"><span class="code">(understand $ as single object $)</span></a><br />
+<a href="understanding.html#howparser"><span class="code">(understand $ as single object $ preferably $)</span></a><br />
+<a href="understanding.html#howparser"><span class="code">(understand $ as single object $ preferably animate)</span></a><br />
+<a href="understanding.html#howparser"><span class="code">(understand $ as single object $ preferably container)</span></a><br />
+<a href="understanding.html#howparser"><span class="code">(understand $ as single object $ preferably held)</span></a><br />
+<a href="understanding.html#howparser"><span class="code">(understand $ as single object $ preferably supporter)</span></a><br />
+<a href="understanding.html#howparser"><span class="code">(understand $ as topic $)</span></a><br />
 <a href="understanding.html#newactions"><span class="code">@(understand command $)</span></a><br />
 <a href="builtins.html#system"><span class="code">(undo)</span></a><br />
 <a href="builtins.html#typechecks"><span class="code">(unknown word $)</span></a><br />
@@ -392,19 +396,12 @@ sections of the manual.
 <a href="miscfeat.html#commoncomplaints"><span class="code">(when $ won't accept $)</span></a><br />
 <a href="miscfeat.html#commoncomplaints"><span class="code">(when $ won't accept actor $)</span></a><br />
 <a href="builtins.html#typechecks"><span class="code">(word $)</span></a><br />
-<a href="io.html#input"><span class="code">(word representing backspace $)</span></a><br />
-<a href="io.html#input"><span class="code">(word representing down $)</span></a><br />
-<a href="io.html#input"><span class="code">(word representing left $)</span></a><br />
-<a href="io.html#input"><span class="code">(word representing return $)</span></a><br />
-<a href="io.html#input"><span class="code">(word representing right $)</span></a><br />
-<a href="io.html#input"><span class="code">(word representing space $)</span></a><br />
-<a href="io.html#input"><span class="code">(word representing up $)</span></a><br />
 <a href="miscfeat.html#questions"><span class="code">(yesno)</span></a><br />
 <a href="traits.html#linguistictraits"><span class="code">(your $)</span></a><br />
 </p>
 	<div class="footer">
 	<p class="nav">Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 23, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 24, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

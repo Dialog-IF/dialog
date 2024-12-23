@@ -1,6 +1,6 @@
 
 (library version)
-	Library version 0.38.
+	Library version 0.39.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -146,13 +146,6 @@
 (name #behind)		behind
 
 (Name #partof)		As part of
-
-(dict #in)		inside into through inwards
-(dict #on)		onto atop upon
-
-(dict #partof)		(just) (fail)
-(dict #heldby)		(just) (fail)
-(dict #wornby)		(just) (fail)
 
 (interface (present-name $<Rel))
 
@@ -688,8 +681,7 @@
 
 %% LOOK <dir>
 
-(understand [examine/x/look/l | $Words] as [look $Dir])
-	*(understand $Words as direction $Dir)
+(grammar [examine/x/look/l [direction]] for [look $])
 
 (unlikely [look $])
 
@@ -742,9 +734,10 @@
 
 %% LOOK <rel> <obj>
 
-(understand [look/l | $Words] as [look $Rel $Obj])
-	*(split $Words by relation $Rel into [] and $MoreWords)
-	*(understand $MoreWords as single object $Obj)
+(grammar [look/l [in inside into through] [single]] for [look #in $])
+(grammar [look/l [on upon] [single]] for [look #on $])
+(grammar [look/l behind [single]] for [look #behind $])
+(grammar [look/l under [single]] for [look #under $])
 
 (unlikely [look #in $Obj])
 	~(container $Obj)
@@ -827,11 +820,8 @@
 %% they were last encountered. This will usually put the player on the expected
 %% side of doors.
 
-(understand [find | $Words] as [find $Obj])
-	*(understand $Words as any object $Obj)
-
-(understand [look/l for | $Words] as [find $Obj])
-	*(understand $Words as any object $Obj)
+(grammar [find [any]] for [find $])
+(grammar [look/l for [any]] for [find $])
 
 (unlikely [find $Obj])
 	($Obj is nowhere)
@@ -871,11 +861,8 @@
 
 %% EXAMINE <obj>
 
-(understand [examine/x/watch/describe/check/look/l | $Words] as [examine $Obj])
-	*(understand $Words as non-all object $Obj)
-
-(understand [look/l at | $Words] as [examine $Obj])
-	*(understand $Words as non-all object $Obj)
+(grammar [examine/x/watch/describe/check/look/l [object]] for [examine $])
+(grammar [look/l at [object]] for [examine $])
 
 (understand [who am i] as [examine $Player])
 	(current player $Player)
@@ -938,10 +925,9 @@
 
 %% LOOK
 
-(understand [look])
-(understand [l] as [look])
-(understand [look/l around] as [look])
-(understand [where am i] as [look])
+(grammar [look/l] for [look])
+(grammar [look/l around] for [look])
+(grammar [where am i] for [look])
 
 (describe action [look])
 	look around
@@ -961,8 +947,7 @@
 
 %% SEARCH <obj>
 
-(understand [search | $Words] as [search $Obj])
-	*(understand $Words as non-all object $Obj)
+(grammar [search [object]] for [search $])
 
 (instead of [search (current room $R)])
 	(try [look])
@@ -1011,8 +996,7 @@
 
 %% FEEL <obj>
 
-(understand [feel/touch/finger/rub/prod | $Words] as [feel $Obj])
-	*(understand $Words as non-all object $Obj)
+(grammar [feel/touch/finger/rub/prod [object]] for [feel $])
 
 (perform [feel $Obj])
 	(feel $Obj)
@@ -1020,11 +1004,8 @@
 %% LISTEN TO <obj>
 %% LISTEN
 
-(understand [listen/hear | $Words] as [listen to $Obj])
-	*(understand $Words as single object $Obj)
-
-(understand [listen to | $Words] as [listen to $Obj])
-	*(understand $Words as single object $Obj)
+(grammar [listen/hear [single]] for [listen to $])
+(grammar [listen to [single]] for [listen to $])
 
 %% Don't require reachability:
 
@@ -1043,7 +1024,7 @@
 		You hear no particular sound coming from (the $Obj).
 	(endif)
 
-(understand [listen/hear] as [listen])
+(grammar [listen/hear] for [listen])
 
 (instead of [listen])
 	(current room $Room)
@@ -1051,8 +1032,7 @@
 
 %% KISS <obj>
 
-(understand [kiss/hug/embrace/love | $Words] as [kiss $Obj])
-	*(understand $Words as single object $Obj preferably animate)
+(grammar [kiss/hug/embrace/love [animate]] for [kiss $])
 
 (prevent [kiss $Obj])
 	(current player $Player)
@@ -1068,14 +1048,14 @@
 
 %% JUMP
 
-(understand [jump/skip/hop/bounce/exercise] as [jump])
+(grammar [jump/skip/hop/bounce/exercise] for [jump])
 
 (perform [jump])
 	You enjoy a bit of jumping on the spot.
 
 %% DANCE
 
-(understand [dance/jive/shake/twirl/spin] as [dance])
+(grammar [dance/jive/shake/twirl/spin] for [dance])
 
 (perform [dance])
 	You practise your moves.
@@ -1083,8 +1063,8 @@
 %% WAVE <obj>
 %% WAVE
 
-(understand [wave | $Words] as [wave $Obj])
-	*(understand $Words as object $Obj preferably held)
+(grammar [wave [held]] for [wave $])
+(grammar [wave] for itself)
 
 (unlikely [wave $Obj])
 	(current player $Player)
@@ -1102,14 +1082,12 @@
 (perform [wave $Obj])
 	You wave (the $Obj) in the air, with no apparent consequences.
 
-(understand [wave])
-
 (perform [wave])
 	You wave your hands in the air.
 
 %% SING
 
-(understand [sing/hum] as [sing])
+(grammar [sing/hum] for [sing])
 
 (perform [sing])
 	You hum a few notes.
@@ -1118,16 +1096,9 @@
 %% THROW <obj>
 %% THROW <obj> <dir>
 
-(understand [throw/toss | $Words] as [throw $A at $B])
-	*(split $Words by [at on to in into onto] into $Left and $Right)
-	*(understand $Left as object $A preferably held)
-	*(understand $Right as single object $B)
-
-(understand [throw/toss | $Words] as [throw $Obj])
-	*(understand $Words as object $Obj preferably held)
-
-(understand [throw/toss away | $Words] as [throw $Obj])
-	*(understand $Words as object $Obj preferably held)
+(grammar [throw/toss [held] [at on to in into onto] [single]] for [throw $ at $])
+(grammar [throw/toss [held]] for [throw $])
+(grammar [throw/toss away [held]] for [throw $])
 
 (understand [throw/toss | $Words] as [throw $Obj $Dir])
 	(last $Words $Last)
@@ -1177,7 +1148,7 @@
 
 %% THINK
 
-(understand [think])
+(grammar [think] for itself)
 
 (perform [think])
 	That would be a good first step.
@@ -1185,12 +1156,10 @@
 
 %% SLEEP
 
-(understand [sleep])
-(understand [nap] as [sleep])
-(understand [take nap] as [sleep])
-(understand [take a nap] as [sleep])
-(understand [fall asleep] as [sleep])
-(understand [dream] as [sleep])
+(grammar [sleep/nap/dream] for [sleep])
+(grammar [take nap] for [sleep])
+(grammar [take a nap] for [sleep])
+(grammar [fall asleep] for [sleep])
 
 (perform [sleep])
 	You're not all that sleepy.
@@ -1198,16 +1167,10 @@
 %% TAKE <obj>
 %% TAKE <obj> FROM <obj>
 
-(understand [take/grab/snatch/steal/acquire/hold/gather/get/remove/pick | $Words] as [take $Obj from $Parent])
-	*(split $Words by [from] into $Left and $Right)
-	*(understand $Right as single object $Parent)
-	*(understand $Left as object $Obj preferably child of $Parent)
+(grammar [take/grab/snatch/steal/acquire/hold/gather/get/pick/remove [child] from [single]] for [take $ from $])
 
-(understand [take/grab/snatch/steal/acquire/hold/gather/get/pick | $Words] as [take $Obj])
-	*(understand $Words as object $Obj preferably takable)
-
-(understand [pick up | $Words] as [take $Obj])
-	*(understand $Words as object $Obj preferably takable)
+(grammar [take/grab/snatch/steal/acquire/hold/gather/get/pick [takable]] for [take $])
+(grammar [pick up [takable]] for [take $])
 
 (unlikely [take $Obj])
 	~(item $Obj) (or) ($Obj has relation $Rel) ($Rel is one of [#partof #heldby #wornby])
@@ -1264,18 +1227,9 @@
 
 %% REMOVE <obj>
 
-(understand [take | $Words] as [remove $Obj])
-	*(split $Words by [off] into $Left and $Right)
-	{
-		($Left = [])
-		*(understand $Right as object $Obj preferably worn)
-	(or)
-		($Right = [])
-		*(understand $Left as object $Obj preferably worn)
-	}
-
-(understand [remove/doff/shed/loosen/disrobe/undress | $Words] as [remove $Obj])
-	*(understand $Words as object $Obj preferably worn)
+(grammar [remove/doff/shed/loosen/disrobe/undress [worn]] for [remove $])
+(grammar [take off [worn]] for [remove $])
+(grammar [take [worn] off] for [remove $])
 
 (unlikely [remove $Obj])
 	(current player $Actor)
@@ -1306,18 +1260,9 @@
 
 %% WEAR <obj>
 
-(understand [wear/don | $Words] as [wear $Obj])
-	*(understand $Words as object $Obj preferably held)
-
-(understand [put | $Words] as [wear $Obj])
-	*(split $Words by [on] into $Left and $Right)
-	{
-		($Left = [])
-		*(understand $Right as object $Obj preferably held)
-	(or)
-		($Right = [])
-		*(understand $Left as object $Obj preferably held)
-	}
+(grammar [wear/don [held]] for [wear $])
+(grammar [put on [held]] for [wear $])
+(grammar [put [held] on] for [wear $])
 
 (unlikely [wear $Obj])
 	~(wearable $Obj)
@@ -1355,21 +1300,10 @@
 
 %% PUT <obj> <rel> <obj>
 
-(understand [put/lay/drop | $Words] as [put $Obj $Rel $Dest])
-	*(split $Words by relation $Rel into $Left and $Right)
-	*(understand $Right as single object $Dest)
-	*(understand $Left as object $Obj preferably held excluding $Dest)
-
-(understand [hide/stash/stuff | $Words] as [put $Obj $Rel $Dest])
-	*(split $Words by relation $Rel into $Left and $Right)
-	~($Rel = #on)
-	*(understand $Right as single object $Dest)
-	*(understand $Left as object $Obj preferably held excluding $Dest)
-
-(understand [insert | $Words] as [put $Obj #in $Dest])
-	*(split $Words by [in inside into through] into $Left and $Right)
-	*(understand $Right as single object $Dest)
-	*(understand $Left as object $Obj preferably held excluding $Dest)
+(grammar [put/lay/drop/hide/stash/stuff/insert [held] [in inside into through] [single]] for [put $ #in $])
+(grammar [put/lay/drop [held] [on onto atop upon] [single]] for [put $ #on $])
+(grammar [put/lay/drop/hide/stash/stuff [held] behind [single]] for [put $ #behind $])
+(grammar [put/lay/drop/hide/stash/stuff [held] under [single]] for [put $ #under $])
 
 (unlikely [put $Obj $ $])
 	(current player $Actor)
@@ -1436,21 +1370,10 @@
 
 %% DROP <obj>
 
-(understand [put/lay/drop/set | $Words] as [drop $Obj])
-	*(split $Words by [down away] into $Left and $Right)
-	{
-		($Left = [])
-		*(understand $Right as object $Obj preferably held)
-	(or)
-		($Right = [])
-		*(understand $Left as object $Obj preferably held)
-	}
-
-(understand [put/lay/drop | $Words] as [drop $Obj])
-	*(understand $Words as object $Obj preferably held)
-
-(understand [let go of | $Words] as [drop $Obj])
-	*(understand $Words as object $Obj preferably held)
+(grammar [put/lay/drop [held]] for [drop $])
+(grammar [put/lay/drop/set down [held]] for [drop $])
+(grammar [put/lay/drop/set [held] down] for [drop $])
+(grammar [let go of [held]] for [drop $])
 
 (unlikely [drop $Obj])
 	(current player $Actor)
@@ -1485,8 +1408,8 @@
 
 %% INVENTORY
 
-(understand [inventory/i/inv] as [inventory])
-(understand [take/get inventory] as [inventory])
+(grammar [inventory/i/inv] for [inventory])
+(grammar [take/get inventory] for [inventory])
 
 (describe action [inventory])
 	take inventory
@@ -1514,10 +1437,9 @@
 
 %% EXITS
 
-(understand [exits])
-(understand [list exits] as [exits])
-(understand [list the exits] as [exits])
-(understand [map] as [exits])
+(grammar [exits/map] for [exits])
+(grammar [list exits] for [exits])
+(grammar [list the exits] for [exits])
 
 (describe action [exits])
 	list the exits
@@ -1575,14 +1497,14 @@
 
 %% EXIST (misspelled EXITS, just for the giggles)
 
-(understand [exist])
+(grammar [exist] for itself)
 
 (perform [exist])
 	So you do.
 
 %% WAIT
 
-(understand [wait/z] as [wait])
+(grammar [wait/z] for [wait])
 
 (perform [wait])
 	A moment slips away.
@@ -1590,18 +1512,10 @@
 %% GIVE <obj> TO <obj>
 %% GIVE <obj>
 
-(understand [give/offer | $Words] as [give $Obj to $Dest])
-	*(split $Words by [to] into $Left and $Right)
-	*(understand $Right as single object $Dest preferably animate)
-	*(understand $Left as object $Obj preferably held excluding $Dest)
+(grammar [give/offer [held] to [animate]] for [give $ to $])
+(grammar [give/offer [animate] [held]] for [give $ to $] reversed)
 
-(understand [give/offer | $Words] as [give $Obj to $Dest])
-	*(split $Words anywhere into $Left and $Right)
-	*(understand $Left as single object $Dest preferably animate)
-	*(understand $Right as object $Obj preferably held excluding $Dest)
-
-(understand [give/offer | $Words] as [give $Obj])
-	*(understand $Words as object $Obj preferably held)
+(grammar [give/offer [held]] for [give $])
 
 (unlikely [give $Obj to $Obj])
 
@@ -1635,18 +1549,10 @@
 %% SHOW <obj> TO <obj>
 %% SHOW <obj>
 
-(understand [show | $Words] as [show $Obj to $Dest])
-	*(split $Words by [to] into $Left and $Right)
-	*(understand $Right as single object $Dest preferably animate)
-	*(understand $Left as object $Obj preferably held excluding $Dest)
+(grammar [show [held] to [animate]] for [show $ to $])
+(grammar [show [animate] [held]] for [show $ to $] reversed)
 
-(understand [show | $Words] as [show $Obj to $Dest])
-	*(split $Words anywhere into $Left and $Right)
-	*(understand $Left as single object $Dest preferably animate)
-	*(understand $Right as object $Obj preferably held excluding $Dest)
-
-(understand [show | $Words] as [show $Obj])
-	*(understand $Words as object $Obj preferably held)
+(grammar [show [held]] for [show $])
 
 (unlikely [show $Obj to $Obj])
 
@@ -1690,8 +1596,7 @@
 
 %% OPEN <obj>
 
-(understand [open/unwrap/uncover | $Words] as [open $Obj])
-	*(understand $Words as non-all object $Obj)
+(grammar [open/unwrap/uncover [object]] for [open $])
 
 (unlikely [open $Obj])
 	~(openable $Obj) (or) ($Obj is open)
@@ -1735,8 +1640,7 @@
 
 %% CLOSE <obj>
 
-(understand [close/shut/cover | $Words] as [close $Obj])
-	*(understand $Words as non-all object $Obj)
+(grammar [close/shut/cover [object]] for [close $])
 
 (unlikely [close $Obj])
 	~(openable $Obj) (or) ($Obj is closed)
@@ -1759,13 +1663,8 @@
 %% UNLOCK <obj> WITH <obj>
 %% UNLOCK <obj>
 
-(understand [unlock | $Words] as [unlock $Obj with $Key])
-	*(split $Words by [with] into $Left and $Right)
-	*(understand $Left as non-all object $Obj)
-	*(understand $Right as single object $Key preferably held)
-
-(understand [unlock | $Words] as [unlock $Obj])
-	*(understand $Words as non-all object $Obj)
+(grammar [unlock [object] with [single held]] for [unlock $ with $])
+(grammar [unlock [object]] for [unlock $])
 
 (unlikely [unlock $Obj | $])
 	~(lockable $Obj) (or) ($Obj is unlocked)
@@ -1807,13 +1706,8 @@
 %% LOCK <obj> WITH <obj>
 %% LOCK <obj>
 
-(understand [lock | $Words] as [lock $Obj with $Key])
-	*(split $Words by [with] into $Left and $Right)
-	*(understand $Left as non-all object $Obj)
-	*(understand $Right as single object $Key preferably held)
-
-(understand [lock | $Words] as [lock $Obj])
-	*(understand $Words as non-all object $Obj)
+(grammar [lock [object] with [single held]] for [lock $ with $])
+(grammar [lock [object]] for [lock $])
 
 (unlikely [lock $Obj | $])
 	~(lockable $Obj)
@@ -1855,20 +1749,8 @@
 
 %% SWITCH ON <obj>
 
-(understand [turn/switch | $Words] as [switch on $Obj])
-	*(split $Words by [on] into $Left and $Right)
-	{
-		($Left = [])
-		*(understand $Right as non-all object $Obj)
-	(or)
-		($Right = [])
-		*(understand $Left as non-all object $Obj)
-	}
-
-(understand [switch | $Words] as [switch on $Obj])
-	*(understand $Words as single object $Obj)
-	(switchable $Obj)
-	($Obj is off)
+(grammar [turn/switch on [object]] for [switch on $])
+(grammar [turn/switch [object] on] for [switch on $])
 
 (unlikely [switch on $Obj])
 	~(switchable $Obj) (or) ($Obj is on)
@@ -1893,20 +1775,8 @@
 
 %% SWITCH OFF <obj>
 
-(understand [turn/switch | $Words] as [switch off $Obj])
-	*(split $Words by [off] into $Left and $Right)
-	{
-		($Left = [])
-		*(understand $Right as non-all object $Obj)
-	(or)
-		($Right = [])
-		*(understand $Left as non-all object $Obj)
-	}
-
-(understand [switch | $Words] as [switch off $Obj])
-	*(understand $Words as single object $Obj)
-	(switchable $Obj)
-	($Obj is on)
+(grammar [turn/switch off [object]] for [switch off $])
+(grammar [turn/switch [object] off] for [switch off $])
 
 (unlikely [switch off $Obj])
 	~(switchable $Obj) (or) ($Obj is off)
@@ -1929,18 +1799,33 @@
 	(narrate switching off $Obj)
 	(now) ($Obj is off)
 
+%% SWITCH <obj>
+
+(grammar [switch [object]] for [switch $])
+
+(unlikely [switch ~(switchable $)])
+
+(instead of [switch $Obj])
+	($Obj is on)
+	(try [switch off $Obj])
+
+(instead of [switch $Obj])
+	($Obj is off)
+	(try [switch on $Obj])
+
+(perform [switch $Obj])
+	(The $Obj) can't be switched on or off.
+
 %% SQUEEZE <obj>
 
-(understand [squeeze/squash | $Words] as [squeeze $Obj])
-	*(understand $Words as non-all object $Obj)
+(grammar [squeeze/squash [object]] for [squeeze $])
 
 (perform [squeeze $Obj])
 	You give (the $Obj) a bit of a squeeze.
 
 %% FIX <obj>
 
-(understand [fix/repair/mend | $Words] as [fix $Obj])
-	*(understand $Words as non-all object $Obj)
+(grammar [fix/repair/mend [object]] for [fix $])
 
 (unlikely [fix $Obj])
 	($Obj is in order)
@@ -1955,8 +1840,7 @@
 
 %% TASTE <obj>
 
-(understand [taste/lick/relish/savour | $Words] as [taste $Obj])
-	*(understand $Words as non-all object $Obj)
+(grammar [taste/lick/relish/savour [object]] for [taste $])
 
 (unlikely [taste $Obj])
 	~(edible $Obj)
@@ -1972,18 +1856,15 @@
 
 %% FLY
 
-(understand [fly])
+(grammar [fly] for itself)
 
 (perform [fly])
 	You lack the ability.
 
 %% BITE <obj>
 
-(understand [bite/chew/gnaw | $Words] as [bite $Obj])
-	*(understand $Words as single object $Obj)
-
-(understand [gnaw at | $Words] as [bite $Obj])
-	*(understand $Words as single object $Obj)
+(grammar [bite/chew/gnaw [single]] for [bite $])
+(grammar [gnaw at [single]] for [bite $])
 
 (perform [bite (animate $Obj)])
 	(try [attack $Obj])
@@ -1993,8 +1874,7 @@
 
 %% EAT <obj>
 
-(understand [eat/devour/ingest/munch/swallow | $Words] as [eat $Obj])
-	*(understand $Words as non-all object $Obj)
+(grammar [eat/devour/ingest/munch/swallow [object]] for [eat $])
 
 (unlikely [eat $Obj])
 	~(edible $Obj)
@@ -2037,8 +1917,7 @@
 
 %% DRINK <obj>
 
-(understand [drink/sip/quaff | $Words] as [drink $Obj])
-	*(understand $Words as non-all object $Obj)
+(grammar [drink/sip/quaff [object]] for [drink $])
 
 (unlikely [drink $Obj])
 	~(potable $Obj)
@@ -2062,23 +1941,10 @@
 %% CUT <obj> WITH <obj>
 %% CUT <obj>
 
-(understand [cut/sever/slice/prune/chop | $Words] as [cut $A with $B])
-	*(split $Words by [with] into $Left and $Right)
-	*(understand $Left as non-all object $A)
-	*(understand $Right as single object $B)
-
-(understand [cut/sever/slice/prune/chop | $Words] as [cut $Obj])
-	*(understand $Words as non-all object $Obj)
-
-(understand [cut/chop/slice | $Words] as [cut $Obj])
-	*(split $Words by [off] into $Left and $Right)
-	{
-		($Left = [])
-		*(understand $Right as non-all object $Obj)
-	(or)
-		($Right = [])
-		*(understand $Left as non-all object $Obj)
-	}
+(grammar [cut/sever/slice/prune/chop [object] with [single]] for [cut $ with $])
+(grammar [cut/sever/slice/prune/chop [object]] for [cut $])
+(grammar [cut/slice/chop off [object]] for [cut $])
+(grammar [cut/slice/chop [object] off] for [cut $])
 
 (unlikely [cut $ with $Obj])
 	~(sharp $Obj)
@@ -2120,15 +1986,8 @@
 
 %% CONSULT <obj> ABOUT <topic>
 
-(understand [consult | $Words] as [consult $Obj about $Topic])
-	*(split $Words by [about] into $Left and $Right)
-	*(understand $Left as single object $Obj)
-	*(understand $Right as topic $Topic)
-
-(understand [look up | $Words] as [consult $Obj about $Topic])
-	*(split $Words by [in] into $Left and $Right)
-	*(understand $Right as single object $Obj)
-	*(understand $Left as topic $Topic)
+(grammar [consult [object] about [topic]] for [consult $ about $])
+(grammar [look up [topic] in [object]] for [consult $ about $] reversed)
 
 (describe action [consult $Obj about $Topic])
 	consult (the full $Obj) about (describe topic $Topic)
@@ -2151,15 +2010,8 @@
 
 %% ASK/TELL <obj> ABOUT <topic> (redirected to TALK TO <obj> ABOUT <topic> by default)
 
-(understand [ask | $Words] as [ask $Person about $Topic])
-	*(split $Words by [about] into $Left and $Right)
-	*(understand $Left as single object $Person preferably animate)
-	*(understand $Right as topic $Topic)
-
-(understand [tell | $Words] as [tell $Person about $Topic])
-	*(split $Words by [about] into $Left and $Right)
-	*(understand $Left as single object $Person preferably animate)
-	*(understand $Right as topic $Topic)
+(grammar [ask [animate] about [topic]] for [ask $ about $])
+(grammar [tell [animate] about [topic]] for [tell $ about $])
 
 (describe action [ask $Person about $Topic])
 	ask (the full $Person) about (describe topic $Topic)
@@ -2167,11 +2019,8 @@
 (describe action [tell $Person about $Topic])
 	tell (the full $Person) about (describe topic $Topic)
 
-(understand [ask | $Words] as [ask $Obj])
-	*(understand $Words as single object $Obj preferably animate)
-
-(understand [tell | $Words] as [tell $Obj])
-	*(understand $Words as single object $Obj preferably animate)
+(grammar [ask [animate]] for [ask $])
+(grammar [tell [animate]] for [tell $])
 
 (describe action [ask $Person])
 	ask (the full $Person) something
@@ -2203,18 +2052,10 @@
 %% TALK TO <obj>
 %% TALK
 
-(understand [talk/speak to | $Words] as [talk to $Person about $Topic])
-	*(split $Words by [about] into $Left and $Right)
-	*(understand $Left as single object $Person preferably animate)
-	*(understand $Right as topic $Topic)
-
-(understand [talk/speak | $Words] as [talk to $Obj])
-	*(understand $Words as single object $Obj preferably animate)
-
-(understand [talk/speak to | $Words] as [talk to $Obj])
-	*(understand $Words as single object $Obj preferably animate)
-
-(understand [talk])
+(grammar [talk/speak to [animate] about [topic]] for [talk to $ about $])
+(grammar [talk/speak to [animate]] for [talk to $])
+(grammar [talk/speak [animate]] for [talk to $])
+(grammar [talk] for itself)
 
 (describe action [talk to $Person about $Topic])
 	talk to (the full $Person) about (describe topic $Topic)
@@ -2242,7 +2083,7 @@
 
 %% CURSE
 
-(understand [curse/swear] as [curse])
+(grammar [curse/swear] for [curse])
 
 (perform [curse])
 	You mumble a few well-chosen words to yourself.
@@ -2250,8 +2091,7 @@
 %% SHOUT TO <obj> (redirected to TALK TO by default)
 %% SHOUT (redirected to TALK by default)
 
-(understand [shout/yell/scream to | $Words] as [shout to $Obj])
-	*(understand $Words as single object $Obj preferably animate)
+(grammar [shout/yell/scream to [animate]] for [shout to $])
 
 (unlikely [shout to $Obj])
 	~(animate $Obj)
@@ -2262,7 +2102,7 @@
 (perform [shout to $Obj])
 	(try [talk to $Obj])
 
-(understand [shout/yell/scream] as [shout])
+(grammar [shout/yell/scream] for [shout])
 
 (perform [shout])
 	To whom?
@@ -2270,14 +2110,14 @@
 
 %% PRAY
 
-(understand [pray])
+(grammar [pray] for itself)
 
 (perform [pray])
 	There is no answer.
 
 %% SHRUG
 
-(understand [shrug])
+(grammar [shrug] for itself)
 
 (perform [shrug])
 	You shrug indifferently.
@@ -2286,11 +2126,9 @@
 %% CALL (redirected to SHOUT by default)
 %% Stories containing a phone would override these.
 
-(understand [call | $Words] as [call $Obj])
-	*(understand $Words as single object $Obj preferably animate)
-
-(understand [call to | $Words] as [call $Obj])
-	*(understand $Words as single object $Obj preferably animate)
+(grammar [call [animate]] for [call $])
+(grammar [call to [animate]] for [call $])
+(grammar [call] for itself)
 
 (unlikely [call $Obj])
 	~(animate $Obj)
@@ -2301,16 +2139,14 @@
 (perform [call $Obj])
 	(try [shout to $Obj])
 
-(understand [call])
-
 (perform [call])
 	(try [shout])
 
 %% GREET <obj> (redirected to TALK TO by default)
 %% GREET
 
-(understand [greet/hello/hi | $Words] as [greet $Obj])
-	*(understand $Words as single object $Obj preferably animate)
+(grammar [greet/hello/hi [animate]] for [greet $])
+(grammar [greet/hello/hi] for [greet])
 
 (unlikely [greet $Obj])
 	~(animate $Obj)
@@ -2320,8 +2156,6 @@
 
 (perform [greet $Obj])
 	(try [talk to $Obj])
-
-(understand [greet/hello/hi] as [greet])
 
 (perform [greet])
 	You say hello to nobody in particular.
@@ -2380,9 +2214,10 @@
 	(endif)
 
 %% SMELL <obj>
+%% SMELL
 
-(understand [smell/sniff/inhale | $Words] as [smell $Obj])
-	*(understand $Words as non-all object $Obj)
+(grammar [smell/sniff/inhale [object]] for [smell $])
+(grammar [smell/sniff/inhale] for [smell])
 
 (refuse [smell $Obj])
 	(just) (when $Obj is not here)
@@ -2390,15 +2225,14 @@
 (perform [smell $Obj])
 	(The $Obj) smell(s $Obj) as expected.
 
-(understand [smell/sniff/inhale] as [smell])
-
 (perform [smell])
 	You sniff at the air, perceiving nothing out of the ordinary.
 
 %% WAKE UP
 
-(understand [wake up])
-(understand [wake/awake/awaken] as [wake up])
+(grammar [wake up] for itself)
+(grammar [wake/awake/awaken] for [wake up])
+
 (understand [pinch | $Words] as [wake up])
 	*(understand $Words as single object $Obj)
 	(current player $Player)
@@ -2413,26 +2247,13 @@
 
 %% CLIMB <obj>
 
-(understand [climb/mount/scale | $Words] as [climb $Obj])
-	*(understand $Words as single object $Obj preferably supporter)
-
-(understand [go/get/step/climb up on/onto | $Words] as [climb $Obj])
-	*(understand $Words as single object $Obj preferably supporter)
-
-(understand [go/get/step/climb/stand/lie on/onto | $Words] as [climb $Obj])
-	*(understand $Words as single object $Obj preferably supporter)
-
-(understand [go/get/step/climb/stand/lie on top of | $Words] as [climb $Obj])
-	*(understand $Words as single object $Obj preferably supporter)
-
-(understand [sit/stand/lie on | $Words] as [climb $Obj])
-	*(understand $Words as single object $Obj preferably supporter)
-
-(understand [sit/stand/lie down on | $Words] as [climb $Obj])
-	*(understand $Words as single object $Obj preferably supporter)
-
-(understand [jump to/onto | $Words] as [climb $Obj])
-	*(understand $Words as single object $Obj preferably supporter)
+(grammar [climb/mount/scale [single]] for [climb $])
+(grammar [go/get/step/climb up [on onto] [single]] for [climb $])
+(grammar [go/get/step/climb/stand/lie [on onto] [single]] for [climb $])
+(grammar [go/get/step/climb/stand/lie on top of [single]] for [climb $])
+(grammar [sit/stand/lie on [single]] for [climb $])
+(grammar [sit/stand/lie down on [single]] for [climb $])
+(grammar [jump to/onto [single]] for [climb $])
 
 (unlikely [climb $Obj])
 	~(actor supporter $Obj)
@@ -2479,11 +2300,8 @@
 
 %% ENTER <obj>
 
-(understand [enter/cross | $Words] as [enter $Obj])
-	*(understand $Words as single object $Obj preferably container)
-
-(understand [go/get/enter/climb/jump/sit/lie in/into/inside | $Words] as [enter $Obj])
-	*(understand $Words as single object $Obj preferably container)
+(grammar [enter/cross [single]] for [enter $])
+(grammar [go/get/enter/climb/jump/sit/lie [in into inside] [single]] for [enter $])
 
 (understand [go | $Words] as [enter $Obj])
 	*(understand $Words as single object $Obj)
@@ -2561,7 +2379,7 @@
 
 %% SIT
 
-(understand [sit])
+(grammar [sit] for itself)
 
 (unlikely [sit])
 
@@ -2571,9 +2389,8 @@
 
 %% STAND
 
-(understand [stand])
-
-(understand [stand up] as [stand])
+(grammar [stand] for itself)
+(grammar [stand up] for [stand])
 
 (describe action [stand])
 	stand up
@@ -2591,22 +2408,12 @@
 %% LEAVE <obj>
 %% LEAVE
 
-(understand [leave/exit | $Words] as [leave $Obj])
-	*(understand $Words as single object $Obj)
+(grammar [leave/exit [single]] for [leave $])
+(grammar [get/jump/go [out off] of [single]] for [leave $])
+(grammar [get/jump/go off [single]] for [leave $])
 
-(understand [get/jump/go out/off of | $Words] as [leave $Obj])
-	*(understand $Words as single object $Obj preferably container)
-
-(understand [get/jump/go off | $Words] as [leave $Obj])
-	*(understand $Words as single object $Obj preferably supporter)
-
-(understand [leave/exit] as [leave])
-(understand [get/jump out] as [leave])
-(understand [get off] as [leave])
-
-(understand [jump off] as [leave])
-	(current player $Player)
-	($Player has relation #on)
+(grammar [leave/exit] for [leave])
+(grammar [get/jump [out off]] for [leave])
 
 (describe action [leave $Obj])
 	(current player $Player)
@@ -2751,15 +2558,10 @@
 %% The rule for just typing a list of directions (without a verb) is further
 %% down in the file.
 
-(understand [go/walk/crawl/leave/get/climb | $Words] as [go $Dir])
-	*(understand $Words as direction $Dir)
-
-(understand [go/walk/crawl to/further | $Words] as [go $Dir])
-	*(understand $Words as direction $Dir)
-
-(understand [go/walk/crawl] as [go #out])
-
-(understand [enter] as [go #in])
+(grammar [go/walk/crawl/leave/get/climb [direction]] for [go $])
+(grammar [go/walk/crawl [to further] [direction]] for [go $])
+(grammar [go/walk/crawl] for [go #out])
+(grammar [enter] for [go #in])
 
 (understand [climb] as [go $Dir])
 	(current room $Room)
@@ -2833,10 +2635,7 @@
 
 %% PUSH <obj> <dir>
 
-(understand [push/move/shove/shift/press/roll | $Words] as [push $Obj $Dir])
-	*(split $Words anywhere into $Left and $Right)
-	*(understand $Right as direction $Dir)
-	*(understand $Left as single object $Obj)
+(grammar [push/move/shove/shift/press/roll [single] [direction]] for [push $ $])
 
 (unlikely [push $Obj $])
 	~(pushable $Obj)
@@ -2867,8 +2666,7 @@
 
 %% PUSH <obj>
 
-(understand [push/move/shove/shift/press | $Words] as [push $Obj])
-	*(understand $Words as non-all object $Obj)
+(grammar [push/move/shove/shift/press [object]] for [push $])
 
 (perform [push (pushable $Obj)])
 	In what direction?
@@ -2885,11 +2683,8 @@
 
 %% PULL <obj>
 
-(understand [pull/yank/drag/tug/tow | $Words] as [pull $Obj])
-	*(understand $Words as non-all object $Obj)
-
-(understand [pull/yank/drag/tug/tow on | $Words] as [pull $Obj])
-	*(understand $Words as non-all object $Obj)
+(grammar [pull/yank/drag/tug/tow [object]] for [pull $])
+(grammar [pull/yank/drag/tug/tow on [object]] for [pull $])
 
 (perform [pull $Obj])
 	You yank at (the $Obj), but
@@ -2901,8 +2696,7 @@
 
 %% TURN <obj>
 
-(understand [turn/rotate/twist/screw/unscrew | $Words] as [turn $Obj])
-	*(understand $Words as non-all object $Obj)
+(grammar [turn/rotate/twist/screw/unscrew [object]] for [turn $])
 
 (prevent [turn (room $Obj)])
 	You can't turn (the $Obj).
@@ -2912,8 +2706,7 @@
 
 %% READ <obj>
 
-(understand [read | $Words] as [read $Obj])
-	*(understand $Words as non-all object $Obj)
+(grammar [read [object]] for [read $])
 
 (prevent [read $])
 	~(player can see)
@@ -2925,14 +2718,12 @@
 %% FLUSH <obj>
 %% FLUSH
 
-(understand [flush | $Words] as [flush $Obj])
-	*(understand $Words as non-all object $Obj)
+(grammar [flush [object]] for [flush $])
+(grammar [flush] for itself)
 
 (perform [flush $Obj])
 	You don't know how to flush (the $Obj).
 	(tick) (stop)
-
-(understand [flush])
 
 (perform [flush])
 	Flush what?
@@ -2941,14 +2732,12 @@
 %% SWIM IN <obj>
 %% SWIM
 
-(understand [swim/bathe in | $Words] as [swim in $Obj])
-	*(understand $Words as single object $Obj)
+(grammar [swim/bathe in [single]] for [swim in $])
+(grammar [swim/bathe] for [swim])
 
 (perform [swim in $Obj])
 	You can't swim in (the $Obj).
 	(tick) (stop)
-
-(understand [swim/bathe] as [swim])
 
 (perform [swim])
 	In what?
@@ -2956,8 +2745,7 @@
 
 %% CLEAN <obj>
 
-(understand [clean/brush/shine/polish/sweep/dust/wipe/scrub | $Words] as [clean $Obj])
-	*(understand $Words as non-all object $Obj)
+(grammar [clean/brush/shine/polish/sweep/dust/wipe/scrub [object]] for [clean $])
 
 (perform [clean $Obj])
 	You make a half-hearted attempt at cleaning (the $Obj).
@@ -3016,10 +2804,8 @@
 %% ATTACK <obj> WITH <obj>
 %% ATTACK <obj>
 
-(understand [attack/break/smash/hit/slap/kick/fight/torture/wreck/crack/destroy/murder/kill/punch/thump | $Words] as [attack $A with $B])
-	*(split $Words by [with] into $Left and $Right)
-	*(understand $Left as non-all object $A)
-	*(understand $Right as object $B preferably held)
+(grammar [attack/break/smash/hit/slap/kick/fight/torture/wreck/crack/destroy/murder/kill/punch/thump [single] with [single held]] for [attack $ with $])
+(grammar [attack/break/smash/hit/slap/kick/fight/torture/wreck/crack/destroy/murder/kill/punch/thump [single]] for [attack $])
 
 (unlikely [attack $ with $Obj])
 	~(item $Obj)
@@ -3036,9 +2822,6 @@
 
 (perform [attack $Obj with $])
 	(try [attack $Obj])
-
-(understand [attack/break/smash/hit/slap/kick/fight/torture/wreck/crack/destroy/murder/kill/punch/thump | $Words] as [attack $Obj])
-	*(understand $Words as single object $Obj)
 
 (perform [attack $Obj])
 	You consider attacking (the $Obj), but reject the idea.
@@ -3297,6 +3080,147 @@
 (understand [banner] as [version])
 (perform [version])
 	(banner)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Simplified grammar definitions
+
+%% A definition like the following:
+%%	(grammar [give [held] to [animate]] for [give $ to $])
+%% is transformed at compile-time into a compact internal representation:
+%%	(grammar entry @give [22 to 11] [give $ to $])
+
+%% The transformation is carried out by the following access predicates:
+
+@(grammar $Words for itself)
+	(understand $Words)
+@(grammar [$Verb | $More] for $Action)
+	(grammar transformer $More [] $Verb $Action 0)
+@(grammar [$Verb | $More] for $Action reversed)
+	(grammar transformer $More [] $Verb $Action 1)
+
+@(grammar transformer [[single] | $Tail] $SoFar $Verb $Action $Rev)
+	(grammar transformer $Tail [10 | $SoFar] $Verb $Action $Rev)
+@(grammar transformer [[single object] | $Tail] $SoFar $Verb $Action $Rev)
+	(grammar transformer $Tail [10 | $SoFar] $Verb $Action $Rev)
+@(grammar transformer [[animate] | $Tail] $SoFar $Verb $Action $Rev)
+	(grammar transformer $Tail [11 | $SoFar] $Verb $Action $Rev)
+@(grammar transformer [[single held] | $Tail] $SoFar $Verb $Action $Rev)
+	(grammar transformer $Tail [12 | $SoFar] $Verb $Action $Rev)
+@(grammar transformer [[object] | $Tail] $SoFar $Verb $Action $Rev)
+	(grammar transformer $Tail [20 | $SoFar] $Verb $Action $Rev)
+@(grammar transformer [[held] | $Tail] $SoFar $Verb $Action $Rev)
+	(grammar transformer $Tail [22 | $SoFar] $Verb $Action $Rev)
+@(grammar transformer [[takable] | $Tail] $SoFar $Verb $Action $Rev)
+	(grammar transformer $Tail [23 | $SoFar] $Verb $Action $Rev)
+@(grammar transformer [[worn] | $Tail] $SoFar $Verb $Action $Rev)
+	(grammar transformer $Tail [24 | $SoFar] $Verb $Action $Rev)
+@(grammar transformer [[child] | $Tail] $SoFar $Verb $Action $Rev)
+	(grammar transformer $Tail [25 | $SoFar] $Verb $Action $Rev)
+@(grammar transformer [[any] | $Tail] $SoFar $Verb $Action $Rev)
+	(grammar transformer $Tail [30 | $SoFar] $Verb $Action $Rev)
+@(grammar transformer [[any animate] | $Tail] $SoFar $Verb $Action $Rev)
+	(grammar transformer $Tail [31 | $SoFar] $Verb $Action $Rev)
+@(grammar transformer [[topic] | $Tail] $SoFar $Verb $Action $Rev)
+	(grammar transformer $Tail [40 | $SoFar] $Verb $Action $Rev)
+@(grammar transformer [[direction] | $Tail] $SoFar $Verb $Action $Rev)
+	(grammar transformer $Tail [50 | $SoFar] $Verb $Action $Rev)
+@(grammar transformer [[number] | $Tail] $SoFar $Verb $Action $Rev)
+	(grammar transformer $Tail [60 | $SoFar] $Verb $Action $Rev)
+@(grammar transformer [$Head | $Tail] $SoFar $Verb $Action $Rev)
+	(grammar transformer $Tail [$Head | $SoFar] $Verb $Action $Rev)
+@(grammar transformer [] $SoFar $Verb $Action $Rev)
+	(grammar inverter $SoFar [] $Verb $Action $Rev)
+
+@(grammar inverter [$Head | $Tail] $SoFar $Verb $Action $Rev)
+	(grammar inverter $Tail [$Head | $SoFar] $Verb $Action $Rev)
+@(grammar inverter [] $SoFar $Verb $Action 0)
+	(grammar entry $Verb $SoFar $Action)
+@(grammar inverter [] $SoFar $Verb $Action 1)
+	(grammar entry $Verb $SoFar $Action reversed)
+
+(interface (grammar entry $<Verb $>Grammar $Action))
+(interface (grammar entry $<Verb $>Grammar $Action reversed))
+
+%% The resulting grammar tables can be inspected in the debugger, by typing
+%% *(grammar entry $ $ $)
+%% *(grammar entry $ $ $ reversed)
+
+%% We need a couple of understand-rules that query the grammar table:
+
+(understand [$Verb | $Words] as $Action)
+	*(grammar entry $Verb $Grammar $Action)
+	*(match grammar $Grammar against $Words into $ObjList)
+	(populate template $Action with $ObjList)
+
+(understand [$Verb | $Words] as $Action)
+	*(grammar entry $Verb $Grammar $Action reversed)
+	*(match grammar $Grammar against $Words into $ObjList)
+	(reverse $ObjList $RevObjList)
+	(populate template $Action with $RevObjList)
+
+(match grammar [] against [] into [])
+(match grammar [$G | $MoreG] against $Words into $ObjList)
+	(if) (number $G) (then)
+		(if) (empty $MoreG) (then)
+			*(match grammar token $G against $Words [] into $Obj)
+			($ObjList = [$Obj])
+		(else)
+			(if) ($MoreG = [$Prep | $YetMoreG]) ~(number $Prep) (then)
+				*(split $Words by $Prep into $Left and $Right)
+			(else)
+				($YetMoreG = $MoreG)
+				*(split $Words anywhere into $Left and $Right)
+			(endif)
+			*(match grammar $YetMoreG against $Right into $MoreObj)
+			*(match grammar token $G against $Left $MoreObj into $Obj)
+			($ObjList = [$Obj | $MoreObj])
+		(endif)
+	(else)
+		($Words = [$W | $MoreWords])
+		(if) (nonempty $G) (then)
+			($W is one of $G)
+		(else)
+			($W = $G)
+		(endif)
+		*(match grammar $MoreG against $MoreWords into $ObjList)
+	(endif)
+
+(match grammar token 10 against $Words $ into $Obj)
+	*(understand $Words as single object $Obj)
+(match grammar token 11 against $Words $ into $Obj)
+	*(understand $Words as single object $Obj preferably animate)
+(match grammar token 12 against $Words $ into $Obj)
+	*(understand $Words as single object $Obj preferably held)
+(match grammar token 20 against $Words $ into $Obj)
+	*(understand $Words as non-all object $Obj)
+(match grammar token 22 against $Words [$ExclObj | $] into $Obj)
+	*(understand $Words as object $Obj preferably held excluding $ExclObj)
+(match grammar token 22 against $Words $ into $Obj)
+	*(understand $Words as object $Obj preferably held)
+(match grammar token 23 against $Words $ into $Obj)
+	*(understand $Words as object $Obj preferably takable)
+(match grammar token 24 against $Words $ into $Obj)
+	*(understand $Words as object $Obj preferably worn)
+(match grammar token 25 against $Words [$Parent | $] into $Obj)
+	*(understand $Words as object $Obj preferably child of $Parent)
+(match grammar token 30 against $Words $ into $Obj)
+	*(understand $Words as any object $Obj)
+(match grammar token 31 against $Words $ into $Obj)
+	*(understand $Words as any object $Obj preferably animate)
+(match grammar token 40 against $Words $ into $Obj)
+	*(understand $Words as topic $Obj)
+(match grammar token 50 against $Words $ into $Obj)
+	*(understand $Words as direction $Obj)
+(match grammar token 60 against $Words $ into $N)
+	*(understand $Words as number $N)
+
+(interface (populate template $Template with $<ObjList))
+
+(populate template [] with [])
+(populate template [(fully bound $) | $More] with $ObjList)
+	(populate template $More with $ObjList)
+(populate template [$Head | $MoreA] with [$Head | $MoreObj])
+	(populate template $MoreA with $MoreObj)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Understanding actions with special syntax
@@ -4524,7 +4448,8 @@
 				(collect $Choice)
 					*($DispObj offers $Choice)
 					(available $Choice)
-				(into $ChoiceList)
+				(into $ChoiceListWithDup)
+				(remove duplicates $ChoiceListWithDup $ChoiceList)
 				(if) (empty $ChoiceList) (then)
 					(now) ~(current node $)
 					(now) ($DispObj is choice-exhausted)
@@ -6040,17 +5965,6 @@
 (split [$First $Second | $Tail] anywhere into [$First] and [$Second | $Tail])
 (split [$First | $More] anywhere into [$First | $Left] and $Right)
 	*(split $More anywhere into $Left and $Right)
-
-(interface (split $<Words by relation $>Rel into $>Left and $>Right))
-
-(split $Input by relation $Rel into $Left and $Right)
-	(nonempty $Input)
-	*(relation $Rel)
-	(collect words)
-		*(dict $Rel)
-	(into $WordSet)
-	(nonempty $WordSet)
-	*(split $Input by $WordSet into $Left and $Right)
 
 (interface (print words $<Words))
 

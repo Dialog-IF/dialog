@@ -67,10 +67,10 @@ enum {
 	I_CHECK_INDEX,		// -- simple value, routine
 	I_CHECK_WORDMAP,	// -- wordmap number, routine, predicate
 
-	I_COLLECT_BEGIN,	// --
-	I_COLLECT_PUSH,		// -- value
-	I_COLLECT_END_R,	// -- dest (pop all into list)
-	I_COLLECT_END_V,	// F- dest value (pop all into list, then unify)
+	I_COLLECT_BEGIN,	// -- subop = accumulate
+	I_COLLECT_PUSH,		// -- value, subop = accumulate
+	I_COLLECT_END_R,	// -- dest (pop all into list), subop = accumulate
+	I_COLLECT_END_V,	// F- dest value (pop all into list, then unify), subop = accumulate
 	I_COLLECT_CHECK,	// F- value (pop all, all must be simple, fail if value not present)
 	I_COLLECT_MATCH_ALL,	// F- input list
 

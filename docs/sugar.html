@@ -14,10 +14,15 @@
 variations that can help make certain code more readable and succinct.
 </p>
 <a id="accesspred"></a><h2>Access predicates</h2>
-<p>Access predicates are special rules that are transparent to <span class="code">(now)</span>
-statements and initial value assignments. The rule head of an access predicate
-definition is prefixed by an <span class="nobreak"><span class="code">@</span> character</span>. The
-following is an example from the standard library:
+<p>Whereas normal predicates describe what will happen when the program is
+running, <i>access predicates</i> transform the code at compile-time. As a
+general rule of thumb, they should be used sparingly, and <b>only for the
+purpose of increasing source code readability</b>. This is of course a
+subjective call.
+</p>
+<p>The rule head of an access predicate definition is prefixed by an
+<span class="nobreak"><span class="code">@</span> character</span>. Here is an example from the standard
+library:
 </p>
 <textarea class="copyarea" id="copy0" readonly>
 @($Obj is open)		~($Obj is closed)
@@ -30,14 +35,11 @@ following is an example from the standard library:
 <div class="copycode">
 <a class="copybtn" href="" onClick="document.getElementById('copy0').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
-<p>Only one rule definition is allowed per access predicate, and all of its
-parameters must be variables. The rule body must be a straightforward
-conjunction of queries: There can be more than one query, and they can be
-regular, negated, or multi-queries, but no special syntax such as if-statements
-is allowed.
+<p>The rule body must be a straightforward conjunction of queries: There can be
+more than one query, and they can be regular, negated, or multi-queries, but no
+special syntax such as if-statements is allowed.
 </p>
-<p>Access predicates are queried in exactly the same way as ordinary predicates.
-Thus, for instance:
+<p>Access predicates transform queries. Thus, for instance:
 </p>
 <textarea class="copyarea" id="copy1" readonly>
 	(if) (#door is open) (then) ... (endif)
@@ -50,7 +52,7 @@ Thus, for instance:
 <div class="copycode">
 <a class="copybtn" href="" onClick="document.getElementById('copy1').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
-<p>is equivalent to:
+<p>is reinterpreted, at compile-time, as:
 </p>
 <textarea class="copyarea" id="copy2" readonly>
 	(if) ~(#door is closed) (then) ... (endif)
@@ -109,10 +111,10 @@ body of the access predicate. In other words,
 <a class="copybtn" href="" onClick="document.getElementById('copy5').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Relations in the standard library are <span class="code">#in</span>, <span class="code">#on</span>,
-<span class="code">#heldby</span> etc. The predicate <span class="nobreak"><span class="code">($&nbsp;has relation
-$)</span></span> is an ordinary per-object variable, and <span class="nobreak"><span class="code">($&nbsp;has
-parent&nbsp;$)</span></span> is the special built-in predicate that abstracts the
-Z-machine object tree operations. Thus, a statement such as:
+<span class="code">#heldby</span>, etc. The predicate <span class="nobreak"><span class="code">($&nbsp;has
+relation&nbsp;$)</span></span> is an ordinary per-object variable, and
+<span class="nobreak"><span class="code">($&nbsp;has parent&nbsp;$)</span></span> is the special built-in predicate
+that abstracts the Z-machine object tree operations. Thus, a statement such as:
 </p>
 <textarea class="copyarea" id="copy6" readonly>
 	(now) (#pizza is #in #oven)
@@ -128,11 +130,17 @@ Z-machine object tree operations. Thus, a statement such as:
 <p>behaves like the following block of statements:
 </p>
 <textarea class="copyarea" id="copy7" readonly>
-	{ (now) (#pizza has parent #oven) (now) (#pizza has relation #in) }
+	{
+		(now) (#pizza has parent #oven)
+		(now) (#pizza has relation #in)
+	}
 </textarea>
 <div class="blkcode">
 <table>
-<tr><td class="left"></td><td class="right">{ (now) (#pizza has parent #oven) (now) (#pizza has relation #in) }</td></tr>
+<tr><td class="left"></td><td class="right">{</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(now) (#pizza has parent #oven)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(now) (#pizza has relation #in)</td></tr>
+<tr><td class="left"></td><td class="right">}</td></tr>
 </table>
 </div>
 <div class="copycode">
@@ -193,12 +201,12 @@ the following definition:
 </p>
 <textarea class="copyarea" id="copy11" readonly>
 ($Obj is #in #oven)
-	(edible $Obj)
+	*(edible $Obj)
 </textarea>
 <div class="blkcode">
 <table>
 <tr><td class="both" colspan="2">($Obj is #in #oven)</td></tr>
-<tr><td class="left"></td><td class="right">(edible $Obj)</td></tr>
+<tr><td class="left"></td><td class="right">*(edible $Obj)</td></tr>
 </table>
 </div>
 <div class="copycode">
@@ -210,26 +218,26 @@ definitions:
 </p>
 <textarea class="copyarea" id="copy12" readonly>
 ($Obj has parent #oven)
-	(edible $Obj)
+	*(edible $Obj)
 
 ($Obj has relation #in)
-	(edible $Obj)
+	*(edible $Obj)
 </textarea>
 <div class="blkcode">
 <table>
 <tr><td class="both" colspan="2">($Obj has parent #oven)</td></tr>
-<tr><td class="left"></td><td class="right">(edible $Obj)</td></tr>
+<tr><td class="left"></td><td class="right">*(edible $Obj)</td></tr>
 <tr><td class="blank" colspan="2"></td></tr>
 <tr><td class="both" colspan="2">($Obj has relation #in)</td></tr>
-<tr><td class="left"></td><td class="right">(edible $Obj)</td></tr>
+<tr><td class="left"></td><td class="right">*(edible $Obj)</td></tr>
 </table>
 </div>
 <div class="copycode">
 <a class="copybtn" href="" onClick="document.getElementById('copy12').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>These rule definitions then contribute to the compile-time computation of
-initial values for the <span class="code">($&nbsp;has parent&nbsp;$)</span> and <span class="code">($&nbsp;has relation
-$)</span> dynamic predicates.
+initial values for the <span class="code">($&nbsp;has parent&nbsp;$)</span> and <span class="code">($&nbsp;has
+relation&nbsp;$)</span> dynamic predicates.
 </p>
 <p>When you are modelling your game world, and you wish to create a flag that can
 be accessed with a pair of antonyms as in the open/closed example, you have to
@@ -266,8 +274,27 @@ However, it's perfectly all right to have a rule that says:
 </div>
 <p>as long as <span class="code">(door&nbsp;$)</span> only succeeds for objects.
 </p>
-<p>An access predicate definition can be located anywhere in the source code, i.e.
-before, after, or even in between the sites where it is used.
+<p>An access predicate can have multiple rules. Each rule is tried in order, and
+the formal parameters are matched against program source code. This is not
+unification, but a simple form of structural matching:
+</p>
+<ul><li>A variable (in the access predicate rule head) matches any source-code expression.
+</li>
+<li>A simple constant, like an object name or the empty list, matches only that constant.
+</li>
+<li>A list (or partial list) matches a list (or partial list) if the heads match, and the tails match.
+</li>
+</ul><p>Note in particular that this behaviour is assymetric: A variable in the program
+source code does not match a constant in the access predicate rule.
+</p>
+<p>The result of the transformation is again subjected to access predicate
+matching, so with recursion it is possible to transform complex source code
+expressions. The standard library uses this technique to deal with grammar
+declarations.
+</p>
+<p>Like normal rule definitions, access predicate definitions can appear anywhere
+in the source code, i.e. before, after, or even intertwined with the rules in
+which they are used.
 </p>
 <a id="currtopic"></a><h2>The current topic</h2>
 <p>Rules that belong to the same predicate form a kind of disjunction, but unlike
@@ -559,11 +586,11 @@ of&nbsp;$)</span>:
 Here is an example from the standard library:
 </p>
 <textarea class="copyarea" id="copy30" readonly>
-(rewrite [go/get/step/climb up on/onto | $Words] into [climb | $Words])
+(grammar [pull/yank/drag/tug/tow [object]] for [pull $])
 </textarea>
 <div class="blkcode">
 <table>
-<tr><td class="both" colspan="2">(rewrite [go/get/step/climb up on/onto | $Words] into [climb | $Words])</td></tr>
+<tr><td class="both" colspan="2">(grammar [pull/yank/drag/tug/tow [object]] for [pull $])</td></tr>
 </table>
 </div>
 <div class="copycode">
@@ -688,7 +715,7 @@ by some unique number, since these objects have no source-code names.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="builtins.html">Chapter 8: More built-in predicates</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 23, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 24, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>
