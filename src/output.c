@@ -4,11 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "common.h"
 #include "output.h"
 #include "terminal.h"
-
-#define NO_SPACE_BEFORE ".,:;!?)]}>-%/| \t"
-#define NO_SPACE_AFTER "([{<-/#@| \t"
 
 enum {
 	SP_AUTO = 0,

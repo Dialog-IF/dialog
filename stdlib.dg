@@ -1,6 +1,6 @@
 
 (library version)
-	Library version 0.21.
+	Library version 0.22.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -3389,6 +3389,7 @@
 (the $Obj)		(current player $Obj) yourself
 (The $Obj)		(current player $Obj) You
 (it $Obj)		(current player $Obj) you
+(them $Obj)		(current player $Obj) you
 (its $Obj)		(current player $Obj) your
 (itself $Obj)		(current player $Obj) yourself
 (is $Obj)		(current player $Obj) are
@@ -3416,6 +3417,7 @@
 
 (a (plural $Obj))	some (name $Obj)
 (it (plural $))		they
+(them (plural $))	them
 (itself (plural $))	themselves
 (its (plural $))	their
 (it (plural $) is)	they're
@@ -3431,11 +3433,13 @@
 (a (an $Obj))		an (name $Obj)
 
 (it (female $))		she
+(them (female $))	her
 (itself (female $))	herself
 (its (female $))	her
 (it (female $) is)	she's
 
 (it (male $))		he
+(them (male $))		him
 (itself (male $))	himself
 (its (male $))		his
 (it (male $) is)	he's
@@ -3443,6 +3447,7 @@
 (a $Obj)		a (name $Obj)
 (the $Obj)		the (name $Obj)
 (it $)			it
+(them $)		it
 (itself $)		itself
 (its $)			its
 (s $)			(no space) s

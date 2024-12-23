@@ -1,5 +1,5 @@
-This archive contains version 0e/02 of the Dialog compiler and interactive
-debugger, bundled with documentation and version 0.21 of the dialog Standard
+This archive contains version 0e/03 of the Dialog compiler and interactive
+debugger, bundled with documentation and version 0.22 of the dialog Standard
 Library.
 
 Directory structure:
@@ -37,6 +37,16 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0e/03 Lib 0.22 (Manual revision 7):
+
+		Compiler: Internal restructuring and cleanup, as well as new
+		optimizations.
+
+		Library: Added '(them $)' for object pronouns (them, her, it,
+		and so on).
+
+		Debugger: Bugfix related to select and undo.
 
 	0e/02 Lib 0.21 (Manual revision 6):
 

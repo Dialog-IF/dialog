@@ -176,6 +176,7 @@ struct clause {
 	void			*backend;
 	struct word		**varnames;
 	uint16_t		nvar;
+	uint16_t		next_temp;
 	uint16_t		clause_id;
 	uint8_t			max_call_arity;
 	char			*structure;
@@ -219,6 +220,7 @@ struct predicate {
 	struct wordmap		*wordmaps;
 	void			*backend;
 	struct clause		**unbound_in_due_to;
+	struct clause		**unbound_out_due_to;
 	struct predlist		*callers;
 	struct dynamic		*dynamic;
 	line_t			invoked_at_line;
@@ -247,19 +249,20 @@ struct predicate {
 #define PREDF_CONTAINS_JUST		0x00004000
 #define PREDF_STOP			0x00008000
 #define PREDF_DEFINED			0x00010000
+#define PREDF_DYN_LINKAGE		0x00020000
+#define PREDF_INVOKED_NORMALLY		0x00040000
 
-#define PREDF_INVOKED_NORMALLY (PREDF_INVOKED_BY_PROGRAM | PREDF_INVOKED_BY_DEBUGGER)
-#define PREDF_INVOKED (PREDF_INVOKED_NORMALLY | PREDF_INVOKED_FOR_WORDS)
+#define PREDF_INVOKED (PREDF_INVOKED_NORMALLY | PREDF_INVOKED_FOR_WORDS | PREDF_INVOKED_BY_PROGRAM | PREDF_INVOKED_BY_DEBUGGER)
 
 struct wordmap_tally {
-	uint16_t		onumtable[MAXWORDMAP];
+	uint16_t		key;	// dict_id or backend-specific value, 0xffff = any
 	uint16_t		count;
+	uint16_t		onumtable[MAXWORDMAP];
 };
 
 struct wordmap {
 	int			nmap;
-	uint16_t		*dict_ids;
-	struct wordmap_tally	*objects;
+	struct wordmap_tally	*map;
 };
 
 struct endings_point {
@@ -285,6 +288,7 @@ struct program {
 	struct word		**allwords;;
 	struct word		**worldobjnames;
 	struct word		**dictwordnames;
+	uint16_t		*dictmap; // from dict_id to backend-specific tagged word
 	struct predname		**globalflagpred;
 	struct predname		**globalvarpred;
 	struct predname		**objflagpred;
@@ -313,6 +317,9 @@ struct program {
 };
 
 #define OPTF_BOUND_PARAMS	0x00000001
+#define OPTF_TAIL_CALLS		0x00000002
+#define OPTF_NO_TRACE		0x00000004
+#define OPTF_ENV_FRAMES		0x00000008
 
 typedef void (*word_visitor_t)(struct word *);
 
@@ -321,6 +328,7 @@ struct astnode *mkast(int kind, int nchild, struct arena *arena, line_t line);
 struct astnode *deepcopy_astnode(struct astnode *an, struct arena *arena, line_t line);
 struct word *find_word(struct program *prg, char *name);
 struct word *find_word_nocreate(struct program *prg, char *name);
+void ensure_dict_word(struct program *prg, struct word *w);
 struct word *fresh_word(struct program *prg);
 void pred_clear(struct predname *predname);
 struct predname *find_predicate(struct program *prg, int nword, struct word **words);

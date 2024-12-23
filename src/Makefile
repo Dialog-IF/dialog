@@ -1,5 +1,5 @@
 CC		= gcc
-CFLAGS		+= -O3 -Wall -DVERSION=\"0e/02\"
+CFLAGS		+= -O3 -Wall -DVERSION=\"0e/03\"
 WININCLUDE	= winglk
 WINLIB		= ../prebuilt/win32
 
@@ -38,7 +38,7 @@ frontend.o:		frontend.c compile.h arena.h ast.h frontend.h parse.h report.h eval
 ast.o:			ast.c ast.h arena.h report.h common.h Makefile
 			${CC} -c ${CFLAGS} -o $@ $<
 
-backend_z.o:		backend_z.c ast.h frontend.h zcode.h blorb.h report.h common.h Makefile
+backend_z.o:		backend_z.c ast.h frontend.h zcode.h blorb.h report.h common.h compile.h Makefile
 			${CC} -c ${CFLAGS} -o $@ $<
 
 runtime_z.o:		runtime_z.c zcode.h Makefile

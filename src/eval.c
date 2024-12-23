@@ -384,6 +384,7 @@ static int eval_pop_undo(struct eval_state *es) {
 
 	assert(u->nselect <= es->program->nselect);
 	memcpy(es->program->select, u->select, u->nselect);
+	memset(es->program->select + u->nselect, 0, es->program->nselect - u->nselect);
 
 	pred_release(es->cont.pred);
 	es->cont = u->cont;
@@ -587,18 +588,8 @@ void pp_value(struct eval_state *es, value_t v, int with_at, int with_plus) {
 		if(with_at) {
 			o_print_word("@");
 		}
-		if(v.value < 256) {
-			if((v.value >= 32 && v.value < 127) || (v.value > 132)) {
-				buf[0] = v.value;
-				buf[1] = 0;
-			} else {
-				snprintf(buf, sizeof(buf), "\\%02x", v.value);
-			}
-			o_print_word(buf);
-		} else {
-			assert(v.value - 256 < es->program->ndictword);
-			o_print_word(es->program->dictwordnames[v.value - 256]->name);
-		}
+		assert(v.value < es->program->ndictword);
+		o_print_word(es->program->dictwordnames[v.value]->name);
 		break;
 	case VAL_DICTEXT:
 		if(with_at) {
@@ -611,11 +602,8 @@ void pp_value(struct eval_state *es, value_t v, int with_at, int with_plus) {
 			first = 1;
 			for(sub = es->heap[v.value + 0]; sub.tag == VAL_PAIR; sub = es->heap[sub.value + 1]) {
 				assert(es->heap[sub.value].tag == VAL_DICT);
-				assert(es->heap[sub.value].value < 256);
-				buf[0] = es->heap[sub.value].value;
-				buf[1] = 0;
 				if(!first) o_nospace();
-				o_print_word(buf);
+				o_print_word(es->program->dictwordnames[es->heap[sub.value].value]->name);
 				first = 0;
 			}
 		}
@@ -625,11 +613,8 @@ void pp_value(struct eval_state *es, value_t v, int with_at, int with_plus) {
 		}
 		for(sub = es->heap[v.value + 1]; sub.tag == VAL_PAIR; sub = es->heap[sub.value + 1]) {
 			assert(es->heap[sub.value].tag == VAL_DICT);
-			assert(es->heap[sub.value].value < 256);
-			buf[0] = es->heap[sub.value].value;
-			buf[1] = 0;
 			o_nospace();
-			o_print_word(buf);
+			o_print_word(es->program->dictwordnames[es->heap[sub.value].value]->name);
 		}
 		break;
 	case VAL_NIL:
@@ -734,6 +719,15 @@ static void do_fail(struct eval_state *es, prgpoint_t *pp) {
 	}
 }
 
+static void perform_branch(uint16_t lab, struct eval_state *es, prgpoint_t *pp, int *pc) {
+	if(lab == 0xffff) {
+		do_fail(es, pp);
+	} else {
+		pp->routine = lab;
+	}
+	*pc = 0;
+}
+
 static int check_dyn_dependency(struct eval_state *es, prgpoint_t pp, struct predname *target) {
 	if(es->dyn_callbacks) {
 		return 1;
@@ -807,121 +801,97 @@ static int eval_compute(struct eval_state *es, int op, int a, int b, int *res) {
 	return 0;
 }
 
-static int eval_builtin(struct eval_state *es, int builtin, value_t o1, value_t o2) {
+static void eval_builtin(struct eval_state *es, int builtin, value_t o1, value_t o2) {
 	assert(builtin);
 	switch(builtin) {
 	case BI_BOLD:
 		if(!es->forwords) {
 			o_set_style(STYLE_BOLD);
 		}
-		return 1;
+		break;
 	case BI_CLEAR:
 		o_clear(0);
-		return 1;
+		break;
 	case BI_CLEAR_ALL:
 		o_clear(1);
-		return 1;
+		break;
 	case BI_COMPILERVERSION:
 		if(!es->forwords) {
 			o_print_str("Dialog Interactive Debugger (dgdebug) version " VERSION);
 		}
-		return 1;
+		break;
 	case BI_CURSORTO:
-		return 1;
-	case BI_EMPTY:
-		o1 = eval_deref(o1, es);
-		return o1.tag == VAL_NIL;
+		break;
 	case BI_FIXED:
 		if(!es->forwords) {
 			o_set_style(STYLE_FIXED);
 		}
-		return 1;
-	case BI_HAVE_UNDO:
-		return 1;
+		break;
 	case BI_ITALIC:
 		if(!es->forwords) {
 			o_set_style(STYLE_ITALIC);
 		}
-		return 1;
+		break;
 	case BI_LINE:
 		if(!es->forwords) {
 			o_line();
 		}
-		return 1;
-	case BI_LIST:
-		o1 = eval_deref(o1, es);
-		return o1.tag == VAL_PAIR || o1.tag == VAL_NIL;
+		break;
 	case BI_MEMSTATS:
-		return 1;
-	case BI_NONEMPTY:
-		o1 = eval_deref(o1, es);
-		return o1.tag == VAL_PAIR;
+		break;
 	case BI_NOSPACE:
 		if(!es->forwords) {
 			o_nospace();
 		}
-		return 1;
-	case BI_NUMBER:
-		o1 = eval_deref(o1, es);
-		return o1.tag == VAL_NUM;
-	case BI_OBJECT:
-		o1 = eval_deref(o1, es);
-		return o1.tag == VAL_OBJ;
+		break;
 	case BI_PAR:
 		if(!es->forwords) {
 			o_par();
 		}
-		return 1;
+		break;
 	case BI_PAR_N:
 		o1 = eval_deref(o1, es);
 		if(!es->forwords && o1.tag == VAL_NUM) {
 			o_par_n(o1.value);
 		}
-		return 1;
+		break;
 	case BI_REVERSE:
 		if(!es->forwords) {
 			o_set_style(STYLE_REVERSE);
 		}
-		return 1;
+		break;
 	case BI_ROMAN:
 		if(!es->forwords) {
 			o_set_style(STYLE_ROMAN);
 		}
-		return 1;
+		break;
 	case BI_SERIALNUMBER:
 		if(!es->forwords) {
 			o_print_word("DEBUG");
 		}
-		return 1;
+		break;
 	case BI_SPACE:
 		if(!es->forwords) {
 			o_space();
 		}
-		return 1;
+		break;
 	case BI_SPACE_N:
 		o1 = eval_deref(o1, es);
 		if(!es->forwords && o1.tag == VAL_NUM) {
 			o_space_n(o1.value);
 		}
-		return 1;
-	case BI_SCRIPT_ON:
-		return 0;
-	case BI_SCRIPT_OFF:
-		return 1;
+		break;
 	case BI_TRACE_OFF:
 		es->trace = 0;
-		return 1;
+		break;
 	case BI_TRACE_ON:
 		es->trace = 1;
-		return 1;
+		break;
 	case BI_UPPER:
 		if(!es->forwords) {
 			o_set_upper();
 		}
-		return 1;
-	case BI_WORD:
-		o1 = eval_deref(o1, es);
-		return o1.tag == VAL_DICT || o1.tag == VAL_DICTEXT;
+		break;
 	default:
 		printf("unimplemented builtin %d\n", builtin); exit(1);
 	}
@@ -940,6 +910,7 @@ static int eval_run(struct eval_state *es) {
 	int onum;
 	line_t tr_line = 0;
 	struct word *w;
+	struct wordmap *map;
 
 	pp = es->resume;
 	es->resume.pred = 0;
@@ -947,6 +918,9 @@ static int eval_run(struct eval_state *es) {
 
 	while(pp.pred) {
 		assert(pp.routine < pp.pred->nroutine);
+		if(pc >= pp.pred->routines[pp.routine].ninstr) {
+			printf("%s %d\n", pp.pred->predname->printed_name, pp.routine);
+		}
 		assert(pc < pp.pred->routines[pp.routine].ninstr);
 		ci = &pp.pred->routines[pp.routine].instr[pc];
 		pc++;
@@ -982,19 +956,49 @@ static int eval_run(struct eval_state *es) {
 			return ci->subop? ESTATUS_DEBUGGER : ESTATUS_SUSPENDED;
 		case I_BUILTIN:
 			assert(ci->oper[2].tag == OPER_PRED);
-			if(!eval_builtin(
+			eval_builtin(
 				es,
 				es->program->predicates[ci->oper[2].value]->builtin,
 				value_of(ci->oper[0], es),
-				value_of(ci->oper[1], es)))
-			{
-				do_fail(es, &pp);
-				pc = 0;
-			}
+				value_of(ci->oper[1], es));
 			break;
 		case I_CHECK_INDEX:
 			if(es->index.tag == ci->oper[0].tag
 			&& es->index.value == ci->oper[0].value) {
+				if(ci->oper[1].tag == OPER_RLAB) {
+					pp.routine = ci->oper[1].value;
+					pc = 0;
+				} else {
+					assert(ci->oper[1].tag == OPER_FAIL);
+					do_fail(es, &pp);
+					pc = 0;
+				}
+			}
+			break;
+		case I_CHECK_WORDMAP:
+			assert(ci->oper[0].tag == OPER_NUM);
+			assert(ci->oper[2].tag == OPER_PRED);
+			assert(ci->oper[0].value < es->program->predicates[ci->oper[2].value]->pred->nwordmap);
+			map = &es->program->predicates[ci->oper[2].value]->pred->wordmaps[ci->oper[0].value];
+			for(i = 0; i < map->nmap; i++) {
+				if(es->index.tag == VAL_DICT
+				&& es->index.value == map->map[i].key) {
+					break;
+				}
+			}
+			if(i < map->nmap) {
+				if(map->map[i].count > MAXWORDMAP) {
+					res = 0;
+				} else {
+					for(j = 0; j < map->map[i].count; j++) {
+						push_aux(es, (value_t) {VAL_OBJ, map->map[i].onumtable[j]});
+					}
+					res = 1;
+				}
+			} else {
+				res = 1;
+			}
+			if(res) {
 				if(ci->oper[1].tag == OPER_RLAB) {
 					pp.routine = ci->oper[1].value;
 					pc = 0;
@@ -1206,18 +1210,6 @@ static int eval_run(struct eval_state *es) {
 				es->forwords--;
 			}
 			break;
-		case I_GET_GFLAG:
-			assert(ci->oper[0].tag == OPER_GFLAG);
-			predname = es->program->globalflagpred[ci->oper[0].value];
-			if(!check_dyn_dependency(es, pp, predname)) {
-				pred_release(pp.pred);
-				return ESTATUS_ERR_DYN;
-			}
-			if(!es->dyn_callbacks->get_globalflag(es, es->dyn_callback_data, ci->oper[0].value)) {
-				do_fail(es, &pp);
-				pc = 0;
-			}
-			break;
 		case I_GET_GVAR_R:
 			assert(ci->oper[0].tag == OPER_GVAR);
 			predname = es->program->globalvarpred[ci->oper[0].value];
@@ -1264,32 +1256,6 @@ static int eval_run(struct eval_state *es) {
 			es->resume = es->cont;
 			es->cont.pred = 0;
 			return ESTATUS_GET_KEY;
-		case I_GET_OFLAG:
-			assert(ci->oper[0].tag == OPER_OFLAG);
-			predname = es->program->objflagpred[ci->oper[0].value];
-			v = eval_deref(value_of(ci->oper[1], es), es);
-			assert(v.tag != VAL_REF);
-			if(predname->pred->flags & PREDF_FIXED_FLAG) {
-				ensure_fixed_values(0, es->program, predname);
-				assert(predname->nfixedvalue >= es->program->nworldobj);
-				assert(predname->fixedvalues);
-				if(v.tag != VAL_OBJ
-				|| !predname->fixedvalues[v.value]) {
-					do_fail(es, &pp);
-					pc = 0;
-				}
-			} else {
-				if(!check_dyn_dependency(es, pp, predname)) {
-					pred_release(pp.pred);
-					return ESTATUS_ERR_DYN;
-				}
-				if(v.tag != VAL_OBJ
-				|| !es->dyn_callbacks->get_objflag(es, es->dyn_callback_data, ci->oper[0].value, v.value)) {
-					do_fail(es, &pp);
-					pc = 0;
-				}
-			}
-			break;
 		case I_GET_OVAR_R:
 			assert(ci->oper[0].tag == OPER_OVAR);
 			predname = es->program->objvarpred[ci->oper[0].value];
@@ -1441,73 +1407,139 @@ static int eval_run(struct eval_state *es) {
 			return ESTATUS_GET_RAW_INPUT;
 		case I_IF_BOUND:
 			v = eval_deref(value_of(ci->oper[0], es), es);
-			if(v.tag != VAL_REF) {
-				if(ci->oper[1].tag == OPER_RLAB) {
-					pp.routine = ci->oper[1].value;
-					pc = 0;
-				} else {
-					assert(ci->oper[1].tag == OPER_FAIL);
-					do_fail(es, &pp);
-					pc = 0;
-				}
-			}
+			res = (v.tag != VAL_REF);
+			if(ci->subop ^ res) perform_branch(ci->implicit, es, &pp, &pc);
 			break;
-#if 0
-		case I_IF_BOUND_SIMPLE:
-			v = eval_deref(value_of(ci->oper[0], es), es);
-			if(v.tag != VAL_REF && es->simple != EVAL_MULTI) {
-				if(ci->oper[1].tag == OPER_RLAB) {
-					pp.routine = ci->oper[1].value;
-					pc = 0;
-				} else {
-					assert(ci->oper[1].tag == OPER_FAIL);
-					do_fail(es, &pp);
-					pc = 0;
-				}
-			}
+		case I_IF_GREATER:
+			v0 = eval_deref(value_of(ci->oper[0], es), es);
+			v1 = eval_deref(value_of(ci->oper[1], es), es);
+			res =
+				v0.tag == VAL_NUM &&
+				v1.tag == VAL_NUM &&
+				v0.value > v1.value;
+			if(ci->subop ^ res) perform_branch(ci->implicit, es, &pp, &pc);
 			break;
-#endif
+		case I_IF_HAVE_UNDO:
+			res = 1;
+			if(ci->subop ^ res) perform_branch(ci->implicit, es, &pp, &pc);
+			break;
 		case I_IF_MATCH:
+			v0 = eval_deref(value_of(ci->oper[0], es), es);
+			v1 = value_of(ci->oper[1], es);
+			if(v0.tag == VAL_DICTEXT) v0 = es->heap[v0.value + 0];
+			assert(v1.tag != VAL_DICTEXT);
+			res = (v0.tag == v1.tag && v0.value == v1.value);
+			if(ci->subop ^ res) perform_branch(ci->implicit, es, &pp, &pc);
+			break;
+		case I_IF_MATCH2:
 			v0 = eval_deref(value_of(ci->oper[0], es), es);
 			v1 = eval_deref(value_of(ci->oper[1], es), es);
 			if(v0.tag == VAL_DICTEXT) v0 = es->heap[v0.value + 0];
 			if(v1.tag == VAL_DICTEXT) v1 = es->heap[v1.value + 0];
-			if(v0.tag == v1.tag && v0.value == v1.value) {
-				if(ci->oper[2].tag == OPER_RLAB) {
-					pp.routine = ci->oper[2].value;
-					pc = 0;
-				} else {
-					assert(ci->oper[2].tag == OPER_FAIL);
-					do_fail(es, &pp);
-					pc = 0;
-				}
-			}
+			res = (v0.tag == v1.tag && v0.value == v1.value);
+			if(ci->subop ^ res) perform_branch(ci->implicit, es, &pp, &pc);
 			break;
 		case I_IF_NIL:
 			v = eval_deref(value_of(ci->oper[0], es), es);
-			if(v.tag == VAL_NIL) {
-				if(ci->oper[1].tag == OPER_RLAB) {
-					pp.routine = ci->oper[1].value;
-					pc = 0;
-				} else {
-					assert(ci->oper[1].tag == OPER_FAIL);
-					do_fail(es, &pp);
-					pc = 0;
-				}
-			}
+			res = (v.tag == VAL_NIL);
+			if(ci->subop ^ res) perform_branch(ci->implicit, es, &pp, &pc);
+			break;
+		case I_IF_NUM:
+			v = eval_deref(value_of(ci->oper[0], es), es);
+			res = (v.tag == VAL_NUM);
+			if(ci->subop ^ res) perform_branch(ci->implicit, es, &pp, &pc);
+			break;
+		case I_IF_OBJ:
+			v = eval_deref(value_of(ci->oper[0], es), es);
+			res = (v.tag == VAL_OBJ);
+			if(ci->subop ^ res) perform_branch(ci->implicit, es, &pp, &pc);
+			break;
+		case I_IF_PAIR:
+			v = eval_deref(value_of(ci->oper[0], es), es);
+			res = (v.tag == VAL_PAIR);
+			if(ci->subop ^ res) perform_branch(ci->implicit, es, &pp, &pc);
 			break;
 		case I_IF_WORD:
 			v = eval_deref(value_of(ci->oper[0], es), es);
-			if(v.tag == VAL_DICT || v.tag == VAL_DICTEXT) {
-				if(ci->oper[1].tag == OPER_RLAB) {
-					pp.routine = ci->oper[1].value;
-					pc = 0;
-				} else {
-					assert(ci->oper[1].tag == OPER_FAIL);
-					do_fail(es, &pp);
-					pc = 0;
-				}
+			res = (v.tag == VAL_DICT || v.tag == VAL_DICTEXT);
+			if(ci->subop ^ res) perform_branch(ci->implicit, es, &pp, &pc);
+			break;
+		case I_IF_GFLAG:
+			assert(ci->oper[0].tag == OPER_GFLAG);
+			predname = es->program->globalflagpred[ci->oper[0].value];
+			if(!check_dyn_dependency(es, pp, predname)) {
+				pred_release(pp.pred);
+				return ESTATUS_ERR_DYN;
 			}
+			res = es->dyn_callbacks->get_globalflag(es, es->dyn_callback_data, ci->oper[0].value);
+			if(ci->subop ^ res) perform_branch(ci->implicit, es, &pp, &pc);
+			break;
+		case I_IF_OFLAG:
+			assert(ci->oper[0].tag == OPER_OFLAG);
+			predname = es->program->objflagpred[ci->oper[0].value];
+			v = eval_deref(value_of(ci->oper[1], es), es);
+			assert(v.tag != VAL_REF);
+			if(predname->pred->flags & PREDF_FIXED_FLAG) {
+				ensure_fixed_values(0, es->program, predname);
+				assert(predname->nfixedvalue >= es->program->nworldobj);
+				assert(predname->fixedvalues);
+				res = (v.tag == VAL_OBJ && predname->fixedvalues[v.value]);
+			} else {
+				if(!check_dyn_dependency(es, pp, predname)) {
+					pred_release(pp.pred);
+					return ESTATUS_ERR_DYN;
+				}
+				res = (v.tag == VAL_OBJ && es->dyn_callbacks->get_objflag(es, es->dyn_callback_data, ci->oper[0].value, v.value));
+			}
+			if(ci->subop ^ res) perform_branch(ci->implicit, es, &pp, &pc);
+			break;
+		case I_IF_GVAR_EQ:
+			assert(ci->oper[0].tag == OPER_GVAR);
+			predname = es->program->globalvarpred[ci->oper[0].value];
+			if(!check_dyn_dependency(es, pp, predname)) {
+				pred_release(pp.pred);
+				return ESTATUS_ERR_DYN;
+			}
+			v = es->dyn_callbacks->get_globalvar(es, es->dyn_callback_data, ci->oper[0].value);
+			if(v.tag == VAL_ERROR) {
+				pred_release(pp.pred);
+				return ESTATUS_ERR_HEAP;
+			}
+			res = (v.tag == ci->oper[1].tag && v.value == ci->oper[1].value) || (
+				v.tag == VAL_DICTEXT &&
+				ci->oper[1].tag == VAL_DICT &&
+				es->heap[v.value + 0].tag == VAL_DICT &&
+				es->heap[v.value + 0].value == ci->oper[1].value);
+			if(ci->subop ^ res) perform_branch(ci->implicit, es, &pp, &pc);
+			break;
+		case I_IF_OVAR_EQ:
+			assert(ci->oper[0].tag == OPER_OVAR);
+			predname = es->program->objvarpred[ci->oper[0].value];
+			if(!check_dyn_dependency(es, pp, predname)) {
+				pred_release(pp.pred);
+				return ESTATUS_ERR_DYN;
+			}
+			v1 = eval_deref(value_of(ci->oper[1], es), es);
+			assert(v1.tag != VAL_REF);
+			if(v1.tag != VAL_OBJ) {
+				res = 0;
+			} else {
+				v2 = es->dyn_callbacks->get_objvar(
+					es,
+					es->dyn_callback_data,
+					ci->oper[0].value,
+					v1.value);
+				if(v2.tag == VAL_ERROR) {
+					pred_release(pp.pred);
+					return ESTATUS_ERR_HEAP;
+				}
+				res = (v2.tag == ci->oper[2].tag && v2.value == ci->oper[2].value) || (
+					v2.tag == VAL_DICTEXT &&
+					ci->oper[2].tag == VAL_DICT &&
+					es->heap[v2.value + 0].tag == VAL_DICT &&
+					es->heap[v2.value + 0].value == ci->oper[2].value);
+			}
+			if(ci->subop ^ res) perform_branch(ci->implicit, es, &pp, &pc);
 			break;
 		case I_INVOKE_MULTI:
 			assert(ci->oper[0].tag == OPER_PRED);
@@ -1583,16 +1615,6 @@ static int eval_run(struct eval_state *es) {
 				pc = 0;
 			}
 			break;
-		case I_LESSTHAN:
-			v0 = eval_deref(value_of(ci->oper[0], es), es);
-			v1 = eval_deref(value_of(ci->oper[1], es), es);
-			if(v0.tag != VAL_NUM
-			|| v1.tag != VAL_NUM
-			|| v0.value >= v1.value) {
-				do_fail(es, &pp);
-				pc = 0;
-			}
-			break;
 		case I_MAKE_PAIR_RR:
 			v = alloc_heap_pair(es);
 			if(v.tag == VAL_ERROR) {
@@ -1652,11 +1674,13 @@ static int eval_run(struct eval_state *es) {
 			assert(v.tag == VAL_OBJ);
 			onum = es->dyn_callbacks->get_next_child(es, es->dyn_callback_data, v.value);
 			if(onum >= 0) {
+				es->arg[1] = (value_t) {VAL_OBJ, onum};
 				if(!push_choice(es, 2, pp.pred, ci->oper[1].value)) {
 					pred_release(pp.pred);
 					return ESTATUS_ERR_HEAP;
 				}
-				es->choicestack[es->choice].arg[1] = (value_t) {VAL_OBJ, onum};
+			} else {
+				es->arg[1] = (value_t) {VAL_NONE};
 			}
 			break;
 		case I_NEXT_OBJ_PUSH:
@@ -1664,11 +1688,13 @@ static int eval_run(struct eval_state *es) {
 			v = value_of(ci->oper[0], es); // no need to deref
 			assert(v.tag == VAL_OBJ);
 			if(v.value < es->program->nworldobj - 1) {
+				es->arg[1] = (value_t) {VAL_OBJ, v.value + 1};
 				if(!push_choice(es, 2, pp.pred, ci->oper[1].value)) {
 					pred_release(pp.pred);
 					return ESTATUS_ERR_HEAP;
 				}
-				es->choicestack[es->choice].arg[1] = (value_t) {VAL_OBJ, v.value + 1};
+			} else {
+				es->arg[1] = (value_t) {VAL_NONE};
 			}
 			break;
 		case I_NEXT_OFLAG_PUSH:
@@ -1684,12 +1710,17 @@ static int eval_run(struct eval_state *es) {
 			assert(v.tag == VAL_OBJ);
 			onum = es->dyn_callbacks->get_next_oflag(es, es->dyn_callback_data, ci->oper[0].value, v.value);
 			if(onum >= 0) {
+				es->arg[1] = (value_t) {VAL_OBJ, onum};
 				if(!push_choice(es, 2, pp.pred, ci->oper[2].value)) {
 					pred_release(pp.pred);
 					return ESTATUS_ERR_HEAP;
 				}
-				es->choicestack[es->choice].arg[1] = (value_t) {VAL_OBJ, onum};
+			} else {
+				es->arg[1] = (value_t) {VAL_NONE};
 			}
+			break;
+		case I_NOP:
+		case I_NOP_DEBUG:
 			break;
 		case I_POP_CHOICE:
 			assert(ci->oper[0].tag == OPER_NUM);
@@ -1840,19 +1871,18 @@ static int eval_run(struct eval_state *es) {
 			break;
 		case I_SELECT:
 			assert(ci->oper[0].tag == OPER_NUM);
-			assert(ci->oper[1].tag == OPER_RLAB);
 			n = ci->oper[0].value;
 			assert(n > 1);
 			if(ci->subop == SEL_P_RANDOM) {
 				i = compatible_random(es, 0, n - 1);
 			} else {
-				assert(ci->oper[2].tag == OPER_NUM);
-				assert(ci->oper[2].value < es->program->nselect);
-				i = es->program->select[ci->oper[2].value];
+				assert(ci->oper[1].tag == OPER_NUM);
+				assert(ci->oper[1].value < es->program->nselect);
+				i = es->program->select[ci->oper[1].value];
 				switch(ci->subop) {
 				case SEL_STOPPING:
 					if(i + 1 < n) {
-						es->program->select[ci->oper[2].value] = i + 1;
+						es->program->select[ci->oper[1].value] = i + 1;
 					}
 					break;
 				case SEL_RANDOM:
@@ -1863,50 +1893,58 @@ static int eval_run(struct eval_state *es) {
 					} else {
 						i = compatible_random(es, 0, n - 1);
 					}
-					es->program->select[ci->oper[2].value] = i + 1;
+					es->program->select[ci->oper[1].value] = i + 1;
 					break;
 				case SEL_T_RANDOM:
 					if(i < n) {
 						if(i < n - 1) {
-							es->program->select[ci->oper[2].value] = i + 1;
+							es->program->select[ci->oper[1].value] = i + 1;
 						} else {
-							es->program->select[ci->oper[2].value] = n + n - 1;
+							es->program->select[ci->oper[1].value] = n + n - 1;
 						}
 					} else {
 						j = compatible_random(es, 0, n - 2);
 						if(j >= i - n) j++;
 						i = j;
-						es->program->select[ci->oper[2].value] = n + i;
+						es->program->select[ci->oper[1].value] = n + i;
 					}
 					break;
 				case SEL_T_P_RANDOM:
 					if(i < n) {
-						es->program->select[ci->oper[2].value] = i + 1;
+						es->program->select[ci->oper[1].value] = i + 1;
 					} else {
 						i = compatible_random(es, 0, n - 1);
 					}
 					break;
 				case SEL_CYCLING:
 					if(i < n - 1) {
-						es->program->select[ci->oper[2].value] = i + 1;
+						es->program->select[ci->oper[1].value] = i + 1;
 					} else {
-						es->program->select[ci->oper[2].value] = 0;
+						es->program->select[ci->oper[1].value] = 0;
 					}
 					break;
 				default:
 					printf("unimplemented select case %d\n", ci->subop); exit(1);
 				}
 			}
-			assert(i < n);
-			pp.routine = ci->oper[1].value + i;
-			pc = 0;
+			if(i >= n) {
+				printf("internal inconsistency in select (%d %d %d %d)\n", i, n, ci->subop, ci->oper[1].value);
+				i = n - 1;
+			}
+			es->index = (value_t) {VAL_RAW, i};
 			break;
 		case I_SET_CONT:
-			assert(ci->oper[0].tag == OPER_RLAB);
 			assert(!es->cont.pred);
-			es->cont.pred = pp.pred;
-			pred_claim(es->cont.pred);
-			es->cont.routine = ci->oper[0].value;
+			if(ci->oper[0].tag == OPER_RLAB) {
+				es->cont.pred = pp.pred;
+				pred_claim(es->cont.pred);
+				es->cont.routine = ci->oper[0].value;
+			} else {
+				assert(ci->oper[0].tag == OPER_FAIL);
+				es->cont.pred = find_builtin(es->program, BI_FAIL)->pred;
+				pred_claim(es->cont.pred);
+				es->cont.routine = es->cont.pred->normal_entry;
+			}
 			break;
 		case I_SET_GFLAG:
 			assert(ci->oper[0].tag == OPER_GFLAG);
@@ -2119,6 +2157,13 @@ static int eval_run(struct eval_state *es) {
 					MKLINE(ci->oper[0].value, ci->oper[1].value));
 			} else {
 				assert(0);
+			}
+			break;
+		case I_TRANSCRIPT:
+			if(ci->subop) {
+				// Not supported in the debugger.
+				do_fail(es, &pp);
+				pc = 0;
 			}
 			break;
 		case I_UNDO:

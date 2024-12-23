@@ -1,15 +1,17 @@
 
 enum {
-	// F = can fail, always to <FAIL>
-	// R = can fail by branching to a routine, possibly <FAIL>
+	// F = can fail
 	// E = ends the current routine
+
+	I_NOP,			// --
+	I_NOP_DEBUG,		// --
 
 	I_ASSIGN,		// -- dest, value
 
 	I_ALLOCATE,		// -- number of variables, number of trace variables, subop = use orig_arg0
 	I_DEALLOCATE,		// -- subop = restore args flag
-	I_PROCEED,		// -E
-	I_SET_CONT,		// -- routine id
+	I_PROCEED,		// -E subop = query type (0 unknown, 1 simple, 2 multi)
+	I_SET_CONT,		// -- routine
 
 	I_MAKE_PAIR_VV,		// -- dest, head value, tail value
 	I_MAKE_PAIR_VR,		// -- dest, head value, tail arg/temp number
@@ -27,41 +29,41 @@ enum {
 
 	I_INVOKE_ONCE,		// -E predicate id
 	I_INVOKE_MULTI,		// -E predicate id
-	I_INVOKE_TAIL_ONCE,	// -E predicate id
+	I_INVOKE_TAIL_ONCE,	// -E predicate id, subop = parent query type (0 unknown, 1 simple, 2 multi)
 	I_INVOKE_TAIL_MULTI,	// -E predicate id
 
-	I_PUSH_CHOICE,		// -- number of args, routine id
+	I_PUSH_CHOICE,		// -- number of args, routine
 	I_POP_CHOICE,		// -- number of args
 	I_CUT_CHOICE,		// --
 	I_SAVE_CHOICE,		// -- dest
 	I_RESTORE_CHOICE,	// -- value
 
-	I_SELECT,		// -E number of labels, first label, optional select id, subop = select type
-	I_JUMP,			// -E routine id
+	I_SELECT,		// -- number of choices, select id (unless purely random), subop = select type
+	I_JUMP,			// -E routine
 
-	I_PRINT_WORDS,		// -- up to three word ids
+	I_PRINT_WORDS,		// -- up to three word ids, subop = method (1 = print, 2 = gather words, 3 = either)
 	I_PRINT_VAL,		// -- value
 	I_FOR_WORDS,		// -- subop = 1 for inc, 0 for dec
 
 	I_UNIFY,		// F- value 1, value 2
 
-	I_LESSTHAN,		// R- value 1, value 2
 	I_COMPUTE_V,		// F- value 1, value 2, dest value, subop = BI_*
-	I_COMPUTE_R,		// R- value 1, value 2, dest ref, subop = BI_*
-	I_BUILTIN,		// R- optional value 1, optional value 2, predicate id
+	I_COMPUTE_R,		// F- value 1, value 2, dest ref, subop = BI_*
+	I_BUILTIN,		// -- optional value 1, optional value 2, predicate id
 
 	I_QUIT,			// -E
 	I_RESTART,		// -E
-	I_SAVE,			// FE
-	I_SAVE_UNDO,		// FE
+	I_SAVE,			// FE unifies arg0 with comingback value, then proceeds
+	I_SAVE_UNDO,		// FE unifies arg0 with comingback value, then proceeds
 	I_RESTORE,		// --
 	I_UNDO,			// F-
-	I_GET_INPUT,		// FE
-	I_GET_RAW_INPUT,	// FE
-	I_GET_KEY,		// FE
+	I_GET_INPUT,		// FE unifies arg0 with input, then proceeds
+	I_GET_RAW_INPUT,	// FE unifies arg0 with input, then proceeds
+	I_GET_KEY,		// FE unifies arg0 with input, then proceeds
 
-	I_PREPARE_INDEX,	// -- value known to be bound
-	I_CHECK_INDEX,		// -- simple value, routine id
+	I_PREPARE_INDEX,	// -- value known to be bound (deref'd and unboxed)
+	I_CHECK_INDEX,		// -- simple value, routine
+	I_CHECK_WORDMAP,	// -- wordmap number, routine, predicate
 
 	I_COLLECT_BEGIN,	// --
 	I_COLLECT_PUSH,		// -- value
@@ -69,16 +71,24 @@ enum {
 	I_COLLECT_CHECK,	// F- value (pop all, all must be simple, fail if value not present)
 	I_COLLECT_MATCH_ALL,	// F- input list
 
-	I_IF_BOUND,		// -- value, routine
-	I_IF_NIL,		// -- value, routine
-	I_IF_WORD,		// -- value, routine
-	I_IF_MATCH,		// -- value, value, routine (must be simple values)
+	I_IF_BOUND,		// -- value, implicit routine, subop = negate
+	I_IF_NIL,		// -- value, implicit routine, subop = negate
+	I_IF_NUM,		// -- value, implicit routine, subop = negate
+	I_IF_OBJ,		// -- value, implicit routine, subop = negate
+	I_IF_PAIR,		// -- value, implicit routine, subop = negate
+	I_IF_WORD,		// -- value, implicit routine, subop = negate
+	I_IF_MATCH,		// -- value, simple value, implicit routine, subop = negate (derefs and unboxes first, doesn't handle lists)
+	I_IF_MATCH2,		// -- value, simple value, implicit routine, subop = negate (derefs both, doesn't handle lists)
+	I_IF_GREATER,		// -- value, value, implicit routine, subop = negate
+	I_IF_GFLAG,		// -- global flag number, implicit routine, subop = negate
+	I_IF_OFLAG,		// -- object flag number, object, implicit routine, subop = negate
+	I_IF_GVAR_EQ,		// -- global var number, simple value, implicit routine, subop = negate
+	I_IF_OVAR_EQ,		// -- object var number, object, simple value, implicit routine, subop = negate
+	I_IF_HAVE_UNDO,		// -- implicit routine, subop = negate
 
-	I_GET_GFLAG,		// R- global flag number
-	I_GET_GVAR_R,		// R- global var number, dest ref
+	I_GET_GVAR_R,		// F- global var number, dest ref
 	I_GET_GVAR_V,		// F- global var number, dest value
-	I_GET_OFLAG,		// R- object flag number, object
-	I_GET_OVAR_R,		// R- object var number, object, dest ref
+	I_GET_OVAR_R,		// F- object var number, object, dest ref
 	I_GET_OVAR_V,		// F- object var number, object, dest value
 	I_SET_GFLAG,		// -- global flag number, subop = set/clear
 	I_SET_GVAR,		// -- global var number, value or none
@@ -86,9 +96,9 @@ enum {
 	I_SET_OVAR,		// -- object var number, object, value or none
 	I_CLRALL_OFLAG,		// -- object flag number
 	I_CLRALL_OVAR,		// -- object var number
-	I_FIRST_OFLAG,		// R- object flag number, dest ref
+	I_FIRST_OFLAG,		// F- object flag number, dest ref
 	I_NEXT_OFLAG_PUSH,	// -- object flag number, object, routine
-	I_FIRST_CHILD,		// R- object, dest ref
+	I_FIRST_CHILD,		// F- object, dest ref
 	I_NEXT_CHILD_PUSH,	// -- object, routine
 	I_NEXT_OBJ_PUSH,	// -- object, routine
 
@@ -98,13 +108,27 @@ enum {
 
 	I_BEGIN_STATUS,		// -- value (height)
 	I_END_STATUS,		// --
-	I_WIN_WIDTH,		// -- dest
+	I_WIN_WIDTH,		// -- dest value
+
+	I_TRANSCRIPT,		// F- subop = enable/disable
 
 	I_BREAKPOINT,		// -E
 	I_TRACEPOINT,		// -- file number, line number, predicate id, subop = kind
 
 	N_OPCODES
 };
+
+struct opinfo {
+	uint8_t		flags;
+	char		*name;
+};
+
+#define OPF_SUBOP		1
+#define OPF_ENDS_ROUTINE	2
+#define OPF_BRANCH		4
+#define OPF_CAN_FAIL		8
+
+extern struct opinfo opinfo[N_OPCODES];
 
 enum {
 	TR_ENTER,
@@ -132,6 +156,7 @@ enum {
 	VAL_NIL,
 	VAL_PAIR,
 	VAL_REF,
+	VAL_RAW,		// used when switching on select values and remapped dictionary words
 	VAL_ERROR,		// heap overflow etc.
 	OPER_ARG,
 	OPER_TEMP,
@@ -152,6 +177,7 @@ enum {
 struct cinstr {
 	uint8_t			op;
 	uint8_t			subop;
+	uint16_t		implicit;
 	value_t			oper[3];
 };
 
@@ -159,6 +185,8 @@ struct comp_routine {
 	struct cinstr		*instr;
 	uint16_t		ninstr;
 	uint16_t		clause_id;	// so the debugger can print variable names
+	uint16_t		diverted;
+	uint16_t		reftrack;	// ffff = unvisited, self = group leader, other = part of group
 };
 
 void comp_init();

@@ -39,16 +39,6 @@ struct word *find_word(struct program *prg, char *name) {
 	w->next_in_hash = prg->wordhash[h];
 	prg->wordhash[h] = w;
 
-	if(name[0] && !name[1]) {
-		assert(name[0] < 128);
-		w->flags |= WORDF_DICT;
-		if(name[0] >= 'A' && name[0] <= 'Z') {
-			w->dict_id = name[0] - 'A' + 'a';
-		} else {
-			w->dict_id = name[0];
-		}
-	}
-
 	return w;
 }
 
@@ -61,6 +51,18 @@ struct word *find_word_nocreate(struct program *prg, char *name) {
 	}
 
 	return 0;
+}
+
+void ensure_dict_word(struct program *prg, struct word *w) {
+	if(!(w->flags & WORDF_DICT)) {
+		w->flags |= WORDF_DICT;
+		w->dict_id = prg->ndictword;
+		if(prg->ndictword >= prg->nalloc_dictword) {
+			prg->nalloc_dictword = prg->ndictword * 2 + 8;
+			prg->dictwordnames = realloc(prg->dictwordnames, prg->nalloc_dictword * sizeof(struct word *));
+		}
+		prg->dictwordnames[prg->ndictword++] = w;
+	}
 }
 
 struct word *fresh_word(struct program *prg) {
@@ -82,6 +84,7 @@ void pred_clear(struct predname *predname) {
 	predname->pred->initial_value_entry = -1;
 
 	predname->pred->unbound_in_due_to = arena_calloc(&predname->pred->arena, predname->arity * sizeof(struct clause *));
+	predname->pred->unbound_out_due_to = arena_calloc(&predname->pred->arena, predname->arity * sizeof(struct clause *));
 
 	predname->pred->predname = predname;
 }
@@ -366,8 +369,9 @@ void pp_predicate(struct predname *predname, struct program *prg) {
 	int i;
 	struct predicate *pred = predname->pred;
 
-	printf("Predicate %c%c%c%c ",
-		(pred->flags & PREDF_INVOKED_BY_PROGRAM)? 'N' : '-',
+	printf("Predicate %c%c%c%c%c ",
+		(pred->flags & PREDF_INVOKED_BY_PROGRAM)? 'P' : '-',
+		(pred->flags & PREDF_INVOKED_NORMALLY)? 'N' : '-',
 		(pred->flags & PREDF_INVOKED_FOR_WORDS)? 'W' : '-',
 		(pred->flags & PREDF_INVOKED_MULTI)? 'M' : '-',
 		pred->dynamic? (
@@ -378,13 +382,19 @@ void pp_predicate(struct predname *predname, struct program *prg) {
 	if(prg->optflags & OPTF_BOUND_PARAMS) {
 		for(i = 0; i < predname->arity; i++) {
 			if(pred->unbound_in & (1 << i)) {
-				printf("\tIncoming parameter #%d can be unbound due to e.g. ", i);
+				printf("\tIncoming parameter #%d can be unbound because of ", i + 1);
 				printf("%s at %s:%d.\n",
 					pred->unbound_in_due_to[i]->predicate->printed_name,
 					FILEPART(pred->unbound_in_due_to[i]->line),
 					LINEPART(pred->unbound_in_due_to[i]->line));
 				if(pred->unbound_out & (1 << i)) {
-					printf("\tIt can remain unbound after a successful query.\n");
+					printf("\tIt can remain unbound after a successful query");
+					if(pred->unbound_out_due_to[i]) {
+						printf(" because of the clause at %s:%d",
+							FILEPART(pred->unbound_out_due_to[i]->line),
+							LINEPART(pred->unbound_out_due_to[i]->line));
+					}
+					printf(".\n");
 				}
 			}
 		}

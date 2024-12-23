@@ -9,3 +9,6 @@ extern char **sourcefile;
 extern int nsourcefile;
 
 extern int verbose;
+
+#define NO_SPACE_BEFORE ".,:;!?)]}>-%/| \t"
+#define NO_SPACE_AFTER "([{<-/#@| \t"

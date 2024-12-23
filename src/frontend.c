@@ -352,7 +352,8 @@ void trace_now_expression(struct astnode *an, uint8_t *bound, struct clause *cl,
 		for(i = 0; i < an->predicate->arity; i++) {
 			if(any_unbound(an->children[i], bound, cl)) {
 				an->children[i]->unbound = 1;
-				if((prg->optflags & OPTF_BOUND_PARAMS) && an->kind == AN_RULE) {
+				if((prg->optflags & OPTF_BOUND_PARAMS)
+				&& (an->kind == AN_RULE || an->children[i]->kind != AN_VARIABLE || an->children[i]->word->name[0])) {
 					report(
 						LVL_WARN,
 						an->line,
@@ -370,6 +371,7 @@ void trace_now_expression(struct astnode *an, uint8_t *bound, struct clause *cl,
 					an->predicate->pred->dynamic->linkage_flags |= LINKF_RESET;
 				}
 				if(an->children[0]->unbound) {
+					an->predicate->pred->flags |= PREDF_DYN_LINKAGE;
 					an->predicate->pred->dynamic->linkage_flags |= LINKF_CLEAR;
 					an->predicate->pred->dynamic->linkage_due_to_line = an->line;
 				}
@@ -441,6 +443,7 @@ int trace_invocations_body(struct astnode **anptr, int flags, uint8_t *bound, st
 								an->children[0]->unbound = 0;
 							}
 						} else {
+							an->predicate->pred->flags |= PREDF_DYN_LINKAGE;
 							an->predicate->pred->dynamic->linkage_flags |= LINKF_LIST;
 							an->predicate->pred->dynamic->linkage_due_to_line = an->line;
 						}
@@ -555,9 +558,15 @@ int trace_invocations_body(struct astnode **anptr, int flags, uint8_t *bound, st
 			add_bound_vars(an->children[1], bound, cl);
 			break;
 		case AN_DETERMINE_OBJECT:
-			(void) trace_invocations_body(&an->children[1], flags, bound, cl, 0, prg);
-			memcpy(bound_sub, bound, cl->nvar);
-			(void) trace_invocations_body(&an->children[2], PREDF_INVOKED_FOR_WORDS, bound_sub, cl, 0, prg);
+			if(any_unbound(an->children[0], bound, cl)) {
+				an->children[0]->unbound = 1;
+			}
+			if(trace_invocations_body(&an->children[1], flags, bound, cl, 0, prg)) {
+				memcpy(bound_sub, bound, cl->nvar);
+				(void) trace_invocations_body(&an->children[2], PREDF_INVOKED_FOR_WORDS, bound_sub, cl, 0, prg);
+			} else {
+				failed = 1;
+			}
 			break;
 		}
 		anptr = &an->next_in_body;
@@ -595,7 +604,7 @@ uint32_t trace_reconsider_clause(struct clause *cl, int flags, uint32_t unbound_
 }
 
 void trace_reconsider_pred(struct predicate *pred, struct program *prg) {
-	int i;
+	int i, j;
 	uint32_t unbound = pred->unbound_out;
 	struct predlist *pl;
 
@@ -603,22 +612,22 @@ void trace_reconsider_pred(struct predicate *pred, struct program *prg) {
 	printf("reconsidering %s with bits %x %x\n", pred->predname->printed_name, pred->unbound_in, pred->unbound_out);
 #endif
 	for(i = 0; i < pred->nclause; i++) {
-#if 0
 		uint32_t old = unbound;
-		int j;
-#endif
+
 		unbound |= trace_reconsider_clause(
 			pred->clauses[i],
 			pred->flags & PREDF_INVOKED,
 			pred->unbound_in,
 			prg);
-#if 0
+
 		for(j = 0; j < pred->predname->arity; j++) {
 			if((unbound & ~old) & (1 << j)) {
+				pred->unbound_out_due_to[j] = pred->clauses[i];
+#if 0
 				printf("now, parameter %d of %s can be left unbound\n", j, pred->predname->printed_name);
+#endif
 			}
 		}
-#endif
 	}
 	pred->flags |= PREDF_VISITED;
 
@@ -654,7 +663,7 @@ void trace_invoke_pred(struct predname *predname, int flags, uint32_t unbound_in
 }
 
 void trace_entrypoint(struct predname *predname, struct program *prg, int mode) {
-	predname->pred->flags |= PREDF_INVOKED_SIMPLE | PREDF_INVOKED_MULTI;
+	predname->pred->flags |= PREDF_INVOKED_SIMPLE | PREDF_INVOKED_MULTI | PREDF_INVOKED_NORMALLY;
 	trace_invoke_pred(predname, mode, 0, 0, prg);
 }
 
@@ -670,6 +679,7 @@ void trace_invocations(struct program *prg) {
 
 	trace_entrypoint(find_builtin(prg, BI_PROGRAM_ENTRY), prg, PREDF_INVOKED_BY_PROGRAM);
 	trace_entrypoint(find_builtin(prg, BI_ERROR_ENTRY), prg, PREDF_INVOKED_BY_PROGRAM);
+	trace_entrypoint(find_builtin(prg, BI_OBJECT), prg, PREDF_INVOKED_BY_PROGRAM); // invoked by implicit object loops
 
 	if(!(prg->optflags & OPTF_BOUND_PARAMS)) {
 		// in the debugger, all predicates are potential entry points, and all
@@ -879,16 +889,7 @@ void find_dict_words(struct program *prg, struct astnode *an, int include_barewo
 			}
 			strbuf[i] = 0;
 			w = find_word(prg, strbuf);
-			if(!(w->flags & WORDF_DICT)) {
-				assert(w->name[1]);
-				w->flags |= WORDF_DICT;
-				w->dict_id = 256 + prg->ndictword;
-				if(prg->ndictword >= prg->nalloc_dictword) {
-					prg->nalloc_dictword = prg->ndictword * 2 + 8;
-					prg->dictwordnames = realloc(prg->dictwordnames, prg->nalloc_dictword * sizeof(struct word *));
-				}
-				prg->dictwordnames[prg->ndictword++] = w;
-			}
+			ensure_dict_word(prg, w);
 			if(!(an->word->flags & WORDF_DICT)) {
 				an->word->flags |= WORDF_DICT;
 				an->word->dict_id = w->dict_id;
@@ -1128,7 +1129,7 @@ static void extract_wordmap_from_body(struct wordmap_tally *tallies, int tally_o
 		// Prevent infinite recursion, since we can't detect the base case.
 		// This object must always be considered.
 
-		tally = &tallies[256 + prg->ndictword];
+		tally = &tallies[prg->ndictword];
 		for(i = 0; i < tally->count && i < MAXWORDMAP; i++) {
 			if(tally->onumtable[i] == tally_onum) break;
 		}
@@ -1176,7 +1177,7 @@ static void extract_wordmap_from_body(struct wordmap_tally *tallies, int tally_o
 			case AN_VARIABLE:
 				tally = 0;
 				if(an->kind == AN_VARIABLE) {
-					tally = &tallies[256 + prg->ndictword];
+					tally = &tallies[prg->ndictword];
 				} else if(an->word->flags & WORDF_DICT) {
 					tally = &tallies[an->word->dict_id];
 				}
@@ -1234,13 +1235,23 @@ static void extract_wordmap_from_body(struct wordmap_tally *tallies, int tally_o
 	}
 }
 
+static int cmp_tally(const void *a, const void *b) {
+	const struct wordmap_tally *aa = a;
+	const struct wordmap_tally *bb = b;
+
+	return aa->key - bb->key;
+}
+
 static int compute_wordmap(struct program *prg, struct astnode *generators, struct astnode *collectbody, struct word *objvar, struct predicate *pred) {
 	int onum, i, j, k, n;
-	struct wordmap_tally tallies[256 + prg->ndictword + 1];
+	struct wordmap_tally tallies[prg->ndictword + 1];
+	struct wordmap *map;
 
-	for(i = 0; i < 256 + prg->ndictword + 1; i++) {
+	for(i = 0; i < prg->ndictword + 1; i++) {
+		tallies[i].key = i;
 		tallies[i].count = 0;
 	}
+	tallies[prg->ndictword].key = 0xffff;
 
 	for(onum = 0; onum < prg->nworldobj; onum++) {
 		if(body_can_succeed(prg, generators, objvar, onum, 8)) {
@@ -1252,13 +1263,13 @@ static int compute_wordmap(struct program *prg, struct astnode *generators, stru
 	(void) k;
 
 #if 0
-	for(i = 0; i < 256 + prg->ndictword; i++) {
+	for(i = 0; i < prg->ndictword; i++) {
 		if(tallies[i].count <= MAXWORDMAP) {
 			for(j = 0; j < tallies[i].count; ) {
-				for(k = 0; k < tallies[256 + prg->ndictword].count; k++) {
-					if(tallies[i].onumtable[j] == tallies[256 + prg->ndictword].onumtable[k]) break;
+				for(k = 0; k < tallies[prg->ndictword].count; k++) {
+					if(tallies[i].onumtable[j] == tallies[prg->ndictword].onumtable[k]) break;
 				}
-				if(k < tallies[256 + prg->ndictword].count) {
+				if(k < tallies[prg->ndictword].count) {
 					memmove(tallies[i].onumtable + j, tallies[i].onumtable + j + 1, (tallies[i].count - j - 1) * sizeof(uint16_t));
 					tallies[i].count--;
 				} else {
@@ -1271,15 +1282,13 @@ static int compute_wordmap(struct program *prg, struct astnode *generators, stru
 
 #if 0
 	printf("reverse wordmap, line %d:\n", LINEPART(collectbody->line));
-	for(i = 0; i < 256 + prg->ndictword + 1; i++) {
+	for(i = 0; i < prg->ndictword + 1; i++) {
 		if(tallies[i].count) {
 			printf("  ");
-			if(i < 256) {
-				printf("%-20c", i);
-			} else if(i == 256 + prg->ndictword) {
+			if(i == prg->ndictword) {
 				printf("%-20s", "(always)");
 			} else {
-				printf("%-20s", prg->dictwordnames[i - 256]->name);
+				printf("%-20s", prg->dictwordnames[i]->name);
 			}
 			if(tallies[i].count > MAXWORDMAP) {
 				printf(" (many)");
@@ -1293,28 +1302,62 @@ static int compute_wordmap(struct program *prg, struct astnode *generators, stru
 	}
 #endif
 
-	if(tallies[256 + prg->ndictword].count > MAXWORDMAP) {
+	if(tallies[prg->ndictword].count > MAXWORDMAP) {
 		return -1;
 	}
 
 	pred->wordmaps = realloc(pred->wordmaps, (pred->nwordmap + 1) * sizeof(struct wordmap));
+	map = &pred->wordmaps[pred->nwordmap++];
+
 	n = 0;
-	for(i = 0; i < 256 + prg->ndictword + 1; i++) {
+	for(i = 0; i < prg->ndictword + 1; i++) {
 		if(tallies[i].count) n++;
 	}
-	pred->wordmaps[pred->nwordmap].nmap = n;
-	pred->wordmaps[pred->nwordmap].dict_ids = arena_alloc(&pred->arena, n * sizeof(uint16_t));
-	pred->wordmaps[pred->nwordmap].objects = arena_alloc(&pred->arena, n * sizeof(struct wordmap_tally));
+	map->nmap = n;
+	map->map = arena_alloc(&pred->arena, n * sizeof(struct wordmap_tally));
 	n = 0;
-	for(i = 0; i < 256 + prg->ndictword + 1; i++) {
+	for(i = 0; i < prg->ndictword + 1; i++) {
 		if(tallies[i].count) {
-			pred->wordmaps[pred->nwordmap].dict_ids[n] = i;
-			memcpy(&pred->wordmaps[pred->nwordmap].objects[n], &tallies[i], sizeof(struct wordmap_tally));
+			memcpy(&map->map[n], &tallies[i], sizeof(struct wordmap_tally));
 			n++;
 		}
 	}
-	assert(pred->wordmaps[pred->nwordmap].nmap == n);
-	return pred->nwordmap++;
+	assert(map->nmap == n);
+
+	if(prg->dictmap) {
+		for(i = 0; i < n; i++) {
+			if(map->map[i].key != 0xffff) {
+				map->map[i].key = prg->dictmap[map->map[i].key];
+			}
+		}
+		qsort(map->map, map->nmap, sizeof(struct wordmap_tally), cmp_tally);
+		for(i = 0; i < map->nmap - 1; ) {
+			if(map->map[i].key == map->map[i + 1].key) {
+				if(map->map[i].count >= MAXWORDMAP || map->map[i + 1].count >= MAXWORDMAP) {
+					map->map[i].count += map->map[i + 1].count;
+				} else {
+					n = map->map[i].count;
+					for(j = 0; j < map->map[i + 1].count; j++) {
+						for(k = 0; k < n; k++) {
+							if(map->map[i].onumtable[k] == map->map[i + 1].onumtable[j]) break;
+						}
+						if(k == n) {
+							if(map->map[i].count < MAXWORDMAP) {
+								map->map[i].onumtable[map->map[i].count] = map->map[i + 1].onumtable[j];
+							}
+							map->map[i].count++;
+						}
+					}
+				}
+				memmove(&map->map[i + 1], &map->map[i + 2], (map->nmap - i - 2) * sizeof(struct wordmap_tally));
+				map->nmap--;
+			} else {
+				i++;
+			}
+		}
+	}
+
+	return pred->nwordmap - 1;
 }
 
 static void find_wordmaps(struct program *prg, struct astnode **anptr, int pred_id) {
@@ -1980,7 +2023,7 @@ static void recover_select_statements(struct program *prg) {
 	free(newtable);
 }
 
-int frontend(struct program *prg, int nfile, char **fname) {
+int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t dictmap_callback) {
 	struct clause **clause_dest, *first_clause, *cl;
 	struct predname *predname;
 	struct predicate *pred;
@@ -2158,7 +2201,11 @@ int frontend(struct program *prg, int nfile, char **fname) {
 	recover_select_statements(prg);
 	trace_invocations(prg);
 	find_fixed_flags(prg);
+
 	build_dictionary(prg);
+	if(dictmap_callback) {
+		dictmap_callback(prg);
+	}
 	build_reverse_wordmaps(prg);
 
 	do {
@@ -2222,7 +2269,7 @@ int frontend(struct program *prg, int nfile, char **fname) {
 		if(predname->builtin != BI_HASPARENT) {
 			struct dynamic *dyn = predname->pred->dynamic;
 			if(dyn) {
-				if(dyn->linkage_flags & (LINKF_LIST | LINKF_CLEAR)) {
+				if(predname->pred->flags & PREDF_DYN_LINKAGE) {
 					printf("Needs dynamic linkage: %s", predname->printed_name);
 					printf(" (due to %s:%d)\n",
 						FILEPART(dyn->linkage_due_to_line),
@@ -2245,6 +2292,10 @@ int frontend(struct program *prg, int nfile, char **fname) {
 	}
 #endif
 	arena_free(&lexer.temp_arena);
+
+	if(find_builtin(prg, BI_TRACE_ON)->pred->flags & PREDF_INVOKED) {
+		prg->optflags &= ~OPTF_NO_TRACE;
+	}
 
 	prg->errorflag = 0;
 	comp_builtins(prg);

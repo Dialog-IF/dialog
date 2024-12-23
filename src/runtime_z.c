@@ -21,7 +21,6 @@ struct rtroutine rtroutines[] = {
 			{Z_STORE, {SMALL(REG_CONT), ROUTINE(R_QUIT_PRED)}},
 			{Z_STORE, {SMALL(REG_ENV), REF(G_HEAPEND)}},
 			{Z_STORE, {SMALL(REG_CHOICE), VALUE(REG_ENV)}},
-			{Z_STORE, {SMALL(REG_SIMPLEREF), SMALL(REG_CHOICE)}},
 			{Z_STORE, {SMALL(REG_SPACE), SMALL(4)}},
 			{Z_STORE, {SMALL(REG_COLL), SMALL(0)}},
 			{Z_STORE, {SMALL(REG_UPPER), SMALL(0)}},
@@ -45,7 +44,7 @@ struct rtroutine rtroutines[] = {
 			{Z_CATCH, {}, REG_FATALJMP},
 
 			{Z_CALL2N, {ROUTINE(R_TRY_ME_ELSE_0), VALUE(REG_CONT)}}, // which is R_QUIT_PRED
-			{Z_CALL1N, {ROUTINE(R_PUSH_STOP)}},
+			{Z_STORE, {SMALL(REG_STOPCHOICE), VALUE(REG_CHOICE)}},
 
 			{Z_CALL2N, {ROUTINE(R_INNERLOOP), VALUE(REG_A+1)}},
 
@@ -516,6 +515,16 @@ struct rtroutine rtroutines[] = {
 		}
 	},
 	{
+		R_DISABLE_STYLE,
+		0,
+		(struct zinstr []) {
+			{Z_JNZ, {VALUE(REG_FORWORDS)}, 0, RFALSE},
+			{Z_TEXTSTYLE, {SMALL(0)}},
+			{Z_RFALSE},
+			{Z_END},
+		}
+	},
+	{
 		R_CURSORTO,
 		2,
 			// 0 (param): row (1-based)
@@ -530,6 +539,19 @@ struct rtroutine rtroutines[] = {
 			{Z_AND, {VALUE(REG_LOCAL+1), VALUE(REG_3FFF)}, REG_LOCAL+1},
 			{Z_SET_CURSOR, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+1)}},
 			{Z_STORE, {SMALL(REG_SPACE), SMALL(4)}},
+			{Z_RFALSE},
+			{Z_END},
+		}
+	},
+	{
+		R_IS_WORD,
+		1,
+			// 0 (param): tagged reference
+		(struct zinstr []) {
+			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_LOCAL+0)}, REG_LOCAL+0},
+			{Z_AND, {VALUE(REG_LOCAL+0), VALUE(REG_E000)}, REG_LOCAL+0},
+			{Z_JE, {VALUE(REG_LOCAL+0), LARGE(0x2000)}, 0, RTRUE},
+			{Z_JE, {VALUE(REG_LOCAL+0), VALUE(REG_E000)}, 0, RTRUE},
 			{Z_RFALSE},
 			{Z_END},
 		}
@@ -764,6 +786,17 @@ struct rtroutine rtroutines[] = {
 			{Z_INC_JLE, {SMALL(REG_LOCAL+0), VALUE(REG_LOCAL+1)}, 0, 3},
 
 			{Z_RFALSE},
+			{Z_END},
+		}
+	},
+	{
+		R_PUSH_LIST_V,
+		1,
+			// 0 (param): first value (and temp)
+			// returns tagged reference
+		(struct zinstr []) {
+			{Z_CALLVS, {ROUTINE(R_PUSH_PAIR_VV), VALUE(REG_LOCAL+0), VALUE(REG_NIL)}, REG_LOCAL+0},
+			{Z_RET, {VALUE(REG_LOCAL+0)}},
 			{Z_END},
 		}
 	},
@@ -1315,7 +1348,6 @@ struct rtroutine rtroutines[] = {
 			{Z_STOREW, {VALUE(REG_TEMP), SMALL(CHOICE_TRAIL), VALUE(REG_TRAIL)}},
 			{Z_STOREW, {VALUE(REG_TEMP), SMALL(CHOICE_TOP), VALUE(REG_TOP)}},
 			{Z_STOREW, {VALUE(REG_TEMP), SMALL(CHOICE_SIMPLE), VALUE(REG_SIMPLE)}},
-			{Z_STOREW, {VALUE(REG_TEMP), SMALL(CHOICE_SIMPLEREF), VALUE(REG_SIMPLEREF)}},
 			{Z_STORE, {SMALL(REG_CHOICE), VALUE(REG_TEMP)}},
 
 			{Z_JE, {VALUE(REG_LOCAL+0), SMALL((0 + CHOICE_SIZEOF) * 2)}, 0, RFALSE},
@@ -1412,7 +1444,6 @@ struct rtroutine rtroutines[] = {
 			{Z_LOADW, {VALUE(REG_CHOICE), SMALL(CHOICE_CONT)}, REG_CONT},
 			{Z_LOADW, {VALUE(REG_CHOICE), SMALL(CHOICE_TOP)}, REG_TOP},
 			{Z_LOADW, {VALUE(REG_CHOICE), SMALL(CHOICE_SIMPLE)}, REG_SIMPLE},
-			{Z_LOADW, {VALUE(REG_CHOICE), SMALL(CHOICE_SIMPLEREF)}, REG_SIMPLEREF},
 
 			{Z_LOADW, {VALUE(REG_CHOICE), SMALL(CHOICE_TRAIL)}, REG_LOCAL+1},
 			{Z_DEC_JL, {SMALL(REG_LOCAL+1), VALUE(REG_TRAIL)}, 0, RFALSE},
@@ -1477,7 +1508,6 @@ struct rtroutine rtroutines[] = {
 			{Z_LOADW, {VALUE(REG_CHOICE), SMALL(CHOICE_CONT)}, REG_CONT},
 			{Z_LOADW, {VALUE(REG_CHOICE), SMALL(CHOICE_TOP)}, REG_TOP},
 			{Z_LOADW, {VALUE(REG_CHOICE), SMALL(CHOICE_SIMPLE)}, REG_SIMPLE},
-			{Z_LOADW, {VALUE(REG_CHOICE), SMALL(CHOICE_SIMPLEREF)}, REG_SIMPLEREF},
 
 			{Z_LOADW, {VALUE(REG_CHOICE), SMALL(CHOICE_TRAIL)}, REG_LOCAL+1},
 			{Z_DEC_JL, {SMALL(REG_LOCAL+1), VALUE(REG_TRAIL)}, 0, 4},
@@ -1518,7 +1548,6 @@ struct rtroutine rtroutines[] = {
 			{Z_STOREW, {VALUE(REG_TEMP), SMALL(CHOICE_TRAIL), VALUE(REG_TRAIL)}},
 			{Z_STOREW, {VALUE(REG_TEMP), SMALL(CHOICE_TOP), VALUE(REG_TOP)}},
 			{Z_STOREW, {VALUE(REG_TEMP), SMALL(CHOICE_SIMPLE), VALUE(REG_SIMPLE)}},
-			{Z_STOREW, {VALUE(REG_TEMP), SMALL(CHOICE_SIMPLEREF), VALUE(REG_SIMPLEREF)}},
 			{Z_STORE, {SMALL(REG_CHOICE), VALUE(REG_TEMP)}},
 			{Z_RFALSE},
 			{Z_END},
@@ -1535,7 +1564,6 @@ struct rtroutine rtroutines[] = {
 			{Z_LOADW, {VALUE(REG_CHOICE), SMALL(CHOICE_CONT)}, REG_CONT},
 			{Z_LOADW, {VALUE(REG_CHOICE), SMALL(CHOICE_TOP)}, REG_TOP},
 			{Z_LOADW, {VALUE(REG_CHOICE), SMALL(CHOICE_SIMPLE)}, REG_SIMPLE},
-			{Z_LOADW, {VALUE(REG_CHOICE), SMALL(CHOICE_SIMPLEREF)}, REG_SIMPLEREF},
 
 			{Z_LOADW, {VALUE(REG_CHOICE), SMALL(CHOICE_TRAIL)}, REG_LOCAL+1},
 			{Z_DEC_JL, {SMALL(REG_LOCAL+1), VALUE(REG_TRAIL)}, 0, RFALSE},
@@ -1559,7 +1587,6 @@ struct rtroutine rtroutines[] = {
 			{Z_LOADW, {VALUE(REG_CHOICE), SMALL(CHOICE_CONT)}, REG_CONT},
 			{Z_LOADW, {VALUE(REG_CHOICE), SMALL(CHOICE_TOP)}, REG_TOP},
 			{Z_LOADW, {VALUE(REG_CHOICE), SMALL(CHOICE_SIMPLE)}, REG_SIMPLE},
-			{Z_LOADW, {VALUE(REG_CHOICE), SMALL(CHOICE_SIMPLEREF)}, REG_SIMPLEREF},
 
 			{Z_LOADW, {VALUE(REG_CHOICE), SMALL(CHOICE_TRAIL)}, REG_LOCAL+1},
 			{Z_DEC_JL, {SMALL(REG_LOCAL+1), VALUE(REG_TRAIL)}, 0, 4},
@@ -1767,11 +1794,83 @@ struct rtroutine rtroutines[] = {
 		}
 	},
 	{
-		R_PLUS,
+		R_SET_LISTFLAG,
 		3,
+			// 0 (param): object (tagged reference)
+			// 1 (param): attribute number, then temp
+			// 2 (param): root register number
+			// REG_TEMP (param): pointer to next-array
+		(struct zinstr []) {
+			{Z_CALL2S, {ROUTINE(R_DEREF_OBJ_FORCE), VALUE(REG_LOCAL+0)}, REG_LOCAL+0},
+			{Z_JA, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+1)}, 0, RFALSE},
+			{Z_SET_ATTR, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+1)}},
+			{Z_LOAD, {VALUE(REG_LOCAL+2)}, REG_LOCAL+1},
+			{Z_STOREW, {VALUE(REG_TEMP), VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+1)}},
+			{Z_STORE, {VALUE(REG_LOCAL+2), VALUE(REG_LOCAL+0)}},
+			{Z_RFALSE},
+			{Z_END},
+		}
+	},
+	{
+		R_RESET_LISTFLAG,
+		3,
+			// 0 (param): object (tagged reference)
+			// 1 (param): attribute number, then temp
+			// 2 (param): root register number, then temp
+			// REG_TEMP (param): pointer to next-array
+		(struct zinstr []) {
+			{Z_CALL2S, {ROUTINE(R_DEREF_OBJ_FORCE), VALUE(REG_LOCAL+0)}, REG_LOCAL+0},
+			{Z_JNA, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+1)}, 0, RFALSE},
+			{Z_CLEAR_ATTR, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+1)}},
+
+			{Z_LOAD, {VALUE(REG_LOCAL+2)}, REG_LOCAL+1},
+			{Z_JE, {VALUE(REG_LOCAL+1), VALUE(REG_LOCAL+0)}, 0, 1},
+
+			{OP_LABEL(2)},
+			{Z_LOADW, {VALUE(REG_TEMP), VALUE(REG_LOCAL+1)}, REG_LOCAL+2},
+			{Z_JE, {VALUE(REG_LOCAL+2), VALUE(REG_LOCAL+0)}, 0, 3},
+			{Z_STORE, {SMALL(REG_LOCAL+1), VALUE(REG_LOCAL+2)}},
+			{Z_JUMP, {REL_LABEL(2)}},
+
+			{OP_LABEL(3)},
+			{Z_LOADW, {VALUE(REG_TEMP), VALUE(REG_LOCAL+0)}, REG_LOCAL+2},
+			{Z_STOREW, {VALUE(REG_TEMP), VALUE(REG_LOCAL+1), VALUE(REG_LOCAL+2)}},
+			{Z_RFALSE},
+
+			{OP_LABEL(1)},
+			{Z_LOADW, {VALUE(REG_TEMP), VALUE(REG_LOCAL+0)}, REG_LOCAL+1},
+			{Z_STORE, {VALUE(REG_LOCAL+2), VALUE(REG_LOCAL+1)}},
+			{Z_RFALSE},
+			{Z_END},
+		}
+	},
+	{
+		R_CLRALL_LISTFLAG,
+		4,
+			// 0 (param): attribute number
+			// 1 (param): root register number
+			// 2 (param): pointer to next-array
+			// 3: iterator
+		(struct zinstr []) {
+			{Z_LOAD, {VALUE(REG_LOCAL+1)}, REG_LOCAL+3},
+			{Z_JZ, {VALUE(REG_LOCAL+3)}, 0, RFALSE},
+
+			{OP_LABEL(1)},
+			{Z_CLEAR_ATTR, {VALUE(REG_LOCAL+3), VALUE(REG_LOCAL+0)}},
+			{Z_LOADW, {VALUE(REG_LOCAL+2), VALUE(REG_LOCAL+3)}, REG_LOCAL+3},
+			{Z_JNZ, {VALUE(REG_LOCAL+3)}, 0, 1},
+
+			{Z_STORE, {VALUE(REG_LOCAL+1), SMALL(0)}},
+			{Z_RFALSE},
+			{Z_END},
+		}
+	},
+	{
+		R_PLUS,
+		2,
 			// 0 (param): first parameter (and temp)
 			// 1 (param): second parameter
-			// 2 (param): third parameter
+			// returns result
 		(struct zinstr []) {
 			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_LOCAL+0)}, REG_LOCAL+0},
 			{Z_JL, {VALUE(REG_LOCAL+0), VALUE(REG_4000)}, 0, 1},
@@ -1785,17 +1884,16 @@ struct rtroutine rtroutines[] = {
 			{Z_THROW, {SMALL(0), VALUE(REG_FAILJMP)}},
 
 			{OP_LABEL(2)},
-			{Z_CALLVN, {VALUE(REG_R_USIMPLE), VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+2)}},
-			{Z_RFALSE},
+			{Z_RET, {VALUE(REG_LOCAL+0)}},
 			{Z_END},
 		}
 	},
 	{
 		R_MINUS,
-		3,
+		2,
 			// 0 (param): first parameter (and temp)
 			// 1 (param): second parameter
-			// 2 (param): third parameter
+			// returns result
 		(struct zinstr []) {
 			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_LOCAL+0)}, REG_LOCAL+0},
 			{Z_JL, {VALUE(REG_LOCAL+0), VALUE(REG_4000)}, 0, 1},
@@ -1809,17 +1907,16 @@ struct rtroutine rtroutines[] = {
 
 			{OP_LABEL(2)},
 			{Z_OR, {VALUE(REG_LOCAL+0), VALUE(REG_4000)}, REG_LOCAL+0},
-			{Z_CALLVN, {VALUE(REG_R_USIMPLE), VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+2)}},
-			{Z_RFALSE},
+			{Z_RET, {VALUE(REG_LOCAL+0)}},
 			{Z_END},
 		}
 	},
 	{
 		R_TIMES,
-		3,
+		2,
 			// 0 (param): first parameter (and temp)
 			// 1 (param): second parameter
-			// 2 (param): third parameter
+			// returns result
 		(struct zinstr []) {
 			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_LOCAL+0)}, REG_LOCAL+0},
 			{Z_JL, {VALUE(REG_LOCAL+0), VALUE(REG_4000)}, 0, 1},
@@ -1835,17 +1932,16 @@ struct rtroutine rtroutines[] = {
 			{Z_MUL, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+1)}, REG_LOCAL+0},
 			{Z_AND, {VALUE(REG_LOCAL+0), VALUE(REG_3FFF)}, REG_LOCAL+0},
 			{Z_OR, {VALUE(REG_LOCAL+0), VALUE(REG_4000)}, REG_LOCAL+0},
-			{Z_CALLVN, {VALUE(REG_R_USIMPLE), VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+2)}},
-			{Z_RFALSE},
+			{Z_RET, {VALUE(REG_LOCAL+0)}},
 			{Z_END},
 		}
 	},
 	{
 		R_DIVIDED,
-		3,
+		2,
 			// 0 (param): first parameter (and temp)
 			// 1 (param): second parameter
-			// 2 (param): third parameter
+			// returns result
 		(struct zinstr []) {
 			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_LOCAL+0)}, REG_LOCAL+0},
 			{Z_JL, {VALUE(REG_LOCAL+0), VALUE(REG_4000)}, 0, 1},
@@ -1860,17 +1956,16 @@ struct rtroutine rtroutines[] = {
 			{Z_AND, {VALUE(REG_LOCAL+1), VALUE(REG_3FFF)}, REG_LOCAL+1},
 			{Z_DIV, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+1)}, REG_LOCAL+0},
 			{Z_OR, {VALUE(REG_LOCAL+0), VALUE(REG_4000)}, REG_LOCAL+0},
-			{Z_CALLVN, {VALUE(REG_R_USIMPLE), VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+2)}},
-			{Z_RFALSE},
+			{Z_RET, {VALUE(REG_LOCAL+0)}},
 			{Z_END},
 		}
 	},
 	{
 		R_MODULO,
-		3,
+		2,
 			// 0 (param): first parameter (and temp)
 			// 1 (param): second parameter
-			// 2 (param): third parameter
+			// returns result
 		(struct zinstr []) {
 			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_LOCAL+0)}, REG_LOCAL+0},
 			{Z_JL, {VALUE(REG_LOCAL+0), VALUE(REG_4000)}, 0, 1},
@@ -1885,17 +1980,16 @@ struct rtroutine rtroutines[] = {
 			{Z_AND, {VALUE(REG_LOCAL+1), VALUE(REG_3FFF)}, REG_LOCAL+1},
 			{Z_MOD, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+1)}, REG_LOCAL+0},
 			{Z_OR, {VALUE(REG_LOCAL+0), VALUE(REG_4000)}, REG_LOCAL+0},
-			{Z_CALLVN, {VALUE(REG_R_USIMPLE), VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+2)}},
-			{Z_RFALSE},
+			{Z_RET, {VALUE(REG_LOCAL+0)}},
 			{Z_END},
 		}
 	},
 	{
 		R_RANDOM,
-		3,
+		2,
 			// 0 (param): first parameter (and temp)
 			// 1 (param): second parameter
-			// 2 (param): third parameter
+			// returns result
 		(struct zinstr []) {
 			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_LOCAL+0)}, REG_LOCAL+0},
 			{Z_JL, {VALUE(REG_LOCAL+0), VALUE(REG_4000)}, 0, 1},
@@ -1912,28 +2006,23 @@ struct rtroutine rtroutines[] = {
 			{Z_RANDOM, {VALUE(REG_LOCAL+1)}, REG_LOCAL+1},			// 0001..4000
 			{Z_DEC, {SMALL(REG_LOCAL+0)}},					// 3fff..7ffe
 			{Z_ADD, {VALUE(REG_LOCAL+1), VALUE(REG_LOCAL+0)}, REG_LOCAL+1},	// 4000..7fff
-			{Z_CALLVN, {VALUE(REG_R_USIMPLE), VALUE(REG_LOCAL+1), VALUE(REG_LOCAL+2)}},
-			{Z_RFALSE},
+			{Z_RET, {VALUE(REG_LOCAL+1)}},
 			{Z_END},
 		}
 	},
 	{
-		R_LESS_OR_GREATER,
+		R_GREATER_THAN,
 		2,
-		(struct zinstr []) {
 			// 0 (param): first tagged reference
 			// 1 (param): second tagged reference
+			// returns boolean
+		(struct zinstr []) {
 			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_LOCAL+0)}, REG_LOCAL+0},
-			{Z_JL, {VALUE(REG_LOCAL+0), VALUE(REG_4000)}, 0, 1},
+			{Z_JL, {VALUE(REG_LOCAL+0), VALUE(REG_4000)}, 0, RFALSE},
 			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_LOCAL+1)}, REG_LOCAL+1},
-			{Z_JGE, {VALUE(REG_LOCAL+1), VALUE(REG_4000)}, 0, 2},
-
-			{OP_LABEL(1)},
-			{Z_THROW, {SMALL(0), VALUE(REG_FAILJMP)}},
-
-			{OP_LABEL(2)},
-			{Z_SUB, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+1)}, REG_PUSH},
-			{Z_RET_POPPED},
+			{Z_JL, {VALUE(REG_LOCAL+1), VALUE(REG_4000)}, 0, RFALSE},
+			{Z_JLE, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+1)}, 0, RFALSE},
+			{Z_RTRUE},
 			{Z_END},
 		}
 	},
@@ -1955,56 +2044,60 @@ struct rtroutine rtroutines[] = {
 		}
 	},
 	{
-		R_SAVE_PRED,
+		R_SAVE,
 		0,
-			// arg 0: to be unified with 0 (if saving) or 1 (if coming back)
+			// returns number 0 if saving, number 1 if coming back, fails on failure
 		(struct zinstr []) {
 			{Z_CALL1N, {ROUTINE(R_LINE)}},
 			{Z_SAVE, {}, REG_TEMP},
 			{Z_STORE, {SMALL(REG_SPACE), SMALL(4)}},
-			{Z_JL, {VALUE(REG_TEMP), SMALL(1)}, 0, RFALSE},
+			{Z_JGE, {VALUE(REG_TEMP), SMALL(1)}, 0, 1},
 
+			{Z_THROW, {SMALL(0), VALUE(REG_FAILJMP)}},
+
+			{OP_LABEL(1)},
 			{Z_ADD, {VALUE(REG_TEMP), VALUE(REG_3FFF)}, REG_TEMP},
-			{Z_CALLVN, {VALUE(REG_R_USIMPLE), VALUE(REG_TEMP), VALUE(REG_A+0)}},
-			{Z_LOAD, {VALUE(REG_SIMPLEREF)}, REG_CHOICE},
-			{Z_RET, {VALUE(REG_CONT)}},
+			{Z_RET, {VALUE(REG_TEMP)}},
 			{Z_END},
 		}
 	},
 	{
-		R_SAVE_UNDO_PRED,
+		R_SAVE_UNDO,
 		0,
-			// arg 0: to be unified with 0 (if saving) or 1 (if coming back)
+			// returns number 0 if saving, number 1 if coming back, fails on failure
 		(struct zinstr []) {
 			{Z_CALL1N, {ROUTINE(R_LINE)}},
 			{Z_SAVE_UNDO, {}, REG_TEMP},
 
-			{Z_JG, {VALUE(REG_TEMP), SMALL(1)}, 0, 1},
+			{Z_JNE, {VALUE(REG_TEMP), SMALL(1)}, 0, 1},
 			{Z_OR, {USERGLOBAL(0), SMALL(1)}, DEST_USERGLOBAL(0)},
 			{OP_LABEL(1)},
 
-			{Z_JL, {VALUE(REG_TEMP), SMALL(1)}, 0, RFALSE},
+			{Z_JGE, {VALUE(REG_TEMP), SMALL(1)}, 0, 2},
 
+			{Z_THROW, {SMALL(0), VALUE(REG_FAILJMP)}},
+
+			{OP_LABEL(2)},
 			{Z_STORE, {SMALL(REG_SPACE), SMALL(4)}},
 			{Z_ADD, {VALUE(REG_TEMP), VALUE(REG_3FFF)}, REG_TEMP},
-			{Z_CALLVN, {VALUE(REG_R_USIMPLE), VALUE(REG_TEMP), VALUE(REG_A+0)}},
-			{Z_LOAD, {VALUE(REG_SIMPLEREF)}, REG_CHOICE},
-			{Z_RET, {VALUE(REG_CONT)}},
+			{Z_RET, {VALUE(REG_TEMP)}},
 			{Z_END},
 		}
 	},
 	{
-		R_SCRIPT_ON_PRED,
+		R_SCRIPT_ON,
 		0,
 		(struct zinstr []) {
 			{Z_CALL1N, {ROUTINE(R_LINE)}},
 			{Z_OUTPUT_STREAM, {SMALL(2)}},
 			{Z_STORE, {SMALL(REG_SPACE), SMALL(4)}},
 			{Z_LOADW, {SMALL(0), SMALL(8)}, REG_TEMP},
-			{Z_AND, {VALUE(REG_TEMP), SMALL(1)}, REG_TEMP},
-			{Z_JZ, {VALUE(REG_TEMP)}, 0, RFALSE},
-			{Z_LOAD, {VALUE(REG_SIMPLEREF)}, REG_CHOICE},
-			{Z_RET, {VALUE(REG_CONT)}},
+			{Z_TEST, {VALUE(REG_TEMP), SMALL(1)}, 0, 1},
+
+			{Z_THROW, {SMALL(0), VALUE(REG_FAILJMP)}},
+
+			{OP_LABEL(1)},
+			{Z_RFALSE},
 			{Z_END},
 		}
 	},
@@ -2030,7 +2123,7 @@ struct rtroutine rtroutines[] = {
 		}
 	},
 	{
-		R_GET_INPUT_PRED,
+		R_GET_INPUT,
 		12,
 			// 0: temp
 			// 1: input buffer
@@ -2044,7 +2137,7 @@ struct rtroutine rtroutines[] = {
 			// 9: start of word
 			// 10: temp
 			// 11: temp
-			// arg 0: to be unified with output
+			// returns output
 		(struct zinstr []) {
 			{Z_CALL1N, {ROUTINE(R_SYNC_SPACE)}},
 			{Z_STORE, {SMALL(REG_SPACE), SMALL(4)}},
@@ -2192,10 +2285,8 @@ struct rtroutine rtroutines[] = {
 			// free memory
 			{Z_STORE, {SMALL(REG_COLL), VALUE(REG_LOCAL+5)}},
 
-			// unify result
-			{Z_CALLVN, {ROUTINE(R_UNIFY), VALUE(REG_A+0), VALUE(REG_LOCAL+4)}},
-			{Z_LOAD, {VALUE(REG_SIMPLEREF)}, REG_CHOICE},
-			{Z_RET, {VALUE(REG_CONT)}},
+			// return result
+			{Z_RET, {VALUE(REG_LOCAL+4)}},
 			{Z_END},
 		}
 	},
@@ -2249,453 +2340,52 @@ struct rtroutine rtroutines[] = {
 		}
 	},
 	{
-		R_GET_RAW_INPUT_PRED,
-		5,
-			// 0: bytes left to consider
-			// 1: input buffer
-			// 2: character
-			// 3: saved REG_COLL
-			// 4: tail of output list
-			// arg 0: to be unified with output
+		R_SPLIT_LIST,
+		7,
+			// 0 (param): input list
+			// 1 (param): end marker
+			// 2 (param): output value
+			// 3: heap index of first cell
+			// 4: heap index of previous cell
+			// 5: temp
+			// 6: temp
 		(struct zinstr []) {
-			{Z_CALL1N, {ROUTINE(R_SYNC_SPACE)}},
-			{Z_STORE, {SMALL(REG_SPACE), SMALL(4)}},
-
-			// store the input buffer in the aux area
-			{Z_STORE, {SMALL(REG_LOCAL+3), VALUE(REG_COLL)}},
-			{Z_ADD, {VALUE(REG_COLL), SMALL(128)}, REG_COLL},
-			{Z_JLE, {VALUE(REG_COLL), VALUE(REG_TRAIL)}, 0, 2},
-
-			{Z_THROW, {SMALL(FATAL_AUX), VALUE(REG_FATALJMP)}},
-			{OP_LABEL(2)},
-
-			{Z_JL, {VALUE(REG_COLL), VALUE(REG_MINAUX)}, 0, 1},
-			{Z_STORE, {SMALL(REG_MINAUX), VALUE(REG_COLL)}},
-			{OP_LABEL(1)},
-
-			{Z_ADD, {VALUE(REG_LOCAL+3), VALUE(REG_LOCAL+3)}, REG_LOCAL+1},
-			{Z_ADD, {VALUE(REG_LOCAL+1), VALUE(REG_AUXBASE)}, REG_LOCAL+1},
-
-			// prepare input buffer
-			{Z_STOREB, {VALUE(REG_LOCAL+1), SMALL(0), SMALL(253)}},
-			{Z_STOREB, {VALUE(REG_LOCAL+1), SMALL(1), SMALL(0)}},
-
-			{Z_AREAD, {VALUE(REG_LOCAL+1), SMALL(0)}, REG_LOCAL+0},
-
-			{Z_STORE, {SMALL(REG_LOCAL+4), VALUE(REG_NIL)}},
-
-			{Z_LOADB, {VALUE(REG_LOCAL+1), SMALL(1)}, REG_LOCAL+0},
-			{Z_ADD, {VALUE(REG_LOCAL+1), SMALL(2)}, REG_LOCAL+1},
-			{Z_DEC_JL, {SMALL(REG_LOCAL+0), SMALL(0)}, 0, 3},
-
-			{OP_LABEL(4)},
-			{Z_LOADB, {VALUE(REG_LOCAL+1), VALUE(REG_LOCAL+0)}, REG_LOCAL+2},
-			{Z_OR, {VALUE(REG_LOCAL+2), LARGE(0x3e00)}, REG_LOCAL+2},
-			{Z_CALLVS, {ROUTINE(R_PUSH_PAIR_VV), VALUE(REG_LOCAL+2), VALUE(REG_LOCAL+4)}, REG_LOCAL+4},
-			{Z_DEC_JGE, {SMALL(REG_LOCAL+0), SMALL(0)}, 0, 4},
-
-			{OP_LABEL(3)},
-			// free memory
-			{Z_STORE, {SMALL(REG_COLL), VALUE(REG_LOCAL+3)}},
-
-			// unify result
-			{Z_CALLVN, {ROUTINE(R_UNIFY), VALUE(REG_A+0), VALUE(REG_LOCAL+4)}},
-			{Z_LOAD, {VALUE(REG_SIMPLEREF)}, REG_CHOICE},
-			{Z_RET, {VALUE(REG_CONT)}},
-			{Z_END},
-		}
-	},
-	{
-		R_REPEAT_PRED,
-		0,
-		(struct zinstr []) {
-			{Z_CALLVN, {ROUTINE(R_TRY_ME_ELSE), SMALL((0 + CHOICE_SIZEOF) * 2), ROUTINE(R_REPEAT_SUB)}},
-			{Z_LOAD, {VALUE(REG_SIMPLEREF)}, REG_CHOICE},
-			{Z_RET, {VALUE(REG_CONT)}},
-			{Z_END},
-		}
-	},
-	{
-		R_REPEAT_SUB,
-		0,
-		(struct zinstr []) {
-			{Z_CALLVN, {ROUTINE(R_RETRY_ME_ELSE), SMALL(0), ROUTINE(R_REPEAT_SUB)}},
-			{Z_LOAD, {VALUE(REG_SIMPLEREF)}, REG_CHOICE},
-			{Z_RET, {VALUE(REG_CONT)}},
-			{Z_END},
-		}
-	},
-	{
-		R_OBJECT_PRED,
-		1,
-			// 0: dereferenced argument
-			// arg 0: to be unified with output
-		(struct zinstr []) {
-			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_A+0)}, REG_LOCAL+0},
-			{Z_JL, {VALUE(REG_LOCAL+0), VALUE(REG_C000)}, 0, 1},
-
-			{Z_JL, {VALUE(REG_LOCAL+0), SMALL(1)}, 0, RFALSE},
-			{Z_JGE, {VALUE(REG_LOCAL+0), VALUE(REG_NIL)}, 0, RFALSE},
-
-			// yes, it was an object
-			{Z_LOAD, {VALUE(REG_SIMPLEREF)}, REG_CHOICE},
-			{Z_RET, {VALUE(REG_CONT)}},
-
-			{OP_LABEL(1)},
-			// an unbound variable was provided; backtrack over all objects
-			{Z_JGE, {SMALL(2), REF(G_OBJECT_ID_END)}, 0, 2},
-			{Z_STORE, {SMALL(REG_A+1), SMALL(2)}},
-			{Z_CALLVN, {ROUTINE(R_TRY_ME_ELSE), SMALL((2 + CHOICE_SIZEOF) * 2), ROUTINE(R_OBJECT_SUB)}},
-
-			{OP_LABEL(2)},
-			{Z_JGE, {SMALL(1), REF(G_OBJECT_ID_END)}, 0, RFALSE},
-			{Z_CALLVN, {VALUE(REG_R_USIMPLE), SMALL(1), VALUE(REG_A+0)}},
-			{Z_LOAD, {VALUE(REG_SIMPLEREF)}, REG_CHOICE},
-			{Z_RET, {VALUE(REG_CONT)}},
-			{Z_END},
-		}
-	},
-	{
-		R_OBJECT_SUB,
-		1,
-			// 0: temp
-			// arg 0: to be unified with output
-			// arg 1: next object to return
-		(struct zinstr []) {
-			{Z_CALLVN, {ROUTINE(R_RETRY_ME_ELSE), SMALL(2), ROUTINE(R_OBJECT_SUB)}},
-
-			{Z_ADD, {VALUE(REG_A+1), SMALL(1)}, REG_LOCAL+0},
-			// update the choice frame with the new arg 1
-			{Z_STOREW, {VALUE(REG_CHOICE), SMALL(CHOICE_SIZEOF + 1), VALUE(REG_LOCAL+0)}},
-			{Z_JL, {VALUE(REG_LOCAL+0), REF(G_OBJECT_ID_END)}, 0, 1},
-
-			// last object, so trim the choice frame
-			{Z_CALL2N, {ROUTINE(R_TRUST_ME), SMALL(0)}},
-
-			{OP_LABEL(1)},
-			{Z_CALLVN, {VALUE(REG_R_USIMPLE), VALUE(REG_A+1), VALUE(REG_A+0)}},
-			{Z_LOAD, {VALUE(REG_SIMPLEREF)}, REG_CHOICE},
-			{Z_RET, {VALUE(REG_CONT)}},
-			{Z_END},
-		}
-	},
-	{
-		R_HASPARENT_PRED,
-		1,
-			// 0: temp
-			// arg 0: child
-			// arg 1: parent
-		(struct zinstr []) {
-			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_A+0)}, REG_A+0},
-			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_A+1)}, REG_LOCAL+0},
-			{Z_JL, {VALUE(REG_A+0), VALUE(REG_C000)}, 0, 2},
-
-			{Z_JL, {VALUE(REG_A+0), SMALL(1)}, 0, RFALSE},
-			{Z_JGE, {VALUE(REG_A+0), VALUE(REG_NIL)}, 0, RFALSE},
-
-			// child is an object
-			{Z_GET_PARENT, {VALUE(REG_A+0)}, REG_A+0},
-			{Z_JZ, {VALUE(REG_A+0)}, 0, RFALSE},
-			{Z_CALLVN, {VALUE(REG_R_USIMPLE), VALUE(REG_A+0), VALUE(REG_LOCAL+0)}},
-			{Z_LOAD, {VALUE(REG_SIMPLEREF)}, REG_CHOICE},
-			{Z_RET, {VALUE(REG_CONT)}},
-
-			{OP_LABEL(2)},
-			// child is a variable
-			{Z_JL, {VALUE(REG_LOCAL+0), SMALL(1)}, 0, RFALSE},
-			{Z_JGE, {VALUE(REG_LOCAL+0), VALUE(REG_NIL)}, 0, RFALSE},
-
-			// child is a variable, parent is an object
-			{Z_GET_CHILD_N, {VALUE(REG_LOCAL+0)}, REG_LOCAL+0, RFALSE}, // branch if no children
-			{Z_GET_SIBLING_N, {VALUE(REG_LOCAL+0)}, REG_A+1, 4},
-			{Z_CALLVN, {ROUTINE(R_TRY_ME_ELSE), SMALL((2 + CHOICE_SIZEOF) * 2), ROUTINE(R_HASPARENT_SUB)}},
-
-			{OP_LABEL(4)},
-			// just one child
-			{Z_CALLVN, {VALUE(REG_R_USIMPLE), VALUE(REG_LOCAL+0), VALUE(REG_A+0)}},
-			{Z_LOAD, {VALUE(REG_SIMPLEREF)}, REG_CHOICE},
-			{Z_RET, {VALUE(REG_CONT)}},
-			{Z_END},
-		}
-	},
-	{
-		R_HASPARENT_SUB,
-		1,
-			// 0: temp
-			// arg 0: output variable, unbound
-			// arg 1: next child to return
-		(struct zinstr []) {
-			{Z_CALLVN, {ROUTINE(R_RETRY_ME_ELSE), SMALL(2), ROUTINE(R_HASPARENT_SUB)}},
-			{Z_GET_SIBLING, {VALUE(REG_A+1)}, REG_LOCAL+0, 1},
-
-			// last object, so trim the choice frame
-			{Z_CALL2N, {ROUTINE(R_TRUST_ME), SMALL(0)}},
-			{Z_CALLVN, {VALUE(REG_R_USIMPLE), VALUE(REG_A+1), VALUE(REG_A+0)}},
-			{Z_LOAD, {VALUE(REG_SIMPLEREF)}, REG_CHOICE},
-			{Z_RET, {VALUE(REG_CONT)}},
-
-			{OP_LABEL(1)},
-			// update the choice frame with the new arg 1
-			{Z_STOREW, {VALUE(REG_CHOICE), SMALL(CHOICE_SIZEOF + 1), VALUE(REG_LOCAL+0)}},
-			{Z_CALLVN, {VALUE(REG_R_USIMPLE), VALUE(REG_A+1), VALUE(REG_A+0)}},
-			{Z_LOAD, {VALUE(REG_SIMPLEREF)}, REG_CHOICE},
-			{Z_RET, {VALUE(REG_CONT)}},
-			{Z_END},
-		}
-	},
-	{
-		R_CONTAINS_PRED,
-		2,
-			// 0: temp
-			// 1: temp
-			// arg 0: to be unified with each member
-			// arg 1: input list
-		(struct zinstr []) {
-			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_A+1)}, REG_A+1},
-			{Z_AND, {VALUE(REG_A+1), VALUE(REG_E000)}, REG_LOCAL+0},
-			{Z_JNE, {VALUE(REG_LOCAL+0), VALUE(REG_C000)}, 0, RFALSE},	// fail on type error as well as []
-
-			{Z_SUB, {VALUE(REG_A+1), VALUE(REG_4000)}, REG_LOCAL+1},	// ref to head element
-			{Z_ADD, {VALUE(REG_LOCAL+1), SMALL(1)}, REG_A+1},		// ref to tail element
-
-			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_A+1)}, REG_A+1},
-			{Z_AND, {VALUE(REG_A+1), VALUE(REG_E000)}, REG_LOCAL+0},
-			{Z_JNE, {VALUE(REG_LOCAL+0), VALUE(REG_C000)}, 0, 2},
-
-			{Z_CALLVN, {ROUTINE(R_TRY_ME_ELSE), SMALL((2 + CHOICE_SIZEOF) * 2), ROUTINE(R_CONTAINS_SUB)}},
-
-			{OP_LABEL(2)},
-			{Z_CALLVN, {ROUTINE(R_UNIFY), VALUE(REG_A+0), VALUE(REG_LOCAL+1)}},
-			{Z_LOAD, {VALUE(REG_SIMPLEREF)}, REG_CHOICE},
-			{Z_RET, {VALUE(REG_CONT)}},
-			{Z_END},
-		}
-	},
-	{
-		R_CONTAINS_SUB,
-		2,
-			// 0: temp
-			// 1: temp
-			// arg 0: to be unified with each member
-			// arg 1: input list, already dereferenced and type checked
-		(struct zinstr []) {
-			{Z_CALLVN, {ROUTINE(R_RETRY_ME_ELSE), SMALL(2), ROUTINE(R_CONTAINS_SUB)}},
-
-			{Z_SUB, {VALUE(REG_A+1), VALUE(REG_4000)}, REG_LOCAL+1},	// ref to head element
-			{Z_ADD, {VALUE(REG_LOCAL+1), SMALL(1)}, REG_A+1},		// ref to tail element
-
-			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_A+1)}, REG_A+1},
-			{Z_AND, {VALUE(REG_A+1), VALUE(REG_E000)}, REG_LOCAL+0},
-			{Z_JNE, {VALUE(REG_LOCAL+0), VALUE(REG_C000)}, 0, 2},
-
-			{Z_STOREW, {VALUE(REG_CHOICE), SMALL(CHOICE_SIZEOF + 1), VALUE(REG_A+1)}},
-			{Z_CALLVN, {ROUTINE(R_UNIFY), VALUE(REG_A+0), VALUE(REG_LOCAL+1)}},
-			{Z_LOAD, {VALUE(REG_SIMPLEREF)}, REG_CHOICE},
-			{Z_RET, {VALUE(REG_CONT)}},
-
-			{OP_LABEL(2)},
-			{Z_CALL2N, {ROUTINE(R_TRUST_ME), SMALL(0)}},
-			{Z_CALLVN, {ROUTINE(R_UNIFY), VALUE(REG_A+0), VALUE(REG_LOCAL+1)}},
-			{Z_LOAD, {VALUE(REG_SIMPLEREF)}, REG_CHOICE},
-			{Z_RET, {VALUE(REG_CONT)}},
-			{Z_END},
-		}
-	},
-	{
-		R_CONTAINSCHK_PRED,
-		1,
-			// 0: temp
-			// arg 0: element to check for
-			// arg 1: input list
-		(struct zinstr []) {
-			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_A+0)}, REG_A+0},
-			{Z_JL, {VALUE(REG_A+0), SMALL(0)}, 0, 2},	// unbound or complex element, defer to simple tail-call to contains
-
-			{OP_LABEL(3)},
-			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_A+1)}, REG_A+1},
-			{Z_AND, {VALUE(REG_A+1), VALUE(REG_E000)}, REG_LOCAL+0},
-			{Z_JNE, {VALUE(REG_LOCAL+0), VALUE(REG_C000)}, 0, RFALSE},
-
-			{Z_SUB, {VALUE(REG_A+1), VALUE(REG_4000)}, REG_LOCAL+0},	// ref to head element
-			{Z_ADD, {VALUE(REG_LOCAL+0), SMALL(1)}, REG_A+1},		// ref to tail element
-
-			{Z_CALL2S, {ROUTINE(R_DEREF_UNBOX), VALUE(REG_LOCAL+0)}, REG_LOCAL+0},
-			{Z_JNE, {VALUE(REG_A+0), VALUE(REG_LOCAL+0)}, 0, 3},
-
-			{Z_LOAD, {VALUE(REG_SIMPLEREF)}, REG_CHOICE},
-			{Z_RET, {VALUE(REG_CONT)}},
-
-			{OP_LABEL(2)},
-			{Z_LOAD, {VALUE(REG_SIMPLEREF)}, REG_SIMPLE},
-			{Z_STORE, {SMALL(REG_SIMPLEREF), SMALL(REG_SIMPLE)}},
-			{Z_RET, {ROUTINE(R_CONTAINS_PRED)}},
-			{Z_END},
-		}
-	},
-	{
-		R_SPLIT_PRED,
-		1,
-			// arg 0: input list (must contain only simple values)
-			// arg 1: separator list
-			// arg 2: left output
-			// arg 3: right output
-			// 0: temp
-		(struct zinstr []) {
-			{Z_STORE, {SMALL(REG_A+5), VALUE(REG_CHOICE)}},
-
-			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_A+1)}, REG_A+1},
-			{Z_AND, {VALUE(REG_A+1), VALUE(REG_E000)}, REG_LOCAL+0},
-			{Z_JNE, {VALUE(REG_LOCAL+0), VALUE(REG_C000)}, 0, RFALSE},
-
-			{Z_STORE, {SMALL(REG_A+4), VALUE(REG_A+0)}},
-			{Z_CALLVN, {ROUTINE(R_TRY_ME_ELSE), SMALL((6 + CHOICE_SIZEOF) * 2), ROUTINE(R_SPLIT_SUB)}},
-			{Z_RET, {ROUTINE(R_SPLIT_SUB)}},
-			{Z_END},
-		}
-	},
-	{
-		R_SPLIT_SUB,
-		3,
-			// 0: input element under consideration
-			// 1: separator list iterator
-			// 2: temp
-			// arg 0: input list
-			// arg 1: separator list (already dereferenced)
-			// arg 2: left output
-			// arg 3: right output
-			// arg 4: input list iterator
-			// arg 5: cut
-		(struct zinstr []) {
-			{Z_CALLVN, {ROUTINE(R_RETRY_ME_ELSE), SMALL(6), ROUTINE(R_SPLIT_SUB)}},
-
-			{OP_LABEL(2)},
-			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_A+4)}, REG_A+4},
-			{Z_AND, {VALUE(REG_A+4), VALUE(REG_E000)}, REG_LOCAL+2},
-			{Z_JNE, {VALUE(REG_LOCAL+2), VALUE(REG_C000)}, 0, 7},	// just+fail (no more split point)
-
-			{Z_SUB, {VALUE(REG_A+4), VALUE(REG_4000)}, REG_LOCAL+0},	// ref to input head
-			{Z_ADD, {VALUE(REG_LOCAL+0), SMALL(1)}, REG_A+4},		// ref to input tail
-
-			{Z_CALL2S, {ROUTINE(R_DEREF_UNBOX), VALUE(REG_LOCAL+0)}, REG_LOCAL+0},
-
-			{Z_STORE, {SMALL(REG_LOCAL+1), VALUE(REG_A+1)}},
-
-			{OP_LABEL(3)},
-			{Z_SUB, {VALUE(REG_LOCAL+1), VALUE(REG_4000)}, REG_LOCAL+2},	// ref to keywords head
-			{Z_CALL2S, {ROUTINE(R_DEREF_UNBOX), VALUE(REG_LOCAL+2)}, REG_LOCAL+2},
-			{Z_JE, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+2)}, 0, 4},
-
-			{Z_SUB, {VALUE(REG_LOCAL+1), VALUE(REG_3FFF)}, REG_LOCAL+1},	// ref to keywords tail
+			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_LOCAL+0)}, REG_LOCAL+0},
 			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_LOCAL+1)}, REG_LOCAL+1},
-			{Z_AND, {VALUE(REG_LOCAL+1), VALUE(REG_E000)}, REG_LOCAL+2},
-			{Z_JE, {VALUE(REG_LOCAL+2), VALUE(REG_C000)}, 0, 3},
+			{Z_JE, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+1)}, 0, 1},
 
-			// no match at this position
+			{Z_LSHIFT, {VALUE(REG_TOP), VALUE(REG_FFFF)}, REG_LOCAL+3},
+			{Z_STORE, {SMALL(REG_LOCAL+4), VALUE(REG_LOCAL+3)}},
+
+			{OP_LABEL(2)},
+			{Z_ADD, {VALUE(REG_TOP), SMALL(4)}, REG_TOP},
+			{Z_JG, {VALUE(REG_TOP), VALUE(REG_ENV)}, 0, 3},
+			{Z_JG, {VALUE(REG_TOP), VALUE(REG_CHOICE)}, 0, 3},
+
+			{Z_AND, {VALUE(REG_LOCAL+0), VALUE(REG_NIL)}, REG_LOCAL+5},
+			{Z_LOADW, {SMALL(0), VALUE(REG_LOCAL+5)}, REG_LOCAL+6},
+			{Z_STOREW, {SMALL(0), VALUE(REG_LOCAL+4), VALUE(REG_LOCAL+6)}},
+			{Z_LOADW, {SMALL(2), VALUE(REG_LOCAL+5)}, REG_LOCAL+0},
+			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_LOCAL+0)}, REG_LOCAL+0},
+			{Z_JE, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+1)}, 0, 5},
+
+			{Z_ADD, {VALUE(REG_LOCAL+4), LARGE(0xc002)}, REG_LOCAL+6},
+			{Z_STOREW, {SMALL(2), VALUE(REG_LOCAL+4), VALUE(REG_LOCAL+6)}},
+			{Z_ADD, {VALUE(REG_LOCAL+4), SMALL(2)}, REG_LOCAL+4},
+
 			{Z_JUMP, {REL_LABEL(2)}},
 
-			{OP_LABEL(4)},
-			// report a match at this position
-			{Z_STOREW, {VALUE(REG_CHOICE), SMALL(CHOICE_SIZEOF + 4), VALUE(REG_A+4)}},
-
-			{Z_CALLVN, {ROUTINE(R_UNIFY), VALUE(REG_A+4), VALUE(REG_A+3)}},
-			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_A+0)}, REG_A+0},
-			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_A+4)}, REG_A+4},
-			{Z_JE, {VALUE(REG_A+0), VALUE(REG_NIL)}, 0, 6},
+			{OP_LABEL(3)},
+			{Z_THROW, {SMALL(FATAL_HEAP), VALUE(REG_FATALJMP)}},
 
 			{OP_LABEL(5)},
-			{Z_SUB, {VALUE(REG_A+0), VALUE(REG_4000)}, REG_LOCAL+0},	// ref to input head
-			{Z_ADD, {VALUE(REG_LOCAL+0), SMALL(1)}, REG_A+0},		// ref to input tail
-			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_A+0)}, REG_A+0},
-			{Z_JE, {VALUE(REG_A+0), VALUE(REG_A+4)}, 0, 6},
-
-			{Z_CALLVS, {ROUTINE(R_PUSH_PAIR_VR), VALUE(REG_LOCAL+0), SMALL(REG_X+0)}, REG_LOCAL+2},
-			{Z_CALLVN, {ROUTINE(R_UNIFY), VALUE(REG_A+2), VALUE(REG_LOCAL+2)}},
-			{Z_STORE, {SMALL(REG_A+2), VALUE(REG_X+0)}},
-			{Z_AND, {VALUE(REG_A+0), VALUE(REG_E000)}, REG_LOCAL+2},
-			{Z_JE, {VALUE(REG_LOCAL+2), VALUE(REG_C000)}, 0, 5},
-
-			{OP_LABEL(6)},
-			{Z_CALLVN, {VALUE(REG_R_USIMPLE), VALUE(REG_NIL), VALUE(REG_A+2)}},
-			{Z_LOAD, {VALUE(REG_SIMPLEREF)}, REG_CHOICE},
-			{Z_RET, {VALUE(REG_CONT)}},
-
-			{OP_LABEL(7)},
-			{Z_STORE, {SMALL(REG_CHOICE), VALUE(REG_A+5)}},
+			{Z_STOREW, {SMALL(2), VALUE(REG_LOCAL+4), VALUE(REG_NIL)}},
+			{Z_OR, {VALUE(REG_LOCAL+3), VALUE(REG_C000)}, REG_LOCAL+3},
+			{Z_CALLVN, {ROUTINE(R_UNIFY), VALUE(REG_LOCAL+3), VALUE(REG_LOCAL+2)}},
 			{Z_RFALSE},
-			{Z_END},
-		}
-	},
-	{
-		R_SPLIT_SPECIAL_PRED,
-		0,
-			// arg 0: input list (must contain only simple values)
-			// arg 1: raw pointer to scan table of separators
-			// arg 2: number of words in scan table
-			// arg 3: left output
-			// arg 4: right output
-		(struct zinstr []) {
-			{Z_STORE, {SMALL(REG_A+6), VALUE(REG_CHOICE)}},
 
-			{Z_STORE, {SMALL(REG_A+5), VALUE(REG_A+0)}},
-			{Z_CALLVN, {ROUTINE(R_TRY_ME_ELSE), SMALL((7 + CHOICE_SIZEOF) * 2), ROUTINE(R_SPLIT_SPECIAL_SUB)}},
-			{Z_RET, {ROUTINE(R_SPLIT_SPECIAL_SUB)}},
-			{Z_END},
-		}
-	},
-	{
-		R_SPLIT_SPECIAL_SUB,
-		3,
-			// 0: input element under consideration
-			// 1: temp
-			// 2: temp
-			// arg 0: input list
-			// arg 1: raw pointer to scan table of separators
-			// arg 2: number of words in scan table
-			// arg 3: left output
-			// arg 4: right output
-			// arg 5: input list iterator
-			// arg 6: cut
-		(struct zinstr []) {
-			{Z_CALLVN, {ROUTINE(R_RETRY_ME_ELSE), SMALL(7), ROUTINE(R_SPLIT_SPECIAL_SUB)}},
-
-			{OP_LABEL(2)},
-			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_A+5)}, REG_A+5},
-			{Z_AND, {VALUE(REG_A+5), VALUE(REG_E000)}, REG_LOCAL+1},
-			{Z_JNE, {VALUE(REG_LOCAL+1), VALUE(REG_C000)}, 0, 7},
-
-			{Z_SUB, {VALUE(REG_A+5), VALUE(REG_4000)}, REG_LOCAL+0},	// ref to head element
-			{Z_ADD, {VALUE(REG_LOCAL+0), SMALL(1)}, REG_A+5},		// ref to tail element
-
-			{Z_CALL2S, {ROUTINE(R_DEREF_UNBOX), VALUE(REG_LOCAL+0)}, REG_LOCAL+0},
-			{Z_SCANTABLE_N, {VALUE(REG_LOCAL+0), VALUE(REG_A+1), VALUE(REG_A+2)}, REG_TEMP, 2},
-
-			// report a match at this position
-			{Z_STOREW, {VALUE(REG_CHOICE), SMALL(CHOICE_SIZEOF + 5), VALUE(REG_A+5)}},
-
-			{Z_CALLVN, {ROUTINE(R_UNIFY), VALUE(REG_A+5), VALUE(REG_A+4)}},
-			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_A+0)}, REG_A+0},
-			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_A+5)}, REG_A+5},
-			{Z_JE, {VALUE(REG_A+0), VALUE(REG_NIL)}, 0, 6},
-
-			{OP_LABEL(5)},
-			{Z_SUB, {VALUE(REG_A+0), VALUE(REG_4000)}, REG_LOCAL+0},	// ref to head element
-			{Z_ADD, {VALUE(REG_LOCAL+0), SMALL(1)}, REG_A+0},		// ref to tail element
-			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_A+0)}, REG_A+0},
-			{Z_JE, {VALUE(REG_A+0), VALUE(REG_A+5)}, 0, 6},
-
-			{Z_CALLVS, {ROUTINE(R_PUSH_PAIR_VR), VALUE(REG_LOCAL+0), SMALL(REG_X+0)}, REG_LOCAL+2},
-			{Z_CALLVN, {ROUTINE(R_UNIFY), VALUE(REG_A+3), VALUE(REG_LOCAL+2)}},
-			{Z_STORE, {SMALL(REG_A+3), VALUE(REG_X+0)}},
-			{Z_JNE, {VALUE(REG_A+0), VALUE(REG_NIL)}, 0, 5},
-
-			{OP_LABEL(6)},
-			{Z_CALLVN, {VALUE(REG_R_USIMPLE), VALUE(REG_NIL), VALUE(REG_A+3)}},
-
-			{Z_LOAD, {VALUE(REG_SIMPLEREF)}, REG_CHOICE},
-			{Z_RET, {VALUE(REG_CONT)}},
-
-			{OP_LABEL(7)},
-			{Z_STORE, {SMALL(REG_CHOICE), VALUE(REG_A+6)}},
+			{OP_LABEL(1)},
+			{Z_CALLVN, {VALUE(REG_R_USIMPLE), VALUE(REG_NIL), VALUE(REG_LOCAL+2)}},
 			{Z_RFALSE},
 			{Z_END},
 		}
@@ -3083,16 +2773,77 @@ struct rtroutine rtroutines[] = {
 		}
 	},
 	{
+		R_WORDMAP,
+		5,
+			// 0 (param): raw pointer to wordmap, then entry address, then payload pos
+			// 1 (param): number of entries in wordmap, then payload pointer
+			// 2 (param): deref'd key, then payload size
+			// 3: pivot index, payload byte
+			// 4: pivot element, object number
+		(struct zinstr []) {
+			{Z_JL, {VALUE(REG_LOCAL+1), SMALL(16)}, 0, 3},
+
+			// If the table is very large, use binary search.
+			{OP_LABEL(5)},
+			{Z_AND, {VALUE(REG_LOCAL+1), LARGE(0xfffe)}, REG_LOCAL+3}, // divide length by two, then multiply by two
+			{Z_LOADW, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+3)}, REG_LOCAL+4},
+			{Z_JL, {VALUE(REG_LOCAL+2), VALUE(REG_LOCAL+4)}, 0, 4},
+
+			{Z_ADD, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+3)}, REG_LOCAL+0},
+			{Z_ADD, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+3)}, REG_LOCAL+0},
+			{Z_INC, {SMALL(REG_LOCAL+1)}}, // round up in the shift
+
+			{OP_LABEL(4)},
+			{Z_LSHIFT, {VALUE(REG_LOCAL+1), VALUE(REG_FFFF)}, REG_LOCAL+1},
+			{Z_JGE, {VALUE(REG_LOCAL+1), SMALL(16)}, 0, 5},
+
+			{OP_LABEL(3)},
+
+			// For an unknown word, perhaps a verb, return true without pushing anything.
+			{Z_SCANTABLE_N, {VALUE(REG_LOCAL+2), VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+1), SMALL(0x84)}, REG_LOCAL+0, RTRUE},
+
+			{Z_LOADW, {VALUE(REG_LOCAL+0), SMALL(1)}, REG_LOCAL+1},
+			// For a common word, perhaps 'of', return false without pushing anything.
+			{Z_JZ, {VALUE(REG_LOCAL+1)}, 0, RFALSE},
+
+			// For a known word, push a number of objects and return true.
+			{Z_JG, {VALUE(REG_LOCAL+1), REF(G_OBJECT_ID_END)}, 0, 2},
+
+			// Special treatment for single-element lists: The
+			// object table is located before the wordmaps, so
+			// object numbers can't collide with addresses.
+			{Z_CALL2N, {ROUTINE(R_AUX_PUSH1), VALUE(REG_LOCAL+1)}},
+			{Z_RTRUE},
+
+			{OP_LABEL(2)},
+			{Z_LOADB, {VALUE(REG_LOCAL+1), SMALL(0)}, REG_LOCAL+2},
+			{Z_STORE, {SMALL(REG_LOCAL+0), SMALL(1)}},
+
+			{OP_LABEL(1)},
+			{Z_LOADB, {VALUE(REG_LOCAL+1), VALUE(REG_LOCAL+0)}, REG_LOCAL+4},
+			{Z_JL, {VALUE(REG_LOCAL+4), SMALL(0xe0)}, 0, 6},
+
+			{Z_INC, {SMALL(REG_LOCAL+0)}},
+			{Z_LOADB, {VALUE(REG_LOCAL+1), VALUE(REG_LOCAL+0)}, REG_LOCAL+3},
+
+			{Z_AND, {VALUE(REG_LOCAL+4), SMALL(0x1f)}, REG_LOCAL+4},
+			{Z_LSHIFT, {VALUE(REG_LOCAL+4), SMALL(8)}, REG_LOCAL+4},
+			{Z_OR, {VALUE(REG_LOCAL+4), VALUE(REG_LOCAL+3)}, REG_LOCAL+4},
+
+			{OP_LABEL(6)},
+			{Z_CALL2N, {ROUTINE(R_AUX_PUSH1), VALUE(REG_LOCAL+4)}},
+			{Z_INC_JLE, {SMALL(REG_LOCAL+0), VALUE(REG_LOCAL+2)}, 0, 1},
+
+			{Z_RTRUE},
+			{Z_END},
+		}
+	},
+	{
 		R_BEGINSTATUS,
 		2,
-			// 0: height (tagged integer)
-			// 1: failure routine label, then width
+			// 0 (param): height (tagged integer)
+			// 1: temp
 		(struct zinstr []) {
-			{Z_CALL2N, {ROUTINE(R_AUX_PUSH1), VALUE(REG_SPACE)}},
-
-			{Z_CALL2N, {ROUTINE(R_TRY_ME_ELSE_0), VALUE(REG_LOCAL+1)}},
-			{Z_CALL1N, {ROUTINE(R_PUSH_STOP)}},
-
 			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_LOCAL+0)}, REG_LOCAL+0},
 			{Z_JLE, {VALUE(REG_LOCAL+0), VALUE(REG_4000)}, 0, RFALSE},
 			{Z_AND, {VALUE(REG_LOCAL+0), VALUE(REG_3FFF)}, REG_LOCAL+0},
@@ -3130,38 +2881,7 @@ struct rtroutine rtroutines[] = {
 		(struct zinstr []) {
 			{Z_TEXTSTYLE, {SMALL(0)}},
 			{Z_SET_WINDOW, {SMALL(0)}},
-			{Z_DEC, {SMALL(REG_COLL)}},
-			{Z_LOADW, {VALUE(REG_AUXBASE), VALUE(REG_COLL)}, REG_SPACE},
-			{Z_RFALSE},
-			{Z_END},
-		}
-	},
-	{
-		R_PUSH_STOP,
-		2,
-			// 0: allocated aux area
-			// 1: new stop index
-		(struct zinstr []) {
-			{Z_STORE, {SMALL(REG_LOCAL+1), VALUE(REG_COLL)}},
-			{Z_CALL2S, {ROUTINE(R_AUX_ALLOC), SMALL(2)}, REG_LOCAL+0},
-			{Z_STOREW, {VALUE(REG_LOCAL+0), SMALL(0), VALUE(REG_STOP)}},
-			{Z_STOREW, {VALUE(REG_LOCAL+0), SMALL(1), VALUE(REG_CHOICE)}},
-			{Z_STORE, {SMALL(REG_STOP), VALUE(REG_LOCAL+1)}},
-			{Z_CALL2N, {ROUTINE(R_TRY_ME_ELSE_0), ROUTINE(R_STOP_PRED)}},
-			{Z_RFALSE},
-			{Z_END},
-		}
-	},
-	{
-		R_STOP_PRED,
-		1,
-			// 0: pointer to aux area
-		(struct zinstr []) {
-			{Z_STORE, {SMALL(REG_COLL), VALUE(REG_STOP)}},
-			{Z_ADD, {VALUE(REG_COLL), VALUE(REG_COLL)}, REG_LOCAL+0},
-			{Z_ADD, {VALUE(REG_LOCAL+0), VALUE(REG_AUXBASE)}, REG_LOCAL+0},
-			{Z_LOADW, {VALUE(REG_LOCAL+0), SMALL(0)}, REG_STOP},
-			{Z_LOADW, {VALUE(REG_LOCAL+0), SMALL(1)}, REG_CHOICE},
+			{Z_STORE, {SMALL(REG_SPACE), SMALL(4)}},
 			{Z_RFALSE},
 			{Z_END},
 		}
@@ -3170,9 +2890,11 @@ struct rtroutine rtroutines[] = {
 		R_SEL_STOPPING,
 		3,
 			// 0 (param): index into select table
-			// 1 (param): number of last fork
+			// 1 (param): number of forks
 			// 2: current value
 		(struct zinstr []) {
+			{Z_DEC, {SMALL(REG_LOCAL+1)}},
+
 			{Z_LOADB, {REF(G_SELTABLE), VALUE(REG_LOCAL+0)}, REG_LOCAL+2},
 			{Z_JE, {VALUE(REG_LOCAL+2), VALUE(REG_LOCAL+1)}, 0, 1},
 
@@ -3622,19 +3344,18 @@ struct rtroutine rtroutines[] = {
 		}
 	},
 	{
-		R_SERIALNUMBER_PRED,
+		R_SERIALNUMBER,
 		0,
 		(struct zinstr []) {
 			{Z_CALL1N, {ROUTINE(R_SYNC_SPACE)}},
 			{Z_CALLVN, {ROUTINE(R_PRINT_N_ZSCII), SMALL(6), SMALL(0x12)}},
 			{Z_STORE, {SMALL(REG_SPACE), SMALL(0)}},
-			{Z_LOAD, {VALUE(REG_SIMPLEREF)}, REG_CHOICE},
-			{Z_RET, {VALUE(REG_CONT)}},
+			{Z_RFALSE},
 			{Z_END},
 		}
 	},
 	{
-		R_COMPILERVERSION_PRED,
+		R_COMPILERVERSION,
 		0,
 		(struct zinstr []) {
 			{Z_CALL1N, {ROUTINE(R_SYNC_SPACE)}},
@@ -3643,8 +3364,7 @@ struct rtroutine rtroutines[] = {
 			{Z_PRINTLIT, {}, 0, 0, "/"},
 			{Z_CALLVN, {ROUTINE(R_PRINT_N_ZSCII), SMALL(2), SMALL(0x3e)}},
 			{Z_STORE, {SMALL(REG_SPACE), SMALL(0)}},
-			{Z_LOAD, {VALUE(REG_SIMPLEREF)}, REG_CHOICE},
-			{Z_RET, {VALUE(REG_CONT)}},
+			{Z_RFALSE},
 			{Z_END},
 		}
 	},
@@ -3713,38 +3433,7 @@ struct rtroutine rtroutines[] = {
 		}
 	},
 	{
-		R_MEMINFO_PRED,
-		1,
-			// 0: temp
-		(struct zinstr []) {
-			{Z_CALL1N, {ROUTINE(R_LINE)}},
-			{Z_PRINTLIT, {}, 0, 0, "\rHeap base: "},
-			{Z_CALL2N, {ROUTINE(R_PRINTHEX), REF(G_HEAPBASE)}},
-			{Z_PRINTLIT, {}, 0, 0, "\rHeap top: "},
-			{Z_CALL2N, {ROUTINE(R_PRINTHEX), VALUE(REG_TOP)}},
-			{Z_PRINTLIT, {}, 0, 0, "\rStack end: "},
-			{Z_CALL2N, {ROUTINE(R_PRINTHEX), REF(G_HEAPEND)}},
-			{Z_PRINTLIT, {}, 0, 0, "\rEnv: "},
-			{Z_CALL2N, {ROUTINE(R_PRINTHEX), VALUE(REG_ENV)}},
-			{Z_PRINTLIT, {}, 0, 0, "\rChoice: "},
-			{Z_CALL2N, {ROUTINE(R_PRINTHEX), VALUE(REG_CHOICE)}},
-			{Z_PRINTLIT, {}, 0, 0, "\rAuxbase: "},
-			{Z_CALL2N, {ROUTINE(R_PRINTHEX), VALUE(REG_AUXBASE)}},
-			{Z_PRINTLIT, {}, 0, 0, "\rAux size (words): "},
-			{Z_CALL2N, {ROUTINE(R_PRINTHEX), REF(G_AUXSIZE)}},
-			{Z_PRINTLIT, {}, 0, 0, "\rCollect index: "},
-			{Z_CALL2N, {ROUTINE(R_PRINTHEX), VALUE(REG_COLL)}},
-			{Z_PRINTLIT, {}, 0, 0, "\rTrail index: "},
-			{Z_CALL2N, {ROUTINE(R_PRINTHEX), VALUE(REG_TRAIL)}},
-			{Z_PRINTLIT, {}, 0, 0, "\r"},
-			{Z_STORE, {SMALL(REG_SPACE), SMALL(4)}},
-			{Z_LOAD, {VALUE(REG_SIMPLEREF)}, REG_CHOICE},
-			{Z_RET, {VALUE(REG_CONT)}},
-			{Z_END},
-		}
-	},
-	{
-		R_MEMSTATS_PRED,
+		R_MEMSTATS,
 		4,
 			// 0: loop index
 			// 1: count
@@ -3788,8 +3477,7 @@ struct rtroutine rtroutines[] = {
 			{Z_PRINTLIT, {}, 0, 0, " long-term words.\r"},
 
 			{Z_STORE, {SMALL(REG_SPACE), SMALL(4)}},
-			{Z_LOAD, {VALUE(REG_SIMPLEREF)}, REG_CHOICE},
-			{Z_RET, {VALUE(REG_CONT)}},
+			{Z_RFALSE},
 			{Z_END},
 		}
 	},

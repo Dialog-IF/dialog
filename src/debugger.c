@@ -999,26 +999,31 @@ static struct eval_dyn_cb dyn_callbacks = {
 	.pop_undo = pop_undo,
 };
 
-struct word *consider_endings(struct program *prg, struct endings_point *ep, uint16_t *str, int len) {
+struct word *consider_endings(struct program *prg, struct endings_point *ep, uint16_t *str, int len, int *endpos) {
 	int i;
 	struct word *w;
 	uint8_t utf8[128];
+	uint16_t saved;
 
 	if(len > 1) {
 		for(i = 0; i < ep->nway; i++) {
 			if(ep->ways[i]->letter == str[len - 1]) {
 				if(ep->ways[i]->final) {
+					saved = str[len - 1];
 					str[len - 1] = 0;
 					if(unicode_to_utf8(utf8, sizeof(utf8), str) != len - 1) {
+						str[len - 1] = saved;
 						return 0;
 					}
+					str[len - 1] = saved;
 					w = find_word_nocreate(prg, (char *) utf8);
 					if(w && (w->flags & WORDF_DICT)) {
+						*endpos = len - 1;
 						return w;
 					}
 				}
 				if(ep->ways[i]->more.nway) {
-					return consider_endings(prg, &ep->ways[i]->more, str, len - 1);
+					return consider_endings(prg, &ep->ways[i]->more, str, len - 1, endpos);
 				}
 				break;
 			}
@@ -1030,12 +1035,14 @@ struct word *consider_endings(struct program *prg, struct endings_point *ep, uin
 }
 
 static value_t parse_input_word(struct program *prg, struct eval_state *es, uint8_t *input) {
-	struct word *w;
+	struct word *w, *w2;
 	char *str = (char *) input;
 	int j, len, ulen;
-	uint16_t unicode[64];
+	uint16_t unicode[64], unibuf[2];
+	char utfbuf[8];
 	value_t list;
 	long num;
+	int endpos = 0;
 
 	w = find_word_nocreate(prg, str);
 	if(w && (w->flags & WORDF_DICT)) {
@@ -1052,31 +1059,52 @@ static value_t parse_input_word(struct program *prg, struct eval_state *es, uint
 		} else if(!input[utf8_to_unicode(unicode, sizeof(unicode) / sizeof(uint16_t), input)]) {
 			ulen = 0;
 			while(unicode[ulen]) ulen++;
-			w = consider_endings(prg, &prg->endings_root, unicode, ulen);
-			if(w) {
-				list = (value_t) {VAL_NIL};
-				for(j = strlen(str) - 1; j >= strlen(w->name); j--) {
-					list = eval_makepair((value_t) {VAL_DICT, input[j]}, list, es);
+			if(ulen == 1) {
+				w = find_word(prg, str);
+				ensure_dict_word(prg, w);
+				return (value_t) {VAL_DICT, w->dict_id};
+			} else {
+				w = consider_endings(prg, &prg->endings_root, unicode, ulen, &endpos);
+				if(w) {
+					list = (value_t) {VAL_NIL};
+					for(j = ulen - 1; j >= endpos; j--) {
+						unibuf[0] = unicode[j];
+						unibuf[1] = 0;
+						if(unicode_to_utf8((uint8_t *) utfbuf, sizeof(utfbuf), unibuf) == 1) {
+							w2 = find_word(prg, utfbuf);
+							ensure_dict_word(prg, w2);
+							list = eval_makepair((value_t) {VAL_DICT, w2->dict_id}, list, es);
+							if(list.tag == VAL_ERROR) return list;
+						} else {
+							return (value_t) {VAL_ERROR};
+						}
+					}
+					list = eval_makepair((value_t) {VAL_DICT, w->dict_id}, list, es);
 					if(list.tag == VAL_ERROR) return list;
+					list.tag = VAL_DICTEXT;
+					return list;
+				} else {
+					list = (value_t) {VAL_NIL};
+					for(j = ulen - 1; j >= 0; j--) {
+						unibuf[0] = unicode[j];
+						unibuf[1] = 0;
+						if(unicode_to_utf8((uint8_t *) utfbuf, sizeof(utfbuf), unibuf) == 1) {
+							w2 = find_word(prg, utfbuf);
+							ensure_dict_word(prg, w2);
+							list = eval_makepair((value_t) {VAL_DICT, w2->dict_id}, list, es);
+							if(list.tag == VAL_ERROR) return list;
+						} else {
+							return (value_t) {VAL_ERROR};
+						}
+					}
+					list = eval_makepair(list, (value_t) {VAL_NIL, 0}, es);
+					if(list.tag == VAL_ERROR) return list;
+					list.tag = VAL_DICTEXT;
+					return list;
 				}
-				list = eval_makepair((value_t) {VAL_DICT, w->dict_id}, list, es);
-				if(list.tag == VAL_ERROR) return list;
-				list.tag = VAL_DICTEXT;
-				return list;
 			}
-		}
-		if(len == 1) {
-			return (value_t) {VAL_DICT, input[0]};
 		} else {
-			list = (value_t) {VAL_NIL};
-			for(j = len - 1; j >= 0; j--) {
-				list = eval_makepair((value_t) {VAL_DICT, input[j]}, list, es);
-				if(list.tag == VAL_ERROR) return list;
-			}
-			list = eval_makepair(list, (value_t) {VAL_NIL, 0}, es);
-			if(list.tag == VAL_ERROR) return list;
-			list.tag = VAL_DICTEXT;
-			return list;
+			return (value_t) {VAL_ERROR};
 		}
 	}
 }
@@ -1245,7 +1273,7 @@ static int recompile(struct program *prg, int argc, char **argv) {
 	uint8_t termbuf[1];
 
 	o_begin_box("debugger");
-	while(!frontend(prg, argc, argv)) {
+	while(!frontend(prg, argc, argv, 0)) {
 		o_line();
 		o_print_str("Please fix the errors, and then press RETURN to proceed.");
 		o_print_str(term_quit_hint());
@@ -1344,7 +1372,9 @@ int debugger(int argc, char **argv) {
 	int initial_trace = 0, no_entry = 0, quitopt = 0;
 	struct timeval tv;
 	int dfrotz_quirks = 0;
-	char numbuf[8];
+	char numbuf[8], chbuf[8];
+	struct word *w;
+	uint16_t unibuf[2];
 
 	dbg.timestamps = calloc(argc, sizeof(struct timespec));
 
@@ -1417,7 +1447,7 @@ int debugger(int argc, char **argv) {
 	dbg.prg->eval_ticker = term_ticker;
 	frontend_add_builtins(dbg.prg);
 	(void) check_modification_times(&dbg);
-	if(!frontend(dbg.prg, dbg.nfilename, dbg.filenames)) {
+	if(!frontend(dbg.prg, dbg.nfilename, dbg.filenames, 0)) {
 		free_program(dbg.prg);
 		term_cleanup();
 		return 1;
@@ -1514,21 +1544,32 @@ int debugger(int argc, char **argv) {
 				}
 				o_line();
 				dyn_add_inputlog(&dbg.ds, (uint8_t *) "");
-				dbg.status = eval_resume(&dbg.es, (value_t) {VAL_DICT, '\r'});
+				w = find_word(dbg.prg, "\r");
+				ensure_dict_word(dbg.prg, w);
+				dbg.status = eval_resume(&dbg.es, (value_t) {VAL_DICT, w->dict_id});
 			} else {
 				o_sync();
 				i = term_getkey(0);
 				o_post_input(0);
 				if(i == '\n') i = '\r';
 				if(i == 127) i = 8;
+				if(i >= 129 && i <= 132) {
+					i -= 129 - 16;
+				}
 				if(i < 0 || i == 4) {
 					o_line();
 					running = 0;
-				} else if(i == '\r' || i == 8 || (i >= 32 && i < 127) || (i >= 129 && i <= 132)) {
-					dyn_add_inputlog(&dbg.ds, (uint8_t *) "");
-					dbg.status = eval_resume(&dbg.es, (value_t) {VAL_DICT, i});
 				} else if(i == 3) {
 					dbg.status = eval_injected_query(&dbg.es, find_builtin(dbg.prg, BI_BREAK_GETKEY));
+				} else {
+					unibuf[0] = i;
+					unibuf[1] = 0;
+					if(unicode_to_utf8((uint8_t *) chbuf, sizeof(chbuf), unibuf) == 1) {
+						w = find_word(dbg.prg, chbuf);
+						ensure_dict_word(dbg.prg, w);
+						dyn_add_inputlog(&dbg.ds, (uint8_t *) "");
+						dbg.status = eval_resume(&dbg.es, (value_t) {VAL_DICT, w->dict_id});
+					}
 				}
 			}
 			break;
@@ -1624,14 +1665,7 @@ int debugger(int argc, char **argv) {
 				dyn_add_inputlog(&dbg.ds, termbuf);
 				tail = (value_t) {VAL_NIL};
 				if(dbg.status == ESTATUS_GET_RAW_INPUT) {
-					while(i > 0) {
-						tail = eval_makepair((value_t) {VAL_DICT, termbuf[--i]}, tail, &dbg.es);
-						if(tail.tag == VAL_ERROR) break;
-					}
-					if(i > 0) {
-						dbg.status = ESTATUS_ERR_HEAP;
-						break;
-					}
+					assert(0); exit(1);
 				} else {
 					while(i >= 0) {
 						i--;
@@ -1643,8 +1677,12 @@ int debugger(int argc, char **argv) {
 								if(tail.tag == VAL_ERROR) break;
 							}
 							if(i >= 0 && termbuf[i] != ' ') {
+								chbuf[0] = termbuf[i];
+								chbuf[1] = 0;
+								w = find_word(dbg.prg, chbuf);
+								ensure_dict_word(dbg.prg, w);
 								tail = eval_makepair(
-									(value_t) {VAL_DICT, termbuf[i]},
+									(value_t) {VAL_DICT, w->dict_id},
 									tail,
 									&dbg.es);
 								if(tail.tag == VAL_ERROR) break;

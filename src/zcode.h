@@ -19,6 +19,7 @@ struct zinstr {
 // Variable form VAR: 111nnnnn aabbccdd
 // Extended form VAR: 10111110 nnnnnnnn aabbccdd
 
+#define OP_NOP		0x1fff
 #define OP_EXT		0x1000
 #define OP_NOT		0x2000		// invert sense of branch
 #define OP_LABEL(x)	(0x4000 | (x))	// this is a label pseudo-instruction
@@ -30,21 +31,20 @@ struct zinstr {
 // REG_CONT identifies the routine to resume at (i.e. jump to) after a successful end of clause
 // REG_CHOICE points to a choice frame, representing what to do on local failure
 // REG_SIMPLE may contain an older value of REG_CHOICE, to be restored at a successful end of clause
-// REG_SIMPLEREF refers either to REG_CHOICE (for multi-calls) or REG_SIMPLE (for simple calls).
+// REG_SIMPLE is zero for multi-queries
 //
 // End of clause:
 //
-// When the end of a clause is reached, REG_CHOICE is loaded indirectly from REG_SIMPLEREF,
+// When the end of a clause is reached, REG_CHOICE is loaded from REG_SIMPLE if the latter is non-zero,
 // and REG_CONT is jumped to. This will either keep or discard the choice points.
 //
 // Tailcalls:
 //
-// For a tailcall that is a multi-call, REG_SIMPLE and REG_SIMPLEREF are left the way they are.
+// For a tailcall that is a multi-call, REG_SIMPLE is left the way it was.
 // * If the calling predicate was invoked as a multi-call, the tailcall will remain a multi-call.
 // * If the calling predicate was invoked as a simple call, the tailcall will effectively become a simple call.
 //
-// For a simple tailcall, REG_SIMPLE is loaded indirectly from REG_SIMPLEREF, and REG_SIMPLEREF is
-// set to point to REG_SIMPLE.
+// For a simple tailcall, REG_SIMPLE is loaded from REG_CHOICE if it was zero.
 // * If the calling predicate was invoked as a simple call, the contents of the registers do not change, and
 //   the tailcall will remain a simple call.
 // * If the calling predicate was invoked as a multi-call, REG_SIMPLE is set to the current REG_CHOICE, and
@@ -54,21 +54,17 @@ struct zinstr {
 // Non-tail calls:
 //
 // In order to accomodate non-tail calls, it is necessary to preserve the
-// contents of REG_CONT, REG_SIMPLE and/or REG_SIMPLEREF. Each clause that makes
+// contents of REG_CONT and REG_SIMPLE. Each clause that makes
 // non-tail calls will do this using an environment frame. The environment frame is
 // deallocated (and the values restored) just before the tailcall.
-// REG_CONT must always be saved.
-// REG_SIMPLE and REG_SIMPLEREF must be saved if any simple calls are made.
-// However, if static analysis shows that a predicate is only invoked by simple calls,
-// then REG_SIMPLEREF is known to refer to REG_SIMPLE, and doesn't have to be preserved.
+// If static analysis shows that a predicate is only invoked by simple calls, there is no
+// need to check whether REG_SIMPLE is zero.
 //
-// For a non-tail multi-call, point REG_SIMPLEREF to REG_CHOICE.
-// For a non-tail simple call, point REG_SIMPLEREF to REG_SIMPLE, and copy REG_CHOICE to REG_SIMPLE.
+// For a non-tail multi-call, set REG_SIMPLE to zero.
+// For a non-tail simple call, copy REG_CHOICE to REG_SIMPLE.
 
 // Note that the compiler can figure out which predicates are called in one
-// mode exclusively (simple or multi). Such predicates can ignore SIMPLEREF
-// since its value is known. Furthermore, callers can omit setting SIMPLEREF if
-// the callee is known to ignore it.
+// mode exclusively (simple or multi).
 
 // Cutting:
 //
@@ -90,12 +86,12 @@ struct zinstr {
 #define REG_ENV			0x13	/* current env frame, unpacked before tail call */
 #define REG_CHOICE		0x14	/* current choice frame, unpacked on failure */
 #define REG_SIMPLE		0x15	/* saved choice frame at start of simple call */
-#define REG_SIMPLEREF		0x16	/* indirect reference to REG_CHOICE (multi) or REG_SIMPLE (simple)*/
-#define REG_PAIR		0x17
-#define REG_TRAIL		0x18	/* index into aux area of last used trail cell */
-#define REG_COLL		0x19	/* index into aux area of first free coll cell */
-#define REG_TOP			0x1a	/* top of heap (which grows upwards) */
-#define REG_STOP		0x1b
+#define REG_PAIR		0x16
+#define REG_TRAIL		0x17	/* index into aux area of last used trail cell */
+#define REG_COLL		0x18	/* index into aux area of first free coll cell */
+#define REG_TOP			0x19	/* top of heap (which grows upwards) */
+#define REG_STOPAUX		0x1a
+#define REG_STOPCHOICE		0x1b
 #define REG_TRACING		0x1c
 #define REG_FAILJMP		0x1d	/* catch/throw reference for failing */
 #define REG_FATALJMP		0x1e	/* catch/throw reference for runtime errors */
@@ -104,23 +100,24 @@ struct zinstr {
 #define REG_FORWORDS		0x21	/* are we gathering words? */
 #define REG_LTTOP		0x22	/* top of long-term heap (which grows upwards) */
 #define REG_LTMAX		0x23	/* for memory statistics */
+#define REG_IDX			0x24
 
 /* useful constants */
 
-#define REG_2000		0x24
-#define REG_3FFF		0x25
-#define REG_4000		0x26
-#define REG_8000		0x27
-#define REG_C000		0x28
-#define REG_E000		0x29
-#define REG_FFFF		0x2a
-#define REG_AUXBASE		0x2b
-#define REG_NIL			0x2c	/* 1fff */
-#define REG_R_SPA		0x2d	/* R_SPACE_PRINT_AUTO */
-#define REG_R_USIMPLE		0x2e	/* R_UNIFY_SIMPLE */
+#define REG_2000		0x25
+#define REG_3FFF		0x26
+#define REG_4000		0x27
+#define REG_8000		0x28
+#define REG_C000		0x29
+#define REG_E000		0x2a
+#define REG_FFFF		0x2b
+#define REG_AUXBASE		0x2c
+#define REG_NIL			0x2d	/* 1fff */
+#define REG_R_SPA		0x2e	/* R_SPACE_PRINT_AUTO */
+#define REG_R_USIMPLE		0x2f	/* R_UNIFY_SIMPLE */
 
-#define REG_A			0x2f	/* need 13 registers, one more than max arity */
-#define REG_X			0x3c
+#define REG_A			0x30	/* need 13 registers, one more than max arity */
+#define REG_X			0x3d
 
 #define REG_PUSH		0x100
 #define DEST_USERGLOBAL(x)	(0x200 | (x))
@@ -244,9 +241,7 @@ struct zinstr {
 enum {
 	ENV_ENV,
 	ENV_CONT,
-	ENV_CUT,	// optional
 	ENV_SIMPLE,	// optional
-	ENV_SIMPLEREF,	// optional
 	// persistent variables follow...
 };
 
@@ -260,7 +255,6 @@ enum {
 	CHOICE_TRAIL,
 	CHOICE_TOP,
 	CHOICE_SIMPLE,
-	CHOICE_SIMPLEREF,
 	CHOICE_SIZEOF
 	// argument registers follow...
 };
@@ -333,13 +327,18 @@ enum {
 	R_TRACE_VALUE,
 	R_PRINT_VALUE,
 	R_ENABLE_STYLE,
+	R_DISABLE_STYLE,
 	R_CURSORTO,
+
+	R_IS_WORD,
 
 	R_UNIFY,
 	R_UNIFY_SIMPLE,
 	R_PUSH_VAR,
 	R_PUSH_VAR_SETENV,
 	R_PUSH_VARS_SETENV,
+
+	R_PUSH_LIST_V,
 
 	R_PUSH_PAIR_VV,	// these four must be consecutive
 	R_PUSH_PAIR_VR,
@@ -384,25 +383,29 @@ enum {
 	R_CHECK_FLAG,
 	R_CHECK_FLAG_N,
 
+	R_SET_LISTFLAG,
+	R_RESET_LISTFLAG,
+	R_CLRALL_LISTFLAG,
+
 	R_PLUS,
 	R_MINUS,
 	R_TIMES,
 	R_DIVIDED,
 	R_MODULO,
 	R_RANDOM,
-	R_LESS_OR_GREATER,
+	R_GREATER_THAN,
 
 	R_FAIL_PRED,
 	R_QUIT_PRED,
-	R_SAVE_PRED,
-	R_SAVE_UNDO_PRED,
-	R_SCRIPT_ON_PRED,
+	R_SAVE,
+	R_SAVE_UNDO,
+	R_SCRIPT_ON,
 	R_GET_KEY,
-	R_GET_INPUT_PRED,
+	R_GET_INPUT,
 	R_TRY_STEMMING,
 	R_COPY_INPUT_WORD,
+#if 0
 	R_GET_RAW_INPUT_PRED,
-
 	R_REPEAT_PRED,
 	R_REPEAT_SUB,
 	R_OBJECT_PRED,
@@ -416,6 +419,8 @@ enum {
 	R_SPLIT_SUB,
 	R_SPLIT_SPECIAL_PRED,
 	R_SPLIT_SPECIAL_SUB,
+#endif
+	R_SPLIT_LIST,
 
 	R_COLLECT_BEGIN,
 	R_COLLECT_PUSH,
@@ -430,11 +435,10 @@ enum {
 	R_AUX_PUSH2,
 	R_AUX_PUSH3,
 
+	R_WORDMAP,
+
 	R_BEGINSTATUS,
 	R_ENDSTATUS,
-
-	R_PUSH_STOP,
-	R_STOP_PRED,
 
 	R_SEL_STOPPING,
 	R_SEL_RANDOM,
@@ -452,13 +456,15 @@ enum {
 	R_PRINTHEX8,
 	R_PRINT_N_ZSCII,
 	R_PRINT_N_BYTES,
-	R_SERIALNUMBER_PRED,
-	R_COMPILERVERSION_PRED,
+	R_SERIALNUMBER,
+	R_COMPILERVERSION,
 	R_DUMP_GLOBALS,
 	R_DUMP_MEM,
 	R_DUMP_COLL,
+#if 0
 	R_MEMINFO_PRED,
-	R_MEMSTATS_PRED,
+#endif
+	R_MEMSTATS,
 
 	R_TRACE_ENTER,
 	R_TRACE_QUERY,
