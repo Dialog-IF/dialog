@@ -1729,6 +1729,7 @@ int debugger(int argc, char **argv) {
 				if(dbg.status == ESTATUS_GET_RAW_INPUT) {
 					assert(0); exit(1);
 				} else {
+					i = strlen((char *) termbuf);
 					while(i >= 0) {
 						i--;
 						if(i < 0 || strchr(STOPCHARS " ", termbuf[i])) {

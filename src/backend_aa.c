@@ -2036,7 +2036,7 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 									if(strchr(NO_SPACE_AFTER, w->name[strlen(w->name) - 1])) flag = 1;
 									for(m = 0; w->name[m] && !flag; m++) {
 										if((w->name[m] >= 'A' && w->name[m] <= 'Z')
-										|| w->name[m] >= 0x80) {
+										|| (w->name[m] & 0x80)) {
 											flag = 1;
 											//printf("%s\n", w->name);
 										}

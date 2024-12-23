@@ -1,4 +1,4 @@
-This archive contains version 0i/02 of the Dialog compiler and interactive
+This archive contains version 0i/03 of the Dialog compiler and interactive
 debugger, bundled with documentation and version 0.34 of the Dialog Standard
 Library.
 
@@ -37,6 +37,19 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0i/03 Lib 0.34 (Manual revision 20):
+
+		Compiler: Fixed a bug where, under very specific circumstances,
+		a register could get overwritten by an else-clause.
+
+		Aa-backend: Fixed a bug where text containing non-ASCII
+		characters would occasionally be converted to lowercase.
+
+		Debugger: Fixed a bug in how UTF-8 input is divided into words.
+
+		Manual: Added a clarification about the pristineness of nested
+		objects, including the initial possessions of the player.
 
 	0i/02 Lib 0.34 (Manual revision 19):
 

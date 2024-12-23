@@ -1746,6 +1746,7 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 				ci = add_instr(I_POP_CHOICE);
 				ci->oper[0] = (value_t) {OPER_NUM, 0};
 				comp_body(prg, cl, an->children[2], seen2, endlab, predflags, known_args);
+				memset(known_args, 0, MAXPARAM * sizeof(struct astnode *));
 			}
 			if(at_tail) {
 				return;

@@ -53,10 +53,10 @@ case-by-case basis, and we will soon see how that's done in practice.
 </p>
 <p>For now, the important thing to remember is that items (and wearable objects)
 can move around, and therefore we should only call them out in room
-descriptions (and in the descriptions of containers and supporters) when they
-are in their pristine state. Whenever we include a movable object in our story,
-we have a responsibility to check this. It can be done with an if-statement as
-in the following example:
+descriptions—and in the descriptions of containers and supporters—when they are
+in their pristine state. Whenever we include a movable object in our story, we
+have a responsibility to check this. It can be done with an if-statement as in
+the following example:
 </p>
 <textarea class="copyarea" id="copy1" readonly>
 #bowl
@@ -197,6 +197,40 @@ without a check.
 <span class="prginput">LOOK IN BOWL</span>, <span class="prginput">GET ALL</span>, <span class="prginput">PUT STONE IN
 BOWL</span>, <span class="prginput">PUT STONE ON TABLE</span>, <span class="prginput">DROP ALL</span>...
 </p>
+<h3>Pristineness of nested objects</h3>
+<p>Be aware that, by the above definition, objects are pristine until they are
+moved from their initial location. That initial location could be e.g. a
+portable container or the player character. If the containing object is moved
+from its initial location, its contents nevertheless remain pristine.
+</p>
+<p>So, for instance, if the player starts out with a wallet containing a receipt,
+then both the wallet and the receipt are initially pristine, even though they
+are part of the player's inventory. If the player drops the wallet, it becomes
+handled, but the receipt inside remains in its original location—the wallet—and
+is still considered pristine.
+</p>
+<p>It is therefore the story author who should call attention to the receipt, as
+part of the description of the wallet, until the receipt is no longer pristine:
+</p>
+<textarea class="copyarea" id="copy3" readonly>
+(descr #wallet)
+	Imitation leather. Jammed zipper.
+	(if) (#receipt is pristine) (then)
+		One pitiful receipt inside.
+	(endif)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(descr #wallet)</td></tr>
+<tr><td class="left"></td><td class="right">Imitation leather. Jammed zipper.</td></tr>
+<tr><td class="left"></td><td class="right">(if) (#receipt is pristine) (then)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>One pitiful receipt inside.</td></tr>
+<tr><td class="left"></td><td class="right">(endif)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy3').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
 <a id="plursynonyms"></a><h2>Plural forms</h2>
 <p><span class="code">(dict&nbsp;$)</span> and <span class="code">(plural dict&nbsp;$)</span> can be used to add
 synonyms to objects. In the example above, we added both singular and plural
@@ -215,7 +249,7 @@ games, that approach is generally frowned upon. We could mention the stones in
 the description of the bowl. But there are two stones, so how do we do that? Do
 we check whether they are both pristine? I.e.:
 </p>
-<textarea class="copyarea" id="copy3" readonly>
+<textarea class="copyarea" id="copy4" readonly>
 (descr #bowl)
 	It's a small bowl.
 	(if)
@@ -238,14 +272,14 @@ we check whether they are both pristine? I.e.:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy3').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy4').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>But what if the player only picks up the amethyst, and then puts it back? The
 sapphire is still in the bowl, but the story doesn't mention it, and the
 library only prints a stock message about the amethyst (because it is no longer
 pristine). Another option is to add lots of special cases:
 </p>
-<textarea class="copyarea" id="copy4" readonly>
+<textarea class="copyarea" id="copy5" readonly>
 (descr #bowl)
 	It's a small bowl.
 	(if)
@@ -278,13 +312,13 @@ pristine). Another option is to add lots of special cases:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy4').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy5').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>But this doesn't scale well, if there were more than two precious stones in the
 bowl to begin with. We also have the option to cop out entirely, and tell the
 library to narrate these objects already from the start:
 </p>
-<textarea class="copyarea" id="copy5" readonly>
+<textarea class="copyarea" id="copy6" readonly>
 (descr #bowl)
 	It's a small bowl.
 
@@ -301,7 +335,7 @@ library to narrate these objects already from the start:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy5').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy6').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Remember, handled is the opposite of pristine in this context. Now, when the
 player first examines the bowl, the game responds:
@@ -314,7 +348,7 @@ A sapphire is in the small bowl.</div><p>But that's decidedly clunky. A somewhat
 cop-out, is to print a vague message that encourages the player to look inside
 the bowl, without mentioning any details about what's inside:
 </p>
-<textarea class="copyarea" id="copy6" readonly>
+<textarea class="copyarea" id="copy7" readonly>
 (descr #bowl)
 	It's a small bowl.
 	(if) ($ is #in #bowl) (then)
@@ -331,7 +365,7 @@ the bowl, without mentioning any details about what's inside:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy6').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy7').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>But this will backfire, in a sense, if the player takes the amethyst and then
 puts it back. Examining the bowl would then result in the following output:
@@ -351,7 +385,7 @@ predicate called <span class="code">(appearance $Object $Relation $Parent)</span
 step is to tell the library to refrain from printing such a message about any
 object that's currently in the bowl:
 </p>
-<textarea class="copyarea" id="copy7" readonly>
+<textarea class="copyarea" id="copy8" readonly>
 ~(appearance $ #in #bowl) %% Objects in the bowl have no appearance.
 </textarea>
 <div class="blkcode">
@@ -360,7 +394,7 @@ object that's currently in the bowl:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy7').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy8').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Now that we have silenced those particular messages from the standard library,
 we must provide our own variant in the description of the bowl. But we have to
@@ -369,7 +403,7 @@ object in the bowl, not just the amethyst and the sapphire. So we have to take
 care of any foreign objects that might end up there too. In some situations, it
 might be sufficient to drop a vague hint:
 </p>
-<textarea class="copyarea" id="copy8" readonly>
+<textarea class="copyarea" id="copy9" readonly>
 (descr #bowl)
 	It's a small bowl.
 	(if) ($ is #in #bowl) (then)
@@ -390,14 +424,14 @@ might be sufficient to drop a vague hint:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy8').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy9').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>The library provides a predicate, <span class="code">(list objects $Rel $Obj)</span>, that
 prints a neutral sentence along the lines of “In the small bowl are an amethyst
 and a sapphire”, or nothing at all if there is no object in the specified
 location. Thus:
 </p>
-<textarea class="copyarea" id="copy9" readonly>
+<textarea class="copyarea" id="copy10" readonly>
 (descr #bowl)
 	It's a small bowl.
 	(par)
@@ -416,13 +450,13 @@ location. Thus:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy9').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>A more advanced technique is to use a <a href="choicepoints.html#multiqueries">multi-query</a> and a
 <a href="choicepoints.html#collect">collect statement</a> to print a list of all objects currently inside
 the bowl:
 </p>
-<textarea class="copyarea" id="copy10" readonly>
+<textarea class="copyarea" id="copy11" readonly>
 (descr #bowl)
 	It's a small bowl.
 	(collect $Obj)
@@ -445,13 +479,13 @@ the bowl:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy11').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>An entirely different approach is to allow objects to call attention to
 themselves, but to replace the stock message with a custom one. This is done by
 overriding <span class="code">(appearence $ $&nbsp;$)</span> with a rule that prints text:
 </p>
-<textarea class="copyarea" id="copy11" readonly>
+<textarea class="copyarea" id="copy12" readonly>
 #sapphire
 (appearance * $ $)
 	(* is handled)
@@ -466,7 +500,7 @@ overriding <span class="code">(appearence $ $&nbsp;$)</span> with a rule that pr
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy11').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy12').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>That rule did not check the location of the sapphire, so it would override the
 default message also when the sapphire makes an appearance as part of a room
@@ -476,7 +510,7 @@ is still pristine.
 </p>
 <p>When the last two parameters are wildcards (as above), they can be omitted:
 </p>
-<textarea class="copyarea" id="copy12" readonly>
+<textarea class="copyarea" id="copy13" readonly>
 #sapphire
 (appearance *)
 	(* is handled)
@@ -491,7 +525,7 @@ is still pristine.
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy12').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy13').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>In story code, <span class="code">(appearance $ $&nbsp;$)</span> rules always take precedence
 over <span class="code">(appearance&nbsp;$)</span> rules. The way this works internally, is that
@@ -516,7 +550,7 @@ control over their appearance.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="moving.html">Chapter 5: Moving around</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 19, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 20, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>
