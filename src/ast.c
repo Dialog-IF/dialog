@@ -396,6 +396,9 @@ void pp_expr(struct astnode *an) {
 	case AN_NEG_RULE:
 		printf("~");
 		/* drop through */
+	case AN_REPORT_RULE:
+		if(an->kind == AN_REPORT_RULE) printf("(*report*) ");
+		/* drop through */
 	case AN_RULE:
 		if(an->subkind == RULE_MULTI) printf("*");
 		printf("(");

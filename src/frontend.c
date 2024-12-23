@@ -2880,7 +2880,7 @@ int frontend_inject_query(struct program *prg, struct predname *predname, struct
 	struct lexer lexer = {0};
 	struct clause *cl;
 	struct astnode *body, *an;
-	struct word *vname = find_word(prg, "Input");
+	struct word *vname = find_word(prg, "*Input");
 	struct predicate *pred;
 
 	pred_clear(predname);

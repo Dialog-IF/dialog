@@ -1,5 +1,5 @@
-This archive contains version 0i/01 of the Dialog compiler and interactive
-debugger, bundled with documentation and version 0.33 of the Dialog Standard
+This archive contains version 0i/02 of the Dialog compiler and interactive
+debugger, bundled with documentation and version 0.34 of the Dialog Standard
 Library.
 
 Directory structure:
@@ -37,6 +37,18 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0i/02 Lib 0.34 (Manual revision 19):
+
+		Library: Fixed a bug in how the visibility ceiling was
+		computed.
+
+		Debugger: Removed spurious extra "Query succeeded" after each
+		interactive query. Proper reporting of interactive queries to
+		access predicates.
+
+		Manual: Added missing multi-query asterisks to the fungibility
+		examples.
 
 	0i/01 Lib 0.33 (Manual revision 18):
 

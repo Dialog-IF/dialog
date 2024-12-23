@@ -450,7 +450,7 @@ them, and then define rules in terms of the trait:
 	marble
 (plural name (marble $))
 	marbles
-((marble $) is #in #bowl)
+(*(marble $) is #in #bowl)
 </textarea>
 <div class="blkcode">
 <table>
@@ -464,7 +464,7 @@ them, and then define rules in terms of the trait:
 <tr><td class="left"></td><td class="right">marble</td></tr>
 <tr><td class="both" colspan="2">(plural name (marble $))</td></tr>
 <tr><td class="left"></td><td class="right">marbles</td></tr>
-<tr><td class="both" colspan="2">((marble $) is #in #bowl)</td></tr>
+<tr><td class="both" colspan="2">(*(marble $) is #in #bowl)</td></tr>
 </table>
 </div>
 <div class="copycode">
@@ -480,7 +480,7 @@ object definitions automatically</a>. The following is mostly equivalent:
 	marble
 (plural name (marble $))
 	marbles
-((marble $) is #in #bowl)
+(*(marble $) is #in #bowl)
 </textarea>
 <div class="blkcode">
 <table>
@@ -490,7 +490,7 @@ object definitions automatically</a>. The following is mostly equivalent:
 <tr><td class="left"></td><td class="right">marble</td></tr>
 <tr><td class="both" colspan="2">(plural name (marble $))</td></tr>
 <tr><td class="left"></td><td class="right">marbles</td></tr>
-<tr><td class="both" colspan="2">((marble $) is #in #bowl)</td></tr>
+<tr><td class="both" colspan="2">(*(marble $) is #in #bowl)</td></tr>
 </table>
 </div>
 <div class="copycode">
@@ -552,13 +552,12 @@ object as appropriate. Thus:
 </p>
 <textarea class="copyarea" id="copy9" readonly>
 (generate 3 (box $))
-(item (box $))
-	box
 (name (box $))
 	box
 (plural name (box $))
 	boxes
-(openable (box $))
+(item *(box $))
+(openable *(box $))
 
 (fungible (box $A) (box $B))
 	{
@@ -586,13 +585,12 @@ object as appropriate. Thus:
 <div class="blkcode">
 <table>
 <tr><td class="both" colspan="2">(generate 3 (box $))</td></tr>
-<tr><td class="both" colspan="2">(item (box $))</td></tr>
-<tr><td class="left"></td><td class="right">box</td></tr>
 <tr><td class="both" colspan="2">(name (box $))</td></tr>
 <tr><td class="left"></td><td class="right">box</td></tr>
 <tr><td class="both" colspan="2">(plural name (box $))</td></tr>
 <tr><td class="left"></td><td class="right">boxes</td></tr>
-<tr><td class="both" colspan="2">(openable (box $))</td></tr>
+<tr><td class="both" colspan="2">(item *(box $))</td></tr>
+<tr><td class="both" colspan="2">(openable *(box $))</td></tr>
 <tr><td class="blank" colspan="2"></td></tr>
 <tr><td class="both" colspan="2">(fungible (box $A) (box $B))</td></tr>
 <tr><td class="left"></td><td class="right">{</td></tr>
@@ -630,13 +628,13 @@ strongly recommended that all fungible objects are marked as handled from the
 start:
 </p>
 <textarea class="copyarea" id="copy10" readonly>
-((marble $) is handled)
-((box $) is handled)
+(*(marble $) is handled)
+(*(box $) is handled)
 </textarea>
 <div class="blkcode">
 <table>
-<tr><td class="both" colspan="2">((marble $) is handled)</td></tr>
-<tr><td class="both" colspan="2">((box $) is handled)</td></tr>
+<tr><td class="both" colspan="2">(*(marble $) is handled)</td></tr>
+<tr><td class="both" colspan="2">(*(box $) is handled)</td></tr>
 </table>
 </div>
 <div class="copycode">
@@ -657,23 +655,23 @@ start:
 (marble #marble4)
 (marble #marble5)
 
-(item (box $))
 (name (box $))
 	box
 (plural name (box $))
 	boxes
-(openable (box $))
-((box $) is handled)
-((box $) is #on #table)
+(item *(box $))
+(openable *(box $))
+(*(box $) is handled)
+(*(box $) is #on #table)
 
-(item (marble $))
-(edible (marble $))
 (name (marble $))
 	marble
 (plural name (marble $))
 	marbles
+(item *(marble $))
+(edible *(marble $))
 (clarify location of (marble $))
-((marble $) is handled)
+(*(marble $) is handled)
 
 (#marble1 is #in #box1)
 (#marble2 is #in #box1)
@@ -732,23 +730,23 @@ start:
 <tr><td class="both" colspan="2">(marble #marble4)</td></tr>
 <tr><td class="both" colspan="2">(marble #marble5)</td></tr>
 <tr><td class="blank" colspan="2"></td></tr>
-<tr><td class="both" colspan="2">(item (box $))</td></tr>
 <tr><td class="both" colspan="2">(name (box $))</td></tr>
 <tr><td class="left"></td><td class="right">box</td></tr>
 <tr><td class="both" colspan="2">(plural name (box $))</td></tr>
 <tr><td class="left"></td><td class="right">boxes</td></tr>
-<tr><td class="both" colspan="2">(openable (box $))</td></tr>
-<tr><td class="both" colspan="2">((box $) is handled)</td></tr>
-<tr><td class="both" colspan="2">((box $) is #on #table)</td></tr>
+<tr><td class="both" colspan="2">(item *(box $))</td></tr>
+<tr><td class="both" colspan="2">(openable *(box $))</td></tr>
+<tr><td class="both" colspan="2">(*(box $) is handled)</td></tr>
+<tr><td class="both" colspan="2">(*(box $) is #on #table)</td></tr>
 <tr><td class="blank" colspan="2"></td></tr>
-<tr><td class="both" colspan="2">(item (marble $))</td></tr>
-<tr><td class="both" colspan="2">(edible (marble $))</td></tr>
 <tr><td class="both" colspan="2">(name (marble $))</td></tr>
 <tr><td class="left"></td><td class="right">marble</td></tr>
 <tr><td class="both" colspan="2">(plural name (marble $))</td></tr>
 <tr><td class="left"></td><td class="right">marbles</td></tr>
+<tr><td class="both" colspan="2">(item *(marble $))</td></tr>
+<tr><td class="both" colspan="2">(edible *(marble $))</td></tr>
 <tr><td class="both" colspan="2">(clarify location of (marble $))</td></tr>
-<tr><td class="both" colspan="2">((marble $) is handled)</td></tr>
+<tr><td class="both" colspan="2">(*(marble $) is handled)</td></tr>
 <tr><td class="blank" colspan="2"></td></tr>
 <tr><td class="both" colspan="2">(#marble1 is #in #box1)</td></tr>
 <tr><td class="both" colspan="2">(#marble2 is #in #box1)</td></tr>
@@ -817,7 +815,7 @@ It's your call.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="libref.html">Appendix: Predicate index</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 18, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 19, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

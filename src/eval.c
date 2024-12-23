@@ -2404,14 +2404,6 @@ static int eval_run(struct eval_state *es) {
 					predname,
 					es->arg,
 					MKLINE(ci->oper[0].value, ci->oper[1].value));
-				if(pp.pred->predname->builtin == BI_INJECTED_QUERY) {
-					trace(
-						es,
-						TR_REPORT,
-						predname,
-						es->arg,
-						0);
-				}
 			} else if(ci->subop == TR_DETOBJ) {
 				trace(
 					es,
@@ -2419,6 +2411,15 @@ static int eval_run(struct eval_state *es) {
 					0,
 					es->arg,
 					MKLINE(ci->oper[0].value, ci->oper[1].value));
+			} else if(ci->subop == TR_REPORT) {
+				assert(ci->oper[2].tag == OPER_PRED);
+				predname = es->program->predicates[ci->oper[2].value];
+				trace(
+					es,
+					TR_REPORT,
+					predname,
+					es->arg,
+					0);
 			} else {
 				assert(0);
 			}

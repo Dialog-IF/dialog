@@ -886,7 +886,7 @@ static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an,
 	int vnum;
 	char chbuf[2];
 	struct astnode *sub;
-	int do_trace = !(prg->optflags & OPTF_NO_TRACE);
+	int do_trace = !(prg->optflags & OPTF_NO_TRACE), force_tail = 0;
 	struct word *w;
 
 	// returns non-zero if we handled the tail case
@@ -896,6 +896,7 @@ static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an,
 	if(cl->predicate->builtin == BI_INJECTED_QUERY && tail != NO_TAIL && !an->next_in_body) {
 		// force a tail-call here, otherwise the trace indentation will keep increasing
 		do_trace = 0;
+		force_tail = 1;
 	}
 
 	if(do_trace) {
@@ -1490,7 +1491,7 @@ static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an,
 		}
 	}
 
-	if((prg->optflags & OPTF_TAIL_CALLS) && /* !do_trace && */ tail == CONT_TAIL) {
+	if(force_tail || ((prg->optflags & OPTF_TAIL_CALLS) && /* !do_trace && */ tail == CONT_TAIL)) {
 		ci = add_instr(I_DEALLOCATE);
 		ci->subop = 0;
 		ci = add_instr(I_INVOKE_TAIL_ONCE + (an->subkind == RULE_MULTI));
@@ -2291,6 +2292,17 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 			v1 = comp_value(cl, an, seen, known_args);
 			ci = add_instr(I_PRINT_VAL);
 			ci->oper[0] = v1;
+			break;
+		case AN_REPORT_RULE:
+			for(i = 0; i < an->nchild; i++) {
+				comp_value_into(cl, an->children[i], (value_t) {OPER_ARG, i}, seen, known_args);
+				known_args[i] = an->children[i];
+			}
+			ci = add_instr(I_TRACEPOINT);
+			ci->subop = TR_REPORT;
+			ci->oper[0] = (value_t) {OPER_FILE, 0};
+			ci->oper[1] = (value_t) {OPER_NUM, 0};
+			ci->oper[2] = (value_t) {OPER_PRED, an->predicate->pred_id};
 			break;
 		default:
 			assert(0);

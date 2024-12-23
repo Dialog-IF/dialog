@@ -44,7 +44,9 @@ enum {
 	AN_LINK_SELF,
 	AN_LINK,
 	AN_LINK_RES,
-	AN_LOG
+	AN_LOG,
+
+	AN_REPORT_RULE
 };
 
 enum {

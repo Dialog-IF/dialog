@@ -1495,8 +1495,24 @@ int parse_file(struct lexer *lexer, int filenum, struct clause ***clause_dest_pt
 	return !lexer->errorflag;
 }
 
+static void deanonymize_vars(struct astnode *an, struct program *prg) {
+	int i;
+
+	if(an) {
+		if(an->kind == AN_VARIABLE) {
+			if(!an->word->name[0]) {
+				an->word = fresh_word(prg);
+			}
+		} else {
+			for(i = 0; i < an->nchild; i++) {
+				deanonymize_vars(an->children[i], prg);
+			}
+		}
+	}
+}
+
 struct astnode *parse_injected_query(struct lexer *lexer, struct predicate *pred) {
-	struct astnode *an, *body, **andest = &body;
+	struct astnode *an, *body, **andest = &body, *anrep;
 
 	line = 0;
 	column = 1;
@@ -1545,12 +1561,19 @@ struct astnode *parse_injected_query(struct lexer *lexer, struct predicate *pred
 				report(LVL_ERR, 0, "Syntax error in '(now)'-expression.");
 				return 0;
 			}
+			*andest = an;
+			andest = &an->next_in_body;
 		} else if(an->predicate->special) {
 			report(LVL_ERR, 0, "Only queries, multi-queries, and '(now)'-expressions may be entered interactively.");
 			return 0;
+		} else {
+			deanonymize_vars(an, lexer->program);
+			anrep = deepcopy_astnode(an, &pred->arena, 0);
+			anrep->kind = AN_REPORT_RULE;
+			an->next_in_body = anrep;
+			*andest = an;
+			andest = &anrep->next_in_body;
 		}
-		*andest = an;
-		andest = &an->next_in_body;
 		status = next_token(lexer, PMODE_BODY);
 		if(lexer->errorflag) return 0;
 		if(status) {

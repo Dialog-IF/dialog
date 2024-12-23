@@ -1,6 +1,6 @@
 
 (library version)
-	Library version 0.33.
+	Library version 0.34.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -356,16 +356,20 @@
 	*($Obj provides light)
 	(visibility ceiling of $Obj is $Ceil)
 
-(visibility ceiling of (room $R) is $R)
-
-(visibility ceiling of $Obj is $Parent)
-	($Obj is #in $Parent)
-	($Parent is opaque)
-	($Parent is closed)
-
 (visibility ceiling of $Obj is $Ceil)
-	($Obj has parent $Parent)
-	(visibility ceiling of $Parent is $Ceil)
+	(if) ($Obj has parent $Parent) (then)
+		(if)
+			($Obj has relation #in)
+			($Parent is opaque)
+			($Parent is closed)
+		(then)
+			($Ceil = $Parent)
+		(else)
+			(visibility ceiling of $Parent is $Ceil)
+		(endif)
+	(else)
+		($Ceil = $Obj)
+	(endif)
 
 (player can see $Obj)
 	(current visibility ceiling $Ceil)
