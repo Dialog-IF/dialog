@@ -406,7 +406,8 @@ int trace_invocations_body(struct astnode **anptr, int flags, uint8_t *bound, st
 			if(an->subkind == RULE_SIMPLE
 			|| (tail && !an->next_in_body && (cl->predicate->pred->flags & PREDF_INVOKED_SIMPLE))) {
 				moreflags |= PREDF_INVOKED_SIMPLE;
-			} else {
+			}
+			if(an->subkind == RULE_MULTI) {
 				moreflags |= PREDF_INVOKED_MULTI;
 			}
 			for(i = 0; i < an->predicate->arity; i++) {
@@ -416,7 +417,7 @@ int trace_invocations_body(struct astnode **anptr, int flags, uint8_t *bound, st
 			}
 			if(an->predicate->pred->flags & PREDF_FAIL) {
 				an->predicate->pred->flags |= flags | moreflags;
-				failed = 1;
+				if(an->kind == AN_RULE) failed = 1;
 			} else if(an->predicate->pred->dynamic) {
 				if(an->predicate->arity
 				&& !(an->predicate->pred->flags & PREDF_GLOBAL_VAR)
@@ -930,17 +931,21 @@ void build_dictionary(struct program *prg) {
 	}
 }
 
-static int query_known_to_fail(struct program *prg, struct astnode *an, struct word *objvar, int onum);
-static int query_known_to_succeed(struct program *prg, struct astnode *an, struct word *objvar, int onum);
+static int query_known_to_fail(struct program *prg, struct astnode *an, struct word *objvar, int onum, int max_depth);
+static int query_known_to_succeed(struct program *prg, struct astnode *an, struct word *objvar, int onum, int max_depth);
 
-static int body_can_succeed(struct program *prg, struct astnode *an, struct word *objvar, int onum) {
+static int body_can_succeed(struct program *prg, struct astnode *an, struct word *objvar, int onum, int max_depth) {
+	if(max_depth <= 0) {
+		return 1;
+	}
+
 	while(an) {
 		if(an->kind == AN_RULE) {
-			if(query_known_to_fail(prg, an, objvar, onum)) {
+			if(query_known_to_fail(prg, an, objvar, onum, max_depth - 1)) {
 				return 0;
 			}
 		} else if(an->kind == AN_NEG_RULE) {
-			if(query_known_to_succeed(prg, an, objvar, onum)) {
+			if(query_known_to_succeed(prg, an, objvar, onum, max_depth - 1)) {
 				return 0;
 			}
 		} else {
@@ -952,14 +957,18 @@ static int body_can_succeed(struct program *prg, struct astnode *an, struct word
 	return 1;
 }
 
-static int body_must_succeed(struct program *prg, struct astnode *an, struct word *objvar, int onum) {
+static int body_must_succeed(struct program *prg, struct astnode *an, struct word *objvar, int onum, int max_depth) {
+	if(max_depth <= 0) {
+		return 0;
+	}
+
 	while(an) {
 		if(an->kind == AN_RULE) {
-			if(!query_known_to_succeed(prg, an, objvar, onum)) {
+			if(!query_known_to_succeed(prg, an, objvar, onum, max_depth - 1)) {
 				return 0;
 			}
 		} else if(an->kind == AN_NEG_RULE) {
-			if(!query_known_to_fail(prg, an, objvar, onum)) {
+			if(!query_known_to_fail(prg, an, objvar, onum, max_depth - 1)) {
 				return 0;
 			}
 		} else {
@@ -971,10 +980,14 @@ static int body_must_succeed(struct program *prg, struct astnode *an, struct wor
 	return 1;
 }
 
-static int query_known_to_fail(struct program *prg, struct astnode *an, struct word *objvar, int onum) {
+static int query_known_to_fail(struct program *prg, struct astnode *an, struct word *objvar, int onum, int max_depth) {
 	struct predname *predname;
 	struct astnode *sub;
 	int i;
+
+	if(max_depth <= 0) {
+		return 0;
+	}
 
 	predname = an->predicate;
 
@@ -984,7 +997,8 @@ static int query_known_to_fail(struct program *prg, struct astnode *an, struct w
 
 	if(predname->builtin == BI_IS_ONE_OF) {
 		if(an->children[0]->kind == AN_VARIABLE
-		&& an->children[0]->word == objvar) {
+		&& an->children[0]->word == objvar
+		&& an->children[1]->kind == AN_PAIR) {
 			for(sub = an->children[1]; sub && sub->kind == AN_PAIR; sub = sub->children[1]) {
 				if(sub->children[0]->kind == AN_TAG
 				&& sub->children[0]->word->obj_id == onum) {
@@ -995,7 +1009,17 @@ static int query_known_to_fail(struct program *prg, struct astnode *an, struct w
 				return 1;
 			}
 		}
-	} else if(predname->pred->flags & PREDF_FIXED_FLAG) {
+	} else if(predname->builtin == BI_LIST || predname->builtin == BI_NONEMPTY) {
+		if(an->children[0]->kind == AN_VARIABLE
+		&& an->children[0]->word == objvar) {
+			return 1;
+		}
+	} else if(predname->arity
+	&& !predname->builtin
+	&& (
+		(predname->pred->flags & PREDF_FIXED_FLAG) ||
+		!(predname->pred->flags & PREDF_DYNAMIC)))
+	{
 		if(an->children[0]->kind == AN_VARIABLE
 		&& an->children[0]->word == objvar) {
 			for(i = 0; i < predname->pred->nclause; i++) {
@@ -1003,12 +1027,18 @@ static int query_known_to_fail(struct program *prg, struct astnode *an, struct w
 
 				if(cl->params[0]->kind == AN_TAG
 				&& cl->params[0]->word->obj_id == onum) {
-					if(body_can_succeed(prg, cl->body, 0, -1)) {
+					if(body_can_succeed(prg, cl->body, 0, -1, max_depth - 1)) {
 						return 0;
 					}
 				} else if(cl->params[0]->kind == AN_VARIABLE) {
-					if(body_can_succeed(prg, cl->body, cl->params[0]->word, onum)) {
-						return 0;
+					if(cl->params[0]->word->name[0]) {
+						if(body_can_succeed(prg, cl->body, cl->params[0]->word, onum, max_depth - 1)) {
+							return 0;
+						}
+					} else {
+						if(body_can_succeed(prg, cl->body, 0, -1, max_depth - 1)) {
+							return 0;
+						}
 					}
 				}
 			}
@@ -1019,10 +1049,14 @@ static int query_known_to_fail(struct program *prg, struct astnode *an, struct w
 	return 0;
 }
 
-static int query_known_to_succeed(struct program *prg, struct astnode *an, struct word *objvar, int onum) {
+static int query_known_to_succeed(struct program *prg, struct astnode *an, struct word *objvar, int onum, int max_depth) {
 	struct predname *predname;
 	struct astnode *sub;
 	int i;
+
+	if(max_depth <= 0) {
+		return 0;
+	}
 
 	predname = an->predicate;
 
@@ -1032,7 +1066,8 @@ static int query_known_to_succeed(struct program *prg, struct astnode *an, struc
 
 	if(predname->builtin == BI_IS_ONE_OF) {
 		if(an->children[0]->kind == AN_VARIABLE
-		&& an->children[0]->word == objvar) {
+		&& an->children[0]->word == objvar
+		&& an->children[1]->kind == AN_PAIR) {
 			for(sub = an->children[1]; sub && sub->kind == AN_PAIR; sub = sub->children[1]) {
 				if(sub->children[0]->kind == AN_TAG
 				&& sub->children[0]->word->obj_id == onum) {
@@ -1048,11 +1083,11 @@ static int query_known_to_succeed(struct program *prg, struct astnode *an, struc
 
 				if(cl->params[0]->kind == AN_TAG
 				&& cl->params[0]->word->obj_id == onum) {
-					if(body_must_succeed(prg, cl->body, 0, -1)) {
+					if(body_must_succeed(prg, cl->body, 0, -1, max_depth - 1)) {
 						return 1;
 					}
 				} else if(cl->params[0]->kind == AN_VARIABLE) {
-					if(body_must_succeed(prg, cl->body, cl->params[0]->word, onum)) {
+					if(body_must_succeed(prg, cl->body, cl->params[0]->word, onum, max_depth - 1)) {
 						return 1;
 					}
 				} // We will not enter this clause.
@@ -1066,36 +1101,21 @@ static void extract_wordmap_from_body(struct wordmap_tally *tallies, int tally_o
 
 static void extract_wordmap_from_pred(struct wordmap_tally *tallies, int tally_onum, struct program *prg, struct predname *predname, int objarg, int onum, int max_depth) {
 	int i;
-	struct wordmap_tally *tally;
 
-	if(!max_depth) {
-		// Prevent infinite recursion, since we can't detect the base case. This must be an always-object.
-		tally = &tallies[256 + prg->ndictword];
-		for(i = 0; i < tally->count; i++) {
-			if(tally->onumtable[i] == tally_onum) break;
-		}
-		if(i == tally->count) {
-			if(tally->count < MAXWORDMAP) {
-				tally->onumtable[tally->count] = tally_onum;
-			}
-			tally->count++;
-		}
-	} else {
-		for(i = 0; i < predname->pred->nclause; i++) {
-			struct clause *cl = predname->pred->clauses[i];
+	for(i = 0; i < predname->pred->nclause; i++) {
+		struct clause *cl = predname->pred->clauses[i];
 
-			if(objarg >= 0 && cl->params[objarg]->kind == AN_TAG) {
-				if(cl->params[objarg]->word == prg->worldobjnames[onum]) {
-					extract_wordmap_from_body(tallies, tally_onum, prg, cl->body, 0, -1, max_depth - 1);
-					if(cl->body && cl->body->kind == AN_JUST) break;
-				}
-			} else if(objarg >= 0 && cl->params[objarg]->kind == AN_VARIABLE) {
-				extract_wordmap_from_body(tallies, tally_onum, prg, cl->body, cl->params[objarg]->word, onum, max_depth - 1);
-				if(cl->body && cl->body->kind == AN_JUST) break;
-			} else {
+		if(objarg >= 0 && cl->params[objarg]->kind == AN_TAG) {
+			if(cl->params[objarg]->word == prg->worldobjnames[onum]) {
 				extract_wordmap_from_body(tallies, tally_onum, prg, cl->body, 0, -1, max_depth - 1);
 				if(cl->body && cl->body->kind == AN_JUST) break;
 			}
+		} else if(objarg >= 0 && cl->params[objarg]->kind == AN_VARIABLE) {
+			extract_wordmap_from_body(tallies, tally_onum, prg, cl->body, cl->params[objarg]->word, onum, max_depth - 1);
+			if(cl->body && cl->body->kind == AN_JUST) break;
+		} else if(objarg < 0) {
+			extract_wordmap_from_body(tallies, tally_onum, prg, cl->body, 0, -1, max_depth - 1);
+			if(cl->body && cl->body->kind == AN_JUST) break;
 		}
 	}
 }
@@ -1104,15 +1124,30 @@ static void extract_wordmap_from_body(struct wordmap_tally *tallies, int tally_o
 	int i;
 	struct wordmap_tally *tally;
 
+	if(max_depth <= 0) {
+		// Prevent infinite recursion, since we can't detect the base case.
+		// This object must always be considered.
+
+		tally = &tallies[256 + prg->ndictword];
+		for(i = 0; i < tally->count && i < MAXWORDMAP; i++) {
+			if(tally->onumtable[i] == tally_onum) break;
+		}
+		if(i == tally->count || i == MAXWORDMAP) {
+			if(tally->count < MAXWORDMAP) {
+				tally->onumtable[tally->count] = tally_onum;
+			}
+			if(tally->count <= MAXWORDMAP) {
+				tally->count++;
+			}
+		}
+
+		return;
+	}
+
 	while(an) {
 		switch(an->kind) {
 			case AN_RULE:
 			case AN_NEG_RULE:
-				if(an->kind == AN_RULE && query_known_to_fail(prg, an, objvar, onum)) {
-					return;
-				} else if(an->kind == AN_NEG_RULE && query_known_to_succeed(prg, an, objvar, onum)) {
-					return;
-				}
 				for(i = 0; i < an->predicate->arity; i++) {
 					if(an->children[i]->kind == AN_VARIABLE
 					&& an->children[i]->word == objvar) {
@@ -1130,24 +1165,44 @@ static void extract_wordmap_from_body(struct wordmap_tally *tallies, int tally_o
 				if(i == an->predicate->arity) {
 					extract_wordmap_from_pred(tallies, tally_onum, prg, an->predicate, -1, -1, max_depth);
 				}
+				if(an->kind == AN_RULE && query_known_to_fail(prg, an, objvar, onum, max_depth - 1)) {
+					return;
+				} else if(an->kind == AN_NEG_RULE && query_known_to_succeed(prg, an, objvar, onum, max_depth - 1)) {
+					return;
+				}
 				break;
 			case AN_BAREWORD:
 			case AN_DICTWORD:
 			case AN_VARIABLE:
+				tally = 0;
 				if(an->kind == AN_VARIABLE) {
 					tally = &tallies[256 + prg->ndictword];
-				} else {
-					assert(an->word->flags & WORDF_DICT);
+				} else if(an->word->flags & WORDF_DICT) {
 					tally = &tallies[an->word->dict_id];
 				}
-				for(i = 0; i < tally->count; i++) {
-					if(tally->onumtable[i] == tally_onum) break;
-				}
-				if(i == tally->count) {
-					if(tally->count < MAXWORDMAP) {
-						tally->onumtable[tally->count] = tally_onum;
+				// trace_invocations is more discerning when determining what dictionary words
+				// are reachable. If WORDF_DICT is unset, we can safely ignore this word.
+				if(tally) {
+					for(i = 0; i < tally->count && i < MAXWORDMAP; i++) {
+						if(tally->onumtable[i] == tally_onum) break;
 					}
-					tally->count++;
+					if(i == tally->count || i == MAXWORDMAP) {
+						if(tally->count < MAXWORDMAP) {
+							tally->onumtable[tally->count] = tally_onum;
+						}
+						if(tally->count <= MAXWORDMAP) {
+							tally->count++;
+						}
+					}
+				}
+				break;
+			case AN_IF:
+				extract_wordmap_from_body(tallies, tally_onum, prg, an->children[0], objvar, onum, max_depth - 1);
+				if(body_can_succeed(prg, an->children[0], objvar, onum, max_depth - 1)) {
+					extract_wordmap_from_body(tallies, tally_onum, prg, an->children[1], objvar, onum, max_depth - 1);
+				}
+				if(!body_must_succeed(prg, an->children[0], objvar, onum, max_depth - 1)) {
+					extract_wordmap_from_body(tallies, tally_onum, prg, an->children[2], objvar, onum, max_depth - 1);
 				}
 				break;
 			case AN_BLOCK:
@@ -1155,13 +1210,12 @@ static void extract_wordmap_from_body(struct wordmap_tally *tallies, int tally_o
 			case AN_FIRSTRESULT:
 			case AN_STOPPABLE:
 			case AN_STATUSBAR:
-			case AN_IF:
 			case AN_OR:
 			case AN_SELECT:
 			case AN_EXHAUST:
 			case AN_COLLECT:
 				for(i = 0; i < an->nchild; i++) {
-					extract_wordmap_from_body(tallies, tally_onum, prg, an->children[i], objvar, onum, max_depth);
+					extract_wordmap_from_body(tallies, tally_onum, prg, an->children[i], objvar, onum, max_depth - 1);
 				}
 				break;
 			case AN_COLLECT_WORDS:
@@ -1181,7 +1235,7 @@ static void extract_wordmap_from_body(struct wordmap_tally *tallies, int tally_o
 }
 
 static int compute_wordmap(struct program *prg, struct astnode *generators, struct astnode *collectbody, struct word *objvar, struct predicate *pred) {
-	int onum, i, n;
+	int onum, i, j, k, n;
 	struct wordmap_tally tallies[256 + prg->ndictword + 1];
 
 	for(i = 0; i < 256 + prg->ndictword + 1; i++) {
@@ -1189,10 +1243,31 @@ static int compute_wordmap(struct program *prg, struct astnode *generators, stru
 	}
 
 	for(onum = 0; onum < prg->nworldobj; onum++) {
-		if(body_can_succeed(prg, generators, objvar, onum)) {
-			extract_wordmap_from_body(tallies, onum, prg, collectbody, objvar, onum, 16);
+		if(body_can_succeed(prg, generators, objvar, onum, 8)) {
+			extract_wordmap_from_body(tallies, onum, prg, collectbody, objvar, onum, 8);
 		}
 	}
+
+	(void) j;
+	(void) k;
+
+#if 0
+	for(i = 0; i < 256 + prg->ndictword; i++) {
+		if(tallies[i].count <= MAXWORDMAP) {
+			for(j = 0; j < tallies[i].count; ) {
+				for(k = 0; k < tallies[256 + prg->ndictword].count; k++) {
+					if(tallies[i].onumtable[j] == tallies[256 + prg->ndictword].onumtable[k]) break;
+				}
+				if(k < tallies[256 + prg->ndictword].count) {
+					memmove(tallies[i].onumtable + j, tallies[i].onumtable + j + 1, (tallies[i].count - j - 1) * sizeof(uint16_t));
+					tallies[i].count--;
+				} else {
+					j++;
+				}
+			}
+		}
+	}
+#endif
 
 #if 0
 	printf("reverse wordmap, line %d:\n", LINEPART(collectbody->line));
@@ -1209,7 +1284,6 @@ static int compute_wordmap(struct program *prg, struct astnode *generators, stru
 			if(tallies[i].count > MAXWORDMAP) {
 				printf(" (many)");
 			} else {
-				int j;
 				for(j = 0; j < tallies[i].count; j++) {
 					printf(" #%s", prg->worldobjnames[tallies[i].onumtable[j]]->name);
 				}

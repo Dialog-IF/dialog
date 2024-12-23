@@ -305,14 +305,15 @@ for which the flag is currently set.
 <p>The linked list is enabled for any flag predicate that the program might query
 with an unbound parameter, as this allows Dialog to loop efficiently over every
 object for which the flag is set. An example from the standard library is
-<span class="code">($&nbsp;is in scope)</span>. Such per-object flags can also be checked or set
-in constant time, but <b>clearing them is linear</b> in the number of objects
-having the flag set, because it is necessary to traverse the list at runtime in
-order to unlink the object in question.
+<span class="code">($&nbsp;is to be considered)</span>, which is used during path finding. Such
+per-object flags can also be checked or set in constant time, but <b>clearing
+them is linear</b> in the number of objects having the flag set, because it is
+necessary to traverse the list at runtime in order to unlink the object in
+question.
 </p>
 <p>The linked list is also enabled for flags that the program might clear for
-every object, e.g. <span class="code">(now) ~($ is in scope)</span>. That operation is
-always linear in the number of objects that have the flag set.
+every object, e.g. <span class="code">(now) ~($&nbsp;is to be considered)</span>. That operation
+is always linear in the number of objects that have the flag set.
 </p>
 <a id="future"></a><h2>Limitations and the future of Dialog</h2>
 <p>The support for numerical computation in Dialog is quite minimal at the moment.
@@ -342,7 +343,7 @@ characters is probably more trouble than it's worth.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="quickref.html">Appendix: Quick reference</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 5, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 6, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

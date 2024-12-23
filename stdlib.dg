@@ -1,6 +1,6 @@
 
 (library version)
-	Library version 0.20.
+	Library version 0.21.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -275,6 +275,21 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Access rules
 
+(global variable (current visibility ceiling $))
+
+(recompute visibility)
+	(current player $Player)
+	(visibility ceiling of $Player is $Ceil)
+	(now) (current visibility ceiling $Ceil)
+	(if) (light reaches ceiling $Ceil) (then)
+		(now) (player can see)
+	(else)
+		(now) ~(player can see)
+	(endif)
+
+(recompute visibility)
+	%% E.g. if there is no current player.
+
 (light reaches ceiling (room $Ceil))
 	~(inherently dark $Ceil)
 
@@ -293,18 +308,14 @@
 	($Obj has parent $Parent)
 	(visibility ceiling of $Parent is $Ceil)
 
-(player can see)
-	(current player $Player)
-	(visibility ceiling of $Player is $Ceil)
-	(light reaches ceiling $Ceil)
-
-($Obj is visible to $Actor)
-	(visibility ceiling of $Actor is $Ceil)
+($Obj is visible to player)
+	(current visibility ceiling $Ceil)
 	(if) (visibility ceiling of $Obj is $Ceil) (then)
 		{
 			(light reaches ceiling $Ceil)
 		(or)
-			($Obj has ancestor $Actor)
+			(current player $Player)
+			($Obj has ancestor $Player)
 		}
 	(else)
 		(room $Ceil)
@@ -343,71 +354,58 @@
 
 (add $ to scope)	(fail)
 
-%% These rules should be left as they are:
+%% These rules should generally be left as they are:
 
 (rebuild scope)
-	(now) ~($ is in scope)
-	(current player $Actor)
-	(visibility ceiling of $Actor is $Ceil)
-	(if) (light reaches ceiling $Ceil) (then)
-		(now) ($Ceil is in scope)
-		(exhaust) {
-			*($Child is #in $Ceil)
-			(recursively add $Child to scope)
+	(recompute visibility)
+	(forget pronouns out of scope)
+
+($Obj is in scope)
+	*(add $Obj to scope)
+
+($Obj is in scope)
+	(if) (player can see) (then)
+		(current visibility ceiling $Ceil)
+		{
+			*($Obj is visible up to $Ceil)
+		(or)
+			(room $Ceil)
+			{
+				*(from $Ceil go $ to $Obj)
+				(room $Obj)
+			(or)
+				*(from $Ceil through $Door to $Obj)
+				~($Door blocks light)
+			}
 		}
 	(else)
-		%% in the dark
-		(recursively add $Actor to scope)
-	(endif)
-	(current room $Room)
-	(now) ($Room is in scope) %% i.e. even if we're in darkness
-	(exhaust) {
-		*(from $Room go $ to $Obj)
-		~(direction $Obj)
-		(now) ($Obj is in scope)
-	}
-	(exhaust) {
-		*(from $Room through $Door to $Other)
-		~($Door blocks light)
-		(now) ($Other is in scope)
-	}
-	(exhaust) {
-		*(add $Obj to scope)
-		(now) ($Obj is in scope)
-	}
-	(if) (player's it refers to $Obj) ~($Obj is in scope) (then)
-		(now) ~(player's it refers to $)
-	(endif)
-	(if) (narrator's it refers to $Obj) ~($Obj is in scope) (then)
-		(now) ~(narrator's it refers to $)
-	(endif)
-	(if) (him refers to $Obj) ~($Obj is in scope) (then)
-		(now) ~(him refers to $)
-	(endif)
-	(if) (her refers to $Obj) ~($Obj is in scope) (then)
-		(now) ~(her refers to $)
-	(endif)
-	(if)
-		(them refers to $ObjList)
-		*($Obj is one of $ObjList)
-		~($Obj is in scope)
-	(then)
-		(now) ~(them refers to $)
+		{
+			(current visibility ceiling $Obj)
+		(or)
+			(current player $Player)
+			*($Obj is visible up to $Player)
+		}
 	(endif)
 
-(recursively add $Obj to scope)
-	(now) ($Obj is in scope)
-	(if) ($Obj is closed) ($Obj is opaque) (then)
-		(exhaust) {
-			*($Sub has parent $Obj)
+($Obj is visible up to $Obj)
+
+($Obj is visible up to $Ceiling)
+	(if) (unbound $Obj) (then)
+		(if) ($Ceiling is closed) ($Ceiling is opaque) (then)
+			*($Sub has parent $Ceiling)
 			~($Sub has relation #in)
-			(recursively add $Sub to scope)
-		}
+		(else)
+			*($Sub has parent $Ceiling)
+		(endif)
+		*($Obj is visible up to $Sub)
 	(else)
-		(exhaust) {
-			*($Sub has parent $Obj)
-			(recursively add $Sub to scope)
+		($Obj has parent $Parent)
+		~{
+			($Obj has relation #in)
+			($Parent is closed)
+			($Parent is opaque)
 		}
+		($Parent is visible up to $Ceiling)
 	(endif)
 
 (scope)
@@ -450,6 +448,7 @@
 	(narrate entering $Room)
 
 (update environment around player)
+	(recompute visibility)
 	(if) (current player $Player) ($Player is in room $Room) (then)
 		(now) (current room $Room)
 		(if) ($Room is unvisited) (player can see) (then)
@@ -476,9 +475,10 @@
 
 %% Extend the following predicate to simulate objects occupying multiple rooms:
 
-($Room attracts $Door)
-	*(from $Room go $ to $Door)
-	(door $Door)
+($Room attracts $Obj)
+	*(from $Room go $ to $Obj)
+	~(direction $Obj)
+	~(room $Obj)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Standard actions
@@ -496,8 +496,7 @@
 
 (perform [look $Dir])
 	(if)
-		(current player $Player)
-		(visibility ceiling of $Player is $Room)
+		(current visibility ceiling $Room)
 		(room $Room)
 		(from $Room go $Dir to $Target)
 	(then)
@@ -586,8 +585,7 @@
 (prevent [look #in $Obj])
 	($Obj is opaque)
 	($Obj is closed)
-	(current player $Player)
-	~(visibility ceiling of $Player is $Obj)
+	~(current visibility ceiling $Obj)
 	(if) (openable $Obj) (then)
 		(The $Obj is) closed.
 	(else)
@@ -646,9 +644,7 @@
 		You can't get a good view of (the $Obj) from here.
 	(endif)
 
-(perform [examine $Obj])
-	(current player $Player)
-	(visibility ceiling of $Player is $Obj)
+(perform [examine (current visibility ceiling $Obj)])
 	(look $Obj)
 
 (perform [examine $Obj])
@@ -694,8 +690,8 @@
 
 (perform [look])
 	(current player $Player)
-	(visibility ceiling of $Player is $Ceil)
-	(if) (light reaches ceiling $Ceil) (then)
+	(current visibility ceiling $Ceil)
+	(if) (player can see) (then)
 		(location headline)
 		(line)
 		(look $Ceil)
@@ -1833,7 +1829,6 @@
 	(if)
 		(implicit action is $Implicit)
 		~(implicit action wants direction)
-		~(implicit object list $)
 	(then)
 		(recover implicit action $Implicit $Obj into $Action)
 	(else)
@@ -2422,6 +2417,8 @@
 		(nonempty $Filtered)
 		(determine object $Obj)
 			*(object $Obj)
+			~(direction $Obj)
+			~(relation $Obj)
 			~($Obj is in scope) %% Prevent double matches due to next branch.
 			~($Obj is hidden)
 			($Obj is in room $Room)
@@ -3242,6 +3239,7 @@
 	(if) (inhibiting next tick) (then)
 		(now) ~(inhibiting next tick)
 	(else)
+		(recompute visibility)
 		(exhaust) *(on every tick)
 	(endif)
 
@@ -3569,7 +3567,7 @@
 (dict $Obj)
 	(name $Obj)
 
-%% The plural dict should only mention a noun, so the default rule can't
+%% The plural dict should only mention nouns, so the default rule can't
 %% invoke (plural name $).
 
 (plural dict $)
@@ -3630,6 +3628,27 @@
 	(now) ~(her refers to $)
 	(now) ~(him refers to $)
 	(now) ~(them refers to $)
+
+(forget pronouns out of scope)
+	(if) (player's it refers to $Obj) ~($Obj is in scope) (then)
+		(now) ~(player's it refers to $)
+	(endif)
+	(if) (narrator's it refers to $Obj) ~($Obj is in scope) (then)
+		(now) ~(narrator's it refers to $)
+	(endif)
+	(if) (him refers to $Obj) ~($Obj is in scope) (then)
+		(now) ~(him refers to $)
+	(endif)
+	(if) (her refers to $Obj) ~($Obj is in scope) (then)
+		(now) ~(her refers to $)
+	(endif)
+	(if)
+		(them refers to $ObjList)
+		*($Obj is one of $ObjList)
+		~($Obj is in scope)
+	(then)
+		(now) ~(them refers to $)
+	(endif)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Default descriptions etc.
@@ -3756,9 +3775,8 @@
 %% Common complaints and prevent-checks
 
 (when $O is out of sight)
-	(current player $Actor)
-	~($O is visible to $Actor)
-	(visibility ceiling of $Actor is $Ceil)
+	~($O is visible to player)
+	(current visibility ceiling $Ceil)
 	(if) (light reaches ceiling $Ceil) (then)
 		You can't see any such thing.
 	(else)
@@ -3787,7 +3805,7 @@
 (when $O is out of reach)
 	(current player $Actor)
 	~($O is reachable by $Actor)
-	(if) ($O is visible to $Actor) (then)
+	(if) ($O is visible to player) (then)
 		You can't reach (the $O).
 	(else)
 		(The $O) (isn't $O) here.
@@ -3939,8 +3957,7 @@
 
 (narrate darkness)
 	You are surrounded by darkness.
-	(current player $Player)
-	(visibility ceiling of $Player is $Ceil)
+	(current visibility ceiling $Ceil)
 	(notice $Ceil)
 
 (current score 0)
@@ -4183,36 +4200,6 @@
 (understand $Words as single object $Output preferably container)
 	*(parse $Words as single object $Output 6)
 
-(understand [the | $Words] as object $Obj from $List)
-	(just)
-	*(understand $Words as object $Obj from $List)
-
-(understand [me/myself/self/yourself/you] as object $Obj from $List)
-	(current player $Obj)
-	($Obj is one of $List)
-
-(understand [here/room/location/area/surroundings/wall/walls] as object $Obj from $List)
-	(current room $Obj)
-	($Obj is one of $List)
-
-(understand [this room/location/area] as object $Obj from $List)
-	(current room $Obj)
-	($Obj is one of $List)
-
-(understand $Words as object $Obj from $List)
-	(filter $Words into $Filtered)
-	(determine object $Obj)
-		*($Obj is one of $List)
-	(from words)
-		*(name $Obj)
-	(matching all of $Filtered)
-
-(understand [$Word] as object $Obj from $List)
-	(parse direction [$Word] $Dir)
-	(current room $Room)
-	*(from $Room go $Dir to object $Obj)
-	($Obj is one of $List)
-
 (verify object policy 1 $Obj)	%% takable
 	(item $Obj)
 	~($Obj has relation #partof)
@@ -4395,8 +4382,10 @@
 		(nonempty $Tail)
 		(parse direction [$Head] $Dir)
 		(current room $Room)
-		(from $Room go $Dir to object $Obj)
 		(determine object $Obj)
+			*(from $Room go $Dir to object $Obj)
+			~(direction $Obj)
+			~(relation $Obj)
 		(from words)
 			*(dict $Obj)
 		(matching all of $Tail)
@@ -4404,6 +4393,8 @@
 		%% this is the normal case
 		(determine object $Obj)
 			*($Obj is in scope)
+			~(direction $Obj)
+			~(relation $Obj)
 		(from words)
 			*(dict $Obj)
 		(or)
@@ -4581,8 +4572,6 @@
 			(implicit action is $Implicit)
 			(if) (implicit action wants direction) (then)
 				*(understand $ActualWords as direction $O)
-			(elseif) (implicit object list $ImpList) (then)
-				*(understand $ActualWords as object $O from $ImpList)
 			(else)
 				%% We don't know the correct policy, so
 				%% fall back on 'non-all'.
@@ -4600,7 +4589,6 @@
 			%% Optimize the common case.
 			(now) ~(implicit action is $)
 			(now) ~(implicit action wants direction)
-			(now) ~(implicit object list $)
 			(try-complex $Single)
 		(else)
 			(sieve action candidates $AllCandidates $ActualWords)
@@ -4611,7 +4599,6 @@
 	(if) (nonempty $AllCandidates) (then)
 		(now) ~(implicit action is $)
 		(now) ~(implicit action wants direction)
-		(now) ~(implicit object list $)
 		(collect $A)
 			*($A is one of $AllCandidates)
 			~(unlikely-complex $A)
@@ -4681,8 +4668,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Disambiguation
 
-(global variable (implicit object list $))
-
 (consider action candidates $List)
 	(if) ($List = [$Single]) (then)
 		%% Optimize the common case.
@@ -4710,17 +4695,56 @@
 	(elseif)
 		(rephrase as object disambiguation
 			$AskList
-			$Result
+			$ComplexAction
 			$Template
 			$ObjList)
 	(then)
-		Did you want to (describe action $Result)?
-		(asking for one of $ObjList in $Template)
+		Did you want to (describe action $ComplexAction)?
+		(par)
+		> (get input $Words)
+		{
+			%% Since the player was given an explicit list of
+			%% '(the full $)' descriptions, we have to match
+			%% against those, instead of the normal dict rules.
+			%% However, we make a special case out of me/myself
+			%% (which is usually printed as 'yourself').
+
+			(current player $Player)
+			(if)
+				($Words = [$W])
+				($W is one of [me myself])
+				($Player is one of $ObjList)
+			(then)
+				(recover implicit action $Template $Player into $Result)
+			(else)
+				(collect $A)
+					(determine object $Obj)
+						*($Obj is one of $ObjList)
+						~(direction $Obj)
+						~(relation $Obj)
+					(from words)
+						(the full $Obj)
+					(matching all of $Words)
+					(recover implicit action $Template $Obj into $A)
+				(into $Candidates)
+				(nonempty $Candidates)
+				{
+					($Candidates = [$Result])
+				(or)
+					(just)
+					(consider action candidates $Candidates)
+					(stop)
+				}
+			(endif)
+		(or)
+			(parse commandline $Words)
+			(stop)
+		}
 	(else)
 		Did you want to: (line)
 		(enumerate actions $AskList 1 $)
 		\( Type the corresponding number \)
-		(line)
+		(par)
 		> (get input $Words)
 		{
 			(understand $Words as number $N)
@@ -4787,19 +4811,11 @@
 (asking for object in $Action)
 	(now) (implicit action is $Action)
 	(now) ~(implicit action wants direction)
-	(now) ~(implicit object list $)
 	(stop)
 
 (asking for direction in $Action)
 	(now) (implicit action is $Action)
 	(now) (implicit action wants direction)
-	(now) ~(implicit object list $)
-	(stop)
-
-(asking for one of $ObjList in $Action)
-	(now) (implicit action is $Action)
-	(now) ~(implicit action wants direction)
-	(now) (implicit object list $ObjList)
 	(stop)
 
 (recover implicit action [] $ into [])

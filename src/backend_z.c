@@ -3842,7 +3842,7 @@ void compile_rule(struct astnode *an, struct routine **rptr, struct predicate *m
 		zi->oper[0] = SMALL(REG_CONT);
 		zi->oper[1] = ROUTINE(cont_lab);
 		zi = append_instr(r, Z_RET);
-		zi->oper[0] = ROUTINE(call_lab);
+		zi->oper[0] = call_lab? ROUTINE(call_lab) : LARGE(0xdead);
 
 		if(!tail) {
 			clear_lingering(vars);
@@ -4496,6 +4496,7 @@ void compile_determine_obj(struct astnode *an, struct routine **rptr, struct pre
 		compile_put_ast_in_reg(r, an->children[0], REG_A + 0, vars);
 		compile_put_ast_in_reg(r, an->children[3], REG_A + 1, vars);
 		compile_rev_lookup(prg, rptr, &pred->wordmaps[an->value]);
+		r = *rptr;
 	}
 
 	compile_body(an->children[1], rptr, pred, envflags, vars, 0, prg);

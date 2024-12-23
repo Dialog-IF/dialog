@@ -1,5 +1,5 @@
-This archive contains version 0e/01 of the Dialog compiler and interactive
-debugger, bundled with documentation and version 0.20 of the dialog Standard
+This archive contains version 0e/02 of the Dialog compiler and interactive
+debugger, bundled with documentation and version 0.21 of the dialog Standard
 Library.
 
 Directory structure:
@@ -37,6 +37,33 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0e/02 Lib 0.21 (Manual revision 6):
+
+		Library: In object-based disambiguation, the answer is now
+		matched against '(the full $)'.
+
+		Library: Object-based disambiguation can now be undone with a
+		single undo.
+
+		Library: Scope is now computed on the fly, whereas the current
+		visibility is represented with global variables. Query
+		'(recompute visibility)' to update them. The new representation
+		has better performance due to the changes in 0e/01.
+
+		Library: All objects around the perimeter of a room (not just
+		doors) are attracted to the room.
+
+		Library: Objects around the perimeter of a room are no longer
+		in scope if the player is unable to see them.
+
+		Bugfixes and performance improvements in the internals of
+		'(determine object $)'.
+
+		Bugfix related to certain multi-queries in tail position.
+
+		Bugfix: Reporting a number of syntax errors instead of
+		asserting.
 
 	0e/01 Lib 0.20 (Manual revision 5):
 

@@ -610,18 +610,18 @@ otherwise. The same thing can of course be coded explicitly with an
 <tr><td><span class="code">($&nbsp;is handled)</span></td><td><span class="code">($&nbsp;is pristine)</span></td><td>Object has been moved by the player.</td></tr>
 <tr><td><span class="code">($&nbsp;is visited)</span></td><td><span class="code">($&nbsp;is unvisited)</span></td><td>The player has been inside this room.</td></tr>
 <tr><td>&nbsp;</td><td>&nbsp;</td></tr>
-<tr><td><span class="code">($&nbsp;is in scope)</span></td><td>&nbsp;</td><td>The player may refer to this object.</td></tr>
 <tr><td><span class="code">($&nbsp;is hidden)</span></td><td><span class="code">($&nbsp;is revealed)</span></td><td>Not suggested during disambiguation.</td></tr>
 </table>
 <a id="hidden"></a><h2>Hidden objects</h2>
-<p><i>Hidden objects</i>, <span class="code">($&nbsp;is hidden)</span>, can be in scope, but the
-library is careful not to mention them. Thus, if the player carries a pink
-slip, and the current room contains a pink elephant that is hidden, then
-<span class="prginput">EXAMINE PINK</span> will print the description of the slip, with no
-disambiguating questions asked. <span class="prginput">EXAMINE PINK ELEPHANT</span> will
-examine the elephant, as would <span class="prginput">EXAMINE PINK</span> if the slip weren't
-there. The idea is to improve the experience of replaying a game, while
-avoiding spoilers on the first playthrough.
+<p><i>Hidden objects</i>, <span class="code">($&nbsp;is hidden)</span>, can be in scope (meaning
+that the parser will recognize them as nouns), but the library is careful not
+to mention them. Thus, if the player carries a pink slip, and the current room
+contains a pink elephant that is hidden, then <span class="prginput">EXAMINE PINK</span> will
+print the description of the slip, with no disambiguating questions asked.
+<span class="prginput">EXAMINE PINK ELEPHANT</span> will examine the elephant, as would
+<span class="prginput">EXAMINE PINK</span> if the slip weren't there. The idea is to improve
+the experience of replaying a game, while avoiding spoilers on the first
+playthrough.
 </p>
 <p>Hidden objects can be revealed either by directly updating the flag,
 <span class="code">(now) (#elephant is revealed)</span>, or by querying
@@ -631,7 +631,7 @@ on it.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="traits.html">Chapter 3: Traits</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 5, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 6, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

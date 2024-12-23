@@ -1380,8 +1380,7 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 			break;
 		case AN_DETERMINE_OBJECT:
 			comp_ensure_seen(cl, an, seen);
-			if(an->value >= 0) {
-				assert(an->value < cl->predicate->pred->nwordmap);
+			if(an->value >= 0 && an->value < cl->predicate->pred->nwordmap) {
 				comp_value_into(cl, an->children[0], (value_t) {OPER_ARG, 0}, seen);
 				comp_value_into(cl, an->children[3], (value_t) {OPER_ARG, 1}, seen);
 				comp_rev_lookup(prg, cl, &cl->predicate->pred->wordmaps[an->value]);

@@ -276,17 +276,24 @@ static int look_ahead_for_slash(struct lexer *lexer) {
 static struct astnode *parse_expr(int parsemode, struct lexer *lexer, struct arena *arena);
 static struct astnode *parse_expr_nested(struct astnode **nested_rules, int *nnested, int parsemode, int *nonvar_detected, struct lexer *lexer, struct arena *arena);
 
-static struct astnode *fold_disjunctions(struct astnode *body, struct arena *arena) {
+static struct astnode *fold_disjunctions(struct astnode *body, struct lexer *lexer, struct arena *arena) {
 	struct astnode *an, **prev, *or;
 
 	for(prev = &body; (an = *prev); prev = &an->next_in_body) {
-		if(an->kind == AN_RULE
-		&& an->predicate->special == SP_OR) {
-			*prev = 0;
-			or = mkast(AN_OR, 2, arena, an->line);
-			or->children[0] = body;
-			or->children[1] = fold_disjunctions(an->next_in_body, arena);
-			return or;
+		if(an->kind == AN_RULE) {
+			if(an->predicate->special == SP_OR) {
+				*prev = 0;
+				or = mkast(AN_OR, 2, arena, an->line);
+				or->children[0] = body;
+				or->children[1] = fold_disjunctions(an->next_in_body, lexer, arena);
+				return or;
+			} else if(an->predicate->special == SP_ELSE
+			|| an->predicate->special == SP_ELSEIF
+			|| an->predicate->special == SP_ENDIF
+			|| an->predicate->special == SP_THEN) {
+				report(LVL_ERR, an->line, "Unexpected %s.", an->predicate->printed_name);
+				lexer->errorflag = 1;
+			}
 		}
 	}
 
@@ -465,7 +472,7 @@ static struct clause *parse_clause(int is_macro, struct lexer *lexer) {
 			*dest = an;
 			dest = &an->next_in_body;
 		}
-		*folddest = fold_disjunctions(*folddest, cl->arena);
+		*folddest = fold_disjunctions(*folddest, lexer, cl->arena);
 	}
 
 	return cl;
@@ -494,7 +501,7 @@ static struct astnode *parse_if(struct lexer *lexer, struct arena *arena) {
 		*dest = sub;
 		dest = &sub->next_in_body;
 	}
-	ifnode->children[0] = fold_disjunctions(ifnode->children[0], arena);
+	ifnode->children[0] = fold_disjunctions(ifnode->children[0], lexer, arena);
 	dest = &ifnode->children[1];
 	for(;;) {
 		status = next_token(lexer, PMODE_BODY);
@@ -539,8 +546,8 @@ static struct astnode *parse_if(struct lexer *lexer, struct arena *arena) {
 		*dest = sub;
 		dest = &sub->next_in_body;
 	}
-	ifnode->children[1] = fold_disjunctions(ifnode->children[1], arena);
-	ifnode->children[2] = fold_disjunctions(ifnode->children[2], arena);
+	ifnode->children[1] = fold_disjunctions(ifnode->children[1], lexer, arena);
+	ifnode->children[2] = fold_disjunctions(ifnode->children[2], lexer, arena);
 
 	return ifnode;
 }
@@ -700,7 +707,7 @@ static struct astnode *parse_expr(int parsemode, struct lexer *lexer, struct are
 				*dest = sub;
 				dest = &sub->next_in_body;
 			}
-			an->children[0] = fold_disjunctions(an->children[0], arena);
+			an->children[0] = fold_disjunctions(an->children[0], lexer, arena);
 		} else if(an->predicate->special == SP_COLLECT_WORDS) {
 			an = mkast(AN_COLLECT_WORDS, 2, arena, line);
 			dest = &an->children[0];
@@ -722,7 +729,7 @@ static struct astnode *parse_expr(int parsemode, struct lexer *lexer, struct are
 				*dest = sub;
 				dest = &sub->next_in_body;
 			}
-			an->children[0] = fold_disjunctions(an->children[0], arena);
+			an->children[0] = fold_disjunctions(an->children[0], lexer, arena);
 		} else if(an->predicate->special == SP_DETERMINE_OBJECT) {
 			sub = an->children[0];
 			if(sub->kind != AN_VARIABLE || !sub->word->name[0]) {
@@ -750,7 +757,7 @@ static struct astnode *parse_expr(int parsemode, struct lexer *lexer, struct are
 				*dest = sub;
 				dest = &sub->next_in_body;
 			}
-			an->children[1] = fold_disjunctions(an->children[1], arena);
+			an->children[1] = fold_disjunctions(an->children[1], lexer, arena);
 			dest = &an->children[2];
 			for(;;) {
 				status = next_token(lexer, PMODE_BODY);
@@ -770,7 +777,7 @@ static struct astnode *parse_expr(int parsemode, struct lexer *lexer, struct are
 				*dest = sub;
 				dest = &sub->next_in_body;
 			}
-			an->children[2] = fold_disjunctions(an->children[2], arena);
+			an->children[2] = fold_disjunctions(an->children[2], lexer, arena);
 		} else if(an->predicate->special == SP_STOPPABLE) {
 			an = mkast(AN_STOPPABLE, 1, arena, line);
 			status = next_token(lexer, PMODE_BODY);
@@ -830,7 +837,7 @@ static struct astnode *parse_expr(int parsemode, struct lexer *lexer, struct are
 			*dest = sub;
 			dest = &sub->next_in_body;
 		}
-		an->children[0] = fold_disjunctions(an->children[0], arena);
+		an->children[0] = fold_disjunctions(an->children[0], lexer, arena);
 		if(an->children[0] && !an->children[0]->next_in_body) {
 			an = an->children[0];
 		}
@@ -872,7 +879,7 @@ static struct astnode *parse_expr(int parsemode, struct lexer *lexer, struct are
 				*dest = sub;
 				dest = &sub->next_in_body;
 			}
-			an->children[0] = fold_disjunctions(an->children[0], arena);
+			an->children[0] = fold_disjunctions(an->children[0], lexer, arena);
 			if(an->children[0] && !an->children[0]->next_in_body && an->children[0]->kind == AN_RULE) {
 				an = an->children[0];
 				an->kind = AN_NEG_RULE;
@@ -1218,7 +1225,7 @@ int parse_file(struct lexer *lexer, int filenum, struct clause ***clause_dest_pt
 	lexer->totallines += LINEPART(line);
 	lexer->totalwords += lexer->wordcount;
 
-	return 1;
+	return !lexer->errorflag;
 }
 
 struct astnode *parse_injected_query(struct lexer *lexer, struct predicate *pred) {
