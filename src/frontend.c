@@ -357,7 +357,10 @@ int next_token(struct token *t, FILE *f, int parsemode) {
 				column++;
 				t->kind = TOK_STARPAREN;
 			} else {
-				if(ch != EOF) ungetc(ch, f);
+				if(ch != EOF) {
+					ungetc(ch, f);
+					column--;
+				}
 				t->kind = '*';
 			}
 			return 1 + at_start;
@@ -373,7 +376,10 @@ int next_token(struct token *t, FILE *f, int parsemode) {
 				column = 0;
 				line++;
 			} else {
-				if(ch != EOF) ungetc(ch, f);
+				if(ch != EOF) {
+					ungetc(ch, f);
+					column--;
+				}
 				buf[pos++] = '%';
 				buf[pos] = 0;
 				t->kind = TOK_BAREWORD;
@@ -396,7 +402,12 @@ int next_token(struct token *t, FILE *f, int parsemode) {
 				column++;
 				if(ch == '\\') {
 					ch = fgetc(f);
-					column++;
+					if(ch == '\n') {
+						line++;
+						column = 0;
+					} else {
+						column++;
+					}
 					if(ch == EOF) {
 						report(LVL_ERR, line, "Backslash not allowed at end of file.");
 						exit(1);
@@ -407,7 +418,10 @@ int next_token(struct token *t, FILE *f, int parsemode) {
 					}
 					buf[pos++] = ch;
 				} else if(ch == EOF || strchr("\n\r\t $#[|](){}@~*%/", ch)) {
-					if(ch != EOF) ungetc(ch, f);
+					if(ch != EOF) {
+						ungetc(ch, f);
+						column--;
+					}
 					buf[pos] = 0;
 					if(parsemode != PMODE_BODY) {
 						for(i = 0; i < pos; i++) {
@@ -448,11 +462,14 @@ int look_ahead_for_slash(FILE *f) {
 	do {
 		ch = fgetc(f);
 		column++;
-	} while(ch == ' ' || ch == '\t' || ch == '\r');
+	} while(ch == ' ' || ch == '\t');
 
 	found = (ch == '/');
 
-	if(ch != EOF) ungetc(ch, f);
+	if(ch != EOF) {
+		ungetc(ch, f);
+		column--;
+	}
 
 	return found;
 }
@@ -1025,12 +1042,20 @@ void trace_invoke_pred(struct predicate *pred, int flags, uint32_t unbound_in, s
 int body_can_be_fixed_flag(struct astnode *an, struct word *safevar) {
 	struct predicate *pred;
 	int have_constrained_safevar = !safevar;
+	struct astnode *sub;
 
 	while(an) {
 		if(an->kind == AN_RULE
 		|| an->kind == AN_NEG_RULE) {
 			pred = an->predicate;
-			if(pred->builtin) {
+			if(pred->builtin == BI_IS_ONE_OF
+			&& (an->children[0]->kind == AN_VARIABLE)
+			&& (an->children[0]->word == safevar)) {
+				for(sub = an->children[1]; sub->kind == AN_PAIR; sub = sub->children[1]) {
+					if(sub->children[0]->kind != AN_TAG) break;
+				}
+				return sub->kind == AN_EMPTY_LIST;
+			} else if(pred->builtin) {
 				if(pred->builtin != BI_FAIL
 				&& pred->builtin != BI_OBJECT) {
 					return 0;

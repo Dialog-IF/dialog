@@ -1,4 +1,4 @@
-This is version 0c/02 of the Dialog compiler, bundled with version 0.14 of its
+This is version 0c/03 of the Dialog compiler, bundled with version 0.15 of its
 standard library.
 
 Directory structure:
@@ -26,6 +26,15 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0c/03 Lib 0.15 (Manual revision 2):
+
+		Improved disambiguation: Now the library will ask the player to
+		choose from a list of objects, if that makes all the
+		difference. For more complicated situations, it falls back on a
+		numbered list of actions.
+
+		Miscellaneous compiler bugfixes.
 
 	0c/02 Lib 0.14 (Manual revision 2):
 

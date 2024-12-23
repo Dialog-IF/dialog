@@ -1,5 +1,5 @@
 CC	= gcc
-CFLAGS	+= -O3 -Wall -DVERSION=\"0c/02\"
+CFLAGS	+= -O3 -Wall -DVERSION=\"0c/03\"
 
 all:			dialogc
 

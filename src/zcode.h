@@ -22,7 +22,7 @@ struct zinstr {
 #define OP_EXT		0x1000
 #define OP_NOT		0x2000		// invert sense of branch
 #define OP_LABEL(x)	(0x4000 | (x))	// this is a label pseudo-instruction
-#define OP_NEAR		0x8000		// force near branch
+#define OP_FAR		0x8000		// far branch offset
 
 // How predicates are invoked:
 //

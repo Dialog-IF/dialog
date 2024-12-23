@@ -1,6 +1,6 @@
 
 (library version)
-	Library version 0.14.
+	Library version 0.15.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -1791,6 +1791,7 @@
 	(if)
 		(implicit action is $Implicit)
 		~(implicit action wants direction)
+		~(implicit object list $)
 	(then)
 		(recover implicit action $Implicit $Obj into $Action)
 	(else)
@@ -2742,15 +2743,6 @@
 %% LEAVE <room> <dir> BY <vehicle>
 %% LEAVE <room> <dir> WITH <object>
 
-(describe action [leave $Room $Dir])
-	leave (the $Room) going (name $Dir)
-
-(describe action [leave $Room $Dir by $Obj])
-	leave (the $Room) by (the $Obj) going (name $Dir)
-
-(describe action [leave $Room $Dir with $Obj])
-	leave (the $Room) pushing (the $Obj) (name $Dir)
-
 (instead of [leave $Room $Dir])
 	(from $Room go $Dir to $Target)
 	(direction $Target)
@@ -3272,6 +3264,7 @@
 
 (the full [a $Obj])		(a full $Obj)
 (the full [+ | $List])		(the-full-listing $List)
+(the full [, | $List])		(the-full-or-listing $List)
 (the full (list $List))		(the-full-listing $List)
 
 (it [$Single])			(it $Single)
@@ -3407,6 +3400,8 @@
 (Name $Obj)		(uppercase) (name $Obj)
 (A $Obj)		(uppercase) (a $Obj)
 (The $Obj)		(uppercase) (the $Obj)
+(A full $Obj)		(uppercase) (a full $Obj)
+(The full $Obj)		(uppercase) (the full $Obj)
 (It $Obj)		(uppercase) (it $Obj)
 (The $Obj is)		(uppercase) (the $Obj is)
 
@@ -3423,6 +3418,8 @@
 	(listing $List @t 0)
 (the-full-listing $List)
 	(listing $List @f 0)
+(the-full-or-listing $List)
+	(listing $List @, 0)
 (or-listing $List)
 	(listing $List @o 0)
 
@@ -3439,7 +3436,7 @@
 			,
 		(endif)
 		(if) ($NPrinted > 0) (then)
-			(if) ($Variant = @o) (then)
+			(if) ($Variant = @o) (or) ($Variant = @,) (then)
 				or
 			(else)
 				and
@@ -3454,7 +3451,7 @@
 		(spell out $NInc) (plural name $Head)
 	(elseif) ($Variant = @a) (then)
 		(a $Head)
-	(elseif) ($Variant = @f) (then)
+	(elseif) ($Variant = @f) (or) ($Variant = @,) (then)
 		(the full $Head)
 	(else)
 		(the $Head)
@@ -3509,8 +3506,11 @@
 (dict $Obj)
 	(name $Obj)
 
-(plural dict $O)
-	(plural name $O)
+%% The plural dict should only mention a noun, so the default rule can't
+%% invoke (plural name $).
+
+(plural dict $)
+	(fail)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Setting the pronouns from an object
@@ -3686,6 +3686,7 @@
 
 (fungibility-enabled appearance [$Head | $Tail] $Rel $Loc)
 	(combine-fungible $Tail $Head $NInc $Rest)
+	(par)
 	(if) ($NInc = 1) (then)
 		(appearance $Head $Rel $Loc)
 	(else)
@@ -4172,6 +4173,23 @@
 (understand $Words as single object $Output preferably container)
 	*(parse $Words as single object $Output 6)
 
+(understand [me/myself/self/yourself/you] as object $Obj from $List)
+	(current player $Obj)
+	($Obj is one of $List)
+
+(understand $Words as object $Obj from $List)
+	(filter $Words into $Filtered)
+	*($Obj is one of $List)
+	(collect words)
+		*(name $Obj)
+	(and check $Filtered)
+
+(understand [$Word] as object $Obj from $List)
+	(parse direction [$Word] $Dir)
+	(current room $Room)
+	*(from $Room go $Dir to object $Obj)
+	($Obj is one of $List)
+
 (verify object policy 1 $Obj)	%% takable
 	(item $Obj)
 	~($Obj has relation #partof)
@@ -4260,51 +4278,38 @@
 	*(parse object name $Words as $NegList 0 $BaseList [])
 	(remove from $BaseList matching $NegList into $Result)
 
-(parse basic noun [me] as [$Obj] $ $ $)
-	(current player $Obj)
-(parse basic noun [myself] as [$Obj] $ $ $)
-	(current player $Obj)
-(parse basic noun [self] as [$Obj] $ $ $)
-	(current player $Obj)
-(parse basic noun [yourself] as [$Obj] $ $ $)
-	(current player $Obj)
-(parse basic noun [you] as [$Obj] $ $ $)
+(parse basic noun [me/myself/self/yourself/you] as [$Obj] $ $ $)
 	(current player $Obj)
 
-(parse basic noun [it] as [$Obj] $ $ $)
+(parse basic noun [it/that] as [$Obj] $ $ $)
 	{
 		(player's it refers to $Obj)
 	(or)
 		(narrator's it refers to $Obj)
 	}
-(parse basic noun [that] as [$Obj] $ $ $)
-	{
-		(player's it refers to $Obj)
-	(or)
-		(narrator's it refers to $Obj)
-	}
+
 (parse basic noun [some] as [$Obj] $ $ $)
 	(parse basic noun [it] as [$Obj] $ $ $)
 	(uncountable $Obj)
+
 (parse basic noun [her] as [$Obj] $ $ $)
 	(her refers to $Obj)
+
 (parse basic noun [him] as [$Obj] $ $ $)
 	(him refers to $Obj)
+
 (parse basic noun [them] as $ObjList $ $ $)
 	(them refers to $ObjList)
 
-(parse basic noun [everything] as $Result $Policy $ExcludeList $AllAllowed)
-	(parse basic noun [all] as $Result $Policy $ExcludeList $AllAllowed)
-
-(parse basic noun [all] as [all] $ $ 0)
+(parse basic noun [all/everything] as [all] $ $ 0)
 	(allowing parse errors)
 	(just)
 
-(parse basic noun [all] as $ 0 $ 1)			%% anything
+(parse basic noun [all/everything] as $ 0 $ 1)	%% the policy is anything
 	(just)
 	(fail)
 
-(parse basic noun [all] as $Result (object $Policy) $ExcludeList 1)
+(parse basic noun [all/everything] as $Result (object $Policy) $ExcludeList 1)
 	(just)
 	(collect $Obj)
 		*($Obj has parent $Policy)
@@ -4314,7 +4319,7 @@
 	(into $Candidates)
 	(apply policy to $Candidates $Policy $ExcludeList $Result)
 
-(parse basic noun [all] as $Result $Policy $ExcludeList 1)
+(parse basic noun [all/everything] as $Result $Policy $ExcludeList 1)
 	(just)
 	(collect $Obj)
 		*($Obj is in scope)
@@ -4324,21 +4329,12 @@
 	(into $Candidates)
 	(apply policy to $Candidates $Policy $ExcludeList $Result)
 
-(parse basic noun [all | $Words] as $ObjList $Policy $ExcludeList $)
-	*(parse object name $Words as $ObjList 1 $Policy $ExcludeList)
-(parse basic noun [every | $Words] as $ObjList $Policy $ExcludeList $)
-	*(parse object name $Words as $ObjList 1 $Policy $ExcludeList)
-(parse basic noun [each | $Words] as $ObjList $Policy $ExcludeList $)
+(parse basic noun [all/every/each | $Words] as $ObjList $Policy $ExcludeList $)
 	*(parse object name $Words as $ObjList 1 $Policy $ExcludeList)
 
-(parse basic noun [a | $Words] as $ObjList $Policy $ExcludeList $)
+(parse basic noun [a/an/any/some | $Words] as $ObjList $Policy $ExcludeList $)
 	*(parse indefinite $Words as $ObjList 1 $Policy $ExcludeList)
-(parse basic noun [an | $Words] as $ObjList $Policy $ExcludeList $)
-	*(parse indefinite $Words as $ObjList 1 $Policy $ExcludeList)
-(parse basic noun [any | $Words] as $ObjList $Policy $ExcludeList $)
-	*(parse indefinite $Words as $ObjList 1 $Policy $ExcludeList)
-(parse basic noun [some | $Words] as $ObjList $Policy $ExcludeList $)
-	*(parse indefinite $Words as $ObjList 1 $Policy $ExcludeList)
+
 (parse basic noun [$Number | $Words] as $ObjList $Policy $ExcludeList $)
 	(nonempty $Words)
 	(parse numeral $Number into $N)
@@ -4389,14 +4385,11 @@
 		($All = 1)
 	(or)
 		%% A plural word causes all matching objects to be returned.
-		%% It has already been established that they all match every
-		%% mentioned plural word.
-		([$FirstObj | $] = $CleanList)
+		*($PluralWord is one of $Filtered)
+		*($PObj is one of $CleanList)
 		(collect words)
-			*(plural dict $FirstObj)
-		(into $PluralWords)
-		*($PluralWord is one of $PluralWords)
-		($PluralWord is one of $Filtered)
+			*(plural dict $PObj)
+		(and check [$PluralWord])
 	(then)
 		($Result = $CleanList)
 	(else)
@@ -4544,6 +4537,7 @@
 			(now) (last command was [undo])
 			(now) ~(implicit action is $)
 			(now) ~(implicit action wants direction)
+			(now) ~(implicit object list $)
 			(stop)
 		(endif)
 
@@ -4554,6 +4548,8 @@
 			(implicit action is $Implicit)
 			(if) (implicit action wants direction) (then)
 				*(understand $ActualWords as direction $O)
+			(elseif) (implicit object list $ImpList) (then)
+				*(understand $ActualWords as object $O from $ImpList)
 			(else)
 				%% We don't know the correct policy, so
 				%% fall back on 'non-all'.
@@ -4571,6 +4567,7 @@
 			%% Optimize the common case.
 			(now) ~(implicit action is $)
 			(now) ~(implicit action wants direction)
+			(now) ~(implicit object list $)
 			(try-complex $Single)
 		(else)
 			(sieve action candidates $AllCandidates $ActualWords)
@@ -4581,6 +4578,7 @@
 	(if) (nonempty $AllCandidates) (then)
 		(now) ~(implicit action is $)
 		(now) ~(implicit action wants direction)
+		(now) ~(implicit object list $)
 		(collect $A)
 			*($A is one of $AllCandidates)
 			~(unlikely-complex $A)
@@ -4647,6 +4645,11 @@
 		(stop)
 	(endif)
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Disambiguation
+
+(global variable (implicit object list $) 11)
+
 (consider action candidates $List)
 	(if) ($List = [$Single]) (then)
 		%% Optimize the common case.
@@ -4671,17 +4674,66 @@
 	(endif)
 	(if) ($AskList = [$Single]) (then)
 		($Result = $Single)
+	(elseif)
+		(rephrase as object disambiguation
+			$AskList
+			$Result
+			$Template
+			$ObjList)
+		(length of $ObjList into $NObj)
+		($NObj < 11)
+	(then)
+		Did you want to (describe action $Result)?
+		(asking for one of $ObjList in $Template)
 	(else)
 		Did you want to: (line)
-		(enumerate actions $AskList 1 $Last)
-		\( Type the corresponding number, or a blank line to cancel. \)
+		(enumerate actions $AskList 1 $)
+		\( Type the corresponding number \)
 		(line)
+		> (get input $Words)
 		{
-			(get number from 1 to $Last $Input)
-			(nth $AskList $Input $Result)
+			(understand $Words as number $N)
+			($N > 0)
+			(nth $AskList $N $Result)
 		(or)
+			(parse commandline $Words)
 			(stop)
 		}
+	(endif)
+
+(rephrase as object disambiguation [$Head | $Tail] $Complex $Template $ObjList)
+	(all identical except object $Head $Tail $Pos [] $ObjList)
+	(replace nth $Head $Pos [, | $ObjList] $Complex)
+	(replace nth $Head $Pos [] $Template)
+
+(replace nth [$ | $Tail] 1 $Element [$Element | $Tail])
+
+(replace nth [$Head | $Tail] $N $Element [$Head | $SubOutput])
+	($N minus 1 into $Nm1)
+	(replace nth $Tail $Nm1 $Element $SubOutput)
+
+(all identical except object $First [] $ObjPos $ObjIn [$LastObj | $ObjIn])
+	(number $ObjPos)
+	(nth $First $ObjPos $LastObj)
+
+(all identical except object $First [$Second | $More] $ObjPos $ObjIn $ObjOut)
+	(identical except object $First $Second 1 $ObjPos $FirstObj)
+	(all identical except object
+		$First
+		$More
+		$ObjPos
+		[$FirstObj | $ObjIn]
+		$ObjOut)
+
+(identical except object [$H1 | $T1] [$H2 | $T2] $CurrPos $TargetPos $O1)
+	(if) (object $H1) (object $H2) ~($H1 = $H2) (then)
+		($CurrPos = $TargetPos)
+		($O1 = $H2)
+		($T1 = $T2)
+	(else)
+		($H1 = $H2)
+		($CurrPos plus 1 into $NextPos)
+		(identical except object $T1 $T2 $NextPos $TargetPos $O1)
 	(endif)
 
 (enumerate actions [$Item1 $Item2] $N $Np1)
@@ -4704,11 +4756,19 @@
 (asking for object in $Action)
 	(now) (implicit action is $Action)
 	(now) ~(implicit action wants direction)
+	(now) ~(implicit object list $)
 	(stop)
 
 (asking for direction in $Action)
 	(now) (implicit action is $Action)
 	(now) (implicit action wants direction)
+	(now) ~(implicit object list $)
+	(stop)
+
+(asking for one of $ObjList in $Action)
+	(now) (implicit action is $Action)
+	(now) ~(implicit action wants direction)
+	(now) (implicit object list $ObjList)
 	(stop)
 
 (recover implicit action [] $ into [])
