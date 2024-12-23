@@ -1135,75 +1135,80 @@ static int decode_word_output(struct program *prg, char **bufptr, struct cinstr 
 	if(p_space) *p_space = post_space;
 	return ninstr;
 }
- 
-static int generate_output(struct program *prg, struct routine *r, struct cinstr *instr, int dry_run, int include_ints) {
-	char *utf8;
+
+static void generate_output_from_utf8(struct program *prg, struct routine *r, int pre_space, int post_space, char *utf8) {
 	uint8_t zbuf[MAXSTRING];
 	int pos;
-	int pre_space;
-	int post_space;
 	int n;
 	uint16_t stringlabel;
 	uint32_t variant;
 	struct zinstr *zi;
 	uint32_t uchar;
+
+	for(pos = 0; utf8[pos]; pos += n) {
+		uchar = 0;
+		n = utf8_to_zscii(zbuf, sizeof(zbuf), utf8 + pos, &uchar);
+		stringlabel = find_global_string(zbuf)->global_label;
+
+		if(uchar) {
+			if(n) {
+				zi = append_instr(r, Z_CALL2N);
+				zi->oper[0] = ROUTINE(pre_space? R_SPACE_PRINT_NOSPACE : R_NOSPACE_PRINT_NOSPACE);
+				zi->oper[1] = REF(stringlabel);
+			} else if(pre_space) {
+				zi = append_instr(r, Z_CALL1N);
+				zi->oper[0] = ROUTINE(R_SYNC_SPACE);
+			}
+			zi = append_instr(r, Z_CALL2N);
+			zi->oper[0] = ROUTINE(R_UNICODE);
+			zi->oper[1] = SMALL_OR_LARGE(uchar & 0xffff);
+			pre_space = 0;
+		} else if(utf8[pos + n]) {
+			/* String too long (for runtime uppercase buffer) */
+			assert(n);
+			zi = append_instr(r, Z_CALL2N);
+			zi->oper[0] = ROUTINE(pre_space? R_SPACE_PRINT_NOSPACE : R_NOSPACE_PRINT_NOSPACE);
+			zi->oper[1] = REF(stringlabel);
+			pre_space = 0;
+		} else {
+			if(n) {
+				if(!pre_space && !post_space) {
+					variant = ROUTINE(R_NOSPACE_PRINT_NOSPACE);
+				} else if(!pre_space && post_space) {
+					variant = ROUTINE(R_NOSPACE_PRINT_AUTO);
+				} else if(pre_space && !post_space) {
+					variant = ROUTINE(R_SPACE_PRINT_NOSPACE);
+				} else {
+					variant = VALUE(REG_R_SPA);
+				}
+				zi = append_instr(r, Z_CALL2N);
+				zi->oper[0] = variant;
+				zi->oper[1] = REF(stringlabel);
+			} else {
+				assert(!pre_space);
+				zi = append_instr(r, Z_STORE);
+				zi->oper[0] = SMALL(REG_SPACE);
+				zi->oper[1] = SMALL(0);
+			}
+		}
+	}
+	if(post_space == 2) {
+		zi = append_instr(r, Z_CALL1N);
+		zi->oper[0] = ROUTINE(R_SPACE);
+	}
+}
+
+static int generate_output(struct program *prg, struct routine *r, struct cinstr *instr, int dry_run, int include_ints) {
+	char *utf8;
+	int pre_space;
+	int post_space;
 	int ninstr;
 
 	pre_space = !strchr(NO_SPACE_BEFORE, prg->allwords[instr[0].oper[0].value]->name[0]);
 	ninstr = decode_word_output(prg, &utf8, instr, &post_space, include_ints);
 
 	if(!dry_run) {
-		for(pos = 0; utf8[pos]; pos += n) {
-			uchar = 0;
-			n = utf8_to_zscii(zbuf, sizeof(zbuf), utf8 + pos, &uchar);
-			stringlabel = find_global_string(zbuf)->global_label;
-
-			if(uchar) {
-				if(n) {
-					zi = append_instr(r, Z_CALL2N);
-					zi->oper[0] = ROUTINE(pre_space? R_SPACE_PRINT_NOSPACE : R_NOSPACE_PRINT_NOSPACE);
-					zi->oper[1] = REF(stringlabel);
-				} else if(pre_space) {
-					zi = append_instr(r, Z_CALL1N);
-					zi->oper[0] = ROUTINE(R_SYNC_SPACE);
-				}
-				zi = append_instr(r, Z_CALL2N);
-				zi->oper[0] = ROUTINE(R_UNICODE);
-				zi->oper[1] = SMALL_OR_LARGE(uchar & 0xffff);
-				pre_space = 0;
-			} else if(utf8[pos + n]) {
-				/* String too long (for runtime uppercase buffer) */
-				assert(n);
-				zi = append_instr(r, Z_CALL2N);
-				zi->oper[0] = ROUTINE(pre_space? R_SPACE_PRINT_NOSPACE : R_NOSPACE_PRINT_NOSPACE);
-				zi->oper[1] = REF(stringlabel);
-				pre_space = 0;
-			} else {
-				if(n) {
-					if(!pre_space && !post_space) {
-						variant = ROUTINE(R_NOSPACE_PRINT_NOSPACE);
-					} else if(!pre_space && post_space) {
-						variant = ROUTINE(R_NOSPACE_PRINT_AUTO);
-					} else if(pre_space && !post_space) {
-						variant = ROUTINE(R_SPACE_PRINT_NOSPACE);
-					} else {
-						variant = VALUE(REG_R_SPA);
-					}
-					zi = append_instr(r, Z_CALL2N);
-					zi->oper[0] = variant;
-					zi->oper[1] = REF(stringlabel);
-				} else {
-					assert(!pre_space);
-					zi = append_instr(r, Z_STORE);
-					zi->oper[0] = SMALL(REG_SPACE);
-					zi->oper[1] = SMALL(0);
-				}
-			}
-		}
-		if(post_space == 2) {
-			zi = append_instr(r, Z_CALL1N);
-			zi->oper[0] = ROUTINE(R_SPACE);
-		}
+		generate_output_from_utf8(prg, r, pre_space, post_space, utf8);
 	}
 
 	free(utf8);
@@ -2137,6 +2142,12 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				zi = append_instr(r, Z_CALL1N);
 				zi->oper[0] = ROUTINE(R_DEALLOCATE_S);
 				break;
+			case I_EMBED_RES:
+				o1 = generate_value(r, ci->oper[0], prg, t1);
+				zi = append_instr(r, Z_CALL2N);
+				zi->oper[0] = ROUTINE(R_EMBED_RES);
+				zi->oper[1] = o1;
+				break;
 			case I_END_BOX:
 				assert(ci->oper[0].tag == OPER_BOX);
 				if(ci->subop == BOX_STATUS) {
@@ -2398,6 +2409,9 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 					zi = append_instr(r, OP_LABEL(ll));
 				}
 				break;
+			case I_IF_CAN_EMBED:
+				zi = append_instr(r, Z_RFALSE);
+				break;
 			case I_IF_GFLAG:
 				assert(ci->oper[0].tag == OPER_GFLAG);
 				id = glbflag_global[ci->oper[0].value];
@@ -2504,6 +2518,23 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 					zi = append_instr(r, Z_RET);
 					zi->oper[0] = ROUTINE(rlabel[ci->implicit]);
 					zi = append_instr(r, OP_LABEL(ll));
+				}
+				break;
+			case I_IF_HAVE_QUIT:
+				if(!ci->subop) {
+					if(ci->implicit == 0xffff) {
+						zi = append_instr(r, Z_RFALSE);
+					} else if(pred->routines[ci->implicit].reftrack == r_id) {
+						zi = append_instr(r, Z_JUMP);
+						zi->oper[0] = REL_LABEL(llabel[ci->implicit]);
+						if(!encountered[ci->implicit]) {
+							rstack[rsp++] = ci->implicit;
+							encountered[ci->implicit] = 1;
+						}
+					} else {
+						zi = append_instr(r, Z_RET);
+						zi->oper[0] = ROUTINE(rlabel[ci->implicit]);
+					}
 				}
 				break;
 			case I_IF_MATCH:
@@ -2999,7 +3030,7 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 						zi->oper[0] = ROUTINE(R_PUSH_VAR_SETENV);
 						zi->oper[1] = SMALL(3 + ci->oper[0].value);
 					} else {
-						zi = append_instr(r, Z_CALL2N);
+						zi = append_instr(r, Z_CALLVN);
 						zi->oper[0] = ROUTINE(R_PUSH_VARS_SETENV);
 						zi->oper[1] = SMALL(3 + ci->oper[0].value);
 						zi->oper[2] = SMALL(3 + ci->oper[0].value + n - 1);
@@ -3968,6 +3999,37 @@ void backend_z(
 		compile_endings_check(routines[R_TRY_STEMMING], &prg->endings_root, 0, 0);
 	} else {
 		zi = append_instr(routines[R_TRY_STEMMING], Z_RFALSE);
+	}
+
+	if(prg->nresource) {
+		zi = append_instr(routines[R_EMBED_RES], Z_AND);
+		zi->oper[0] = VALUE(REG_LOCAL+0);
+		zi->oper[1] = VALUE(REG_NIL);
+		zi->store = REG_LOCAL+0;
+		for(i = 0; i < prg->nresource; i++) {
+			int len = 1 + strlen(prg->resources[i].alt) + 2;
+			char withbrackets[len];
+
+			snprintf(withbrackets, len, "[%s]", prg->resources[i].alt);
+			if(i < prg->nresource - 1) {
+				if(i) {
+					zi = append_instr(routines[R_EMBED_RES], Z_JNE);
+					zi->oper[0] = VALUE(REG_LOCAL+0);
+					zi->oper[1] = SMALL_OR_LARGE(i);
+				} else {
+					zi = append_instr(routines[R_EMBED_RES], Z_JNZ);
+					zi->oper[0] = VALUE(REG_LOCAL+0);
+				}
+				zi->branch = i + 1;
+			}
+			generate_output_from_utf8(prg, routines[R_EMBED_RES], 1, 1, withbrackets);
+			zi = append_instr(routines[R_EMBED_RES], Z_RFALSE);
+			if(i < prg->nresource - 1) {
+				zi = append_instr(routines[R_EMBED_RES], OP_LABEL(i + 1));
+			}
+		}
+	} else {
+		zi = append_instr(routines[R_EMBED_RES], Z_RFALSE);
 	}
 
 	user_flags_global = next_user_global++;

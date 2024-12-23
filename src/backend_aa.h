@@ -11,4 +11,5 @@ void backend_aa(
 	int ltssize,
 	int strip,
 	struct program *prg,
-	struct arena *arena);
+	struct arena *arena,
+	char *resdir);

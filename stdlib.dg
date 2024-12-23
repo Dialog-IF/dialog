@@ -1,6 +1,6 @@
 
 (library version)
-	Library version 0.29.
+	Library version 0.30.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -4177,14 +4177,8 @@
 (game over menu)
 	(line)
 	Would you like to:
-	(if) (library links enabled) (then)
-		(link [restart]) RESTART ,
-		(link [restore]) RESTORE a saved game,
-	(else)
-		RESTART,
-		RESTORE a saved game,
-	(endif)
 	(if) (interpreter supports undo) (then)
+		(line) (space 5)
 		(if) (library links enabled) (then)
 			(link [undo]) UNDO
 		(else)
@@ -4192,15 +4186,34 @@
 		(endif)
 		the last move,
 	(endif)
+	(line) (space 5)
+	(if) (library links enabled) (then)
+		(link [restore]) RESTORE a saved position,
+	(else)
+		RESTORE a saved position,
+	(endif)
+	(line) (space 5)
 	(exhaust) {
 		*(game over option)
+		(line) (space 5)
 	}
+	(if) (interpreter supports quit) (then)
+		(if) (library links enabled) (then)
+			(link [quit]) QUIT
+		(else)
+			QUIT
+		(endif)
+		the program,
+		(line) (space 5)
+	(endif)
 	or
 	(if) (library links enabled) (then)
-		(link [quit]) QUIT ?
+		(link [restart]) RESTART
 	(else)
-		QUIT?
+		RESTART
 	(endif)
+	from the beginning?
+	(line)
 	> (get input $Words)
 	(stoppable) (parse game over $Words)
 
@@ -4229,13 +4242,10 @@
 	(amusing enabled)
 	(amusing)
 
-(parse game over [quit])
+(parse game over [quit/q])
 	(display quit message)
 	(line)
 	(quit)
-
-(parse game over [q])
-	(parse game over [quit])
 
 (parse game over $)
 	Please type one of the given words.

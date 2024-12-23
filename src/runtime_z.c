@@ -3203,6 +3203,16 @@ struct rtroutine rtroutines[] = {
 		}
 	},
 	{
+		R_EMBED_RES,
+		1,
+			// 0 (param): resource id
+		(struct zinstr []) {
+			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_LOCAL+0)}, REG_LOCAL+0},
+			// instructions added at compile-time
+			{Z_END},
+		}
+	},
+	{
 		R_SEL_STOPPING,
 		3,
 			// 0 (param): index into select table

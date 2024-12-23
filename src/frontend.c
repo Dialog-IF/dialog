@@ -49,6 +49,7 @@ struct specialspec {
 	{SP_INTO,		0,				2,	{"into", 0}},
 	{SP_JUST,		0,				1,	{"just"}},
 	{SP_LINK,		0,				2,	{"link", 0}},
+	{SP_LINK_RES,		0,				3,	{"link", "resource", 0}},
 	{SP_MATCHING_ALL_OF,	0,				4,	{"matching", "all", "of", 0}},
 	{SP_NOW,		0,				1,	{"now"}},
 	{SP_OR,			0,				1,	{"or"}},
@@ -114,6 +115,7 @@ struct builtinspec {
 	{BI_UPPER,		0, PREDF_SUCCEEDS,		1,	{"uppercase"}},
 	{BI_CLEAR,		0, PREDF_SUCCEEDS,		1,	{"clear"}},
 	{BI_CLEAR_ALL,		0, PREDF_SUCCEEDS,		2,	{"clear", "all"}},
+	{BI_EMBEDRESOURCE,	0, 0,				3,	{"embed", "resource", 0}},
 	{BI_GETINPUT,		0, 0,				3,	{"get", "input", 0}},
 	{BI_GETRAWINPUT,	0, 0,				5,	{"", "get", "raw", "input", 0}},	// disabled for now
 	{BI_GETKEY,		0, 0,				3,	{"get", "key", 0}},
@@ -133,6 +135,8 @@ struct builtinspec {
 	{BI_WORDREP_RIGHT,	0, 0,				4,	{"word", "representing", "right", 0}},
 	{BI_HAVE_UNDO,		0, 0,				3,	{"interpreter", "supports", "undo"}},
 	{BI_HAVE_LINK,		0, 0,				3,	{"interpreter", "supports", "links"}},
+	{BI_HAVE_QUIT,		0, 0,				3,	{"interpreter", "supports", "quit"}},
+	{BI_CAN_EMBED,		0, 0,				4,	{"interpreter", "can", "embed", 0}},
 	{BI_PROGRAM_ENTRY,	PREDNF_DEFINABLE_BI, 0,		3,	{"program", "entry", "point"}},
 	{BI_ERROR_ENTRY,	PREDNF_DEFINABLE_BI, 0,		4,	{"error", 0, "entry", "point"}},
 	{BI_QUERY,		0, 0,				2,	{"query", 0}},
@@ -146,7 +150,11 @@ struct builtinspec {
 	{BI_STORY_RELEASE,	PREDNF_DEFINABLE_BI, 0,		3,	{"story", "release", 0}},
 	{BI_STYLEDEF,		PREDNF_DEFINABLE_BI, 0,		3,	{"style", "class", 0}},
 	{BI_ENDINGS,		PREDNF_DEFINABLE_BI, 0,		3,	{"removable", "word", "endings"}},
+	{BI_RESOURCEDEF,	PREDNF_DEFINABLE_BI, 0,		3,	{"define", "resource", 0}},
+	{BI_RESOLVERESOURCE,	PREDNF_DEFINABLE_BI, 0,		5,	{"", "resolve", "resource", 0, 0}},
 	{BI_INJECTED_QUERY,	PREDNF_DEFINABLE_BI, 0,		3,	{"", "query", 0}},
+	{BI_EMBED_INTERNAL,	0, 0,				4,	{"", "embed", "resource", 0}},
+	{BI_CAN_EMBED_INTERNAL,	0, 0,				4,	{"", "can", "embed", 0}},
 	{BI_BREAKPOINT_AGAIN,	0, 0,				2,	{"", "breakpoint"}},
 	{BI_BREAK_GETKEY,	0, 0,				2,	{"", "key"}},
 	{BI_BREAK_FAIL,		0, 0,				2,	{"", "fail"}},
@@ -537,6 +545,7 @@ int trace_invocations_body(struct astnode **anptr, int flags, uint8_t *bound, st
 			(void) trace_invocations_body(&an->children[1], flags, bound_sub, cl, 0, prg);
 			break;
 		case AN_LINK:
+		case AN_LINK_RES:
 			memcpy(bound_sub, bound, cl->nvar);
 			(void) trace_invocations_body(&an->children[1], flags, bound_sub, cl, 0, prg);
 			break;
@@ -1199,6 +1208,7 @@ static void extract_wordmap_from_body(struct wordmap_tally *tallies, int tally_o
 			case AN_STOPPABLE:
 			case AN_OUTPUTBOX:
 			case AN_LINK:
+			case AN_LINK_RES:
 			case AN_OR:
 			case AN_SELECT:
 			case AN_EXHAUST:
@@ -1468,8 +1478,11 @@ int body_succeeds(struct astnode *an) {
 			}
 			break;
 		case AN_OUTPUTBOX:
-		case AN_LINK:
 			return 0;
+			break;
+		case AN_LINK:
+		case AN_LINK_RES:
+			if(!body_succeeds(an->children[1])) return 0;
 			break;
 		}
 		an = an->next_in_body;
@@ -1589,6 +1602,92 @@ void frontend_add_builtins(struct program *prg) {
 	}
 }
 
+static void add_to_buf(char **buf, int *nalloc, int *pos, char ch) {
+	if(*pos >= *nalloc) {
+		*nalloc = (*pos) * 2 + 32;
+		*buf = realloc(*buf, *nalloc);
+	}
+	(*buf)[(*pos)++] = ch;
+}
+
+static int decode_output(char **bufptr, struct astnode *an, int *p_space, int *p_nl, struct arena *arena, char *context) {
+	int post_space = 0, nl_printed = 0;
+	int i;
+	char last = 0;
+	char *buf = 0;
+	int nalloc = 0, pos = 0;
+	char numbuf[8];
+
+	while(an) {
+		if(an->kind == AN_BAREWORD) {
+			if(post_space && !strchr(".,:;!?)]}>-%/", an->word->name[0])) {
+				add_to_buf(&buf, &nalloc, &pos, ' ');
+				nl_printed = 0;
+			}
+			for(i = 0; an->word->name[i]; i++) {
+				last = an->word->name[i];
+				add_to_buf(&buf, &nalloc, &pos, last);
+				nl_printed = 0;
+			}
+			post_space = !strchr("([{<-/", last);
+		} else if(an->kind == AN_INTEGER) {
+			snprintf(numbuf, sizeof(numbuf), "%d", an->value);
+			if(post_space) {
+				add_to_buf(&buf, &nalloc, &pos, ' ');
+			}
+			for(i = 0; numbuf[i]; i++) {
+				last = numbuf[i];
+				add_to_buf(&buf, &nalloc, &pos, last);
+			}
+			nl_printed = 0;
+			post_space = 1;
+		} else if(an->kind == AN_RULE && an->predicate->builtin == BI_NOSPACE) {
+			post_space = 0;
+		} else if(an->kind == AN_RULE && an->predicate->builtin == BI_SPACE) {
+			add_to_buf(&buf, &nalloc, &pos, ' ');
+			post_space = 0;
+		} else if(an->kind == AN_RULE
+		&& an->predicate->builtin == BI_SPACE_N
+		&& an->children[0]->kind == AN_INTEGER
+		&& an->children[0]->value < 22) {
+			for(i = 0; i < an->children[0]->value; i++) {
+				add_to_buf(&buf, &nalloc, &pos, ' ');
+				nl_printed = 0;
+			}
+			post_space = 0;
+		} else if(an->kind == AN_RULE && an->predicate->builtin == BI_LINE) {
+			while(nl_printed < 1) {
+				add_to_buf(&buf, &nalloc, &pos, '\n');
+				nl_printed++;
+				post_space = 0;
+			}
+		} else if(an->kind == AN_RULE && an->predicate->builtin == BI_PAR) {
+			while(nl_printed < 2) {
+				add_to_buf(&buf, &nalloc, &pos, '\n');
+				nl_printed++;
+				post_space = 0;
+			}
+		} else {
+			report(
+				LVL_ERR,
+				an->line,
+				"%s may only consist of static text.",
+				context);
+			return 0;
+		}
+		an = an->next_in_body;
+	}
+
+	add_to_buf(&buf, &nalloc, &pos, 0);
+	*bufptr = arena_strdup(arena, buf);
+	free(buf);
+
+	if(p_space) *p_space = post_space;
+	if(p_nl) *p_nl = nl_printed;
+
+	return 1;
+}
+
 int frontend_visit_clauses(struct program *prg, struct arena *temp_arena, struct clause **first_ptr) {
 	struct clause *cl, *sub, **clause_dest, **cld;
 	struct astnode *an;
@@ -1694,6 +1793,64 @@ int frontend_visit_clauses(struct program *prg, struct arena *temp_arena, struct
 				report(LVL_ERR, cl->line, "Syntax error in (generate $ $) declaration.");
 				return 0;
 			}
+		} else if(cl->predicate->builtin == BI_RESOURCEDEF) {
+			char *body, *url, *stem, *alt, *ptr;
+			int id, len;
+
+			if(!decode_output(&body, cl->body, 0, 0, &cl->predicate->pred->arena, "Resource definition body")) {
+				return 0;
+			}
+			id = prg->nresource++;
+			prg->resources = realloc(prg->resources, prg->nresource * sizeof(struct extresource));
+			alt = strchr(body, ';');
+			if(alt) {
+				*alt++ = 0;
+				while(*alt == ' ' || *alt == 9) alt++;
+			}
+			while(*body == ' ' || *body == 9) body++;
+			while((len = strlen(body)) && (body[len - 1] == ' ' || body[len - 1] == 9)) {
+				body[len - 1] = 0;
+			}
+			url = body;
+			stem = body;
+			if(!strncmp(body, "http:", 5)
+			|| !strncmp(body, "https:", 6)) {
+				prg->resources[id].path = 0;
+			} else if(!strncmp(body, "mailto:", 7)) {
+				prg->resources[id].path = 0;
+				stem += 7;
+			} else {
+				prg->resources[id].path = body;
+				while(
+					(ptr = strchr(stem, '/')) ||
+					(ptr = strchr(stem, '\\')) ||
+					(ptr = strchr(stem, ':')))
+				{
+					stem = ptr + 1;
+				}
+				len = 5 + strlen(stem) + 1;
+				url = arena_alloc(&cl->predicate->pred->arena, len);
+				snprintf(url, len, "file:%s", stem);
+			}
+			if(!alt) {
+				alt = stem;
+			}
+			prg->resources[id].url = url;
+			prg->resources[id].stem = stem;
+			prg->resources[id].options = "";
+			prg->resources[id].alt = alt;
+			prg->resources[id].line = cl->line;
+			sub = arena_calloc(&cl->predicate->pred->arena, sizeof(*sub));
+			sub->predicate = find_builtin(prg, BI_RESOLVERESOURCE);
+			sub->arena = &cl->predicate->pred->arena;
+			sub->params = arena_alloc(sub->arena, 2 * sizeof(struct astnode *));
+			sub->params[0] = deepcopy_astnode(cl->params[0], &cl->predicate->pred->arena, cl->line);
+			sub->params[1] = mkast(AN_INTEGER, 0, &cl->predicate->pred->arena, cl->line);
+			sub->params[1]->value = id;
+			sub->line = cl->line;
+			sub->next_in_source = cl->next_in_source;
+			cl->next_in_source = sub;
+			clause_dest = &cl->next_in_source;
 		} else if(cl->predicate->pred->flags & PREDF_MACRO) {
 			cld = clause_dest;
 			an = expand_macro_body(
@@ -1735,6 +1892,19 @@ int frontend_visit_clauses(struct program *prg, struct arena *temp_arena, struct
 	pred = find_builtin(prg, BI_INVOKE_CLOSURE)->pred;
 	for(i = 0; i < pred->nclause; i++) {
 		pred->clauses[i]->body = expand_macros(pred->clauses[i]->body, prg, &pred->arena);
+	}
+
+	if(verbose >= 3) {
+		for(i = 0; i < prg->nresource; i++) {
+			printf("Resource %d:", i);
+			printf("URL \"%s\"", prg->resources[i].url);
+			if(prg->resources[i].path) {
+				printf(", local file \"%s\", stem \"%s\"",
+					prg->resources[i].path,
+					prg->resources[i].stem);
+			}
+			printf(", alt \"%s\"\n", prg->resources[i].alt);
+		}
 	}
 
 	return !prg->errorflag;
@@ -2071,92 +2241,6 @@ static void recover_select_statements(struct program *prg) {
 	free(newtable);
 }
 
-static void add_to_buf(char **buf, int *nalloc, int *pos, char ch) {
-	if(*pos >= *nalloc) {
-		*nalloc = (*pos) * 2 + 32;
-		*buf = realloc(*buf, *nalloc);
-	}
-	(*buf)[(*pos)++] = ch;
-}
-
-static int decode_output(char **bufptr, struct astnode *an, int *p_space, int *p_nl, struct arena *arena, char *context) {
-	int post_space = 0, nl_printed = 0;
-	int i;
-	char last = 0;
-	char *buf = 0;
-	int nalloc = 0, pos = 0;
-	char numbuf[8];
-
-	while(an) {
-		if(an->kind == AN_BAREWORD) {
-			if(post_space && !strchr(".,:;!?)]}>-%/", an->word->name[0])) {
-				add_to_buf(&buf, &nalloc, &pos, ' ');
-				nl_printed = 0;
-			}
-			for(i = 0; an->word->name[i]; i++) {
-				last = an->word->name[i];
-				add_to_buf(&buf, &nalloc, &pos, last);
-				nl_printed = 0;
-			}
-			post_space = !strchr("([{<-/", last);
-		} else if(an->kind == AN_INTEGER) {
-			snprintf(numbuf, sizeof(numbuf), "%d", an->value);
-			if(post_space) {
-				add_to_buf(&buf, &nalloc, &pos, ' ');
-			}
-			for(i = 0; numbuf[i]; i++) {
-				last = numbuf[i];
-				add_to_buf(&buf, &nalloc, &pos, last);
-			}
-			nl_printed = 0;
-			post_space = 1;
-		} else if(an->kind == AN_RULE && an->predicate->builtin == BI_NOSPACE) {
-			post_space = 0;
-		} else if(an->kind == AN_RULE && an->predicate->builtin == BI_SPACE) {
-			add_to_buf(&buf, &nalloc, &pos, ' ');
-			post_space = 0;
-		} else if(an->kind == AN_RULE
-		&& an->predicate->builtin == BI_SPACE_N
-		&& an->children[0]->kind == AN_INTEGER
-		&& an->children[0]->value < 22) {
-			for(i = 0; i < an->children[0]->value; i++) {
-				add_to_buf(&buf, &nalloc, &pos, ' ');
-				nl_printed = 0;
-			}
-			post_space = 0;
-		} else if(an->kind == AN_RULE && an->predicate->builtin == BI_LINE) {
-			while(nl_printed < 1) {
-				add_to_buf(&buf, &nalloc, &pos, '\n');
-				nl_printed++;
-				post_space = 0;
-			}
-		} else if(an->kind == AN_RULE && an->predicate->builtin == BI_PAR) {
-			while(nl_printed < 2) {
-				add_to_buf(&buf, &nalloc, &pos, '\n');
-				nl_printed++;
-				post_space = 0;
-			}
-		} else {
-			report(
-				LVL_ERR,
-				an->line,
-				"%s may only consist of static text.",
-				context);
-			return 0;
-		}
-		an = an->next_in_body;
-	}
-
-	add_to_buf(&buf, &nalloc, &pos, 0);
-	*bufptr = arena_strdup(arena, buf);
-	free(buf);
-
-	if(p_space) *p_space = post_space;
-	if(p_nl) *p_nl = nl_printed;
-
-	return 1;
-}
-
 char *decode_metadata_str(int builtin, struct word *param, struct program *prg, struct arena *arena) {
 	struct predname *predname;
 	struct predicate *pred;
@@ -2287,6 +2371,44 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 	cl->body->children[0] = deepcopy_astnode(cl->params[0]->children[0], cl->arena, 0);
 	cl->body->children[1] = deepcopy_astnode(cl->params[0]->children[1], cl->arena, 0);
 	cl->body->children[2] = deepcopy_astnode(cl->params[1], cl->arena, 0);
+	add_clause(cl, predname->pred);
+
+	predname = find_builtin(prg, BI_EMBEDRESOURCE);
+	cl = arena_calloc(&predname->pred->arena, sizeof(*cl));
+	cl->predicate = predname;
+	cl->arena = &predname->pred->arena;
+	cl->params = arena_alloc(cl->arena, predname->arity * sizeof(struct astnode *));
+	cl->params[0] = mkast(AN_VARIABLE, 0, cl->arena, 0);
+	cl->params[0]->word = find_word(prg, "Id");
+	cl->body = mkast(AN_RULE, 2, cl->arena, 0);
+	cl->body->subkind = RULE_SIMPLE;
+	cl->body->predicate = find_builtin(prg, BI_RESOLVERESOURCE);
+	cl->body->children[0] = deepcopy_astnode(cl->params[0], cl->arena, 0);
+	cl->body->children[1] = mkast(AN_VARIABLE, 0, cl->arena, 0);
+	cl->body->children[1]->word = find_word(prg, "Num");
+	cl->body->next_in_body = mkast(AN_RULE, 1, cl->arena, 0);
+	cl->body->next_in_body->subkind = RULE_SIMPLE;
+	cl->body->next_in_body->predicate = find_builtin(prg, BI_EMBED_INTERNAL);
+	cl->body->next_in_body->children[0] = deepcopy_astnode(cl->body->children[1], cl->arena, 0);
+	add_clause(cl, predname->pred);
+
+	predname = find_builtin(prg, BI_CAN_EMBED);
+	cl = arena_calloc(&predname->pred->arena, sizeof(*cl));
+	cl->predicate = predname;
+	cl->arena = &predname->pred->arena;
+	cl->params = arena_alloc(cl->arena, predname->arity * sizeof(struct astnode *));
+	cl->params[0] = mkast(AN_VARIABLE, 0, cl->arena, 0);
+	cl->params[0]->word = find_word(prg, "Id");
+	cl->body = mkast(AN_RULE, 2, cl->arena, 0);
+	cl->body->subkind = RULE_SIMPLE;
+	cl->body->predicate = find_builtin(prg, BI_RESOLVERESOURCE);
+	cl->body->children[0] = deepcopy_astnode(cl->params[0], cl->arena, 0);
+	cl->body->children[1] = mkast(AN_VARIABLE, 0, cl->arena, 0);
+	cl->body->children[1]->word = find_word(prg, "Num");
+	cl->body->next_in_body = mkast(AN_RULE, 1, cl->arena, 0);
+	cl->body->next_in_body->subkind = RULE_SIMPLE;
+	cl->body->next_in_body->predicate = find_builtin(prg, BI_CAN_EMBED_INTERNAL);
+	cl->body->next_in_body->children[0] = deepcopy_astnode(cl->body->children[1], cl->arena, 0);
 	add_clause(cl, predname->pred);
 
 	for(i = 0; i < prg->npredicate; i++) {

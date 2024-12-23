@@ -4,6 +4,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+
+#include <sys/types.h>
+#include <unistd.h>
 
 #include "common.h"
 #include "arena.h"
@@ -101,6 +105,8 @@ static int code_sz;
 static uint32_t *symbols;
 
 static uint32_t aatotalsize;
+
+static int *altstring;
 
 static int cmp_aadict(const void *a, const void *b) {
 	const struct dictentry *aa = a;
@@ -1019,6 +1025,10 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				ai = add_instr(AA_ENTER_LINK);
 				ai->oper[0] = encode_value(ci->oper[0], prg);
 				break;
+			case I_BEGIN_LINK_RES:
+				ai = add_instr(AA_ENTER_LINK_RES);
+				ai->oper[0] = encode_value(ci->oper[0], prg);
+				break;
 			case I_BUILTIN:
 				assert(ci->oper[2].tag == OPER_PRED);
 				id = prg->predicates[ci->oper[2].value]->builtin;
@@ -1321,6 +1331,10 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 					ai = add_instr(AA_POP_ENV);
 				}
 				break;
+			case I_EMBED_RES:
+				ai = add_instr(AA_EMBED_RES);
+				ai->oper[0] = encode_value(ci->oper[0], prg);
+				break;
 			case I_END_BOX:
 				assert(ci->oper[0].tag == OPER_BOX);
 				if(ci->subop == BOX_STATUS) {
@@ -1331,6 +1345,9 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				break;
 			case I_END_LINK:
 				ai = add_instr(AA_LEAVE_LINK);
+				break;
+			case I_END_LINK_RES:
+				ai = add_instr(AA_LEAVE_LINK_RES);
 				break;
 			case I_FIRST_CHILD:
 				ai = add_instr(AA_LOAD_VAL);
@@ -1452,6 +1469,24 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 					}
 				}
 				break;
+			case I_IF_CAN_EMBED:
+				ai = add_instr(AA_CAN_EMBED_RES);
+				ai->oper[0] = encode_value(ci->oper[0], prg);
+				ai->oper[1] = (aaoper_t) {AAO_STORE_REG, REG_TMP};
+				ai = add_instr(AA_IF_RAW_EQ | 0x80);
+				if(!ci->subop) ai->op ^= AA_NEG_FLIP;
+				ai->oper[0] = (aaoper_t) {AAO_ZERO};
+				ai->oper[1] = (aaoper_t) {AAO_REG, REG_TMP};
+				if(ci->implicit == 0xffff) {
+					ai->oper[2] = (aaoper_t) {AAO_CODE, AAFAIL};
+				} else {
+					ai->oper[2] = (aaoper_t) {AAO_CODE, labelbase + ci->implicit};
+					if(!encountered[ci->implicit]) {
+						rstack[rsp++] = ci->implicit;
+						encountered[ci->implicit] = 1;
+					}
+				}
+				break;
 			case I_IF_GFLAG:
 				assert(ci->oper[0].tag == OPER_GFLAG);
 				ai = add_instr(AA_IF_FLAG | 0x80);
@@ -1521,6 +1556,24 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 			case I_IF_HAVE_UNDO:
 				ai = add_instr(AA_VM_INFO);
 				ai->oper[0] = (aaoper_t) {AAO_BYTE, AAFEAT_UNDO};
+				ai->oper[1] = (aaoper_t) {AAO_STORE_REG, REG_TMP};
+				ai = add_instr(AA_IF_RAW_EQ | 0x80);
+				if(!ci->subop) ai->op ^= AA_NEG_FLIP;
+				ai->oper[0] = (aaoper_t) {AAO_ZERO};
+				ai->oper[1] = (aaoper_t) {AAO_REG, REG_TMP};
+				if(ci->implicit == 0xffff) {
+					ai->oper[2] = (aaoper_t) {AAO_CODE, AAFAIL};
+				} else {
+					ai->oper[2] = (aaoper_t) {AAO_CODE, labelbase + ci->implicit};
+					if(!encountered[ci->implicit]) {
+						rstack[rsp++] = ci->implicit;
+						encountered[ci->implicit] = 1;
+					}
+				}
+				break;
+			case I_IF_HAVE_QUIT:
+				ai = add_instr(AA_VM_INFO);
+				ai->oper[0] = (aaoper_t) {AAO_BYTE, AAFEAT_QUIT};
 				ai->oper[1] = (aaoper_t) {AAO_STORE_REG, REG_TMP};
 				ai = add_instr(AA_IF_RAW_EQ | 0x80);
 				if(!ci->subop) ai->op ^= AA_NEG_FLIP;
@@ -2426,6 +2479,34 @@ static void compile_program(struct program *prg) {
 	}
 }
 
+static void analyze_resources(struct program *prg) {
+	int i, pos, bytes;
+	uint16_t ubuf[2];
+	int nalloc = 0;
+	uint8_t *aabuf = 0, *str;
+
+	altstring = malloc(prg->nresource * sizeof(int));
+	for(i = 0; i < prg->nresource; i++) {
+		str = (uint8_t *) prg->resources[i].alt;
+		pos = 0;
+		while((bytes = utf8_to_unicode(ubuf, 2, str))) {
+			if(pos + 1 >= nalloc) {
+				nalloc = 2 * (pos + 4);
+				aabuf = realloc(aabuf, nalloc);
+			}
+			aabuf[pos++] = resolve_aachar(ubuf[0]);
+			str += bytes;
+		}
+		assert(pos);
+		assert(nalloc);
+		assert(pos < nalloc);
+		aabuf[pos] = 0;
+		altstring[i] = findstring(aabuf);
+	}
+
+	free(aabuf);
+}
+
 struct decodernode {
 	uint32_t	occurrences;
 	uint8_t		aachar;
@@ -2832,6 +2913,102 @@ static void chunk_meta(FILE *f, struct program *prg) {
 	if(pad) fputc(0, f);
 }
 
+static void chunk_urls(FILE *f, struct program *prg) {
+	uint32_t size;
+	int pad, i, j;
+	uint16_t offset[prg->nresource];
+	uint32_t addr;
+
+	if(prg->nresource) {
+		size = 2 + prg->nresource * 2;
+		for(i = 0; i < prg->nresource; i++) {
+			offset[i] = size;
+			size += 3 + strlen(prg->resources[i].url) + 2;
+		}
+		pad = chunkheader(f, "URLS", size);
+		putword(prg->nresource, f);
+		for(i = 0; i < prg->nresource; i++) {
+			putword(offset[i], f);
+		}
+		for(i = 0; i < prg->nresource; i++) {
+			assert(altstring[i] < n_textstr);
+			addr = textstrings[altstring[i]].address;
+			fputc((addr >> 16) & 0xff, f);
+			fputc((addr >> 8) & 0xff, f);
+			fputc((addr >> 0) & 0xff, f);
+			for(j = 0; prg->resources[i].url[j]; j++) {
+				fputc(prg->resources[i].url[j], f);
+			}
+			fputc(0, f);
+			fputc(0, f);
+		}
+		if(pad) fputc(0, f);
+	}
+}
+
+static void chunks_file(FILE *f, struct program *prg, char *resdir) {
+	int pad, i, len;
+	FILE *datafile;
+	struct stat st;
+	uint32_t size;
+	uint8_t *buf;
+	char *path, *pathbuf = 0;
+
+	for(i = 0; i < prg->nresource; i++) {
+		if(prg->resources[i].path) {
+			if(resdir
+			&& prg->resources[i].path[0] != '/'
+			&& prg->resources[i].path[0] != '\\'
+			&& !strchr(prg->resources[i].path, ':')) {
+				len = strlen(resdir) + 1 + strlen(prg->resources[i].path) + 1;
+				pathbuf = malloc(len);
+				snprintf(pathbuf, len, "%s/%s", resdir, prg->resources[i].path);
+				path = pathbuf;
+			} else {
+				path = prg->resources[i].path;
+			}
+			datafile = fopen(path, "rb");
+			if(!datafile) {
+				report(
+					LVL_ERR,
+					prg->resources[i].line,
+					"Failed to open \"%s\": %s",
+					path,
+					strerror(errno));
+				exit(1);
+			}
+			if(fstat(fileno(datafile), &st)) {
+				report(
+					LVL_ERR,
+					prg->resources[i].line,
+					"Failed to obtain file size for \"%s\": %s",
+					path,
+					strerror(errno));
+				exit(1);
+			}
+			size = (uint32_t) st.st_size;
+			buf = malloc(size);
+			if(1 != fread(buf, size, 1, datafile)) {
+				report(
+					LVL_ERR,
+					prg->resources[i].line,
+					"Failed to read all of \"%s\": %s",
+					path,
+					strerror(errno));
+				exit(1);
+			}
+			fclose(datafile);
+			pad = chunkheader(f, "FILE", strlen(prg->resources[i].stem) + 1 + size);
+			fwrite(prg->resources[i].stem, strlen(prg->resources[i].stem), 1, f);
+			fputc(0, f);
+			fwrite(buf, size, 1, f);
+			if(pad) fputc(0, f);
+			free(buf);
+			free(pathbuf);
+		}
+	}
+}
+
 static uint32_t opersize(aaoper_t aao) {
 	uint32_t addr;
 
@@ -3139,7 +3316,8 @@ void backend_aa(
 	int ltssize,
 	int strip,
 	struct program *prg,
-	struct arena *arena)
+	struct arena *arena,
+	char *resdir)
 {
 	FILE *f;
 	int i;
@@ -3178,6 +3356,7 @@ void backend_aa(
 	longterm_sz = ltssize;
 
 	compile_program(prg);
+	analyze_resources(prg);
 	analyze_chars();
 	analyze_strings();
 	analyze_code();
@@ -3209,6 +3388,9 @@ void backend_aa(
 
 	chunk_code(f, prg, &crc);
 	chunk_writ(f, &crc);
+
+	chunk_urls(f, prg);
+	chunks_file(f, prg, resdir);
 
 	crc ^= 0xffffffff;
 

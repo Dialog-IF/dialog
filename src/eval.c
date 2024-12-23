@@ -687,6 +687,12 @@ static void begin_link(struct eval_state *es, value_t v) {
 	}
 }
 
+static void begin_link_res(struct eval_state *es, int id) {
+	if(!es->hide_links) {
+		o_begin_link(es->program->resources[id].url);
+	}
+}
+
 void trace(struct eval_state *es, int kind, struct predname *predname, value_t *args, line_t line) {
 	int i, j, level;
 	static const char *tracename[] = {
@@ -1027,6 +1033,11 @@ static int eval_run(struct eval_state *es) {
 		case I_BEGIN_LINK:
 			begin_link(es, value_of(ci->oper[0], es));
 			break;
+		case I_BEGIN_LINK_RES:
+			v = eval_deref(value_of(ci->oper[0], es), es);
+			assert(v.tag == VAL_NUM);
+			begin_link_res(es, v.value);
+			break;
 		case I_BREAKPOINT:
 			if(!ci->subop && tr_line) {
 				report(LVL_NOTE, tr_line, "Query made to (breakpoint)");
@@ -1249,6 +1260,13 @@ static int eval_run(struct eval_state *es) {
 			pred_claim(es->cont.pred);
 			revert_env_to(es, env->env);
 			break;
+		case I_EMBED_RES:
+			v = eval_deref(value_of(ci->oper[0], es), es);
+			assert(v.tag == VAL_NUM);
+			o_print_word("[");
+			o_print_word(es->program->resources[v.value].alt);
+			o_print_word("]");
+			break;
 		case I_END_BOX:
 			o_end_box();
 			o_par_n(es->program->boxclasses[ci->oper[0].value].marginbottom);
@@ -1262,6 +1280,7 @@ static int eval_run(struct eval_state *es) {
 			o_set_style(es->divstyle);
 			break;
 		case I_END_LINK:
+		case I_END_LINK_RES:
 			if(!es->hide_links) {
 				o_end_link();
 			}
@@ -1505,6 +1524,10 @@ static int eval_run(struct eval_state *es) {
 			res = (v.tag != VAL_REF);
 			if(ci->subop ^ res) perform_branch(ci->implicit, es, &pp, &pc);
 			break;
+		case I_IF_CAN_EMBED:
+			res = 0;
+			if(ci->subop ^ res) perform_branch(ci->implicit, es, &pp, &pc);
+			break;
 		case I_IF_GREATER:
 			v0 = eval_deref(value_of(ci->oper[0], es), es);
 			v1 = eval_deref(value_of(ci->oper[1], es), es);
@@ -1519,6 +1542,7 @@ static int eval_run(struct eval_state *es) {
 			if(ci->subop ^ res) perform_branch(ci->implicit, es, &pp, &pc);
 			break;
 		case I_IF_HAVE_UNDO:
+		case I_IF_HAVE_QUIT:
 			res = 1;
 			if(ci->subop ^ res) perform_branch(ci->implicit, es, &pp, &pc);
 			break;

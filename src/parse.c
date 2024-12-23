@@ -330,6 +330,11 @@ static struct astnode *fold_disjunctions(struct astnode *body, struct lexer *lex
 				lexer->errorflag = 1;
 			}
 		}
+		if(an->kind == AN_RULE || an->kind == AN_NEG_RULE) {
+			if(an->predicate->builtin == BI_RESOURCEDEF) {
+				report(LVL_ERR, an->line, "Program may not query %s directly.", an->predicate->printed_name);
+			}
+		}
 	}
 
 	return body;
@@ -895,6 +900,33 @@ static struct astnode *parse_expr(int parsemode, struct lexer *lexer, struct are
 			if(!an->children[1]) return 0;
 			if(contains_just(an->children[1])) {
 				report(LVL_ERR, line, "(just) not allowed inside (link $).");
+				lexer->errorflag = 1;
+				return 0;
+			}
+		} else if(an->predicate->special == SP_LINK_RES) {
+			sub = an->children[0];
+			an = mkast(AN_BLOCK, 1, arena, line);
+			an->children[0] = mkast(AN_RULE, 2, arena, line);
+			an->children[0]->subkind = RULE_SIMPLE;
+			an->children[0]->predicate = find_builtin(lexer->program, BI_RESOLVERESOURCE);
+			an->children[0]->children[0] = sub;
+			an->children[0]->children[1] = mkast(AN_VARIABLE, 0, arena, line);
+			an->children[0]->children[1]->word = fresh_word(lexer->program);
+			sub = mkast(AN_LINK_RES, 2, arena, line);
+			an->children[0]->next_in_body = sub;
+			sub->children[0] = mkast(AN_VARIABLE, 0, arena, line);
+			sub->children[0]->word = an->children[0]->children[1]->word;
+			status = next_token(lexer, PMODE_BODY);
+			if(lexer->errorflag) return 0;
+			if(status != 1) {
+				report(LVL_ERR, line, "Expected expression after (link resource $).");
+				lexer->errorflag = 1;
+				return 0;
+			}
+			sub->children[1] = parse_expr(PMODE_BODY, lexer, arena);
+			if(!sub->children[1]) return 0;
+			if(contains_just(sub->children[1])) {
+				report(LVL_ERR, line, "(just) not allowed inside (link resource $).");
 				lexer->errorflag = 1;
 				return 0;
 			}

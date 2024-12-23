@@ -9,7 +9,7 @@
 <body>
 	<div class="chapter">
 	<h1>Chapter 5: Input and output</h1>
-	<div class="navlinks">(<a href="#div">Divisions and style classes</a>&nbsp;&bull; <a href="#styles">Inline styles and formatting</a>&nbsp;&bull; <a href="#statusbar">The status bar</a>&nbsp;&bull; <a href="#progressbar">Visualizing progress</a>&nbsp;&bull; <a href="#clear">Clearing the screen</a>&nbsp;&bull; <a href="#input">Input</a>&nbsp;&bull; <a href="#hyperlinks">Hyperlinks</a>&nbsp;&bull; <a href="#split">Splitting input by keywords</a>&nbsp;&bull; <a href="#detobj">Determining objects from words</a>)</div>
+	<div class="navlinks">(<a href="#div">Divisions and style classes</a>&nbsp;&bull; <a href="#styles">Inline styles and formatting</a>&nbsp;&bull; <a href="#statusbar">The status bar</a>&nbsp;&bull; <a href="#progressbar">Visualizing progress</a>&nbsp;&bull; <a href="#clear">Clearing the screen</a>&nbsp;&bull; <a href="#input">Input</a>&nbsp;&bull; <a href="#hyperlinks">Hyperlinks</a>&nbsp;&bull; <a href="#resources">Resources</a>&nbsp;&bull; <a href="#split">Splitting input by keywords</a>&nbsp;&bull; <a href="#detobj">Determining objects from words</a>)</div>
 <a id="div"></a><h2>Divisions and style classes</h2>
 <p>As we saw in the <a href="execution.html#printing">introductory chapter</a>, text inside rule bodies
 gets printed. The text is treated as a sequence of words and punctuation.
@@ -573,6 +573,193 @@ would-be-clickable text shows up as normal text.
 </p>
 <p>Hyperlinks are always disabled on the Z-machine backend.
 </p>
+<a id="resources"></a><h2>Resources</h2>
+<p>The Å-machine backend supports embedded graphics, as well as links to external
+web sites, using a common mechanism. A <i>resource</i> is defined with the
+following syntax:
+</p>
+<textarea class="copyarea" id="copy12" readonly>
+(define resource <i>id</i>) <i>location</i>
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(define resource <i>id</i>) <i>location</i></td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy12').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The <i>id</i> is any bound Dialog-value, such as an integer, a dictionary word,
+an object, or even a list.
+</p>
+<p>The <i>location</i> is either a URL with one of the schemes <span class="tt">http</span>,
+<span class="tt">https</span>, or <span class="tt">mailto</span>, or a local filename. Local files are copied
+into the <span class="tt">.aastory</span> file, and this is the recommended way to work with
+<i>feelies</i> and embedded graphics.
+</p>
+<h3>Links to resources</h3>
+<p>When a resource has been defined, it's possible to link to it using the following
+syntax:
+</p>
+<textarea class="copyarea" id="copy13" readonly>
+	(link resource $Id) <i>statement</i>
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">(link resource $Id) <i>statement</i></td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy13').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Here is an example:
+</p>
+<textarea class="copyarea" id="copy14" readonly>
+(define resource @manual)
+	feelies/manual.pdf
+
+(define resource @web)
+	https://example.com/
+
+(understand command [about])
+(perform [about])
+
+	Please make sure to check out the (link resource @manual) {printed
+	manual} that was bundled with the game.
+
+	(par)
+
+	For more works by the same author, head over to
+	(link resource @web) {example.com}.
+
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(define resource @manual)</td></tr>
+<tr><td class="left"></td><td class="right">feelies/manual.pdf</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(define resource @web)</td></tr>
+<tr><td class="left"></td><td class="right">https://example.com/</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(understand command [about])</td></tr>
+<tr><td class="both" colspan="2">(perform [about])</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left"></td><td class="right">Please make sure to check out the (link resource @manual) {printed</td></tr>
+<tr><td class="left"></td><td class="right">manual} that was bundled with the game.</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left"></td><td class="right">(par)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left"></td><td class="right">For more works by the same author, head over to</td></tr>
+<tr><td class="left"></td><td class="right">(link resource @web) {example.com}.</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy14').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Not every interpreter or backend supports links. Use <span class="code">(interpreter
+supports links)</span> to check for this feature at runtime. Alternatively,
+make sure that all of your sentences with links also make sense as plain text.
+</p>
+<p>It is up to the interpreter to decide what happens when the player clicks on a
+link to a resource. The Å-machine web interpreter opens the file or web site in
+a new browser tab.
+</p>
+<h3>Embedded resources</h3>
+<p>It is also possible to <i>embed</i> a resource, such as a picture, into the
+story text. This is done with the built-in predicate <span class="code">(embed
+resource&nbsp;$)</span>.
+</p>
+<p>In general, interpreters won't be able to embed every conceivable kind of
+resource. When defining a resource, it is possible to add an <i>alt-text</i>
+that can be displayed instead of the resource. The alt-text appears at the end
+of the resource definition, separated from the location by a semicolon:
+</p>
+<textarea class="copyarea" id="copy15" readonly>
+(define resource <i>id</i>) <i>location</i>; <i>alt-text</i>
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(define resource <i>id</i>) <i>location</i>; <i>alt-text</i></td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy15').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>If no alt-text is specified, the filename (i.e. location) is used as a default
+value. Only the actual filename is used as alt-text, not the full path.
+</p>
+<p>The built-in predicate <span class="code">(interpreter can embed&nbsp;$)</span> checks whether
+the current interpreter is capable of displaying a given resource. If not,
+<span class="code">(embed resource&nbsp;$)</span> will display the alt-text instead.
+</p>
+<p>Example:
+</p>
+<textarea class="copyarea" id="copy16" readonly>
+(define resource #lighthouse)
+	media/lighthouse.png; A small model of a lighthouse.
+
+(style class @center)
+	margin-top: 1em;
+	margin-bottom: 1em;
+	text-align: center;
+
+#lighthouse
+(name *)	lighthouse
+(dict *)	small tiny model silver
+(descr *)
+	It's a tiny model of a lighthouse, made of silver.
+	(if) (interpreter can embed *) (then)
+		(div @center) (embed resource *)
+	(endif)
+	The lighthouse glistens in the moonlight.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(define resource #lighthouse)</td></tr>
+<tr><td class="left"></td><td class="right">media/lighthouse.png; A small model of a lighthouse.</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(style class @center)</td></tr>
+<tr><td class="left"></td><td class="right">margin-top: 1em;</td></tr>
+<tr><td class="left"></td><td class="right">margin-bottom: 1em;</td></tr>
+<tr><td class="left"></td><td class="right">text-align: center;</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#lighthouse</td></tr>
+<tr><td class="left">(name *)</td><td class="right">lighthouse</td></tr>
+<tr><td class="left">(dict *)</td><td class="right">small tiny model silver</td></tr>
+<tr><td class="both" colspan="2">(descr *)</td></tr>
+<tr><td class="left"></td><td class="right">It's a tiny model of a lighthouse, made of silver.</td></tr>
+<tr><td class="left"></td><td class="right">(if) (interpreter can embed *) (then)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(div @center) (embed resource *)</td></tr>
+<tr><td class="left"></td><td class="right">(endif)</td></tr>
+<tr><td class="left"></td><td class="right">The lighthouse glistens in the moonlight.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy16').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>In the above example, the <span class="code">(div&nbsp;$)</span> splits the text into two
+paragraphs if the interpreter is able to embed <span class="tt">png</span> files. Otherwise,
+there will be no paragraph break, and no alt-text.
+</p>
+<p>With an eye towards future extensibility, this language feature has been
+designed to be open-ended. Resources could conceivably be any kind of
+multimedia, including sound and animation. Interpreters are supposed to
+restrict this vast space of possibilities to a manageable set of supported file
+formats. The current version of the Å-machine web interpreter, for instance,
+only embeds graphics in <span class="tt">png</span> or <span class="tt">jpeg</span> format. Other backends
+(Z-machine, debugger) just print the alt-text.
+</p>
+<h3>About local filenames</h3>
+<p>Local path names are interpreted relative to the <i>resource directory</i>,
+which defaults to the current working directory. A different resource directory
+can be specified with the <span class="tt">-r</span> option to <span class="tt">dialogc</span>.
+</p>
+<p>All resources bundled into an <span class="tt">.aastory</span> file must have unique
+filenames, regardless of their path. Thus, you can't define one resource with
+the filename &ldquo;hero/face.png&rdquo; and another with the filename
+&ldquo;heroine/face.png&rdquo;. This restriction might be relaxed in future versions.
+</p>
 <a id="split"></a><h2>Splitting input by keywords</h2>
 <p>During parsing, it is often necessary to scan a list for certain keywords, and
 then split it into two sublists, representing the elements on either side of
@@ -580,7 +767,7 @@ the matched keyword. It is straightforward to implement this using ordinary
 rules in Dialog. However, for performance reasons the language also provides a
 built-in predicate:
 </p>
-<textarea class="copyarea" id="copy12" readonly>
+<textarea class="copyarea" id="copy17" readonly>
 (split $Input by $Keywords into $Left and $Right)
 </textarea>
 <div class="blkcode">
@@ -589,7 +776,7 @@ built-in predicate:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy12').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy17').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p><span class="code">$Input</span> and <span class="code">$Keywords</span> must be lists of simple values,
 i.e. they mustn't contain sublists.
@@ -604,7 +791,7 @@ keyword itself.
 <p>When invoked as a multi-query, the predicate backtracks over each matching
 position. Thus:
 </p>
-<textarea class="copyarea" id="copy13" readonly>
+<textarea class="copyarea" id="copy18" readonly>
 	*(split [the good , the bad and the ugly]
 		by [and ,]
 		into $Left and $Right)
@@ -617,7 +804,7 @@ position. Thus:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy13').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy18').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>will succeed twice: First, binding <span class="code">$Left</span> to <span class="code">[the
 good]</span> and <span class="code">$Right</span> to <span class="code">[the bad and the ugly]</span>,
@@ -628,7 +815,7 @@ bad]</span> and <span class="code">$Right</span> to <span class="code">[the ugly
 more of a set of keywords. The standard library uses it that way in the
 following rule definition:
 </p>
-<textarea class="copyarea" id="copy14" readonly>
+<textarea class="copyarea" id="copy19" readonly>
 ($X contains one of $Y)
 	(split $X by $Y into $ and $)
 </textarea>
@@ -639,7 +826,7 @@ following rule definition:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy14').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy19').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <a id="detobj"></a><h2>Determining objects from words</h2>
 <p>This section is mainly of concern for library programmers, so story authors may
@@ -648,7 +835,7 @@ safely skip it.
 <p>Dialog has a special construct for matching player input against in-world
 object names in a very efficient way:
 </p>
-<textarea class="copyarea" id="copy15" readonly>
+<textarea class="copyarea" id="copy20" readonly>
 	(determine object $Obj)
 		<i>object generator</i>
 	(from words)
@@ -665,7 +852,7 @@ object names in a very efficient way:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy15').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy20').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>This statement will backtrack over every object <span class="code">$Obj</span> for which:<br />
 </p>
@@ -676,7 +863,7 @@ object names in a very efficient way:
 in the word generator, and the object generator should contain a multi-query to
 backtrack over a set of objects. A canonical example is:
 </p>
-<textarea class="copyarea" id="copy16" readonly>
+<textarea class="copyarea" id="copy21" readonly>
 	(determine object $Obj)
 		*($Obj is in scope)
 	(from words)
@@ -693,7 +880,7 @@ backtrack over a set of objects. A canonical example is:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy16').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy21').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>A non-optimizing compiler could deal with this construct as follows: First,
 compile normal code for the object generator. Then, exhaust every branch of the
@@ -716,7 +903,7 @@ unoptimized case.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="dynamic.html">Chapter 6: Dynamic predicates</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 14, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 15, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

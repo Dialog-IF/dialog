@@ -57,6 +57,7 @@ void usage(char *prgname) {
 	fprintf(stderr, "\n");
 	fprintf(stderr, "--output    -o    Set output filename.\n");
 	fprintf(stderr, "--format    -t    Set output format (zblorb, z8, z5, aa).\n");
+	fprintf(stderr, "--resources -r    Set resource directory (default '.').\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "--heap      -H    Set main heap size (default 1000 words).\n");
 	fprintf(stderr, "--aux       -A    Set aux heap size (default 500 words).\n");
@@ -77,6 +78,7 @@ int main(int argc, char **argv) {
 		{"verbose", 0, 0, 'v'},
 		{"output", 1, 0, 'o'},
 		{"format", 1, 0, 't'},
+		{"resources", 1, 0, 'r'},
 		{"cover", 1, 0, 'c'},
 		{"cover-alt", 1, 0, 'a'},
 		{"heap", 1, 0, 'H'},
@@ -91,6 +93,7 @@ int main(int argc, char **argv) {
 	char *format = "zblorb";
 	char *coverfname = 0;
 	char *coveralt = 0;
+	char *resdir = 0;
 	int auxsize = 500, heapsize = 1000, ltssize = 500;
 	int strip = 0;
 	int opt, i;
@@ -105,7 +108,7 @@ int main(int argc, char **argv) {
 	comp_init();
 
 	do {
-		opt = getopt_long(argc, argv, "?hVvo:t:c:a:H:A:L:s", longopts, 0);
+		opt = getopt_long(argc, argv, "?hVvo:t:r:c:a:H:A:L:s", longopts, 0);
 		switch(opt) {
 			case 0:
 			case '?':
@@ -123,6 +126,9 @@ int main(int argc, char **argv) {
 				break;
 			case 't':
 				format = strdup(optarg);
+				break;
+			case 'r':
+				resdir = strdup(optarg);
 				break;
 			case 'c':
 				coverfname = strdup(optarg);
@@ -259,7 +265,7 @@ int main(int argc, char **argv) {
 	prg->meta_reldate = arena_strdup(&prg->arena, reldate_buf);
 
 	if(aamachine) {
-		backend_aa(outname, format, coverfname, coveralt, heapsize, auxsize, ltssize, strip, prg, &backend_arena);
+		backend_aa(outname, format, coverfname, coveralt, heapsize, auxsize, ltssize, strip, prg, &backend_arena, resdir);
 	} else {
 		backend_z(outname, format, coverfname, coveralt, heapsize, auxsize, ltssize, strip, prg, &backend_arena);
 	}

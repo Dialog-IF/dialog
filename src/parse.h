@@ -39,6 +39,7 @@ enum {
 	SP_OUTPUTBOX,
 	SP_STATUSBAR,
 	SP_LINK,
+	SP_LINK_RES,
 
 	SP_OR,
 

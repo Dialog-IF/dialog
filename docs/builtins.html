@@ -182,6 +182,12 @@ there's some other problem&mdash;such as the interpreter imposing a limit
 on the number of undo states that are retained in memory&mdash;the
 predicate succeeds, and execution continues normally.
 </p>
+<p class="codeline">(interpreter supports quit)</p>
+<p class="noteline">Succeeds if and only if the current interpreter handles
+<span class="code">(quit)</span> in a way that is meaningful to the player. For
+instance, it fails under the Å-machine web interpreter, because a web
+page cannot close itself.
+</p>
 <p class="codeline">(interpreter supports undo)</p>
 <p class="noteline">Succeeds if and only if the current interpreter declares that it
 supports undo functionality.
@@ -206,7 +212,7 @@ to the limits.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="beyondprg.html">Chapter 9: Beyond the program</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 14, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 15, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

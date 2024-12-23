@@ -1,5 +1,5 @@
-This archive contains version 0g/06 of the Dialog compiler and interactive
-debugger, bundled with documentation and version 0.29 of the dialog Standard
+This archive contains version 0h/01 of the Dialog compiler and interactive
+debugger, bundled with documentation and version 0.30 of the dialog Standard
 Library.
 
 Directory structure:
@@ -37,6 +37,21 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0h/01 Lib 0.30 (Manual revision 15):
+
+		Language: Added support for resources, such as pictures and
+		external links. This includes two new syntactic elements,
+		'(define resource $)' and '(link resource $)', and two built-in
+		predicates, '(embed resource $)' and '(interpreter can
+		embed $)'. This feature is primarily intended for use with the
+		aa-machine backend.
+
+		Language: Added runtime check '(interpreter supports quit)'.
+
+		Library: The game-over menu is displayed differently, and the
+		'quit' item only appears if '(interpreter supports quit)'
+		succeeds. The normal 'quit' verb is still handled as before.
 
 	0g/06 Lib 0.29 (Manual revision 14):
 

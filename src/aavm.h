@@ -1,5 +1,5 @@
 #define AAVM_FORMAT_MAJOR 0
-#define AAVM_FORMAT_MINOR 1
+#define AAVM_FORMAT_MINOR 2
 
 #define AA_NOP			0x00
 #define AA_FAIL			0x01
@@ -98,13 +98,14 @@
 #define AA_LEAVE_DIV		0xe6
 #define AA_ENTER_STATUS		0x67	// INDEX
 #define AA_LEAVE_STATUS		0xe7
-#define AA_ENTER_SPAN		0x68	// INDEX
-#define AA_LEAVE_SPAN		0xe8
+#define AA_ENTER_LINK_RES	0x68	// VALUE
+#define AA_LEAVE_LINK_RES	0xe8
 #define AA_ENTER_LINK		0x69	// VALUE
 #define AA_LEAVE_LINK		0xe9
 #define AA_SET_STYLE		0x6b	// BYTE
 #define AA_RESET_STYLE		0xeb	// BYTE
-#define AA_PICTURE		0x6c	// VALUE STRING
+#define AA_EMBED_RES		0x6c	// VALUE
+#define AA_CAN_EMBED_RES	0xec	// VALUE DEST
 #define AA_PROGRESS		0x6d	// VALUE VALUE
 #define AA_EXT0			0x70	// BYTE
 #define AA_SAVE			0x72	// CODE
@@ -159,7 +160,7 @@
 #define AAFEAT_UNDO		0x40
 #define AAFEAT_SAVE		0x41
 #define AAFEAT_LINKS		0x42
-#define AAFEAT_PICTURES		0x43
+#define AAFEAT_QUIT		0x43
 
 #define AA_N_INITREG		3
 

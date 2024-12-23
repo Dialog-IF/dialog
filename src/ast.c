@@ -335,6 +335,12 @@ void pp_expr(struct astnode *an) {
 		printf(") ");
 		pp_expr(an->children[1]);
 		break;
+	case AN_LINK_RES:
+		printf("(link resource ");
+		pp_expr(an->children[0]);
+		printf(") ");
+		pp_expr(an->children[1]);
+		break;
 	case AN_COLLECT:
 		printf("(collect ");
 		pp_expr(an->children[1]);
@@ -447,7 +453,8 @@ void pp_predicate(struct predname *predname, struct program *prg) {
 	printf("%s of arity %d\n", predname->printed_name, predname->arity);
 	if((prg->optflags & OPTF_BOUND_PARAMS) && !(pred->flags & PREDF_DYNAMIC)) {
 		for(i = 0; i < predname->arity; i++) {
-			if(pred->unbound_in & (1 << i)) {
+			if((pred->unbound_in & (1 << i))
+			&& pred->unbound_in_due_to[i]) {
 				printf("\tIncoming parameter #%d can be unbound because of ", i + 1);
 				printf("%s at %s:%d.\n",
 					pred->unbound_in_due_to[i]->predicate->printed_name,
@@ -511,7 +518,8 @@ static void find_clause_vars(struct program *prg, struct clause *cl, struct astn
 		|| an->kind == AN_NEG_BLOCK
 		|| an->kind == AN_FIRSTRESULT
 		|| an->kind == AN_OUTPUTBOX
-		|| an->kind == AN_LINK) {
+		|| an->kind == AN_LINK
+		|| an->kind == AN_LINK_RES) {
 			an->word = fresh_word(prg);
 			(void) resolve_clause_var(prg, an->word);
 		} else if(an->kind == AN_VARIABLE) {
@@ -607,6 +615,7 @@ void free_program(struct program *prg) {
 	free(prg->globalvarpred);
 	free(prg->objflagpred);
 	free(prg->objvarpred);
+	free(prg->resources);
 	free(prg->select);
 	free(prg->boxclasses);
 	free(prg->closurebodies);

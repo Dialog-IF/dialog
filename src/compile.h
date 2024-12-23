@@ -84,8 +84,10 @@ enum {
 	I_IF_OFLAG,		// -- object flag number, object, implicit routine, subop = negate
 	I_IF_GVAR_EQ,		// -- global var number, simple value, implicit routine, subop = negate
 	I_IF_OVAR_EQ,		// -- object var number, object, simple value, implicit routine, subop = negate
-	I_IF_HAVE_UNDO,		// -- implicit routine, subop = negate
 	I_IF_HAVE_LINK,		// -- implicit routine, subop = negate
+	I_IF_HAVE_UNDO,		// -- implicit routine, subop = negate
+	I_IF_HAVE_QUIT,		// -- implicit routine, subop = negate
+	I_IF_CAN_EMBED,		// -- value, implicit routine, subop = negate
 
 	I_GET_GVAR_R,		// F- global var number, dest ref
 	I_GET_GVAR_V,		// F- global var number, dest value
@@ -111,6 +113,10 @@ enum {
 	I_END_BOX,		// -- word id, subop = status
 	I_BEGIN_LINK,		// -- value
 	I_END_LINK,		// --
+	I_BEGIN_LINK_RES,	// -- value
+	I_END_LINK_RES,		// --
+
+	I_EMBED_RES,		// -- value
 
 	I_TRANSCRIPT,		// F- subop = enable/disable
 

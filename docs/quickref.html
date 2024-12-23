@@ -145,6 +145,11 @@ displays the output, optionally in the form of a hyperlink. If the
 hyperlink is selected by the player, the given <span class="code">$Words</span> are
 appended to the current input buffer, which is submitted.
 </p>
+<p class="codeline">(link resource $Id) <i>statement</i></p>
+<p class="noteline">The inner statement executes, succeeding at most once. The interpreter
+displays the output, optionally in the form of a hyperlink. The
+hyperlink leads to the resource identified by <span class="code">$Id</span>.
+</p>
 <p class="codeline">(now) <i>pseudo-query</i></p>
 <p class="noteline">Updates a dynamic predicate.
 </p>
@@ -193,6 +198,9 @@ appended to the current input buffer, which is submitted.
 <p class="codeline">($X divided by $Y into $Z)</p>
 <p class="noteline">Unifies <span class="code">$Z</span> with the quotient after dividing <span class="code">$X</span> by <span class="code">$Y</span>.
 </p>
+<p class="codeline">(embed resource $Id)</p>
+<p class="noteline">Displays the resource identified by <span class="code">$Id</span>, embedded in the story text.
+</p>
 <p class="codeline">(empty $X)</p>
 <p class="noteline">Succeeds if <span class="code">$X</span> is bound to an empty list.
 </p>
@@ -212,10 +220,21 @@ appended to the current input buffer, which is submitted.
 <p class="noteline">Dynamic predicate that succeeds when <span class="code">$X</span> is a direct child
 of <span class="code">$Y</span> in the object tree. Either parameter can be unbound.
 </p>
+<p class="codeline">(interpreter can embed $Id)</p>
+<p class="noteline">Succeeds if the current interpreter supports the resource identified by
+<span class="code">$Id</span>, and is able to display it using <span class="code">(embed
+resource&nbsp;$Id)</span> without falling back on just printing the
+alt-text.
+</p>
 <p class="codeline">(interpreter supports links)</p>
 <p class="noteline">Succeeds if the current interpreter claims to support hyperlinks, and
 they are currently enabled. This can change at runtime, for instance if
 a game is saved and subsequently restored on a different interpreter.
+</p>
+<p class="codeline">(interpreter supports quit)</p>
+<p class="noteline">Succeeds if the current interpreter supports quit in a way that is
+meaningful to the player. This can change at runtime, for instance if a
+game is saved and subsequently restored on a different interpreter.
 </p>
 <p class="codeline">(interpreter supports undo)</p>
 <p class="noteline">Succeeds if the current interpreter claims to support undo. This can
@@ -386,9 +405,12 @@ successful restore.
 <p class="codeline">(style class $Name)</p>
 <p class="noteline">Associates one or more style attributes with the given class name.
 </p>
+<p class="codeline">(define resource $Id)</p>
+<p class="noteline">Defines the location (local filename or URL) and alt-text of a resource.
+</p>
 	<div class="footer">
 	<p class="nav">Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 14, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 15, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

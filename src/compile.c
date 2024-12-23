@@ -37,6 +37,7 @@ struct opinfosrc {
 	{I_ASSIGN,		0,					"ASSIGN"},
 	{I_BEGIN_BOX,		OPF_SUBOP|OPF_CAN_FAIL,			"BEGIN_BOX"},
 	{I_BEGIN_LINK,		0,					"BEGIN_LINK"},
+	{I_BEGIN_LINK_RES,	0,					"BEGIN_LINK_RES"},
 	{I_BREAKPOINT,		OPF_ENDS_ROUTINE,			"BREAKPOINT"},
 	{I_BUILTIN,		0,					"BUILTIN"},
 	{I_CHECK_INDEX,		0,					"CHECK_INDEX"},
@@ -52,8 +53,10 @@ struct opinfosrc {
 	{I_COMPUTE_V,		OPF_CAN_FAIL|OPF_SUBOP,			"COMPUTE_V"},
 	{I_CUT_CHOICE,		0,					"CUT_CHOICE"},
 	{I_DEALLOCATE,		OPF_SUBOP,				"DEALLOCATE"},
+	{I_EMBED_RES,		0,					"EMBED_RES"},
 	{I_END_BOX,		OPF_SUBOP,				"END_BOX"},
 	{I_END_LINK,		0,					"END_LINK"},
+	{I_END_LINK_RES,	0,					"END_LINK_RES"},
 	{I_FIRST_CHILD,		OPF_CAN_FAIL,				"FIRST_CHILD"},
 	{I_FIRST_OFLAG,		OPF_CAN_FAIL,				"FIRST_OFLAG"},
 	{I_FOR_WORDS,		OPF_SUBOP,				"FOR_WORDS"},
@@ -69,9 +72,11 @@ struct opinfosrc {
 	{I_GET_PAIR_VV,		OPF_CAN_FAIL,				"GET_PAIR_VV"},
 	{I_GET_RAW_INPUT,	OPF_CAN_FAIL|OPF_ENDS_ROUTINE,		"GET_RAW_INPUT"},
 	{I_IF_BOUND,		OPF_BRANCH,				"IF_BOUND"},
+	{I_IF_CAN_EMBED,	OPF_BRANCH,				"IF_CAN_EMBED"},
 	{I_IF_GREATER,		OPF_BRANCH,				"IF_GREATER"},
 	{I_IF_HAVE_LINK,	OPF_BRANCH,				"IF_HAVE_LINK"},
 	{I_IF_HAVE_UNDO,	OPF_BRANCH,				"IF_HAVE_UNDO"},
+	{I_IF_HAVE_QUIT,	OPF_BRANCH,				"IF_HAVE_QUIT"},
 	{I_IF_MATCH,		OPF_BRANCH,				"IF_MATCH"},
 	{I_IF_NIL,		OPF_BRANCH,				"IF_NIL"},
 	{I_IF_NUM,		OPF_BRANCH,				"IF_NUM"},
@@ -1144,6 +1149,13 @@ static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an,
 		return 0;
 	}
 
+	if(an->predicate->builtin == BI_HAVE_QUIT) {
+		ci = add_instr(I_IF_HAVE_QUIT);
+		ci->subop = 1;
+		post_rule_trace(prg, cl, an, seen);
+		return 0;
+	}
+
 	if(an->predicate->builtin == BI_HAVE_LINK) {
 		if(prg->optflags & OPTF_NO_LINKS) {
 			ci = add_instr(I_JUMP);
@@ -1203,6 +1215,31 @@ static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an,
 		ci = add_instr(I_BUILTIN);
 		ci->oper[0] = v1;
 		ci->oper[2] = (value_t) {OPER_PRED, an->predicate->pred_id};
+		post_rule_trace(prg, cl, an, seen);
+		return 0;
+	}
+
+	if(an->predicate->builtin == BI_EMBED_INTERNAL) {
+		if(do_trace) {
+			v1 = (value_t) {OPER_ARG, 0};
+		} else {
+			v1 = comp_value(cl, an->children[0], seen);
+		}
+		ci = add_instr(I_EMBED_RES);
+		ci->oper[0] = v1;
+		post_rule_trace(prg, cl, an, seen);
+		return 0;
+	}
+
+	if(an->predicate->builtin == BI_CAN_EMBED_INTERNAL) {
+		if(do_trace) {
+			v1 = (value_t) {OPER_ARG, 0};
+		} else {
+			v1 = comp_value(cl, an->children[0], seen);
+		}
+		ci = add_instr(I_IF_CAN_EMBED);
+		ci->subop = 1;
+		ci->oper[0] = v1;
 		post_rule_trace(prg, cl, an, seen);
 		return 0;
 	}
@@ -1909,6 +1946,7 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 			begin_routine(endlab);
 			break;
 		case AN_LINK:
+		case AN_LINK_RES:
 			if(prg->optflags & OPTF_NO_LINKS) {
 				comp_body(prg, cl, an->children[1], seen, NO_TAIL, predflags);
 			} else {
@@ -1918,7 +1956,11 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 				vnum = findvar(cl, an->word);
 				v1 = comp_value(cl, an->children[0], seen);
 				comp_ensure_seen(cl, an, seen);
-				ci = add_instr(I_BEGIN_LINK);
+				if(an->kind == AN_LINK_RES) {
+					ci = add_instr(I_BEGIN_LINK_RES);
+				} else {
+					ci = add_instr(I_BEGIN_LINK);
+				}
 				ci->oper[0] = v1;
 				ci = add_instr(I_PUSH_STOP);
 				ci->oper[0] = (value_t) {OPER_RLAB, stoplab};
@@ -1935,7 +1977,11 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 				ci->oper[0] = (value_t) {OPER_VAR, vnum};
 				ci = add_instr(I_CUT_CHOICE);
 				ci = add_instr(I_POP_STOP);
-				ci = add_instr(I_END_LINK);
+				if(an->kind == AN_LINK_RES) {
+					ci = add_instr(I_END_LINK_RES);
+				} else {
+					ci = add_instr(I_END_LINK);
+				}
 				ci = add_instr(I_JUMP);
 				ci->oper[0] = (value_t) {OPER_RLAB, endlab};
 				end_routine_cl(cl);
@@ -1945,7 +1991,11 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 				ci->oper[0] = (value_t) {OPER_NUM, 0};
 				ci = add_instr(I_CUT_CHOICE);
 				ci = add_instr(I_POP_STOP);
-				ci = add_instr(I_END_LINK);
+				if(an->kind == AN_LINK_RES) {
+					ci = add_instr(I_END_LINK_RES);
+				} else {
+					ci = add_instr(I_END_LINK);
+				}
 				ci = add_instr(I_JUMP);
 				ci->oper[0] = (value_t) {OPER_FAIL};
 				end_routine_cl(cl);
@@ -1954,7 +2004,11 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 				ci = add_instr(I_POP_CHOICE);
 				ci->oper[0] = (value_t) {OPER_NUM, 0};
 				ci = add_instr(I_POP_STOP);
-				ci = add_instr(I_END_LINK);
+				if(an->kind == AN_LINK_RES) {
+					ci = add_instr(I_END_LINK_RES);
+				} else {
+					ci = add_instr(I_END_LINK);
+				}
 				ci = add_instr(I_STOP);
 				end_routine_cl(cl);
 
@@ -3767,6 +3821,8 @@ void comp_program(struct program *prg) {
 			|| predname->builtin == BI_HASPARENT
 			|| predname->builtin == BI_QUERY
 			|| predname->builtin == BI_QUERY_ARG
+			|| predname->builtin == BI_EMBEDRESOURCE
+			|| predname->builtin == BI_CAN_EMBED
 			|| (predname->nameflags & PREDNF_DEFINABLE_BI))
 		&& !predname->special
 		&& !(pred->flags & PREDF_MACRO)) {

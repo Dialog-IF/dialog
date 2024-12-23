@@ -41,7 +41,8 @@ enum {
 	AN_STOPPABLE,
 	AN_STATUSBAR,
 	AN_OUTPUTBOX,
-	AN_LINK
+	AN_LINK,
+	AN_LINK_RES
 };
 
 enum {
@@ -136,6 +137,9 @@ enum {
 
 	BI_HAVE_UNDO,
 	BI_HAVE_LINK,
+	BI_HAVE_QUIT,
+	BI_CAN_EMBED,
+	BI_CAN_EMBED_INTERNAL,
 
 	BI_PROGRAM_ENTRY,
 	BI_ERROR_ENTRY,
@@ -153,6 +157,10 @@ enum {
 
 	BI_ENDINGS,
 	BI_STYLEDEF,
+	BI_RESOURCEDEF,
+	BI_RESOLVERESOURCE,
+	BI_EMBEDRESOURCE,
+	BI_EMBED_INTERNAL,
 
 	BI_INJECTED_QUERY,
 	BI_BREAKPOINT_AGAIN,
@@ -308,6 +316,15 @@ struct boxclass {
 #define BOXF_FLOATLEFT		0x0004
 #define BOXF_FLOATRIGHT		0x0008
 
+struct extresource {
+	char			*url;
+	char			*stem;
+	char			*path;
+	char			*options;
+	char			*alt;
+	line_t			line;
+};
+
 #define WORDBUCKETS 1024
 
 typedef void (*program_ticker_t)();
@@ -327,6 +344,7 @@ struct program {
 	struct predname		**objflagpred;
 	struct predname		**objvarpred;
 	struct astnode		**closurebodies;
+	struct extresource	*resources;
 	uint8_t			*select;
 	uint32_t		optflags;
 	int			did_warn_about_repeat; // prevent multiple warnings
@@ -343,6 +361,7 @@ struct program {
 	int			nselect;
 	int			nalloc_dictword;
 	int			nalloc_word;
+	int			nresource;
 	int			nalloc_select;
 	struct endings_point	endings_root;
 	struct arena		endings_arena;
