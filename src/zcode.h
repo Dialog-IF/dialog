@@ -229,7 +229,8 @@ struct zinstr {
 #define Z_ASHIFT	(OP_EXT | 0x03)
 #define Z_SAVE_UNDO	(OP_EXT | 0x09)
 #define Z_RESTORE_UNDO	(OP_EXT | 0x0a)
-#define Z_PRINTUNICODE	(OP_EXT | 0x0b)
+#define Z_PRINT_UNICODE	(OP_EXT | 0x0b)
+#define Z_CHECK_UNICODE	(OP_EXT | 0x0c)
 
 #define Z_VERIFY_N	(OP_NOT | Z_VERIFY)
 #define Z_JNZ		(OP_NOT | Z_JZ)

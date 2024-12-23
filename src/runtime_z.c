@@ -65,11 +65,35 @@ struct rtroutine rtroutines[] = {
 		(struct zinstr []) {
 			{Z_LOADB, {SMALL(0), SMALL(0x32)}, REG_LOCAL+1},
 			{Z_JL, {VALUE(REG_LOCAL+1), SMALL(1)}, 0, 1},
-			{Z_PRINTUNICODE, {VALUE(REG_LOCAL+0)}},
+
+			{Z_CHECK_UNICODE, {VALUE(REG_LOCAL+0)}, REG_LOCAL+1},
+			{Z_TESTN, {VALUE(REG_LOCAL+1), SMALL(1)}, 0, 1},
+
+			{Z_PRINT_UNICODE, {VALUE(REG_LOCAL+0)}},
 			{Z_RFALSE},
+
 			{OP_LABEL(1)},
+			{Z_JE, {VALUE(REG_LOCAL+0), LARGE(0x2013)}, 0, 2},	// en dash
+			{Z_JE, {VALUE(REG_LOCAL+0), LARGE(0x2014)}, 0, 3},	// em dash
+			{Z_JE, {VALUE(REG_LOCAL+0), LARGE(0x201c)}, 0, 4},	// upper 66 quote
+			{Z_JE, {VALUE(REG_LOCAL+0), LARGE(0x201d)}, 0, 4},	// upper 99 quote
+			{Z_JE, {VALUE(REG_LOCAL+0), LARGE(0x201e)}, 0, 4},	// lower 99 quote
+
 			{Z_PRINTLIT, {}, 0, 0, "?"},
 			{Z_RFALSE},
+
+			{OP_LABEL(2)},
+			{Z_PRINTLIT, {}, 0, 0, "-"},
+			{Z_RFALSE},
+
+			{OP_LABEL(3)},
+			{Z_PRINTLIT, {}, 0, 0, "--"},
+			{Z_RFALSE},
+
+			{OP_LABEL(4)},
+			{Z_PRINTLIT, {}, 0, 0, "\""},
+			{Z_RFALSE},
+
 			{Z_END},
 		}
 	},

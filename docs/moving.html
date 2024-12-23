@@ -522,11 +522,15 @@ described here.
 </p>
 <p>At any given time, a subset of the objects in the game world are considered to
 be <i>in&nbsp;scope</i>. These are the only objects that the player may currently
-refer to, i.e. the only objects that the parser will understand. By default,
-all objects that are visible to the player character are in scope. All of the
-player's reachable possessions are also in scope, which is useful e.g. for
-turning on the flashlight in a dark room. The current room is always in scope,
-and neighbouring rooms are in scope if the player can see.
+refer to, i.e. the only objects that the parser will understand. The predicate
+<span class="code">($&nbsp;is in scope)</span> can be used to check whether a given object is in
+scope, or, with a <a href="choicepoints.html#multiqueries">multi-query</a>, to backtrack over every
+object in scope.
+</p>
+<p>By default, all objects that are visible to the player character are in scope.
+All of the player's reachable possessions are also in scope, which is useful
+e.g. for turning on the flashlight in a dark room. The current room is always
+in scope, and neighbouring rooms are in scope if the player can see.
 </p>
 <p>Finally, it is possible to add objects to the scope explicitly using the
 predicate <span class="code">(add $ to scope)</span>, typically with some condition, like
@@ -871,6 +875,10 @@ querying <span class="code">(move player to $&nbsp;$)</span> or <span class="cod
 of this variable is updated to reflect the new location. Another thing that
 happens is that floating objects are moved into position.
 </p>
+<p>The library uses a helper predicate called <span class="code">(update environment around
+player)</span> to carry out the updates described above. Occasionally, it can
+be useful to query this predicate directly from story code.
+</p>
 <a id="pathfinding"></a><h2>Path finding</h2>
 <p>The standard library predicate <span class="code">(shortest path from $Room1 to $Room2 is
 $Path)</span> computes the shortest path from <span class="code">$Room1</span> to
@@ -882,7 +890,7 @@ But it is straightforward to modify the library to relax those conditions.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="actions.html">Chapter 6: Actions</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 9, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 10, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

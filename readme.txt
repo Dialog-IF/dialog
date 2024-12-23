@@ -1,5 +1,5 @@
-This archive contains version 0f/06 of the Dialog compiler and interactive
-debugger, bundled with documentation and version 0.23 of the dialog Standard
+This archive contains version 0f/07 of the Dialog compiler and interactive
+debugger, bundled with documentation and version 0.24 of the dialog Standard
 Library.
 
 Directory structure:
@@ -37,6 +37,19 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0f/07 Lib 0.24 (Manual revision 10):
+
+		Documentation: Added predicate index. Various minor
+		improvements and clarifications.
+
+		Library: Style class definitions use em and ch properly.
+
+		Library bugfix: With fungibility enabled, under certain
+		circumstances, object appearances didn't get printed.
+
+		Z-machine backend: ASCII fallbacks for en-dash, em-dash, and
+		three kinds of fancy quotes.
 
 	0f/06 Lib 0.23 (Manual revision 9):
 

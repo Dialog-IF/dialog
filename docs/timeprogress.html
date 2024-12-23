@@ -298,13 +298,16 @@ the story:
 </div>
 <p>For scored games, the current score is displayed in the status bar.
 </p>
+<p>The global variable is called <span class="code">(current score $)</span>.
+</p>
 <p>Points can be added to the score with <span class="code">(increase score by&nbsp;$)</span>, and
 subtracted with <span class="code">(decrease score by&nbsp;$)</span>. These predicates fail if
 the score would end up outside the valid range of integers in Dialog, which is
 <span class="nobreak">0&ndash;16383</span> inclusive.
 </p>
 <p>After every move, the standard library will mention if the score has gone up or
-down, and by how much.
+down, and by how much, unless the player has disabled this feature using
+<span class="prginput">NOTIFY OFF</span>.
 </p>
 <p>If you know what the maximum score is, you can declare it:
 </p>
@@ -321,7 +324,7 @@ down, and by how much.
 </div>
 <p>When declared, the maximum score is mentioned by the default implementation of
 the <span class="prginput">SCORE</span> command, in the status bar, as well as by the
-<span class="code">(game over)</span> predicate. It does not affect the operation of
+<span class="code">(game over&nbsp;$)</span> predicate. It does not affect the operation of
 <span class="code">(increase score by&nbsp;$)</span>.
 </p>
 <a id="part2status"></a><h2>The status bar</h2>
@@ -341,15 +344,15 @@ dark</span>&rdquo;.
 %% A thicker status bar with the name of the current player in the upper right corner.
 
 (style class @status)
-	height: 3 em;
+	height: 3em;
 
 (style class @playername)
 	float: right;
-	width: 20 em;
-	margin-top: 1 em;
+	width: 20ch;
+	margin-top: 1em;
 
 (style class @roomname)
-	margin-top: 1 em;
+	margin-top: 1em;
 
 (redraw status bar)
 	(status bar @status) {
@@ -367,15 +370,15 @@ dark</span>&rdquo;.
 <tr><td class="both" colspan="2"><span class="comment">%% A thicker status bar with the name of the current player in the upper right corner.</span></td></tr>
 <tr><td class="blank" colspan="2"></td></tr>
 <tr><td class="both" colspan="2">(style class @status)</td></tr>
-<tr><td class="left"></td><td class="right">height: 3 em;</td></tr>
+<tr><td class="left"></td><td class="right">height: 3em;</td></tr>
 <tr><td class="blank" colspan="2"></td></tr>
 <tr><td class="both" colspan="2">(style class @playername)</td></tr>
 <tr><td class="left"></td><td class="right">float: right;</td></tr>
-<tr><td class="left"></td><td class="right">width: 20 em;</td></tr>
-<tr><td class="left"></td><td class="right">margin-top: 1 em;</td></tr>
+<tr><td class="left"></td><td class="right">width: 20ch;</td></tr>
+<tr><td class="left"></td><td class="right">margin-top: 1em;</td></tr>
 <tr><td class="blank" colspan="2"></td></tr>
 <tr><td class="both" colspan="2">(style class @roomname)</td></tr>
-<tr><td class="left"></td><td class="right">margin-top: 1 em;</td></tr>
+<tr><td class="left"></td><td class="right">margin-top: 1em;</td></tr>
 <tr><td class="blank" colspan="2"></td></tr>
 <tr><td class="both" colspan="2">(redraw status bar)</td></tr>
 <tr><td class="left"></td><td class="right">(status bar @status) {</td></tr>
@@ -464,7 +467,7 @@ amusing things the player might want to try:
 </div>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="understanding.html">Chapter 9: Understanding player input</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 9, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 10, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

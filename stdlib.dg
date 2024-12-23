@@ -1,6 +1,6 @@
 
 (library version)
-	Library version 0.23.
+	Library version 0.24.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -26,17 +26,17 @@
 %% Attributes can be ignored based on context. On the Z-machine backend, for
 %% instance, 'height' only has an effect on (status bar $) boxes, whereas
 %% 'width' and 'float' only affect (div $) boxes that are nested inside a
-%% (status bar $) box. The width and height may be specified in em or %.
+%% (status bar $) box. The height and width may be specified in em/ch or %.
 
 (style class @status)
-	height: 1 em;
+	height: 1em;
 
 (style class @score)
 	float: right;
-	width: 17 em;
+	width: 17ch;
 
 (style class @initial-spacer)
-	margin-bottom: 2 em;
+	margin-bottom: 2em;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Relations
@@ -3785,7 +3785,7 @@
 	(combine-fungible $Tail $Head $NInc $Rest)
 	(par)
 	(if) ($NInc = 1) (then)
-		(appearance $Head $Rel $Loc)
+		(appearance $Head $Rel $Loc) (or)
 	(else)
 		(remove from $Tail matching $Rest into $Similar)
 		(appearance [$Head | $Similar] $Rel $Loc)

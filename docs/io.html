@@ -65,15 +65,15 @@ and choose among them, or ignore them altogether.
 <textarea class="copyarea" id="copy1" readonly>
 (style class @quote)
 	font-style: italic;
-	margin-top: 2 em;
-	margin-bottom: 2 em;
+	margin-top: 2em;
+	margin-bottom: 2em;
 </textarea>
 <div class="blkcode">
 <table>
 <tr><td class="both" colspan="2">(style class @quote)</td></tr>
 <tr><td class="left"></td><td class="right">font-style: italic;</td></tr>
-<tr><td class="left"></td><td class="right">margin-top: 2 em;</td></tr>
-<tr><td class="left"></td><td class="right">margin-bottom: 2 em;</td></tr>
+<tr><td class="left"></td><td class="right">margin-top: 2em;</td></tr>
+<tr><td class="left"></td><td class="right">margin-bottom: 2em;</td></tr>
 </table>
 </div>
 <div class="copycode">
@@ -89,12 +89,14 @@ divs in the main text area, they are:
 <p class="noteline">Supported values are <span class="code">bold</span> and <span class="code">inherit</span>.
 </p>
 <p class="codeline">margin-top</p>
-<p class="noteline">The value must be an integer followed by the keyword <span class="code">em</span>.
-The size of the resulting margin is the given number of blank lines.
+<p class="noteline">The value must be an integer followed by the keyword <span class="code">em</span>,
+with no whitespace in between. The size of the resulting margin is the
+given number of blank lines.
 </p>
 <p class="codeline">margin-bottom</p>
-<p class="noteline">The value must be an integer followed by the keyword <span class="code">em</span>.
-The size of the resulting margin is the given number of blank lines.
+<p class="noteline">The value must be an integer followed by the keyword <span class="code">em</span>,
+with no whitespace in between. The size of the resulting margin is the
+given number of blank lines.
 </p>
 <p>There is currently no support for the combined <span class="code">margin</span> attribute.
 </p>
@@ -117,11 +119,6 @@ a surrounding stoppable environment.
 concluded, its bottom margin takes effect, and the style attributes of the
 surrounding div are restored on the fly.
 </p>
-<p>An interpreter may refuse to save the game state to a file or undo buffer from
-within a div. In that case, the operation simply fails. This eliminates the
-need for an interpreter-agnostic serialization format for the set of active
-divs.
-</p>
 <a id="styles"></a><h2>Inline styles and formatting</h2>
 <p>To change the current text style without entering a new division, use the
 built-in predicates <span class="code">(bold)</span>, <span class="code">(italic)</span>,
@@ -131,14 +128,28 @@ respective style, and <span class="code">(roman)</span> to disable all four. The
 which is usually roman.
 </p>
 <p>The built-in predicate <span class="code">(uppercase)</span> forces the next character to be
-printed in uppercase. The standard library uses this to define a number of
-convenient predicates such as:
+printed in uppercase. The standard library uses this to define the following
+convenient predicates:
 </p>
 <textarea class="copyarea" id="copy2" readonly>
+(A full $Obj)	(uppercase) (a full $Obj)
+(A $Obj)	(uppercase) (a $Obj)
+(It $Obj)	(uppercase) (it $Obj)
+(Name $Obj)	(uppercase) (name $Obj)
+(That $Obj)	(uppercase) (that $Obj)
+(The full $Obj)	(uppercase) (the full $Obj)
+(The $Obj is)	(uppercase) (the $Obj is)
 (The $Obj)	(uppercase) (the $Obj)
 </textarea>
 <div class="blkcode">
 <table>
+<tr><td class="left">(A full $Obj)</td><td class="right">(uppercase) (a full $Obj)</td></tr>
+<tr><td class="left">(A $Obj)</td><td class="right">(uppercase) (a $Obj)</td></tr>
+<tr><td class="left">(It $Obj)</td><td class="right">(uppercase) (it $Obj)</td></tr>
+<tr><td class="left">(Name $Obj)</td><td class="right">(uppercase) (name $Obj)</td></tr>
+<tr><td class="left">(That $Obj)</td><td class="right">(uppercase) (that $Obj)</td></tr>
+<tr><td class="left">(The full $Obj)</td><td class="right">(uppercase) (the full $Obj)</td></tr>
+<tr><td class="left">(The $Obj is)</td><td class="right">(uppercase) (the $Obj is)</td></tr>
 <tr><td class="left">(The $Obj)</td><td class="right">(uppercase) (the $Obj)</td></tr>
 </table>
 </div>
@@ -159,7 +170,7 @@ the top of the screen.
 </p>
 <textarea class="copyarea" id="copy3" readonly>
 (style class @status)
-	height: 1 em;
+	height: 1em;
 
 (program entry point)
 	(status bar @status) {
@@ -169,7 +180,7 @@ the top of the screen.
 <div class="blkcode">
 <table>
 <tr><td class="both" colspan="2">(style class @status)</td></tr>
-<tr><td class="left"></td><td class="right">height: 1 em;</td></tr>
+<tr><td class="left"></td><td class="right">height: 1em;</td></tr>
 <tr><td class="blank" colspan="2"></td></tr>
 <tr><td class="both" colspan="2">(program entry point)</td></tr>
 <tr><td class="left"></td><td class="right">(status bar @status) {</td></tr>
@@ -190,7 +201,7 @@ segments are described using nested so called <i>floating</i> divs. These have
 a <span class="code">float</span> attribute that is set to either <span class="code">left</span> or
 <span class="code">right</span> to determine where inside the status bar the segment should
 be located. The width of the segment can be specified in absolute numbers
-(using the <span class="code">em</span> unit) or as a percentage of the width of the
+(using the <span class="code">ch</span> unit) or as a percentage of the width of the
 surrounding div, which is normally the status bar itself.
 </p>
 <p>Floating divs can be further subdivided, either horizontally using floating
@@ -203,10 +214,10 @@ corner:
 (current score 0)
 
 (style class @status)
-	height: 1 em;
+	height: 1em;
 
 (style class @score)
-	width: 20 em;
+	width: 20ch;
 	float: right;
 
 (program entry point)
@@ -223,10 +234,10 @@ corner:
 <tr><td class="both" colspan="2">(current score 0)</td></tr>
 <tr><td class="blank" colspan="2"></td></tr>
 <tr><td class="both" colspan="2">(style class @status)</td></tr>
-<tr><td class="left"></td><td class="right">height: 1 em;</td></tr>
+<tr><td class="left"></td><td class="right">height: 1em;</td></tr>
 <tr><td class="blank" colspan="2"></td></tr>
 <tr><td class="both" colspan="2">(style class @score)</td></tr>
-<tr><td class="left"></td><td class="right">width: 20 em;</td></tr>
+<tr><td class="left"></td><td class="right">width: 20ch;</td></tr>
 <tr><td class="left"></td><td class="right">float: right;</td></tr>
 <tr><td class="blank" colspan="2"></td></tr>
 <tr><td class="both" colspan="2">(program entry point)</td></tr>
@@ -242,6 +253,12 @@ corner:
 <div class="copycode">
 <a class="copybtn" href="" onClick="document.getElementById('copy4').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
+<p>In CSS, <span class="code">em</span> represents the height of a capital M, while
+<span class="code">ch</span> represents the width of the digit zero. On the Z-machine, they
+both refer to the width or height of a character, depending on context, and are
+interchangeable. But it is good practice to specify widths in <span class="code">ch</span>
+and heights in <span class="code">em</span>.
+</p>
 <p>The Z-machine obeys the following style attributes in the status bar area:
 </p>
 <p class="codeline">height</p>
@@ -270,12 +287,13 @@ the surrounding div. Must be either <span class="code">left</span> or
 <p>It is possible to invoke <span class="code">(status bar&nbsp;$)</span> with different style
 classes at different times, in order to vary the look of the status bar area
 during gameplay. When reducing the size of the status bar area (e.g. drawing a
-status bar of height 1&nbsp;em after having drawn one of height 2&nbsp;em), be aware that
+status bar of height 1em after having drawn one of height 2em), be aware that
 some interpreters hide the extraneous lines, while others regard them as being
 part of the main window.
 </p>
-<p>Attempts to enter a nested <span class="code">(status bar&nbsp;$)</span> from within the status
-bar area will fail.
+<p>It is not possible to save the game state (to a file or undo buffer) from
+within the status bar area, or to enter a nested <span class="code">(status bar&nbsp;$)</span>
+from within the status bar area. Such operations will fail.
 </p>
 <a id="progressbar"></a><h2>Visualizing progress</h2>
 <p>The built-in predicate <span class="code">(progress bar $ of&nbsp;$)</span> draws a progress bar
@@ -630,7 +648,7 @@ unoptimized case.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="dynamic.html">Chapter 6: Dynamic predicates</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 9, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 10, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>
