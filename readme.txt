@@ -1,4 +1,4 @@
-This is version 0c/01 of the Dialog compiler, bundled with version 0.14 of its
+This is version 0c/02 of the Dialog compiler, bundled with version 0.14 of its
 standard library.
 
 Directory structure:
@@ -26,6 +26,10 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0c/02 Lib 0.14 (Manual revision 2):
+
+		Compiler bugfix related to '(status bar width $)'.
 
 	0c/01 Lib 0.14 (Manual revision 2):
 

@@ -2634,7 +2634,7 @@ void compile_simple_builtin(struct routine *r, struct astnode *an, int for_words
 		o1 = compile_ast_to_oper(r, an->children[0], vars);
 		zi = append_instr(r, Z_LOADB);
 		zi->oper[0] = SMALL(0);
-		zi->oper[0] = SMALL(0x21);
+		zi->oper[1] = SMALL(0x21);
 		zi->store = REG_TEMP;
 		zi = append_instr(r, Z_OR);
 		zi->oper[0] = VALUE(REG_TEMP);
