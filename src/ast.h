@@ -1,5 +1,5 @@
 #define MAXPARAM 12
-#define MAXWORDMAP 10
+#define MAXWORDMAP 32
 
 struct word {
 	struct word		*next_in_hash;
@@ -40,7 +40,7 @@ enum {
 	AN_DETERMINE_OBJECT,
 	AN_SELECT,
 	AN_STOPPABLE,
-	AN_STATUSBAR,
+	AN_STATUSAREA,
 	AN_OUTPUTBOX,
 	AN_LINK_SELF,
 	AN_LINK,
@@ -66,8 +66,12 @@ enum {
 
 enum {
 	BOX_DIV,
-	BOX_SPAN,
-	BOX_STATUS
+	BOX_SPAN
+};
+
+enum {
+	AREA_TOP,
+	AREA_INLINE
 };
 
 enum {
@@ -120,6 +124,8 @@ enum {
 	BI_CLEAR,
 	BI_CLEAR_ALL,
 	BI_CLEAR_LINKS,
+	BI_CLEAR_DIV,
+	BI_CLEAR_OLD,
 	BI_PROGRESS_BAR,
 
 	BI_OBJECT,
@@ -143,6 +149,8 @@ enum {
 	BI_HAVE_UNDO,
 	BI_HAVE_LINK,
 	BI_HAVE_QUIT,
+	BI_HAVE_STATUS,
+	BI_HAVE_INLINE_STATUS,
 	BI_CAN_EMBED,
 	BI_CAN_EMBED_INTERNAL,
 
@@ -409,6 +417,7 @@ struct program {
 	char			*meta_reldate;
 	int			meta_release;
 	uint16_t		max_temp;
+	uint8_t			reported_violations;
 };
 
 #define OPTF_BOUND_PARAMS	0x00000001

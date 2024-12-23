@@ -152,8 +152,12 @@ rendered according to the given style class.
 rendered into a rectangular area according to the given style class.
 </p>
 <p class="codeline">(status bar $Class) <i>statement</i></p>
-<p class="noteline">Like <span class="code">(div&nbsp;$)</span>, but the output is rendered into the status bar
+<p class="noteline">Like <span class="code">(div&nbsp;$)</span>, but the output is rendered into the top status
 area, which is created if necessary.
+</p>
+<p class="codeline">(inline status bar $Class) <i>statement</i></p>
+<p class="noteline">Like <span class="code">(div&nbsp;$)</span>, but the output is rendered into an inline status
+area. The previous inline status area, if any, is removed from display.
 </p>
 <p class="codeline">(link) <i>statement</i></p>
 <p class="noteline">The inner statement executes, succeeding at most once. The interpreter
@@ -222,13 +226,19 @@ transformed into the rule body at compile-time.
 <p class="noteline">Suspends execution (if running in the debugger).
 </p>
 <p class="codeline">(clear)</p>
-<p class="noteline">Clears the main window, but not the status bar area.
+<p class="noteline">Clears the main window, but not the top status area.
 </p>
 <p class="codeline">(clear all)</p>
-<p class="noteline">Clears the screen and disables the status bar.
+<p class="noteline">Clears the screen and disables the top status area.
+</p>
+<p class="codeline">(clear div)</p>
+<p class="noteline">Clears or hides the current div.
 </p>
 <p class="codeline">(clear links)</p>
-<p class="noteline">Transforms all hyperlinks into plain text, except in the status bar area.
+<p class="noteline">Transforms all hyperlinks into plain text, except in the status areas.
+</p>
+<p class="codeline">(clear old)</p>
+<p class="noteline">Clears the screen from all text that the player has had a chance to read.
 </p>
 <p class="codeline">(compiler version)</p>
 <p class="noteline">Prints the name and version of the compiler.
@@ -270,6 +280,9 @@ of <span class="code">$Y</span> in the object tree. Either parameter can be unbo
 resource&nbsp;$Id)</span> without falling back on just printing the
 alt-text.
 </p>
+<p class="codeline">(interpreter supports inline status bar)</p>
+<p class="noteline">Succeeds if the current interpreter supports inline status areas.
+</p>
 <p class="codeline">(interpreter supports links)</p>
 <p class="noteline">Succeeds if the current interpreter claims to support hyperlinks, and
 they are currently enabled. This can change at runtime, for instance if
@@ -279,6 +292,9 @@ a game is saved and subsequently restored on a different interpreter.
 <p class="noteline">Succeeds if the current interpreter supports quit in a way that is
 meaningful to the player. This can change at runtime, for instance if a
 game is saved and subsequently restored on a different interpreter.
+</p>
+<p class="codeline">(interpreter supports status bar)</p>
+<p class="noteline">Succeeds if the current interpreter supports the top status area.
 </p>
 <p class="codeline">(interpreter supports undo)</p>
 <p class="noteline">Succeeds if the current interpreter claims to support undo. This can
@@ -442,7 +458,7 @@ successful restore.
 </p>
 	<div class="footer">
 	<p class="nav">Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 28, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 29, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

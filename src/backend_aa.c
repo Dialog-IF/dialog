@@ -1234,12 +1234,21 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				}
 				ai->oper[1] = encode_dest(ci->oper[0], prg, 0);
 				break;
+			case I_BEGIN_AREA:
+				assert(ci->oper[0].tag == OPER_BOX);
+				if(ci->subop == AREA_TOP) {
+					ai = add_instr(AA_ENTER_STATUS_0);
+					ai->oper[0] = (aaoper_t) {AAO_ZERO};
+					ai->oper[1] = (aaoper_t) {AAO_INDEX, ci->oper[0].value};
+				} else {
+					ai = add_instr(AA_ENTER_STATUS);
+					ai->oper[0] = (aaoper_t) {AAO_BYTE, 1};
+					ai->oper[1] = (aaoper_t) {AAO_INDEX, ci->oper[0].value};
+				}
+				break;
 			case I_BEGIN_BOX:
 				assert(ci->oper[0].tag == OPER_BOX);
-				if(ci->subop == BOX_STATUS) {
-					ai = add_instr(AA_ENTER_STATUS);
-					ai->oper[0] = (aaoper_t) {AAO_INDEX, ci->oper[0].value};
-				} else if(ci->subop == BOX_SPAN) {
+				if(ci->subop == BOX_SPAN) {
 					ai = add_instr(AA_ENTER_SPAN);
 					ai->oper[0] = (aaoper_t) {AAO_INDEX, ci->oper[0].value};
 				} else {
@@ -1277,6 +1286,14 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				case BI_CLEAR_LINKS:
 					ai = add_instr(AA_EXT0);
 					ai->oper[0] = (aaoper_t) {AAO_BYTE, AAEXT0_CLEAR_LINKS};
+					break;
+				case BI_CLEAR_DIV:
+					ai = add_instr(AA_EXT0);
+					ai->oper[0] = (aaoper_t) {AAO_BYTE, AAEXT0_CLEAR_DIV};
+					break;
+				case BI_CLEAR_OLD:
+					ai = add_instr(AA_EXT0);
+					ai->oper[0] = (aaoper_t) {AAO_BYTE, AAEXT0_CLEAR_OLD};
 					break;
 				case BI_COMPILERVERSION:
 					ai = add_instr(AA_PRINT_A_STR_A);
@@ -1463,8 +1480,8 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				}
 				break;
 			case I_COLLECT_BEGIN:
-				ai = add_instr(AA_AUX_PUSH_RAW | 0x80);
-				ai->oper[0] = (aaoper_t) {AAO_VBYTE, 0};
+				ai = add_instr(AA_AUX_PUSH_RAW_0);
+				ai->oper[0] = (aaoper_t) {AAO_ZERO};
 				if(ci->subop) {
 					ai = add_instr(AA_AUX_PUSH_VAL);
 					ai->oper[0] = (aaoper_t) {AAO_CONST, tag_eval_value((value_t) {VAL_NUM, 0}, prg)};
@@ -1518,8 +1535,8 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				if(ci->subop) {
 					ai = add_instr(AA_AUX_POP_LIST);
 					ai->oper[0] = (aaoper_t) {AAO_STORE_REG, REG_TMP};
-					ai = add_instr(AA_AUX_PUSH_RAW | 0x80);
-					ai->oper[0] = (aaoper_t) {AAO_VBYTE, 0};
+					ai = add_instr(AA_AUX_PUSH_RAW_0);
+					ai->oper[0] = (aaoper_t) {AAO_ZERO};
 					ai = add_instr(AA_MAKE_PAIR_D);
 					ai->oper[0] = (aaoper_t) {AAO_STORE_REG, REG_TMP};
 					ai->oper[1] = (aaoper_t) {AAO_REG, REG_NIL};
@@ -1621,11 +1638,13 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				ai = add_instr(AA_EMBED_RES);
 				ai->oper[0] = encode_value(ci->oper[0], prg);
 				break;
+			case I_END_AREA:
+				assert(ci->oper[0].tag == OPER_BOX);
+				ai = add_instr(AA_LEAVE_STATUS);
+				break;
 			case I_END_BOX:
 				assert(ci->oper[0].tag == OPER_BOX);
-				if(ci->subop == BOX_STATUS) {
-					ai = add_instr(AA_LEAVE_STATUS);
-				} else if(ci->subop == BOX_SPAN) {
+				if(ci->subop == BOX_SPAN) {
 					ai = add_instr(AA_LEAVE_SPAN);
 				} else {
 					ai = add_instr(AA_LEAVE_DIV);
@@ -1842,6 +1861,21 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 			case I_IF_HAVE_QUIT:
 				ai = add_instr(AA_VM_INFO);
 				ai->oper[0] = (aaoper_t) {AAO_BYTE, AAFEAT_QUIT};
+				ai->oper[1] = (aaoper_t) {AAO_STORE_REG, REG_TMP};
+				ai = add_instr(AA_IF_RAW_EQ | 0x80);
+				if(!ci->subop) ai->op ^= AA_NEG_FLIP;
+				ai->oper[0] = (aaoper_t) {AAO_ZERO};
+				ai->oper[1] = (aaoper_t) {AAO_REG, REG_TMP};
+				if(ci->implicit == 0xffff) {
+					ai->oper[2] = (aaoper_t) {AAO_CODE, AAFAIL};
+				} else {
+					ai->oper[2] = (aaoper_t) {AAO_CODE, labelbase + ci->implicit};
+				}
+				break;
+			case I_IF_HAVE_STATUS:
+				assert(ci->oper[0].tag == VAL_RAW);
+				ai = add_instr(AA_VM_INFO);
+				ai->oper[0] = (aaoper_t) {AAO_BYTE, ci->oper[0].value? AAFEAT_INLINE_AREA : AAFEAT_TOP_AREA};
 				ai->oper[1] = (aaoper_t) {AAO_STORE_REG, REG_TMP};
 				ai = add_instr(AA_IF_RAW_EQ | 0x80);
 				if(!ci->subop) ai->op ^= AA_NEG_FLIP;
@@ -2785,7 +2819,7 @@ static void compile_program(struct program *prg) {
 	free(symbols);
 
 	// transform jmp 0 to fail
-	// transform set_cont + jmp to jmpl
+	// transform set_cont + jmp to jmpl etc.
 	// eliminate dead instructions
 	for(i = 0; i < ninstr - 2; i++) {
 		if(aainstr[i].op != AA_LABEL
@@ -2802,6 +2836,12 @@ static void compile_program(struct program *prg) {
 		&& aainstr[i + 1].op == AA_LABEL
 		&& aainstr[i].oper[0].value == aainstr[i + 1].oper[0].value) {
 			aainstr[i].op = AA_SKIP;
+		}
+		if(aainstr[i].op == AA_JMP_TAIL
+		&& aainstr[i + 1].op == AA_LABEL
+		&& aainstr[i].oper[0].value == aainstr[i + 1].oper[0].value) {
+			aainstr[i].op = AA_TAIL;
+			aainstr[i].oper[0] = (aaoper_t) {AAO_NONE};
 		}
 		if(aainstr[i].op == AA_SET_CONT
 		&& aainstr[i + 1].op == AA_JMP_MULTI
@@ -3277,7 +3317,7 @@ static void chunk_head(FILE *f, struct program *prg) {
 	if(prg->meta_ifid) size += 10 + strlen(prg->meta_ifid);
 	pad = chunkheader(f, "HEAD", size);
 	fputc(AAVM_FORMAT_MAJOR, f);
-	fputc(4, f); // minimum required minor version of interpreter
+	fputc(5, f); // minimum required minor version of interpreter
 	fputc(2, f);
 	fputc(0, f);
 	putword(prg->meta_release, f);

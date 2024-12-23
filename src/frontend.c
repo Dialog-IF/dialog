@@ -62,6 +62,7 @@ struct specialspec {
 	{SP_SELECT,		0,				1,	{"select"}},
 	{SP_SPAN,		0,				2,	{"span", 0}},
 	{SP_STATUSBAR,		0,				3,	{"status", "bar", 0}},
+	{SP_INLINE_STATUSBAR,	0,				4,	{"inline", "status", "bar", 0}},
 	{SP_STOPPABLE,		0,				1,	{"stoppable"}},
 	{SP_STOPPING,		0,				1,	{"stopping"}},
 	{SP_THEN,		0,				1,	{"then"}},
@@ -123,6 +124,8 @@ struct builtinspec {
 	{BI_CLEAR,		0, PREDF_SUCCEEDS,		1,	{"clear"}},
 	{BI_CLEAR_ALL,		0, PREDF_SUCCEEDS,		2,	{"clear", "all"}},
 	{BI_CLEAR_LINKS,	0, PREDF_SUCCEEDS,		2,	{"clear", "links"}},
+	{BI_CLEAR_DIV,		0, PREDF_SUCCEEDS,		2,	{"clear", "div"}},
+	{BI_CLEAR_OLD,		0, PREDF_SUCCEEDS,		2,	{"clear", "old"}},
 	{BI_EMBEDRESOURCE,	0, 0,				3,	{"embed", "resource", 0}},
 	{BI_GETINPUT,		0, 0,				3,	{"get", "input", 0}},
 	{BI_GETRAWINPUT,	0, 0,				5,	{"", "get", "raw", "input", 0}},	// disabled for now
@@ -140,6 +143,8 @@ struct builtinspec {
 	{BI_HAVE_UNDO,		0, 0,				3,	{"interpreter", "supports", "undo"}},
 	{BI_HAVE_LINK,		0, 0,				3,	{"interpreter", "supports", "links"}},
 	{BI_HAVE_QUIT,		0, 0,				3,	{"interpreter", "supports", "quit"}},
+	{BI_HAVE_STATUS,	0, 0,				4,	{"interpreter", "supports", "status", "bar"}},
+	{BI_HAVE_INLINE_STATUS,	0, 0,				5,	{"interpreter", "supports", "inline", "status", "bar"}},
 	{BI_CAN_EMBED,		0, 0,				4,	{"interpreter", "can", "embed", 0}},
 	{BI_PROGRAM_ENTRY,	PREDNF_DEFINABLE_BI, 0,		3,	{"program", "entry", "point"}},
 	{BI_ERROR_ENTRY,	PREDNF_DEFINABLE_BI, 0,		4,	{"error", 0, "entry", "point"}},
@@ -275,6 +280,22 @@ void find_fixed_flags(struct program *prg) {
 			}
 		}
 	} while(flag);
+}
+
+static int may_report_interface_violation(struct program *prg) {
+	if(prg->reported_violations > 10) {
+		return 0;
+	} else {
+		prg->reported_violations++;
+		if(prg->reported_violations > 10) {
+			report(LVL_WARN, 0,
+				"Hiding further warnings about interface violations. "
+				"The first warning usually describes the root cause.");
+			return 0;
+		} else {
+			return 1;
+		}
+	}
 }
 
 static void trace_enqueue(struct predicate *pred, int queuelen) {
@@ -495,12 +516,15 @@ int trace_invocations_body(struct astnode **anptr, int flags, uint8_t *bound, st
 					if(an->children[i]->unbound) {
 						unbound |= 1 << i;
 						if(an->predicate->pred->iface_bound_in & (1 << i)) {
-							report(LVL_WARN, an->line,
-								"Parameter #%d of %s can be (partially) unbound, which violates the interface declaration at %s:%d.",
-								i + 1,
-								an->predicate->printed_name,
-								FILEPART(an->predicate->pred->iface_decl->line),
-								LINEPART(an->predicate->pred->iface_decl->line));
+							if(may_report_interface_violation(prg)) {
+								report(LVL_WARN, an->line,
+									"Parameter #%d of %s can be (partially) unbound, "
+									"which violates the interface declaration at %s:%d.",
+									i + 1,
+									an->predicate->printed_name,
+									FILEPART(an->predicate->pred->iface_decl->line),
+									LINEPART(an->predicate->pred->iface_decl->line));
+							}
 						}
 					}
 				}
@@ -559,6 +583,7 @@ int trace_invocations_body(struct astnode **anptr, int flags, uint8_t *bound, st
 			memcpy(bound_sub, bound, cl->nvar);
 			(void) trace_invocations_body(&an->children[0], flags, bound_sub, cl, 1, prg);
 			break;
+		case AN_STATUSAREA:
 		case AN_OUTPUTBOX:
 			memcpy(bound_sub, bound, cl->nvar);
 			(void) trace_invocations_body(&an->children[1], flags, bound_sub, cl, 0, prg);
@@ -709,11 +734,14 @@ void trace_reconsider_pred(struct predicate *pred, struct program *prg) {
 				printf("now, parameter %d of %s can be left unbound\n", j, pred->predname->printed_name);
 #endif
 				if(pred->iface_bound_out & (1 << j)) {
-					report(LVL_WARN, pred->clauses[i]->line,
-						"Rule can leave parameter #%d (partially) unbound, which violates the interface declaration at %s:%d.",
-						j + 1,
-						FILEPART(pred->iface_decl->line),
-						LINEPART(pred->iface_decl->line));
+					if(may_report_interface_violation(prg)) {
+						report(LVL_WARN, pred->clauses[i]->line,
+							"Rule can leave parameter #%d (partially) unbound, "
+							"which violates the interface declaration at %s:%d.",
+							j + 1,
+							FILEPART(pred->iface_decl->line),
+							LINEPART(pred->iface_decl->line));
+					}
 				}
 			}
 		}
@@ -956,7 +984,7 @@ void find_dict_words(struct program *prg, struct astnode *an, int include_barewo
 			find_dict_words(prg, an->children[1], include_barewords);
 			find_dict_words(prg, an->children[2], 1);
 			find_dict_words(prg, an->children[3], include_barewords);
-		} else if(an->kind == AN_OUTPUTBOX) {
+		} else if(an->kind == AN_OUTPUTBOX || an->kind == AN_STATUSAREA) {
 			find_dict_words(prg, an->children[1], include_barewords);
 		} else if(an->kind == AN_LINK_SELF) {
 			find_dict_words(prg, an->children[0], include_barewords);
@@ -1274,6 +1302,7 @@ static void extract_wordmap_from_body(struct wordmap_tally *tallies, int tally_o
 			case AN_FIRSTRESULT:
 			case AN_STOPPABLE:
 			case AN_OUTPUTBOX:
+			case AN_STATUSAREA:
 			case AN_LINK_SELF:
 			case AN_LINK:
 			case AN_LINK_RES:
@@ -1558,6 +1587,7 @@ int body_succeeds(struct astnode *an) {
 		case AN_LINK:
 		case AN_LINK_RES:
 		case AN_OUTPUTBOX:
+		case AN_STATUSAREA:
 			if(!body_succeeds(an->children[1])) return 0;
 			break;
 		}
@@ -1636,7 +1666,7 @@ int body_succeeds_at_most_once(struct astnode *an) {
 		case AN_COLLECT_WORDS:
 		case AN_ACCUMULATE:
 		case AN_STOPPABLE:
-		case AN_STATUSBAR:
+		case AN_STATUSAREA:
 		case AN_OUTPUTBOX:
 		case AN_LINK_SELF:
 		case AN_LINK:
@@ -2535,13 +2565,14 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 	}
 
 #if 0
-	for(i = 0; i < npredicate; i++) {
-		if(!predicates[i]->special
-		&& !(predicates[i]->pred->flags & PREDF_MACRO)
-		&& !(predicates[i]->pred->flags & PREDF_DYNAMIC)) {
-			printf("%s %s\n",
-				(predicates[i]->pred->flags & PREDF_CONTAINS_JUST)? "J" : " ",
-				predicates[i]->printed_name);
+	for(i = 0; i < prg->npredicate; i++) {
+		if(!prg->predicates[i]->special
+		&& !(prg->predicates[i]->pred->flags & PREDF_MACRO)
+		&& !(prg->predicates[i]->pred->flags & PREDF_DYNAMIC)) {
+			printf("%s %s %d\n",
+				(prg->predicates[i]->pred->flags & PREDF_CONTAINS_JUST)? "J" : " ",
+				prg->predicates[i]->printed_name,
+				prg->predicates[i]->pred->nclause);
 		}
 	}
 #endif

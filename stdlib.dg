@@ -1,6 +1,6 @@
 
 (library version)
-	Library version 0.43.
+	Library version 0.44.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -1182,7 +1182,7 @@
 %% TAKE <obj>
 %% TAKE <obj> FROM <obj>
 
-(grammar [take/grab/snatch/steal/acquire/hold/gather/get/pick/remove [child] from [single]] for [take $ from $])
+(grammar [take/grab/snatch/steal/acquire/hold/gather/get/pick/remove [takable child] from [single]] for [take $ from $])
 
 (grammar [take/grab/snatch/steal/acquire/hold/gather/get/pick [takable]] for [take $])
 (grammar [pick up [takable]] for [take $])
@@ -1339,6 +1339,9 @@
 
 (unlikely [put $Obj $ $Dest])
 	($Dest has ancestor $Obj)
+
+(unlikely [put $Obj $Rel $Dest])
+	($Obj is $Rel $Dest)
 
 (before [put $Obj $Rel $Dest])
 	~($Obj is $Rel $Dest)
@@ -1743,6 +1746,11 @@
 
 (before [lock $ with $Key])
 	(ensure $Key is held)
+
+(before [lock (lockable $Obj) with $])
+	(openable $Obj)
+	($Obj is open)
+	(first try [close $Obj])
 
 (instead of [lock $Obj])
 	(current player $Player)
@@ -3032,8 +3040,8 @@
 	(endif)
 	(stop)
 
-(narrate undoing)
-	Undoing the last turn.
+(narrate undoing $Words)
+	Undoing the last turn \( (print words $Words) \).
 	(line)
 	(location headline)
 
@@ -3156,6 +3164,8 @@
 	(grammar transformer $Tail [24 | $SoFar] $Verb $Action $Rev)
 @(grammar transformer [[child] | $Tail] $SoFar $Verb $Action $Rev)
 	(grammar transformer $Tail [25 | $SoFar] $Verb $Action $Rev)
+@(grammar transformer [[takable child] | $Tail] $SoFar $Verb $Action $Rev)
+	(grammar transformer $Tail [26 | $SoFar] $Verb $Action $Rev)
 @(grammar transformer [[any] | $Tail] $SoFar $Verb $Action $Rev)
 	(grammar transformer $Tail [30 | $SoFar] $Verb $Action $Rev)
 @(grammar transformer [[any animate] | $Tail] $SoFar $Verb $Action $Rev)
@@ -3243,6 +3253,8 @@
 	*(understand $Words as object $Obj preferably worn)
 (match grammar token 25 against $Words [$Parent | $] into $Obj)
 	*(understand $Words as object $Obj preferably child of $Parent)
+(match grammar token 26 against $Words [$Parent | $] into $Obj)
+	*(understand $Words as object $Obj preferably { ($_ has parent $Parent) (takable $_) })
 (match grammar token 30 against $Words $ into $Obj)
 	*(understand $Words as any object $Obj)
 (match grammar token 31 against $Words $ into $Obj)
@@ -3434,6 +3446,10 @@
 (interface (try-complex $<Action))
 
 (try-complex $ComplexAction)
+	(if) ~(action $ComplexAction preserves the question) (then)
+		(now) ~(implicit action is $)
+		(now) ~(implicit action wants direction)
+	(endif)
 	(if) ~(allowed action $ComplexAction) (then)
 		(report disallowed action $ComplexAction)
 		(stop)
@@ -4039,14 +4055,14 @@
 (the ($Obj is hidden))	(reveal $Obj) (fail) %% Proceed with normal handling.
 
 (a (current player $Obj))
-	(if) (library links enabled) (interpreter supports links) (then)
+	(if) (library links enabled) (then)
 		(link [myself]) yourself
 	(else)
 		yourself
 	(endif)
 
 (A (current player $Obj))
-	(if) (library links enabled) (interpreter supports links) (then)
+	(if) (library links enabled) (then)
 		(link [me]) You
 	(else)
 		You
@@ -4668,19 +4684,27 @@
 					(now) ($DispObj is choice-exhausted)
 					(if) ($DispObj flows to $Fallback) (then)
 						(activate node $Fallback)
+					(else)
+						(activate parser)
 					(endif)
 				(endif)
 				(redraw status bar)
-				(enumerate choices $ChoiceList 1)
+				(get choice of $ChoiceList into $Words)
 			(else)
 				(redraw status bar)
 				($ChoiceList = [])
+				> (get input $Words)
 			(endif)
 
-			> (get input $Words)
 			(parse commandline $Words with choices $ChoiceList)
 		}
 	(endif)
+
+(interface (get choice of $<ChoiceList into $>Words))
+
+(get choice of $ChoiceList into $Words)
+	(enumerate choices $ChoiceList 1)
+	> (get input $Words)
 
 (interface (enumerate choices $<ObjList $<FirstIndex))
 
@@ -4728,16 +4752,21 @@
 	(location headline)
 
 (location headline)
-	(current player $Player)
-	(if) (player can see) (then)
-		(current room $Room)
-		(span @bold) (room header $Room)
-		($Player is $Rel $Loc)
-		(if) ~{ ($Rel = #in) ($Loc = $Room) } (then)
-			\( (name $Rel) (the $Loc) \)
+	(if) (current player $) (then)
+		(if) (player can see) (then)
+			(current room $Room)
+			(span @bold) (room header $Room)
+			(location headline tag)
+		(else)
+			(span @bold) (darkness headline)
 		(endif)
-	(else)
-		(span @bold) (darkness headline)
+	(endif)
+
+(location headline tag)
+	(current player $Player)
+	($Player is $Rel $Loc)
+	(if) ~(room $Loc) (then)
+		\( (name $Rel) (the $Loc) \)
 	(endif)
 
 (darkness headline)
@@ -5091,6 +5120,8 @@
 (takable (item $Obj))
 	($Obj has relation $Rel)
 	~($Rel is one of [#partof #heldby #wornby])
+	(current player $Player)
+	~($Obj has ancestor $Player)
 
 (interface (verify object policy $Policy $<Obj))
 
@@ -5140,6 +5171,7 @@
 			~($Obj is hidden)
 			($Obj is in room $Room)
 			($Room is visited)
+			(words $Filtered sufficiently specify $Obj)
 		(from words)
 			*(dict $Obj)
 		(matching all of $Filtered)
@@ -5191,7 +5223,7 @@
 	(remove from $BaseList matching $NegList into $Result)
 
 (parse negative noun $Words from $BaseList into $Result)
-	*(parse object name $Words as $NegList 0 $BaseList [])
+	*(parse object name $Words as $NegList 0 { ($_ is one of $BaseList) })
 	(remove from $BaseList matching $NegList into $Result)
 
 (interface (parse basic noun $<Words as $>ObjList $Policy $<AllAllowed))
@@ -5337,10 +5369,10 @@
 		(endif)
 	(endif)
 
+(interface (words $<Words sufficiently specify $<Obj))
+
 (words $ sufficiently specify $)
 	~(head noun is required)
-
-(interface (words $<Words sufficiently specify $<Obj))
 
 (words $Words sufficiently specify $Obj)
 	(collect words)
@@ -5528,7 +5560,7 @@
 (parse commandline $Words with choices $ChoiceList)
 	%% Before proceeding, save the current undo state:
 	(if) (save undo 1) (then)
-		(narrate undoing)
+		(narrate undoing $Words)
 		(stop)
 	(endif)
 	(if)
@@ -5600,8 +5632,6 @@
 	(remove duplicates $AllCandidatesWithDup $AllCandidates)
 	(if) ($AllCandidates = [$Single]) (then)
 		%% Optimize the common case.
-		(now) ~(implicit action is $)
-		(now) ~(implicit action wants direction)
 		(try-complex $Single)
 	(elseif) (empty $AllCandidates) (then)
 		%% We were unable to parse the action.
@@ -5629,8 +5659,6 @@
 			(parse partial action $ActualWords)
 		(endif)
 	(else)
-		(now) ~(implicit action is $)
-		(now) ~(implicit action wants direction)
 		(sieve action candidates $AllCandidates $ActualWords 0)
 	(endif)
 
@@ -5888,6 +5916,9 @@
 
 (recover implicit action [$Other | $MoreIn] $Obj into [$Other | $MoreOut])
 	(recover implicit action $MoreIn $Obj into $MoreOut)
+
+(action [inventory] preserves the question)
+(action (command $) preserves the question)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Miscellaneous input routines

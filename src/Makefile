@@ -1,5 +1,5 @@
 CC		= gcc
-CFLAGS		+= -O3 -Wall -DVERSION=\"0k/06\"
+CFLAGS		+= -O3 -Wall -DVERSION=\"0m/01\"
 WININCLUDE	= winglk
 WINLIB		= ../prebuilt/win32
 

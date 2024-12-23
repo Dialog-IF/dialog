@@ -22,6 +22,7 @@ enum {
 enum {
 	CLA_MAIN,
 	CLA_STATUS,
+	CLA_INLINESTATUS,
 	CLA_INTDEBUG,
 	CLA_DEBUG,
 	CLA_DEBUGIN,
@@ -187,6 +188,8 @@ void o_begin_box(char *boxclass) {
 			boxstack[boxsp].boxclass = CLA_STATUS;
 			boxstack[boxsp].visible = 0;
 			boxstack[boxsp].wrap = 0;
+		} else if(!strcmp(boxclass, "inlinestatus")) {
+			boxstack[boxsp].boxclass = CLA_INLINESTATUS;
 		} else if(!strcmp(boxclass, "trace")) {
 			boxstack[boxsp].boxclass = CLA_TRACE;
 			boxstack[boxsp].wrap = 0;

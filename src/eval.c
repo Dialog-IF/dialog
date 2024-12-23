@@ -716,9 +716,14 @@ void pp_value(struct eval_state *es, value_t v, int with_at, int with_plus) {
 			assert(es->heap[v.value + 0].tag == VAL_PAIR);
 			first = 1;
 			for(sub = es->heap[v.value + 0]; sub.tag == VAL_PAIR; sub = es->heap[sub.value + 1]) {
-				assert(es->heap[sub.value].tag == VAL_DICT);
 				if(!first) o_nospace();
-				o_print_opaque_word(es->program->dictwordnames[es->heap[sub.value].value]->name);
+				if(es->heap[sub.value].tag == VAL_NUM) {
+					snprintf(buf, sizeof(buf), "%d", es->heap[sub.value].value);
+					o_print_word(buf);
+				} else {
+					assert(es->heap[sub.value].tag == VAL_DICT);
+					o_print_opaque_word(es->program->dictwordnames[es->heap[sub.value].value]->name);
+				}
 				first = 0;
 			}
 		}
@@ -1011,15 +1016,20 @@ value_t parse_input_word(struct eval_state *es, uint8_t *input) {
 				} else {
 					list = (value_t) {VAL_NIL};
 					for(j = ulen - 1; j >= 0; j--) {
-						unibuf[0] = unicode[j];
-						unibuf[1] = 0;
-						if(unicode_to_utf8((uint8_t *) utfbuf, sizeof(utfbuf), unibuf) == 1) {
-							w2 = find_word(prg, utfbuf);
-							ensure_dict_word(prg, w2);
-							list = eval_makepair((value_t) {VAL_DICT, w2->dict_id}, list, es);
+						if(unicode[j] >= '0' && unicode[j] <= '9') {
+							list = eval_makepair((value_t) {VAL_NUM, unicode[j] - '0'}, list, es);
 							if(list.tag == VAL_ERROR) return list;
 						} else {
-							return (value_t) {VAL_ERROR};
+							unibuf[0] = unicode[j];
+							unibuf[1] = 0;
+							if(unicode_to_utf8((uint8_t *) utfbuf, sizeof(utfbuf), unibuf) == 1) {
+								w2 = find_word(prg, utfbuf);
+								ensure_dict_word(prg, w2);
+								list = eval_makepair((value_t) {VAL_DICT, w2->dict_id}, list, es);
+								if(list.tag == VAL_ERROR) return list;
+							} else {
+								return (value_t) {VAL_ERROR};
+							}
 						}
 					}
 					list = eval_makepair(list, (value_t) {VAL_NIL, 0}, es);
@@ -1202,6 +1212,8 @@ static int eval_builtin(struct eval_state *es, int builtin, value_t o1, value_t 
 		o_clear(1);
 		break;
 	case BI_CLEAR_LINKS:
+	case BI_CLEAR_DIV:
+	case BI_CLEAR_OLD:
 		break;
 	case BI_COMPILERVERSION:
 		if(!es->forwords) {
@@ -1353,6 +1365,28 @@ static int eval_run(struct eval_state *es) {
 		case I_ASSIGN:
 			set_by_ref(ci->oper[0], value_of(ci->oper[1], es), es);
 			break;
+		case I_BEGIN_AREA:
+			assert(ci->oper[0].tag == OPER_BOX);
+			if(!es->forwords) {
+				if(es->divsp == EVAL_MAXDIV) {
+					pred_release(pp.pred);
+					return ESTATUS_ERR_IO;
+				}
+				es->divstack[es->divsp++] = ci->oper[0].value;
+				if(es->inStatus || es->nSpan) {
+					pred_release(pp.pred);
+					return ESTATUS_ERR_IO;
+				} else {
+					if(ci->subop == AREA_TOP) {
+						o_begin_box("status");
+					} else {
+						o_par_n(es->program->boxclasses[ci->oper[0].value].margintop);
+						o_begin_box("inlinestatus");
+					}
+					es->inStatus = 1;
+				}
+			}
+			break;
 		case I_BEGIN_BOX:
 			assert(ci->oper[0].tag == OPER_BOX);
 			if(!es->forwords) {
@@ -1361,15 +1395,7 @@ static int eval_run(struct eval_state *es) {
 					return ESTATUS_ERR_IO;
 				}
 				es->divstack[es->divsp++] = ci->oper[0].value;
-				if(ci->subop == BOX_STATUS) {
-					if(es->inStatus || es->nSpan) {
-						pred_release(pp.pred);
-						return ESTATUS_ERR_IO;
-					} else {
-						o_begin_box("status");
-						es->inStatus = 1;
-					}
-				} else if(ci->subop == BOX_DIV && es->nSpan) {
+				if(ci->subop == BOX_DIV && es->nSpan) {
 					pred_release(pp.pred);
 					return ESTATUS_ERR_IO;
 				} else {
@@ -1697,6 +1723,22 @@ static int eval_run(struct eval_state *es) {
 				o_print_word("]");
 			}
 			break;
+		case I_END_AREA:
+			if(!es->forwords) {
+				if(!es->divsp) {
+					pred_release(pp.pred);
+					return ESTATUS_ERR_IO;
+				}
+				es->divsp--;
+				o_end_box();
+				es->inStatus = 0;
+				if(ci->subop == AREA_INLINE) {
+					o_par_n(es->program->boxclasses[ci->oper[0].value].marginbottom);
+				}
+				o_set_style(STYLE_ROMAN);
+				o_set_style(es->divstyle);
+			}
+			break;
 		case I_END_BOX:
 			if(!es->forwords) {
 				if(!es->divsp) {
@@ -1705,19 +1747,15 @@ static int eval_run(struct eval_state *es) {
 				}
 				es->divsp--;
 				o_end_box();
-				if(ci->subop == BOX_STATUS) {
-					es->inStatus = 0;
+				if(ci->subop == BOX_SPAN) {
+					es->nSpan--;
 				} else {
-					if(ci->subop == BOX_SPAN) {
-						es->nSpan--;
-					} else {
-						o_par_n(es->program->boxclasses[ci->oper[0].value].marginbottom);
-					}
-					assert(es->aux);
-					v = es->auxstack[--es->aux];
-					assert(v.tag == VAL_NUM);
-					es->divstyle = v.value;
+					o_par_n(es->program->boxclasses[ci->oper[0].value].marginbottom);
 				}
+				assert(es->aux);
+				v = es->auxstack[--es->aux];
+				assert(v.tag == VAL_NUM);
+				es->divstyle = v.value;
 				o_set_style(STYLE_ROMAN);
 				o_set_style(es->divstyle);
 			}
@@ -2019,6 +2057,15 @@ static int eval_run(struct eval_state *es) {
 		case I_IF_HAVE_UNDO:
 		case I_IF_HAVE_QUIT:
 			res = 1;
+			if(ci->subop ^ res) perform_branch(ci->implicit, es, &pp, &pc);
+			break;
+		case I_IF_HAVE_STATUS:
+			assert(ci->oper[0].tag == VAL_RAW);
+			if(ci->oper[0].value == 1) {
+				res = 1;
+			} else {
+				res = 0;
+			}
 			if(ci->subop ^ res) perform_branch(ci->implicit, es, &pp, &pc);
 			break;
 		case I_IF_MATCH:

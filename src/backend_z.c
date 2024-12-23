@@ -1820,16 +1820,23 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 					generate_store(r, ci->oper[0], o1);
 				}
 				break;
-			case I_BEGIN_BOX:
+			case I_BEGIN_AREA:
 				assert(ci->oper[0].tag == OPER_BOX);
-				if(ci->subop == BOX_STATUS) {
+				if(ci->subop == AREA_TOP) {
 					zi = append_instr(r, Z_CALLVN);
 					zi->oper[0] = ROUTINE(R_BEGIN_STATUS);
 					zi->oper[1] = SMALL_OR_LARGE(
 						prg->boxclasses[ci->oper[0].value].height |
 						((prg->boxclasses[ci->oper[0].value].flags & BOXF_RELHEIGHT)? 0x8000 : 0));
 					zi->oper[2] = SMALL(prg->boxclasses[ci->oper[0].value].style);
-				} else if(ci->subop == BOX_SPAN) {
+				} else {
+					zi = append_instr(r, Z_CALL1N);
+					zi->oper[0] = ROUTINE(R_BEGIN_NOSTATUS);
+				}
+				break;
+			case I_BEGIN_BOX:
+				assert(ci->oper[0].tag == OPER_BOX);
+				if(ci->subop == BOX_SPAN) {
 					zi = append_instr(r, Z_CALL2N);
 					zi->oper[0] = ROUTINE(R_BEGIN_SPAN);
 					zi->oper[1] = SMALL(prg->boxclasses[ci->oper[0].value].style);
@@ -1882,6 +1889,8 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 					zi->oper[1] = VALUE(REG_FFFF);
 					break;
 				case BI_CLEAR_LINKS:
+				case BI_CLEAR_DIV:
+				case BI_CLEAR_OLD:
 					break;
 				case BI_COMPILERVERSION:
 					zi = append_instr(r, Z_CALL1N);
@@ -2205,12 +2214,14 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				zi->oper[0] = ROUTINE(R_EMBED_RES);
 				zi->oper[1] = o1;
 				break;
+			case I_END_AREA:
+				assert(ci->oper[0].tag == OPER_BOX);
+				zi = append_instr(r, Z_CALL1N);
+				zi->oper[0] = ROUTINE(R_END_STATUS);
+				break;
 			case I_END_BOX:
 				assert(ci->oper[0].tag == OPER_BOX);
-				if(ci->subop == BOX_STATUS) {
-					zi = append_instr(r, Z_CALL1N);
-					zi->oper[0] = ROUTINE(R_END_STATUS);
-				} else if(ci->subop == BOX_SPAN) {
+				if(ci->subop == BOX_SPAN) {
 					zi = append_instr(r, Z_CALL1N);
 					zi->oper[0] = ROUTINE(R_END_SPAN);
 				} else if(prg->boxclasses[ci->oper[0].value].flags & (BOXF_FLOATLEFT | BOXF_FLOATRIGHT)) {
@@ -2586,6 +2597,24 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				break;
 			case I_IF_HAVE_QUIT:
 				if(!ci->subop) {
+					if(ci->implicit == 0xffff) {
+						zi = append_instr(r, Z_RFALSE);
+					} else if(pred->routines[ci->implicit].reftrack == r_id) {
+						zi = append_instr(r, Z_JUMP);
+						zi->oper[0] = REL_LABEL(llabel[ci->implicit]);
+						if(!encountered[ci->implicit]) {
+							rstack[rsp++] = ci->implicit;
+							encountered[ci->implicit] = 1;
+						}
+					} else {
+						zi = append_instr(r, Z_RET);
+						zi->oper[0] = ROUTINE(rlabel[ci->implicit]);
+					}
+				}
+				break;
+			case I_IF_HAVE_STATUS:
+				assert(ci->oper[0].tag == VAL_RAW);
+				if((ci->oper[0].value == 0) ^ !!ci->subop) {
 					if(ci->implicit == 0xffff) {
 						zi = append_instr(r, Z_RFALSE);
 					} else if(pred->routines[ci->implicit].reftrack == r_id) {

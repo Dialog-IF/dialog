@@ -1,5 +1,5 @@
 #define AAVM_FORMAT_MAJOR 0
-#define AAVM_FORMAT_MINOR 4
+#define AAVM_FORMAT_MINOR 5
 
 #define AA_NOP			0x00
 #define AA_FAIL			0x01
@@ -11,6 +11,7 @@
 #define AA_JMP_SIMPLE		0x06	// CODE
 #define AA_JMPL_SIMPLE		0x86	// CODE
 #define AA_JMP_TAIL		0x07	// CODE
+#define AA_TAIL			0x87
 #define AA_PUSH_ENV		0x08	// BYTE/0
 #define AA_POP_ENV		0x09
 #define AA_POP_ENV_PROCEED	0x89
@@ -25,6 +26,7 @@
 #define AA_MAKE_PAIR_D		0x12	// DEST DEST DEST
 #define AA_MAKE_PAIR_WB		0x13	// WORD/VBYTE DEST DEST
 #define AA_AUX_PUSH_VAL		0x14	// VALUE
+#define AA_AUX_PUSH_RAW_0	0x94	// 0
 #define AA_AUX_PUSH_RAW		0x15	// WORD/VBYTE
 #define AA_AUX_POP_VAL		0x16	// DEST
 #define AA_AUX_POP_LIST		0x17	// DEST
@@ -102,7 +104,7 @@
 #define AA_PRINT_VAL		0x65	// VALUE
 #define AA_ENTER_DIV		0x66	// INDEX
 #define AA_LEAVE_DIV		0xe6
-#define AA_ENTER_STATUS		0x67	// INDEX
+#define AA_ENTER_STATUS_0	0x67	// INDEX
 #define AA_LEAVE_STATUS		0xe7
 #define AA_ENTER_LINK_RES	0x68	// VALUE
 #define AA_LEAVE_LINK_RES	0xe8
@@ -117,6 +119,7 @@
 #define AA_PROGRESS		0x6d	// VALUE VALUE
 #define AA_ENTER_SPAN		0x6e	// INDEX
 #define AA_LEAVE_SPAN		0xee
+#define AA_ENTER_STATUS		0x6f	// BYTE INDEX
 #define AA_EXT0			0x70	// BYTE
 #define AA_SAVE			0x72	// CODE
 #define AA_SAVE_UNDO		0xf2	// CODE
@@ -153,7 +156,9 @@
 #define AAEXT0_DEC_CWL		0x0d
 #define AAEXT0_UPPERCASE	0x0e
 #define AAEXT0_CLEAR_LINKS	0x0f
-#define AAEXT0_N		0x10
+#define AAEXT0_CLEAR_OLD	0x10
+#define AAEXT0_CLEAR_DIV	0x11
+#define AAEXT0_N		0x12
 
 #define OVAR_PARENT		0
 #define OVAR_CHILD		1
@@ -176,6 +181,8 @@
 #define AAFEAT_SAVE		0x41
 #define AAFEAT_LINKS		0x42
 #define AAFEAT_QUIT		0x43
+#define AAFEAT_TOP_AREA		0x60
+#define AAFEAT_INLINE_AREA	0x61
 
 #define AA_N_INITREG		3
 

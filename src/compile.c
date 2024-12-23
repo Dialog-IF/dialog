@@ -37,6 +37,7 @@ struct opinfosrc {
 } opinfosrc[N_OPCODES] = {
 	{I_ALLOCATE,		0, 0,					"ALLOCATE"},
 	{I_ASSIGN,		1, 0,					"ASSIGN"},
+	{I_BEGIN_AREA,		0, OPF_SUBOP|OPF_CAN_FAIL,		"BEGIN_AREA"},
 	{I_BEGIN_BOX,		0, OPF_SUBOP|OPF_CAN_FAIL,		"BEGIN_BOX"},
 	{I_BEGIN_LINK,		0, 0,					"BEGIN_LINK"},
 	{I_BEGIN_LINK_RES,	0, 0,					"BEGIN_LINK_RES"},
@@ -59,6 +60,7 @@ struct opinfosrc {
 	{I_CUT_CHOICE,		0, 0,					"CUT_CHOICE"},
 	{I_DEALLOCATE,		0, OPF_SUBOP,				"DEALLOCATE"},
 	{I_EMBED_RES,		0, 0,					"EMBED_RES"},
+	{I_END_AREA,		0, OPF_SUBOP,				"END_AREA"},
 	{I_END_BOX,		0, OPF_SUBOP,				"END_BOX"},
 	{I_END_LINK,		0, 0,					"END_LINK"},
 	{I_END_LINK_RES,	0, 0,					"END_LINK_RES"},
@@ -84,6 +86,7 @@ struct opinfosrc {
 	{I_IF_HAVE_LINK,	0, OPF_BRANCH,				"IF_HAVE_LINK"},
 	{I_IF_HAVE_UNDO,	0, OPF_BRANCH,				"IF_HAVE_UNDO"},
 	{I_IF_HAVE_QUIT,	0, OPF_BRANCH,				"IF_HAVE_QUIT"},
+	{I_IF_HAVE_STATUS,	0, OPF_BRANCH,				"IF_HAVE_STATUS"},
 	{I_IF_MATCH,		0, OPF_BRANCH,				"IF_MATCH"},
 	{I_IF_NIL,		0, OPF_BRANCH,				"IF_NIL"},
 	{I_IF_NUM,		0, OPF_BRANCH,				"IF_NUM"},
@@ -1307,6 +1310,22 @@ static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an,
 		return 0;
 	}
 
+	if(an->predicate->builtin == BI_HAVE_STATUS) {
+		ci = add_instr(I_IF_HAVE_STATUS);
+		ci->oper[0] = (value_t) {VAL_RAW, 0};
+		ci->subop = 1;
+		post_rule_trace(prg, cl, an, seen);
+		return 0;
+	}
+
+	if(an->predicate->builtin == BI_HAVE_INLINE_STATUS) {
+		ci = add_instr(I_IF_HAVE_STATUS);
+		ci->oper[0] = (value_t) {VAL_RAW, 1};
+		ci->subop = 1;
+		post_rule_trace(prg, cl, an, seen);
+		return 0;
+	}
+
 	if(an->predicate->builtin == BI_HAVE_LINK) {
 		if(prg->optflags & OPTF_NO_LINKS) {
 			ci = add_instr(I_JUMP);
@@ -1349,6 +1368,8 @@ static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an,
 	|| an->predicate->builtin == BI_CLEAR
 	|| an->predicate->builtin == BI_CLEAR_ALL
 	|| an->predicate->builtin == BI_CLEAR_LINKS
+	|| an->predicate->builtin == BI_CLEAR_DIV
+	|| an->predicate->builtin == BI_CLEAR_OLD
 	|| an->predicate->builtin == BI_SERIALNUMBER
 	|| an->predicate->builtin == BI_COMPILERVERSION
 	|| an->predicate->builtin == BI_MEMSTATS) {
@@ -2138,6 +2159,7 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 			ci->oper[0] = (value_t) {OPER_NUM, 0};
 			ci = add_instr(I_POP_STOP);
 			break;
+		case AN_STATUSAREA:
 		case AN_OUTPUTBOX:
 			comp_ensure_seen_if_nonlocal(cl, an, seen);
 			memset(known_args, 0, MAXPARAM * sizeof(struct astnode *));
@@ -2156,12 +2178,15 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 					LVL_ERR,
 					an->line,
 					"The parameter of %s must be a dictionary word.",
-					an->subkind? "(status bar $)" : "(div $)");
+					(an->kind == AN_STATUSAREA)?
+						(an->subkind == AREA_TOP)? "(status bar $)" : "(inline status bar $)"
+					:
+						(an->subkind == BOX_SPAN)? "(span $)" : "(div $)");
 				prg->errorflag = 1;
 				box = -1;
 			}
 
-			ci = add_instr(I_BEGIN_BOX);
+			ci = add_instr((an->kind == AN_STATUSAREA)? I_BEGIN_AREA : I_BEGIN_BOX);
 			ci->subop = an->subkind;
 			ci->oper[0] = (value_t) {OPER_BOX, box};
 
@@ -2196,7 +2221,7 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 				ci = add_instr(I_CUT_CHOICE);
 				ci = add_instr(I_POP_STOP);
 			}
-			ci = add_instr(I_END_BOX);
+			ci = add_instr((an->kind == AN_STATUSAREA)? I_END_AREA : I_END_BOX);
 			ci->subop = an->subkind;
 			ci->oper[0] = (value_t) {OPER_BOX, box};
 			ci = add_instr(I_JUMP);
@@ -2210,7 +2235,7 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 				ci = add_instr(I_CUT_CHOICE);
 				ci = add_instr(I_POP_STOP);
 			}
-			ci = add_instr(I_END_BOX);
+			ci = add_instr((an->kind == AN_STATUSAREA)? I_END_AREA : I_END_BOX);
 			ci->subop = an->subkind;
 			ci->oper[0] = (value_t) {OPER_BOX, box};
 			ci = add_instr(I_JUMP);
@@ -2222,7 +2247,7 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 				ci = add_instr(I_POP_CHOICE);
 				ci->oper[0] = (value_t) {OPER_NUM, 0};
 				ci = add_instr(I_POP_STOP);
-				ci = add_instr(I_END_BOX);
+				ci = add_instr((an->kind == AN_STATUSAREA)? I_END_AREA : I_END_BOX);
 				ci->subop = an->subkind;
 				ci->oper[0] = (value_t) {OPER_BOX, box};
 				ci = add_instr(I_STOP);

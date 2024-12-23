@@ -16,6 +16,7 @@ static struct aaopinfo aaopinfosrc[] = {
 	{AA_JMP_SIMPLE,		{AAO_CODE}, 0,						"jmp_simple"},
 	{AA_JMPL_SIMPLE,	{AAO_CODE}, 0,						"jmpl_simple"},
 	{AA_JMP_TAIL,		{AAO_CODE}, 0,						"jmp_tail"},
+	{AA_TAIL,		{}, 0,							"tail"},
 	{AA_PUSH_ENV,		{AAO_BYTE}, AAO_ZERO,					"push_env"},
 	{AA_POP_ENV,		{}, 0,							"pop_env"},
 	{AA_POP_ENV_PROCEED,	{}, 0,							"pop_env_proceed"},
@@ -30,6 +31,7 @@ static struct aaopinfo aaopinfosrc[] = {
 	{AA_MAKE_PAIR_D,	{AAO_DEST, AAO_DEST, AAO_DEST}, 0,			"make_pair"},
 	{AA_MAKE_PAIR_WB,	{AAO_WORD, AAO_DEST, AAO_DEST}, AAO_VBYTE,		"make_pair"},
 	{AA_AUX_PUSH_VAL,	{AAO_VALUE}, 0,						"aux_push_val"},
+	{AA_AUX_PUSH_RAW_0,	{AAO_ZERO}, 0,						"aux_push_raw"},
 	{AA_AUX_PUSH_RAW,	{AAO_WORD}, AAO_VBYTE,					"aux_push_raw"},
 	{AA_STOP,		{}, 0,							"stop"},
 	{AA_PUSH_STOP,		{AAO_CODE}, 0,						"push_stop"},
@@ -107,7 +109,7 @@ static struct aaopinfo aaopinfosrc[] = {
 	{AA_PRINT_VAL,		{AAO_VALUE}, 0,						"print_val"},
 	{AA_ENTER_DIV,		{AAO_INDEX}, 0,						"enter_div"},
 	{AA_LEAVE_DIV,		{}, 0,							"leave_div"},
-	{AA_ENTER_STATUS,	{AAO_INDEX}, 0,						"enter_status"},
+	{AA_ENTER_STATUS_0,	{AAO_ZERO, AAO_INDEX}, 0,				"enter_status"},
 	{AA_LEAVE_STATUS,	{}, 0,							"leave_status"},
 	{AA_ENTER_LINK_RES,	{AAO_VALUE}, 0,						"enter_link_res"},
 	{AA_LEAVE_LINK_RES,	{}, 0,							"leave_link_res"},
@@ -122,6 +124,7 @@ static struct aaopinfo aaopinfosrc[] = {
 	{AA_PROGRESS,		{AAO_VALUE, AAO_VALUE}, 0,				"progress"},
 	{AA_ENTER_SPAN,		{AAO_INDEX}, 0,						"enter_span"},
 	{AA_LEAVE_SPAN,		{}, 0,							"leave_span"},
+	{AA_ENTER_STATUS,	{AAO_BYTE, AAO_INDEX}, 0,				"enter_status"},
 	{AA_EXT0,		{AAO_BYTE}, 0,						"ext"},
 	{AA_SAVE,		{AAO_CODE}, 0,						"save"},
 	{AA_SAVE_UNDO,		{AAO_CODE}, 0,						"save_undo"},
@@ -155,6 +158,8 @@ char *aaext0name[AAEXT0_N] = {
 	"dec_cwl",
 	"uppercase",
 	"clear_links",
+	"clear_old",
+	"clear_div",
 };
 
 void aavm_init() {

@@ -65,6 +65,8 @@ struct rtroutine rtroutines[] = {
 			// 0 (param): Unicode char
 			// 1: temp
 		(struct zinstr []) {
+			{Z_JG, {VALUE(REG_STATUSBAR), SMALL(1)}, 0, RFALSE},
+
 			{Z_LOADB, {SMALL(0), SMALL(0x32)}, REG_LOCAL+1},
 			{Z_JL, {VALUE(REG_LOCAL+1), SMALL(1)}, 0, 1},
 
@@ -80,6 +82,7 @@ struct rtroutine rtroutines[] = {
 			{Z_JE, {VALUE(REG_LOCAL+0), LARGE(0x201c)}, 0, 4},	// upper 66 quote
 			{Z_JE, {VALUE(REG_LOCAL+0), LARGE(0x201d)}, 0, 4},	// upper 99 quote
 			{Z_JE, {VALUE(REG_LOCAL+0), LARGE(0x201e)}, 0, 4},	// lower 99 quote
+			{Z_JE, {VALUE(REG_LOCAL+0), LARGE(0x2022)}, 0, 5},	// bullet
 
 			{Z_PRINTLIT, {}, 0, 0, "?"},
 			{Z_RFALSE},
@@ -94,6 +97,10 @@ struct rtroutine rtroutines[] = {
 
 			{OP_LABEL(4)},
 			{Z_PRINTLIT, {}, 0, 0, "\""},
+			{Z_RFALSE},
+
+			{OP_LABEL(5)},
+			{Z_PRINTLIT, {}, 0, 0, "*"},
 			{Z_RFALSE},
 
 			{Z_END},
@@ -125,6 +132,7 @@ struct rtroutine rtroutines[] = {
 		1,
 			// 0 (param): what to print, packed address
 		(struct zinstr []) {
+			{Z_JG, {VALUE(REG_STATUSBAR), SMALL(1)}, 0, RFALSE},
 			{Z_JNE, {VALUE(REG_SPACE), SMALL(2)}, 0, 1},
 			{Z_PRINTLIT, {}, 0, 0, " "},
 
@@ -140,6 +148,7 @@ struct rtroutine rtroutines[] = {
 		1,
 			// 0 (param): what to print, packed address
 		(struct zinstr []) {
+			{Z_JG, {VALUE(REG_STATUSBAR), SMALL(1)}, 0, RFALSE},
 			{Z_JNE, {VALUE(REG_SPACE), SMALL(2)}, 0, 1},
 			{Z_PRINTLIT, {}, 0, 0, " "},
 
@@ -155,6 +164,7 @@ struct rtroutine rtroutines[] = {
 		1,
 			// 0 (param): what to print, packed address
 		(struct zinstr []) {
+			{Z_JG, {VALUE(REG_STATUSBAR), SMALL(1)}, 0, RFALSE},
 			{Z_CALL1N, {ROUTINE(R_SYNC_SPACE)}},
 			{Z_CALL2N, {ROUTINE(R_PRINT_UPPER), VALUE(REG_LOCAL+0)}},
 			{Z_STORE, {SMALL(REG_SPACE), SMALL(1)}},
@@ -167,6 +177,7 @@ struct rtroutine rtroutines[] = {
 		1,
 			// 0 (param): what to print, packed address
 		(struct zinstr []) {
+			{Z_JG, {VALUE(REG_STATUSBAR), SMALL(1)}, 0, RFALSE},
 			{Z_CALL1N, {ROUTINE(R_SYNC_SPACE)}},
 			{Z_CALL2N, {ROUTINE(R_PRINT_UPPER), VALUE(REG_LOCAL+0)}},
 			{Z_STORE, {SMALL(REG_SPACE), SMALL(0)}},
@@ -248,6 +259,7 @@ struct rtroutine rtroutines[] = {
 			// 0 (param): number of spaces to print, as tagged value
 		(struct zinstr []) {
 			{Z_JNZ, {VALUE(REG_FORWORDS)}, 0, RFALSE},
+			{Z_JG, {VALUE(REG_STATUSBAR), SMALL(1)}, 0, RFALSE},
 			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_LOCAL+0)}, REG_LOCAL+0},
 			{Z_STORE, {SMALL(REG_SPACE), SMALL(1)}},
 			{Z_JLE, {VALUE(REG_LOCAL+0), VALUE(REG_4000)}, 0, RFALSE},
@@ -271,6 +283,7 @@ struct rtroutine rtroutines[] = {
 			{Z_RFALSE},
 
 			{OP_LABEL(1)},
+			{Z_JNE, {VALUE(REG_STATUSBAR), SMALL(1)}, 0, RFALSE},
 			{Z_INC, {SMALL(REG_YPOS)}},
 			{Z_STORE, {SMALL(REG_SPACE), SMALL(4)}},
 			{Z_JG, {VALUE(REG_YPOS), VALUE(REG_CURRSPLIT)}, 0, RFALSE},
@@ -296,6 +309,7 @@ struct rtroutine rtroutines[] = {
 			{Z_RFALSE},
 
 			{OP_LABEL(2)},
+			{Z_JNE, {VALUE(REG_STATUSBAR), SMALL(1)}, 0, RFALSE},
 			{Z_JE, {VALUE(REG_SPACE), SMALL(4)}, 0, 3},
 			{Z_INC, {SMALL(REG_YPOS)}},
 			{OP_LABEL(3)},
@@ -330,6 +344,7 @@ struct rtroutine rtroutines[] = {
 			{Z_RFALSE},
 
 			{OP_LABEL(2)},
+			{Z_JNE, {VALUE(REG_STATUSBAR), SMALL(1)}, 0, RFALSE},
 			{Z_INC, {SMALL(REG_YPOS)}},
 			{Z_INC_JLE, {SMALL(REG_SPACE), VALUE(REG_LOCAL+0)}, 0, 2},
 
@@ -349,8 +364,9 @@ struct rtroutine rtroutines[] = {
 			{Z_JZ, {VALUE(REG_SPACE)}, 0, 1},
 			{Z_JNE, {VALUE(REG_SPACE), SMALL(2)}, 0, RFALSE},
 			{OP_LABEL(1)},
-			{Z_PRINTLIT, {}, 0, 0, " "},
 			{Z_STORE, {SMALL(REG_SPACE), SMALL(3)}},
+			{Z_JG, {VALUE(REG_STATUSBAR), SMALL(1)}, 0, RFALSE},
+			{Z_PRINTLIT, {}, 0, 0, " "},
 			{Z_RFALSE},
 			{Z_END},
 		}
@@ -388,6 +404,7 @@ struct rtroutine rtroutines[] = {
 			// 3: string length, list iterator
 			// 4: temp
 		(struct zinstr []) {
+			{Z_JG, {VALUE(REG_STATUSBAR), SMALL(1)}, 0, RFALSE},
 			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_LOCAL+0)}, REG_LOCAL+0},
 			{Z_AND, {VALUE(REG_LOCAL+0), LARGE(0xff00)}, REG_LOCAL+4},
 			{Z_JNE, {VALUE(REG_LOCAL+4), LARGE(0x3e00)}, 0, 1},
@@ -2266,7 +2283,9 @@ struct rtroutine rtroutines[] = {
 			{Z_READCHAR, {SMALL(1)}, REG_LOCAL+0},
 			{Z_AND, {VALUE(REG_LOCAL+0), SMALL(0xff)}, REG_LOCAL+0},
 			{Z_JE, {VALUE(REG_LOCAL+0), SMALL(8), SMALL(13), SMALL(129)}, 0, 1},
-			{Z_JL, {VALUE(REG_LOCAL+0), SMALL(32)}, 0, 2},
+			{Z_JL, {VALUE(REG_LOCAL+0), SMALL(0x20)}, 0, 2},
+			{Z_JL, {VALUE(REG_LOCAL+0), SMALL(0x30)}, 0, 1},
+			{Z_JL, {VALUE(REG_LOCAL+0), SMALL(0x3a)}, 0, 4},
 			{Z_JL, {VALUE(REG_LOCAL+0), SMALL(0x41)}, 0, 1},
 			{Z_JL, {VALUE(REG_LOCAL+0), SMALL(0x5b)}, 0, 3},
 			{Z_JL, {VALUE(REG_LOCAL+0), SMALL(127)}, 0, 1},
@@ -2281,6 +2300,10 @@ struct rtroutine rtroutines[] = {
 
 			{OP_LABEL(1)},
 			{Z_OR, {VALUE(REG_LOCAL+0), LARGE(0x3e00)}, REG_LOCAL+0},
+			{Z_RET, {VALUE(REG_LOCAL+0)}},
+
+			{OP_LABEL(4)},
+			{Z_ADD, {VALUE(REG_LOCAL+0), LARGE(0x4000-0x30)}, REG_LOCAL+0},
 			{Z_RET, {VALUE(REG_LOCAL+0)}},
 			{Z_END},
 		}
@@ -2434,7 +2457,12 @@ struct rtroutine rtroutines[] = {
 
 			{OP_LABEL(11)},
 			{Z_LOADB, {VALUE(REG_LOCAL+1), VALUE(REG_LOCAL+7)}, REG_LOCAL+10},
-			{Z_OR, {VALUE(REG_LOCAL+10), LARGE(0x3e00)}, REG_LOCAL+10},
+			{Z_JL, {VALUE(REG_LOCAL+10), SMALL(0x30)}, 0, 15},
+			{Z_JGE, {VALUE(REG_LOCAL+10), SMALL(0x3a)}, 0, 15},
+			{Z_ADD, {VALUE(REG_LOCAL+10), LARGE(0x200-0x30)}, REG_LOCAL+10},
+
+			{OP_LABEL(15)},
+			{Z_ADD, {VALUE(REG_LOCAL+10), LARGE(0x3e00)}, REG_LOCAL+10},
 			{Z_CALLVS, {ROUTINE(R_PUSH_PAIR_VV), VALUE(REG_LOCAL+10), VALUE(REG_LOCAL+5)}, REG_LOCAL+5},
 			{Z_DEC_JGE, {SMALL(REG_LOCAL+7), VALUE(REG_LOCAL+9)}, 0, 11},
 
@@ -3330,6 +3358,23 @@ struct rtroutine rtroutines[] = {
 		}
 	},
 	{
+		R_BEGIN_NOSTATUS,
+		0,
+		(struct zinstr []) {
+			{Z_JZ, {VALUE(REG_STATUSBAR)}, 0, 1},
+
+			{OP_LABEL(2)},
+			{Z_THROW, {SMALL(FATAL_IO), VALUE(REG_FATALJMP)}},
+
+			{OP_LABEL(1)},
+			{Z_JNZ, {VALUE(REG_NSPAN)}, 0, 2},
+
+			{Z_STORE, {SMALL(REG_STATUSBAR), SMALL(2)}},
+			{Z_RFALSE},
+			{Z_END},
+		}
+	},
+	{
 		R_BEGIN_STATUS,
 		2,
 			// 0 (param): height (msb indicates relative)
@@ -3400,10 +3445,13 @@ struct rtroutine rtroutines[] = {
 		R_END_STATUS,
 		0,
 		(struct zinstr []) {
-			{Z_DEC, {SMALL(REG_STATUSBAR)}},
+			{Z_JG, {VALUE(REG_STATUSBAR), SMALL(1)}, 0, 1},
 			{Z_SET_WINDOW, {SMALL(0)}},
 			{Z_TEXTSTYLE, {SMALL(0)}},
+
+			{OP_LABEL(1)},
 			{Z_STORE, {SMALL(REG_SPACE), SMALL(5)}},
+			{Z_STORE, {SMALL(REG_STATUSBAR), SMALL(0)}},
 			{Z_RFALSE},
 			{Z_END},
 		}
@@ -3438,7 +3486,7 @@ struct rtroutine rtroutines[] = {
 			// 1 (param): style
 			// 2 (param): top margin
 		(struct zinstr []) {
-			{Z_JZ, {VALUE(REG_STATUSBAR)}, 0, 1},
+			{Z_JNE, {VALUE(REG_STATUSBAR), SMALL(1)}, 0, 1},
 
 			{Z_JGE, {VALUE(REG_LOCAL+0), SMALL(0)}, 0, 2},
 			{Z_AND, {VALUE(REG_LOCAL+0), SMALL(0xff)}, REG_LOCAL+0},
@@ -3466,7 +3514,7 @@ struct rtroutine rtroutines[] = {
 			{Z_RFALSE},
 
 			{OP_LABEL(1)},
-			// not inside @status
+			// not inside top status area
 			{Z_CALLVN, {ROUTINE(R_BEGIN_BOX), VALUE(REG_LOCAL+1), VALUE(REG_LOCAL+2)}},
 			{Z_RFALSE},
 			{Z_END},
@@ -3479,7 +3527,7 @@ struct rtroutine rtroutines[] = {
 			// 1 (param): style
 			// 2 (param): top margin
 		(struct zinstr []) {
-			{Z_JZ, {VALUE(REG_STATUSBAR)}, 0, 1},
+			{Z_JNE, {VALUE(REG_STATUSBAR), SMALL(1)}, 0, 1},
 
 			{Z_JGE, {VALUE(REG_LOCAL+0), SMALL(0)}, 0, 2},
 			{Z_AND, {VALUE(REG_LOCAL+0), SMALL(0xff)}, REG_LOCAL+0},
@@ -3507,7 +3555,7 @@ struct rtroutine rtroutines[] = {
 			{Z_RFALSE},
 
 			{OP_LABEL(1)},
-			// not inside status box
+			// not inside top status area
 			{Z_CALLVN, {ROUTINE(R_BEGIN_BOX), VALUE(REG_LOCAL+1), VALUE(REG_LOCAL+2)}},
 			{Z_RFALSE},
 			{Z_END},
@@ -3548,7 +3596,7 @@ struct rtroutine rtroutines[] = {
 		1,
 			// 0 (param): bottom margin
 		(struct zinstr []) {
-			{Z_JZ, {VALUE(REG_STATUSBAR)}, 0, 1},
+			{Z_JNE, {VALUE(REG_STATUSBAR), SMALL(1)}, 0, 1},
 
 			// leaving an inner box
 			{Z_DEC, {SMALL(REG_COLL)}},
@@ -3596,8 +3644,9 @@ struct rtroutine rtroutines[] = {
 			{Z_SUB, {VALUE(REG_LOCAL+0), VALUE(REG_4000)}, REG_LOCAL+0},
 			{Z_SUB, {VALUE(REG_LOCAL+1), VALUE(REG_4000)}, REG_LOCAL+1},
 
+			{Z_JG, {VALUE(REG_STATUSBAR), SMALL(1)}, 0, RFALSE},
 			{Z_JNZ, {VALUE(REG_STATUSBAR)}, 0, 1},
-			// not inside status box
+			// in main area
 			{Z_CALL1S, {ROUTINE(R_GET_FULLWIDTH)}, REG_XREMSIZE},
 			{Z_DEC, {SMALL(REG_XREMSIZE)}}, // prevent word wrap
 			{Z_TEXTSTYLE, {SMALL(0)}},
@@ -4148,6 +4197,7 @@ struct rtroutine rtroutines[] = {
 		R_SERIALNUMBER,
 		0,
 		(struct zinstr []) {
+			{Z_JG, {VALUE(REG_STATUSBAR), SMALL(1)}, 0, RFALSE},
 			{Z_CALL1N, {ROUTINE(R_SYNC_SPACE)}},
 			{Z_CALLVN, {ROUTINE(R_PRINT_N_ZSCII), SMALL(6), SMALL(0x12)}},
 			{Z_STORE, {SMALL(REG_SPACE), SMALL(0)}},
@@ -4159,6 +4209,7 @@ struct rtroutine rtroutines[] = {
 		R_COMPILERVERSION,
 		0,
 		(struct zinstr []) {
+			{Z_JG, {VALUE(REG_STATUSBAR), SMALL(1)}, 0, RFALSE},
 			{Z_CALL1N, {ROUTINE(R_SYNC_SPACE)}},
 			{Z_PRINTLIT, {}, 0, 0, "Dialog compiler version "},
 			{Z_CALLVN, {ROUTINE(R_PRINT_N_ZSCII), SMALL(2), SMALL(0x3c)}},
@@ -4241,6 +4292,7 @@ struct rtroutine rtroutines[] = {
 			// 2: temp
 			// 3: heap base
 		(struct zinstr []) {
+			{Z_JG, {VALUE(REG_STATUSBAR), SMALL(1)}, 0, RFALSE},
 			{Z_CALL1N, {ROUTINE(R_LINE)}},
 			{Z_PRINTLIT, {}, 0, 0, "Peak dynamic memory usage: "},
 

@@ -647,9 +647,11 @@ MANUAL</span>), even if they are currently out of scope.
 </p>
 <h3>Traits that determine what actions may be carried out on an object:</h3>
 <div class="img"><img src="inheritance3.png" /></div>
-<p><i>Openable</i> objects can be opened (unless they are locked) and closed.
-<i>Lockable</i> objects can be locked and unlocked. Lockable objects are
-openable by inheritance.
+<p><i>Opaque</i> objects hide their contents when closed. <i>Openable</i> objects
+can be opened (unless they are locked) and closed. <i>Lockable</i> objects can
+be locked and unlocked. Lockable objects are openable by inheritance, and
+openable objects are opaque (and start out closed). But such inheritance
+relations can be overridden on a per-object basis.
 </p>
 <p><i>Items</i> can be picked up by the player. Anything that is carried by the
 player (usually items) can be dropped, or put inside containers or on top of
@@ -678,7 +680,7 @@ the diagram because of their inheritance relation to the animate trait.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="items.html">Chapter 4: Items</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 28, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 29, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

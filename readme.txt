@@ -1,5 +1,5 @@
-This archive contains version 0k/06 of the Dialog compiler and interactive
-debugger, bundled with documentation and version 0.43 of the Dialog Standard
+This archive contains version 0m/01 of the Dialog compiler and interactive
+debugger, bundled with documentation and version 0.44 of the Dialog Standard
 Library.
 
 Directory structure:
@@ -37,6 +37,67 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0m/01, Lib 0.44 (Manual revision 29):
+
+		Language: Added '(clear old)' to clear, from the main area, any
+		text that the player has had a chance to read. Interpreters may
+		ignore it.
+
+		Language: Added '(clear div)' to clear, hide, or fold away the
+		current div. Interpreters may ignore it.
+
+		Language: Added '(inline status bar $) ...' for redirecting
+		output to a separate status area that appears as an ordinary
+		div inside the main area. The inline status bar is removed from
+		display when a new one appears. Interpreters do not have to
+		support status areas.
+
+		Language: Added '(interpreter supports status bar)' and
+		'(interpreter supports inline status bar)' to check for these
+		features at runtime.
+
+		Library: Certain actions (commands and '[inventory]' by
+		default) now preserve the current implicit action as set up by
+		'(asking for object in $)' or '(asking for direction in $)'.
+
+		Library: The definition of takable has changed so that TAKE ALL
+		no longer includes items inside a held container.
+
+		Library: Changed '(narrate undoing)' to '(narrate undoing $)',
+		where the parameter is the player input being undone, as a list
+		of words. The default rule prints this.
+
+		Library: Now uses noun heads to disambiguate when the grammar
+		calls for any object (e.g. for FIND).
+
+		Library: Close doors before locking them.
+
+		Library: Fixed a bug that affected EXCEPT/BUT when parsing
+		lists of objects.
+
+		Library: Added '[takable child]' grammar token, used for TAKE
+		ALL FROM.
+
+		Library: It is now deemed unlikely to put something where it
+		already is.
+
+		Library: Refactored some rules, e.g. '(location headline)'.
+
+		Frontend: Don't report more than ten interface violation
+		warnings.
+
+		Frontend: Increased maximum size of word-to-object maps.
+
+		All backends: '(split word $ into $)' and '(get key $)' now
+		return digits as numbers.
+
+		Z-backend: Unicode bullet falls back on '*'.
+
+		Aa-backend: Improved performance thanks to new Aa-machine 0.5
+		features.
+
+	(There is no language version 0l, for reasons of typography.)
 
 	0k/06, Lib 0.43 (Manual revision 28):
 

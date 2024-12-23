@@ -102,7 +102,7 @@ struct zinstr {
 #define REG_LTMAX		0x23	/* for memory statistics */
 #define REG_IDX			0x24
 
-#define REG_STATUSBAR		0x25	/* current number of nested boxes when in @status */
+#define REG_STATUSBAR		0x25	/* 0 = main, 1 = status bar, 2 = other area */
 #define REG_YPOS		0x26	/* current line when in status bar */
 #define REG_XOFFSET		0x27	/* current box x offset when in status bar */
 #define REG_XFULLSIZE		0x28	/* original box width when in status bar */
@@ -448,6 +448,7 @@ enum {
 
 	R_GET_FULLWIDTH,
 	R_BEGIN_STATUS,
+	R_BEGIN_NOSTATUS,
 	R_END_STATUS,
 	R_BEGIN_BOX,
 	R_BEGIN_BOX_LEFT,

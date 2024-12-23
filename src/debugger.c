@@ -1517,13 +1517,18 @@ int debugger(int argc, char **argv) {
 					} else if(i >= 0x80) {
 						i = unicode_to_lower(i);
 					}
-					unibuf[0] = i;
-					unibuf[1] = 0;
-					if(unicode_to_utf8((uint8_t *) chbuf, sizeof(chbuf), unibuf) == 1) {
-						w = find_word(dbg.prg, chbuf);
-						ensure_dict_word(dbg.prg, w);
+					if(i >= '0' && i <= '9') {
 						dyn_add_inputlog(&dbg.ds, (uint8_t *) "");
-						dbg.status = eval_resume(&dbg.es, (value_t) {VAL_DICT, w->dict_id});
+						dbg.status = eval_resume(&dbg.es, (value_t) {VAL_NUM, i - '0'});
+					} else {
+						unibuf[0] = i;
+						unibuf[1] = 0;
+						if(unicode_to_utf8((uint8_t *) chbuf, sizeof(chbuf), unibuf) == 1) {
+							w = find_word(dbg.prg, chbuf);
+							ensure_dict_word(dbg.prg, w);
+							dyn_add_inputlog(&dbg.ds, (uint8_t *) "");
+							dbg.status = eval_resume(&dbg.es, (value_t) {VAL_DICT, w->dict_id});
+						}
 					}
 				}
 			}
