@@ -78,7 +78,7 @@ enum {
 	I_IF_PAIR,		// -- value, implicit routine, subop = negate
 	I_IF_WORD,		// -- value, implicit routine, subop = negate
 	I_IF_MATCH,		// -- value, simple value, implicit routine, subop = negate (derefs and unboxes first, doesn't handle lists)
-	I_IF_MATCH2,		// -- value, simple value, implicit routine, subop = negate (derefs both, doesn't handle lists)
+	I_IF_UNIFY,		// -- value, value, implicit routine, subop = negate (derefs both, doesn't bind variables)
 	I_IF_GREATER,		// -- value, value, implicit routine, subop = negate
 	I_IF_GFLAG,		// -- global flag number, implicit routine, subop = negate
 	I_IF_OFLAG,		// -- object flag number, object, implicit routine, subop = negate
@@ -106,9 +106,8 @@ enum {
 	I_STOP,			// -E
 	I_POP_STOP,		// --
 
-	I_BEGIN_STATUS,		// -- value (height)
-	I_END_STATUS,		// --
-	I_WIN_WIDTH,		// -- dest value
+	I_BEGIN_BOX,		// F- word id, subop = status
+	I_END_BOX,		// -- word id, subop = status
 
 	I_TRANSCRIPT,		// F- subop = enable/disable
 
@@ -169,6 +168,7 @@ enum {
 	OPER_OFLAG,
 	OPER_OVAR,
 	OPER_PRED,
+	OPER_BOX,
 	OPER_STR,
 	OPER_FILE,
 	OPER_WORD

@@ -39,6 +39,7 @@ enum {
 	AN_SELECT,
 	AN_STOPPABLE,
 	AN_STATUSBAR,
+	AN_OUTPUTBOX,
 };
 
 enum {
@@ -53,6 +54,11 @@ enum {
 enum {
 	RULE_SIMPLE,
 	RULE_MULTI
+};
+
+enum {
+	BOX_DIV,
+	BOX_STATUS
 };
 
 enum {
@@ -74,7 +80,7 @@ enum {
 	BI_EMPTY,
 	BI_NONEMPTY,
 	BI_WORD,
-	BI_UNBOUND,
+	BI_BOUND,
 
 	BI_QUIT,
 	BI_RESTART,
@@ -93,7 +99,7 @@ enum {
 	BI_SPACE_N,
 	BI_LINE,
 	BI_PAR,
-	BI_PAR_N,
+	BI_UNSTYLE,
 	BI_ROMAN,
 	BI_BOLD,
 	BI_ITALIC,
@@ -102,8 +108,7 @@ enum {
 	BI_UPPER,
 	BI_CLEAR,
 	BI_CLEAR_ALL,
-	BI_WINDOWWIDTH,
-	BI_CURSORTO,
+	BI_PROGRESS_BAR,
 
 	BI_OBJECT,
 	BI_GETINPUT,
@@ -132,6 +137,10 @@ enum {
 	BI_PROGRAM_ENTRY,
 	BI_ERROR_ENTRY,
 
+	BI_QUERY,
+	BI_QUERY_ARG,
+	BI_INVOKE_CLOSURE,
+
 	BI_STORY_IFID,
 	BI_STORY_TITLE,
 	BI_STORY_AUTHOR,
@@ -140,6 +149,7 @@ enum {
 	BI_STORY_RELEASE,
 
 	BI_ENDINGS,
+	BI_STYLEDEF,
 
 	BI_INJECTED_QUERY,
 	BI_BREAKPOINT_AGAIN,
@@ -203,9 +213,8 @@ struct predname {
 #define DYN_NONE		0xffff
 #define DYN_HASPARENT		0		// this is an objvar id
 
-#define PREDNF_OUTPUT			0x0001
-#define PREDNF_META			0x0002
-#define PREDNF_DEFINABLE_BI		0x0004
+#define PREDNF_META		0x0001
+#define PREDNF_DEFINABLE_BI	0x0002
 
 struct predicate {
 	struct clause		**clauses;
@@ -276,6 +285,19 @@ struct endings_way {
 	struct endings_point	more;
 };
 
+struct boxclass {
+	uint16_t		width, height;
+	uint16_t		margintop, marginbottom;
+	uint16_t		flags;
+	uint16_t		style;	// STYLE_*
+	struct word		*class;
+};
+
+#define BOXF_RELWIDTH		0x0001
+#define BOXF_RELHEIGHT		0x0002
+#define BOXF_FLOATLEFT		0x0004
+#define BOXF_FLOATRIGHT		0x0008
+
 #define WORDBUCKETS 1024
 
 typedef void (*program_ticker_t)();
@@ -285,14 +307,16 @@ struct program {
 	struct word		*wordhash[WORDBUCKETS];
 	int			nextfresh;
 	struct predname		**predicates;
-	struct word		**allwords;;
+	struct word		**allwords;
 	struct word		**worldobjnames;
 	struct word		**dictwordnames;
+	struct boxclass		*boxclasses;
 	uint16_t		*dictmap; // from dict_id to backend-specific tagged word
 	struct predname		**globalflagpred;
 	struct predname		**globalvarpred;
 	struct predname		**objflagpred;
 	struct predname		**objvarpred;
+	struct astnode		**closurebodies;
 	uint8_t			*select;
 	uint32_t		optflags;
 	int			did_warn_about_repeat; // prevent multiple warnings
@@ -300,10 +324,12 @@ struct program {
 	int			npredicate;
 	int			nworldobj;
 	int			ndictword;
+	int			nboxclass;
 	int			nglobalflag;
 	int			nglobalvar;
 	int			nobjflag;
 	int			nobjvar;
+	int			nclosurebody;
 	int			nselect;
 	int			nalloc_dictword;
 	int			nalloc_word;
@@ -314,6 +340,9 @@ struct program {
 	int			errorflag;
 	program_ticker_t	eval_ticker;
 	int			nwordmappred;
+	struct word		**clausevars;
+	int			nclausevar;
+	int			nalloc_var;
 };
 
 #define OPTF_BOUND_PARAMS	0x00000001
@@ -330,9 +359,13 @@ struct word *find_word(struct program *prg, char *name);
 struct word *find_word_nocreate(struct program *prg, char *name);
 void ensure_dict_word(struct program *prg, struct word *w);
 struct word *fresh_word(struct program *prg);
+int find_boxclass(struct program *prg, struct word *w);
 void pred_clear(struct predname *predname);
 struct predname *find_predicate(struct program *prg, int nword, struct word **words);
 struct predname *find_builtin(struct program *prg, int id);
+int find_closurebody(struct program *prg, struct astnode *an, int *did_create);
+void analyse_clause(struct program *prg, struct clause *cl);
+void add_clause(struct clause *cl, struct predicate *pred);
 void pp_expr(struct astnode *an);
 void pp_body(struct astnode *an);
 void pp_clause(struct clause *cl);

@@ -275,6 +275,30 @@ void o_print_str(const char *utf8) {
 	}
 }
 
+void o_progress_bar(int position, int total) {
+	int i;
+
+	update_size();
+	if(position >= total) {
+		position = width - 3;
+	} else {
+		position = position * (width - 3) / total;
+	}
+	o_begin_box("box");
+	o_set_style(STYLE_FIXED);
+	o_print_str("[");
+	o_nospace();
+	for(i = 0; i < position; i++) {
+		o_print_str("=");
+		o_nospace();
+	}
+	if(position < width - 3) {
+		o_space_n(width - 3 - position);
+	}
+	o_print_str("]");
+	o_end_box();
+}
+
 void o_clear(int all) {
 	o_sync();
 	term_clear(all);

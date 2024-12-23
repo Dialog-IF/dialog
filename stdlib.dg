@@ -1,6 +1,6 @@
 
 (library version)
-	Library version 0.22.
+	Library version 0.23.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -17,6 +17,26 @@
 
 %% Update with (increase score by $) or (decrease score by $):
 (global variable (current score $))
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Style class declarations
+
+%% These declarations are merely hints to the backend and/or interpreter.
+
+%% Attributes can be ignored based on context. On the Z-machine backend, for
+%% instance, 'height' only has an effect on (status bar $) boxes, whereas
+%% 'width' and 'float' only affect (div $) boxes that are nested inside a
+%% (status bar $) box. The width and height may be specified in em or %.
+
+(style class @status)
+	height: 1 em;
+
+(style class @score)
+	float: right;
+	width: 17 em;
+
+(style class @initial-spacer)
+	margin-bottom: 2 em;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Relations
@@ -312,14 +332,15 @@
 	(current visibility ceiling $Ceil)
 	(if) (visibility ceiling of $Obj is $Ceil) (then)
 		{
-			(light reaches ceiling $Ceil)
+			(player can see)
 		(or)
 			(current player $Player)
 			($Obj has ancestor $Player)
 		}
 	(else)
+		(room $Obj)
 		(room $Ceil)
-		(light reaches ceiling $Ceil)
+		(player can see)
 		{
 			(from $Ceil go $ to $Obj)
 		(or)
@@ -339,12 +360,23 @@
 		($O = $Ceil)
 	(endif)
 
-~($Obj is reachable by $)
-	(out of reach $Obj)
+(trace reachability $Obj to $Obj or $)
+(trace reachability $Obj to $ or $Obj)
+(trace reachability $Obj to $Ceil1 or $Ceil2)
+	($Obj is $Rel $Parent)
+	~{ ($Rel = #in) ($Parent is closed) }
+	(trace reachability $Parent to $Ceil1 or $Ceil2)
 
 ($Obj is reachable by $Actor)
+	~(out of reach $Obj)
 	(reachability ceiling of $Actor is $Ceil)
 	(reachability ceiling of $Obj is $Ceil)
+
+($Obj is reachable by player)
+	~(out of reach $Obj)
+	(current player $Player)
+	(reachability ceiling of $Player is $Ceil)
+	(trace reachability $Obj to $Player or $Ceil)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Scope
@@ -390,15 +422,7 @@
 ($Obj is visible up to $Obj)
 
 ($Obj is visible up to $Ceiling)
-	(if) (unbound $Obj) (then)
-		(if) ($Ceiling is closed) ($Ceiling is opaque) (then)
-			*($Sub has parent $Ceiling)
-			~($Sub has relation #in)
-		(else)
-			*($Sub has parent $Ceiling)
-		(endif)
-		*($Obj is visible up to $Sub)
-	(else)
+	(if) (bound $Obj) (then)
 		($Obj has parent $Parent)
 		~{
 			($Obj has relation #in)
@@ -406,6 +430,14 @@
 			($Parent is opaque)
 		}
 		($Parent is visible up to $Ceiling)
+	(else)
+		(if) ($Ceiling is closed) ($Ceiling is opaque) (then)
+			*($Sub has parent $Ceiling)
+			~($Sub has relation #in)
+		(else)
+			*($Sub has parent $Ceiling)
+		(endif)
+		*($Obj is visible up to $Sub)
 	(endif)
 
 (scope)
@@ -691,16 +723,14 @@
 (perform [look])
 	(current player $Player)
 	(current visibility ceiling $Ceil)
+	(location headline)
+	(line)
 	(if) (player can see) (then)
-		(location headline)
-		(line)
 		(look $Ceil)
 		($Player is $Rel $Loc)
 		(make appearances $Rel $Loc)
 		(par)
 	(else)
-		(bold) (darkness headline) (roman)
-		(line)
 		(narrate darkness)
 	(endif)
 
@@ -3482,52 +3512,38 @@
 	(endif)
 
 (a-listing $List)
-	(listing $List @a 0)
+	(listing $List {(a $_)} @and 0)
 (the-listing $List)
-	(listing $List @t 0)
+	(listing $List {(the $_)} @and 0)
 (the-full-listing $List)
-	(listing $List @f 0)
+	(listing $List {(the full $_)} @and 0)
 (the-full-or-listing $List)
-	(listing $List @, 0)
+	(listing $List {(the full $_)} @or 0)
 (or-listing $List)
-	(listing $List @o 0)
+	(listing $List {(the $_)} @or 0)
 
-(listing [] $ 0)
+(listing [] $ $ 0)
 	nothing
-(listing [$Head | $Tail] $Variant $NPrinted)
+(listing [$Head | $Tail] $PrintClosure $Conjunction $NPrinted)
 	(if) (fungibility enabled) (then)
 		(combine-fungible $Tail $Head $NInc $Rest)
 	(else)
 		($Rest = $Tail)
 	(endif)
 	(if) (empty $Rest) (then)
-		(if) ($NPrinted > 1) (then)
-			,
-		(endif)
-		(if) ($NPrinted > 0) (then)
-			(if) ($Variant = @o) (or) ($Variant = @,) (then)
-				or
-			(else)
-				and
-			(endif)
-		(endif)
+		(if) ($NPrinted > 1) (then) , (endif)
+		(if) ($NPrinted > 0) (then) $Conjunction (endif)
 	(else)
-		(if) ($NPrinted > 0) (then)
-			,
-		(endif)
+		(if) ($NPrinted > 0) (then) , (endif)
 	(endif)
 	(if) (fungibility enabled) ($NInc > 1) (then)
 		(spell out $NInc) (plural name $Head)
-	(elseif) ($Variant = @a) (then)
-		(a $Head)
-	(elseif) ($Variant = @f) (or) ($Variant = @,) (then)
-		(the full $Head)
 	(else)
-		(the $Head)
+		(query $PrintClosure $Head)
 	(endif)
 	($NPrinted plus 1 into $NPp1)
 	(if) (nonempty $Rest) (then)
-		(listing $Rest $Variant $NPp1)
+		(listing $Rest $PrintClosure $Conjunction $NPp1)
 	(endif)
 
 (list of objects $Rel $Loc)
@@ -3781,8 +3797,7 @@
 
 (when $O is out of sight)
 	~($O is visible to player)
-	(current visibility ceiling $Ceil)
-	(if) (light reaches ceiling $Ceil) (then)
+	(if) (player can see) (then)
 		You can't see any such thing.
 	(else)
 		You can't see well enough to do that in the darkness.
@@ -3808,8 +3823,7 @@
 	(The $Obj) (isn't $Obj) here.
 
 (when $O is out of reach)
-	(current player $Actor)
-	~($O is reachable by $Actor)
+	~($O is reachable by player)
 	(if) ($O is visible to player) (then)
 		You can't reach (the $O).
 	(else)
@@ -3881,7 +3895,7 @@
 %% Program entry, main loop, status bar, score
 
 (program entry point)
-	(par 2)
+	(div @initial-spacer) {}
 	(update environment around player)
 	(stoppable) (intro)
 	(par)
@@ -3926,35 +3940,28 @@
 	(par)
 
 (redraw status bar)
-	(status bar 1) {
-		(status headline)
+	(status bar @status) {
 		(score headline)
+		(status headline)
 	}
 
+(redraw status bar)
+	%% This predicate shouldn't fail.
+
 (status headline)
-	(current player $Player)
-	(if) (player can see) (then)
-		(current room $Room)
-		(room header $Room)
-		($Player is $Rel $Loc)
-		(if) ~{ ($Rel = #in) ($Loc = $Room) } (then)
-			\( (name $Rel) (the $Loc) \)
-		(endif)
-	(else)
-		(darkness headline)
-	(endif)
+	(location headline)
 
 (location headline)
 	(current player $Player)
 	(if) (player can see) (then)
 		(current room $Room)
-		(bold) (room header $Room) (roman)
+		(bold) (room header $Room) (unstyle)
 		($Player is $Rel $Loc)
 		(if) ~{ ($Rel = #in) ($Loc = $Room) } (then)
 			\( (name $Rel) (the $Loc) \)
 		(endif)
 	(else)
-		(bold) (darkness headline) (roman)
+		(bold) (darkness headline) (unstyle)
 	(endif)
 
 (darkness headline)
@@ -3983,14 +3990,13 @@
 
 (score headline)
 	(if) (scoring enabled) (then)
-		(status bar width $Width)
-		($Width minus 17 into $Pos)
-		(cursor to row 1 column $Pos)
 		(current score $Score)
-		Score: $Score
-		(if) (maximum score $Max) (then)
-			of $Max
-		(endif)
+		(div @score) {
+			Score: $Score
+			(if) (maximum score $Max) (then)
+				of $Max
+			(endif)
+		}
 	(endif)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -4001,7 +4007,7 @@
 
 (banner)
 	(par)
-	(bold) (story title or default) (roman) (line)
+	(bold) (story title or default) (unstyle) (line)
 	(story noun) by (story author or default).
 	(line)
 	(story release $RelNum)
@@ -4058,10 +4064,16 @@
 	(endif)
 	*(repeat forever) (game over menu) (fail)
 
+(game over $Message)
+	(par)
+	(space 5)
+	(bold) \*\*\* (query $Message) \*\*\* (unstyle)
+	(game over)
+
 (game over status bar)
-	(status bar 1) {
-		Game Over
+	(status bar @status) {
 		(score headline)
+		Game Over
 	}
 
 (game over menu)
@@ -4176,37 +4188,53 @@
 %% Ambiguous expressions result in backtracking.
 
 (understand $Words as non-all object $Output)
-	*(parse $Words as object $Output 0 [] 0)
+	*(parse $Words as object $Output {} [] 0)
+
 (understand $Words as single object $Object)
-	*(parse $Words as single object $Object 0)
+	*(parse $Words as single object $Object {} [])
+
+(understand $Words as object $Output preferably $Closure)
+	*(parse $Words as object $Output $Closure [] 1)
+
+(understand $Words as single object $Output preferably $Closure)
+	*(parse $Words as single object $Output $Closure [])
 
 (understand $Words as object $Output preferably child of $Parent)
 	*(parse $Words as object $Output $Parent [] 1)
 
 (understand $Words as object $Output preferably takable)
-	*(parse $Words as object $Output 1 [] 1)
+	*(parse $Words as object $Output {(takable $_)} [] 1)
 
 (understand $Words as object $Output preferably held)
-	*(parse $Words as object $Output 2 [] 1)
+	(current player $Player)
+	*(parse $Words as object $Output {($_ is #heldby $Player)} [] 1)
+
 (understand $Words as single object $Output preferably held)
-	*(parse $Words as single object $Output 2)
+	(current player $Player)
+	*(parse $Words as single object $Output {($_ is #heldby $Player)} [])
+
 (understand $Words as object $Output preferably held excluding $ExcludeObj)
-	*(parse $Words as object $Output 2 [$ExcludeObj] 1)
+	(current player $Player)
+	*(parse $Words as object $Output {
+		($_ is #heldby $Player)
+		~($_ = $ExcludeObj)
+	} [] 1)
 
 (understand $Words as single object $Output preferably animate)
-	*(parse $Words as single object $Output 3)
+	*(parse $Words as single object $Output {(animate $_)} [1])
+	%% [1] produces 'someone' instead of 'something' in error responses.
 
 (understand $Words as object $Output preferably worn)
-	*(parse $Words as object $Output 4 [] 1)
+	(current player $Player)
+	*(parse $Words as object $Output {($_ is #wornby $Player)} [] 1)
 
 (understand $Words as single object $Output preferably supporter)
-	*(parse $Words as single object $Output 5)
+	*(parse $Words as single object $Output {(supporter $_)} [])
 
 (understand $Words as single object $Output preferably container)
-	*(parse $Words as single object $Output 6)
+	*(parse $Words as single object $Output {(container $_)} [])
 
-(verify object policy 1 $Obj)	%% takable
-	(item $Obj)
+(takable (item $Obj))
 	~($Obj has relation #partof)
 	~{
 		($Obj is $Rel $Player)
@@ -4214,44 +4242,27 @@
 		(current player $Player)
 	}
 
-(verify object policy 2 $Obj)	%% held
-	($Obj is #heldby $Player)
-	(current player $Player)
+(verify object policy (object $Policy) $Obj)
+	($Obj has parent $Policy)
 
-(verify object policy 3 $Obj)	%% animate
-	(animate $Obj)
+(verify object policy (nonempty $Policy) $Obj)
+	(query $Policy $Obj)
 
-(verify object policy 4 $Obj)	%% worn
-	($Obj is #wornby $Player)
-	(current player $Player)
-
-(verify object policy 5 $Obj)	%% supporter
-	(supporter $Obj)
-
-(verify object policy 6 $Obj)	%% container
-	(container $Obj)
-
-(parse $Words as object $Output $Policy $ExcludeList $AllAllowed)
+(parse $Words as object $Output $Policy $ $AllAllowed)
 	*(split $Words by [but except] into $Left and $Right)
-	*(parse noun list $Left as $BaseList $Policy $ExcludeList $AllAllowed)
+	*(parse noun list $Left as $BaseList $Policy $AllAllowed)
 	*(parse negative noun $Right from $BaseList into $ObjList)
 	(mark multi-object $ObjList into $Output)
 
-(parse $Words as object $Output $Policy $ExcludeList $AllAllowed)
-	*(parse noun list $Words as $ObjList $Policy $ExcludeList $AllAllowed)
+(parse $Words as object $Output $Policy $ $AllAllowed)
+	*(parse noun list $Words as $ObjList $Policy $AllAllowed)
 	(mark multi-object $ObjList into $Output)
 
-(parse $ as object $ErrCode $Policy $ $)
+(parse $ as object $Someone $Policy $Someone $)
 	(allowing parse errors)
-	(if) ($Policy = 3) (then)
-		%% Will result in 'someone' instead of 'something' in response.
-		($ErrCode = [1])
-	(else)
-		($ErrCode = [])
-	(endif)
 
-(parse $Words as single object $Output $Policy)
-	*(parse $Words as object $ObjList $Policy [] 0)
+(parse $Words as single object $Output $Policy $Someone)
+	*(parse $Words as object $ObjList $Policy $Someone 0)
 	(if) ($ObjList = [+ | $]) (then)
 		(allowing parse errors)
 		($Output = [,])
@@ -4265,14 +4276,14 @@
 	(object $Head)
 (mark multi-object $Other into $Other)
 
-(parse noun list $Words as $ObjList $Policy $ExcludeList $AllAllowed)
+(parse noun list $Words as $ObjList $Policy $AllAllowed)
 	(split $Words by [, and] into $Left and $Right)
-	*(parse basic noun $Left as $LeftObj $Policy $ExcludeList $AllAllowed)
-	*(parse noun list $Right as $RightObj $Policy $ExcludeList $AllAllowed)
+	*(parse basic noun $Left as $LeftObj $Policy $AllAllowed)
+	*(parse noun list $Right as $RightObj $Policy $AllAllowed)
 	(append $LeftObj $RightObj $ObjList)
 
-(parse noun list $Words as $ObjList $Policy $ExcludeList $AllAllowed)
-	*(parse basic noun $Words as $ObjList $Policy $ExcludeList $AllAllowed)
+(parse noun list $Words as $ObjList $Policy $AllAllowed)
+	*(parse basic noun $Words as $ObjList $Policy $AllAllowed)
 
 (parse negative noun [$Number | $Words] from $BaseList into $Result)
 	{
@@ -4285,7 +4296,7 @@
 	(if) (empty $Words) (then)
 		(take $N from $BaseList into $NegList)
 	(else)
-		*(parse indefinite $Words as $NegList $N $BaseList [])
+		*(parse indefinite $Words as $NegList $N {($_ is one of $BaseList)})
 	(endif)
 	(remove from $BaseList matching $NegList into $Result)
 
@@ -4293,84 +4304,78 @@
 	*(parse object name $Words as $NegList 0 $BaseList [])
 	(remove from $BaseList matching $NegList into $Result)
 
-(parse basic noun [the | $Words] as $ObjList $Policy $ExcludeList $AllAllowed)
+(parse basic noun [the | $Words] as $ObjList $Policy $AllAllowed)
 	(just)
-	*(parse basic noun $Words as $ObjList $Policy $ExcludeList $AllAllowed)
+	*(parse basic noun $Words as $ObjList $Policy $AllAllowed)
 
-(parse basic noun [me/myself/self/yourself/you] as [$Obj] $ $ $)
+(parse basic noun [me/myself/self/yourself/you] as [$Obj] $ $)
 	(current player $Obj)
 
-(parse basic noun [here/room/location/area/surroundings/wall/walls] as [$Room] $ $ $)
+(parse basic noun [here/room/location/area/surroundings/wall/walls] as [$Room] $ $)
 	(current room $Room)
 
-(parse basic noun [this room/location/area] as [$Room] $ $ $)
+(parse basic noun [this room/location/area] as [$Room] $ $)
 	(current room $Room)
 
-(parse basic noun [it/that] as [$Obj] $ $ $)
+(parse basic noun [it/that] as [$Obj] $ $)
 	{
 		(player's it refers to $Obj)
 	(or)
 		(narrator's it refers to $Obj)
 	}
 
-(parse basic noun [some] as [$Obj] $Policy $ExcludeList $AllAllowed)
-	(parse basic noun [it] as [$Obj] $Policy $ExcludeList $AllAllowed)
+(parse basic noun [some] as [$Obj] $Policy $AllAllowed)
+	(parse basic noun [it] as [$Obj] $Policy $AllAllowed)
 	(uncountable $Obj)
 
-(parse basic noun [her] as [$Obj] $ $ $)
+(parse basic noun [her] as [$Obj] $ $)
 	(her refers to $Obj)
 
-(parse basic noun [him] as [$Obj] $ $ $)
+(parse basic noun [him] as [$Obj] $ $)
 	(him refers to $Obj)
 
-(parse basic noun [them] as $ObjList $ $ $)
+(parse basic noun [them] as $ObjList $ $)
 	(them refers to $ObjList)
 
-(parse basic noun [all/everything] as [all] $ $ 0)
+(parse basic noun [all/everything] as [all] $ 0)
 	(allowing parse errors)
 	(just)
 
-(parse basic noun [all/everything] as $ 0 $ 1)	%% the policy is anything
-	(just)
-	(fail)
-
-(parse basic noun [all/everything] as $Result (object $Policy) $ExcludeList 1)
+(parse basic noun [all/everything] as $Result (object $Policy) 1)
 	(just)
 	(collect $Obj)
 		*($Obj has parent $Policy)
 		($Obj is in scope)
 		~($Obj is hidden)
 		~(excluded from all $Obj)
-	(into $Candidates)
-	(apply policy to $Candidates $Policy $ExcludeList $Result)
+	(into $Result)
 
-(parse basic noun [all/everything] as $Result $Policy $ExcludeList 1)
+(parse basic noun [all/everything] as $Result (nonempty $Policy) 1)
 	(just)
 	(collect $Obj)
 		*($Obj is in scope)
 		~(excluded from all $Obj)
 		~($Obj is hidden)
 		(verify object policy $Policy $Obj)
-	(into $Candidates)
-	(apply policy to $Candidates $Policy $ExcludeList $Result)
+	(into $Result)
 
-(parse basic noun [all/every/each | $Words] as $ObjList $Policy $ExcludeList $)
-	*(parse object name $Words as $ObjList 1 $Policy $ExcludeList)
+(parse basic noun [all/every/each | $Words] as $ObjList $Policy $)
+	*(parse object name $Words as $ObjList 1 $Policy)
 
-(parse basic noun [a/an/any/some | $Words] as $ObjList $Policy $ExcludeList $)
-	*(parse indefinite $Words as $ObjList 1 $Policy $ExcludeList)
+(parse basic noun [a/an/any/some | $Words] as $ObjList $Policy $)
+	*(parse indefinite $Words as $ObjList 1 $Policy)
 
-(parse basic noun [$Number | $Words] as $ObjList $Policy $ExcludeList $)
+(parse basic noun [$Number | $Words] as $ObjList $Policy $)
 	(nonempty $Words)
 	(parse numeral $Number into $N)
-	*(parse indefinite $Words as $ObjList $N $Policy $ExcludeList)
+	*(parse indefinite $Words as $ObjList $N $Policy)
 
-(parse basic noun $Words as $ObjList $Policy $ExcludeList $)
+(parse basic noun $Words as $ObjList $Policy $)
 	%% This is the common case.
-	*(parse object name $Words as $ObjList 0 $Policy $ExcludeList)
+	*(parse object name $Words as $ObjList 0 $Policy)
 
-(parse indefinite $Words as $Result $Limit $Policy $ExcludeList)
-	*(parse object name $Words as $ObjList 1 $Policy $ExcludeList)
+(parse indefinite $Words as $Result $Limit $Policy)
+	*(parse object name $Words as $ObjList 1 $Policy)
 	(if) ($Limit = 1) ($ObjList = [$First $ | $]) (then)
 		($Result = [[a $First]]) %% Decorate the result.
 	(else)
@@ -4378,7 +4383,7 @@
 		(nonempty $Result)
 	(endif)
 
-(parse object name $Words as $Result $All $Policy $ExcludeList)
+(parse object name $Words as $Result $All $Policy)
 	(filter $Words into $Filtered)
 	(nonempty $Filtered)
 	(collect $Obj)
@@ -4407,7 +4412,7 @@
 		(matching all of $Filtered)
 	(into $Candidates)
 	(nonempty $Candidates)
-	(apply policy to $Candidates $Policy $ExcludeList $CleanList)
+	(apply policy to $Candidates $Policy $CleanList)
 	(if)
 		%% Optimize for the common case.
 		($CleanList = [$])
@@ -4439,51 +4444,21 @@
 (filter [] into [])
 	(just)
 
-(filter [of | $MoreIn] into $MoreOut)
-	(just)
-	(filter $MoreIn into $MoreOut)
-
-(filter [the | $MoreIn] into $MoreOut)
-	(just)
-	(filter $MoreIn into $MoreOut)
-
-(filter [this | $MoreIn] into $MoreOut)
-	(just)
-	(filter $MoreIn into $MoreOut)
-
-(filter [that | $MoreIn] into $MoreOut)
+(filter [of/the/this/that | $MoreIn] into $MoreOut)
 	(just)
 	(filter $MoreIn into $MoreOut)
 
 (filter [$Other | $MoreIn] into [$Other | $MoreOut])
 	(filter $MoreIn into $MoreOut)
 
-(apply policy to $Input $Policy $ExcludeList $Output)
-	(if) ($Policy = 0) (then)
-		%% anything
-		($Result1 = $Input)
-	(elseif) (object $Policy) (then)
-		%% child of $Policy
-		(collect $Obj)
-			*($Obj is one of $Input)
-			($Obj has parent $Policy)
-		(into $Result1)
-	(else)
-		%% takable, held, worn, animate, supporter, container
-		(collect $Obj)
-			*($Obj is one of $Input)
-			(verify object policy $Policy $Obj)
-		(into $Result1)
-	(endif)
-	(if) (empty $ExcludeList) (then)
-		%% Optimize the common case.
-		($Output = $Result1)
-	(else)
-		(remove from $Result1 matching $ExcludeList into $Output)
-	(endif)
+(apply policy to $Input $Policy $Output)
+	(collect $Obj)
+		*($Obj is one of $Input)
+		(verify object policy $Policy $Obj)
+	(into $Output)
 	(nonempty $Output)
 
-(apply policy to $Input $ $ $Input)
+(apply policy to $Input $ $Input)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Topics
@@ -4970,28 +4945,22 @@
 %% They will traverse the object tree in the most efficient way for each case.
 
 ($Obj has ancestor $Ancestor)
-	(if) (unbound $Obj) (then)
-		*($Sub has parent $Ancestor)
-		{
-			($Obj = $Sub) (or)
-			*($Obj has ancestor $Sub)
-		}
-	(else)
+	(if) (bound $Obj) (then)
 		($Obj has parent $Parent)
 		{
 			($Parent = $Ancestor) (or)
 			*($Parent has ancestor $Ancestor)
 		}
-	(endif)
-
-($Obj is nested $Rel $Loc)
-	(if) (unbound $Obj) (then)
-		*($Sub is $Rel $Loc)
+	(else)
+		*($Sub has parent $Ancestor)
 		{
 			($Obj = $Sub) (or)
 			*($Obj has ancestor $Sub)
 		}
-	(else)
+	(endif)
+
+($Obj is nested $Rel $Loc)
+	(if) (bound $Obj) (then)
 		($Obj has parent $Parent)
 		{
 			($Obj has relation $Rel)
@@ -4999,20 +4968,26 @@
 		(or)
 			*($Parent is nested $Rel $Loc)
 		}
+	(else)
+		*($Sub is $Rel $Loc)
+		{
+			($Obj = $Sub) (or)
+			*($Obj has ancestor $Sub)
+		}
 	(endif)
 
 ($Obj is part of $Ancestor)
-	(if) (unbound $Obj) (then)
-		*($Sub is #partof $Ancestor)
-		{
-			($Obj = $Sub) (or)
-			*($Obj is part of $Sub)
-		}
-	(else)
+	(if) (bound $Obj) (then)
 		($Obj is #partof $Parent)
 		{
 			($Parent = $Ancestor) (or)
 			*($Parent is part of $Ancestor)
+		}
+	(else)
+		*($Sub is #partof $Ancestor)
+		{
+			($Obj = $Sub) (or)
+			*($Obj is part of $Sub)
 		}
 	(endif)
 

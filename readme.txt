@@ -1,5 +1,5 @@
-This archive contains version 0e/03 of the Dialog compiler and interactive
-debugger, bundled with documentation and version 0.22 of the dialog Standard
+This archive contains version 0f/01 of the Dialog compiler and interactive
+debugger, bundled with documentation and version 0.23 of the dialog Standard
 Library.
 
 Directory structure:
@@ -37,6 +37,27 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0f/01 Lib 0.23 (Manual revision 8):
+
+		Introduction of closures. Related changes in the standard
+		library.
+
+		Introduction of '(div $)' and style classes. Added '(unstyle)'.
+		Div-based control of the status bar area. Added '(progress bar
+		$ of $)'.
+
+		Removed built-in predicates: '(par $)', '(status bar width $)',
+		'(cursor to row $ column $)'.
+
+		Removed '(unbound $)'. Added '(bound $)' with opposite
+		semantics.
+
+		Corresponding changes to the documentation.
+
+		Bugfix: The transcript builtins are working again.
+
+		Minor bugfixes and optimizations.
 
 	0e/03 Lib 0.22 (Manual revision 7):
 

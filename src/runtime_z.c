@@ -25,7 +25,9 @@ struct rtroutine rtroutines[] = {
 			{Z_STORE, {SMALL(REG_COLL), SMALL(0)}},
 			{Z_STORE, {SMALL(REG_UPPER), SMALL(0)}},
 			{Z_STORE, {SMALL(REG_FORWORDS), SMALL(0)}},
-			{Z_TEXTSTYLE, {SMALL(0)}},
+			{Z_STORE, {SMALL(REG_STATUSBAR), SMALL(0)}},
+			{Z_STORE, {SMALL(REG_STYLE), REF(G_MAINSTYLE)}},
+			{Z_CALL1N, {ROUTINE(R_RESET_STYLE)}},
 
 			{Z_CALL1S, {ROUTINE(R_OUTERLOOP)}, REG_TEMP},
 			{Z_ADD, {VALUE(REG_TEMP), VALUE(REG_4000)}, REG_A+0},
@@ -240,9 +242,19 @@ struct rtroutine rtroutines[] = {
 		(struct zinstr []) {
 			{Z_JNZ, {VALUE(REG_FORWORDS)}, 0, RFALSE},
 			{Z_JG, {VALUE(REG_SPACE), SMALL(3)}, 0, RFALSE},
+			{Z_JNZ, {VALUE(REG_STATUSBAR)}, 0, 1},
+
 			{Z_NEW_LINE},
 			{Z_STORE, {SMALL(REG_SPACE), SMALL(4)}},
 			{Z_RFALSE},
+
+			{OP_LABEL(1)},
+			{Z_INC, {SMALL(REG_YPOS)}},
+			{Z_STORE, {SMALL(REG_SPACE), SMALL(4)}},
+			{Z_JG, {VALUE(REG_YPOS), VALUE(REG_CURRSPLIT)}, 0, RFALSE},
+			{Z_SET_CURSOR, {VALUE(REG_YPOS), VALUE(REG_XOFFSET)}},
+			{Z_RFALSE},
+
 			{Z_END},
 		}
 	},
@@ -252,10 +264,26 @@ struct rtroutine rtroutines[] = {
 		(struct zinstr []) {
 			{Z_JNZ, {VALUE(REG_FORWORDS)}, 0, RFALSE},
 			{Z_JG, {VALUE(REG_SPACE), SMALL(4)}, 0, RFALSE},
+			{Z_JNZ, {VALUE(REG_STATUSBAR)}, 0, 2},
+
 			{Z_JE, {VALUE(REG_SPACE), SMALL(4)}, 0, 1},
 			{Z_NEW_LINE},
 			{OP_LABEL(1)},
 			{Z_NEW_LINE},
+			{Z_STORE, {SMALL(REG_SPACE), SMALL(5)}},
+			{Z_RFALSE},
+
+			{OP_LABEL(2)},
+			{Z_JE, {VALUE(REG_SPACE), SMALL(4)}, 0, 3},
+			{Z_INC, {SMALL(REG_YPOS)}},
+			{OP_LABEL(3)},
+			{Z_INC, {SMALL(REG_YPOS)}},
+
+			{Z_JLE, {VALUE(REG_YPOS), VALUE(REG_CURRSPLIT)}, 0, 4},
+			{Z_STORE, {SMALL(REG_YPOS), VALUE(REG_CURRSPLIT)}},
+			{OP_LABEL(4)},
+
+			{Z_SET_CURSOR, {VALUE(REG_YPOS), VALUE(REG_XOFFSET)}},
 			{Z_STORE, {SMALL(REG_SPACE), SMALL(5)}},
 			{Z_RFALSE},
 			{Z_END},
@@ -264,24 +292,30 @@ struct rtroutine rtroutines[] = {
 	{
 		R_PAR_N,
 		1,
-			// 0 (param): number of blank lines to produce, as tagged value
+			// 0 (param): raw number of blank lines to produce
 		(struct zinstr []) {
 			{Z_JNZ, {VALUE(REG_FORWORDS)}, 0, RFALSE},
 
-			{Z_JG, {VALUE(REG_SPACE), SMALL(3)}, 0, 2},
-			{Z_NEW_LINE},
-			{Z_STORE, {SMALL(REG_SPACE), SMALL(4)}},
-			{OP_LABEL(2)},
-
-			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_LOCAL+0)}, REG_LOCAL+0},
-			{Z_JL, {VALUE(REG_LOCAL+0), VALUE(REG_4000)}, 0, RFALSE},
-			{Z_SUB, {VALUE(REG_LOCAL+0), LARGE(0x4000-3)}, REG_LOCAL+0},
-
+			{Z_CALL1N, {ROUTINE(R_LINE)}},
+			{Z_ADD, {VALUE(REG_LOCAL+0), SMALL(3)}, REG_LOCAL+0},
 			{Z_JG, {VALUE(REG_SPACE), VALUE(REG_LOCAL+0)}, 0, RFALSE},
 
+			{Z_JNZ, {VALUE(REG_STATUSBAR)}, 0, 2},
+
 			{OP_LABEL(1)},
-			{Z_PRINTLIT, {}, 0, 0, "\r"},
+			{Z_NEW_LINE},
 			{Z_INC_JLE, {SMALL(REG_SPACE), VALUE(REG_LOCAL+0)}, 0, 1},
+			{Z_RFALSE},
+
+			{OP_LABEL(2)},
+			{Z_INC, {SMALL(REG_YPOS)}},
+			{Z_INC_JLE, {SMALL(REG_SPACE), VALUE(REG_LOCAL+0)}, 0, 2},
+
+			{Z_JLE, {VALUE(REG_YPOS), VALUE(REG_CURRSPLIT)}, 0, 4},
+			{Z_STORE, {SMALL(REG_YPOS), VALUE(REG_CURRSPLIT)}},
+			{OP_LABEL(4)},
+
+			{Z_SET_CURSOR, {VALUE(REG_YPOS), VALUE(REG_XOFFSET)}},
 			{Z_RFALSE},
 			{Z_END},
 		}
@@ -508,6 +542,7 @@ struct rtroutine rtroutines[] = {
 			// 0 (param): style to enable
 		(struct zinstr []) {
 			{Z_JNZ, {VALUE(REG_FORWORDS)}, 0, RFALSE},
+			{Z_JNZ, {VALUE(REG_STATUSBAR)}, 0, RFALSE},
 			{Z_CALL1N, {ROUTINE(R_SYNC_SPACE)}},
 			{Z_TEXTSTYLE, {VALUE(REG_LOCAL+0)}},
 			{Z_RFALSE},
@@ -515,30 +550,23 @@ struct rtroutine rtroutines[] = {
 		}
 	},
 	{
-		R_DISABLE_STYLE,
+		R_RESET_STYLE,
 		0,
 		(struct zinstr []) {
-			{Z_JNZ, {VALUE(REG_FORWORDS)}, 0, RFALSE},
-			{Z_TEXTSTYLE, {SMALL(0)}},
+			{Z_CALL2N, {ROUTINE(R_SET_STYLE), VALUE(REG_STYLE)}},
 			{Z_RFALSE},
 			{Z_END},
 		}
 	},
 	{
-		R_CURSORTO,
-		2,
-			// 0 (param): row (1-based)
-			// 1 (param): column (1-based)
+		R_SET_STYLE,
+		1,
+			// 0 (param): style(s) to set
 		(struct zinstr []) {
-			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_LOCAL+0)}, REG_LOCAL+0},
-			{Z_JLE, {VALUE(REG_LOCAL+0), VALUE(REG_4000)}, 0, RFALSE},
-			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_LOCAL+1)}, REG_LOCAL+1},
-			{Z_JLE, {VALUE(REG_LOCAL+1), VALUE(REG_4000)}, 0, RFALSE},
-
-			{Z_AND, {VALUE(REG_LOCAL+0), VALUE(REG_3FFF)}, REG_LOCAL+0},
-			{Z_AND, {VALUE(REG_LOCAL+1), VALUE(REG_3FFF)}, REG_LOCAL+1},
-			{Z_SET_CURSOR, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+1)}},
-			{Z_STORE, {SMALL(REG_SPACE), SMALL(4)}},
+			{Z_JNZ, {VALUE(REG_FORWORDS)}, 0, RFALSE},
+			{Z_JNZ, {VALUE(REG_STATUSBAR)}, 0, RFALSE},
+			{Z_TEXTSTYLE, {SMALL(0)}},
+			{Z_TEXTSTYLE, {VALUE(REG_LOCAL+0)}},
 			{Z_RFALSE},
 			{Z_END},
 		}
@@ -2314,7 +2342,7 @@ struct rtroutine rtroutines[] = {
 			// note: doesn't actually allocate, just checks that enough space is available
 		(struct zinstr []) {
 			{Z_ADD, {VALUE(REG_LOCAL+1), SMALL(6+2+1)}, REG_LOCAL+2},
-			{Z_LSHIFT, {VALUE(REG_LOCAL+2), LARGE(0xffff)}, REG_LOCAL+2},
+			{Z_LSHIFT, {VALUE(REG_LOCAL+2), VALUE(REG_FFFF)}, REG_LOCAL+2},
 
 			{Z_ADD, {VALUE(REG_COLL), VALUE(REG_LOCAL+2)}, REG_LOCAL+3},
 			{Z_JLE, {VALUE(REG_LOCAL+3), VALUE(REG_TRAIL)}, 0, 2},
@@ -2629,13 +2657,33 @@ struct rtroutine rtroutines[] = {
 	},
 	{
 		R_WOULD_UNIFY,
-		4,
-			// 0 (param): first value, deref'd, must only contain deref'd values
-			// 1 (param): second value, deref'd
+		3,
+			// 0 (param): first value
+			// 1 (param): second value
 			// 2: temp
-			// 3: temp
+			// returns true or false
 		(struct zinstr []) {
 			{OP_LABEL(2)},
+
+			// dereference first
+			{Z_JGE, {VALUE(REG_LOCAL+0), VALUE(REG_C000)}, 0, 9},
+			{OP_LABEL(8)},
+			{Z_ADD, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+0)}, REG_LOCAL+0},
+			{Z_LOADW, {VALUE(REG_LOCAL+0), SMALL(0)}, REG_LOCAL+0},
+			{Z_JL, {VALUE(REG_LOCAL+0), VALUE(REG_C000)}, 0, 8},
+			{Z_JZ, {VALUE(REG_LOCAL+0)}, 0, RTRUE},
+			{OP_LABEL(9)},
+
+			// dereference second
+			{Z_JGE, {VALUE(REG_LOCAL+1), VALUE(REG_C000)}, 0, 11},
+			{OP_LABEL(10)},
+			{Z_ADD, {VALUE(REG_LOCAL+1), VALUE(REG_LOCAL+1)}, REG_LOCAL+1},
+			{Z_LOADW, {VALUE(REG_LOCAL+1), SMALL(0)}, REG_LOCAL+1},
+			{Z_JL, {VALUE(REG_LOCAL+1), VALUE(REG_C000)}, 0, 10},
+			{Z_JZ, {VALUE(REG_LOCAL+1)}, 0, RTRUE},
+			{OP_LABEL(11)},
+
+			{OP_LABEL(7)},
 			{Z_JE, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+1)}, 0, RTRUE},
 			{Z_JL, {VALUE(REG_LOCAL+0), VALUE(REG_C000)}, 0, RTRUE},
 			{Z_JL, {VALUE(REG_LOCAL+1), VALUE(REG_C000)}, 0, RTRUE},
@@ -2662,7 +2710,7 @@ struct rtroutine rtroutines[] = {
 			{Z_STORE, {SMALL(REG_LOCAL+0), VALUE(REG_LOCAL+2)}},
 			{Z_AND, {VALUE(REG_LOCAL+1), VALUE(REG_NIL)}, REG_LOCAL+1},
 			{Z_LOADW, {SMALL(0), VALUE(REG_LOCAL+1)}, REG_LOCAL+1},
-			{Z_JUMP, {REL_LABEL(2)}},
+			{Z_JUMP, {REL_LABEL(7)}},
 
 			{OP_LABEL(5)},
 			{Z_TESTN, {VALUE(REG_LOCAL+1), VALUE(REG_E000)}, 0, 1},
@@ -2674,20 +2722,17 @@ struct rtroutine rtroutines[] = {
 
 			{OP_LABEL(1)},
 
-			// different types or mismatching object/integer? then fail
+			// mismatching simple value? then fail
 			{Z_JGE, {VALUE(REG_LOCAL+0), SMALL(0)}, 0, RFALSE},
 			{Z_JGE, {VALUE(REG_LOCAL+1), SMALL(0)}, 0, RFALSE},
 
 			// both are pairs
-			{Z_AND, {VALUE(REG_LOCAL+0), VALUE(REG_NIL)}, REG_LOCAL+0},
-			{Z_LOADW, {SMALL(0), VALUE(REG_LOCAL+0)}, REG_LOCAL+2},
+			{Z_SUB, {VALUE(REG_LOCAL+0), VALUE(REG_4000)}, REG_LOCAL+0},	// pair ref -> first var ref
 			{Z_SUB, {VALUE(REG_LOCAL+1), VALUE(REG_4000)}, REG_LOCAL+1},	// pair ref -> first var ref
-			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_LOCAL+1)}, REG_LOCAL+3},
-			{Z_CALLVS, {ROUTINE(R_WOULD_UNIFY), VALUE(REG_LOCAL+2), VALUE(REG_LOCAL+3)}, REG_LOCAL+2},
+			{Z_CALLVS, {ROUTINE(R_WOULD_UNIFY), VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+1)}, REG_LOCAL+2},
 			{Z_JZ, {VALUE(REG_LOCAL+2)}, 0, RFALSE},
-			{Z_LOADW, {SMALL(2), VALUE(REG_LOCAL+0)}, REG_LOCAL+0},
+			{Z_INC, {SMALL(REG_LOCAL+0)}},					// second var ref
 			{Z_INC, {SMALL(REG_LOCAL+1)}},					// second var ref
-			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_LOCAL+1)}, REG_LOCAL+1},
 			{Z_JUMP, {REL_LABEL(2)}},
 			{Z_END},
 		}
@@ -2839,49 +2884,294 @@ struct rtroutine rtroutines[] = {
 		}
 	},
 	{
-		R_BEGINSTATUS,
+		R_GET_FULLWIDTH,
+		1,
+			// 0: temp
+			// returns width of display
+		(struct zinstr []) {
+			{Z_LOADB, {SMALL(0), SMALL(0x21)}, REG_LOCAL+0},	// screen width
+			{Z_JL, {VALUE(REG_LOCAL+0), SMALL(40)}, 0, 1},
+			{Z_RET, {VALUE(REG_LOCAL+0)}},
+
+			{OP_LABEL(1)},
+			{Z_RET, {SMALL(40)}},	// workaround for winfrotz bug
+			{Z_END},
+		}
+	},
+	{
+		R_BEGIN_STATUS,
 		2,
-			// 0 (param): height (tagged integer)
+			// 0 (param): height (msb indicates relative)
 			// 1: temp
 		(struct zinstr []) {
-			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_LOCAL+0)}, REG_LOCAL+0},
-			{Z_JLE, {VALUE(REG_LOCAL+0), VALUE(REG_4000)}, 0, RFALSE},
-			{Z_AND, {VALUE(REG_LOCAL+0), VALUE(REG_3FFF)}, REG_LOCAL+0},
+			{Z_JZ, {VALUE(REG_STATUSBAR)}, 0, 1},
+			{Z_THROW, {SMALL(0), VALUE(REG_FAILJMP)}},
+
+			{OP_LABEL(1)},
+			{Z_INC, {SMALL(REG_STATUSBAR)}},
+
+			{Z_LOADB, {SMALL(0), SMALL(0x20)}, REG_LOCAL+1},	// screen height
+
+			{Z_JGE, {VALUE(REG_LOCAL+0), SMALL(0)}, 0, 2},
+			{Z_AND, {VALUE(REG_LOCAL+0), SMALL(0xff)}, REG_LOCAL+0},
+			{Z_MUL, {VALUE(REG_LOCAL+1), VALUE(REG_LOCAL+0)}, REG_LOCAL+0},
+			{Z_DIV, {VALUE(REG_LOCAL+0), SMALL(100)}, REG_LOCAL+0},
+			{OP_LABEL(2)},
+
+			{Z_JGE, {VALUE(REG_LOCAL+0), SMALL(1)}, 0, 4},
+			{Z_STORE, {SMALL(REG_LOCAL+0), SMALL(1)}},
+			{OP_LABEL(4)},
+
+			{Z_JLE, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+1)}, 0, 5},
+			{Z_STORE, {SMALL(REG_LOCAL+0), VALUE(REG_LOCAL+1)}},
+			{OP_LABEL(5)},
+
+			{Z_STORE, {SMALL(REG_CURRSPLIT), VALUE(REG_LOCAL+0)}},
 
 			{Z_SPLIT_WINDOW, {VALUE(REG_LOCAL+0)}},
 			{Z_SET_WINDOW, {SMALL(1)}},
-			{Z_LOADB, {SMALL(0), SMALL(0x21)}, REG_LOCAL+1},	// screen width
-			{Z_JGE, {VALUE(REG_LOCAL+1), SMALL(40)}, 0, 3},
 
-			{Z_STORE, {SMALL(REG_LOCAL+1), SMALL(40)}},	// workaround for buggy terp
+			{Z_CALL1S, {ROUTINE(R_GET_FULLWIDTH)}, REG_XFULLSIZE},
 
-			{OP_LABEL(3)},
 			{Z_TEXTSTYLE, {SMALL(0)}},
 			{Z_TEXTSTYLE, {SMALL(1)}},
 
-			{OP_LABEL(2)},
+			{OP_LABEL(7)},
 			{Z_SET_CURSOR, {VALUE(REG_LOCAL+0), SMALL(1)}},
-			{Z_STORE, {SMALL(REG_TEMP), VALUE(REG_LOCAL+1)}},
+			{Z_STORE, {SMALL(REG_TEMP), VALUE(REG_XFULLSIZE)}},	// known to be >= 40
 
-			{OP_LABEL(1)},
+			{OP_LABEL(8)},
+			{Z_PRINTLIT, {}, 0, 0, "         "},
+			{Z_SUB, {VALUE(REG_TEMP), SMALL(9)}, REG_TEMP},
+			{Z_JGE, {VALUE(REG_TEMP), SMALL(10)}, 0, 8},
+
+			{OP_LABEL(6)},
 			{Z_PRINTLIT, {}, 0, 0, " "},
-			{Z_DEC_JGE, {SMALL(REG_TEMP), SMALL(1)}, 0, 1},
+			{Z_DEC_JGE, {SMALL(REG_TEMP), SMALL(1)}, 0, 6},
 
-			{Z_DEC_JGE, {SMALL(REG_LOCAL+0), SMALL(1)}, 0, 2},
+			{Z_DEC_JGE, {SMALL(REG_LOCAL+0), SMALL(1)}, 0, 7},
 
-			{Z_SET_CURSOR, {SMALL(1), SMALL(1)}},
+			{Z_STORE, {SMALL(REG_XREMSIZE), VALUE(REG_XFULLSIZE)}},
+			{Z_STORE, {SMALL(REG_XOFFSET), SMALL(1)}},
+			{Z_STORE, {SMALL(REG_YPOS), SMALL(1)}},
+			{Z_SET_CURSOR, {VALUE(REG_YPOS), VALUE(REG_XOFFSET)}},
 			{Z_STORE, {SMALL(REG_SPACE), SMALL(4)}},
 			{Z_RFALSE},
 			{Z_END},
 		}
 	},
 	{
-		R_ENDSTATUS,
+		R_END_STATUS,
 		0,
 		(struct zinstr []) {
-			{Z_TEXTSTYLE, {SMALL(0)}},
+			{Z_DEC, {SMALL(REG_STATUSBAR)}},
 			{Z_SET_WINDOW, {SMALL(0)}},
+			{Z_TEXTSTYLE, {SMALL(0)}},
 			{Z_STORE, {SMALL(REG_SPACE), SMALL(4)}},
+			{Z_RFALSE},
+			{Z_END},
+		}
+	},
+	{
+		R_BEGIN_BOX,
+		2,
+			// 0 (param): style
+			// 1 (param): top margin
+		(struct zinstr []) {
+			{Z_CALL2N, {ROUTINE(R_PAR_N), VALUE(REG_LOCAL+1)}},
+			{Z_CALL2N, {ROUTINE(R_AUX_PUSH1), VALUE(REG_STYLE)}},
+			{Z_JZ, {VALUE(REG_LOCAL+0)}, 0, 1},
+
+			{Z_AND, {VALUE(REG_LOCAL+0), SMALL(0x7f)}, REG_STYLE},
+
+			{OP_LABEL(1)},
+			{Z_CALL1N, {ROUTINE(R_RESET_STYLE)}},
+			{Z_RFALSE},
+			{Z_END},
+		}
+	},
+	{
+		R_BEGIN_BOX_LEFT,
+		3,
+			// 0 (param): width (msb indicates relative)
+			// 1 (param): style
+			// 2 (param): top margin
+		(struct zinstr []) {
+			{Z_JZ, {VALUE(REG_STATUSBAR)}, 0, 1},
+
+			{Z_JGE, {VALUE(REG_LOCAL+0), SMALL(0)}, 0, 2},
+			{Z_AND, {VALUE(REG_LOCAL+0), SMALL(0xff)}, REG_LOCAL+0},
+			{Z_MUL, {VALUE(REG_XFULLSIZE), VALUE(REG_LOCAL+0)}, REG_LOCAL+0},
+			{Z_DIV, {VALUE(REG_LOCAL+0), SMALL(100)}, REG_LOCAL+0},
+			{OP_LABEL(2)},
+
+			{Z_JGE, {VALUE(REG_LOCAL+0), SMALL(0)}, 0, 4},
+			{Z_STORE, {SMALL(REG_LOCAL+0), SMALL(0)}},
+			{OP_LABEL(4)},
+
+			{Z_JLE, {VALUE(REG_LOCAL+0), VALUE(REG_XREMSIZE)}, 0, 5},
+			{Z_STORE, {SMALL(REG_LOCAL+0), VALUE(REG_XREMSIZE)}},
+			{OP_LABEL(5)},
+
+			{Z_ADD, {VALUE(REG_XOFFSET), VALUE(REG_LOCAL+0)}, REG_TEMP},
+			{Z_SUB, {VALUE(REG_XREMSIZE), VALUE(REG_LOCAL+0)}, REG_XREMSIZE},
+			{Z_CALLVN, {ROUTINE(R_AUX_PUSH3), VALUE(REG_TEMP), VALUE(REG_XFULLSIZE), VALUE(REG_XREMSIZE)}},
+
+			{Z_STORE, {SMALL(REG_XFULLSIZE), VALUE(REG_LOCAL+0)}},
+			{Z_STORE, {SMALL(REG_XREMSIZE), VALUE(REG_XFULLSIZE)}},
+			{Z_ADD, {VALUE(REG_LOCAL+2), SMALL(1)}, REG_YPOS},
+			{Z_SET_CURSOR, {VALUE(REG_YPOS), VALUE(REG_XOFFSET)}},
+			{Z_STORE, {SMALL(REG_SPACE), SMALL(4)}},
+			{Z_RFALSE},
+
+			{OP_LABEL(1)},
+			// not inside @status
+			{Z_CALLVN, {ROUTINE(R_BEGIN_BOX), VALUE(REG_LOCAL+1), VALUE(REG_LOCAL+2)}},
+			{Z_RFALSE},
+			{Z_END},
+		}
+	},
+	{
+		R_BEGIN_BOX_RIGHT,
+		3,
+			// 0 (param): width (msb indicates relative)
+			// 1 (param): style
+			// 2 (param): top margin
+		(struct zinstr []) {
+			{Z_JZ, {VALUE(REG_STATUSBAR)}, 0, 1},
+
+			{Z_JGE, {VALUE(REG_LOCAL+0), SMALL(0)}, 0, 2},
+			{Z_AND, {VALUE(REG_LOCAL+0), SMALL(0xff)}, REG_LOCAL+0},
+			{Z_MUL, {VALUE(REG_XFULLSIZE), VALUE(REG_LOCAL+0)}, REG_LOCAL+0},
+			{Z_DIV, {VALUE(REG_LOCAL+0), SMALL(100)}, REG_LOCAL+0},
+			{OP_LABEL(2)},
+
+			{Z_JGE, {VALUE(REG_LOCAL+0), SMALL(0)}, 0, 4},
+			{Z_STORE, {SMALL(REG_LOCAL+0), SMALL(0)}},
+			{OP_LABEL(4)},
+
+			{Z_JLE, {VALUE(REG_LOCAL+0), VALUE(REG_XREMSIZE)}, 0, 5},
+			{Z_STORE, {SMALL(REG_LOCAL+0), VALUE(REG_XREMSIZE)}},
+			{OP_LABEL(5)},
+
+			{Z_SUB, {VALUE(REG_XREMSIZE), VALUE(REG_LOCAL+0)}, REG_XREMSIZE},
+			{Z_CALLVN, {ROUTINE(R_AUX_PUSH3), VALUE(REG_XOFFSET), VALUE(REG_XFULLSIZE), VALUE(REG_XREMSIZE)}},
+
+			{Z_ADD, {VALUE(REG_XOFFSET), VALUE(REG_XREMSIZE)}, REG_XOFFSET},
+			{Z_STORE, {SMALL(REG_XFULLSIZE), VALUE(REG_LOCAL+0)}},
+			{Z_STORE, {SMALL(REG_XREMSIZE), VALUE(REG_XFULLSIZE)}},
+			{Z_ADD, {VALUE(REG_LOCAL+2), SMALL(1)}, REG_YPOS},
+			{Z_SET_CURSOR, {VALUE(REG_YPOS), VALUE(REG_XOFFSET)}},
+			{Z_STORE, {SMALL(REG_SPACE), SMALL(4)}},
+			{Z_RFALSE},
+
+			{OP_LABEL(1)},
+			// not inside status box
+			{Z_CALLVN, {ROUTINE(R_BEGIN_BOX), VALUE(REG_LOCAL+1), VALUE(REG_LOCAL+2)}},
+			{Z_RFALSE},
+			{Z_END},
+		}
+	},
+	{
+		R_END_BOX_FLOAT,
+		1,
+			// 0 (param): bottom margin
+		(struct zinstr []) {
+			{Z_JZ, {VALUE(REG_STATUSBAR)}, 0, 1},
+
+			// leaving an inner box
+			{Z_DEC, {SMALL(REG_COLL)}},
+			{Z_LOADW, {VALUE(REG_AUXBASE), VALUE(REG_COLL)}, REG_XREMSIZE},
+			{Z_DEC, {SMALL(REG_COLL)}},
+			{Z_LOADW, {VALUE(REG_AUXBASE), VALUE(REG_COLL)}, REG_XFULLSIZE},
+			{Z_DEC, {SMALL(REG_COLL)}},
+			{Z_LOADW, {VALUE(REG_AUXBASE), VALUE(REG_COLL)}, REG_XOFFSET},
+			{Z_STORE, {SMALL(REG_YPOS), SMALL(1)}},
+			{Z_SET_CURSOR, {VALUE(REG_YPOS), VALUE(REG_XOFFSET)}},
+			{Z_STORE, {SMALL(REG_SPACE), SMALL(4)}},
+			{Z_RFALSE},
+
+			{OP_LABEL(1)},
+			{Z_CALL2N, {ROUTINE(R_END_BOX), VALUE(REG_LOCAL+0)}},
+			{Z_RFALSE},
+			{Z_END},
+		}
+	},
+	{
+		R_END_BOX,
+		1,
+			// 0 (param): bottom margin
+		(struct zinstr []) {
+			{Z_DEC, {SMALL(REG_COLL)}},
+			{Z_LOADW, {VALUE(REG_AUXBASE), VALUE(REG_COLL)}, REG_STYLE},
+			{Z_CALL1N, {ROUTINE(R_RESET_STYLE)}},
+			{Z_CALL2N, {ROUTINE(R_PAR_N), VALUE(REG_LOCAL+0)}},
+			{Z_RFALSE},
+			{Z_END},
+		}
+	},
+	{
+		R_PROGRESS_BAR,
+		3,
+			// 0 (param): position (tagged integer)
+			// 1 (param): total (tagged integer), then amount remaining
+			// 2: size minus 2, then amount of fill
+		(struct zinstr []) {
+			{Z_CALL1N, {ROUTINE(R_LINE)}},
+			{Z_JL, {VALUE(REG_LOCAL+0), VALUE(REG_4000)}, 0, RFALSE},
+			{Z_JL, {VALUE(REG_LOCAL+1), VALUE(REG_4000)}, 0, RFALSE},
+			{Z_SUB, {VALUE(REG_LOCAL+0), VALUE(REG_4000)}, REG_LOCAL+0},
+			{Z_SUB, {VALUE(REG_LOCAL+1), VALUE(REG_4000)}, REG_LOCAL+1},
+
+			{Z_JNZ, {VALUE(REG_STATUSBAR)}, 0, 1},
+			// not inside status box
+			{Z_CALL1S, {ROUTINE(R_GET_FULLWIDTH)}, REG_XREMSIZE},
+			{Z_DEC, {SMALL(REG_XREMSIZE)}}, // prevent word wrap
+			{Z_TEXTSTYLE, {SMALL(0)}},
+			{Z_TEXTSTYLE, {SMALL(8)}},
+			{Z_BUFFER_MODE, {SMALL(0)}},
+			{OP_LABEL(1)},
+
+			{Z_SUB, {VALUE(REG_XREMSIZE), SMALL(2)}, REG_LOCAL+2},
+			{Z_JL, {VALUE(REG_LOCAL+2), SMALL(0)}, 0, RFALSE},
+
+			// reduce precision until signed multiplication cannot overflow
+			{Z_JLE, {VALUE(REG_LOCAL+0), SMALL(0x7f)}, 0, 3},
+			{OP_LABEL(4)},
+			{Z_LSHIFT, {VALUE(REG_LOCAL+0), VALUE(REG_FFFF)}, REG_LOCAL+0},
+			{Z_LSHIFT, {VALUE(REG_LOCAL+1), VALUE(REG_FFFF)}, REG_LOCAL+1},
+			{Z_JG, {VALUE(REG_LOCAL+0), SMALL(0x7f)}, 0, 4},
+			{OP_LABEL(3)},
+
+			{Z_JGE, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+1)}, 0, 2}, // also deals with 0 of 0 case
+			{Z_MUL, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+2)}, REG_LOCAL+2},
+			{Z_DIV, {VALUE(REG_LOCAL+2), VALUE(REG_LOCAL+1)}, REG_LOCAL+2},
+			{OP_LABEL(2)},
+
+			{Z_SUB, {VALUE(REG_XREMSIZE), SMALL(2)}, REG_LOCAL+1},
+			{Z_SUB, {VALUE(REG_LOCAL+1), VALUE(REG_LOCAL+2)}, REG_LOCAL+1},
+
+			{Z_PRINTLIT, {}, 0, 0, "["},
+
+			{Z_JL, {SMALL(REG_LOCAL+2), SMALL(1)}, 0, 6},
+			{OP_LABEL(5)},
+			{Z_PRINTLIT, {}, 0, 0, "="},
+			{Z_DEC_JGE, {SMALL(REG_LOCAL+2), SMALL(1)}, 0, 5},
+			{OP_LABEL(6)},
+
+			{Z_JL, {SMALL(REG_LOCAL+1), SMALL(1)}, 0, 8},
+			{OP_LABEL(7)},
+			{Z_PRINTLIT, {}, 0, 0, " "},
+			{Z_DEC_JGE, {SMALL(REG_LOCAL+1), SMALL(1)}, 0, 7},
+			{OP_LABEL(8)},
+
+			{Z_PRINTLIT, {}, 0, 0, "]"},
+			{Z_CALL1N, {ROUTINE(R_LINE)}},
+
+			{Z_JNZ, {VALUE(REG_STATUSBAR)}, 0, RFALSE},
+			// not inside status box
+			{Z_BUFFER_MODE, {SMALL(1)}},
+			{Z_TEXTSTYLE, {SMALL(0)}},
 			{Z_RFALSE},
 			{Z_END},
 		}

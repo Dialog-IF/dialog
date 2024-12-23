@@ -51,6 +51,7 @@ struct specialspec {
 	{SP_MATCHING_ALL_OF,	0,				4,	{"matching", "all", "of", 0}},
 	{SP_NOW,		0,				1,	{"now"}},
 	{SP_OR,			0,				1,	{"or"}},
+	{SP_OUTPUTBOX,		0,				2,	{"div", 0}},
 	{SP_P_RANDOM,		0,				3,	{"purely", "at", "random"}},
 	{SP_SELECT,		0,				1,	{"select"}},
 	{SP_STATUSBAR,		0,				3,	{"status", "bar", 0}},
@@ -85,7 +86,7 @@ struct builtinspec {
 	{BI_NONEMPTY,		0, 0,				2,	{"nonempty", 0}},
 	{BI_WORD,		0, 0,				2,	{"word", 0}},
 	{BI_OBJECT,		0, 0,				2,	{"object", 0}},
-	{BI_UNBOUND,		0, 0,				2,	{"unbound", 0}},
+	{BI_BOUND,		0, 0,				2,	{"bound", 0}},
 	{BI_QUIT,		0, PREDF_SUCCEEDS,		1,	{"quit"}},
 	{BI_RESTART,		0, PREDF_SUCCEEDS,		1,	{"restart"}},
 	{BI_BREAKPOINT,		0, PREDF_SUCCEEDS,		1,	{"breakpoint"}},
@@ -97,13 +98,14 @@ struct builtinspec {
 	{BI_SCRIPT_OFF,		0, PREDF_SUCCEEDS,		2,	{"transcript", "off"}},
 	{BI_TRACE_ON,		0, PREDF_SUCCEEDS,		2,	{"trace", "on"}},
 	{BI_TRACE_OFF,		0, PREDF_SUCCEEDS,		2,	{"trace", "off"}},
-	{BI_NOSPACE,		PREDNF_OUTPUT, PREDF_SUCCEEDS,	2,	{"no", "space"}},
-	{BI_SPACE,		PREDNF_OUTPUT, PREDF_SUCCEEDS,	1,	{"space"}},
-	{BI_SPACE_N,		PREDNF_OUTPUT, PREDF_SUCCEEDS,	2,	{"space", 0}},
-	{BI_LINE,		PREDNF_OUTPUT, PREDF_SUCCEEDS,	1,	{"line"}},
-	{BI_PAR,		PREDNF_OUTPUT, PREDF_SUCCEEDS,	1,	{"par"}},
-	{BI_PAR_N,		PREDNF_OUTPUT, PREDF_SUCCEEDS,	2,	{"par", 0}},
+	{BI_NOSPACE,		0, PREDF_SUCCEEDS,		2,	{"no", "space"}},
+	{BI_SPACE,		0, PREDF_SUCCEEDS,		1,	{"space"}},
+	{BI_SPACE_N,		0, PREDF_SUCCEEDS,		2,	{"space", 0}},
+	{BI_LINE,		0, PREDF_SUCCEEDS,		1,	{"line"}},
+	{BI_PAR,		0, PREDF_SUCCEEDS,		1,	{"par"}},
+	{BI_PROGRESS_BAR,	0, PREDF_SUCCEEDS,		5,	{"progress", "bar", 0, "of", 0}},
 	{BI_ROMAN,		0, PREDF_SUCCEEDS,		1,	{"roman"}},
+	{BI_UNSTYLE,		0, PREDF_SUCCEEDS,		1,	{"unstyle"}},
 	{BI_BOLD,		0, PREDF_SUCCEEDS,		1,	{"bold"}},
 	{BI_ITALIC,		0, PREDF_SUCCEEDS,		1,	{"italic"}},
 	{BI_REVERSE,		0, PREDF_SUCCEEDS,		1,	{"reverse"}},
@@ -111,8 +113,6 @@ struct builtinspec {
 	{BI_UPPER,		0, PREDF_SUCCEEDS,		1,	{"uppercase"}},
 	{BI_CLEAR,		0, PREDF_SUCCEEDS,		1,	{"clear"}},
 	{BI_CLEAR_ALL,		0, PREDF_SUCCEEDS,		2,	{"clear", "all"}},
-	{BI_WINDOWWIDTH,	0, 0,				4,	{"status", "bar", "width", 0}},
-	{BI_CURSORTO,		0, PREDF_SUCCEEDS,		6,	{"cursor", "to", "row", 0, "column", 0}},
 	{BI_GETINPUT,		0, 0,				3,	{"get", "input", 0}},
 	{BI_GETRAWINPUT,	0, 0,				5,	{"", "get", "raw", "input", 0}},	// disabled for now
 	{BI_GETKEY,		0, 0,				3,	{"get", "key", 0}},
@@ -133,12 +133,16 @@ struct builtinspec {
 	{BI_HAVE_UNDO,		0, 0,				3,	{"interpreter", "supports", "undo"}},
 	{BI_PROGRAM_ENTRY,	PREDNF_DEFINABLE_BI, 0,		3,	{"program", "entry", "point"}},
 	{BI_ERROR_ENTRY,	PREDNF_DEFINABLE_BI, 0,		4,	{"error", 0, "entry", "point"}},
+	{BI_QUERY,		0, 0,				2,	{"query", 0}},
+	{BI_QUERY_ARG,		0, 0,				3,	{"query", 0, 0}},
+	{BI_INVOKE_CLOSURE,	PREDNF_DEFINABLE_BI, 0,		5,	{"", "invoke-closure", 0, 0, 0}},
 	{BI_STORY_IFID,		PREDNF_DEFINABLE_BI, 0,		2,	{"story", "ifid"}},
 	{BI_STORY_TITLE,	PREDNF_DEFINABLE_BI, 0,		2,	{"story", "title"}},
 	{BI_STORY_AUTHOR,	PREDNF_DEFINABLE_BI, 0,		2,	{"story", "author"}},
 	{BI_STORY_NOUN,		PREDNF_DEFINABLE_BI, 0,		2,	{"story", "noun"}},
 	{BI_STORY_BLURB,	PREDNF_DEFINABLE_BI, 0,		2,	{"story", "blurb"}},
 	{BI_STORY_RELEASE,	PREDNF_DEFINABLE_BI, 0,		3,	{"story", "release", 0}},
+	{BI_STYLEDEF,		PREDNF_DEFINABLE_BI, 0,		3,	{"style", "class", 0}},
 	{BI_ENDINGS,		PREDNF_DEFINABLE_BI, 0,		3,	{"removable", "word", "endings"}},
 	{BI_INJECTED_QUERY,	PREDNF_DEFINABLE_BI, 0,		3,	{"", "query", 0}},
 	{BI_BREAKPOINT_AGAIN,	0, 0,				2,	{"", "breakpoint"}},
@@ -325,6 +329,35 @@ int any_unbound(struct astnode *an, const uint8_t *bound, struct clause *cl) {
 	return 0;
 }
 
+int mark_ast_unbound(struct astnode *an, const uint8_t *bound, struct clause *cl) {
+	int i;
+
+	assert(!an->next_in_body);
+	if(an->kind == AN_VARIABLE) {
+		if(!an->word->name[0]) {
+			an->unbound = 1;
+			return 1;
+		}
+		for(i = 0; i < cl->nvar; i++) {
+			if(an->word == cl->varnames[i]) break;
+		}
+		assert(i < cl->nvar);
+		if(!bound[i]) {
+			an->unbound = 1;
+			return 1;
+		}
+	} else {
+		for(i = 0; i < an->nchild; i++) {
+			if(mark_ast_unbound(an->children[i], bound, cl)) {
+				an->unbound = 1;
+				return 1;
+			}
+		}
+	}
+
+	return 0;
+}
+
 void trace_add_caller(struct predicate *callee, struct predicate *caller) {
 	struct predlist *pl;
 
@@ -413,9 +446,7 @@ int trace_invocations_body(struct astnode **anptr, int flags, uint8_t *bound, st
 				moreflags |= PREDF_INVOKED_MULTI;
 			}
 			for(i = 0; i < an->predicate->arity; i++) {
-				if(any_unbound(an->children[i], bound, cl)) {
-					an->children[i]->unbound = 1;
-				}
+				mark_ast_unbound(an->children[i], bound, cl);
 			}
 			if(an->predicate->pred->flags & PREDF_FAIL) {
 				an->predicate->pred->flags |= flags | moreflags;
@@ -499,7 +530,7 @@ int trace_invocations_body(struct astnode **anptr, int flags, uint8_t *bound, st
 			memcpy(bound_sub, bound, cl->nvar);
 			(void) trace_invocations_body(&an->children[0], flags, bound_sub, cl, 1, prg);
 			break;
-		case AN_STATUSBAR:
+		case AN_OUTPUTBOX:
 			memcpy(bound_sub, bound, cl->nvar);
 			(void) trace_invocations_body(&an->children[1], flags, bound_sub, cl, 0, prg);
 			break;
@@ -586,7 +617,9 @@ uint32_t trace_reconsider_clause(struct clause *cl, int flags, uint32_t unbound_
 
 	memset(bound, 0, cl->nvar);
 	for(i = 0; i < cl->predicate->arity; i++) {
-		if(!(unbound_in & (1 << i))) {
+		if(unbound_in & (1 << i)) {
+			mark_ast_unbound(cl->params[i], bound, cl);
+		} else {
 			add_bound_vars(cl->params[i], bound, cl);
 		}
 	}
@@ -672,14 +705,13 @@ void trace_invocations(struct program *prg) {
 	struct predname *predname;
 	int i;
 
-	// This is the only builtin that can succeed and leave an unbound parameter.
-	find_builtin(prg, BI_UNBOUND)->pred->unbound_out = 1;
-
 	tracequeue = malloc(prg->npredicate * sizeof(struct predicate *));
 
 	trace_entrypoint(find_builtin(prg, BI_PROGRAM_ENTRY), prg, PREDF_INVOKED_BY_PROGRAM);
 	trace_entrypoint(find_builtin(prg, BI_ERROR_ENTRY), prg, PREDF_INVOKED_BY_PROGRAM);
 	trace_entrypoint(find_builtin(prg, BI_OBJECT), prg, PREDF_INVOKED_BY_PROGRAM); // invoked by implicit object loops
+
+	trace_entrypoint(find_builtin(prg, BI_HASPARENT), prg, PREDF_INVOKED_BY_DEBUGGER); // invoked for initial values
 
 	if(!(prg->optflags & OPTF_BOUND_PARAMS)) {
 		// in the debugger, all predicates are potential entry points, and all
@@ -708,6 +740,7 @@ void trace_invocations(struct program *prg) {
 		pred = predname->pred;
 		if(!predname->special
 		&& !(predname->builtin && !(predname->nameflags & PREDNF_DEFINABLE_BI))
+		&& predname->builtin != BI_INVOKE_CLOSURE
 		&& !pred->dynamic
 		&& (pred->flags & PREDF_INVOKED_BY_PROGRAM)
 		&& !(pred->flags & PREDF_DEFINED)) {
@@ -795,81 +828,6 @@ static int find_dynamic(struct program *prg, struct astnode *an, line_t line) {
 	return success;
 }
 
-static void add_clause(struct clause *cl, struct predicate *pred) {
-	pred->clauses = realloc(pred->clauses, (pred->nclause + 1) * sizeof(struct clause *));
-	pred->clauses[pred->nclause++] = cl;
-}
-
-static struct word **clausevars;
-static int nclausevar;
-static int nalloc_var;
-
-static int resolve_clause_var(struct word *w) {
-	int i;
-
-	for(i = 0; i < nclausevar; i++) {
-		if(w == clausevars[i]) return i;
-	}
-
-	if(i == nclausevar) {
-		if(nclausevar >= nalloc_var) {
-			nalloc_var = nclausevar * 2 + 8;
-			clausevars = realloc(clausevars, nalloc_var * sizeof(struct word *));
-		}
-		clausevars[nclausevar++] = w;
-	}
-
-	return i;
-}
-
-static void find_clause_vars(struct program *prg, struct clause *cl, struct astnode *an) {
-	int i;
-
-	while(an) {
-		if(an->kind == AN_IF
-		|| an->kind == AN_NEG_RULE
-		|| an->kind == AN_NEG_BLOCK
-		|| an->kind == AN_FIRSTRESULT
-		|| an->kind == AN_STATUSBAR) {
-			an->word = fresh_word(prg);
-			(void) resolve_clause_var(an->word);
-		} else if(an->kind == AN_VARIABLE) {
-			if(an->word->name[0]) {
-				(void) resolve_clause_var(an->word);
-			}
-		}
-		if(an->kind == AN_RULE || an->kind == AN_NEG_RULE) {
-			if(an->nchild > cl->max_call_arity) {
-				cl->max_call_arity = an->nchild;
-			}
-		}
-		for(i = 0; i < an->nchild; i++) {
-			find_clause_vars(prg, cl, an->children[i]);
-		}
-		an = an->next_in_body;
-	}
-}
-
-static void analyse_clause(struct program *prg, struct clause *cl) {
-	int i;
-
-	nclausevar = 0;
-
-	if((cl->predicate->pred->flags & PREDF_CONTAINS_JUST)
-	&& contains_just(cl->body)) {
-		(void) resolve_clause_var(find_word(prg, "*just"));
-	}
-
-	for(i = 0; i < cl->predicate->arity; i++) {
-		find_clause_vars(prg, cl, cl->params[i]);
-	}
-	find_clause_vars(prg, cl, cl->body);
-
-	cl->nvar = nclausevar;
-	cl->varnames = arena_alloc(&cl->predicate->pred->arena, nclausevar * sizeof(struct word *));
-	memcpy(cl->varnames, clausevars, nclausevar * sizeof(struct word *));
-}
-
 void find_dict_words(struct program *prg, struct astnode *an, int include_barewords) {
 	int i;
 	struct word *w;
@@ -903,6 +861,8 @@ void find_dict_words(struct program *prg, struct astnode *an, int include_barewo
 			find_dict_words(prg, an->children[1], include_barewords);
 			find_dict_words(prg, an->children[2], 1);
 			find_dict_words(prg, an->children[3], include_barewords);
+		} else if(an->kind == AN_OUTPUTBOX) {
+			find_dict_words(prg, an->children[1], include_barewords);
 		} else {
 			for(i = 0; i < an->nchild; i++) {
 				find_dict_words(prg, an->children[i], include_barewords);
@@ -920,14 +880,16 @@ void build_dictionary(struct program *prg) {
 	for(i = 0; i < prg->npredicate; i++) {
 		predname = prg->predicates[i];
 		pred = predname->pred;
-		for(j = 0; j < pred->nclause; j++) {
-			for(k = 0; k < predname->arity; k++) {
-				find_dict_words(prg, pred->clauses[j]->params[k], 0);
+		if(pred->flags & (PREDF_INVOKED | PREDF_DYNAMIC)) {
+			for(j = 0; j < pred->nclause; j++) {
+				for(k = 0; k < predname->arity; k++) {
+					find_dict_words(prg, pred->clauses[j]->params[k], 0);
+				}
+				find_dict_words(
+					prg,
+					pred->clauses[j]->body,
+					!!(pred->flags & PREDF_INVOKED_FOR_WORDS));
 			}
-			find_dict_words(
-				prg,
-				pred->clauses[j]->body,
-				!!(pred->flags & PREDF_INVOKED_FOR_WORDS));
 		}
 	}
 }
@@ -1210,7 +1172,7 @@ static void extract_wordmap_from_body(struct wordmap_tally *tallies, int tally_o
 			case AN_NEG_BLOCK:
 			case AN_FIRSTRESULT:
 			case AN_STOPPABLE:
-			case AN_STATUSBAR:
+			case AN_OUTPUTBOX:
 			case AN_OR:
 			case AN_SELECT:
 			case AN_EXHAUST:
@@ -1479,6 +1441,9 @@ int body_succeeds(struct astnode *an) {
 				if(!body_succeeds(an->children[i])) return 0;
 			}
 			break;
+		case AN_OUTPUTBOX:
+			return 0;
+			break;
 		}
 		an = an->next_in_body;
 	}
@@ -1600,6 +1565,7 @@ int frontend_visit_clauses(struct program *prg, struct arena *temp_arena, struct
 	struct astnode *an;
 	int i, j;
 	char buf[32];
+	struct predicate *pred;
 
 	for(clause_dest = first_ptr; (cl = *clause_dest); ) {
 		if(cl->predicate->special == SP_GLOBAL_VAR) {
@@ -1720,6 +1686,11 @@ int frontend_visit_clauses(struct program *prg, struct arena *temp_arena, struct
 			cl->body = expand_macros(cl->body, prg, cl->arena);
 			clause_dest = &cl->next_in_source;
 		}
+	}
+
+	pred = find_builtin(prg, BI_INVOKE_CLOSURE)->pred;
+	for(i = 0; i < pred->nclause; i++) {
+		pred->clauses[i]->body = expand_macros(pred->clauses[i]->body, prg, &pred->arena);
 	}
 
 	return 1;
@@ -2023,6 +1994,114 @@ static void recover_select_statements(struct program *prg) {
 	free(newtable);
 }
 
+static void add_to_buf(char **buf, int *nalloc, int *pos, char ch) {
+	if(*pos >= *nalloc) {
+		*nalloc = (*pos) * 2 + 32;
+		*buf = realloc(*buf, *nalloc);
+	}
+	(*buf)[(*pos)++] = ch;
+}
+
+int decode_output(char **bufptr, struct astnode *an, int *p_space, int *p_nl, struct arena *arena, char *context) {
+	int post_space = 0, nl_printed = 0;
+	int i;
+	char last = 0;
+	char *buf = 0;
+	int nalloc = 0, pos = 0;
+	char numbuf[8];
+
+	while(an) {
+		if(an->kind == AN_BAREWORD) {
+			if(post_space && !strchr(".,:;!?)]}>-%/", an->word->name[0])) {
+				add_to_buf(&buf, &nalloc, &pos, ' ');
+				nl_printed = 0;
+			}
+			for(i = 0; an->word->name[i]; i++) {
+				last = an->word->name[i];
+				add_to_buf(&buf, &nalloc, &pos, last);
+				nl_printed = 0;
+			}
+			post_space = !strchr("([{<-/", last);
+		} else if(an->kind == AN_INTEGER) {
+			snprintf(numbuf, sizeof(numbuf), "%d", an->value);
+			if(post_space) {
+				add_to_buf(&buf, &nalloc, &pos, ' ');
+			}
+			for(i = 0; numbuf[i]; i++) {
+				last = numbuf[i];
+				add_to_buf(&buf, &nalloc, &pos, last);
+			}
+			nl_printed = 0;
+			post_space = 1;
+		} else if(an->kind == AN_RULE && an->predicate->builtin == BI_NOSPACE) {
+			post_space = 0;
+		} else if(an->kind == AN_RULE && an->predicate->builtin == BI_SPACE) {
+			add_to_buf(&buf, &nalloc, &pos, ' ');
+			post_space = 0;
+		} else if(an->kind == AN_RULE
+		&& an->predicate->builtin == BI_SPACE_N
+		&& an->children[0]->kind == AN_INTEGER
+		&& an->children[0]->value < 22) {
+			for(i = 0; i < an->children[0]->value; i++) {
+				add_to_buf(&buf, &nalloc, &pos, ' ');
+				nl_printed = 0;
+			}
+			post_space = 0;
+		} else if(an->kind == AN_RULE && an->predicate->builtin == BI_LINE) {
+			while(nl_printed < 1) {
+				add_to_buf(&buf, &nalloc, &pos, '\r');
+				nl_printed++;
+				post_space = 0;
+			}
+		} else if(an->kind == AN_RULE && an->predicate->builtin == BI_PAR) {
+			while(nl_printed < 2) {
+				add_to_buf(&buf, &nalloc, &pos, '\r');
+				nl_printed++;
+				post_space = 0;
+			}
+		} else {
+			report(
+				LVL_ERR,
+				an->line,
+				"%s may only consist of static text.",
+				context);
+			return 0;
+		}
+		an = an->next_in_body;
+	}
+
+	add_to_buf(&buf, &nalloc, &pos, 0);
+	*bufptr = arena_strdup(arena, buf);
+	free(buf);
+
+	if(p_space) *p_space = post_space;
+	if(p_nl) *p_nl = nl_printed;
+
+	return 1;
+}
+
+char *decode_metadata_str(int builtin, struct word *param, struct program *prg, struct arena *arena) {
+	struct predname *predname;
+	struct predicate *pred;
+	char *buf;
+	int i;
+
+	predname = find_builtin(prg, builtin);
+	pred = predname->pred;
+	for(i = 0; i < pred->nclause; i++) {
+		if(!param
+		|| (pred->clauses[i]->params[0]->kind == AN_DICTWORD && pred->clauses[i]->params[0]->word == param)) {
+			if(decode_output(&buf, pred->clauses[i]->body, 0, 0, arena, "Story metadata")) {
+				return buf;
+			} else {
+				return 0;
+			}
+		}
+	}
+
+	return 0;
+}
+
 int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t dictmap_callback) {
 	struct clause **clause_dest, *first_clause, *cl;
 	struct predname *predname;
@@ -2083,6 +2162,44 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 		return 0;
 	}
 
+	predname = find_builtin(prg, BI_QUERY);
+	cl = arena_calloc(&predname->pred->arena, sizeof(*cl));
+	cl->predicate = predname;
+	cl->arena = &predname->pred->arena;
+	cl->params = arena_alloc(cl->arena, predname->arity * sizeof(struct astnode *));
+	cl->params[0] = mkast(AN_PAIR, 2, cl->arena, 0);
+	cl->params[0]->children[0] = mkast(AN_VARIABLE, 0, cl->arena, 0);
+	cl->params[0]->children[0]->word = find_word(prg, "Head");
+	cl->params[0]->children[1] = mkast(AN_VARIABLE, 0, cl->arena, 0);
+	cl->params[0]->children[1]->word = find_word(prg, "Tail");
+	cl->body = mkast(AN_RULE, 3, cl->arena, 0);
+	cl->body->subkind = RULE_MULTI;
+	cl->body->predicate = find_builtin(prg, BI_INVOKE_CLOSURE);
+	cl->body->children[0] = deepcopy_astnode(cl->params[0]->children[0], cl->arena, 0);
+	cl->body->children[1] = deepcopy_astnode(cl->params[0]->children[1], cl->arena, 0);
+	cl->body->children[2] = mkast(AN_EMPTY_LIST, 0, cl->arena, 0);
+	add_clause(cl, predname->pred);
+
+	predname = find_builtin(prg, BI_QUERY_ARG);
+	cl = arena_calloc(&predname->pred->arena, sizeof(*cl));
+	cl->predicate = predname;
+	cl->arena = &predname->pred->arena;
+	cl->params = arena_alloc(cl->arena, predname->arity * sizeof(struct astnode *));
+	cl->params[0] = mkast(AN_PAIR, 2, cl->arena, 0);
+	cl->params[0]->children[0] = mkast(AN_VARIABLE, 0, cl->arena, 0);
+	cl->params[0]->children[0]->word = find_word(prg, "Head");
+	cl->params[0]->children[1] = mkast(AN_VARIABLE, 0, cl->arena, 0);
+	cl->params[0]->children[1]->word = find_word(prg, "Tail");
+	cl->params[1] = mkast(AN_VARIABLE, 0, cl->arena, 0);
+	cl->params[1]->word = find_word(prg, "Arg");
+	cl->body = mkast(AN_RULE, 3, cl->arena, 0);
+	cl->body->subkind = RULE_MULTI;
+	cl->body->predicate = find_builtin(prg, BI_INVOKE_CLOSURE);
+	cl->body->children[0] = deepcopy_astnode(cl->params[0]->children[0], cl->arena, 0);
+	cl->body->children[1] = deepcopy_astnode(cl->params[0]->children[1], cl->arena, 0);
+	cl->body->children[2] = deepcopy_astnode(cl->params[1], cl->arena, 0);
+	add_clause(cl, predname->pred);
+
 	for(i = 0; i < prg->npredicate; i++) {
 		pred = prg->predicates[i]->pred;
 		for(j = 0; j < pred->nclause; j++) {
@@ -2128,31 +2245,6 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 		}
 	}
 #endif
-
-	// these will not be necessary when using the intermediate code:
-
-	if(!(predname = find_builtin(prg, BI_ERROR_ENTRY))->pred->nclause) {
-		cl = calloc(1, sizeof(*cl));
-		cl->predicate = predname;
-		cl->arena = &predname->pred->arena;
-		cl->params = calloc(1, sizeof(struct astnode *));
-		cl->params[0] = mkast(AN_VARIABLE, 0, cl->arena, 0);
-		cl->params[0]->word = find_word(prg, "");
-		cl->body = mkast(AN_RULE, 0, cl->arena, 0);
-		cl->body->subkind = RULE_SIMPLE;
-		cl->body->predicate = find_builtin(prg, BI_QUIT);
-		add_clause(cl, predname->pred);
-	}
-
-	if(!(predname = find_builtin(prg, BI_PROGRAM_ENTRY))->pred->nclause) {
-		cl = calloc(1, sizeof(*cl));
-		cl->predicate = predname;
-		cl->arena = &predname->pred->arena;
-		cl->body = mkast(AN_RULE, 0, cl->arena, 0);
-		cl->body->subkind = RULE_SIMPLE;
-		cl->body->predicate = find_builtin(prg, BI_QUIT);
-		add_clause(cl, predname->pred);
-	}
 
 	for(i = 0; i < prg->npredicate; i++) {
 		predname = prg->predicates[i];
@@ -2291,7 +2383,6 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 		}
 	}
 #endif
-	arena_free(&lexer.temp_arena);
 
 	if(find_builtin(prg, BI_TRACE_ON)->pred->flags & PREDF_INVOKED) {
 		prg->optflags &= ~OPTF_NO_TRACE;
@@ -2302,8 +2393,84 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 	comp_program(prg);
 	comp_cleanup();
 
+	for(i = 0; i < prg->nboxclass; i++) {
+		struct boxclass *bc = &prg->boxclasses[i];
+		char *css = decode_metadata_str(BI_STYLEDEF, bc->class, prg, &lexer.temp_arena);
+		char *param, *str;
+
+		bc->width = 100;
+		bc->height = 1;
+		bc->flags = BOXF_RELWIDTH;
+		bc->margintop = 0;
+		bc->marginbottom = 0;
+		if(css) {
+			param = arena_alloc(&lexer.temp_arena, strlen(css) + 1);
+			while((str = strtok(css, ";"))) {
+				for(j = 0; str[j]; j++) {
+					if(str[j] >= 'A' && str[j] <= 'Z') str[j] ^= ' ';
+				}
+				if(2 == sscanf(str, " width : %d %s", &j, param)) {
+					if(!strcmp(param, "%")) {
+						bc->width = j;
+						bc->flags |= BOXF_RELWIDTH;
+					} else if(!strcmp(param, "em")) {
+						bc->width = j;
+						bc->flags &= ~BOXF_RELWIDTH;
+					}
+				} else if(2 == sscanf(str, " height : %d %s", &j, param)) {
+					if(!strcmp(param, "%")) {
+						bc->height = j;
+						bc->flags |= BOXF_RELHEIGHT;
+					} else if(!strcmp(param, "em")) {
+						bc->height = j;
+						bc->flags &= ~BOXF_RELHEIGHT;
+					}
+				} else if(2 == sscanf(str, " margin-top : %d %s", &j, param)) {
+					if(!strcmp(param, "em")) {
+						bc->margintop = j;
+					}
+				} else if(2 == sscanf(str, " margin-bottom : %d %s", &j, param)) {
+					if(!strcmp(param, "em")) {
+						bc->marginbottom = j;
+					}
+				} else if(1 == sscanf(str, " float : %s", param)) {
+					if(!strcmp(param, "left")) {
+						bc->flags &= ~BOXF_FLOATRIGHT;
+						bc->flags |= BOXF_FLOATLEFT;
+					} else if(!strcmp(param, "right")) {
+						bc->flags &= ~BOXF_FLOATLEFT;
+						bc->flags |= BOXF_FLOATRIGHT;
+					}
+				} else if(1 == sscanf(str, " font-style : %s", param)) {
+					if(!strcmp(param, "italic") || !strcmp(param, "oblique")) {
+						bc->style = STYLE_ITALIC;
+					}
+				} else if(1 == sscanf(str, " font-weight : %s", param)) {
+					if(!strcmp(param, "bold")) {
+						bc->style = STYLE_BOLD;
+					}
+				}
+				css = 0;
+			}
+		}
+		if(verbose >= 3) {
+			printf("Box class @%s:\n", bc->class->name);
+			printf("\tWidth:\t%d%s\n", bc->width, (bc->flags & BOXF_RELWIDTH)? "%" : " em");
+			printf("\tHeight:\t%d%s\n", bc->height, (bc->flags & BOXF_RELHEIGHT)? "%" : " em");
+			printf("\tMargin-top:\t%d em\n", bc->margintop);
+			printf("\tMargin-bottom:\t%d em\n", bc->marginbottom);
+			printf("\tFloat:\t%s\n",
+				(bc->flags & BOXF_FLOATLEFT)? "left" :
+				(bc->flags & BOXF_FLOATRIGHT)? "right" : "none");
+			printf("\tStyle:\t%s\n",
+				(bc->style == STYLE_ITALIC)? "italic" :
+				(bc->style == STYLE_BOLD)? "bold" : "inherit");
+		}
+	}
+
+	arena_free(&lexer.temp_arena);
+
 	if(prg->errorflag || !build_endings_tree(prg)) {
-		arena_free(&lexer.temp_arena);
 		frontend_reset_program(prg);
 		return 0;
 	}
@@ -2320,10 +2487,6 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 		}
 	}
 	free_evalstate(&es);
-
-	free(clausevars);
-	clausevars = 0;
-	nalloc_var = 0;
 
 	prg->totallines = lexer.totallines;
 
@@ -2387,10 +2550,6 @@ int frontend_inject_query(struct program *prg, struct predname *predname, struct
 	pred->unbound_in = 1;
 	trace_reconsider_pred(pred, prg);
 	//pp_predicate(predname, prg);
-
-	free(clausevars);
-	clausevars = 0;
-	nalloc_var = 0;
 
 	prg->errorflag = 0;
 	comp_predicate(prg, predname);

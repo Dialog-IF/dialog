@@ -61,6 +61,9 @@ and braces. Prefix by <span class="code">\</span> to print.
 <p class="codeline">[ <i>element1</i> <i>element2</i> <i>element3</i> <i>...</i> | <i>tail</i> ]</p>
 <p class="noteline">Partial list.
 </p>
+<p class="codeline">{ <i>...</i> }</p>
+<p class="noteline">Closure.
+</p>
 <p class="codeline">*</p>
 <p class="noteline">Current topic.
 </p>
@@ -128,9 +131,13 @@ exhausted) emits at least every word in <span class="code">$List</span>.
 <p class="noteline">The inner statement executes, succeeding at most once. The <span class="code">(stop)</span> built-in breaks out of
 the innermost stoppable environment. The stoppable environment itself always succeeds.
 </p>
-<p class="codeline">(status bar $Height) <i>statement</i></p>
-<p class="noteline">Like <span class="code">(stoppable)</span>, but all output is diverted to the status bar area,
-which is created if necessary.
+<p class="codeline">(div $Class) <i>statement</i></p>
+<p class="noteline">The inner statement executes, succeeding at most once. All output is
+rendered into a rectangular area according to the given style class.
+</p>
+<p class="codeline">(status bar $Class) <i>statement</i></p>
+<p class="noteline">Like <span class="code">(div&nbsp;$)</span>, but the output is rendered into the status bar
+area, which is created if necessary.
 </p>
 <p class="codeline">(now) <i>pseudo-query</i></p>
 <p class="noteline">Updates a dynamic predicate.
@@ -159,11 +166,14 @@ which is created if necessary.
 <p class="codeline">(bold)</p>
 <p class="noteline">Enables bold text.
 </p>
+<p class="codeline">(bound $X)</p>
+<p class="noteline">Succeeds if <span class="code">$X</span> is bound to a value.
+</p>
 <p class="codeline">(breakpoint)</p>
 <p class="noteline">Suspends execution (if running in the debugger).
 </p>
 <p class="codeline">(clear)</p>
-<p class="noteline">Clears the main window (but not the status bar area).
+<p class="noteline">Clears the main window, but not the status bar area.
 </p>
 <p class="codeline">(clear all)</p>
 <p class="noteline">Clears the screen and disables the status bar.
@@ -235,8 +245,8 @@ of <span class="code">$Y</span> in the object tree. Either parameter can be unbo
 <p class="codeline">(par)</p>
 <p class="noteline">Requests a paragraph break.
 </p>
-<p class="codeline">(par $)</p>
-<p class="noteline">Prints <span class="code">$N</span> blank lines.
+<p class="codeline">(progress bar $ of $)</p>
+<p class="noteline">Draws a progress bar scaled to fit the width of the current div.
 </p>
 <p class="codeline">($X plus $Y into $Z)</p>
 <p class="noteline">Unifies <span class="code">$Z</span> with the sum of <span class="code">$X</span> and <span class="code">$Y</span>.
@@ -305,11 +315,11 @@ successful restore.
 <p class="codeline">(trace on)</p>
 <p class="noteline">Enables query tracing.
 </p>
-<p class="codeline">(unbound $X)</p>
-<p class="noteline">Succeeds if <span class="code">$X</span> is currently unbound.
-</p>
 <p class="codeline">(undo)</p>
 <p class="noteline">Restores the program state at the time of the latest <span class="code">(save undo 0)</span>.
+</p>
+<p class="codeline">(unstyle)</p>
+<p class="noteline">Select the default text style for the current division.
 </p>
 <p class="codeline">(uppercase)</p>
 <p class="noteline">Convert the next printed character to uppercase.
@@ -366,9 +376,12 @@ successful restore.
 <p class="codeline">(removable word endings)</p>
 <p class="noteline">Defines one or more word endings that can be removed when parsing user input.
 </p>
+<p class="codeline">(style class $Name)</p>
+<p class="noteline">Associates one or more style attributes with the given class name.
+</p>
 	<div class="footer">
 	<p class="nav">Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 7, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 8, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

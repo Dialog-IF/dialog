@@ -1,0 +1,637 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<link rel="StyleSheet" href="style.css" type="text/css" />
+	<title>Chapter 5: Input and output</title>
+</head>
+<body>
+	<div class="chapter">
+	<h1>Chapter 5: Input and output</h1>
+	<div class="navlinks">(<a href="#div">Divisions and style classes</a>&nbsp;&bull; <a href="#styles">Inline styles and formatting</a>&nbsp;&bull; <a href="#statusbar">The status bar</a>&nbsp;&bull; <a href="#progressbar">Visualizing progress</a>&nbsp;&bull; <a href="#clear">Clearing the screen</a>&nbsp;&bull; <a href="#input">Input</a>&nbsp;&bull; <a href="#split">Splitting input by keywords</a>&nbsp;&bull; <a href="#detobj">Determining objects from words</a>)</div>
+<a id="div"></a><h2>Divisions and style classes</h2>
+<p>As we saw in the <a href="execution.html#printing">introductory chapter</a>, text inside rule bodies
+gets printed. The text is treated as a sequence of words and punctuation.
+Furthermore, the <span class="code">(par)</span> built-in predicate produces paragraph
+breaks, and <span class="code">(line)</span> produces line breaks.
+</p>
+<p>Output can be further organized into <i>divisions</i>, or <i>divs</i> for
+short. Divisions are rectangular areas of text, often spanning the full width
+of the containing window, to which style hints can be applied.
+</p>
+<p>The purpose of divisions and style hints is to allow the same story to run on
+many different platforms, with varying support for advanced presentation
+techniques. Furthermore, divisions promote a clean source code structure, by
+isolating the presentation aspects from the text and logic of the story.
+</p>
+<p>The syntax for creating a division is <span class="code">(div&nbsp;$)</span> followed by a
+statement. The parameter is a style class, and the statement is usually a
+block. Example:
+</p>
+<textarea class="copyarea" id="copy0" readonly>
+	(div @quote) {
+		This could be displayed in italics, for instance, if
+		the corresponding style hint is defined for the @quote
+		class.
+	}
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">(div @quote) {</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>This could be displayed in italics, for instance, if</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>the corresponding style hint is defined for the @quote</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>class.</td></tr>
+<tr><td class="left"></td><td class="right">}</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy0').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Style classes are identified by words, but these words don't end up in the game
+dictionary (unless they're also used elsewhere, of course). This is
+particularly relevant if removable word endings are used (see the <a href="io.html#input">input
+section</a> below).
+</p>
+<p>What a given class is supposed to look like is determined by compile-time
+queries to the <span class="code">(style class&nbsp;$)</span> predicate, with the name of the
+class as parameter. Style attributes are specified using a small subset of CSS,
+the widely known <i>Cascading Style Sheets</i> syntax of the web. All style
+attributes are regarded as optional hints, so a backend or interpreter can pick
+and choose among them, or ignore them altogether.
+</p>
+<p>Here is an example style definition:
+</p>
+<textarea class="copyarea" id="copy1" readonly>
+(style class @quote)
+	font-style: italic;
+	margin-top: 2 em;
+	margin-bottom: 2 em;
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(style class @quote)</td></tr>
+<tr><td class="left"></td><td class="right">font-style: italic;</td></tr>
+<tr><td class="left"></td><td class="right">margin-top: 2 em;</td></tr>
+<tr><td class="left"></td><td class="right">margin-bottom: 2 em;</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy1').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The Z-machine backend only supports a limited number of style attributes. For
+divs in the main text area, they are:
+</p>
+<p class="codeline">font-style</p>
+<p class="noteline">Supported values are <span class="code">italic</span> and <span class="code">inherit</span>.
+</p>
+<p class="codeline">font-weight</p>
+<p class="noteline">Supported values are <span class="code">bold</span> and <span class="code">inherit</span>.
+</p>
+<p class="codeline">margin-top</p>
+<p class="noteline">The value must be an integer followed by the keyword <span class="code">em</span>.
+The size of the resulting margin is the given number of blank lines.
+</p>
+<p class="codeline">margin-bottom</p>
+<p class="noteline">The value must be an integer followed by the keyword <span class="code">em</span>.
+The size of the resulting margin is the given number of blank lines.
+</p>
+<p>There is currently no support for the combined <span class="code">margin</span> attribute.
+</p>
+<h3>Divs and the flow of execution</h3>
+<p>Divisions can be nested, but only in a strict tree-like structure. There are
+three ways to leave a div during normal program execution:
+</p>
+<ul><li>The inner statement might succeed. In this case, any remaining choice
+points are discarded, and the <span class="code">(div&nbsp;$)</span> expression itself
+succeeds. The choice points must be discarded to prevent the same div
+from being exited more than once.
+</li>
+<li>The inner statement might fail. In this case, the <span class="code">(div&nbsp;$)</span>
+expression also fails.
+</li>
+<li>The inner statement might invoke <span class="code">(stop)</span> to break out of
+a surrounding stoppable environment.
+</li>
+</ul><p>Regardless of how the inner statement terminates, the div rectangle is
+concluded, its bottom margin takes effect, and the style attributes of the
+surrounding div are restored on the fly.
+</p>
+<p>An interpreter may refuse to save the game state to a file or undo buffer from
+within a div. In that case, the operation simply fails. This eliminates the
+need for an interpreter-agnostic serialization format for the set of active
+divs.
+</p>
+<a id="styles"></a><h2>Inline styles and formatting</h2>
+<p>To change the current text style without entering a new division, use the
+built-in predicates <span class="code">(bold)</span>, <span class="code">(italic)</span>,
+<span class="code">(reverse)</span>, and <span class="code">(fixed pitch)</span> to enable each
+respective style, and <span class="code">(roman)</span> to disable all four. The predicate
+<span class="code">(unstyle)</span> reverts to the default style of the current division,
+which is usually roman.
+</p>
+<p>The built-in predicate <span class="code">(uppercase)</span> forces the next character to be
+printed in uppercase. The standard library uses this to define a number of
+convenient predicates such as:
+</p>
+<textarea class="copyarea" id="copy2" readonly>
+(The $Obj)	(uppercase) (the $Obj)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left">(The $Obj)</td><td class="right">(uppercase) (the $Obj)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy2').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The built-in predicate <span class="code">(space&nbsp;$)</span> prints a given number of space
+characters in succession.
+</p>
+<a id="statusbar"></a><h2>The status bar</h2>
+<p>The special syntax <span class="code">(status bar $Class)</span>, followed by a statement,
+creates a special kind of division located at the top of the screen. The
+appearance of this <i>status bar area</i> is controlled using style hints.
+</p>
+<p>The status bar itself should have a <span class="code">height</span> attribute, specified in
+<span class="code">em</span> units. The Z-machine backend will reserve this many lines at
+the top of the screen.
+</p>
+<textarea class="copyarea" id="copy3" readonly>
+(style class @status)
+	height: 1 em;
+
+(program entry point)
+	(status bar @status) {
+		Look at my status bar!
+	}
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(style class @status)</td></tr>
+<tr><td class="left"></td><td class="right">height: 1 em;</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">(status bar @status) {</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>Look at my status bar!</td></tr>
+<tr><td class="left"></td><td class="right">}</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy3').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>On the Z-machine, text inside the status bar is always rendered in a
+fixed-pitch font. When entering the status bar environment, Dialog fills the
+status bar area with reverse space characters, enables reverse video, and
+positions the cursor in the top left corner.
+</p>
+<p>The status bar area can be split into multiple segments horizontally. These
+segments are described using nested so called <i>floating</i> divs. These have
+a <span class="code">float</span> attribute that is set to either <span class="code">left</span> or
+<span class="code">right</span> to determine where inside the status bar the segment should
+be located. The width of the segment can be specified in absolute numbers
+(using the <span class="code">em</span> unit) or as a percentage of the width of the
+surrounding div, which is normally the status bar itself.
+</p>
+<p>Floating divs can be further subdivided, either horizontally using floating
+divs, or vertically using ordinary divs (or simply with line breaks).
+</p>
+<p>Let's extend our simple status bar with a score display in the upper right
+corner:
+</p>
+<textarea class="copyarea" id="copy4" readonly>
+(current score 0)
+
+(style class @status)
+	height: 1 em;
+
+(style class @score)
+	width: 20 em;
+	float: right;
+
+(program entry point)
+	(status bar @status) {
+		(div @score) {
+			(current score $S)
+			Score: $S
+		}
+		Look at my status bar!
+	}
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(current score 0)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(style class @status)</td></tr>
+<tr><td class="left"></td><td class="right">height: 1 em;</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(style class @score)</td></tr>
+<tr><td class="left"></td><td class="right">width: 20 em;</td></tr>
+<tr><td class="left"></td><td class="right">float: right;</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">(status bar @status) {</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(div @score) {</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span><span class="tab"> </span>(current score $S)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span><span class="tab"> </span>Score: $S</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>}</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>Look at my status bar!</td></tr>
+<tr><td class="left"></td><td class="right">}</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy4').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The Z-machine obeys the following style attributes in the status bar area:
+</p>
+<p class="codeline">height</p>
+<p class="noteline">For the top-level <span class="code">(status bar&nbsp;$)</span> div only: The desired
+height, expressed as an integer followed by the word <span class="code">em</span>.
+</p>
+<p class="codeline">width</p>
+<p class="noteline">For divs nested inside the status bar area: The desired width, as an
+integer followed by a unit. Supported units are <span class="code">em</span> and
+<span class="code">%</span>. An <span class="code">em</span> is interpreted as the width of a
+character in the fixed-pitch font.
+</p>
+<p class="codeline">float</p>
+<p class="noteline">For divs nested inside the status bar area: The desired location within
+the surrounding div. Must be either <span class="code">left</span> or
+<span class="code">right</span>.
+</p>
+<p class="codeline">margin-top</p>
+<p class="noteline">Works as it does for ordinary divs, but is ignored for the top-level
+<span class="code">(status bar&nbsp;$)</span> itself.
+</p>
+<p class="codeline">margin-bottom</p>
+<p class="noteline">Works as it does for ordinary divs, but is ignored for the top-level
+<span class="code">(status bar&nbsp;$)</span> itself.
+</p>
+<p>It is possible to invoke <span class="code">(status bar&nbsp;$)</span> with different style
+classes at different times, in order to vary the look of the status bar area
+during gameplay. When reducing the size of the status bar area (e.g. drawing a
+status bar of height 1&nbsp;em after having drawn one of height 2&nbsp;em), be aware that
+some interpreters hide the extraneous lines, while others regard them as being
+part of the main window.
+</p>
+<p>Attempts to enter a nested <span class="code">(status bar&nbsp;$)</span> from within the status
+bar area will fail.
+</p>
+<a id="progressbar"></a><h2>Visualizing progress</h2>
+<p>The built-in predicate <span class="code">(progress bar $ of&nbsp;$)</span> draws a progress bar
+scaled to fit the width of the current div. It is rendered with character
+graphics on the Z-machine backend.
+</p>
+<a id="clear"></a><h2>Clearing the screen</h2>
+<p>To clear the screen below the status bar area, use <span class="code">(clear)</span>. To
+clear the entire screen and disable the status bar, use <span class="code">(clear
+all)</span>. Be aware that on some interpreters, clearing interferes with the
+player's ability to scroll back and review earlier parts of the play session.
+</p>
+<a id="input"></a><h2>Input</h2>
+<p>User input is represented by dictionary words.
+</p>
+<p>The Dialog compiler collects all dictionary words mentioned explicitly in the
+source code (with the <span class="nobreak"><span class="code">@</span>-prefix</span> or as bare words
+inside lists), as well as every literal word that can come out of a
+<span class="code">(collect words)</span> or <span class="code">(determine object $)</span> expression.
+In addition, the system makes sure to provide a single-letter dictionary word
+for every character supported by the underlying platform. Together, these words
+make up what's called the <i>game-wide dictionary</i>.
+</p>
+<p>It may be helpful to know that there's a difference between dictionary words at
+the Dialog level, and the native, low-level words of the Z-machine. Dialog
+dictionary words are an abstraction over several different kinds of internal
+representation. That being said, it is the specific constraints of the
+low-level Z-machine dictionary that determine where the split occurs between
+the essential and optional parts of a given dictionary word.
+</p>
+<p>There are two built-in predicates for obtaining input from the player. One
+waits for a single keypress, while the other reads a full line of input.
+</p>
+<h3>Get key</h3>
+<textarea class="copyarea" id="copy5" readonly>
+	(get key $Char)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">(get key $Char)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy5').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>This predicate waits for the player to type a character.
+</p>
+<p>Some interpreters indicate that the game is waiting for input by displaying a
+flashing cursor. Others don't, so story authors may wish to prompt the reader
+explicitly.
+</p>
+<p>The parameter, <span class="code">$Char</span>, is unified with a dictionary word
+representing the character that was typed, e.g. <span class="code">@e</span> if the
+<span class="prginput">E</span> key was pressed. Note that dictionary words are
+case-insensitive, so for letters of the alphabet there is no way to tell
+whether the player was holding shift or not.
+</p>
+<p>Some special keys correspond to dictionary words that can't be represented
+directly in Dialog source code. The dictionary words for these keys can be
+obtained at runtime, by querying the following built-in predicates:
+</p>
+<textarea class="copyarea" id="copy6" readonly>
+(word representing return $Char)
+(word representing space $Char)
+(word representing backspace $Char)
+(word representing up $Char)
+(word representing down $Char)
+(word representing left $Char)
+(word representing right $Char)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(word representing return $Char)</td></tr>
+<tr><td class="both" colspan="2">(word representing space $Char)</td></tr>
+<tr><td class="both" colspan="2">(word representing backspace $Char)</td></tr>
+<tr><td class="both" colspan="2">(word representing up $Char)</td></tr>
+<tr><td class="both" colspan="2">(word representing down $Char)</td></tr>
+<tr><td class="both" colspan="2">(word representing left $Char)</td></tr>
+<tr><td class="both" colspan="2">(word representing right $Char)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy6').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>A simple keypress dispatcher might look like this:
+</p>
+<textarea class="copyarea" id="copy7" readonly>
+(program entry point)
+	(get key $Key)
+	(handle keypress $Key)
+
+(handle keypress @a)
+	'A' was pressed.
+
+(handle keypress @b)
+	'B' was pressed.
+
+(handle keypress (word representing return $))
+	RETURN was pressed.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">(get key $Key)</td></tr>
+<tr><td class="left"></td><td class="right">(handle keypress $Key)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(handle keypress @a)</td></tr>
+<tr><td class="left"></td><td class="right">'A' was pressed.</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(handle keypress @b)</td></tr>
+<tr><td class="left"></td><td class="right">'B' was pressed.</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(handle keypress (word representing return $))</td></tr>
+<tr><td class="left"></td><td class="right">RETURN was pressed.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy7').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<h3>Get input</h3>
+<textarea class="copyarea" id="copy8" readonly>
+	(get input $WordList)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">(get input $WordList)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy8').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>This query blocks execution until the player types a line of input, followed by
+return. Different interpreters provide different levels of line-editing
+facilities, ranging from simple backspace handling all the way up to input
+history and spell checking.
+</p>
+<p>The parameter, <span class="code">$WordList</span>, is unified with a list where each
+element represents a word typed by the player. The punctuation characters full
+stop, comma, double quote, semicolon, and asterisk are treated as individual
+words; the remaining text is separated into words by whitespace. If a word is
+recognized as one that appears in the program-wide dictionary, then the element
+will be that dictionary word. Else, if the word is a decimal number in the
+range <span class="nobreak">0&ndash;16383</span>, the element will be that number.
+</p>
+<p>If the word was neither recognized, nor found to be a decimal number, then
+Dialog will attempt to remove certain word endings, and check whether the
+remaining part of the word exists in the dictionary. This procedure is
+necessary for games written in e.g. German, whereas English games generally do
+not require it.
+</p>
+<p>To specify removable endings, add one or more rule definitions to the predicate
+<span class="code">(removable word endings)</span>. Each rule body should consist of one or
+more word endings:
+</p>
+<textarea class="copyarea" id="copy9" readonly>
+(removable word endings)
+	%% German adjective endings
+	en es em e
+
+(removable word endings)
+	%% German noun endings
+	e en s es
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(removable word endings)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="comment">%% German adjective endings</span></td></tr>
+<tr><td class="left"></td><td class="right">en es em e</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(removable word endings)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="comment">%% German noun endings</span></td></tr>
+<tr><td class="left"></td><td class="right">e en s es</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy9').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The part that remains after removing the ending is referred to as the
+<i>stem</i> of the word. If the stem consists of at least two letters, and
+exists in the program-wide dictionary, then the resulting dictionary word will
+have the stem as its essential part, and the ending as its optional part.
+During comparison (unification with another bound value), only the essential
+part is considered. During printing, both the essential part and the optional
+part are printed.
+</p>
+<p>During <a href="builtins.html#trace">tracing</a>, dictionary words are displayed with a plus sign (+)
+separating the essential and optional parts. Thus, if the German word
+&ldquo;klein&rdquo; is part of the game-wide dictionary, and the player enters
+<span class="prginput">KLEINES</span>, that word appears as <span class="tt">@klein+es</span> in the trace
+logs, and unifies successfully with <span class="code">@klein</span>.
+</p>
+<p>If a word of input isn't recognized at all, even after considering the
+removable word endings, then it's an <i>unrecognized</i> dictionary word. It
+can still be stored in a variable, retrieved, and printed back, and it will
+unify successfully with other instances of the same unrecognized word. When
+tracing is enabled, unrecognized dictionary words are displayed with a plus
+sign at the end.
+</p>
+<p>For instance, the input <span class="prginput">TAKE&nbsp;02&nbsp;UNKNOWNWORD,X&nbsp;BALL</span> may,
+depending on the contents of the dictionary, be represented by the list:
+<span class="nobreak"><span class="code">[take 2 unknownword , x ball]</span>.</span> As part of a trace,
+it might be displayed as
+<span class="nobreak"><span class="code">[take 2 unknownword+ , x ball]</span>.</span>
+</p>
+<p>Special gotcha: Recall that zero-prefixed numbers in the source code, as well
+as numbers that are out of range, are treated as words. If <span class="code">007</span>
+appears in the program in such a way that it becomes part of the program-wide
+dictionary, then it will show up as a dictionary word in the list returned by
+<span class="code">(get input&nbsp;$)</span>. Otherwise, it will be represented by the numerical
+value&nbsp;7.
+</p>
+<a id="split"></a><h2>Splitting input by keywords</h2>
+<p>During parsing, it is often necessary to scan a list for certain keywords, and
+then split it into two sublists, representing the elements on either side of
+the matched keyword. It is straightforward to implement this using ordinary
+rules in Dialog. However, for performance reasons the language also provides a
+built-in predicate:
+</p>
+<textarea class="copyarea" id="copy10" readonly>
+(split $Input by $Keywords into $Left and $Right)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(split $Input by $Keywords into $Left and $Right)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p><span class="code">$Input</span> and <span class="code">$Keywords</span> must be lists of simple values,
+i.e. they mustn't contain sublists.
+</p>
+<p>The <span class="code">$Input</span> list will be scanned, starting at its head, until the
+first element that also appears in <span class="code">$Keywords</span> is found. A list of
+the elements that came before the keyword is unified with <span class="code">$Left</span>,
+and a list of the elements that follow it is unified with <span class="code">$Right</span>.
+That is, neither <span class="code">$Left</span> nor <span class="code">$Right</span> includes the
+keyword itself.
+</p>
+<p>When invoked as a multi-query, the predicate backtracks over each matching
+position. Thus:
+</p>
+<textarea class="copyarea" id="copy11" readonly>
+	*(split [the good , the bad and the ugly]
+		by [and ,]
+		into $Left and $Right)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">*(split [the good , the bad and the ugly]</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>by [and ,]</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>into $Left and $Right)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy11').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>will succeed twice: First, binding <span class="code">$Left</span> to <span class="code">[the
+good]</span> and <span class="code">$Right</span> to <span class="code">[the bad and the ugly]</span>,
+and then a second time binding <span class="code">$Left</span> to <span class="code">[the good , the
+bad]</span> and <span class="code">$Right</span> to <span class="code">[the ugly]</span>.
+</p>
+<p>The split-by predicate can also be used to check whether a list contains one or
+more of a set of keywords. The standard library uses it that way in the
+following rule definition:
+</p>
+<textarea class="copyarea" id="copy12" readonly>
+($X contains one of $Y)
+	(split $X by $Y into $ and $)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">($X contains one of $Y)</td></tr>
+<tr><td class="left"></td><td class="right">(split $X by $Y into $ and $)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy12').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<a id="detobj"></a><h2>Determining objects from words</h2>
+<p>This section is mainly of concern for library programmers, so story authors may
+safely skip it.
+</p>
+<p>Dialog has a special construct for matching player input against in-world
+object names in a very efficient way:
+</p>
+<textarea class="copyarea" id="copy13" readonly>
+	(determine object $Obj)
+		<i>object generator</i>
+	(from words)
+		<i>word generator</i>
+	(matching all of $Input)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">(determine object $Obj)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span><i>object generator</i></td></tr>
+<tr><td class="left"></td><td class="right">(from words)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span><i>word generator</i></td></tr>
+<tr><td class="left"></td><td class="right">(matching all of $Input)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy13').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>This statement will backtrack over every object <span class="code">$Obj</span> for which:<br />
+</p>
+<p class="indented">&bull; <i>object generator</i> succeeds, and<br />
+&bull; <i>word generator</i>, when exhausted, emits at least every word in the <span class="code">$Input</span> list.
+</p>
+<p>The variable <span class="code">$Obj</span> should appear both in the object generator and
+in the word generator, and the object generator should contain a multi-query to
+backtrack over a set of objects. A canonical example is:
+</p>
+<textarea class="copyarea" id="copy14" readonly>
+	(determine object $Obj)
+		*($Obj is in scope)
+	(from words)
+		*(dict $Obj)
+	(matching all of $Input)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">(determine object $Obj)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>*($Obj is in scope)</td></tr>
+<tr><td class="left"></td><td class="right">(from words)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>*(dict $Obj)</td></tr>
+<tr><td class="left"></td><td class="right">(matching all of $Input)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy14').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>A non-optimizing compiler could deal with this construct as follows: First,
+compile normal code for the object generator. Then, exhaust every branch of the
+word generator, collecting all its output into a temporary list of words.
+Finally, check that every word of <span class="code">$Input</span> appears in the temporary
+list.
+</p>
+<p>However, the Dialog compiler and debugger both perform the following
+optimization: At compile-time, they analyze the word generator statically, and
+construct a reverse lookup table, mapping words of input to objects. At
+runtime, this table is consulted first, based on <span class="code">$Input</span>, to
+determine what objects the player might be referring to. So, for instance, if
+the input is <span class="prginput">LARGE HAT</span>, and there are only two game objects for
+which <span class="code">(dict $Obj)</span> can produce both of those words, then
+<span class="code">$Obj</span> will now be bound to each of those two objects in turn. But
+if there are dozens of large hats, <span class="code">$Obj</span> may instead be left
+unbound; the compiler is allowed to make a trade-off between speed and memory
+footprint. Either way, after this step, the operation proceeds as in the
+unoptimized case.
+</p>
+	<div class="footer">
+	<p class="nav">Onwards to &ldquo;<a href="dynamic.html">Chapter 6: Dynamic predicates</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
+	<p class="tagline">The Dialog Manual, Revision 8, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	</div>
+	</div>
+</body>
+</html>

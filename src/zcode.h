@@ -102,22 +102,30 @@ struct zinstr {
 #define REG_LTMAX		0x23	/* for memory statistics */
 #define REG_IDX			0x24
 
+#define REG_STATUSBAR		0x25	/* current number of nested boxes when in @status */
+#define REG_YPOS		0x26	/* current line when in status bar */
+#define REG_XOFFSET		0x27	/* current box x offset when in status bar */
+#define REG_XFULLSIZE		0x28	/* original box width when in status bar */
+#define REG_XREMSIZE		0x29	/* remaining box width when in status bar */
+#define REG_CURRSPLIT		0x2a	/* current split amount */
+#define REG_STYLE		0x2b	/* default style for current div */
+
 /* useful constants */
 
-#define REG_2000		0x25
-#define REG_3FFF		0x26
-#define REG_4000		0x27
-#define REG_8000		0x28
-#define REG_C000		0x29
-#define REG_E000		0x2a
-#define REG_FFFF		0x2b
-#define REG_AUXBASE		0x2c
-#define REG_NIL			0x2d	/* 1fff */
-#define REG_R_SPA		0x2e	/* R_SPACE_PRINT_AUTO */
-#define REG_R_USIMPLE		0x2f	/* R_UNIFY_SIMPLE */
+#define REG_2000		0x2c
+#define REG_3FFF		0x2d
+#define REG_4000		0x2e
+#define REG_8000		0x2f
+#define REG_C000		0x30
+#define REG_E000		0x31
+#define REG_FFFF		0x32
+#define REG_AUXBASE		0x33
+#define REG_NIL			0x34	/* 1fff */
+#define REG_R_SPA		0x35	/* R_SPACE_PRINT_AUTO */
+#define REG_R_USIMPLE		0x36	/* R_UNIFY_SIMPLE */
 
-#define REG_A			0x30	/* need 13 registers, one more than max arity */
-#define REG_X			0x3d
+#define REG_A			0x37	/* need 13 registers, one more than max arity */
+#define REG_X			0x44
 
 #define REG_PUSH		0x100
 #define DEST_USERGLOBAL(x)	(0x200 | (x))
@@ -207,6 +215,7 @@ struct zinstr {
 #define Z_SET_CURSOR	(ZVAR | 0x0f)
 #define Z_GET_CURSOR	(ZVAR | 0x10)
 #define Z_TEXTSTYLE	(ZVAR | 0x11)
+#define Z_BUFFER_MODE	(ZVAR | 0x12)
 #define Z_OUTPUT_STREAM	(ZVAR | 0x13)
 #define Z_READCHAR	(ZVAR | 0x16)
 #define Z_SCANTABLE	(ZVAR | 0x17)
@@ -291,13 +300,12 @@ enum {
 	G_LTBASE,
 	G_LTBASE2,
 	G_LTSIZE,
-	G_INPBUF0,
-	G_INPBUF1,
 	G_ARG_REGISTERS,
 	G_TEMPSPACE_REGISTERS,
 	G_USER_GLOBALS,
 	G_DICT_TABLE,
 	G_OBJECT_ID_END,
+	G_MAINSTYLE,
 	G_SELTABLE,
 	G_PROGRAM_ENTRY,
 	G_ERROR_ENTRY,
@@ -327,8 +335,8 @@ enum {
 	R_TRACE_VALUE,
 	R_PRINT_VALUE,
 	R_ENABLE_STYLE,
-	R_DISABLE_STYLE,
-	R_CURSORTO,
+	R_RESET_STYLE,
+	R_SET_STYLE,
 
 	R_IS_WORD,
 
@@ -404,22 +412,7 @@ enum {
 	R_GET_INPUT,
 	R_TRY_STEMMING,
 	R_COPY_INPUT_WORD,
-#if 0
-	R_GET_RAW_INPUT_PRED,
-	R_REPEAT_PRED,
-	R_REPEAT_SUB,
-	R_OBJECT_PRED,
-	R_OBJECT_SUB,
-	R_HASPARENT_PRED,
-	R_HASPARENT_SUB,
-	R_CONTAINS_PRED,
-	R_CONTAINS_SUB,
-	R_CONTAINSCHK_PRED,
-	R_SPLIT_PRED,
-	R_SPLIT_SUB,
-	R_SPLIT_SPECIAL_PRED,
-	R_SPLIT_SPECIAL_SUB,
-#endif
+
 	R_SPLIT_LIST,
 
 	R_COLLECT_BEGIN,
@@ -437,8 +430,15 @@ enum {
 
 	R_WORDMAP,
 
-	R_BEGINSTATUS,
-	R_ENDSTATUS,
+	R_GET_FULLWIDTH,
+	R_BEGIN_STATUS,
+	R_END_STATUS,
+	R_BEGIN_BOX,
+	R_BEGIN_BOX_LEFT,
+	R_BEGIN_BOX_RIGHT,
+	R_END_BOX_FLOAT,
+	R_END_BOX,
+	R_PROGRESS_BAR,
 
 	R_SEL_STOPPING,
 	R_SEL_RANDOM,

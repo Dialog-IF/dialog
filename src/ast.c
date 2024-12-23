@@ -72,6 +72,20 @@ struct word *fresh_word(struct program *prg) {
 	return find_word(prg, buf);
 }
 
+int find_boxclass(struct program *prg, struct word *w) {
+	int i;
+
+	for(i = 0; i < prg->nboxclass; i++) {
+		if(prg->boxclasses[i].class == w) return i;
+	}
+
+	prg->boxclasses = realloc(prg->boxclasses, ++prg->nboxclass * sizeof(struct boxclass));
+	memset(&prg->boxclasses[i], 0, sizeof(struct boxclass));
+	prg->boxclasses[i].class = w;
+
+	return i;
+}
+
 void pred_clear(struct predname *predname) {
 	pred_release(predname->pred);
 
@@ -189,6 +203,46 @@ struct astnode *deepcopy_astnode(struct astnode *an, struct arena *arena, line_t
 	return a;
 }
 
+int astnode_equals(struct astnode *a, struct astnode *b) {
+	int i;
+
+	while(a && b) {
+		if(a->kind != b->kind
+		|| a->subkind != b->subkind
+		|| a->nchild != b->nchild
+		|| a->word != b->word
+		|| a->value != b->value
+		|| a->predicate != b->predicate) {
+			return 0;
+		}
+		for(i = 0; i < a->nchild; i++) {
+			if(!astnode_equals(a->children[i], b->children[i])) {
+				return 0;
+			}
+		}
+		a = a->next_in_body;
+		b = b->next_in_body;
+	}
+	return !a && !b;
+}
+
+int find_closurebody(struct program *prg, struct astnode *an, int *did_create) {
+	int i;
+
+	for(i = 0; i < prg->nclosurebody; i++) {
+		if(astnode_equals(an, prg->closurebodies[i])) {
+			*did_create = 0;
+			return i;
+		}
+	}
+
+	prg->closurebodies = realloc(prg->closurebodies, ++prg->nclosurebody * sizeof(struct astnode *));
+	prg->closurebodies[i] = deepcopy_astnode(an, &prg->arena, 0);
+
+	*did_create = 1;
+	return i;
+}
+
 void pp_pair(struct astnode *head, struct astnode *tail) {
 	pp_expr(head);
 	if(tail->kind != AN_EMPTY_LIST) {
@@ -268,6 +322,12 @@ void pp_expr(struct astnode *an) {
 	case AN_STOPPABLE:
 		printf("(stoppable) ");
 		pp_expr(an->children[0]);
+		break;
+	case AN_OUTPUTBOX:
+		printf("(div ");
+		pp_expr(an->children[0]);
+		printf(") ");
+		pp_expr(an->children[1]);
 		break;
 	case AN_COLLECT:
 		printf("(collect ");
@@ -418,6 +478,77 @@ int contains_just(struct astnode *an) {
 	return 0;
 }
 
+static int resolve_clause_var(struct program *prg, struct word *w) {
+	int i;
+
+	for(i = 0; i < prg->nclausevar; i++) {
+		if(w == prg->clausevars[i]) return i;
+	}
+
+	if(i == prg->nclausevar) {
+		if(prg->nclausevar >= prg->nalloc_var) {
+			prg->nalloc_var = prg->nclausevar * 2 + 8;
+			prg->clausevars = realloc(prg->clausevars, prg->nalloc_var * sizeof(struct word *));
+		}
+		prg->clausevars[prg->nclausevar++] = w;
+	}
+
+	return i;
+}
+
+static void find_clause_vars(struct program *prg, struct clause *cl, struct astnode *an) {
+	int i;
+
+	while(an) {
+		if(an->kind == AN_IF
+		|| an->kind == AN_NEG_RULE
+		|| an->kind == AN_NEG_BLOCK
+		|| an->kind == AN_FIRSTRESULT
+		|| an->kind == AN_OUTPUTBOX) {
+			an->word = fresh_word(prg);
+			(void) resolve_clause_var(prg, an->word);
+		} else if(an->kind == AN_VARIABLE) {
+			if(an->word->name[0]) {
+				(void) resolve_clause_var(prg, an->word);
+			}
+		}
+		if(an->kind == AN_RULE || an->kind == AN_NEG_RULE) {
+			if(an->nchild > cl->max_call_arity) {
+				cl->max_call_arity = an->nchild;
+			}
+		}
+		for(i = 0; i < an->nchild; i++) {
+			find_clause_vars(prg, cl, an->children[i]);
+		}
+		an = an->next_in_body;
+	}
+}
+
+void analyse_clause(struct program *prg, struct clause *cl) {
+	int i;
+
+	prg->nclausevar = 0;
+
+	if((cl->predicate->pred->flags & PREDF_CONTAINS_JUST)
+	&& contains_just(cl->body)) {
+		(void) resolve_clause_var(prg, find_word(prg, "*just"));
+	}
+
+	for(i = 0; i < cl->predicate->arity; i++) {
+		find_clause_vars(prg, cl, cl->params[i]);
+	}
+	find_clause_vars(prg, cl, cl->body);
+
+	cl->nvar = prg->nclausevar;
+	cl->varnames = arena_alloc(&cl->predicate->pred->arena, prg->nclausevar * sizeof(struct word *));
+	memcpy(cl->varnames, prg->clausevars, prg->nclausevar * sizeof(struct word *));
+}
+
+void add_clause(struct clause *cl, struct predicate *pred) {
+	pred->clauses = realloc(pred->clauses, (pred->nclause + 1) * sizeof(struct clause *));
+	pred->clauses[pred->nclause++] = cl;
+}
+
 struct program *new_program() {
 	struct program *prg = calloc(1, sizeof(*prg));
 
@@ -470,6 +601,9 @@ void free_program(struct program *prg) {
 	free(prg->objflagpred);
 	free(prg->objvarpred);
 	free(prg->select);
+	free(prg->boxclasses);
+	free(prg->closurebodies);
+	free(prg->clausevars);
 	arena_free(&prg->arena);
 	arena_free(&prg->endings_arena);
 	free(prg);

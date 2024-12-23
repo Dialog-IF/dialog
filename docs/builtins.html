@@ -4,18 +4,15 @@
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<link rel="StyleSheet" href="style.css" type="text/css" />
-	<title>Chapter 7: More built-in predicates</title>
+	<title>Chapter 8: More built-in predicates</title>
 </head>
 <body>
 	<div class="chapter">
-	<h1>Chapter 7: More built-in predicates</h1>
-	<div class="navlinks">(<a href="#typechecks">Checking the type of a value</a>&nbsp;&bull; <a href="#arithmetic">Numbers and arithmetic</a>&nbsp;&bull; <a href="#styles">Styles and formatting</a>&nbsp;&bull; <a href="#input">Input</a>&nbsp;&bull; <a href="#trace">Debugging</a>&nbsp;&bull; <a href="#system">System control</a>)</div>
+	<h1>Chapter 8: More built-in predicates</h1>
+	<div class="navlinks">(<a href="#typechecks">Checking the type of a value</a>&nbsp;&bull; <a href="#arithmetic">Numbers and arithmetic</a>&nbsp;&bull; <a href="#trace">Debugging</a>&nbsp;&bull; <a href="#system">System control</a>)</div>
 <a id="typechecks"></a><h2>Checking the type of a value</h2>
 <p>Dialog contains a set of built-in predicates for checking if a value is of a
 particular type. They are:
-</p>
-<p class="codeline">(unbound $X)</p>
-<p class="noteline">Succeeds if and only if <span class="code">$X</span> is currently an unbound variable.
 </p>
 <p class="codeline">(number $X)</p>
 <p class="noteline">Succeeds if and only if <span class="code">$X</span> is bound to a number.
@@ -31,6 +28,12 @@ particular type. They are:
 </p>
 <p class="codeline">(list $X)</p>
 <p class="noteline">Succeeds if and only if <span class="code">$X</span> is bound to a list (empty or non-empty).
+</p>
+<p class="codeline">(bound $X)</p>
+<p class="noteline">Succeeds if and only if <span class="code">$X</span> is bound to anything. That is,
+the predicate only fails if <span class="code">$X</span> is an unbound variable. It
+succeeds for numbers, dictionary words, and lists, including lists with
+one or more unbound variables inside.
 </p>
 <p>The last one comes with an extra feature:
 </p>
@@ -98,401 +101,6 @@ $)</span>.
 PIN codes. Pocket money should be fairly straightforward to implement by
 counting in cents; story authors (or library developers) that require more
 sophisticated number crunching will have to get creative.
-</p>
-<a id="styles"></a><h2>Styles and formatting</h2>
-<p>To change the current text style, use the built-in predicates
-<span class="code">(bold)</span>, <span class="code">(italic)</span>, <span class="code">(reverse)</span>, and
-<span class="code">(fixed pitch)</span> to enable each respective style, and
-<span class="code">(roman)</span> to disable all four.
-</p>
-<p>The built-in predicate <span class="code">(uppercase)</span> forces the next character to be
-printed in uppercase. The standard library uses this to define a number of
-convenient predicates such as:
-</p>
-<textarea class="copyarea" id="copy0" readonly>
-(The $Obj)	(uppercase) (the $Obj)
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="left">(The $Obj)</td><td class="right">(uppercase) (the $Obj)</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy0').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>To clear the screen below the status bar area, use <span class="code">(clear)</span>. To
-clear the entire screen and disable the status bar, use <span class="code">(clear
-all)</span>. Be aware that on some interpreters, clearing interferes with the
-player's ability to scroll back and review earlier parts of the play session.
-</p>
-<p>The built-in predicate <span class="code">(space&nbsp;$)</span> prints a given number of space
-characters in succession.
-</p>
-<p>Its vertical counterpart, <span class="code">(par&nbsp;$)</span>, produces a paragraph break with
-a height corresponding to the given number of blank lines. Adjacent paragraph
-breaks are merged based on the maximum specified height, so
-<span class="code">(par&nbsp;5)&nbsp;(par&nbsp;7)</span> produces seven blank lines.
-</p>
-<textarea class="copyarea" id="copy1" readonly>
-(program entry point)
-	(clear all)
-	(par 10)
-	(space 10)
-	(bold)
-	This text is printed in bold, starting at row 11, column 11.
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="both" colspan="2">(program entry point)</td></tr>
-<tr><td class="left"></td><td class="right">(clear all)</td></tr>
-<tr><td class="left"></td><td class="right">(par 10)</td></tr>
-<tr><td class="left"></td><td class="right">(space 10)</td></tr>
-<tr><td class="left"></td><td class="right">(bold)</td></tr>
-<tr><td class="left"></td><td class="right">This text is printed in bold, starting at row 11, column 11.</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy1').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<a id="input"></a><h2>Input</h2>
-<p>User input is represented by dictionary words.
-</p>
-<p>The Dialog compiler collects all dictionary words mentioned explicitly in the
-source code (with the <span class="nobreak"><span class="code">@</span>-prefix</span> or as bare words
-inside lists), as well as every literal word that can come out of a
-<span class="code">(collect words)</span> or <span class="code">(determine object $)</span> expression.
-In addition, the system makes sure to provide a single-letter dictionary word
-for every character supported by the underlying platform. Together, these words
-make up what's called the <i>game-wide dictionary</i>.
-</p>
-<p>It may be helpful to know that there's a difference between dictionary words at
-the Dialog level, and the native, low-level words of the Z-machine. Dialog
-dictionary words are an abstraction over several different kinds of internal
-representation. That being said, it is the specific constraints of the
-low-level Z-machine dictionary that determine where the split occurs between
-the essential and optional parts of a given dictionary word.
-</p>
-<p>There are two built-in predicates for obtaining input from the player. One
-waits for a single keypress, while the other reads a full line of input.
-</p>
-<h3>Get key</h3>
-<textarea class="copyarea" id="copy2" readonly>
-	(get key $Char)
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="left"></td><td class="right">(get key $Char)</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy2').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>This predicate waits for the player to type a character.
-</p>
-<p>Some interpreters indicate that the game is waiting for input by displaying a
-flashing cursor. Others don't, so story authors may wish to prompt the reader
-explicitly.
-</p>
-<p>The parameter, <span class="code">$Char</span>, is unified with a dictionary word
-representing the character that was typed, e.g. <span class="code">@e</span> if the
-<span class="prginput">E</span> key was pressed. Note that dictionary words are
-case-insensitive, so for letters of the alphabet there is no way to tell
-whether the player was holding shift or not.
-</p>
-<p>Some special keys correspond to dictionary words that can't be represented
-directly in Dialog source code. The dictionary words for these keys can be
-obtained at runtime, by querying the following built-in predicates:
-</p>
-<textarea class="copyarea" id="copy3" readonly>
-(word representing return $Char)
-(word representing space $Char)
-(word representing backspace $Char)
-(word representing up $Char)
-(word representing down $Char)
-(word representing left $Char)
-(word representing right $Char)
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="both" colspan="2">(word representing return $Char)</td></tr>
-<tr><td class="both" colspan="2">(word representing space $Char)</td></tr>
-<tr><td class="both" colspan="2">(word representing backspace $Char)</td></tr>
-<tr><td class="both" colspan="2">(word representing up $Char)</td></tr>
-<tr><td class="both" colspan="2">(word representing down $Char)</td></tr>
-<tr><td class="both" colspan="2">(word representing left $Char)</td></tr>
-<tr><td class="both" colspan="2">(word representing right $Char)</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy3').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>A simple keypress dispatcher might look like this:
-</p>
-<textarea class="copyarea" id="copy4" readonly>
-(program entry point)
-	(get key $Key)
-	(handle keypress $Key)
-
-(handle keypress @a)
-	'A' was pressed.
-
-(handle keypress @b)
-	'B' was pressed.
-
-(handle keypress (word representing return $))
-	RETURN was pressed.
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="both" colspan="2">(program entry point)</td></tr>
-<tr><td class="left"></td><td class="right">(get key $Key)</td></tr>
-<tr><td class="left"></td><td class="right">(handle keypress $Key)</td></tr>
-<tr><td class="blank" colspan="2"></td></tr>
-<tr><td class="both" colspan="2">(handle keypress @a)</td></tr>
-<tr><td class="left"></td><td class="right">'A' was pressed.</td></tr>
-<tr><td class="blank" colspan="2"></td></tr>
-<tr><td class="both" colspan="2">(handle keypress @b)</td></tr>
-<tr><td class="left"></td><td class="right">'B' was pressed.</td></tr>
-<tr><td class="blank" colspan="2"></td></tr>
-<tr><td class="both" colspan="2">(handle keypress (word representing return $))</td></tr>
-<tr><td class="left"></td><td class="right">RETURN was pressed.</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy4').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<h3>Get input</h3>
-<textarea class="copyarea" id="copy5" readonly>
-	(get input $WordList)
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="left"></td><td class="right">(get input $WordList)</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy5').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>This query blocks execution until the player types a line of input, followed by
-return. Different interpreters provide different levels of line-editing
-facilities, ranging from simple backspace handling all the way up to input
-history and spell checking.
-</p>
-<p>The parameter, <span class="code">$WordList</span>, is unified with a list where each
-element represents a word typed by the player. The punctuation characters full
-stop, comma, double quote, semicolon, and asterisk are treated as individual
-words; the remaining text is separated into words by whitespace. If a word is
-recognized as one that appears in the program-wide dictionary, then the element
-will be that dictionary word. Else, if the word is a decimal number in the
-range <span class="nobreak">0&ndash;16383</span>, the element will be that number.
-</p>
-<p>If the word was neither recognized, nor found to be a decimal number, then
-Dialog will attempt to remove certain word endings, and check whether the
-remaining part of the word exists in the dictionary. This procedure is
-necessary for games written in e.g. German, whereas English games generally do
-not require it.
-</p>
-<p>To specify removable endings, add one or more rule definitions to the predicate
-<span class="code">(removable word endings)</span>. Each rule body should consist of one or
-more word endings:
-</p>
-<textarea class="copyarea" id="copy6" readonly>
-(removable word endings)
-	%% German adjective endings
-	en es em e
-
-(removable word endings)
-	%% German noun endings
-	e en s es
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="both" colspan="2">(removable word endings)</td></tr>
-<tr><td class="left"></td><td class="right"><span class="comment">%% German adjective endings</span></td></tr>
-<tr><td class="left"></td><td class="right">en es em e</td></tr>
-<tr><td class="blank" colspan="2"></td></tr>
-<tr><td class="both" colspan="2">(removable word endings)</td></tr>
-<tr><td class="left"></td><td class="right"><span class="comment">%% German noun endings</span></td></tr>
-<tr><td class="left"></td><td class="right">e en s es</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy6').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>The part that remains after removing the ending is referred to as the
-<i>stem</i> of the word. If the stem consists of at least two letters, and
-exists in the program-wide dictionary, then the resulting dictionary word will
-have the stem as its essential part, and the ending as its optional part.
-During comparison (unification with another bound value), only the essential
-part is considered. During printing, both the essential part and the optional
-part are printed.
-</p>
-<p>During <a href="builtins.html#trace">tracing</a>, dictionary words are displayed with a plus sign (+)
-separating the essential and optional parts. Thus, if the German word
-&ldquo;klein&rdquo; is part of the game-wide dictionary, and the player enters
-<span class="prginput">KLEINES</span>, that word appears as <span class="tt">@klein+es</span> in the trace
-logs, and unifies successfully with <span class="code">@klein</span>.
-</p>
-<p>If a word of input isn't recognized at all, even after considering the
-removable word endings, then it's an <i>unrecognized</i> dictionary word. It
-can still be stored in a variable, retrieved, and printed back, and it will
-unify successfully with other instances of the same unrecognized word. When
-tracing is enabled, unrecognized dictionary words are displayed with a plus
-sign at the end.
-</p>
-<p>For instance, the input <span class="prginput">TAKE&nbsp;02&nbsp;UNKNOWNWORD,X&nbsp;BALL</span> may,
-depending on the contents of the dictionary, be represented by the list:
-<span class="nobreak"><span class="code">[take 2 unknownword , x ball]</span>.</span> As part of a trace,
-it might be displayed as
-<span class="nobreak"><span class="code">[take 2 unknownword+ , x ball]</span>.</span>
-</p>
-<p>Special gotcha: Recall that zero-prefixed numbers in the source code, as well
-as numbers that are out of range, are treated as words. If <span class="code">007</span>
-appears in the program in such a way that it becomes part of the program-wide
-dictionary, then it will show up as a dictionary word in the list returned by
-<span class="code">(get input&nbsp;$)</span>. Otherwise, it will be represented by the numerical
-value&nbsp;7.
-</p>
-<h3>Splitting input by keywords</h3>
-<p>During parsing, it is often necessary to scan a list for certain keywords, and
-then split it into two sublists, representing the elements on either side of
-the matched keyword. It is straightforward to implement this using ordinary
-rules in Dialog. However, for performance reasons the language also provides a
-built-in predicate:
-</p>
-<textarea class="copyarea" id="copy7" readonly>
-(split $Input by $Keywords into $Left and $Right)
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="both" colspan="2">(split $Input by $Keywords into $Left and $Right)</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy7').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p><span class="code">$Input</span> and <span class="code">$Keywords</span> must be lists of simple values,
-i.e. they mustn't contain sublists.
-</p>
-<p>The <span class="code">$Input</span> list will be scanned, starting at its head, until the
-first element that also appears in <span class="code">$Keywords</span> is found. A list of
-the elements that came before the keyword is unified with <span class="code">$Left</span>,
-and a list of the elements that follow it is unified with <span class="code">$Right</span>.
-That is, neither <span class="code">$Left</span> nor <span class="code">$Right</span> includes the
-keyword itself.
-</p>
-<p>When invoked as a multi-query, the predicate backtracks over each matching
-position. Thus:
-</p>
-<textarea class="copyarea" id="copy8" readonly>
-	*(split [the good , the bad and the ugly]
-		by [and ,]
-		into $Left and $Right)
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="left"></td><td class="right">*(split [the good , the bad and the ugly]</td></tr>
-<tr><td class="left"></td><td class="right"><span class="tab"> </span>by [and ,]</td></tr>
-<tr><td class="left"></td><td class="right"><span class="tab"> </span>into $Left and $Right)</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy8').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>will succeed twice: First, binding <span class="code">$Left</span> to <span class="code">[the
-good]</span> and <span class="code">$Right</span> to <span class="code">[the bad and the ugly]</span>,
-and then a second time binding <span class="code">$Left</span> to <span class="code">[the good , the
-bad]</span> and <span class="code">$Right</span> to <span class="code">[the ugly]</span>.
-</p>
-<p>The split-by predicate can also be used to check whether a list contains one or
-more of a set of keywords. The standard library uses it that way in the
-following rule definition:
-</p>
-<textarea class="copyarea" id="copy9" readonly>
-($X contains one of $Y)
-	(split $X by $Y into $ and $)
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="both" colspan="2">($X contains one of $Y)</td></tr>
-<tr><td class="left"></td><td class="right">(split $X by $Y into $ and $)</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy9').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<h3>Determining objects from words</h3>
-<p>This section is mainly of concern for library programmers, so story authors may
-safely skip it.
-</p>
-<p>Dialog has a special construct for matching player input against in-world
-object names in a very efficient way:
-</p>
-<textarea class="copyarea" id="copy10" readonly>
-	(determine object $Obj)
-		<i>object generator</i>
-	(from words)
-		<i>word generator</i>
-	(matching all of $Input)
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="left"></td><td class="right">(determine object $Obj)</td></tr>
-<tr><td class="left"></td><td class="right"><span class="tab"> </span><i>object generator</i></td></tr>
-<tr><td class="left"></td><td class="right">(from words)</td></tr>
-<tr><td class="left"></td><td class="right"><span class="tab"> </span><i>word generator</i></td></tr>
-<tr><td class="left"></td><td class="right">(matching all of $Input)</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>This statement will backtrack over every object <span class="code">$Obj</span> for which:<br />
-</p>
-<p class="indented">&bull; <i>object generator</i> succeeds, and<br />
-&bull; <i>word generator</i>, when exhausted, emits at least every word in the <span class="code">$Input</span> list.
-</p>
-<p>The variable <span class="code">$Obj</span> should appear both in the object generator and
-in the word generator, and the object generator should contain a multi-query to
-backtrack over a set of objects. A canonical example is:
-</p>
-<textarea class="copyarea" id="copy11" readonly>
-	(determine object $Obj)
-		*($Obj is in scope)
-	(from words)
-		*(dict $Obj)
-	(matching all of $Input)
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="left"></td><td class="right">(determine object $Obj)</td></tr>
-<tr><td class="left"></td><td class="right"><span class="tab"> </span>*($Obj is in scope)</td></tr>
-<tr><td class="left"></td><td class="right">(from words)</td></tr>
-<tr><td class="left"></td><td class="right"><span class="tab"> </span>*(dict $Obj)</td></tr>
-<tr><td class="left"></td><td class="right">(matching all of $Input)</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy11').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>A non-optimizing compiler could deal with this construct as follows: First,
-compile normal code for the object generator. Then, exhaust every branch of the
-word generator, collecting all its output into a temporary list of words.
-Finally, check that every word of <span class="code">$Input</span> appears in the temporary
-list.
-</p>
-<p>However, the Dialog compiler and debugger both perform the following
-optimization: At compile-time, they analyze the word generator statically, and
-construct a reverse lookup table, mapping words of input to objects. At
-runtime, this table is consulted first, based on <span class="code">$Input</span>, to
-determine what objects the player might be referring to. So, for instance, if
-the input is <span class="prginput">LARGE HAT</span>, and there are only two game objects for
-which <span class="code">(dict $Obj)</span> can produce both of those words, then
-<span class="code">$Obj</span> will now be bound to each of those two objects in turn. But
-if there are dozens of large hats, <span class="code">$Obj</span> may instead be left
-unbound; the compiler is allowed to make a trade-off between speed and memory
-footprint. Either way, after this step, the operation proceeds as in the
-unoptimized case.
 </p>
 <a id="trace"></a><h2>Debugging</h2>
 <p>The following built-in predicates are useful for debugging:
@@ -597,8 +205,8 @@ predicate just before quitting, as it will tell you how close you are
 to the limits.
 </p>
 	<div class="footer">
-	<p class="nav">Onwards to &ldquo;<a href="beyondprg.html">Chapter 8: Beyond the program</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 7, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="nav">Onwards to &ldquo;<a href="beyondprg.html">Chapter 9: Beyond the program</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
+	<p class="tagline">The Dialog Manual, Revision 8, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

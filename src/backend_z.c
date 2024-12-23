@@ -142,6 +142,8 @@ int nwordtable;
 
 static struct backend_wobj *backendwobj;
 
+static struct arena zarena;
+
 void get_timestamp(char *dest, char *longdest) {
 	time_t t = 0;
 	struct tm *tm;
@@ -1085,65 +1087,7 @@ static void add_to_buf(char **buf, int *nalloc, int *pos, char ch) {
 	(*buf)[(*pos)++] = ch;
 }
 
-struct astnode *decode_output(char **bufptr, struct astnode *an, int *p_space, int *p_nl) {
-	int post_space = 0, nl_printed = 0;
-	int i;
-	char last = 0;
-	char *buf = 0;
-	int nalloc = 0, pos = 0;
-
-	while(an) {
-		if(an->kind == AN_BAREWORD) {
-			if(post_space && !strchr(".,:;!?)]}>-%/", an->word->name[0])) {
-				add_to_buf(&buf, &nalloc, &pos, ' ');
-				nl_printed = 0;
-			}
-			for(i = 0; an->word->name[i]; i++) {
-				last = an->word->name[i];
-				add_to_buf(&buf, &nalloc, &pos, last);
-				nl_printed = 0;
-			}
-			post_space = !strchr("([{<-/", last);
-		} else if(an->kind == AN_RULE && an->predicate->builtin == BI_NOSPACE) {
-			post_space = 0;
-		} else if(an->kind == AN_RULE && an->predicate->builtin == BI_SPACE) {
-			add_to_buf(&buf, &nalloc, &pos, ' ');
-			post_space = 0;
-		} else if(an->kind == AN_RULE
-		&& an->predicate->builtin == BI_SPACE_N
-		&& an->children[0]->kind == AN_INTEGER
-		&& an->children[0]->value < 22) {
-			for(i = 0; i < an->children[0]->value; i++) {
-				add_to_buf(&buf, &nalloc, &pos, ' ');
-				nl_printed = 0;
-			}
-			post_space = 0;
-		} else if(an->kind == AN_RULE && an->predicate->builtin == BI_LINE) {
-			while(nl_printed < 1) {
-				add_to_buf(&buf, &nalloc, &pos, '\r');
-				nl_printed++;
-				post_space = 0;
-			}
-		} else if(an->kind == AN_RULE && an->predicate->builtin == BI_PAR) {
-			while(nl_printed < 2) {
-				add_to_buf(&buf, &nalloc, &pos, '\r');
-				nl_printed++;
-				post_space = 0;
-			}
-		} else {
-			break;
-		}
-		an = an->next_in_body;
-	}
-
-	add_to_buf(&buf, &nalloc, &pos, 0);
-	*bufptr = buf;
-	if(p_space) *p_space = post_space;
-	if(p_nl) *p_nl = nl_printed;
-	return an;
-}
-
-static int decode_word_output(struct program *prg, char **bufptr, struct cinstr *instr, int *p_space) {
+static int decode_word_output(struct program *prg, char **bufptr, struct cinstr *instr, int *p_space, int include_ints) {
 	int post_space = 0;
 	int ninstr = 0;
 	char last = 0;
@@ -1152,6 +1096,7 @@ static int decode_word_output(struct program *prg, char **bufptr, struct cinstr 
 	int nalloc = 0, pos = 0;
 	struct cinstr *ci;
 	struct word *w;
+	char numbuf[8];
 
 	for(;;) {
 		ci = &instr[ninstr];
@@ -1170,6 +1115,17 @@ static int decode_word_output(struct program *prg, char **bufptr, struct cinstr 
 				}
 			}
 			ninstr++;
+		} else if(ci->op == I_PRINT_VAL && include_ints && ci->oper[0].tag == VAL_NUM) {
+			snprintf(numbuf, sizeof(numbuf), "%d", ci->oper[0].value);
+			if(post_space) {
+				add_to_buf(&buf, &nalloc, &pos, ' ');
+			}
+			for(i = 0; numbuf[i]; i++) {
+				last = numbuf[i];
+				add_to_buf(&buf, &nalloc, &pos, last);
+			}
+			post_space = 1;
+			ninstr++;
 		} else if(ci->op == I_BUILTIN && ci->oper[2].value == BI_NOSPACE) {
 			post_space = 0;
 			ninstr++;
@@ -1187,7 +1143,7 @@ static int decode_word_output(struct program *prg, char **bufptr, struct cinstr 
 	return ninstr;
 }
  
-static int generate_output(struct program *prg, struct routine *r, struct cinstr *instr, int dry_run) {
+static int generate_output(struct program *prg, struct routine *r, struct cinstr *instr, int dry_run, int include_ints) {
 	char *utf8;
 	uint8_t zbuf[MAXSTRING];
 	int pos;
@@ -1201,7 +1157,7 @@ static int generate_output(struct program *prg, struct routine *r, struct cinstr
 	int ninstr;
 
 	pre_space = !strchr(NO_SPACE_BEFORE, prg->allwords[instr[0].oper[0].value]->name[0]);
-	ninstr = decode_word_output(prg, &utf8, instr, &post_space);
+	ninstr = decode_word_output(prg, &utf8, instr, &post_space, include_ints);
 
 	if(!dry_run) {
 		for(pos = 0; utf8[pos]; pos += n) {
@@ -1837,11 +1793,37 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 					generate_store(r, ci->oper[0], o1);
 				}
 				break;
-			case I_BEGIN_STATUS:
-				o1 = generate_value(r, ci->oper[0], prg, t1);
-				zi = append_instr(r, Z_CALL2N);
-				zi->oper[0] = ROUTINE(R_BEGINSTATUS);
-				zi->oper[1] = o1;
+			case I_BEGIN_BOX:
+				assert(ci->oper[0].tag == OPER_BOX);
+				if(ci->subop == BOX_STATUS) {
+					zi = append_instr(r, Z_CALLVN);
+					zi->oper[0] = ROUTINE(R_BEGIN_STATUS);
+					zi->oper[1] = SMALL_OR_LARGE(
+						prg->boxclasses[ci->oper[0].value].height |
+						((prg->boxclasses[ci->oper[0].value].flags & BOXF_RELHEIGHT)? 0x8000 : 0));
+					zi->oper[2] = SMALL(prg->boxclasses[ci->oper[0].value].style);
+				} else {
+					zi = append_instr(r, Z_CALLVN);
+					if(prg->boxclasses[ci->oper[0].value].flags & BOXF_FLOATLEFT) {
+						zi->oper[0] = ROUTINE(R_BEGIN_BOX_LEFT);
+						zi->oper[1] = SMALL_OR_LARGE(
+							prg->boxclasses[ci->oper[0].value].width |
+							((prg->boxclasses[ci->oper[0].value].flags & BOXF_RELWIDTH)? 0x8000 : 0));
+						zi->oper[2] = SMALL(prg->boxclasses[ci->oper[0].value].style);
+						zi->oper[3] = SMALL_OR_LARGE(prg->boxclasses[ci->oper[0].value].margintop);
+					} else if(prg->boxclasses[ci->oper[0].value].flags & BOXF_FLOATRIGHT) {
+						zi->oper[0] = ROUTINE(R_BEGIN_BOX_RIGHT);
+						zi->oper[1] = SMALL_OR_LARGE(
+							prg->boxclasses[ci->oper[0].value].width |
+							((prg->boxclasses[ci->oper[0].value].flags & BOXF_RELWIDTH)? 0x8000 : 0));
+						zi->oper[2] = SMALL(prg->boxclasses[ci->oper[0].value].style);
+						zi->oper[3] = SMALL_OR_LARGE(prg->boxclasses[ci->oper[0].value].margintop);
+					} else {
+						zi->oper[0] = ROUTINE(R_BEGIN_BOX);
+						zi->oper[1] = SMALL(prg->boxclasses[ci->oper[0].value].style);
+						zi->oper[2] = SMALL_OR_LARGE(prg->boxclasses[ci->oper[0].value].margintop);
+					}
+				}
 				break;
 			case I_BUILTIN:
 				assert(ci->oper[2].tag == OPER_PRED);
@@ -1870,13 +1852,10 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 					zi = append_instr(r, Z_CALL1N);
 					zi->oper[0] = ROUTINE(R_COMPILERVERSION);
 					break;
-				case BI_CURSORTO:
-					o1 = generate_value(r, ci->oper[0], prg, t1);
-					o2 = generate_value(r, ci->oper[1], prg, t2);
-					zi = append_instr(r, Z_CALLVN);
-					zi->oper[0] = ROUTINE(R_CURSORTO);
-					zi->oper[1] = o1;
-					zi->oper[2] = o2;
+				case BI_FIXED:
+					zi = append_instr(r, Z_CALL2N);
+					zi->oper[0] = ROUTINE(R_ENABLE_STYLE);
+					zi->oper[1] = SMALL(8);
 					break;
 				case BI_ITALIC:
 					zi = append_instr(r, Z_CALL2N);
@@ -1899,15 +1878,23 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 					zi = append_instr(r, Z_CALL1N);
 					zi->oper[0] = ROUTINE(R_PAR);
 					break;
-				case BI_PAR_N:
+				case BI_PROGRESS_BAR:
 					o1 = generate_value(r, ci->oper[0], prg, t1);
+					o2 = generate_value(r, ci->oper[1], prg, t2);
 					zi = append_instr(r, Z_CALL2N);
-					zi->oper[0] = ROUTINE(R_PAR_N);
+					zi->oper[0] = ROUTINE(R_PROGRESS_BAR);
 					zi->oper[1] = o1;
+					zi->oper[2] = o2;
+					break;
+				case BI_REVERSE:
+					zi = append_instr(r, Z_CALL2N);
+					zi->oper[0] = ROUTINE(R_ENABLE_STYLE);
+					zi->oper[1] = SMALL(1);
 					break;
 				case BI_ROMAN:
-					zi = append_instr(r, Z_CALL1N);
-					zi->oper[0] = ROUTINE(R_DISABLE_STYLE);
+					zi = append_instr(r, Z_CALL2N);
+					zi->oper[0] = ROUTINE(R_SET_STYLE);
+					zi->oper[1] = SMALL(0);
 					break;
 				case BI_SCRIPT_OFF:
 					zi = append_instr(r, Z_OUTPUT_STREAM);
@@ -1940,6 +1927,10 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 					zi = append_instr(r, Z_STORE);
 					zi->oper[0] = SMALL(REG_TRACING);
 					zi->oper[1] = SMALL(1);
+					break;
+				case BI_UNSTYLE:
+					zi = append_instr(r, Z_CALL1N);
+					zi->oper[0] = ROUTINE(R_RESET_STYLE);
 					break;
 				case BI_UPPER:
 					zi = append_instr(r, Z_STORE);
@@ -2147,9 +2138,20 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				zi = append_instr(r, Z_CALL1N);
 				zi->oper[0] = ROUTINE(R_DEALLOCATE_S);
 				break;
-			case I_END_STATUS:
-				zi = append_instr(r, Z_CALL1N);
-				zi->oper[0] = ROUTINE(R_ENDSTATUS);
+			case I_END_BOX:
+				assert(ci->oper[0].tag == OPER_BOX);
+				if(ci->subop == BOX_STATUS) {
+					zi = append_instr(r, Z_CALL1N);
+					zi->oper[0] = ROUTINE(R_END_STATUS);
+				} else if(prg->boxclasses[ci->oper[0].value].flags & (BOXF_FLOATLEFT | BOXF_FLOATRIGHT)) {
+					zi = append_instr(r, Z_CALL2N);
+					zi->oper[0] = ROUTINE(R_END_BOX_FLOAT);
+					zi->oper[1] = SMALL_OR_LARGE(prg->boxclasses[ci->oper[0].value].marginbottom);
+				} else {
+					zi = append_instr(r, Z_CALL2N);
+					zi->oper[0] = ROUTINE(R_END_BOX);
+					zi->oper[1] = SMALL_OR_LARGE(prg->boxclasses[ci->oper[0].value].marginbottom);
+				}
 				break;
 			case I_FIRST_CHILD:
 				o1 = generate_value(r, ci->oper[0], prg, t1);
@@ -2309,7 +2311,7 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				zi->oper[0] = ROUTINE(R_GET_INPUT);
 				zi->store = REG_TEMP;
 				zi = append_instr(r, Z_CALLVN);
-				zi->oper[0] = VALUE(REG_R_USIMPLE);
+				zi->oper[0] = ROUTINE(R_UNIFY);
 				zi->oper[1] = VALUE(REG_TEMP);
 				zi->oper[2] = VALUE(REG_A + 0);
 				generate_proceed(r, 0);
@@ -2504,20 +2506,12 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				}
 				break;
 			case I_IF_MATCH:
-			case I_IF_MATCH2:
 				o1 = generate_value(r, ci->oper[0], prg, t1);
 				o2 = generate_value(r, ci->oper[1], prg, t2);
 				zi = append_instr(r, Z_CALL2S);
 				zi->oper[0] = ROUTINE(R_DEREF_UNBOX);
 				zi->oper[1] = o1;
 				zi->store = REG_X + t1;
-				if(ci->op == I_IF_MATCH2) {
-					zi = append_instr(r, Z_CALL2S);
-					zi->oper[0] = ROUTINE(R_DEREF_UNBOX);
-					zi->oper[1] = o2;
-					zi->store = REG_TEMP;
-					o2 = VALUE(REG_TEMP);
-				}
 				zi = append_instr(r, Z_JE);
 				zi->oper[0] = VALUE(REG_X + t1);
 				zi->oper[1] = o2;
@@ -2730,6 +2724,34 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				zi = append_instr(r, Z_JE);
 				zi->oper[0] = VALUE(REG_TEMP);
 				zi->oper[1] = VALUE(REG_C000);
+				if(ci->subop) zi->op ^= OP_NOT;
+				if(ci->implicit == 0xffff) {
+					zi->branch = RFALSE;
+				} else if(pred->routines[ci->implicit].reftrack == r_id) {
+					zi->branch = llabel[ci->implicit];
+					if(!encountered[ci->implicit]) {
+						rstack[rsp++] = ci->implicit;
+						encountered[ci->implicit] = 1;
+					}
+				} else {
+					ll = r->next_label++;
+					zi->op ^= OP_NOT;
+					zi->branch = ll;
+					zi = append_instr(r, Z_RET);
+					zi->oper[0] = ROUTINE(rlabel[ci->implicit]);
+					zi = append_instr(r, OP_LABEL(ll));
+				}
+				break;
+			case I_IF_UNIFY:
+				o1 = generate_value(r, ci->oper[0], prg, t1);
+				o2 = generate_value(r, ci->oper[1], prg, t2);
+				zi = append_instr(r, Z_CALLVS);
+				zi->oper[0] = ROUTINE(R_WOULD_UNIFY);
+				zi->oper[1] = o1;
+				zi->oper[2] = o2;
+				zi->store = REG_TEMP;
+				zi = append_instr(r, Z_JNZ);
+				zi->oper[0] = VALUE(REG_TEMP);
 				if(ci->subop) zi->op ^= OP_NOT;
 				if(ci->implicit == 0xffff) {
 					zi->branch = RFALSE;
@@ -3139,7 +3161,7 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				break;
 			case I_PRINT_WORDS:
 				if(ci->subop == 1) {
-					n = generate_output(prg, r, &cr->instr[i], 0);
+					n = generate_output(prg, r, &cr->instr[i], 0, 1);
 				} else {
 					if(ci->subop == 3) {
 						ll = r->next_label++;
@@ -3147,12 +3169,12 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 						zi = append_instr(r, Z_JNZ);
 						zi->oper[0] = VALUE(REG_FORWORDS);
 						zi->branch = ll;
-						n = generate_output(prg, r, &cr->instr[i], 0);
+						n = generate_output(prg, r, &cr->instr[i], 0, 0);
 						zi = append_instr(r, Z_JUMP);
 						zi->oper[0] = REL_LABEL(ll2);
 						zi = append_instr(r, OP_LABEL(ll));
 					} else {
-						n = generate_output(prg, r, &cr->instr[i], 1);
+						n = generate_output(prg, r, &cr->instr[i], 1, 0);
 						ll2 = 0; // prevent gcc warning
 					}
 					for(j = 0; j < n; j++) {
@@ -3490,6 +3512,15 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 					}
 				}
 				break;
+			case I_TRANSCRIPT:
+				if(ci->subop) {
+					zi = append_instr(r, Z_CALL1N);
+					zi->oper[0] = ROUTINE(R_SCRIPT_ON);
+				} else {
+					zi = append_instr(r, Z_OUTPUT_STREAM);
+					zi->oper[0] = LARGE(0xfffe);
+				}
+				break;
 			case I_UNDO:
 				// This flag prevents any attempts to undo back to before the
 				// first successfully saved undo point, since doing that
@@ -3508,21 +3539,6 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				zi->oper[0] = ROUTINE(R_UNIFY);
 				zi->oper[1] = o1;
 				zi->oper[2] = o2;
-				break;
-			case I_WIN_WIDTH:
-				o1 = generate_value(r, ci->oper[0], prg, t1);
-				zi = append_instr(r, Z_LOADB);
-				zi->oper[0] = SMALL(0);
-				zi->oper[1] = SMALL(0x21);
-				zi->store = REG_TEMP;
-				zi = append_instr(r, Z_OR);
-				zi->oper[0] = VALUE(REG_TEMP);
-				zi->oper[1] = VALUE(REG_4000);
-				zi->store = REG_TEMP;
-				zi = append_instr(r, Z_CALLVN);
-				zi->oper[0] = VALUE(REG_R_USIMPLE);
-				zi->oper[1] = VALUE(REG_TEMP);
-				zi->oper[2] = o1;
 				break;
 			default:
 				printf("unimplemented op %s in R%d of %s\n",
@@ -3582,28 +3598,6 @@ void compile_predicate(struct predname *predname, struct program *prg) {
 				straighten_jumps(r);
 			}
 		}
-	}
-}
-
-char *decode_metadata_str(int builtin, struct program *prg) {
-	struct predname *predname;
-	struct predicate *pred;
-	struct astnode *an;
-	char *buf;
-
-	predname = find_builtin(prg, builtin);
-	if(predname && (pred = predname->pred)->nclause) {
-		an = decode_output(&buf, pred->clauses[0]->body, 0, 0);
-		if(an) {
-			report(
-				LVL_ERR,
-				pred->clauses[0]->line,
-				"Story metadata may only consist of static text.");
-			exit(1);
-		}
-		return buf;
-	} else {
-		return 0;
 	}
 }
 
@@ -4028,7 +4022,9 @@ void backend(char *filename, char *format, char *coverfname, char *coveralt, int
 		pred = predname->pred;
 		bp = pred->backend;
 
-		if((pred->flags & PREDF_INVOKED) || (predname->builtin == BI_HASPARENT)) {
+		if((pred->flags & PREDF_INVOKED)
+		|| (predname->builtin == BI_HASPARENT)
+		|| (predname->builtin == BI_OBJECT)) {
 			if(!bp->global_label) {
 				bp->global_label = make_routine_label();
 			}
@@ -4098,7 +4094,7 @@ void backend(char *filename, char *format, char *coverfname, char *coveralt, int
 	printf("routines traced\n");
 #endif
 
-	ifid = decode_metadata_str(BI_STORY_IFID, prg);
+	ifid = decode_metadata_str(BI_STORY_IFID, 0, prg, &zarena);
 	if(!ifid) {
 		if(linecount > 100) {
 			report(LVL_WARN, 0, "No IFID declared.");
@@ -4108,16 +4104,16 @@ void backend(char *filename, char *format, char *coverfname, char *coveralt, int
 		ifid = 0;
 	}
 
-	author = decode_metadata_str(BI_STORY_AUTHOR, prg);
+	author = decode_metadata_str(BI_STORY_AUTHOR, 0, prg, &zarena);
 	if(!author && linecount > 100) {
 		report(LVL_WARN, 0, "No author declared.");
 	}
-	title = decode_metadata_str(BI_STORY_TITLE, prg);
+	title = decode_metadata_str(BI_STORY_TITLE, 0, prg, &zarena);
 	if(!title && linecount > 100) {
 		report(LVL_WARN, 0, "No title declared.");
 	}
-	noun = decode_metadata_str(BI_STORY_NOUN, prg);
-	blurb = decode_metadata_str(BI_STORY_BLURB, prg);
+	noun = decode_metadata_str(BI_STORY_NOUN, 0, prg, &zarena);
+	blurb = decode_metadata_str(BI_STORY_BLURB, 0, prg, &zarena);
 
 	predname = find_builtin(prg, BI_STORY_RELEASE);
 	if(predname && (pred = predname->pred)->nclause) {
@@ -4245,6 +4241,7 @@ void backend(char *filename, char *format, char *coverfname, char *coveralt, int
 	set_global_label(G_ARG_REGISTERS, addr_globals + (REG_A - 0x10) * 2);
 	set_global_label(G_DICT_TABLE, addr_dictionary + 4 + NSTOPCHAR);
 	set_global_label(G_OBJECT_ID_END, prg->nworldobj);
+	set_global_label(G_MAINSTYLE, 0x80);
 	set_global_label(G_SELTABLE, addr_seltable);
 
 	assert(REG_SPACE == REG_TEMP + 1);
@@ -4566,6 +4563,8 @@ int main(int argc, char **argv) {
 	int opt, i;
 	struct program *prg;
 
+	arena_init(&zarena, 1024);
+
 	comp_init();
 
 	do {
@@ -4664,6 +4663,7 @@ int main(int argc, char **argv) {
 	backend(outname, format, coverfname, coveralt, heapsize, auxsize, ltssize, strip, prg->totallines, prg);
 
 	free_program(prg);
+	arena_free(&zarena);
 
 	return 0;
 }

@@ -10,6 +10,7 @@
 #include <termios.h>
 #include <unistd.h>
 
+#include "common.h"
 #include "terminal.h"
 
 enum {

@@ -9,7 +9,7 @@
 <body>
 	<div class="chapter">
 	<h1>Chapter 4: More control structures</h1>
-	<div class="navlinks">(<a href="#if">If-statements</a>&nbsp;&bull; <a href="#negation">Negation</a>&nbsp;&bull; <a href="#select">Selecting among variations</a>&nbsp;&bull; <a href="#stoppable">Stoppable environments</a>&nbsp;&bull; <a href="#statusbar">The status bar</a>)</div>
+	<div class="navlinks">(<a href="#if">If-statements</a>&nbsp;&bull; <a href="#negation">Negation</a>&nbsp;&bull; <a href="#select">Selecting among variations</a>&nbsp;&bull; <a href="#closures">Closures</a>&nbsp;&bull; <a href="#stoppable">Stoppable environments</a>)</div>
 <a id="if"></a><h2>If-statements</h2>
 <p>We have seen how execution can be directed into different branches based on
 arbitrary conditions, with the help of conjunctions and disjunctions. It is
@@ -339,6 +339,115 @@ from the beginning, use:
 </p>
 <p>The three remaining variants from Inform&nbsp;7 are currently not supported by Dialog.
 </p>
+<a id="closures"></a><h2>Closures</h2>
+<p>A <i>closure</i> is an anonymous bit of code that can be kept as a value, and
+invoked at a later time.
+</p>
+<p>A closure definition in curly braces can appear at any place where a value is
+expected. Once a closure has been created, it can be invoked using the built-in
+predicate <span class="code">(query&nbsp;$)</span>.
+</p>
+<p>Example:
+</p>
+<textarea class="copyarea" id="copy10" readonly>
+	($X = { Hello, world! })
+
+	%% Nothing is printed yet, but $X is bound to the code in braces.
+
+	(query $X) %% This will print &ldquo;Hello, world!&rdquo;
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">($X = { Hello, world! })</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left"></td><td class="right"><span class="comment">%% Nothing is printed yet, but $X is bound to the code in braces.</span></td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left"></td><td class="right">(query $X) <span class="comment">&emsp;%% This will print &ldquo;Hello, world!&rdquo;</span></td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>A closure captures the environment surrounding its definition. This means that
+the same local variables are accessible both inside and outside of the
+brace-expression. In the following example, the closure is created with a
+reference to the local variable <span class="code">$X</span>. Afterwards, the same variable
+is bound to a dictionary word.
+</p>
+<textarea class="copyarea" id="copy11" readonly>
+(program entry point)
+	($Closure = { Hello, $X! })
+	($X = @world)
+	(query $Closure)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">($Closure = { Hello, $X! })</td></tr>
+<tr><td class="left"></td><td class="right">($X = @world)</td></tr>
+<tr><td class="left"></td><td class="right">(query $Closure)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy11').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The output is:
+</p>
+<div class="blkoutput">Hello, world!</div><p>It is possible to make multi-queries to closures. The following program:
+</p>
+<textarea class="copyarea" id="copy12" readonly>
+(program entry point)
+	(exhaust) {
+		*(query { Veni (or) Vidi (or) Vici })
+		!
+	}
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">(exhaust) {</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>*(query { Veni (or) Vidi (or) Vici })</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>!</td></tr>
+<tr><td class="left"></td><td class="right">}</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy12').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>produces the following output:
+</p>
+<div class="blkoutput">Veni! Vidi! Vici!</div><p>It is also possible to invoke a closure with a single parameter, using an
+alternative form of the <span class="code">query</span> builtin: <span class="code">(query $Closure
+$Parameter)</span>. The parameter is accessible from within the closure, by
+means of the special variable <span class="code">$_</span>. Here is an example:
+</p>
+<textarea class="copyarea" id="copy13" readonly>
+(program entry point)
+	($Greeter = { Hello, $_! })
+	(query $Greeter @world)
+	(query $Greeter @indeed)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">($Greeter = { Hello, $_! })</td></tr>
+<tr><td class="left"></td><td class="right">(query $Greeter @world)</td></tr>
+<tr><td class="left"></td><td class="right">(query $Greeter @indeed)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy13').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The output is:
+</p>
+<div class="blkoutput">Hello, world! Hello, indeed!</div><p>Under the hood, closures are actually lists. The first element is a number,
+assigned by the compiler to differentiate between the various closure
+definitions appearing in the program. The remaining elements, if any, are bound
+to local variables from the environment surrounding the closure definition.
+</p>
+<p>Thus, there is no way to check at runtime whether a value is a closure, or just
+an ordinary list that happens to begin with a number.
+</p>
 <a id="stoppable"></a><h2>Stoppable environments</h2>
 <p>Dialog provides a mechanism for non-local returns, similar to exceptions in
 other programming languages. By prefixing a statement (such as a query or a
@@ -357,7 +466,7 @@ the program.
 </p>
 <p>Here is a convoluted example:
 </p>
-<textarea class="copyarea" id="copy10" readonly>
+<textarea class="copyarea" id="copy14" readonly>
 (routine)
 	this (stop) (or) that
 
@@ -388,7 +497,7 @@ the program.
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy14').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>The printed output is:
 </p>
@@ -399,51 +508,9 @@ time. If taking the booby-trapped statuette triggers some dramatic cutscene,
 the code for that cutscene can invoke <span class="code">(stop)</span> to prevent spending
 time on taking the other items.
 </p>
-<a id="statusbar"></a><h2>The status bar</h2>
-<p>The special syntax <span class="code">(status bar $N)</span>, followed by a statement,
-creates a special kind of stoppable environment: While the inner statement executes,
-all output will be directed into a status bar area, the height of which will be
-<span class="code">$N</span> rows. If no status bar area exists yet, one will be created.
-</p>
-<p>Text inside the status bar is always rendered in a fixed-pitch font. When
-entering the status bar environment, Dialog fills the status bar area with
-reverse space characters, enables reverse video, and positions the cursor in
-the top left corner.
-</p>
-<p>The following example draws a very simple status bar:
-</p>
-<textarea class="copyarea" id="copy11" readonly>
-	(status bar 1) { Game over }
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="left"></td><td class="right">(status bar 1) { Game over }</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy11').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>To create more complex status bars, Dialog offers the following two built-in
-predicates:
-</p>
-<p class="codeline">(status bar width $Columns)</p>
-<p class="noteline">Unifies $Columns with the current width, in characters, of the status
-bar.
-</p>
-<p class="codeline">(cursor to row $Row column $Column)</p>
-<p class="noteline">Moves the cursor to the indicated row and column (with 1, 1
-representing the upper left corner).
-</p>
-<p>It is only legal to invoke <span class="code">(cursor to row $ column&nbsp;$)</span> from within
-a status bar environment. To remove the status bar, use the built-in predicate
-<span class="code">(clear all)</span>. When reducing the size of the status bar area (e.g.
-drawing a status bar of height&nbsp;1 after having drawn one of height&nbsp;2), be aware
-that some interpreters hide the extraneous lines, while others regard them as
-being part of the main window.
-</p>
 	<div class="footer">
-	<p class="nav">Onwards to &ldquo;<a href="dynamic.html">Chapter 5: Dynamic predicates</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 7, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="nav">Onwards to &ldquo;<a href="io.html">Chapter 5: Input and output</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
+	<p class="tagline">The Dialog Manual, Revision 8, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

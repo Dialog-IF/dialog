@@ -11,6 +11,7 @@ void o_set_style(int style);
 void o_set_upper(void);
 void o_print_word(const char *utf8);
 void o_print_str(const char *utf8);
+void o_progress_bar(int position, int total);
 void o_clear(int all);
 void o_post_input(int external_lf);
 void o_reset(int force_width, int quirks);

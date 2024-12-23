@@ -526,8 +526,9 @@ static int unify(struct eval_state *es, value_t v1, value_t v2) {
 }
 
 static int would_unify(struct eval_state *es, value_t v1, value_t v2) {
-	// v1 and v2 are deref'd, and v1 only contains deref'd values
 	for(;;) {
+		v1 = eval_deref(v1, es);
+		v2 = eval_deref(v2, es);
 		if(v1.tag == VAL_REF || v2.tag == VAL_REF) {
 			return 1;
 		} else if(v1.tag == VAL_PAIR) {
@@ -535,12 +536,12 @@ static int would_unify(struct eval_state *es, value_t v1, value_t v2) {
 			if(!would_unify(
 				es,
 				es->heap[v1.value + 0],
-				eval_deref(es->heap[v2.value + 0], es)))
+				es->heap[v2.value + 0]))
 			{
 				return 0;
 			}
 			v1 = es->heap[v1.value + 1];
-			v2 = eval_deref(es->heap[v2.value + 1], es);
+			v2 = es->heap[v2.value + 1];
 		} else if(v1.tag == VAL_DICTEXT && v2.tag == VAL_DICTEXT) {
 			v1 = es->heap[v1.value + 0];
 			v2 = es->heap[v2.value + 0];
@@ -820,8 +821,6 @@ static void eval_builtin(struct eval_state *es, int builtin, value_t o1, value_t
 			o_print_str("Dialog Interactive Debugger (dgdebug) version " VERSION);
 		}
 		break;
-	case BI_CURSORTO:
-		break;
 	case BI_FIXED:
 		if(!es->forwords) {
 			o_set_style(STYLE_FIXED);
@@ -849,10 +848,11 @@ static void eval_builtin(struct eval_state *es, int builtin, value_t o1, value_t
 			o_par();
 		}
 		break;
-	case BI_PAR_N:
+	case BI_PROGRESS_BAR:
 		o1 = eval_deref(o1, es);
-		if(!es->forwords && o1.tag == VAL_NUM) {
-			o_par_n(o1.value);
+		o2 = eval_deref(o2, es);
+		if(o1.tag == VAL_NUM && o2.tag == VAL_NUM) {
+			o_progress_bar(o1.value, o2.value);
 		}
 		break;
 	case BI_REVERSE:
@@ -886,6 +886,12 @@ static void eval_builtin(struct eval_state *es, int builtin, value_t o1, value_t
 		break;
 	case BI_TRACE_ON:
 		es->trace = 1;
+		break;
+	case BI_UNSTYLE:
+		if(!es->forwords) {
+			o_set_style(STYLE_ROMAN);
+			o_set_style(es->divstyle);
+		}
 		break;
 	case BI_UPPER:
 		if(!es->forwords) {
@@ -943,8 +949,20 @@ static int eval_run(struct eval_state *es) {
 		case I_ASSIGN:
 			set_by_ref(ci->oper[0], value_of(ci->oper[1], es), es);
 			break;
-		case I_BEGIN_STATUS:
-			o_begin_box("status");
+		case I_BEGIN_BOX:
+			assert(ci->oper[0].tag == OPER_BOX);
+			if(ci->subop == BOX_STATUS) {
+				o_begin_box("status");
+			} else {
+				push_aux(es, (value_t) {VAL_NUM, es->divstyle});
+				o_par_n(es->program->boxclasses[ci->oper[0].value].margintop);
+				o_begin_box("box");
+				if(es->program->boxclasses[ci->oper[0].value].style) {
+					es->divstyle = es->program->boxclasses[ci->oper[0].value].style & 0x7f;
+				}
+				o_set_style(STYLE_ROMAN);
+				o_set_style(es->divstyle);
+			}
 			break;
 		case I_BREAKPOINT:
 			if(!ci->subop && tr_line) {
@@ -1168,8 +1186,17 @@ static int eval_run(struct eval_state *es) {
 			pred_claim(es->cont.pred);
 			revert_env_to(es, env->env);
 			break;
-		case I_END_STATUS:
+		case I_END_BOX:
 			o_end_box();
+			o_par_n(es->program->boxclasses[ci->oper[0].value].marginbottom);
+			if(ci->subop != BOX_STATUS) {
+				assert(es->aux);
+				v = es->auxstack[--es->aux];
+				assert(v.tag == VAL_NUM);
+				es->divstyle = v.value;
+			}
+			o_set_style(STYLE_ROMAN);
+			o_set_style(es->divstyle);
 			break;
 		case I_FIRST_CHILD:
 			predname = es->program->objvarpred[DYN_HASPARENT];
@@ -1431,12 +1458,8 @@ static int eval_run(struct eval_state *es) {
 			res = (v0.tag == v1.tag && v0.value == v1.value);
 			if(ci->subop ^ res) perform_branch(ci->implicit, es, &pp, &pc);
 			break;
-		case I_IF_MATCH2:
-			v0 = eval_deref(value_of(ci->oper[0], es), es);
-			v1 = eval_deref(value_of(ci->oper[1], es), es);
-			if(v0.tag == VAL_DICTEXT) v0 = es->heap[v0.value + 0];
-			if(v1.tag == VAL_DICTEXT) v1 = es->heap[v1.value + 0];
-			res = (v0.tag == v1.tag && v0.value == v1.value);
+		case I_IF_UNIFY:
+			res = would_unify(es, value_of(ci->oper[0], es), value_of(ci->oper[1], es));
 			if(ci->subop ^ res) perform_branch(ci->implicit, es, &pp, &pc);
 			break;
 		case I_IF_NIL:
@@ -2191,9 +2214,6 @@ static int eval_run(struct eval_state *es) {
 				do_fail(es, &pp);
 				pc = 0;
 			}
-			break;
-		case I_WIN_WIDTH:
-			set_by_ref(ci->oper[0], (value_t) {VAL_NUM, o_get_width()}, es);
 			break;
 		default:
 			printf("unimplemented cinstr! %d\n", ci->op);

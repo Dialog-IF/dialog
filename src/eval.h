@@ -91,6 +91,7 @@ struct eval_state {
 
 	uint8_t			forwords;
 	uint8_t			trace;
+	uint8_t			divstyle;
 };
 
 struct eval_dyn_cb {

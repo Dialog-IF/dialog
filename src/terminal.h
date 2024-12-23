@@ -3,14 +3,6 @@
 #define TERM_LEFT 131
 #define TERM_RIGHT 132
 
-#define STYLE_ROMAN	0
-#define STYLE_REVERSE	1
-#define STYLE_BOLD	2
-#define STYLE_ITALIC	4
-#define STYLE_FIXED	8
-#define STYLE_DEBUG	16
-#define STYLE_INPUT	32
-
 typedef void (*term_int_callback_t)();
 
 void term_init(term_int_callback_t callback);

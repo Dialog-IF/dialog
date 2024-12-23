@@ -326,7 +326,7 @@ the <span class="prginput">SCORE</span> command, in the status bar, as well as b
 </p>
 <a id="part2status"></a><h2>The status bar</h2>
 <p>It is straightforward to supply your own, custom status bar. Define a rule for
-the predicate <span class="code">(redraw status bar)</span>, and make use of <a href="control.html#statusbar">the
+the predicate <span class="code">(redraw status bar)</span>, and make use of <a href="io.html#statusbar">the
 status bar functionality</a> built into the Dialog programming language.
 </p>
 <p>The standard library defines <span class="code">(status headline)</span>, which can be used
@@ -338,40 +338,54 @@ if the player character is in a dark location, control is instead passed to
 dark</span>&rdquo;.
 </p>
 <textarea class="copyarea" id="copy8" readonly>
+%% A thicker status bar with the name of the current player in the upper right corner.
+
+(style class @status)
+	height: 3 em;
+
+(style class @playername)
+	float: right;
+	width: 20 em;
+	margin-top: 1 em;
+
+(style class @roomname)
+	margin-top: 1 em;
+
 (redraw status bar)
-
-	%% Draw a thicker status bar with the name of the current player in the
-	%% upper right corner.
-
-	(status bar 3) {
-		(move cursor to row 2 column 2)
-		(status headline)
-
-		(status bar width $W)
-		($W minus 20 into $Pos)
-		(move cursor to row 2 column $Pos)
-
-		(current player $Player)
-		(name $Player)
+	(status bar @status) {
+		(div @playername) {
+			(current player $Player)
+			(name $Player)
+		}
+		(div @roomname) {
+			(space 1) (status headline)
+		}
 	}
 </textarea>
 <div class="blkcode">
 <table>
+<tr><td class="both" colspan="2"><span class="comment">%% A thicker status bar with the name of the current player in the upper right corner.</span></td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(style class @status)</td></tr>
+<tr><td class="left"></td><td class="right">height: 3 em;</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(style class @playername)</td></tr>
+<tr><td class="left"></td><td class="right">float: right;</td></tr>
+<tr><td class="left"></td><td class="right">width: 20 em;</td></tr>
+<tr><td class="left"></td><td class="right">margin-top: 1 em;</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(style class @roomname)</td></tr>
+<tr><td class="left"></td><td class="right">margin-top: 1 em;</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
 <tr><td class="both" colspan="2">(redraw status bar)</td></tr>
-<tr><td class="blank" colspan="2"></td></tr>
-<tr><td class="left"></td><td class="right"><span class="comment">%% Draw a thicker status bar with the name of the current player in the</span></td></tr>
-<tr><td class="left"></td><td class="right"><span class="comment">%% upper right corner.</span></td></tr>
-<tr><td class="blank" colspan="2"></td></tr>
-<tr><td class="left"></td><td class="right">(status bar 3) {</td></tr>
-<tr><td class="left"></td><td class="right"><span class="tab"> </span>(move cursor to row 2 column 2)</td></tr>
-<tr><td class="left"></td><td class="right"><span class="tab"> </span>(status headline)</td></tr>
-<tr><td class="blank" colspan="2"></td></tr>
-<tr><td class="left"></td><td class="right"><span class="tab"> </span>(status bar width $W)</td></tr>
-<tr><td class="left"></td><td class="right"><span class="tab"> </span>($W minus 20 into $Pos)</td></tr>
-<tr><td class="left"></td><td class="right"><span class="tab"> </span>(move cursor to row 2 column $Pos)</td></tr>
-<tr><td class="blank" colspan="2"></td></tr>
-<tr><td class="left"></td><td class="right"><span class="tab"> </span>(current player $Player)</td></tr>
-<tr><td class="left"></td><td class="right"><span class="tab"> </span>(name $Player)</td></tr>
+<tr><td class="left"></td><td class="right">(status bar @status) {</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(div @playername) {</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span><span class="tab"> </span>(current player $Player)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span><span class="tab"> </span>(name $Player)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>}</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(div @roomname) {</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span><span class="tab"> </span>(space 1) (status headline)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>}</td></tr>
 <tr><td class="left"></td><td class="right">}</td></tr>
 </table>
 </div>
@@ -379,59 +393,41 @@ dark</span>&rdquo;.
 <a class="copybtn" href="" onClick="document.getElementById('copy8').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <a id="gameover"></a><h2>Game over</h2>
-<p>When the game is over, it is customary to print a final message enclosed by
-asterisks, in bold text:
+<p>The library provides a predicate called <span class="code">(game over&nbsp;$)</span>. Its
+parameter is a <a href="control.html#closures">closure</a> containing a final message, which the
+library will print in bold text, enclosed by asterisks. Then it will:
 </p>
-<textarea class="copyarea" id="copy9" readonly>
-	(par) (bold) \*\*\* You have won! \*\*\* (roman) (par)
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="left"></td><td class="right">(par) (bold) \*\*\* You have won! \*\*\* (roman) (par)</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy9').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
-<p>Then you usually query the predicate <span class="code">(game over)</span>, which:
-</p>
-<ul><li>Invokes <span class="code">(game over status bar)</span> which sets the status bar
-to &ldquo;Game over&rdquo;, unless you override it.
+<ul><li>Invoke <span class="code">(game over status bar)</span> which sets the status bar to
+&ldquo;Game over&rdquo;, unless you override it.
 </li>
-<li>Reports the final score (if scoring is enabled), and the maximum
-score (if one has been declared).
+<li>Report the final score (if scoring is enabled), and the maximum score
+(if one has been declared).
 </li>
-<li>Enters an infinite loop where the player is asked if they wish to
+<li>Enter an infinite loop where the player is asked if they wish to
 <span class="prginput">RESTART</span>, <span class="prginput">RESTORE</span>, <span class="prginput">UNDO</span> the
 last move, or <span class="prginput">QUIT</span>.
 </li>
 </ul><p>Here is an example of a (very small) cutscene that ends the game:
 </p>
-<textarea class="copyarea" id="copy10" readonly>
+<textarea class="copyarea" id="copy9" readonly>
 (perform [eat #apple])
 	The apple is yummy. You feel that your mission has come to an end.
-
-	(par) (bold) \*\*\* You are no longer hungry. \*\*\* (roman) (par)
-
-	(game over)
+	(game over { You are no longer hungry. })
 </textarea>
 <div class="blkcode">
 <table>
 <tr><td class="both" colspan="2">(perform [eat #apple])</td></tr>
 <tr><td class="left"></td><td class="right">The apple is yummy. You feel that your mission has come to an end.</td></tr>
-<tr><td class="blank" colspan="2"></td></tr>
-<tr><td class="left"></td><td class="right">(par) (bold) \*\*\* You are no longer hungry. \*\*\* (roman) (par)</td></tr>
-<tr><td class="blank" colspan="2"></td></tr>
-<tr><td class="left"></td><td class="right">(game over)</td></tr>
+<tr><td class="left"></td><td class="right">(game over { You are no longer hungry. })</td></tr>
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy9').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>A fifth option can be added to the game-over menu: <span class="prginput">AMUSING</span>.
 First, add the option to the menu with the following rule definition:
 </p>
-<textarea class="copyarea" id="copy11" readonly>
+<textarea class="copyarea" id="copy10" readonly>
 (amusing enabled)
 </textarea>
 <div class="blkcode">
@@ -440,12 +436,12 @@ First, add the option to the menu with the following rule definition:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy11').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Then, implement a predicate called <span class="code">(amusing)</span> that prints a list of
 amusing things the player might want to try:
 </p>
-<textarea class="copyarea" id="copy12" readonly>
+<textarea class="copyarea" id="copy11" readonly>
 (amusing)
 	(par)
 	Have you tried...
@@ -464,11 +460,11 @@ amusing things the player might want to try:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy12').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy11').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="understanding.html">Chapter 9: Understanding player input</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 7, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 8, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

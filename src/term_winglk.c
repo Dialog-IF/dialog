@@ -4,6 +4,7 @@
 #include "glk.h"
 #include "WinGlk.h"
 
+#include "common.h"
 #include "unicode.h"
 #include "terminal.h"
 

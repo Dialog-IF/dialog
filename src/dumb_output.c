@@ -24,6 +24,7 @@ void o_set_style(int style)		{ bail_out(); }
 void o_set_upper()			{ bail_out(); }
 void o_print_word(const char *utf8)	{ bail_out(); }
 void o_print_str(const char *utf8)	{ bail_out(); }
+void o_progress_bar(int a, int b)	{ bail_out(); }
 void o_clear(int all)			{ bail_out(); }
 void o_post_input(int external_lf)	{ bail_out(); }
 

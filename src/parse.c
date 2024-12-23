@@ -64,6 +64,7 @@ static int next_token(struct lexer *lexer, int parsemode) {
 	char buf[MAXWORDLENGTH + 1];
 	int pos = 0, i;
 	int at_start;
+	long val;
 
 	for(;;) {
 		ch = lexer_getc(lexer);
@@ -220,21 +221,22 @@ static int next_token(struct lexer *lexer, int parsemode) {
 						column--;
 					}
 					buf[pos] = 0;
-					if(parsemode != PMODE_BODY) {
-						for(i = 0; i < pos; i++) {
-							if(buf[i] < '0' || buf[i] > '9') break;
-						}
-						if(i == pos && (pos == 1 || buf[0] != '0')) {
-							lexer->kind = TOK_INTEGER;
-							lexer->value = strtol(buf, 0, 10);
-							if(lexer->value < 0 || lexer->value > 0x3fff) {
-								report(LVL_ERR, line, "Integer out of range (%d)", lexer->value);
+					for(i = 0; i < pos; i++) {
+						if(buf[i] < '0' || buf[i] > '9') break;
+					}
+					if(i == pos && (pos == 1 || buf[0] != '0')) {
+						val = strtol(buf, 0, 10);
+						if(val < 0 || val > 0x3fff) {
+							if(parsemode != PMODE_BODY) {
+								report(LVL_ERR, line, "Integer out of range (%ld)", val);
 								lexer->errorflag = 1;
 								return 0;
 							}
-						} else {
 							lexer->kind = TOK_BAREWORD;
 							lexer->word = find_word(lexer->program, buf);
+						} else {
+							lexer->kind = TOK_INTEGER;
+							lexer->value = val;
 						}
 					} else {
 						lexer->kind = TOK_BAREWORD;
@@ -553,7 +555,11 @@ static struct astnode *parse_if(struct lexer *lexer, struct arena *arena) {
 }
 
 static struct astnode *parse_expr(int parsemode, struct lexer *lexer, struct arena *arena) {
-	struct astnode *an, *sub, **dest;
+	struct astnode *an, *sub, **dest, *body;
+	int i, id, have_arg, did_create;
+	struct clause *cl;
+	struct predname *predname;
+	line_t orig_line;
 
 	switch(lexer->kind) {
 	case TOK_VARIABLE:
@@ -796,7 +802,8 @@ static struct astnode *parse_expr(int parsemode, struct lexer *lexer, struct are
 			}
 		} else if(an->predicate->special == SP_STATUSBAR) {
 			sub = an->children[0];
-			an = mkast(AN_STATUSBAR, 2, arena, line);
+			an = mkast(AN_OUTPUTBOX, 2, arena, line);
+			an->subkind = BOX_STATUS;
 			an->children[0] = sub;
 			status = next_token(lexer, PMODE_BODY);
 			if(lexer->errorflag) return 0;
@@ -812,34 +819,120 @@ static struct astnode *parse_expr(int parsemode, struct lexer *lexer, struct are
 				lexer->errorflag = 1;
 				return 0;
 			}
+		} else if(an->predicate->special == SP_OUTPUTBOX) {
+			sub = an->children[0];
+			an = mkast(AN_OUTPUTBOX, 2, arena, line);
+			an->subkind = BOX_DIV;
+			an->children[0] = sub;
+			status = next_token(lexer, PMODE_BODY);
+			if(lexer->errorflag) return 0;
+			if(status != 1) {
+				report(LVL_ERR, line, "Expected expression after (div $).");
+				lexer->errorflag = 1;
+				return 0;
+			}
+			an->children[1] = parse_expr(PMODE_BODY, lexer, arena);
+			if(!an->children[1]) return 0;
+			if(contains_just(an->children[1])) {
+				report(LVL_ERR, line, "(just) not allowed inside (div $).");
+				lexer->errorflag = 1;
+				return 0;
+			}
 		} else if(an->predicate->special == SP_IF) {
 			an = parse_if(lexer, arena);
 			if(!an) return 0;
 		}
 		break;
 	case '{':
-		an = mkast(AN_BLOCK, 1, arena, line);
-		dest = &an->children[0];
-		for(;;) {
-			status = next_token(lexer, PMODE_BODY);
-			if(lexer->errorflag) return 0;
-			if(status != 1) {
-				report(LVL_ERR, line, "Unterminated block.");
-				lexer->errorflag = 1;
-				return 0;
+		if(parsemode == PMODE_BODY) {
+			an = mkast(AN_BLOCK, 1, arena, line);
+			dest = &an->children[0];
+			for(;;) {
+				status = next_token(lexer, PMODE_BODY);
+				if(lexer->errorflag) return 0;
+				if(status != 1) {
+					report(LVL_ERR, line, "Unterminated block.");
+					lexer->errorflag = 1;
+					return 0;
+				}
+				if(lexer->kind == '}') {
+					*dest = 0;
+					break;
+				}
+				sub = parse_expr(PMODE_BODY, lexer, arena);
+				if(!sub) return 0;
+				*dest = sub;
+				dest = &sub->next_in_body;
 			}
-			if(lexer->kind == '}') {
-				*dest = 0;
-				break;
+			an->children[0] = fold_disjunctions(an->children[0], lexer, arena);
+			if(an->children[0] && !an->children[0]->next_in_body) {
+				an = an->children[0];
 			}
-			sub = parse_expr(PMODE_BODY, lexer, arena);
-			if(!sub) return 0;
-			*dest = sub;
-			dest = &sub->next_in_body;
-		}
-		an->children[0] = fold_disjunctions(an->children[0], lexer, arena);
-		if(an->children[0] && !an->children[0]->next_in_body) {
-			an = an->children[0];
+		} else {
+			// Closure
+			orig_line = line;
+			body = 0;
+			dest = &body;
+			for(;;) {
+				status = next_token(lexer, PMODE_BODY);
+				if(lexer->errorflag) return 0;
+				if(status != 1) {
+					report(LVL_ERR, orig_line, "Unterminated block in closure.");
+					lexer->errorflag = 1;
+					return 0;
+				}
+				if(lexer->kind == '}') {
+					*dest = 0;
+					break;
+				}
+				sub = parse_expr(PMODE_BODY, lexer, arena);
+				if(!sub) return 0;
+				*dest = sub;
+				dest = &sub->next_in_body;
+			}
+			body = fold_disjunctions(body, lexer, arena);
+			id = find_closurebody(lexer->program, body, &did_create);
+			an = mkast(AN_PAIR, 2, arena, line);
+			an->children[0] = mkast(AN_INTEGER, 0, arena, orig_line);
+			an->children[0]->value = id;
+			an->children[1] = mkast(AN_EMPTY_LIST, 0, arena, orig_line);
+			predname = find_builtin(lexer->program, BI_INVOKE_CLOSURE);
+			if(did_create) {
+				cl = arena_calloc(&predname->pred->arena, sizeof(*cl));
+				cl->predicate = predname;
+				cl->arena = &predname->pred->arena;
+				cl->line = orig_line;
+				cl->params = arena_alloc(cl->arena, predname->arity * sizeof(struct astnode *));
+				cl->params[0] = mkast(AN_INTEGER, 0, cl->arena, orig_line);
+				cl->params[0]->value = id;
+				cl->params[1] = mkast(AN_EMPTY_LIST, 0, cl->arena, orig_line); // placeholder
+				cl->params[2] = mkast(AN_VARIABLE, 0, cl->arena, orig_line);
+				cl->params[2]->word = find_word(lexer->program, "");
+				cl->body = deepcopy_astnode(body, cl->arena, 0);
+				add_clause(cl, predname->pred);
+				analyse_clause(lexer->program, cl);
+				assert(cl == predname->pred->clauses[id]);
+			} else {
+				cl = predname->pred->clauses[id];
+			}
+			have_arg = 0;
+			for(i = 0; i < cl->nvar; i++) {
+				if(!strcmp(cl->varnames[i]->name, "_")) {
+					have_arg = 1;
+				} else {
+					sub = an->children[1];
+					an->children[1] = mkast(AN_PAIR, 2, cl->arena, orig_line);
+					an->children[1]->children[0] = mkast(AN_VARIABLE, 0, cl->arena, orig_line);
+					an->children[1]->children[0]->word = cl->varnames[i];
+					an->children[1]->children[1] = sub;
+				}
+			}
+			if(did_create) {
+				cl->params[1] = deepcopy_astnode(an->children[1], cl->arena, 0);
+				if(have_arg) {
+					cl->params[2]->word = find_word(lexer->program, "_");
+				}
+			}
 		}
 		break;
 	case '~':
@@ -1209,9 +1302,11 @@ int parse_file(struct lexer *lexer, int filenum, struct clause ***clause_dest_pt
 				report(LVL_ERR, line, "Bad kind of expression at beginning of line.");
 				return 0;
 			}
-			if(clause->predicate->builtin
-			&& clause->predicate->builtin != BI_HASPARENT
-			&& !(clause->predicate->nameflags & (PREDNF_META | PREDNF_DEFINABLE_BI))) {
+			if(clause->predicate->builtin == BI_QUERY || (
+				clause->predicate->builtin
+				&& clause->predicate->builtin != BI_HASPARENT
+				&& !(clause->predicate->nameflags & (PREDNF_META | PREDNF_DEFINABLE_BI))))
+			{
 				report(LVL_ERR, line, "Rule definition collides with built-in predicate.");
 				return 0;
 			}
