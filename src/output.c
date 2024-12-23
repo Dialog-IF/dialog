@@ -97,8 +97,6 @@ static void sendstr_n(const char *str, int n) {
 	int i;
 	uint16_t ch, wstr[n + 1];
 
-	if(!boxstack[boxsp].visible) return;
-
 	utf8_to_unicode_n(wstr, n + 1, (uint8_t *) str, n);
 
 	for(i = 0; wstr[i]; i++) {
@@ -124,8 +122,6 @@ static void sendstr(const char *str) {
 }
 
 static void sendlf() {
-	if(!boxstack[boxsp].visible) return;
-
 	syncwrap();
 	if(term_sendlf()) update_size();
 	column = 0;
@@ -149,6 +145,8 @@ static void sendstyle(int style) {
 // These routines correspond to what the runtime layer is doing.
 
 void o_line() {
+	if(!boxstack[boxsp].visible) return;
+
 	if(space < SP_DONELINE) {
 		sendlf();
 		space = SP_DONELINE;
@@ -156,6 +154,8 @@ void o_line() {
 }
 
 void o_par_n(int n) {
+	if(!boxstack[boxsp].visible) return;
+
 	if(height && n > height) n = height;
 	o_line();
 	while(space < SP_DONELINE + n) {
@@ -221,23 +221,31 @@ void o_end_box() {
 }
 
 void o_space() {
+	if(!boxstack[boxsp].visible) return;
+
 	if(space < SP_SPACE) {
 		space = SP_SPACE;
 	}
 }
 
 void o_space_n(int n) {
+	if(!boxstack[boxsp].visible) return;
+
 	while(n-- > 0) sendstr(" ");
 	space = SP_DONESPACE;
 }
 
 void o_nospace() {
+	if(!boxstack[boxsp].visible) return;
+
 	if(space < SP_INHIBIT) {
 		space = SP_INHIBIT;
 	}
 }
 
 void o_sync() {
+	if(!boxstack[boxsp].visible) return;
+
 	if(space == SP_AUTO || space == SP_SPACE) {
 		sendspace();
 		space = SP_DONESPACE;
@@ -247,6 +255,8 @@ void o_sync() {
 }
 
 void o_set_style(int style) {
+	if(!boxstack[boxsp].visible) return;
+
 	if(style) {
 		if(space == SP_AUTO || space == SP_SPACE) {
 			sendspace();
@@ -260,10 +270,14 @@ void o_set_style(int style) {
 }
 
 void o_set_upper() {
+	if(!boxstack[boxsp].visible) return;
+
 	boxstack[boxsp].upper = 1;
 }
 
 void o_print_word_n(const char *utf8, int n) {
+	if(!boxstack[boxsp].visible) return;
+
 	if(n) {
 		if(space == SP_SPACE) {
 			sendspace();
@@ -280,6 +294,8 @@ void o_print_word(const char *utf8) {
 }
 
 void o_print_opaque_word(const char *utf8) {
+	if(!boxstack[boxsp].visible) return;
+
 	if(space == SP_SPACE || space == SP_AUTO) {
 		sendspace();
 	}
@@ -350,6 +366,8 @@ void o_progress_bar(int position, int total) {
 }
 
 void o_clear(int all) {
+	if(!boxstack[boxsp].visible) return;
+
 	o_sync();
 	term_clear(all);
 	update_size();

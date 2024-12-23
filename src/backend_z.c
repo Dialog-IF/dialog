@@ -2054,7 +2054,23 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				zi->oper[0] = ROUTINE(R_COLLECT_CHECK);
 				zi->oper[1] = o1;
 				break;
-			case I_COLLECT_END:
+			case I_COLLECT_END_R:
+				zi = append_instr(r, Z_CALL1S);
+				zi->oper[0] = ROUTINE(R_COLLECT_END);
+				if(ci->oper[0].tag == OPER_VAR) {
+					zi->store = REG_TEMP;
+					zi = append_instr(r, Z_STOREW);
+					zi->oper[0] = VALUE(REG_ENV);
+					zi->oper[1] = SMALL(3 + ci->oper[0].value);
+					zi->oper[2] = VALUE(REG_TEMP);
+				} else if(ci->oper[0].tag == OPER_ARG) {
+					zi->store = REG_A + ci->oper[0].value;
+				} else {
+					assert(ci->oper[0].tag == OPER_TEMP);
+					zi->store = REG_X + ci->oper[0].value;
+				}
+				break;
+			case I_COLLECT_END_V:
 				o1 = generate_value(r, ci->oper[0], prg, t1);
 				zi = append_instr(r, Z_CALL1S);
 				zi->oper[0] = ROUTINE(R_COLLECT_END);

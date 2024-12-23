@@ -1,6 +1,6 @@
 
 (library version)
-	Library version 0.36.
+	Library version 0.37.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -2508,6 +2508,10 @@
 
 ~(refuse [enter (room $)])
 
+(before [enter (actor container $Obj)])
+	($Obj is closed)
+	(first try [open $Obj])
+
 (instead of [enter (room $Room)])
 	(current room $Here)
 	~($Here = $Room)
@@ -3475,12 +3479,16 @@
 	(then)
 		(notice player's $Obj)
 	(endif)
+	($Action = [$Verb | $CleanList])
+	(if) ~(allowed action $Action) (then)
+		(report disallowed action $Action)
+		(stop)
+	(endif)
 	(exhaust) {
 		*($Obj is one of $CleanList)
 		(object $Obj)
 		(now) ~($Obj is hidden)
 	}
-	($Action = [$Verb | $CleanList])
 	(try $Action)
 	(if) ~(command $Action) (then)
 		(tick)
@@ -3550,10 +3558,12 @@
 		(now) ~(inhibiting next tick)
 	(else)
 		(recompute visibility)
+		(exhaust) *(early on every tick)
 		(exhaust) *(on every tick)
+		(exhaust) *(late on every tick)
 	(endif)
 
-%% Stories may add rules to this predicate, or to (on every tick in $):
+%% Stories may add rules to the following predicates:
 
 (on every tick)
 	(current room $Room)
@@ -3567,6 +3577,11 @@
 		%% 'it' unambiguously refers to it.
 		(now) ~(narrator's it refers to $)
 	(endif)
+
+(on every tick in $)		(fail)
+
+(early on every tick)		(fail)
+(late on every tick)		(fail)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Non-player characters
@@ -4453,7 +4468,7 @@
 	(div @initial-spacer) {}
 	(update environment around player)
 	(stoppable) (intro)
-	*(repeat forever) (par) (read-parse-act) (fail)
+	*(repeat forever) (read-parse-act) (fail)
 
 (intro)
 	(banner)
@@ -4472,9 +4487,10 @@
 	(if) (deferred commandline $Words) (then)
 		(now) ~(deferred commandline $)
 		(stoppable) {
-			(parse commandline $Words)
+			(parse commandline $Words with choices [])
 		}
 	(else)
+		(par)
 		(stoppable) {
 			(if)
 				(scoring enabled)
@@ -4482,11 +4498,45 @@
 			(then)
 				(report score change)
 			(endif)
+
 			(redraw status bar)
+
+			(if) (current node $DispObj) (then)
+				(collect $Choice)
+					*($DispObj offers $Choice)
+					(available $Choice)
+				(into $ChoiceList)
+				(if) (empty $ChoiceList) (then)
+					(now) ~(current node $)
+					(now) ($DispObj is choice-exhausted)
+					(if) ($DispObj flows to $Fallback) (then)
+						(activate node $Fallback)
+					(endif)
+				(else)
+					(enumerate choices $ChoiceList 1)
+				(endif)
+			(else)
+				($ChoiceList = [])
+			(endif)
+
 			> (get input $Words)
-			(parse commandline $Words)
+			(parse commandline $Words with choices $ChoiceList)
 		}
 	(endif)
+
+(interface (enumerate choices $<ObjList $<FirstIndex))
+
+(enumerate choices [] $)
+(enumerate choices [$Target | $More] $Index)
+	$Index .
+	(if) (library links enabled) (then)
+		(link [$Index]) (print label of $Target)
+	(else)
+		(print label of $Target)
+	(endif)
+	(line)
+	($Index plus 1 into $Ip1)
+	(enumerate choices $More $Ip1)
 
 (report score change)
 	(reported score is $Reported)
@@ -5208,6 +5258,91 @@
 	(topic keyword $Keyword)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Choice mode
+
+(global variable (current node $))
+(global variable (previous node $))
+
+(interface (choose $<Obj))
+
+(choose $Obj)
+	(print label of $Obj)
+	(par)
+	(activate node $Obj)
+
+(interface (print label of $<Obj))
+
+(print label of $Obj)
+	(if) ($Obj is exposed) (then)
+		(label $Obj)
+	(else)
+		(initial label $Obj)
+	(endif)
+
+(interface (display $<Obj))
+
+(display $Obj)
+	(exhaust) { *(before disp $Obj) }
+	(disp $Obj)
+	(exhaust) { *(after disp $Obj) }
+
+(interface (activate node $<Obj))
+
+(activate node $Obj)
+	(if) (current node $Previous) (then)
+		(now) (previous node $Previous)
+	(else)
+		(now) ~(previous node $)
+	(endif)
+	(now) (current node $Obj)
+	(display $Obj)
+	(if) (object $Obj) (then) (now) ($Obj is exposed) (endif)
+	(stop)
+
+(activate parser)
+	(now) ~(current node $)
+	(now) ~(previous node $)
+	(stop)
+
+(interface (available $<Obj))
+
+(available (sticky $))
+
+(available $Node)		~($Node is choice-exhausted)
+
+(sticky *(terminating $))
+
+(interface ($<Object flows to $>Target))
+
+($Obj flows to $Previous)
+	~(terminating $Obj)
+	(previous node $Previous)
+
+(interface (initial label $<Obj))
+
+(initial label $Obj)		(label $Obj)
+
+(interface (allowed action $<Action))
+
+(allowed action $)		~(current node $)
+(allowed action (command $))
+
+(report disallowed action $)
+	\( That action is currently disabled. \)
+
+(interface (label $<Obj))
+
+(terminating $)			(fail)
+(label $)			(fail)
+($ offers $)			(fail)
+
+(before disp $)			(fail)
+(disp $)
+(after disp $)			(fail)
+
+@($Node is unexposed)		~($Node is exposed)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Parser: Toplevel
 
 %% Parse and attempt each action in turn, and abort if one fails.
@@ -5216,18 +5351,48 @@
 
 (global variable (current actor $))
 
-(interface (parse commandline $<Words))
+(interface (parse commandline $<Words with choices $<ChoiceList))
 
-(parse commandline [])
+(parse commandline [] with choices $)
 	Come again?
 
-(parse commandline [\* | $])
+(parse commandline [\* | $] with choices $)
 	%% By convention used by testers to put comments in a transcript.
 
-(parse commandline $Words)
-	(now) ~(allowing parse errors)
+(parse commandline [undo] with choices $)
+	(if) ~(interpreter supports undo) (then)
+		This interpreter doesn't support undo.
+	(elseif) (undo) (then)
+		Failed to undo last turn.
+	(else)
+		There are no more turns to undo!
+	(endif)
+	(stop)
+
+(parse commandline $Words with choices $ChoiceList)
+	%% The commandline wasn't UNDO.
+	%% Before proceeding, save the current undo state:
+
+	(if) (save undo 1) (then)
+		Undoing the last turn.
+		(line)
+		(location headline)
+		(stop)
+	(endif)
+
 	(rebuild scope)
-	(parse action sequence $Words)
+
+	(if)
+		(nonempty $ChoiceList)
+		($Words = [$Index])
+		(number $Index)
+		(nth $ChoiceList $Index $Target)
+	(then)
+		(choose $Target)
+	(else)
+		(now) ~(allowing parse errors)
+		(parse action sequence $Words)
+	(endif)
 
 (interface (parse action sequence $<Words))
 
@@ -5245,102 +5410,79 @@
 (parse action [])
 
 (parse action $Words)
-	%% First, check for UNDO.
+	%% Usually, the player is the actor.
+	(if) (current player $Player) (then)
+		(now) (current actor $Player)
+	(endif)
 
-	(if) ($Words = [undo]) (then)
-		(if) ~(interpreter supports undo) (then)
-			This interpreter doesn't support undo.
-		(elseif) (undo) (then)
-			Failed to undo last turn.
+	%% Handle AGAIN, OOPS, and rewriting:
+
+	(if)
+		($Words = [$W])
+		($W is one of [again g])
+		(last command was $LastCmd)
+	(then)
+		(rewrite $LastCmd into $ActualWords)
+	(elseif) ($Words = [oops $GoodWord]) (then)
+		(if)
+			(last command was $LastCmd)
+			(correct $LastCmd with $GoodWord into $GoodCmd)
+		(then)
+			(now) (last command was $GoodCmd)
+			(rewrite $GoodCmd into $ActualWords)
 		(else)
-			There are no more turns to undo!
-		(endif)
-		(stop)
-	(else)
-		%% The command wasn't UNDO.
-		%% Before proceeding, save the current undo state:
-
-		(if) (save undo 1) (then)
-			(roman)
-			Undoing the last turn.
-			(line)
-			(location headline)
+			\( Sorry, I don't know what to fix. \)
 			(stop)
 		(endif)
+	(else)
+		(now) (last command was $Words)
+		(rewrite $Words into $ActualWords)
+	(endif)
 
-		%% Usually, the player is the actor.
-		(current player $Player)
-		(now) (current actor $Player)
+	%% Parse the action:
 
-		%% Handle AGAIN, OOPS, and rewriting:
+	(now) ~(head noun is required)
+	(collect $A)
+		*(understand $ActualWords as $A)
+	(into $AllCandidatesWithDup)
+
+	%% Since we may have multiple matches, do some sieving:
+
+	(remove duplicates $AllCandidatesWithDup $AllCandidates)
+	(if) ($AllCandidates = [$Single]) (then)
+		%% Optimize the common case.
+		(now) ~(implicit action is $)
+		(now) ~(implicit action wants direction)
+		(try-complex $Single)
+	(elseif) (empty $AllCandidates) (then)
+		%% We were unable to parse the action.
+
+		%% Occasionally people like to separate actions by
+		%% commas or 'AND', but this is problematic. We can
+		%% only deal with it as a last resort, because in order
+		%% to parse the part after the separator, we need to
+		%% have the right scope, and therefore we first have to
+		%% execute what's to the left of the separator.
 
 		(if)
-			($Words = [$W])
-			($W is one of [again g])
-			(last command was $LastCmd)
+			*(split $ActualWords by [, and]
+				into $Left and $Right)
+			*(understand $Left as $)
 		(then)
-			(rewrite $LastCmd into $ActualWords)
-		(elseif) ($Words = [oops $GoodWord]) (then)
-			(if)
-				(last command was $LastCmd)
-				(correct $LastCmd with $GoodWord into $GoodCmd)
-			(then)
-				(now) (last command was $GoodCmd)
-				(rewrite $GoodCmd into $ActualWords)
-			(else)
-				\( Sorry, I don't know what to fix. \)
-				(stop)
-			(endif)
+			(parse action $Left)
+			(rebuild scope)
+			(parse action $Right)
 		(else)
-			(now) (last command was $Words)
-			(rewrite $Words into $ActualWords)
+			%% Everything has failed. Can we understand a
+			%% partial action, in order to print an
+			%% informative error message?
+
+			(parse partial action $ActualWords)
 		(endif)
-
-		%% Parse the action:
-
-		(now) ~(head noun is required)
-		(collect $A)
-			*(understand $ActualWords as $A)
-		(into $AllCandidatesWithDup)
-
-		%% Since we may have multiple matches, do some sieving:
-
-		(remove duplicates $AllCandidatesWithDup $AllCandidates)
-		(if) ($AllCandidates = [$Single]) (then)
-			%% Optimize the common case.
-			(now) ~(implicit action is $)
-			(now) ~(implicit action wants direction)
-			(try-complex $Single)
-		(elseif) (empty $AllCandidates) (then)
-			%% We were unable to parse the action.
-
-			%% Occasionally people like to separate actions by
-			%% commas or 'AND', but this is problematic. We can
-			%% only deal with it as a last resort, because in order
-			%% to parse the part after the separator, we need to
-			%% have the right scope, and therefore we first have to
-			%% execute what's to the left of the separator.
-
-			(if)
-				*(split $ActualWords by [, and]
-					into $Left and $Right)
-				*(understand $Left as $)
-			(then)
-				(parse action $Left)
-				(rebuild scope)
-				(parse action $Right)
-			(else)
-				%% Everything has failed. Can we understand a
-				%% partial action, in order to print an
-				%% informative error message?
-
-				(parse partial action $ActualWords)
-			(endif)
-		(else)
-			(now) ~(implicit action is $)
-			(now) ~(implicit action wants direction)
-			(sieve action candidates $AllCandidates $ActualWords 0)
-		(endif)
+	(else)
+		(now) ~(implicit action is $)
+		(now) ~(implicit action wants direction)
+		(sieve action candidates $AllCandidates $ActualWords 0)
 	(endif)
 
 (correct [$BadWord | $More] with $GoodWord into [$GoodWord | $More])
@@ -5931,7 +6073,6 @@
 ($ unlocks $)			(fail)
 (from $ through $ to $)		(fail)
 (topic keyword $)		(fail)
-(on every tick in $)		(fail)
 (scoring enabled)		(fail)
 (maximum score $)		(fail)
 (amusing enabled)		(fail)

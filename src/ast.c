@@ -534,8 +534,8 @@ static int resolve_clause_var(struct program *prg, struct word *w) {
 		if(i >= prg->nalloc_var) {
 			prg->nalloc_var = i * 2 + 8;
 			prg->clausevars = realloc(prg->clausevars, prg->nalloc_var * sizeof(struct word *));
-			prg->clausevarcounts = realloc(prg->clausevarcounts, prg->nalloc_var * sizeof(int));
-			memset(prg->clausevarcounts + i, 0, (prg->nalloc_var - i) * sizeof(int));
+			prg->clausevarcounts = realloc(prg->clausevarcounts, prg->nalloc_var * sizeof(*prg->clausevarcounts));
+			memset(prg->clausevarcounts + i, 0, (prg->nalloc_var - i) * sizeof(*prg->clausevarcounts));
 		}
 		prg->clausevarcounts[i] = 1;
 		prg->clausevars[i] = w;

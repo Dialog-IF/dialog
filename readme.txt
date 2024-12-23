@@ -1,5 +1,5 @@
-This archive contains version 0j/02 of the Dialog compiler and interactive
-debugger, bundled with documentation and version 0.36 of the Dialog Standard
+This archive contains version 0j/03 of the Dialog compiler and interactive
+debugger, bundled with documentation and version 0.37 of the Dialog Standard
 Library.
 
 Directory structure:
@@ -37,6 +37,27 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0j/03, Lib 0.37 (Manual revision 22):
+
+		Library: Choice mode.
+
+		Library: Added hooks that are queried early and late on every
+		tick.
+
+		Library: Undo now operates at the level of commandlines, rather
+		than complex actions. "UNDO" must now be typed on a line of its
+		own, but behaves in a less surprising way.
+
+		Library: Before entering a closed container, try opening it.
+
+		Compiler: Fixed rare bug related to variables bound inside
+		if-statements.
+
+		Compiler: Minor optimization of collect-into.
+
+		Debugger: Removed spurious blank line when entering a status
+		bar environment.
 
 	0j/02, Lib 0.36:
 

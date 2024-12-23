@@ -9,7 +9,7 @@
 <body>
 	<div class="chapter">
 	<h1>Chapter 8: Ticks, scenes, and progress</h1>
-	<div class="navlinks">(<a href="#timedevents">Timed code</a>&nbsp;&bull; <a href="#cutscenes">Cutscenes</a>&nbsp;&bull; <a href="#theintro">The intro</a>&nbsp;&bull; <a href="#score">Keeping score</a>&nbsp;&bull; <a href="#part2status">The status bar</a>&nbsp;&bull; <a href="#gameover">Game over</a>)</div>
+	<div class="navlinks">(<a href="#timedevents">Timed code</a>&nbsp;&bull; <a href="#cutscenes">Cutscenes</a>&nbsp;&bull; <a href="#theintro">The intro</a>&nbsp;&bull; <a href="#score">Keeping score</a>&nbsp;&bull; <a href="#part2status">The status bar</a>&nbsp;&bull; <a href="#gameover">Game over</a>&nbsp;&bull; <a href="#choicemode">Choice mode</a>)</div>
 <a id="timedevents"></a><h2>Timed code</h2>
 <p>As we've seen earlier (<a href="actions.html#tickstop">Stopping and ticking</a>), the standard
 library measures time in <i>ticks</i>. One tick corresponds to one action. The
@@ -509,9 +509,699 @@ supposed to end with a comma. For instance:
 <div class="copycode">
 <a class="copybtn" href="" onClick="document.getElementById('copy13').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
+<a id="choicemode"></a><h2>Choice mode</h2>
+<p>As a complement to the parser, the Dialog standard library offers a <i>choice
+mode</i>, where the player navigates a set of <i>nodes</i> (text passages) by
+choosing from explicit lists of options. Choice mode can be used for
+interactive cutscenes, conversations, mini-games, or even as the primary mode
+of interaction of a game. The author is free to switch between parser-based and
+choice-based interaction at any time, as behoves the story.
+</p>
+<p>Nodes are represented by ordinary Dialog objects. In the simplest mode of
+operation, each node has a label and some display-text, and offers a set of
+links to other nodes:
+</p>
+<div class="img"><img src="choice1.png" /></div>
+<textarea class="copyarea" id="copy14" readonly>
+(intro)		(activate node #start)
+
+#start
+(disp *)	You extend your wings. A warm, buzzy feeling spreads through your body
+		as you leave the hive.
+(* offers #rosebush)
+(* offers #poppies)
+
+#rosebush
+(label *)	Follow a scent of roses.
+(disp *)	You hover for a while near the pink rosebush.
+(* offers #poppies)
+
+#poppies
+(label *)	Follow a scent of poppies.
+(disp *)	You circle a patch of poppies by the pondside.
+(* offers #rosebush/#pond)
+
+#pond
+(label *)	Approach the pond.
+(disp *)	You flutter across the water, enjoying the sweet bouquet of water lilies.
+(* offers #poppies)
+
+#land
+(label *)	Return back home.
+(disp *)	After an impeccable landing, you find yourself back at the hive.
+		(game over { A day well spent! })
+(#rosebush/#poppies/#pond offers *)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left">(intro)</td><td class="right">(activate node #start)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#start</td></tr>
+<tr><td class="left">(disp *)</td><td class="right">You extend your wings. A warm, buzzy feeling spreads through your body</td></tr>
+<tr><td class="left"></td><td class="right">as you leave the hive.</td></tr>
+<tr><td class="both" colspan="2">(* offers #rosebush)</td></tr>
+<tr><td class="both" colspan="2">(* offers #poppies)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#rosebush</td></tr>
+<tr><td class="left">(label *)</td><td class="right">Follow a scent of roses.</td></tr>
+<tr><td class="left">(disp *)</td><td class="right">You hover for a while near the pink rosebush.</td></tr>
+<tr><td class="both" colspan="2">(* offers #poppies)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#poppies</td></tr>
+<tr><td class="left">(label *)</td><td class="right">Follow a scent of poppies.</td></tr>
+<tr><td class="left">(disp *)</td><td class="right">You circle a patch of poppies by the pondside.</td></tr>
+<tr><td class="both" colspan="2">(* offers #rosebush/#pond)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#pond</td></tr>
+<tr><td class="left">(label *)</td><td class="right">Approach the pond.</td></tr>
+<tr><td class="left">(disp *)</td><td class="right">You flutter across the water, enjoying the sweet bouquet of water lilies.</td></tr>
+<tr><td class="both" colspan="2">(* offers #poppies)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#land</td></tr>
+<tr><td class="left">(label *)</td><td class="right">Return back home.</td></tr>
+<tr><td class="left">(disp *)</td><td class="right">After an impeccable landing, you find yourself back at the hive.</td></tr>
+<tr><td class="left"></td><td class="right">(game over { A day well spent! })</td></tr>
+<tr><td class="both" colspan="2">(#rosebush/#poppies/#pond offers *)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy14').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>To select choice mode—or remain in choice mode but force a transition to a
+different node—make a query to <span class="code">(activate node&nbsp;$)</span> with the desired
+node object as parameter. To select parser mode, make a query to
+<span class="code">(activate parser)</span>. Be aware that both of these predicates invoke
+<span class="code">(stop)</span>, thereby effecting an immediate return to the main loop.
+</p>
+<p>In the main loop, if choice mode is on, the library determines what nodes are
+reachable from the currently active node, and prints a numbered list of their
+labels. If the player types one of the numbers (or clicks one of the labels, if
+library links are enabled and the interpreter supports them) then the
+corresponding node is activated. Otherwise, the input is parsed in the usual
+way. By default, all in-world actions are disabled in choice mode; only
+commands (e.g. <span class="prginput">UNDO</span>, <span class="prginput">SAVE</span>) work. Here is an
+example session:
+</p>
+<div class="blkoutput">You extend your wings. A warm, buzzy feeling spreads through your body as you leave the hive.<br />
+<br />
+1. Follow a scent of roses.<br />
+2. Follow a scent of poppies.<br />
+&gt; 2<br />
+Follow a scent of poppies.<br />
+<br />
+You circle a patch of poppies by the pondside.<br />
+<br />
+1. Follow a scent of roses.<br />
+2. Approach the pond.<br />
+3. Return back home.<br />
+&gt; undo<br />
+Undoing the last turn.<br />
+<br />
+1. Follow a scent of roses.<br />
+2. Follow a scent of poppies.<br />
+&gt; look<br />
+(That action is currently disabled.)<br />
+<br />
+1. Follow a scent of roses.<br />
+2. Follow a scent of poppies.<br />
+&gt;</div><h3>Exposed and unexposed nodes</h3>
+<p>When a node has been activated at least once, it is considered <i>exposed</i>,
+and the flag <span class="code">($&nbsp;is exposed)</span> is set. This is handy for putting
+conditions on the links between nodes:
+</p>
+<textarea class="copyarea" id="copy15" readonly>
+...
+
+#land
+(label *)	Return back home.
+(disp *)	After an impeccable landing, you find yourself back at the hive.
+		(game over { A day well spent! })
+(#rosebush/#poppies/#pond offers *)
+	(#rosebush is exposed)
+	(#poppies is exposed)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">...</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#land</td></tr>
+<tr><td class="left">(label *)</td><td class="right">Return back home.</td></tr>
+<tr><td class="left">(disp *)</td><td class="right">After an impeccable landing, you find yourself back at the hive.</td></tr>
+<tr><td class="left"></td><td class="right">(game over { A day well spent! })</td></tr>
+<tr><td class="both" colspan="2">(#rosebush/#poppies/#pond offers *)</td></tr>
+<tr><td class="left"></td><td class="right">(#rosebush is exposed)</td></tr>
+<tr><td class="left"></td><td class="right">(#poppies is exposed)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy15').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>In the above example, the &ldquo;<span class="prgoutput">Return back home</span>&rdquo; option will only
+show up after the player has visited both the poppies and the rosebush.
+</p>
+<p>The access predicate <span class="code">($&nbsp;is unexposed)</span> is the negation of
+<span class="code">($&nbsp;is exposed)</span>.
+</p>
+<p>A node can have an <i>initial label</i> which is shown instead of the regular
+label while the node is unexposed:
+</p>
+<textarea class="copyarea" id="copy16" readonly>
+#poppies
+(initial label *)	Follow a scent of poppies.
+(label *)		Return to the patch of poppies.
+(disp *)		You circle a patch of poppies by the pondside.
+(* offers #rosebush/#pond)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">#poppies</td></tr>
+<tr><td class="left">(initial label *)</td><td class="right">Follow a scent of poppies.</td></tr>
+<tr><td class="left">(label *)</td><td class="right">Return to the patch of poppies.</td></tr>
+<tr><td class="left">(disp *)</td><td class="right">You circle a patch of poppies by the pondside.</td></tr>
+<tr><td class="both" colspan="2">(* offers #rosebush/#pond)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy16').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The default implementation of <span class="code">(initial label&nbsp;$)</span> simply passes
+control to <span class="code">(label&nbsp;$)</span>.
+</p>
+<h3>Dead ends and sticky nodes</h3>
+<p>A <i>dead end</i> is a node that doesn't offer any further choices. When the
+current node is a dead end, control flows back to the most recent node by
+default. In addition, the dead-end node becomes <i>unavailable</i>. Unavailable
+nodes do not show up in option lists, even if they are declared using
+<span class="code">($&nbsp;offers&nbsp;$)</span>.
+</p>
+<textarea class="copyarea" id="copy17" readonly>
+#poppies-collect
+(#poppies offers *)
+(label *)		Collect nectar from the poppies.
+(disp *)		Yum!
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">#poppies-collect</td></tr>
+<tr><td class="both" colspan="2">(#poppies offers *)</td></tr>
+<tr><td class="left">(label *)</td><td class="right">Collect nectar from the poppies.</td></tr>
+<tr><td class="left">(disp *)</td><td class="right">Yum!</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy17').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<div class="img"><img src="choice1a.png" /></div>
+<div class="blkoutput">You extend your wings. A warm, buzzy feeling spreads through your body as you<br />
+leave the hive.<br />
+<br />
+1. Follow a scent of roses.<br />
+2. Follow a scent of poppies.<br />
+&gt; 2<br />
+Follow a scent of poppies.<br />
+<br />
+You circle a patch of poppies by the pondside.<br />
+<br />
+1. Follow a scent of roses.<br />
+2. Approach the pond.<br />
+3. Collect nectar from the poppies.<br />
+&gt; 3<br />
+Collect nectar from the poppies.<br />
+<br />
+Yum!<br />
+<br />
+You circle a patch of poppies by the pondside.<br />
+<br />
+1. Follow a scent of roses.<br />
+2. Approach the pond.<br />
+&gt;</div><p>Sometimes you'll want a dead-end node that remains available in choice-listings
+even after it has been exposed. Just mark the node as <i>sticky</i>:
+</p>
+<textarea class="copyarea" id="copy18" readonly>
+#poppies-collect
+(sticky *)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">#poppies-collect</td></tr>
+<tr><td class="both" colspan="2">(sticky *)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy18').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<h3>Flow and converging paths</h3>
+<p>It is possible to specify a different target for a dead-end node using
+<span class="code">($&nbsp;flows to&nbsp;$)</span>:
+</p>
+<textarea class="copyarea" id="copy19" readonly>
+#poppies-collect
+(#poppies offers *)
+(label *)		Collect nectar from the poppies.
+(disp *)		Yum!
+			(par)
+			A sudden gust of wind throws you in the direction of the pond.
+(* flows to #pond)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">#poppies-collect</td></tr>
+<tr><td class="both" colspan="2">(#poppies offers *)</td></tr>
+<tr><td class="left">(label *)</td><td class="right">Collect nectar from the poppies.</td></tr>
+<tr><td class="left">(disp *)</td><td class="right">Yum!</td></tr>
+<tr><td class="left"></td><td class="right">(par)</td></tr>
+<tr><td class="left"></td><td class="right">A sudden gust of wind throws you in the direction of the pond.</td></tr>
+<tr><td class="both" colspan="2">(* flows to #pond)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy19').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<div class="img"><img src="choice1b.png" /></div>
+<p>This mechanism can be used to implement <i>converging paths</i>, where a single
+node can be reached in several ways, with different display-text for every
+path. The common node itself can have a blank display-text, and only serve as
+an anonymous bag of subsequent choices:
+</p>
+<div class="img"><img src="choice2.png" /></div>
+<p>Note: In this example, <span class="code">#poppies-collect</span> and
+<span class="code">#rosebush-collect</span> are declared sticky. This prevents the game from
+becoming unwinnable if the player revisits a plant after collecting both kinds
+of nectar.
+</p>
+<textarea class="copyarea" id="copy20" readonly>
+(intro)		(activate node #start)
+
+#start
+(disp *)	You extend your wings. A warm, buzzy feeling spreads through your body
+		as you leave the hive.
+(* offers #rosebush)
+(* offers #poppies)
+
+#rosebush
+(initial label *)	Follow a scent of roses.
+(label *)		Return to the rosebush.
+(disp *)		You hover for a while near the pink rosebush.
+(* offers #poppies)
+
+#poppies
+(initial label *)	Follow a scent of poppies.
+(label *)		Return to the patch of poppies.
+(disp *)		You circle a fragrant patch of poppies.
+(* offers #rosebush)
+
+#rosebush-collect
+(#rosebush offers *)
+(sticky *)
+(label *)		Collect nectar from the rosebush.
+(disp *)		Yum! Rose nectar!
+(* flows to #collect-done)
+
+#poppies-collect
+(#poppies offers *)
+(sticky *)
+(label *)		Collect nectar from the poppies.
+(disp *)		Yum! Poppy nectar!
+(* flows to #collect-done)
+
+#collect-done
+(* offers #rosebush/#poppies/#land)
+
+#land
+(label *)	Return back home.
+(disp *)	After an impeccable landing, you find yourself back at the hive.
+		(game over { A day well spent! })
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left">(intro)</td><td class="right">(activate node #start)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#start</td></tr>
+<tr><td class="left">(disp *)</td><td class="right">You extend your wings. A warm, buzzy feeling spreads through your body</td></tr>
+<tr><td class="left"></td><td class="right">as you leave the hive.</td></tr>
+<tr><td class="both" colspan="2">(* offers #rosebush)</td></tr>
+<tr><td class="both" colspan="2">(* offers #poppies)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#rosebush</td></tr>
+<tr><td class="left">(initial label *)</td><td class="right">Follow a scent of roses.</td></tr>
+<tr><td class="left">(label *)</td><td class="right">Return to the rosebush.</td></tr>
+<tr><td class="left">(disp *)</td><td class="right">You hover for a while near the pink rosebush.</td></tr>
+<tr><td class="both" colspan="2">(* offers #poppies)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#poppies</td></tr>
+<tr><td class="left">(initial label *)</td><td class="right">Follow a scent of poppies.</td></tr>
+<tr><td class="left">(label *)</td><td class="right">Return to the patch of poppies.</td></tr>
+<tr><td class="left">(disp *)</td><td class="right">You circle a fragrant patch of poppies.</td></tr>
+<tr><td class="both" colspan="2">(* offers #rosebush)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#rosebush-collect</td></tr>
+<tr><td class="both" colspan="2">(#rosebush offers *)</td></tr>
+<tr><td class="both" colspan="2">(sticky *)</td></tr>
+<tr><td class="left">(label *)</td><td class="right">Collect nectar from the rosebush.</td></tr>
+<tr><td class="left">(disp *)</td><td class="right">Yum! Rose nectar!</td></tr>
+<tr><td class="both" colspan="2">(* flows to #collect-done)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#poppies-collect</td></tr>
+<tr><td class="both" colspan="2">(#poppies offers *)</td></tr>
+<tr><td class="both" colspan="2">(sticky *)</td></tr>
+<tr><td class="left">(label *)</td><td class="right">Collect nectar from the poppies.</td></tr>
+<tr><td class="left">(disp *)</td><td class="right">Yum! Poppy nectar!</td></tr>
+<tr><td class="both" colspan="2">(* flows to #collect-done)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#collect-done</td></tr>
+<tr><td class="both" colspan="2">(* offers #rosebush/#poppies/#land)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#land</td></tr>
+<tr><td class="left">(label *)</td><td class="right">Return back home.</td></tr>
+<tr><td class="left">(disp *)</td><td class="right">After an impeccable landing, you find yourself back at the hive.</td></tr>
+<tr><td class="left"></td><td class="right">(game over { A day well spent! })</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy20').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The default behaviour of automatically returning to the previous node is
+actually implemented as a fallback rule for the <span class="code">($&nbsp;flows to&nbsp;$)</span>
+predicate.
+</p>
+<p>Only a single level of node history is recorded, so automatic backtracking only
+works once. If the previous node also offers no choices, then the library dumps
+the player back into parser mode. If this is undesirable, always provide
+explicit <span class="code">($&nbsp;flows to&nbsp;$)</span> links for nodes that might <i>turn
+into</i> dead ends. That is, nodes that offer choices initially, but where all
+of those choices may eventually go away.
+</p>
+<h3>The hub pattern</h3>
+<p>Another way to organize a choice-based sequence is to have a central hub node,
+and to selectively offer links based on which peripheral nodes have been
+exposed so far.
+</p>
+<p>In the following example, the player can collect nectar once from each plant,
+and needs at least some nectar in order to proceed with the landing:
+</p>
+<div class="img"><img src="choicehub.png" /></div>
+<textarea class="copyarea" id="copy21" readonly>
+(intro)		You extend your wings. A warm, buzzy feeling spreads through your body
+		as you leave the hive.
+		(activate node #hub)
+
+#hub
+(* offers #rosebush)
+(* offers #poppies)
+
+#rosebush
+(sticky *)
+(initial label *)	Follow a scent of roses.
+(label *)		Return to the rosebush.
+(disp *)		You (select) discover a (or) revisit the (stopping) pink rosebush.
+
+#poppies
+(sticky *)
+(initial label *)	Follow a scent of poppies.
+(label *)		Return to the patch of poppies.
+(disp *)		You (select) find a (or) circle the (stopping) fragrant patch of poppies.
+
+#rosebush-collect
+(#hub offers *)		(#rosebush is exposed)
+(label *)		Collect nectar from the rosebush.
+(disp *)		Yum! Rose nectar!
+
+#poppies-collect
+(#hub offers *)		(#poppies is exposed)
+(label *)		Collect nectar from the poppies.
+(disp *)		Yum! Poppy nectar!
+
+#land
+(#hub offers *)		(#rosebush-collect is exposed) (or) (#poppies-collect is exposed)
+(label *)		Return back home.
+(disp *)		After an impeccable landing, you find yourself back at the hive.
+			(game over { A day well spent! })
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left">(intro)</td><td class="right">You extend your wings. A warm, buzzy feeling spreads through your body</td></tr>
+<tr><td class="left"></td><td class="right">as you leave the hive.</td></tr>
+<tr><td class="left"></td><td class="right">(activate node #hub)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#hub</td></tr>
+<tr><td class="both" colspan="2">(* offers #rosebush)</td></tr>
+<tr><td class="both" colspan="2">(* offers #poppies)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#rosebush</td></tr>
+<tr><td class="both" colspan="2">(sticky *)</td></tr>
+<tr><td class="left">(initial label *)</td><td class="right">Follow a scent of roses.</td></tr>
+<tr><td class="left">(label *)</td><td class="right">Return to the rosebush.</td></tr>
+<tr><td class="left">(disp *)</td><td class="right">You (select) discover a (or) revisit the (stopping) pink rosebush.</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#poppies</td></tr>
+<tr><td class="both" colspan="2">(sticky *)</td></tr>
+<tr><td class="left">(initial label *)</td><td class="right">Follow a scent of poppies.</td></tr>
+<tr><td class="left">(label *)</td><td class="right">Return to the patch of poppies.</td></tr>
+<tr><td class="left">(disp *)</td><td class="right">You (select) find a (or) circle the (stopping) fragrant patch of poppies.</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#rosebush-collect</td></tr>
+<tr><td class="left">(#hub offers *)</td><td class="right">(#rosebush is exposed)</td></tr>
+<tr><td class="left">(label *)</td><td class="right">Collect nectar from the rosebush.</td></tr>
+<tr><td class="left">(disp *)</td><td class="right">Yum! Rose nectar!</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#poppies-collect</td></tr>
+<tr><td class="left">(#hub offers *)</td><td class="right">(#poppies is exposed)</td></tr>
+<tr><td class="left">(label *)</td><td class="right">Collect nectar from the poppies.</td></tr>
+<tr><td class="left">(disp *)</td><td class="right">Yum! Poppy nectar!</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#land</td></tr>
+<tr><td class="left">(#hub offers *)</td><td class="right">(#rosebush-collect is exposed) (or) (#poppies-collect is exposed)</td></tr>
+<tr><td class="left">(label *)</td><td class="right">Return back home.</td></tr>
+<tr><td class="left">(disp *)</td><td class="right">After an impeccable landing, you find yourself back at the hive.</td></tr>
+<tr><td class="left"></td><td class="right">(game over { A day well spent! })</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy21').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<h3>Choice/parser integration</h3>
+<p>A <i>terminating</i> dead-end node has the side-effect of leaving choice mode.
+This is handy when integrating choice-based sequences into a larger game:
+</p>
+<div class="img"><img src="choiceterm.png" /></div>
+<textarea class="copyarea" id="copy22" readonly>
+(current player #player)
+(#player is #in #beehive)
+
+#beehive
+(room *)
+(look *)	Honeycombs line every wall. The exit is due east.
+
+(instead of [leave * #east])
+	(activate node #start)
+
+#start
+(disp *)	You extend your wings. A warm, buzzy feeling spreads through your body
+		as you leave the hive.
+(* offers #rosebush)
+(* offers #poppies)
+
+#rosebush
+(label *)	Follow a scent of roses.
+(disp *)	You hover for a while near the pink rosebush.
+(* offers #poppies/#land)
+
+#poppies
+(label *)	Follow a scent of poppies.
+(disp *)	You circle a patch of poppies by the pondside.
+(* offers #rosebush/#land)
+
+#land
+(label *)	Return back home.
+(disp *)	After an impeccable landing, you find yourself back at the hive.
+(terminating *)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(current player #player)</td></tr>
+<tr><td class="both" colspan="2">(#player is #in #beehive)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#beehive</td></tr>
+<tr><td class="both" colspan="2">(room *)</td></tr>
+<tr><td class="left">(look *)</td><td class="right">Honeycombs line every wall. The exit is due east.</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(instead of [leave * #east])</td></tr>
+<tr><td class="left"></td><td class="right">(activate node #start)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#start</td></tr>
+<tr><td class="left">(disp *)</td><td class="right">You extend your wings. A warm, buzzy feeling spreads through your body</td></tr>
+<tr><td class="left"></td><td class="right">as you leave the hive.</td></tr>
+<tr><td class="both" colspan="2">(* offers #rosebush)</td></tr>
+<tr><td class="both" colspan="2">(* offers #poppies)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#rosebush</td></tr>
+<tr><td class="left">(label *)</td><td class="right">Follow a scent of roses.</td></tr>
+<tr><td class="left">(disp *)</td><td class="right">You hover for a while near the pink rosebush.</td></tr>
+<tr><td class="both" colspan="2">(* offers #poppies/#land)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#poppies</td></tr>
+<tr><td class="left">(label *)</td><td class="right">Follow a scent of poppies.</td></tr>
+<tr><td class="left">(disp *)</td><td class="right">You circle a patch of poppies by the pondside.</td></tr>
+<tr><td class="both" colspan="2">(* offers #rosebush/#land)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#land</td></tr>
+<tr><td class="left">(label *)</td><td class="right">Return back home.</td></tr>
+<tr><td class="left">(disp *)</td><td class="right">After an impeccable landing, you find yourself back at the hive.</td></tr>
+<tr><td class="both" colspan="2">(terminating *)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy22').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Terminating nodes are implicitly sticky.
+</p>
+<p>Nothing prevents you from letting arbitrary game objects double as nodes in
+choice mode. For instance, in the above example we could have used
+<span class="code">#beehive</span> as the starting node, instead of introducing a separate
+<span class="code">#start</span> object. This is particularly handy when a game contains
+multiple choice-based sequences that are triggered in a similar way. For
+instance, conversations with non-player characters could be launched with a
+generic rule, such as:
+</p>
+<textarea class="copyarea" id="copy23" readonly>
+(perform [talk to (animate $NPC)])
+	(activate node $NPC)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(perform [talk to (animate $NPC)])</td></tr>
+<tr><td class="left"></td><td class="right">(activate node $NPC)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy23').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>When the player types a number during choice mode, a query is made to
+<span class="code">(choose&nbsp;$)</span>. The default behaviour of this predicate—feel free to
+override it!—is to print the label of the object followed by a paragraph break,
+and then make a query to <span class="code">(activate node&nbsp;$)</span>. This predicate, in
+turn, performs some internal housekeeping, and <i>displays</i> the node using a
+predicate called <span class="code">(display&nbsp;$)</span>:
+</p>
+<textarea class="copyarea" id="copy24" readonly>
+(display $Obj)
+	(exhaust) { *(before disp $Obj) }
+	(disp $Obj)
+	(exhaust) { *(after disp $Obj) }
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(display $Obj)</td></tr>
+<tr><td class="left"></td><td class="right">(exhaust) { *(before disp $Obj) }</td></tr>
+<tr><td class="left"></td><td class="right">(disp $Obj)</td></tr>
+<tr><td class="left"></td><td class="right">(exhaust) { *(after disp $Obj) }</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy24').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>So as a complement to the normal <span class="code">(disp&nbsp;$)</span> rules, story authors can
+put header and footer material in <span class="code">(before disp&nbsp;$)</span> and <span class="code">(after
+disp&nbsp;$)</span>, respectively.
+</p>
+<p>After querying <span class="code">(display&nbsp;$)</span>, <span class="code">(activate node&nbsp;$)</span> marks
+the node as exposed, and invokes <span class="code">(stop)</span>. But no query is made to
+<span class="code">(tick)</span>. Hence, by default, no in-game time passes in choice mode.
+</p>
+<p>To change this, just add an <span class="code">(after disp&nbsp;$)</span> rule with an explicit
+query to <span class="code">(tick)</span>:
+</p>
+<textarea class="copyarea" id="copy25" readonly>
+(after disp $)	(tick)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left">(after disp $)</td><td class="right">(tick)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy25').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Sometimes, it is more natural to advance time only at terminating nodes, i.e.
+just before the game transitions from choice mode to parser mode:
+</p>
+<textarea class="copyarea" id="copy26" readonly>
+(after disp (terminating $))
+	(tick)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(after disp (terminating $))</td></tr>
+<tr><td class="left"></td><td class="right">(tick)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy26').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>And here is a variant that also prints the current room description, sending a
+signal to the player that the game is now in parser mode:
+</p>
+<textarea class="copyarea" id="copy27" readonly>
+(after disp (terminating $))
+	(par)
+	(try [look])
+	(tick)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(after disp (terminating $))</td></tr>
+<tr><td class="left"></td><td class="right">(par)</td></tr>
+<tr><td class="left"></td><td class="right">(try [look])</td></tr>
+<tr><td class="left"></td><td class="right">(tick)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy27').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<h3>Hybrid modes</h3>
+<p>The library also supports parser/choice hybrid modes, where certain actions are
+available in addition to the numbered choices. For instance, it could be useful
+to allow <span class="prginput">SHOW X TO Y</span> from within a choice-based conversation.
+</p>
+<p>By default, all actions are allowed in parser mode, while only commands are
+allowed in choice mode. Change this by adding rules to <span class="code">(allowed
+action&nbsp;$)</span>, e.g.:
+</p>
+<textarea class="copyarea" id="copy28" readonly>
+(allowed action [look])
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(allowed action [look])</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy28').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The currently active node is indicated by the global variable <span class="code">(current
+node&nbsp;$)</span>. In parser mode, <span class="code">(current node&nbsp;$)</span> is unset. You
+shouldn't update this variable directly—use <span class="code">(activate node&nbsp;$)</span> and
+<span class="code">(activate parser)</span>—but you may query it. As an arbitrary example,
+you could allow <span class="prginput">LOOK</span> from a subset of the nodes:
+</p>
+<textarea class="copyarea" id="copy29" readonly>
+(allowed action [look])
+	(current node $Node)
+	($Node is one of [#rosebush #poppies])
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(allowed action [look])</td></tr>
+<tr><td class="left"></td><td class="right">(current node $Node)</td></tr>
+<tr><td class="left"></td><td class="right">($Node is one of [#rosebush #poppies])</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy29').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="npc.html">Chapter 9: Non-player characters</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 21, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 22, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

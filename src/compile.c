@@ -48,7 +48,8 @@ struct opinfosrc {
 	{I_CLRALL_OVAR,		0,					"CLRALL_OVAR"},
 	{I_COLLECT_BEGIN,	0,					"COLLECT_BEGIN"},
 	{I_COLLECT_CHECK,	OPF_CAN_FAIL,				"COLLECT_CHECK"},
-	{I_COLLECT_END,		OPF_CAN_FAIL,				"COLLECT_END"},
+	{I_COLLECT_END_R,	0,					"COLLECT_END_R"},
+	{I_COLLECT_END_V,	OPF_CAN_FAIL,				"COLLECT_END_V"},
 	{I_COLLECT_MATCH_ALL,	OPF_CAN_FAIL,				"COLLECT_MATCH_ALL"},
 	{I_COLLECT_PUSH,	0,					"COLLECT_PUSH"},
 	{I_COMPUTE_R,		OPF_CAN_FAIL|OPF_SUBOP,			"COMPUTE_R"},
@@ -410,30 +411,27 @@ static int variable_mentioned_in(struct word *w, struct astnode *an) {
 	return 0;
 }
 
-static void comp_ensure_seen(struct clause *cl, struct astnode *an, uint8_t *seen) {
+static void comp_vars_appearing_outside(struct clause *cl, struct astnode *an, struct astnode *target, uint8_t *flags) {
 	int i, vnum;
-	struct cinstr *ci;
 
 	while(an) {
-		if(an->kind == AN_VARIABLE) {
-			if(an->word->name[0]) {
-				vnum = findvar(cl, an->word);
-				if(!seen[vnum]) {
-					ci = add_instr(I_MAKE_VAR);
-					ci->oper[0] = (value_t) {OPER_VAR, vnum};
-					seen[vnum] = 1;
+		if(an != target) {
+			if(an->kind == AN_VARIABLE) {
+				if(an->word->name[0]) {
+					vnum = findvar(cl, an->word);
+					flags[vnum] = 1;
 				}
-			}
-		} else {
-			for(i = 0; i < an->nchild; i++) {
-				comp_ensure_seen(cl, an->children[i], seen);
+			} else {
+				for(i = 0; i < an->nchild; i++) {
+					comp_vars_appearing_outside(cl, an->children[i], target, flags);
+				}
 			}
 		}
 		an = an->next_in_body;
 	}
 }
 
-static void comp_ensure_seen_if_mentioned(struct clause *cl, struct astnode *an, uint8_t *seen, struct astnode *body) {
+static void comp_ensure_seen_if_flagged(struct clause *cl, struct astnode *an, uint8_t *seen, uint8_t *flags) {
 	int i, vnum;
 	struct cinstr *ci;
 
@@ -441,8 +439,7 @@ static void comp_ensure_seen_if_mentioned(struct clause *cl, struct astnode *an,
 		if(an->kind == AN_VARIABLE) {
 			if(an->word->name[0]) {
 				vnum = findvar(cl, an->word);
-				if(!seen[vnum]
-				&& variable_mentioned_in(an->word, body)) {
+				if(!seen[vnum] && flags[vnum]) {
 					ci = add_instr(I_MAKE_VAR);
 					ci->oper[0] = (value_t) {OPER_VAR, vnum};
 					seen[vnum] = 1;
@@ -450,11 +447,19 @@ static void comp_ensure_seen_if_mentioned(struct clause *cl, struct astnode *an,
 			}
 		} else {
 			for(i = 0; i < an->nchild; i++) {
-				comp_ensure_seen_if_mentioned(cl, an->children[i], seen, body);
+				comp_ensure_seen_if_flagged(cl, an->children[i], seen, flags);
 			}
 		}
 		an = an->next_in_body;
 	}
+}
+
+static void comp_ensure_seen_if_nonlocal(struct clause *cl, struct astnode *an, uint8_t *seen) {
+	uint8_t flags[cl->nvar];
+
+	memset(flags, 0, cl->nvar);
+	comp_vars_appearing_outside(cl, cl->body, an, flags);
+	comp_ensure_seen_if_flagged(cl, an, seen, flags);
 }
 
 static int comp_simple_constant(struct astnode *an) {
@@ -785,7 +790,7 @@ static void comp_rev_lookup(struct program *prg, struct clause *cl, int mapnum) 
 		ci->oper[1] = (value_t) {OPER_RLAB, labfound};
 		ci->oper[2] = (value_t) {OPER_PRED, cl->predicate->pred_id};
 
-		ci = add_instr(I_COLLECT_END);
+		ci = add_instr(I_COLLECT_END_V);
 		ci->oper[0] = (value_t) {VAL_NIL, 0};
 		ci = add_instr(I_JUMP);
 		ci->oper[0] = (value_t) {OPER_RLAB, labloop};
@@ -806,7 +811,7 @@ static void comp_rev_lookup(struct program *prg, struct clause *cl, int mapnum) 
 		for(i = 0; i < nmap; i++) {
 			begin_routine(labblock + i);
 			if(map->map[i].count > MAXWORDMAP) {
-				ci = add_instr(I_COLLECT_END);
+				ci = add_instr(I_COLLECT_END_V);
 				ci->oper[0] = (value_t) {VAL_NIL, 0};
 				ci = add_instr(I_JUMP);
 				ci->oper[0] = (value_t) {OPER_RLAB, labloop};
@@ -833,9 +838,7 @@ static void comp_rev_lookup(struct program *prg, struct clause *cl, int mapnum) 
 	ci->oper[0] = (value_t) {OPER_ARG, 0};
 	ci->implicit = labcheck;
 
-	ci = add_instr(I_MAKE_VAR);
-	ci->oper[0] = (value_t) {OPER_VAR, 0};
-	ci = add_instr(I_COLLECT_END);
+	ci = add_instr(I_COLLECT_END_R);
 	ci->oper[0] = (value_t) {OPER_VAR, 0};
 	ci = add_instr(I_JUMP);
 	ci->oper[0] = (value_t) {OPER_RLAB, labfoundloop};
@@ -1682,6 +1685,7 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 	int i, lab = -1, endlab, stoplab, vnum, box, dyn_id;
 	int at_tail;
 	struct astnode *sub_known_args[MAXPARAM];
+	uint8_t seen_sub[cl->nvar];
 
 	while(an) {
 		at_tail = (tail != NO_TAIL && !an->next_in_body);
@@ -1696,7 +1700,7 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 			if(at_tail) return;
 			break;
 		case AN_OR:
-			comp_ensure_seen(cl, an, seen);
+			comp_ensure_seen_if_nonlocal(cl, an, seen);
 			if(at_tail) {
 				endlab = tail;
 			} else {
@@ -1710,7 +1714,8 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 					ci->oper[0] = (value_t) {OPER_NUM, 0};
 					ci->oper[1] = (value_t) {OPER_RLAB, lab};
 				}
-				comp_body(prg, cl, an->children[i], seen, endlab, predflags, known_args);
+				memcpy(seen_sub, seen, cl->nvar);
+				comp_body(prg, cl, an->children[i], seen_sub, endlab, predflags, known_args);
 				memset(known_args, 0, MAXPARAM * sizeof(struct astnode *));
 				if(!last) {
 					begin_routine(lab);
@@ -1750,7 +1755,7 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 			} else {
 				uint8_t seen1[cl->nvar], seen2[cl->nvar];
 
-				comp_ensure_seen_if_mentioned(cl, an, seen, an->next_in_body);
+				comp_ensure_seen_if_nonlocal(cl, an, seen);
 				memcpy(seen1, seen, cl->nvar);
 				memcpy(seen2, seen, cl->nvar);
 				lab = make_routine_id();
@@ -1846,17 +1851,18 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 			}
 			// drop through
 		case AN_NEG_BLOCK:
-			comp_ensure_seen(cl, an, seen);
+			comp_ensure_seen_if_nonlocal(cl, an, seen);
+			memcpy(seen_sub, seen, cl->nvar);
 			endlab = make_routine_id();
 			if(an->kind == AN_NEG_RULE || body_succeeds_at_most_once(an->children[0])) {
 				ci = add_instr(I_PUSH_CHOICE);
 				ci->oper[0] = (value_t) {OPER_NUM, 0};
 				ci->oper[1] = (value_t) {OPER_RLAB, endlab};
 				if(an->kind == AN_NEG_BLOCK) {
-					comp_body(prg, cl, an->children[0], seen, NO_TAIL, predflags, known_args);
+					comp_body(prg, cl, an->children[0], seen_sub, NO_TAIL, predflags, known_args);
 				} else {
 					assert(an->subkind != RULE_MULTI);
-					comp_rule(prg, cl, an, seen, NO_TAIL, predflags, known_args);
+					comp_rule(prg, cl, an, seen_sub, NO_TAIL, predflags, known_args);
 				}
 				ci = add_instr(I_CUT_CHOICE);
 			} else {
@@ -1868,7 +1874,7 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 				ci->oper[0] = (value_t) {OPER_NUM, 0};
 				ci->oper[1] = (value_t) {OPER_RLAB, endlab};
 				assert(an->kind == AN_NEG_BLOCK);
-				comp_body(prg, cl, an->children[0], seen, NO_TAIL, predflags, known_args);
+				comp_body(prg, cl, an->children[0], seen_sub, NO_TAIL, predflags, known_args);
 				ci = add_instr(I_RESTORE_CHOICE);
 				ci->oper[0] = (value_t) {OPER_VAR, vnum};
 			}
@@ -1892,12 +1898,13 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 				&& an->children[0]->children[0]->kind == AN_RULE
 				&& (an->children[0]->children[0]->predicate->pred->flags & PREDF_FAIL)))
 			{
-				comp_ensure_seen(cl, an, seen);
+				memcpy(seen_sub, seen, cl->nvar);
 				endlab = make_routine_id();
 				ci = add_instr(I_PUSH_CHOICE);
 				ci->oper[0] = (value_t) {OPER_NUM, 0};
 				ci->oper[1] = (value_t) {OPER_RLAB, endlab};
-				comp_body(prg, cl, an->children[0], seen, NO_TAIL, predflags, known_args);
+				memset(known_args, 0, MAXPARAM * sizeof(struct astnode *));
+				comp_body(prg, cl, an->children[0], seen_sub, NO_TAIL, predflags, known_args);
 				ci = add_instr(I_JUMP);
 				ci->oper[0] = (value_t) {OPER_FAIL};
 				end_routine_cl(cl);
@@ -1925,7 +1932,7 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 				comp_body(prg, cl, an->children[0], seen, at_tail? tail : NO_TAIL, predflags, known_args);
 				if(at_tail) return;
 			} else {
-				comp_ensure_seen(cl, an, seen);
+				comp_ensure_seen_if_nonlocal(cl, an, seen);
 				if(at_tail) {
 					endlab = tail;
 				} else {
@@ -1945,10 +1952,12 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 					ci->subop = 1;
 					ci->oper[0] = (value_t) {OPER_GFLAG, dyn_id};
 					memcpy(sub_known_args, known_args, MAXPARAM * sizeof(struct astnode *));
-					comp_body(prg, cl, an->children[0], seen, endlab, predflags, sub_known_args);
+					memcpy(seen_sub, seen, cl->nvar);
+					comp_body(prg, cl, an->children[0], seen_sub, endlab, predflags, sub_known_args);
 					begin_routine(lab);
+					memcpy(seen_sub, seen, cl->nvar);
 					memcpy(sub_known_args, known_args, MAXPARAM * sizeof(struct astnode *));
-					comp_body(prg, cl, an->children[1], seen, endlab, predflags, sub_known_args);
+					comp_body(prg, cl, an->children[1], seen_sub, endlab, predflags, sub_known_args);
 				} else {
 					lab = make_routine_block(an->nchild - 1);
 					ci = add_instr(I_SELECT);
@@ -1963,11 +1972,13 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 						ci->oper[1] = (value_t) {OPER_RLAB, lab + i - 1};
 					}
 					memcpy(sub_known_args, known_args, MAXPARAM * sizeof(struct astnode *));
-					comp_body(prg, cl, an->children[0], seen, endlab, predflags, sub_known_args);
+					memcpy(seen_sub, seen, cl->nvar);
+					comp_body(prg, cl, an->children[0], seen_sub, endlab, predflags, sub_known_args);
 					for(i = 1; i < an->nchild; i++) {
 						begin_routine(lab + i - 1);
 						memcpy(sub_known_args, known_args, MAXPARAM * sizeof(struct astnode *));
-						comp_body(prg, cl, an->children[i], seen, endlab, predflags, sub_known_args);
+						memcpy(seen_sub, seen, cl->nvar);
+						comp_body(prg, cl, an->children[i], seen_sub, endlab, predflags, sub_known_args);
 					}
 				}
 				memset(known_args, 0, MAXPARAM * sizeof(struct astnode *));
@@ -1985,14 +1996,15 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 			ci->oper[0] = (value_t) {OPER_VAR, vnum};
 			break;
 		case AN_COLLECT:
-			comp_ensure_seen(cl, an, seen);
 			endlab = make_routine_id();
 			ci = add_instr(I_COLLECT_BEGIN);
 			ci = add_instr(I_PUSH_CHOICE);
 			ci->oper[0] = (value_t) {OPER_NUM, 0};
 			ci->oper[1] = (value_t) {OPER_RLAB, endlab};
-			comp_body(prg, cl, an->children[0], seen, NO_TAIL, predflags, known_args);
-			v1 = comp_value(cl, an->children[1], seen, known_args);
+			memset(known_args, 0, MAXPARAM * sizeof(struct astnode *));
+			memcpy(seen_sub, seen, cl->nvar);
+			comp_body(prg, cl, an->children[0], seen_sub, NO_TAIL, predflags, known_args);
+			v1 = comp_value(cl, an->children[1], seen_sub, known_args);
 			ci = add_instr(I_COLLECT_PUSH);
 			ci->oper[0] = v1;
 			ci = add_instr(I_JUMP);
@@ -2002,12 +2014,20 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 			begin_routine(endlab);
 			ci = add_instr(I_POP_CHOICE);
 			ci->oper[0] = (value_t) {OPER_NUM, 0};
-			v2 = comp_value(cl, an->children[2], seen, known_args);
-			ci = add_instr(I_COLLECT_END);
-			ci->oper[0] = v2;
+			if(an->children[2]->kind == AN_VARIABLE
+			&& an->children[2]->word->name[0]
+			&& (vnum = findvar(cl, an->children[2]->word)) >= 0
+			&& !seen[vnum]) {
+				ci = add_instr(I_COLLECT_END_R);
+				ci->oper[0] = (value_t) {OPER_VAR, vnum};
+				seen[vnum] = 1;
+			} else {
+				v2 = comp_value(cl, an->children[2], seen, known_args);
+				ci = add_instr(I_COLLECT_END_V);
+				ci->oper[0] = v2;
+			}
 			break;
 		case AN_COLLECT_WORDS:
-			comp_ensure_seen(cl, an, seen);
 			endlab = make_routine_id();
 			ci = add_instr(I_COLLECT_BEGIN);
 			ci = add_instr(I_FOR_WORDS);
@@ -2015,7 +2035,9 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 			ci = add_instr(I_PUSH_CHOICE);
 			ci->oper[0] = (value_t) {OPER_NUM, 0};
 			ci->oper[1] = (value_t) {OPER_RLAB, endlab};
-			comp_body(prg, cl, an->children[0], seen, NO_TAIL, predflags | PREDF_INVOKED_FOR_WORDS, known_args);
+			memset(known_args, 0, MAXPARAM * sizeof(struct astnode *));
+			memcpy(seen_sub, seen, cl->nvar);
+			comp_body(prg, cl, an->children[0], seen_sub, NO_TAIL, predflags | PREDF_INVOKED_FOR_WORDS, known_args);
 			ci = add_instr(I_JUMP);
 			ci->oper[0] = (value_t) {OPER_FAIL};
 			end_routine_cl(cl);
@@ -2025,12 +2047,21 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 			ci->oper[0] = (value_t) {OPER_NUM, 0};
 			ci = add_instr(I_FOR_WORDS);
 			ci->subop = 0;
-			v1 = comp_value(cl, an->children[1], seen, known_args);
-			ci = add_instr(I_COLLECT_END);
-			ci->oper[0] = v1;
+			if(an->children[1]->kind == AN_VARIABLE
+			&& an->children[1]->word->name[0]
+			&& (vnum = findvar(cl, an->children[1]->word)) >= 0
+			&& !seen[vnum]) {
+				ci = add_instr(I_COLLECT_END_R);
+				ci->oper[0] = (value_t) {OPER_VAR, vnum};
+				seen[vnum] = 1;
+			} else {
+				v1 = comp_value(cl, an->children[1], seen, known_args);
+				ci = add_instr(I_COLLECT_END_V);
+				ci->oper[0] = v1;
+			}
 			break;
 		case AN_DETERMINE_OBJECT:
-			comp_ensure_seen(cl, an, seen);
+			comp_ensure_seen_if_nonlocal(cl, an, seen);
 			memset(known_args, 0, MAXPARAM * sizeof(struct astnode *));
 			if(an->value >= 0 && an->value < cl->predicate->pred->nwordmap) {
 				comp_value_into(cl, an->children[0], (value_t) {OPER_ARG, 0}, seen, known_args);
@@ -2051,7 +2082,8 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 			ci = add_instr(I_PUSH_CHOICE);
 			ci->oper[0] = (value_t) {OPER_NUM, 0};
 			ci->oper[1] = (value_t) {OPER_RLAB, endlab};
-			comp_body(prg, cl, an->children[2], seen, NO_TAIL, predflags | PREDF_INVOKED_FOR_WORDS, known_args);
+			memcpy(seen_sub, seen, cl->nvar);
+			comp_body(prg, cl, an->children[2], seen_sub, NO_TAIL, predflags | PREDF_INVOKED_FOR_WORDS, known_args);
 			ci = add_instr(I_JUMP);
 			ci->oper[0] = (value_t) {OPER_FAIL};
 			end_routine_cl(cl);
@@ -2065,7 +2097,7 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 			ci->oper[0] = v1;
 			break;
 		case AN_STOPPABLE:
-			comp_ensure_seen(cl, an, seen);
+			comp_ensure_seen_if_nonlocal(cl, an, seen);
 			endlab = make_routine_id();
 			ci = add_instr(I_PUSH_STOP);
 			ci->oper[0] = (value_t) {OPER_RLAB, endlab};
@@ -2079,7 +2111,7 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 			ci = add_instr(I_POP_STOP);
 			break;
 		case AN_OUTPUTBOX:
-			comp_ensure_seen(cl, an, seen);
+			comp_ensure_seen_if_nonlocal(cl, an, seen);
 			memset(known_args, 0, MAXPARAM * sizeof(struct astnode *));
 			lab = make_routine_id();
 			if(body_might_stop(an->children[1])) {
@@ -2185,7 +2217,7 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 				}
 				endlab = make_routine_id();
 				vnum = findvar(cl, an->word);
-				comp_ensure_seen(cl, an, seen);
+				comp_ensure_seen_if_nonlocal(cl, an, seen);
 				ci = add_instr(I_BEGIN_SELF_LINK);
 				if(stoplab >= 0) {
 					ci = add_instr(I_PUSH_STOP);
@@ -2263,7 +2295,7 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 				endlab = make_routine_id();
 				vnum = findvar(cl, an->word);
 				v1 = comp_value(cl, an->children[0], seen, known_args);
-				comp_ensure_seen(cl, an, seen);
+				comp_ensure_seen_if_nonlocal(cl, an, seen);
 				memset(known_args, 0, MAXPARAM * sizeof(struct astnode *));
 				if(an->kind == AN_LINK_RES) {
 					ci = add_instr(I_BEGIN_LINK_RES);
@@ -2347,7 +2379,7 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 			break;
 		case AN_LOG:
 			if(!(prg->optflags & OPTF_NO_LOG)) {
-				comp_ensure_seen(cl, an, seen);
+				comp_ensure_seen_if_nonlocal(cl, an, seen);
 				endlab = make_routine_id();
 				ci = add_instr(I_BEGIN_LOG);
 				ci = add_instr(I_PUSH_STOP);

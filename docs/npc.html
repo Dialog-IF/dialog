@@ -9,7 +9,7 @@
 <body>
 	<div class="chapter">
 	<h1>Chapter 9: Non-player characters</h1>
-	<div class="navlinks">(<a href="#npcmove">Movement</a>&nbsp;&bull; <a href="#npcaction">Other NPC actions</a>&nbsp;&bull; <a href="#npcorder">Taking orders</a>&nbsp;&bull; <a href="#conversation">Conversation</a>)</div>
+	<div class="navlinks">(<a href="#npcmove">Movement</a>&nbsp;&bull; <a href="#npcaction">Other NPC actions</a>&nbsp;&bull; <a href="#npcorder">Taking orders</a>&nbsp;&bull; <a href="#asktell">Ask and tell</a>&nbsp;&bull; <a href="#choiceconv">Choice-based conversation</a>)</div>
 <p>Animated non-player characters (NPCs) can really make the game world come
 alive. In their simplest form, NPCs are just ordinary objects whose antics are
 narrated spontaneously from time to time:
@@ -148,7 +148,7 @@ a random element from a given list, or fails if the list is empty.
 <p>The library provides a predicate called <span class="code">(let $NPC go $Direction)</span>,
 to allow NPCs to roam the game world.
 </p>
-<p>The following character moves around on a fixed schedule:
+<p>Here's a character who moves around on a fixed schedule:
 </p>
 <textarea class="copyarea" id="copy2" readonly>
 #workshop
@@ -490,7 +490,7 @@ variable instead of a global variable:
 <a class="copybtn" href="" onClick="document.getElementById('copy7').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <h3>Moving towards an object</h3>
-<p>Using the path-finder from the standard library, it's a simple matter to create
+<p>Using the path-finder from the standard library, it's straightforward to create
 an NPC that moves towards another object, such as the player character:
 </p>
 <textarea class="copyarea" id="copy8" readonly>
@@ -610,7 +610,7 @@ remember that we have to ensure that the action is possible. Thus:
 </div>
 <p>If there is no exit in the given direction, <span class="code">(from $ go $ to
 room&nbsp;$)</span> fails, and the <span class="code">perform</span> rule falls back on the
-default rule provided by the library, in which Bob refuses.
+default rule provided by the library, wherein Bob refuses.
 </p>
 <p>The above is sufficient in a game where Bob is free to roam the map using
 obvious exits. But if Bob is e.g. locked up in a cage at some point, the rules
@@ -653,18 +653,11 @@ have to take that into account. Thus, for instance:
 <div class="copycode">
 <a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
-<a id="conversation"></a><h2>Conversation</h2>
-<p>Conversation is an area where the standard library is expected to grow. The
-missing piece of the puzzle is some kind of mechanism for tracking conversation
-state, with optional support for choice-based interaction. Story authors can of
-course do this manually, using dynamic predicates and
-<span class="code">(select)...(stopping)</span> statements, but there is no library-supplied
-structure to build upon.
-</p>
-<p>Parser-wise, the library does provide <a href="stdactions.html#stdcomm">a set of standard actions</a>
-for communicating with NPCs. These include the classical “ask <i>x</i> about
-<i>y</i>” and “tell <i>x</i> about <i>y</i>” actions, which redirect by default
-via “talk to <i>x</i> about <i>y</i>” to a simple “talk to <i>x</i>”.
+<a id="asktell"></a><h2>Ask and tell</h2>
+<p>The library provides <a href="stdactions.html#stdcomm">a set of standard actions</a> for communicating
+with NPCs. These include the classical “ask <i>x</i> about <i>y</i>” and “tell
+<i>x</i> about <i>y</i>” actions, which redirect by default via “talk to
+<i>x</i> about <i>y</i>” to a simple “talk to <i>x</i>”.
 </p>
 <p>The story author deals with the <span class="code">[talk to $]</span> action as with any
 other; namely by overriding the default action-handling predicates. For
@@ -785,7 +778,7 @@ magazine?”
 </p>
 <textarea class="copyarea" id="copy14" readonly>
 #lifetopic
-(name *)	life , the universe , and everything
+(name *)	life, the universe, and everything
 (proper *)
 (topic *)
 
@@ -795,7 +788,7 @@ magazine?”
 <div class="blkcode">
 <table>
 <tr><td class="both" colspan="2">#lifetopic</td></tr>
-<tr><td class="left">(name *)</td><td class="right">life , the universe , and everything</td></tr>
+<tr><td class="left">(name *)</td><td class="right">life, the universe, and everything</td></tr>
 <tr><td class="both" colspan="2">(proper *)</td></tr>
 <tr><td class="both" colspan="2">(topic *)</td></tr>
 <tr><td class="blank" colspan="2"></td></tr>
@@ -811,13 +804,13 @@ traits in one go:
 </p>
 <textarea class="copyarea" id="copy15" readonly>
 #lifetopic
-(name *)	life , the universe , and everything
+(name *)	life, the universe, and everything
 (proper topic *)
 </textarea>
 <div class="blkcode">
 <table>
 <tr><td class="both" colspan="2">#lifetopic</td></tr>
-<tr><td class="left">(name *)</td><td class="right">life , the universe , and everything</td></tr>
+<tr><td class="left">(name *)</td><td class="right">life, the universe, and everything</td></tr>
 <tr><td class="both" colspan="2">(proper topic *)</td></tr>
 </table>
 </div>
@@ -943,9 +936,373 @@ know much about the subject:
 <div class="copycode">
 <a class="copybtn" href="" onClick="document.getElementById('copy20').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
+<a id="choiceconv"></a><h2>Choice-based conversation</h2>
+<p>One possible approach to conversation in parser games is to temporarily switch
+to choice-based interaction. If you haven't already read the chapter on
+<a href="timeprogress.html#choicemode">choice mode</a>, please do so before proceeding.
+</p>
+<p>Typically, one would create a set of choice nodes where the labels represent
+lines spoken by the player character, and the display-texts contain responses
+from the NPC.
+</p>
+<p>In the following playable example, the NPC object itself acts as a central hub
+node, offering an initial set of choices. Some choices cause the conversation
+to branch away from the hub in order to focus on a particular subject,
+represented by a separate hub-like structure. Some of the choices are gated,
+and appear only if certain other nodes of the conversation have been exposed.
+</p>
+<div class="img"><img src="choiceconv.png" /></div>
+<textarea class="copyarea" id="copy21" readonly>
+#player
+(current player *)
+(* is #in #repairshop)
+
+#repairshop
+(name *)	repair shop
+(room *)
+(look *)	You're in a noisy workshop.
+
+#mechanic
+(name *)	(if) (#mech-name is exposed) (then)
+			Lisa
+		(else)
+			busy-looking mechanic
+		(endif)
+(proper *)	(#mech-name is exposed)
+(female *)
+(* is #in #repairshop)
+(appearance * $ $)
+		(A *) is here, looking busy.
+
+(on every tick)
+	(if) (player can see *) (then)
+		(The *)
+		(select)
+			rifles through a box of parts.
+		(or)
+			removes a couple of screws.
+		(or)
+			checks the oil pressure of a clunker.
+		(at random)
+	(endif)
+
+(perform [talk to *])
+	“Um, excuse me?”
+	(par)
+	“Can I help you?”
+	(The #mechanic) wipes her hands on a dirty cloth and turns to face you.
+	(activate node *)
+
+(after disp (terminating $))
+	(par)
+	(try [look])
+	(tick)
+
+#mech-nice
+(#mechanic offers *)
+(label *)	“This looks like a nice establishment. Very authentic-looking.”
+(disp *)	“Happy to hear it.”
+
+#mech-wrong
+(#mechanic offers *)
+(sticky *)
+(initial label *)	“There's something wrong with my car.”
+(label *)		“About my car again...”
+(disp *)		“Yee-es?”
+(* flows to #mech-car)
+
+#mech-car-nowork
+(#mech-car offers *)
+(label *)		“It doesn't start anymore, is the thing.”
+(disp *)		“I see. Have you checked the battery?”
+
+#mech-battery
+(#mech-car offers *)
+			(#mech-car-nowork is exposed)
+(label *)		“How do I check the battery?”
+(disp *)		“Under the hood. Voltmeter on the plus and minus terminals.”
+
+#mech-voltmeter
+(#mech-car offers *)
+			(#mech-battery is exposed)
+(label *)		“Uh, what's a voltmeter?”
+(disp *)		“Or a multimeter. I could have a look at it, I guess. I have some time
+			next Thursday.”
+
+#mech-gas
+(#mech-car offers *)
+			(#mech-car-nowork is exposed)
+			(* is unexposed) %% Only offer this node once, even if it's not a dead end.
+(label *)		“The battery is brand new. Could it be something else, do you think?”
+(disp *)		“And you're sure that there's gas in the tank?”
+
+#mech-gasyes
+(#mech-gas offers *)
+(label *)		“Gas? Oh, gas! Yes, the man who sold me the car specifically said
+			there was gas in the tank.”
+(disp *)		“I was afraid of that. This'll be expensive. I have a free timeslot next
+			Thursday.”
+(* flows to #mech-car)
+
+#mech-gasno
+(#mech-gas offers *)
+(label *)		“I should certainly think not! That sounds positively dangerous.”
+(disp *)		“I see. Well, I could have a look at it next Thursday.”
+(* flows to #mech-car)
+
+#mech-deal
+(#mech-car offers *)
+			(#mech-voltmeter is exposed) (or) (#mech-gas is exposed)
+(label *)		“Next Thursday is fine.”
+(disp *)		“All right then. You can leave the car out front.”
+			(The #mechanic) returns to her work.
+			(par)
+			“Right. Goodbye for now, then!”
+			(par)
+			(The #mechanic) nods, and you walk out into the rain.
+			(game over { You have no car. })
+
+#mech-nevermind
+(#mech-car offers *)
+(sticky *)
+(label *)	“Never mind.”
+(* flows to #mechanic)
+
+#mech-name
+(#mechanic offers *)
+(label *)	“What's your name?”
+(disp *)	“I'm Lisa. Pleasure to meet you.”
+
+#mech-bye
+(#mechanic offers *)
+(label *)	“It was nice talking to you!”
+(disp *)	“Any time!” (The #mechanic) returns to her work.
+(terminating *)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">#player</td></tr>
+<tr><td class="both" colspan="2">(current player *)</td></tr>
+<tr><td class="both" colspan="2">(* is #in #repairshop)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#repairshop</td></tr>
+<tr><td class="left">(name *)</td><td class="right">repair shop</td></tr>
+<tr><td class="both" colspan="2">(room *)</td></tr>
+<tr><td class="left">(look *)</td><td class="right">You're in a noisy workshop.</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#mechanic</td></tr>
+<tr><td class="left">(name *)</td><td class="right">(if) (#mech-name is exposed) (then)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>Lisa</td></tr>
+<tr><td class="left"></td><td class="right">(else)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>busy-looking mechanic</td></tr>
+<tr><td class="left"></td><td class="right">(endif)</td></tr>
+<tr><td class="left">(proper *)</td><td class="right">(#mech-name is exposed)</td></tr>
+<tr><td class="both" colspan="2">(female *)</td></tr>
+<tr><td class="both" colspan="2">(* is #in #repairshop)</td></tr>
+<tr><td class="both" colspan="2">(appearance * $ $)</td></tr>
+<tr><td class="left"></td><td class="right">(A *) is here, looking busy.</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(on every tick)</td></tr>
+<tr><td class="left"></td><td class="right">(if) (player can see *) (then)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(The *)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(select)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span><span class="tab"> </span>rifles through a box of parts.</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(or)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span><span class="tab"> </span>removes a couple of screws.</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(or)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span><span class="tab"> </span>checks the oil pressure of a clunker.</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(at random)</td></tr>
+<tr><td class="left"></td><td class="right">(endif)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(perform [talk to *])</td></tr>
+<tr><td class="left"></td><td class="right">“Um, excuse me?”</td></tr>
+<tr><td class="left"></td><td class="right">(par)</td></tr>
+<tr><td class="left"></td><td class="right">“Can I help you?”</td></tr>
+<tr><td class="left"></td><td class="right">(The #mechanic) wipes her hands on a dirty cloth and turns to face you.</td></tr>
+<tr><td class="left"></td><td class="right">(activate node *)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(after disp (terminating $))</td></tr>
+<tr><td class="left"></td><td class="right">(par)</td></tr>
+<tr><td class="left"></td><td class="right">(try [look])</td></tr>
+<tr><td class="left"></td><td class="right">(tick)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#mech-nice</td></tr>
+<tr><td class="both" colspan="2">(#mechanic offers *)</td></tr>
+<tr><td class="left">(label *)</td><td class="right">“This looks like a nice establishment. Very authentic-looking.”</td></tr>
+<tr><td class="left">(disp *)</td><td class="right">“Happy to hear it.”</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#mech-wrong</td></tr>
+<tr><td class="both" colspan="2">(#mechanic offers *)</td></tr>
+<tr><td class="both" colspan="2">(sticky *)</td></tr>
+<tr><td class="left">(initial label *)</td><td class="right">“There's something wrong with my car.”</td></tr>
+<tr><td class="left">(label *)</td><td class="right">“About my car again...”</td></tr>
+<tr><td class="left">(disp *)</td><td class="right">“Yee-es?”</td></tr>
+<tr><td class="both" colspan="2">(* flows to #mech-car)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#mech-car-nowork</td></tr>
+<tr><td class="both" colspan="2">(#mech-car offers *)</td></tr>
+<tr><td class="left">(label *)</td><td class="right">“It doesn't start anymore, is the thing.”</td></tr>
+<tr><td class="left">(disp *)</td><td class="right">“I see. Have you checked the battery?”</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#mech-battery</td></tr>
+<tr><td class="both" colspan="2">(#mech-car offers *)</td></tr>
+<tr><td class="left"></td><td class="right">(#mech-car-nowork is exposed)</td></tr>
+<tr><td class="left">(label *)</td><td class="right">“How do I check the battery?”</td></tr>
+<tr><td class="left">(disp *)</td><td class="right">“Under the hood. Voltmeter on the plus and minus terminals.”</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#mech-voltmeter</td></tr>
+<tr><td class="both" colspan="2">(#mech-car offers *)</td></tr>
+<tr><td class="left"></td><td class="right">(#mech-battery is exposed)</td></tr>
+<tr><td class="left">(label *)</td><td class="right">“Uh, what's a voltmeter?”</td></tr>
+<tr><td class="left">(disp *)</td><td class="right">“Or a multimeter. I could have a look at it, I guess. I have some time</td></tr>
+<tr><td class="left"></td><td class="right">next Thursday.”</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#mech-gas</td></tr>
+<tr><td class="both" colspan="2">(#mech-car offers *)</td></tr>
+<tr><td class="left"></td><td class="right">(#mech-car-nowork is exposed)</td></tr>
+<tr><td class="left"></td><td class="right">(* is unexposed) <span class="comment">&emsp;%% Only offer this node once, even if it's not a dead end.</span></td></tr>
+<tr><td class="left">(label *)</td><td class="right">“The battery is brand new. Could it be something else, do you think?”</td></tr>
+<tr><td class="left">(disp *)</td><td class="right">“And you're sure that there's gas in the tank?”</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#mech-gasyes</td></tr>
+<tr><td class="both" colspan="2">(#mech-gas offers *)</td></tr>
+<tr><td class="left">(label *)</td><td class="right">“Gas? Oh, gas! Yes, the man who sold me the car specifically said</td></tr>
+<tr><td class="left"></td><td class="right">there was gas in the tank.”</td></tr>
+<tr><td class="left">(disp *)</td><td class="right">“I was afraid of that. This'll be expensive. I have a free timeslot next</td></tr>
+<tr><td class="left"></td><td class="right">Thursday.”</td></tr>
+<tr><td class="both" colspan="2">(* flows to #mech-car)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#mech-gasno</td></tr>
+<tr><td class="both" colspan="2">(#mech-gas offers *)</td></tr>
+<tr><td class="left">(label *)</td><td class="right">“I should certainly think not! That sounds positively dangerous.”</td></tr>
+<tr><td class="left">(disp *)</td><td class="right">“I see. Well, I could have a look at it next Thursday.”</td></tr>
+<tr><td class="both" colspan="2">(* flows to #mech-car)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#mech-deal</td></tr>
+<tr><td class="both" colspan="2">(#mech-car offers *)</td></tr>
+<tr><td class="left"></td><td class="right">(#mech-voltmeter is exposed) (or) (#mech-gas is exposed)</td></tr>
+<tr><td class="left">(label *)</td><td class="right">“Next Thursday is fine.”</td></tr>
+<tr><td class="left">(disp *)</td><td class="right">“All right then. You can leave the car out front.”</td></tr>
+<tr><td class="left"></td><td class="right">(The #mechanic) returns to her work.</td></tr>
+<tr><td class="left"></td><td class="right">(par)</td></tr>
+<tr><td class="left"></td><td class="right">“Right. Goodbye for now, then!”</td></tr>
+<tr><td class="left"></td><td class="right">(par)</td></tr>
+<tr><td class="left"></td><td class="right">(The #mechanic) nods, and you walk out into the rain.</td></tr>
+<tr><td class="left"></td><td class="right">(game over { You have no car. })</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#mech-nevermind</td></tr>
+<tr><td class="both" colspan="2">(#mech-car offers *)</td></tr>
+<tr><td class="both" colspan="2">(sticky *)</td></tr>
+<tr><td class="left">(label *)</td><td class="right">“Never mind.”</td></tr>
+<tr><td class="both" colspan="2">(* flows to #mechanic)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#mech-name</td></tr>
+<tr><td class="both" colspan="2">(#mechanic offers *)</td></tr>
+<tr><td class="left">(label *)</td><td class="right">“What's your name?”</td></tr>
+<tr><td class="left">(disp *)</td><td class="right">“I'm Lisa. Pleasure to meet you.”</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#mech-bye</td></tr>
+<tr><td class="both" colspan="2">(#mechanic offers *)</td></tr>
+<tr><td class="left">(label *)</td><td class="right">“It was nice talking to you!”</td></tr>
+<tr><td class="left">(disp *)</td><td class="right">“Any time!” (The #mechanic) returns to her work.</td></tr>
+<tr><td class="both" colspan="2">(terminating *)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy21').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>And this is what it looks like:
+</p>
+<div class="blkoutput"><b>Repair shop</b><br />
+You're in a noisy workshop.<br />
+<br />
+A busy-looking mechanic is here, looking busy.<br />
+<br />
+&gt; talk to mechanic<br />
+“Um, excuse me?”<br />
+<br />
+“Can I help you?” The busy-looking mechanic wipes her hands on a dirty cloth and turns to face you.<br />
+<br />
+1. “This looks like a nice establishment. Very authentic-looking.”<br />
+2. “There's something wrong with my car.”<br />
+3. “What's your name?”<br />
+4. “It was nice talking to you!”<br />
+&gt; 1<br />
+“This looks like a nice establishment. Very authentic-looking.”<br />
+<br />
+“Happy to hear it.”<br />
+<br />
+1. “There's something wrong with my car.”<br />
+2. “What's your name?”<br />
+3. “It was nice talking to you!”<br />
+&gt; undo<br />
+Undoing the last turn.<br />
+<b>Repair shop</b><br />
+<br />
+1. “This looks like a nice establishment. Very authentic-looking.”<br />
+2. “There's something wrong with my car.”<br />
+3. “What's your name?”<br />
+4. “It was nice talking to you!”<br />
+&gt; 3<br />
+“What's your name?”<br />
+<br />
+“I'm Lisa. Pleasure to meet you.”<br />
+<br />
+1. “This looks like a nice establishment. Very authentic-looking.”<br />
+2. “There's something wrong with my car.”<br />
+3. “It was nice talking to you!”<br />
+&gt; 3<br />
+“It was nice talking to you!”<br />
+<br />
+“Any time!” Lisa returns to her work.<br />
+<br />
+<b>Repair shop</b><br />
+You're in a noisy workshop.<br />
+<br />
+Lisa is here, looking busy.<br />
+<br />
+Lisa checks the oil pressure of a clunker.<br />
+<br />
+&gt;</div><p>Ask-and-tell topic objects can serve as shortcuts to conversation nodes. Recall
+that <span class="code">(choose&nbsp;$)</span> prints the label, i.e. the player character's
+line, in a separate paragraph before activating the node:
+</p>
+<textarea class="copyarea" id="copy22" readonly>
+#car
+(name *)	my car
+(topic *)
+(perform [ask #mechanic about *])
+	(choose #mech-wrong)
+
+#voltmeter
+(name *)	voltmeter
+(topic *)
+(perform [ask #mechanic about *])
+	(choose #mech-voltmeter)
+	%% This node is a dead end, so we will remain in parser mode.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">#car</td></tr>
+<tr><td class="left">(name *)</td><td class="right">my car</td></tr>
+<tr><td class="both" colspan="2">(topic *)</td></tr>
+<tr><td class="both" colspan="2">(perform [ask #mechanic about *])</td></tr>
+<tr><td class="left"></td><td class="right">(choose #mech-wrong)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#voltmeter</td></tr>
+<tr><td class="left">(name *)</td><td class="right">voltmeter</td></tr>
+<tr><td class="both" colspan="2">(topic *)</td></tr>
+<tr><td class="both" colspan="2">(perform [ask #mechanic about *])</td></tr>
+<tr><td class="left"></td><td class="right">(choose #mech-voltmeter)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="comment">%% This node is a dead end, so we will remain in parser mode.</span></td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy22').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="understanding.html">Chapter 10: Understanding player input</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 21, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 22, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

@@ -1470,7 +1470,11 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				ai = add_instr(AA_AUX_POP_LIST_CHK);
 				ai->oper[0] = encode_value(ci->oper[0], prg);
 				break;
-			case I_COLLECT_END:
+			case I_COLLECT_END_R:
+				ai = add_instr(AA_AUX_POP_LIST);
+				ai->oper[0] = encode_dest(ci->oper[0], prg, 0);
+				break;
+			case I_COLLECT_END_V:
 				ai = add_instr(AA_AUX_POP_LIST);
 				if(ci->oper[0].tag == OPER_TEMP
 				|| ci->oper[0].tag == OPER_VAR
@@ -1478,10 +1482,10 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				|| ci->oper[0].tag == VAL_NIL) {
 					ai->oper[0] = encode_dest(ci->oper[0], prg, 1);
 				} else {
-					ai->oper[0] = (aaoper_t) {AAO_REG, REG_TMP};
+					ai->oper[0] = (aaoper_t) {AAO_STORE_REG, REG_TMP};
 					ai = add_instr(AA_ASSIGN);
 					ai->oper[0] = encode_value(ci->oper[0], prg);
-					ai->oper[1] = (aaoper_t) {AAO_STORE_REG, REG_TMP};
+					ai->oper[1] = (aaoper_t) {AAO_REG, REG_TMP};
 				}
 				break;
 			case I_COLLECT_MATCH_ALL:

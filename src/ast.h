@@ -385,7 +385,7 @@ struct program {
 	program_ticker_t	eval_ticker;
 	int			nwordmappred;
 	struct word		**clausevars;
-	int			*clausevarcounts;
+	uint8_t			*clausevarcounts;
 	int			nclausevar;
 	int			nalloc_var;
 	char			*meta_author;

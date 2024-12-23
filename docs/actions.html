@@ -263,9 +263,10 @@ played out.
 time in the game world, by querying a predicate called <span class="code">(tick)</span>. The
 default implementation of <span class="code">(tick)</span> makes
 <a href="choicepoints.html#multiqueries">multi-queries</a> to the story-supplied predicates <span class="code">(on
-every tick)</span> and <span class="code">(on every tick in $Room)</span>. These can be used
-to print flavour text, move non-player characters, implement daemons and timers
-of various kinds, or anything else the story author might think of.
+every tick)</span>, <span class="code">(on every tick in $Room)</span>, <span class="code">(early on
+every tick)</span>, and <span class="code">(late on every tick)</span>. These can be used to
+print flavour text, move non-player characters, implement daemons and timers of
+various kinds, or anything else the story author might think of.
 </p>
 <p>Time is not advanced after <i>commands</i>, i.e. actions such as
 <span class="code">[save]</span> and <span class="code">[transcript off]</span> that take place outside
@@ -712,7 +713,7 @@ action is triggered automatically by the game.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="stdactions.html">Chapter 7: The standard actions</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 21, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 22, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

@@ -1511,7 +1511,22 @@ static int eval_run(struct eval_state *es) {
 				pc = 0;
 			}
 			break;
-		case I_COLLECT_END:
+		case I_COLLECT_END_R:
+			v = (value_t) {VAL_NIL, 0};
+			while((v1 = collect_pop(es)).tag != VAL_NONE) {
+				if(v1.tag == VAL_ERROR) {
+					pred_release(pp.pred);
+					return ESTATUS_ERR_HEAP;
+				}
+				v = eval_makepair(v1, v, es);
+				if(v.tag == VAL_ERROR) {
+					pred_release(pp.pred);
+					return ESTATUS_ERR_HEAP;
+				}
+			}
+			set_by_ref(ci->oper[0], v, es);
+			break;
+		case I_COLLECT_END_V:
 			v = (value_t) {VAL_NIL, 0};
 			while((v1 = collect_pop(es)).tag != VAL_NONE) {
 				if(v1.tag == VAL_ERROR) {
