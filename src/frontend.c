@@ -50,6 +50,8 @@ struct specialspec {
 	{SP_JUST,		0,				1,	{"just"}},
 	{SP_LINK,		0,				2,	{"link", 0}},
 	{SP_LINK_RES,		0,				3,	{"link", "resource", 0}},
+	{SP_LINK_SELF,		0,				1,	{"link"}},
+	{SP_LOG,		0,				1,	{"log"}},
 	{SP_MATCHING_ALL_OF,	0,				4,	{"matching", "all", "of", 0}},
 	{SP_NOW,		0,				1,	{"now"}},
 	{SP_OR,			0,				1,	{"or"}},
@@ -544,10 +546,20 @@ int trace_invocations_body(struct astnode **anptr, int flags, uint8_t *bound, st
 			memcpy(bound_sub, bound, cl->nvar);
 			(void) trace_invocations_body(&an->children[1], flags, bound_sub, cl, 0, prg);
 			break;
+		case AN_LINK_SELF:
+			memcpy(bound_sub, bound, cl->nvar);
+			(void) trace_invocations_body(&an->children[0], flags, bound_sub, cl, 0, prg);
+			break;
 		case AN_LINK:
 		case AN_LINK_RES:
 			memcpy(bound_sub, bound, cl->nvar);
 			(void) trace_invocations_body(&an->children[1], flags, bound_sub, cl, 0, prg);
+			break;
+		case AN_LOG:
+			if(!(prg->optflags & OPTF_NO_LOG)) {
+				memcpy(bound_sub, bound, cl->nvar);
+				(void) trace_invocations_body(&an->children[0], flags, bound_sub, cl, 0, prg);
+			}
 			break;
 		case AN_NEG_BLOCK:
 			for(i = 0; i < an->nchild; i++) {
@@ -742,6 +754,9 @@ void trace_invocations(struct program *prg) {
 			}
 			if(predname->arity == 2) {
 				pred->unbound_in |= 2; // when computing the initial value
+				if(predname->builtin == BI_HASPARENT) {
+					pred->unbound_in |= 1;
+				}
 			}
 			trace_invoke_pred(predname, PREDF_INVOKED_BY_DEBUGGER, 0, 0, prg);
 		}
@@ -904,6 +919,12 @@ void find_dict_words(struct program *prg, struct astnode *an, int include_barewo
 			find_dict_words(prg, an->children[3], include_barewords);
 		} else if(an->kind == AN_OUTPUTBOX) {
 			find_dict_words(prg, an->children[1], include_barewords);
+		} else if(an->kind == AN_LINK_SELF) {
+			find_dict_words(prg, an->children[0], 1);
+		} else if(an->kind == AN_LOG) {
+			if(!(prg->optflags & OPTF_NO_LOG)) {
+				find_dict_words(prg, an->children[0], include_barewords);
+			}
 		} else {
 			for(i = 0; i < an->nchild; i++) {
 				find_dict_words(prg, an->children[i], include_barewords);
@@ -1214,6 +1235,7 @@ static void extract_wordmap_from_body(struct wordmap_tally *tallies, int tally_o
 			case AN_FIRSTRESULT:
 			case AN_STOPPABLE:
 			case AN_OUTPUTBOX:
+			case AN_LINK_SELF:
 			case AN_LINK:
 			case AN_LINK_RES:
 			case AN_OR:
@@ -1222,6 +1244,11 @@ static void extract_wordmap_from_body(struct wordmap_tally *tallies, int tally_o
 			case AN_COLLECT:
 				for(i = 0; i < an->nchild; i++) {
 					extract_wordmap_from_body(tallies, tally_onum, prg, an->children[i], objvar, onum, max_depth - 1);
+				}
+				break;
+			case AN_LOG:
+				if(!(prg->optflags & OPTF_NO_LOG)) {
+					extract_wordmap_from_body(tallies, tally_onum, prg, an->children[0], objvar, onum, max_depth - 1);
 				}
 				break;
 			case AN_COLLECT_WORDS:
@@ -1493,6 +1520,9 @@ int body_succeeds(struct astnode *an) {
 		case AN_OUTPUTBOX:
 			return 0;
 			break;
+		case AN_LINK_SELF:
+			if(!body_succeeds(an->children[0])) return 0;
+			break;
 		case AN_LINK:
 		case AN_LINK_RES:
 			if(!body_succeeds(an->children[1])) return 0;
@@ -1574,6 +1604,7 @@ int body_succeeds_at_most_once(struct astnode *an) {
 		case AN_STOPPABLE:
 		case AN_STATUSBAR:
 		case AN_OUTPUTBOX:
+		case AN_LINK_SELF:
 		case AN_LINK:
 		case AN_LINK_RES:
 			break;

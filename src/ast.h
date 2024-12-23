@@ -41,8 +41,10 @@ enum {
 	AN_STOPPABLE,
 	AN_STATUSBAR,
 	AN_OUTPUTBOX,
+	AN_LINK_SELF,
 	AN_LINK,
-	AN_LINK_RES
+	AN_LINK_RES,
+	AN_LOG
 };
 
 enum {
@@ -390,6 +392,7 @@ struct program {
 #define OPTF_ENV_FRAMES		0x00000008
 #define OPTF_SIMPLE_SELECT	0x00000010
 #define OPTF_NO_LINKS		0x00000020
+#define OPTF_NO_LOG		0x00000040
 
 typedef void (*word_visitor_t)(struct word *);
 

@@ -1,6 +1,6 @@
 
 (library version)
-	Library version 0.32.
+	Library version 0.33.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -556,7 +556,7 @@
 
 %% LOOK <dir>
 
-(understand [examine/look | $Words] as [look $Dir])
+(understand [examine/x/look/l | $Words] as [look $Dir])
 	*(understand $Words as direction $Dir)
 
 (unlikely [look $])
@@ -610,7 +610,7 @@
 
 %% LOOK <rel> <obj>
 
-(understand [look | $Words] as [look $Rel $Obj])
+(understand [look/l | $Words] as [look $Rel $Obj])
 	*(split $Words by relation $Rel into [] and $MoreWords)
 	*(understand $MoreWords as single object $Obj)
 
@@ -686,11 +686,63 @@
 		(Name $Rel) (the $Obj) you see (a $List). (notice $List)
 	(endif)
 
+%% FIND <obj>
+
+%% FIND takes the player to the room that currently contains the object.
+%% For objects that move around autonomously, it may be a good idea to override
+%% this rule, to say e.g. "you don't know where the cat might be right now".
+%% Note that floating objects, including doors, will remain in the room where
+%% they were last encountered. This will usually put the player on the expected
+%% side of doors.
+
+(understand [find | $Words] as [find $Obj])
+	*(understand $Words as any object $Obj)
+
+(understand [look/l for | $Words] as [find $Obj])
+	*(understand $Words as any object $Obj)
+
+(unlikely [find $Obj])
+	($Obj is nowhere)
+
+~(refuse [find $])
+
+(prevent [find (not here $Obj)])
+	You don't know where to find (the $Obj).
+
+(prevent [find $Obj])
+	(when $Obj is already held)
+
+(prevent [find $Obj])
+	($Obj is in room $Room)
+	(current room $Room)
+	(The $Obj) (is $Obj)
+	(if) ($Obj is $Rel $Loc) ~(room $Loc) (then)
+		(name $Rel) (the $Loc)
+	(else)
+		here
+	(endif)
+	.
+
+(prevent [find $Obj])
+	($Obj is in room $Room)
+	(current room $Here)
+	~(shortest path from $Here to $Room is $)
+	You don't know how to get to (the $Obj) from here.
+
+(perform [find $Obj])
+	(if) ($Obj is in room $Room) (then)
+		(line) \( attempting to go to (the $Room) \) (line)
+		(try [go to $Room])
+	(else)
+		You don't know where to find (the $Obj).
+	(endif)
+
 %% EXAMINE <obj>
 
-(rewrite [look/l at | $Words] into [examine | $Words])
+(understand [examine/x/watch/describe/check/look/l | $Words] as [examine $Obj])
+	*(understand $Words as non-all object $Obj)
 
-(understand [examine/watch/describe/check/look | $Words] as [examine $Obj])
+(understand [look/l at | $Words] as [examine $Obj])
 	*(understand $Words as non-all object $Obj)
 
 (understand [who am i] as [examine $Player])
@@ -731,6 +783,7 @@
 				*($Child is #on $Obj)
 				(par)
 				(appearance $Child #on $Obj)
+				(notice $Child)
 			}
 		(endif)
 	(endif)
@@ -745,6 +798,7 @@
 				*($Child is #in $Obj)
 				(par)
 				(appearance $Child #in $Obj)
+				(notice $Child)
 			}
 		(endif)
 	(endif)
@@ -753,7 +807,8 @@
 %% LOOK
 
 (understand [look])
-(understand [look around] as [look])
+(understand [l] as [look])
+(understand [look/l around] as [look])
 (understand [where am i] as [look])
 
 (describe action [look])
@@ -833,9 +888,10 @@
 %% LISTEN TO <obj>
 %% LISTEN
 
-(rewrite [listen to | $Words] into [listen | $Words])
-
 (understand [listen/hear | $Words] as [listen to $Obj])
+	*(understand $Words as single object $Obj)
+
+(understand [listen to | $Words] as [listen to $Obj])
 	*(understand $Words as single object $Obj)
 
 %% Don't require reachability:
@@ -930,14 +986,15 @@
 %% THROW <obj>
 %% THROW <obj> <dir>
 
-(rewrite [throw away | $Words] into [throw | $Words])
-
 (understand [throw/toss | $Words] as [throw $A at $B])
 	*(split $Words by [at on to in into onto] into $Left and $Right)
 	*(understand $Left as object $A preferably held)
 	*(understand $Right as single object $B)
 
 (understand [throw/toss | $Words] as [throw $Obj])
+	*(understand $Words as object $Obj preferably held)
+
+(understand [throw/toss away | $Words] as [throw $Obj])
 	*(understand $Words as object $Obj preferably held)
 
 (understand [throw/toss | $Words] as [throw $Obj $Dir])
@@ -1009,14 +1066,15 @@
 %% TAKE <obj>
 %% TAKE <obj> FROM <obj>
 
-(rewrite [pick up | $Words] into [take | $Words])
-
-(understand [take/grab/snatch/steal/acquire/hold/gather/get/remove | $Words] as [take $Obj from $Parent])
+(understand [take/grab/snatch/steal/acquire/hold/gather/get/remove/pick | $Words] as [take $Obj from $Parent])
 	*(split $Words by [from] into $Left and $Right)
 	*(understand $Right as single object $Parent)
 	*(understand $Left as object $Obj preferably child of $Parent)
 
-(understand [take/grab/snatch/steal/acquire/hold/gather/get | $Words] as [take $Obj])
+(understand [take/grab/snatch/steal/acquire/hold/gather/get/pick | $Words] as [take $Obj])
+	*(understand $Words as object $Obj preferably takable)
+
+(understand [pick up | $Words] as [take $Obj])
 	*(understand $Words as object $Obj preferably takable)
 
 (unlikely [take $Obj])
@@ -1116,14 +1174,18 @@
 
 %% WEAR <obj>
 
-(rewrite [put on | $Words] into [wear | $Words])
-
 (understand [wear/don | $Words] as [wear $Obj])
 	*(understand $Words as object $Obj preferably held)
 
 (understand [put | $Words] as [wear $Obj])
-	*(split $Words by [on] into $Left and [])
-	*(understand $Left as object $Obj preferably held)
+	*(split $Words by [on] into $Left and $Right)
+	{
+		($Left = [])
+		*(understand $Right as object $Obj preferably held)
+	(or)
+		($Right = [])
+		*(understand $Left as object $Obj preferably held)
+	}
 
 (unlikely [wear $Obj])
 	~(wearable $Obj)
@@ -1160,10 +1222,6 @@
 	(now) ($Obj is handled)
 
 %% PUT <obj> <rel> <obj>
-
-(rewrite [set/lay/drop down | $Words] into [put | $Words])
-(rewrite [put away/down | $Words] into [put | $Words])
-(rewrite [let go of | $Words] into [drop | $Words])
 
 (understand [put/lay/drop | $Words] as [put $Obj $Rel $Dest])
 	*(split $Words by relation $Rel into $Left and $Right)
@@ -1246,11 +1304,20 @@
 
 %% DROP <obj>
 
-(understand [put/lay/drop | $Words] as [drop $Obj])
-	*(split $Words by [down] into $Left and [])
-	*(understand $Left as object $Obj preferably held)
+(understand [put/lay/drop/set | $Words] as [drop $Obj])
+	*(split $Words by [down away] into $Left and $Right)
+	{
+		($Left = [])
+		*(understand $Right as object $Obj preferably held)
+	(or)
+		($Right = [])
+		*(understand $Left as object $Obj preferably held)
+	}
 
 (understand [put/lay/drop | $Words] as [drop $Obj])
+	*(understand $Words as object $Obj preferably held)
+
+(understand [let go of | $Words] as [drop $Obj])
 	*(understand $Words as object $Obj preferably held)
 
 (unlikely [drop $Obj])
@@ -1683,7 +1750,7 @@
 
 (prevent [switch on $Obj])
 	($Obj is on)
-	(The $Obj) is already on.
+	(The $Obj is) already on.
 
 (narrate switching on $Obj)
 	You switch (the $Obj) on.
@@ -1717,7 +1784,7 @@
 
 (prevent [switch off $Obj])
 	($Obj is off)
-	(The $Obj) is already off.
+	(The $Obj is) already off.
 
 (prevent [switch off $Obj])
 	~(switchable $Obj)
@@ -1780,9 +1847,10 @@
 
 %% BITE <obj>
 
-(rewrite [gnaw at | $Words] into [bite | $Words])
-
 (understand [bite/chew/gnaw | $Words] as [bite $Obj])
+	*(understand $Words as single object $Obj)
+
+(understand [gnaw at | $Words] as [bite $Obj])
 	*(understand $Words as single object $Obj)
 
 (perform [bite (animate $Obj)])
@@ -1862,9 +1930,6 @@
 %% CUT <obj> WITH <obj>
 %% CUT <obj>
 
-(rewrite [cut off | $Words] into [cut | $Words])
-(rewrite [chop off | $Words] into [cut | $Words])
-
 (understand [cut/sever/slice/prune/chop | $Words] as [cut $A with $B])
 	*(split $Words by [with] into $Left and $Right)
 	*(understand $Left as non-all object $A)
@@ -1874,8 +1939,14 @@
 	*(understand $Words as non-all object $Obj)
 
 (understand [cut/chop/slice | $Words] as [cut $Obj])
-	*(split $Words by [off] into $Left and [])
-	*(understand $Left as non-all object $Obj)
+	*(split $Words by [off] into $Left and $Right)
+	{
+		($Left = [])
+		*(understand $Right as non-all object $Obj)
+	(or)
+		($Right = [])
+		*(understand $Left as non-all object $Obj)
+	}
 
 (unlikely [cut $ with $Obj])
 	~(sharp $Obj)
@@ -1933,9 +2004,6 @@
 (unlikely [consult $Obj about $])
 	~(consultable $Obj)
 
-(very unlikely [consult $Obj about $Topic])
-	(just) ($Topic = @?)
-
 (refuse [consult $Obj about $])
 	(just) {
 		(when $Obj is not here)
@@ -1949,7 +2017,7 @@
 (perform [consult $Obj about $Topic])
 	You find no information about (describe topic $Topic) in (the $Obj).
 
-%% ASK/TELL <obj> ABOUT <topic> (redirected to TALK TO by default)
+%% ASK/TELL <obj> ABOUT <topic> (redirected to TALK TO <obj> ABOUT <topic> by default)
 
 (understand [ask | $Words] as [ask $Person about $Topic])
 	*(split $Words by [about] into $Left and $Right)
@@ -1982,9 +2050,6 @@
 (unlikely [ask/tell $Obj about $])
 	~(animate $Obj)
 
-(very unlikely [ask/tell $ about $Topic])
-	(just) ($Topic = @?)
-
 %% Don't require reachability:
 
 (refuse [ask $Obj | $])
@@ -1996,30 +2061,33 @@
 (refuse [tell $Obj])
 	(just) (when $Obj is not here)
 
-(perform [ask $Person about $])
-	(try [talk to $Person])
+(perform [ask/tell $Person about $Topic])
+	(try [talk to $Person about $Topic])
 
-(perform [tell $Person about $])
-	(try [talk to $Person])
-
-(perform [ask $Obj])
+(perform [ask/tell $Obj])
 	(try [talk to $Obj])
 
-(perform [tell $Obj])
-	(try [talk to $Obj])
-
+%% TALK TO <obj> ABOUT <topic>
 %% TALK TO <obj>
 %% TALK
 
-(rewrite [talk to | $Words] into [talk | $Words])
-(rewrite [speak to | $Words] into [talk | $Words])
+(understand [talk/speak to | $Words] as [talk to $Person about $Topic])
+	*(split $Words by [about] into $Left and $Right)
+	*(understand $Left as single object $Person preferably animate)
+	*(understand $Right as topic $Topic)
 
 (understand [talk/speak | $Words] as [talk to $Obj])
 	*(understand $Words as single object $Obj preferably animate)
 
+(understand [talk/speak to | $Words] as [talk to $Obj])
+	*(understand $Words as single object $Obj preferably animate)
+
 (understand [talk])
 
-(unlikely [talk to $Obj])
+(describe action [talk to $Person about $Topic])
+	talk to (the full $Person) about (describe topic $Topic)
+
+(unlikely [talk to $Obj | $])
 	~(animate $Obj)
 
 (perform [talk])
@@ -2028,8 +2096,11 @@
 
 %% Don't require reachability:
 
-(refuse [talk to $Obj])
+(refuse [talk to $Obj | $])
 	(just) (when $Obj is not here)
+
+(perform [talk to $Obj about $])
+	(try [talk to $Obj])
 
 (perform [talk to (current player $)])
 	You mumble a few well-chosen words to yourself.
@@ -2083,9 +2154,10 @@
 %% CALL (redirected to SHOUT by default)
 %% Stories containing a phone would override these.
 
-(rewrite [call to | $Words] into [call | $Words])
-
 (understand [call | $Words] as [call $Obj])
+	*(understand $Words as single object $Obj preferably animate)
+
+(understand [call to | $Words] as [call $Obj])
 	*(understand $Words as single object $Obj preferably animate)
 
 (unlikely [call $Obj])
@@ -2159,9 +2231,6 @@
 (unlikely [tell $Obj to | $])
 	~(animate $Obj)
 
-(very unlikely [tell $ to tell $ about $Topic])
-	(just) ($Topic = @?)
-
 (refuse [tell $NPC to | $])
 	(just) (when $NPC is not here)
 
@@ -2212,14 +2281,25 @@
 
 %% CLIMB <obj>
 
-(rewrite [go/get/step/climb up on/onto | $Words] into [climb | $Words])
-(rewrite [go/get/step/climb on/onto | $Words] into [climb | $Words])
-(rewrite [sit on top of | $Words] into [climb | $Words])
-(rewrite [sit/stand/lie on | $Words] into [climb | $Words])
-(rewrite [sit/lie down on | $Words] into [climb | $Words])
-(rewrite [jump to/onto | $Words] into [climb | $Words])
-
 (understand [climb/mount/scale | $Words] as [climb $Obj])
+	*(understand $Words as single object $Obj preferably supporter)
+
+(understand [go/get/step/climb up on/onto | $Words] as [climb $Obj])
+	*(understand $Words as single object $Obj preferably supporter)
+
+(understand [go/get/step/climb/stand/lie on/onto | $Words] as [climb $Obj])
+	*(understand $Words as single object $Obj preferably supporter)
+
+(understand [go/get/step/climb/stand/lie on top of | $Words] as [climb $Obj])
+	*(understand $Words as single object $Obj preferably supporter)
+
+(understand [sit/stand/lie on | $Words] as [climb $Obj])
+	*(understand $Words as single object $Obj preferably supporter)
+
+(understand [sit/stand/lie down on | $Words] as [climb $Obj])
+	*(understand $Words as single object $Obj preferably supporter)
+
+(understand [jump to/onto | $Words] as [climb $Obj])
 	*(understand $Words as single object $Obj preferably supporter)
 
 (unlikely [climb $Obj])
@@ -2267,10 +2347,10 @@
 
 %% ENTER <obj>
 
-(rewrite [go/get/enter/climb/jump in/into/inside | $Words] into [enter | $Words])
-(rewrite [sit/lie in/inside | $Words] into [enter | $Words])
-
 (understand [enter/cross | $Words] as [enter $Obj])
+	*(understand $Words as single object $Obj preferably container)
+
+(understand [go/get/enter/climb/jump/sit/lie in/into/inside | $Words] as [enter $Obj])
 	*(understand $Words as single object $Obj preferably container)
 
 (understand [go | $Words] as [enter $Obj])
@@ -2308,7 +2388,7 @@
 		(direction $Dir) %% Assure the compiler that $Dir is bound.
 		(try [go $Dir])
 	(else)
-		(The $Room) isn't here.
+		(The $Room) (isn't $Room) here.
 		(tick) (stop)
 	(endif)
 
@@ -2355,9 +2435,9 @@
 
 %% STAND
 
-(rewrite [stand up] into [stand])
-
 (understand [stand])
+
+(understand [stand up] as [stand])
 
 (describe action [stand])
 	stand up
@@ -2474,7 +2554,13 @@
 %% It is only possible to go to visited rooms and non-hidden objects in this
 %% way.
 
+(understand [go to | $Words] as [go to $Room])
+	*(understand $Words as room name $Room)
+
 (understand [go/approach | $Words] as [go to $Room])
+	*(understand $Words as room name $Room)
+
+(understand $Words as room name $Room)
 	(filter $Words into $Filtered)
 	(nonempty $Filtered)
 	(determine object $Room)
@@ -2509,56 +2595,6 @@
 		(tick) (stop)
 	(endif)
 
-%% FIND <obj>
-
-%% FIND takes the player to the room that currently contains the object.
-%% For objects that move around autonomously, it may be a good idea to override
-%% this rule, to say e.g. "you don't know where the cat might be right now".
-%% Note that floating objects, including doors, will remain in the room where
-%% they were last encountered. This will usually put the player on the expected
-%% side of doors.
-
-(rewrite [look for | $Words] into [find | $Words])
-
-(understand [find | $Words] as [find $Obj])
-	*(understand $Words as any object $Obj)
-
-(unlikely [find $Obj])
-	($Obj is nowhere)
-
-~(refuse [find $])
-
-(prevent [find (not here $Obj)])
-	You don't know where to find (the $Obj).
-
-(prevent [find $Obj])
-	(when $Obj is already held)
-
-(prevent [find $Obj])
-	($Obj is in room $Room)
-	(current room $Room)
-	(The $Obj) (is $Obj)
-	(if) ($Obj is $Rel $Loc) ~(room $Loc) (then)
-		(name $Rel) (the $Loc)
-	(else)
-		here
-	(endif)
-	.
-
-(prevent [find $Obj])
-	($Obj is in room $Room)
-	(current room $Here)
-	~(shortest path from $Here to $Room is $)
-	You don't know how to get to (the $Obj) from here.
-
-(perform [find $Obj])
-	(if) ($Obj is in room $Room) (then)
-		(line) \( attempting to go to (the $Room) \) (line)
-		(try [go to $Room])
-	(else)
-		You don't know where to find (the $Obj).
-	(endif)
-
 %% Navigation by direction:
 
 %% What the player types is eventually translated into one of:
@@ -2579,10 +2615,10 @@
 %% The rule for just typing a list of directions (without a verb) is further
 %% down in the file.
 
-(rewrite [go/walk/crawl to | $Words] into [go | $Words])
-(rewrite [go/walk/crawl further | $Words] into [go | $Words])
-
 (understand [go/walk/crawl/leave/get/climb | $Words] as [go $Dir])
+	*(understand $Words as direction $Dir)
+
+(understand [go/walk/crawl to/further | $Words] as [go $Dir])
 	*(understand $Words as direction $Dir)
 
 (understand [go/walk/crawl] as [go #out])
@@ -2594,7 +2630,7 @@
 	*($Dir is one of [#up #down])
 	(from $Room go $Dir to $)
 
-(unlikely-complex [go $DirList])
+(unlikely-complex [go $DirList] 0)
 	(just)
 	(if) (direction $DirList) (then)
 		($Dir = $DirList)
@@ -2713,9 +2749,10 @@
 
 %% PULL <obj>
 
-(rewrite [pull/yank/drag/tug/tow on | $Words] into [pull | $Words])
-
 (understand [pull/yank/drag/tug/tow | $Words] as [pull $Obj])
+	*(understand $Words as non-all object $Obj)
+
+(understand [pull/yank/drag/tug/tow on | $Words] as [pull $Obj])
 	*(understand $Words as non-all object $Obj)
 
 (perform [pull $Obj])
@@ -2833,11 +2870,11 @@
 	*(understand $Words as non-all object $Obj)
 
 (perform [untie $Obj])
-	(The $Obj) isn't tied to anything.
+	(The $Obj) (isn't $Obj) tied to anything.
 	(tick) (stop)
 
 (perform [untie $Obj from $OtherObj])
-	(The $Obj) isn't tied to (the $OtherObj).
+	(The $Obj) (isn't $Obj) tied to (the $OtherObj).
 	(tick) (stop)
 
 %% ATTACK <obj> WITH <obj>
@@ -3329,23 +3366,36 @@
 (expand complex objlist [$Other | $MoreIn] [$Other | $MoreOut])
 	*(expand complex objlist $MoreIn $MoreOut)
 
-(unlikely-complex [$Verb | $ComplexObjList])
+(unlikely-complex [$Verb | $ComplexObjList] $VeryLevel)
 	*(expand complex objlist $ComplexObjList $SimpleObjList)
 	(strip decorations from $SimpleObjList into $Stripped)
-	(unlikely [$Verb | $Stripped])
+	(level $VeryLevel unlikely [$Verb | $Stripped])
+
+(level 0 unlikely $Action)
+	(unlikely $Action) (or)
+	(very unlikely $Action) (or)
+	(very very unlikely $Action)
+
+(level 1 unlikely $Action)
+	(very unlikely $Action) (or)
+	(very very unlikely $Action)
+
+(level 2 unlikely $Action)
+	(very very unlikely $Action)
 
 %% Current and nearby rooms are in scope, but they're rarely what the player
 %% means. The following rules ensure that most actions that mention rooms
 %% directly are considered unlikely.
-%% Unrecognized topics are also very unlikely.
-
-(unlikely $Action)
-	(very unlikely $Action)
 
 (very unlikely [(room $) | $])
-(very unlikely [? | $])
 (very unlikely [$ | $More])
 	(very unlikely $More)
+
+%% Only report the unrecognized topic (@?) as a last resort.
+
+(very very unlikely [? | $])
+(very very unlikely [$ | $More])
+	(very very unlikely $More)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Daemons
@@ -3967,7 +4017,7 @@
 	(current room $Room)
 	*(from $Room go $Dir to $O)
 	(direction $Dir)
-	(The $O) is (name $Dir) from here.
+	(The $O is) (name $Dir) from here.
 
 (descr $Obj)
 	(It $Obj) seem(s $Obj) to be harmless.
@@ -3982,24 +4032,27 @@
 (feel $Obj)
 	(The $Obj) feel(s $Obj) as expected.
 
-(appearance (item $Obj) #in (room $Room))
-	($Obj is handled)
-	You see (a $Obj) here.
-	(notice $Obj)
+(appearance $Obj $ $)
+	(appearance $Obj)
 
-(appearance (item $Obj) $Rel $Loc)
+(appearance (item $Obj))
 	($Obj is handled)
-	(A $Obj) (is $Obj) (name $Rel) (the $Loc).
-	(notice $Obj)
+	($Obj is $Rel $Loc)
+	(if) ($Rel = #in) (room $Loc) (then)
+		You see (a $Obj) here.
+	(else)
+		(A $Obj) (is $Obj) (name $Rel) (the $Loc).
+	(endif)
 
-(appearance (list $List) $Rel $Loc)
+(appearance (nonempty $List))
 	(fungibility enabled)
+	($List = [$Head | $])
+	($Head is $Rel $Loc)
 	(if) ($Rel = #in) (room $Loc) (then)
 		You see (a $List) here.
 	(else)
 		(A $List) are (name $Rel) (the $Loc).
 	(endif)
-	(notice $List)
 
 (make appearances $Rel $Loc)
 	(if)
@@ -4020,7 +4073,17 @@
 			~($Object is hidden)
 			(par)
 			(appearance $Object $Rel $Loc)
+			(notice $Object)
 		}
+	(endif)
+
+(list objects $Rel $Loc)
+	(collect $Obj)
+		*($Obj is $Rel $Loc)
+	(into $List)
+	(if) (nonempty $List) (then)
+		(Name $Rel) (the $Loc) (is $List) (a $List).
+		(notice $List)
 	(endif)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -4060,12 +4123,17 @@
 (fungibility-enabled appearance [$Head | $Tail] $Rel $Loc)
 	(combine-fungible $Tail $Head $NInc $Rest)
 	(par)
-	(if) ($NInc = 1) (then)
-		(appearance $Head $Rel $Loc) (or)
-	(else)
-		(remove from $Tail matching $Rest into $Similar)
-		(appearance [$Head | $Similar] $Rel $Loc)
-	(endif)
+	(exhaust) {
+		(if) ($NInc = 1) (then)
+			(appearance $Head $Rel $Loc)
+			(notice $Head)
+		(else)
+			(remove from $Tail matching $Rest into $Similar)
+			($ObjSet = [$Head | $Similar])
+			(appearance $ObjSet $Rel $Loc)
+			(notice $ObjSet)
+		(endif)
+	}
 	(fungibility-enabled appearance $Rest $Rel $Loc)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -4470,9 +4538,6 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Parser: Rewrite
-
-(rewrite [x | $Words] into [examine | $Words])
-(rewrite [l | $Words] into [look | $Words])
 
 %% Fallback rewrite rule does nothing.
 
@@ -4952,8 +5017,7 @@
 			(rewrite $Words into $ActualWords)
 		(endif)
 
-		%% Parse the action. Special treatment if we've asked for
-		%% clarification, and a noun was entered on its own:
+		%% Parse the action:
 
 		(now) ~(head noun is required)
 		(collect $A)
@@ -4968,83 +5032,85 @@
 			(now) ~(implicit action is $)
 			(now) ~(implicit action wants direction)
 			(try-complex $Single)
+		(elseif) (empty $AllCandidates) (then)
+			%% We were unable to parse the action.
+
+			%% Occasionally people like to separate actions by
+			%% commas or 'AND', but this is problematic. We can
+			%% only deal with it as a last resort, because in order
+			%% to parse the part after the separator, we need to
+			%% have the right scope, and therefore we first have to
+			%% execute what's to the left of the separator.
+
+			(if)
+				*(split $ActualWords by [, and]
+					into $Left and $Right)
+				*(understand $Left as $)
+			(then)
+				(parse action $Left)
+				(rebuild scope)
+				(parse action $Right)
+			(else)
+				%% Everything has failed. Can we understand a
+				%% partial action, in order to print an
+				%% informative error message?
+
+				(parse partial action $ActualWords)
+			(endif)
 		(else)
-			(sieve action candidates $AllCandidates $ActualWords)
+			(now) ~(implicit action is $)
+			(now) ~(implicit action wants direction)
+			(sieve action candidates $AllCandidates $ActualWords 0)
 		(endif)
 	(endif)
 
-(sieve action candidates $AllCandidates $ActualWords)
-	(if) (nonempty $AllCandidates) (then)
-		(now) ~(implicit action is $)
-		(now) ~(implicit action wants direction)
+(parse partial action $Words)
+	%% The multi-query inside the if-condition is unnecessary
+	%% (if-conditions are only evaluated once), but the compiler is able to
+	%% opmitize predicates better if they're consistently queried in the
+	%% same mode.
+
+	(now) (allowing parse errors)
+	(if) *(understand $Words as $BadAction) (then)
+		(if) ([all] is one of $BadAction) (then)
+			\( The word "all" is not allowed in that context.
+			Please be more specific. \)
+		(elseif) ([,] is one of $BadAction) (then)
+			\( You're not allowed to use multiple objects in that
+			context. Please do it step by step. \)
+		(else)
+			\( I only understood you as far as wanting to
+			(describe action $BadAction)
+			. \)
+		(endif)
+	(else)
+		\( I'm sorry, I didn't understand what you wanted to do. \)
+	(endif)
+	(stop)
+
+(sieve action candidates $AllCandidates $Words $VeryLevel)
+	(if) ($VeryLevel = 3) (then)
+		($LikelyCandidates = $AllCandidates)
+	(else)
 		(collect $A)
 			*($A is one of $AllCandidates)
-			~(unlikely-complex $A)
+			~(unlikely-complex $A $VeryLevel)
 		(into $LikelyCandidates)
-		(if) (nonempty $LikelyCandidates) (then)
-			%% Consider only the likely candidates.
-			(consider action candidates $LikelyCandidates $ActualWords)
-		(else)
-			%% All candidates were deemed unlikely, but some
-			%% candidates are more unlikely than others.
-			(collect $A)
-				*($A is one of $AllCandidates)
-				~(very unlikely $A)
-			(into $SomewhatLikely)
-			(if) (nonempty $SomewhatLikely) (then)
-				(consider action candidates $SomewhatLikely $ActualWords)
-			(else)
-				(consider action candidates $AllCandidates $ActualWords)
-			(endif)
-		(endif)
-	(elseif)
-		%% We were unable to parse the action.
-
-		%% Occasionally people like to separate actions by commas or
-		%% 'AND', but this is problematic. We can only deal with it as
-		%% a last resort, because in order to parse the part after the
-		%% separator, we need to have the right scope, and therefore we
-		%% first have to execute what's to the left of the separator.
-
-		*(split $ActualWords by [, and] into $Left and $Right)
-		*(understand $Left as $)
-	(then)
-		(parse action $Left)
-		(rebuild scope)
-		(parse action $Right)
+	(endif)
+	(if) (nonempty $LikelyCandidates) (then)
+		%% Consider only the likely candidates.
+		(consider action candidates $LikelyCandidates $Words)
 	(else)
-		%% Everything has failed. Can we understand a partial action,
-		%% in order to print an informative error message?
-
-		%% The multi-query inside the if-condition is unnecessary
-		%% (if-conditions are only evaluated once), but the compiler is
-		%% able to opmitize predicates better if they're consistently
-		%% queried in the same mode.
-
-		(now) (allowing parse errors)
-		(if) *(understand $ActualWords as $BadAction) (then)
-			(if) ([all] is one of $BadAction) (then)
-				\( The word "all" is not allowed in that
-				context. Please be more specific. \)
-			(elseif) ([,] is one of $BadAction) (then)
-				\( You're not allowed to use multiple objects
-				in that context. Please do it step by step. \)
-			(else)
-				\( I only understood you as far as wanting to
-				(describe action $BadAction)
-				. \)
-			(endif)
-		(else)
-			\( I'm sorry, I didn't understand what you wanted to
-			do. \)
-		(endif)
-		(stop)
+		%% All candidates were deemed unlikely, but some candidates
+		%% could be more unlikely than the others.
+		($VeryLevel plus 1 into $NextLevel)
+		(sieve action candidates $AllCandidates $Words $NextLevel)
 	(endif)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Disambiguation
 
-(consider action candidates $List $ActualWords)
+(consider action candidates $List $Words)
 	(if) ($List = [$Single]) (then)
 		%% Optimize the common case.
 		(try-complex $Single)
@@ -5052,7 +5118,7 @@
 		%% Eliminate options where the head noun is missing.
 		(now) (head noun is required)
 		(collect $A)
-			*(understand $ActualWords as $A)
+			*(understand $Words as $A)
 			($A is one of $List)
 		(into $ShortListWithDup)
 		(remove duplicates $ShortListWithDup $ShortList)

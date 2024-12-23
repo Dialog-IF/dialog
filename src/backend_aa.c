@@ -82,9 +82,6 @@ static int n_glb_word, n_obj_word;
 
 static uint16_t *dynlink_id;
 static int n_dynlink;
-static uint16_t *initialparent;
-static uint16_t *initialsibling;
-static uint16_t *initialchild;
 
 static int heap_sz, aux_sz, fixed_sz, longterm_sz;
 
@@ -488,64 +485,16 @@ static int render_eval_value(uint16_t *buffer, int nword, value_t v, struct eval
 	return size;
 }
 
-static void analyze_tree(struct program *prg) {
-	struct eval_state es;
-	value_t eval_args[2];
-	int i, j;
-	struct predname *predname = find_builtin(prg, BI_HASPARENT);
-	uint8_t seen[prg->nworldobj];
-
-	initialparent = arena_calloc(&aa_arena, prg->nworldobj * sizeof(uint16_t));
-	initialsibling = arena_calloc(&aa_arena, prg->nworldobj * sizeof(uint16_t));
-	initialchild = arena_calloc(&aa_arena, prg->nworldobj * sizeof(uint16_t));
-
-	init_evalstate(&es, prg);
-	for(i = 0; i < prg->nworldobj; i++) {
-		eval_reinitialize(&es);
-		eval_args[0] = (value_t) {VAL_OBJ, i};
-		eval_args[1] = eval_makevar(&es);
-		if(eval_initial(&es, predname, eval_args)) {
-			if(eval_args[1].tag != VAL_OBJ) {
-				report(
-					LVL_ERR,
-					0,
-					"Initial value of ($ has parent $) must have objects in both parameters.");
-				exit(1);
-			}
-			initialparent[i] = eval_args[1].value + 1;
-		}
-		if(es.errorflag) exit(1);
-	}
-	free_evalstate(&es);
-
-	for(i = 0; i < prg->nworldobj; i++) {
-		memset(seen, 0, prg->nworldobj);
-		for(j = i; j >= 0; j = initialparent[j] - 1) {
-			if(seen[j]) {
-				report(
-					LVL_ERR,
-					0,
-					"Badly formed object tree! #%s is nested in itself.",
-					prg->worldobjnames[j]->name);
-				exit(1);
-			}
-			seen[j] = 1;
-		}
-		j = initialparent[i];
-		if(j > 0) {
-			initialsibling[i] = initialchild[j - 1];
-			initialchild[j - 1] = i + 1;
-		}
-	}
-}
-
 static int initial_values(struct program *prg, uint16_t *core, int ltt) {
 	struct eval_state es;
 	struct predname *predname;
 	struct predicate *pred;
 	int i, j;
-	int addr, size, status;
-	value_t eval_args[2];
+	int baseaddr, addr, size, status;
+	value_t eval_args[2], obj1, obj2;
+	int16_t initialparent[prg->nworldobj];
+	uint8_t seen[prg->nworldobj];
+	int more;
 
 	init_evalstate(&es, prg);
 
@@ -652,13 +601,61 @@ static int initial_values(struct program *prg, uint16_t *core, int ltt) {
 	}
 
 	for(i = 0; i < prg->nworldobj; i++) {
-		j = initialparent[i];
-		if(j > 0) {
-			core[AA_N_INITREG + 1 + prg->nworldobj + n_glb_word + i * n_obj_word + OVAR_PARENT] = j;
-			core[AA_N_INITREG + 1 + prg->nworldobj + n_glb_word + i * n_obj_word + OVAR_SIBLING] =
-				core[AA_N_INITREG + 1 + prg->nworldobj + n_glb_word + (j - 1) * n_obj_word + OVAR_CHILD];
-			core[AA_N_INITREG + 1 + prg->nworldobj + n_glb_word + (j - 1) * n_obj_word + OVAR_CHILD] = i + 1;
+		initialparent[i] = -1;
+		baseaddr = AA_N_INITREG + 1 + prg->nworldobj + n_glb_word + i * n_obj_word;
+		core[baseaddr + OVAR_PARENT] = 0;
+		core[baseaddr + OVAR_CHILD] = 0;
+		core[baseaddr + OVAR_SIBLING] = 0;
+	}
+
+	eval_reinitialize(&es);
+	eval_args[0] = eval_makevar(&es);
+	eval_args[1] = eval_makevar(&es);
+	more = eval_initial_multi(&es, find_builtin(prg, BI_HASPARENT), eval_args);
+	while(more) {
+		obj1 = eval_deref(eval_args[0], &es);
+		if(obj1.tag == VAL_OBJ) {
+			if(initialparent[obj1.value] < 0) {
+				obj2 = eval_deref(eval_args[1], &es);
+				if(obj2.tag != VAL_OBJ) {
+					report(
+						LVL_ERR,
+						0,
+						"Attempted to set the initial parent of #%s to a non-object.",
+						prg->worldobjnames[obj1.value]->name);
+					exit(1);
+				}
+				initialparent[obj1.value] = obj2.value;
+				memset(seen, 0, prg->nworldobj);
+				for(i = obj1.value; i >= 0; i = initialparent[i]) {
+					if(seen[i]) {
+						report(
+							LVL_ERR,
+							0,
+							"Badly formed object tree! #%s is nested in itself.",
+							prg->worldobjnames[i]->name);
+						exit(1);
+					}
+					seen[i] = 1;
+				}
+				i = obj1.value;
+				j = obj2.value;
+				baseaddr = AA_N_INITREG + 1 + prg->nworldobj + n_glb_word;
+				core[baseaddr + i * n_obj_word + OVAR_PARENT] = j + 1;
+				addr = baseaddr + j * n_obj_word + OVAR_CHILD;
+				while(core[addr]) {
+					addr = baseaddr + (core[addr] - 1) * n_obj_word + OVAR_SIBLING;
+				}
+				core[addr] = i + 1;
+			}
+		} else {
+			report(
+				LVL_ERR,
+				0,
+				"Initial parent defined with a non-object as the first parameter.");
+			exit(1);
 		}
+		more = eval_initial_next(&es);
 	}
 
 	free_evalstate(&es);
@@ -3569,7 +3566,6 @@ void backend_aa(
 	fixed_sz = 1 + prg->nworldobj + n_glb_word + prg->nworldobj * n_obj_word;
 	longterm_sz = ltssize;
 
-	analyze_tree(prg);
 	compile_program(prg);
 	analyze_resources(prg);
 	analyze_chars();

@@ -3751,15 +3751,16 @@ static void set_initial_reg(uint8_t *core, int reg, uint16_t value) {
 
 static void initial_values(struct program *prg, uint8_t *zcore, uint16_t addr_globals, uint16_t addr_lts, int ltssize, uint16_t *extflagarrays, int n_extflag) {
 	struct eval_state es;
-	int i, j, status;
+	int i, j, status, more;
 	struct predname *predname;
 	struct predicate *pred;
 	struct backend_pred *bp;
-	struct backend_wobj *wobj, *parent;
+	struct backend_wobj *wobj;
 	uint8_t seen[prg->nworldobj];
 	value_t eval_args[2];
 	uint16_t addr, value;
 	int lttop = 0;
+	value_t obj1, obj2;
 
 	init_evalstate(&es, prg);
 
@@ -3850,20 +3851,7 @@ static void initial_values(struct program *prg, uint8_t *zcore, uint16_t addr_gl
 					eval_reinitialize(&es);
 					eval_args[0] = (value_t) {VAL_OBJ, j};
 					eval_args[1] = eval_makevar(&es);
-					if(predname->builtin == BI_HASPARENT) {
-						if(eval_initial(&es, predname, eval_args)) {
-							if(eval_args[1].tag != VAL_OBJ) {
-								report(
-									LVL_ERR,
-									0,
-									"Initial value of ($ has parent $) must have objects in both parameters.");
-								exit(1);
-							}
-							wobj->initialparent = eval_args[1].value;
-						} else {
-							wobj->initialparent = -1;
-						}
-					} else {
+					if(predname->builtin != BI_HASPARENT) {
 						if(eval_initial(&es, predname, eval_args)) {
 							if(eval_args[1].tag == VAL_REF) {
 								report(
@@ -3895,29 +3883,59 @@ static void initial_values(struct program *prg, uint8_t *zcore, uint16_t addr_gl
 	}
 
 	for(i = 0; i < prg->nworldobj; i++) {
-		memset(seen, 0, prg->nworldobj);
-		wobj = &backendwobj[i];
-		for(j = i; j >= 0; j = backendwobj[j].initialparent) {
-			if(seen[j]) {
-				report(
-					LVL_ERR,
-					0,
-					"Badly formed object tree! #%s is nested in itself.",
-					prg->worldobjnames[j]->name);
-				exit(1);
+		backendwobj[i].initialparent = -1;
+	}
+
+	eval_reinitialize(&es);
+	eval_args[0] = eval_makevar(&es);
+	eval_args[1] = eval_makevar(&es);
+	more = eval_initial_multi(&es, find_builtin(prg, BI_HASPARENT), eval_args);
+	while(more) {
+		obj1 = eval_deref(eval_args[0], &es);
+		if(obj1.tag == VAL_OBJ) {
+			wobj = &backendwobj[obj1.value];
+			if(wobj->initialparent < 0) {
+				obj2 = eval_deref(eval_args[1], &es);
+				if(obj2.tag != VAL_OBJ) {
+					report(
+						LVL_ERR,
+						0,
+						"Attempted to set the initial parent of #%s to a non-object.",
+						prg->worldobjnames[obj1.value]->name);
+					exit(1);
+				}
+				wobj->initialparent = obj2.value;
+				memset(seen, 0, prg->nworldobj);
+				for(i = obj1.value; i >= 0; i = backendwobj[i].initialparent) {
+					if(seen[i]) {
+						report(
+							LVL_ERR,
+							0,
+							"Badly formed object tree! #%s is nested in itself.",
+							prg->worldobjnames[i]->name);
+						exit(1);
+					}
+					seen[i] = 1;
+				}
+				i = obj1.value;
+				j = obj2.value;
+				zcore[wobj->addr_objtable + 6] = (j + 1) >> 8;
+				zcore[wobj->addr_objtable + 7] = (j + 1) & 0xff;
+				addr = backendwobj[j].addr_objtable + 10;
+				while(zcore[addr] | zcore[addr + 1]) {
+					addr = backendwobj[((zcore[addr] << 8) | zcore[addr + 1]) - 1].addr_objtable + 8;
+				}
+				zcore[addr + 0] = (i + 1) >> 8;
+				zcore[addr + 1] = (i + 1) & 0xff;
 			}
-			seen[j] = 1;
+		} else {
+			report(
+				LVL_ERR,
+				0,
+				"Initial parent defined with a non-object as the first parameter.");
+			exit(1);
 		}
-		j = wobj->initialparent;
-		if(j >= 0) {
-			parent = &backendwobj[j];
-			zcore[wobj->addr_objtable + 6] = (j + 1) >> 8;
-			zcore[wobj->addr_objtable + 7] = (j + 1) & 0xff;
-			zcore[wobj->addr_objtable + 8] = zcore[parent->addr_objtable + 10];
-			zcore[wobj->addr_objtable + 9] = zcore[parent->addr_objtable + 11];
-			zcore[parent->addr_objtable + 10] = (i + 1) >> 8;
-			zcore[parent->addr_objtable + 11] = (i + 1) & 0xff;
-		}
+		more = eval_initial_next(&es);
 	}
 
 	free_evalstate(&es);

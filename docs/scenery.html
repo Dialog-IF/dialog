@@ -9,7 +9,7 @@
 <body>
 	<div class="chapter">
 	<h1>Chapter 2: Objects and state</h1>
-	<div class="navlinks">(<a href="#objects">Populating the game world</a>&nbsp;&bull; <a href="#descriptions">Descriptions and synonyms</a>&nbsp;&bull; <a href="#predstoryintro">Defining new predicates</a>&nbsp;&bull; <a href="#objlocations">Object locations</a>&nbsp;&bull; <a href="#part2dynamic">Dynamic predicates</a>&nbsp;&bull; <a href="#hidden">Hidden objects</a>)</div>
+	<div class="navlinks">(<a href="#objects">Populating the game world</a>&nbsp;&bull; <a href="#descriptions">Descriptions, appearances, and synonyms</a>&nbsp;&bull; <a href="#predstoryintro">Defining new predicates</a>&nbsp;&bull; <a href="#objlocations">Object locations</a>&nbsp;&bull; <a href="#part2dynamic">Dynamic predicates</a>&nbsp;&bull; <a href="#hidden">Hidden objects</a>)</div>
 <a id="objects"></a><h2>Populating the game world</h2>
 <p>Things in the game world are represented by <a href="execution.html#parameters">objects</a>
 (hashtags) in the Dialog language. Dialog objects are <i>thin</i>; they are
@@ -192,7 +192,7 @@ supports the relations <span class="code">#on</span>, <span class="code">#under<
 <span class="code">#behind</span>, <span class="code">#heldby</span>, <span class="code">#wornby</span>, and
 <span class="code">#partof</span>.
 </p>
-<a id="descriptions"></a><h2>Descriptions and synonyms</h2>
+<a id="descriptions"></a><h2>Descriptions, appearances, and synonyms</h2>
 <p>The <span class="code">(descr&nbsp;$)</span> predicate prints the <i>external description</i> of
 an object; what it looks like when viewed from the outside. Another predicate,
 <span class="code">(look&nbsp;$)</span>, prints the <i>internal description</i> of an object,
@@ -257,9 +257,33 @@ i.e. what it looks like from the inside. This is used for room descriptions.
 <p>Did you miss the chair in the room description? In Dialog, as a general design
 principle, game objects do not call attention to themselves. They are assumed
 to be part of the scenery, and it is up to the story author to mention (or
-subtly hint at) their existence in the prose, like we did with the table. (We
-will see an important exception to this when we get to the chapter about
-<a href="items.html">Items</a>.)
+subtly hint at) their existence in the prose, like we did with the table.
+Nevertheless, there is a way to furnish objects with <i>appearances</i>, which
+are displayed in separate paragraphs of their own after the room description:
+</p>
+<textarea class="copyarea" id="copy4" readonly>
+#chair
+(appearance *)		You notice a conspicuous chair here.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">#chair</td></tr>
+<tr><td class="left">(appearance *)</td><td class="right">You notice a conspicuous chair here.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy4').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The room description would then turn into:
+</p>
+<div class="blkoutput">&gt; LOOK<br />
+<b>Tutorial room</b><br />
+This is a very nondescript room, dominated by a wooden table.<br />
+<br />
+You notice a conspicuous chair here.</div><p>Appearances can be very handy for objects that move around during gameplay.
+This includes objects that the player might pick up, and drop in another room.
+We will learn more about such objects—and appearances—when we get to the
+chapter about <a href="items.html">Items</a>.
 </p>
 <p>How does the game know that <span class="prginput">CHAIR</span> refers to the chair object? By
 default, the standard library assumes that every word that appears in the
@@ -269,7 +293,7 @@ must all refer to the same object, so <span class="prginput">WOODEN CHAIR</span>
 match any object in this game. We can easily add extra synonyms to an object,
 using the <span class="code">(dict&nbsp;$)</span> predicate:
 </p>
-<textarea class="copyarea" id="copy4" readonly>
+<textarea class="copyarea" id="copy5" readonly>
 (dict #chair)		white plain
 </textarea>
 <div class="blkcode">
@@ -278,7 +302,7 @@ using the <span class="code">(dict&nbsp;$)</span> predicate:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy4').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy5').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Now the game would understand <span class="prginput">SIT ON THE WHITE CHAIR</span>, for
 instance. Add some synonyms to the game and try them out!
@@ -294,7 +318,7 @@ cap of doom&rdquo;.
 </p>
 <p>Thus, we might define:
 </p>
-<textarea class="copyarea" id="copy5" readonly>
+<textarea class="copyarea" id="copy6" readonly>
 #bottle
 (name *)	red bottle
 (dict *)	crimson decanter
@@ -317,7 +341,7 @@ cap of doom&rdquo;.
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy5').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy6').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Now, if the player types <span class="prginput">EXAMINE BOTTLE</span>, this is unambiguously
 interpreted as a request to examine the bottle, not the bottle cap, because one
@@ -339,7 +363,7 @@ case-by-case basis, when ambiguities turn up during playtesting.
 them. For instance, we might want to put the primary construction material of
 our objects in a separate predicate that we call <span class="code">(material)</span>:
 </p>
-<textarea class="copyarea" id="copy6" readonly>
+<textarea class="copyarea" id="copy7" readonly>
 (material)		caramelized sugar
 </textarea>
 <div class="blkcode">
@@ -348,12 +372,12 @@ our objects in a separate predicate that we call <span class="code">(material)</
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy6').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy7').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>This predicate can then be <a href="execution.html#predsrules">queried</a> from within rule bodies,
 like so:
 </p>
-<textarea class="copyarea" id="copy7" readonly>
+<textarea class="copyarea" id="copy8" readonly>
 #table
 (name *)		(material) table
 (descr *)		It's a sturdy table made of (material).
@@ -366,7 +390,7 @@ like so:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy7').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy8').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>We can use <a href="varsvalues.html">variables</a> to pass parameters around. In the
 following example, a generic object description calls out to object-specific
@@ -374,7 +398,7 @@ material and colour predicates. The standard library doesn't know about these
 predicates; we just created them by defining rules for them. The library
 queries <span class="code">(descr&nbsp;$)</span>, and we take it from there:
 </p>
-<textarea class="copyarea" id="copy8" readonly>
+<textarea class="copyarea" id="copy9" readonly>
 #player
 (current player *)
 (* is #in #room)
@@ -433,7 +457,7 @@ queries <span class="code">(descr&nbsp;$)</span>, and we take it from there:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy8').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy9').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Note that the rule for <span class="code">(descr #player)</span>, on line four, supersedes
 the generic rule for <span class="code">(descr $Obj)</span>, at the very last line. This is
@@ -452,7 +476,7 @@ thumb, predicates that print text should be designed to always succeed.
 Therefore, we'll often want to put a catch-all rule at the end of the program,
 with a wildcard (<span class="code">$</span>) in the rule head:
 </p>
-<textarea class="copyarea" id="copy9" readonly>
+<textarea class="copyarea" id="copy10" readonly>
 (material $)		an unknown material
 (colour $)		beige
 </textarea>
@@ -463,7 +487,7 @@ with a wildcard (<span class="code">$</span>) in the rule head:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy9').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>The standard library provides a catch-all rule for <span class="code">(descr&nbsp;$)</span>,
 printing a stock message along the lines of &ldquo;It seems to be harmless&rdquo;. But
@@ -487,7 +511,7 @@ predicate</a> that combines them into a single expression: <span class="code">($
 $Relation $Parent)</span>. We have already seen that one defines the initial
 location of an object like this:
 </p>
-<textarea class="copyarea" id="copy10" readonly>
+<textarea class="copyarea" id="copy11" readonly>
 (#chair is #in #room)
 </textarea>
 <div class="blkcode">
@@ -496,12 +520,12 @@ location of an object like this:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy11').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>and, due to the access predicate, the above is equivalent to the following pair
 of definitions:
 </p>
-<textarea class="copyarea" id="copy11" readonly>
+<textarea class="copyarea" id="copy12" readonly>
 (#chair has parent #room)
 (#chair has relation #in)
 </textarea>
@@ -512,12 +536,12 @@ of definitions:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy11').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy12').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>From within a rule body, you may query the access predicate to determine the
 current location of an object:
 </p>
-<textarea class="copyarea" id="copy12" readonly>
+<textarea class="copyarea" id="copy13" readonly>
 (descr #apple)
 	The apple
 	(if) (#apple is #in $Parent) (then)
@@ -536,14 +560,14 @@ current location of an object:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy12').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy13').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>The output of the above code might be:
 </p>
 <div class="blkoutput">The apple in the fruit basket looks yummy!</div><p>With a <a href="choicepoints.html#multiqueries">multi-query</a>, you can <a href="choicepoints.html#backtracking">backtrack</a>
 over every object that has a particular location:
 </p>
-<textarea class="copyarea" id="copy13" readonly>
+<textarea class="copyarea" id="copy14" readonly>
 (descr #basket)
 	It's a plain fruit basket.
 	(exhaust) {
@@ -562,13 +586,13 @@ over every object that has a particular location:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy13').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy14').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <a id="part2dynamic"></a><h2>Dynamic predicates</h2>
 <p>The location of an object is <a href="dynamic.html">dynamic</a>, which means that it can be
 modified at runtime using the <span class="code">(now)</span> keyword:
 </p>
-<textarea class="copyarea" id="copy14" readonly>
+<textarea class="copyarea" id="copy15" readonly>
 (descr #apple)
 	(if) (#apple is #in #basket) (then)
 		Yummy!
@@ -591,7 +615,7 @@ modified at runtime using the <span class="code">(now)</span> keyword:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy14').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy15').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>The standard library also uses dynamic predicates to track the <i>internal
 state</i> of game world objects. For instance, <span class="code">($&nbsp;is closed)</span>
@@ -606,7 +630,7 @@ initial value definitions.
 otherwise. The same thing can of course be coded explicitly with an
 <a href="control.html#if">if&nbsp;statement</a>.
 </p>
-<textarea class="copyarea" id="copy15" readonly>
+<textarea class="copyarea" id="copy16" readonly>
 #box
 (openable *)
 (* is closed)
@@ -643,7 +667,7 @@ otherwise. The same thing can of course be coded explicitly with an
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy15').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy16').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>The following dynamic predicates are used by the library:
 </p>
@@ -679,7 +703,7 @@ on it.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="traits.html">Chapter 3: Traits</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 17, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 18, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

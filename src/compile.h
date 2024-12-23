@@ -115,6 +115,8 @@ enum {
 	I_END_LINK,		// --
 	I_BEGIN_LINK_RES,	// -- value
 	I_END_LINK_RES,		// --
+	I_BEGIN_LOG,		// --
+	I_END_LOG,		// --
 
 	I_EMBED_RES,		// -- value
 

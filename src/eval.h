@@ -145,6 +145,7 @@ enum {
 	ESTATUS_UNDO		// used internally by the debugger
 };
 
+value_t eval_deref(value_t v, struct eval_state *es);
 int ensure_fixed_values(struct eval_state *es, struct program *prg, struct predname *predname);
 void pp_value(struct eval_state *es, value_t v, int with_at, int with_plus);
 void init_evalstate(struct eval_state *es, struct program *prg);
@@ -155,6 +156,8 @@ value_t eval_makepair(value_t head, value_t tail, struct eval_state *es);
 value_t eval_gethead(value_t v, struct eval_state *es);
 value_t eval_gettail(value_t v, struct eval_state *es);
 int eval_initial(struct eval_state *es, struct predname *predname, value_t *args);
+int eval_initial_multi(struct eval_state *es, struct predname *predname, value_t *args);
+int eval_initial_next(struct eval_state *es);
 int eval_program_entry(struct eval_state *es, struct predname *predname, value_t *args);
 int eval_resume(struct eval_state *es, value_t arg);
 int eval_injected_query(struct eval_state *es, struct predname *predname);

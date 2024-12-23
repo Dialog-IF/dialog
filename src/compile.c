@@ -38,6 +38,7 @@ struct opinfosrc {
 	{I_BEGIN_BOX,		OPF_SUBOP|OPF_CAN_FAIL,			"BEGIN_BOX"},
 	{I_BEGIN_LINK,		0,					"BEGIN_LINK"},
 	{I_BEGIN_LINK_RES,	0,					"BEGIN_LINK_RES"},
+	{I_BEGIN_LOG,		0,					"BEGIN_LOG"},
 	{I_BREAKPOINT,		OPF_ENDS_ROUTINE,			"BREAKPOINT"},
 	{I_BUILTIN,		0,					"BUILTIN"},
 	{I_CHECK_INDEX,		0,					"CHECK_INDEX"},
@@ -57,6 +58,7 @@ struct opinfosrc {
 	{I_END_BOX,		OPF_SUBOP,				"END_BOX"},
 	{I_END_LINK,		0,					"END_LINK"},
 	{I_END_LINK_RES,	0,					"END_LINK_RES"},
+	{I_END_LOG,		0,					"END_LOG"},
 	{I_FIRST_CHILD,		OPF_CAN_FAIL,				"FIRST_CHILD"},
 	{I_FIRST_OFLAG,		OPF_CAN_FAIL,				"FIRST_OFLAG"},
 	{I_FOR_WORDS,		OPF_SUBOP,				"FOR_WORDS"},
@@ -1623,6 +1625,24 @@ static void comp_now(struct program *prg, struct clause *cl, struct astnode *an,
 	}
 }
 
+static void comp_block_word_list(struct clause *cl, struct astnode *an, uint8_t *seen, struct astnode **known_args, value_t dest) {
+	value_t v;
+	struct cinstr *ci;
+
+	assert(an->kind == AN_BAREWORD);
+	assert(an->word->flags & WORDF_DICT);
+	if(an->next_in_body) {
+		comp_block_word_list(cl, an->next_in_body, seen, known_args, dest);
+		v = dest;
+	} else {
+		v = (value_t) {VAL_NIL, 0};
+	}
+	ci = add_instr(I_MAKE_PAIR_VV);
+	ci->oper[0] = dest;
+	ci->oper[1] = (value_t) {VAL_DICT, an->word->dict_id};
+	ci->oper[2] = v;
+}
+
 static void comp_body(struct program *prg, struct clause *cl, struct astnode *an, uint8_t *seen, int tail, uint32_t predflags, struct astnode **known_args) {
 	value_t v1, v2;
 	struct cinstr *ci;
@@ -2109,6 +2129,23 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 
 			begin_routine(endlab);
 			break;
+		case AN_LINK_SELF:
+			if(prg->optflags & OPTF_NO_LINKS) {
+				comp_body(prg, cl, an->children[0], seen, NO_TAIL, predflags, known_args);
+			} else {
+				v1 = (value_t) {OPER_TEMP, ntemp++};
+				if(an->children[0]->kind == AN_BAREWORD) {
+					comp_block_word_list(cl, an->children[0], seen, known_args, v1);
+				} else {
+					assert(an->children[0]->kind == AN_BLOCK);
+					comp_block_word_list(cl, an->children[0]->children[0], seen, known_args, v1);
+				}
+				ci = add_instr(I_BEGIN_LINK);
+				ci->oper[0] = v1;
+				comp_body(prg, cl, an->children[0], seen, NO_TAIL, predflags, known_args);
+				ci = add_instr(I_END_LINK);
+			}
+			break;
 		case AN_LINK:
 		case AN_LINK_RES:
 			if(prg->optflags & OPTF_NO_LINKS) {
@@ -2203,6 +2240,25 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 				}
 
 				begin_routine(endlab);
+			}
+			break;
+		case AN_LOG:
+			if(!(prg->optflags & OPTF_NO_LOG)) {
+				comp_ensure_seen(cl, an, seen);
+				endlab = make_routine_id();
+				ci = add_instr(I_BEGIN_LOG);
+				ci = add_instr(I_PUSH_STOP);
+				ci->oper[0] = (value_t) {OPER_RLAB, endlab};
+				comp_body(prg, cl, an->children[0], seen, NO_TAIL, predflags, known_args);
+				ci = add_instr(I_STOP);
+				end_routine_cl(cl);
+				memset(known_args, 0, MAXPARAM * sizeof(struct astnode *));
+				begin_routine(endlab);
+				ci = add_instr(I_POP_CHOICE);
+				ci->oper[0] = (value_t) {OPER_NUM, 0};
+				ci = add_instr(I_POP_STOP);
+				ci = add_instr(I_END_LOG);
+				break;
 			}
 			break;
 		case AN_NOW:

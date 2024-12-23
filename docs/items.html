@@ -9,7 +9,7 @@
 <body>
 	<div class="chapter">
 	<h1>Chapter 4: Items</h1>
-	<div class="navlinks">(<a href="#pristine">Pristine and handled objects</a>&nbsp;&bull; <a href="#plursynonyms">Plural forms</a>&nbsp;&bull; <a href="#appearance">Appearance</a>)</div>
+	<div class="navlinks">(<a href="#pristine">Pristine and handled objects</a>&nbsp;&bull; <a href="#plursynonyms">Plural forms</a>&nbsp;&bull; <a href="#appearance">All about appearances</a>)</div>
 <p><i>Items</i> are objects that can be picked up by the player:
 </p>
 <textarea class="copyarea" id="copy0" readonly>
@@ -206,7 +206,7 @@ picked up, due to the plural form. In contrast, <span class="prginput">GET STONE
 triggers a disambiguating question, where the game asks the player whether they
 meant to pick up the amethyst or the sapphire.
 </p>
-<a id="appearance"></a><h2>Appearance</h2>
+<a id="appearance"></a><h2>All about appearances</h2>
 <p>You may have noticed a problem with the last example: When the player examines
 the bowl, there is no mention of the stones within. For an oldschool game, it
 may be acceptable to expect the player to <span class="prginput">SEARCH</span> or <span class="prginput">LOOK
@@ -344,21 +344,19 @@ first paragraph encourages the player to look inside the bowl, the second
 paragraph takes that incentive away, and the player is mislead to believe that
 there's nothing in the bowl apart from the amethyst.
 </p>
-<p>Instead, the recommended way to handle this situation is to selectively
-override the <i>appearance text</i> that's printed for handled objects by the
-library. The message &ldquo;<span class="prgoutput">An amethyst is in the small bowl</span>&rdquo;
-originates from a predicate called <span class="code">(appearance $Object $Relation
-$Parent)</span>. The first step is to tell the library to refrain from printing
-such a message about any object that's currently in the bowl:
+<p>A better way to handle this situation is to selectively override the
+<i>appearance</i> message that's printed for handled objects by the library.
+The text &ldquo;<span class="prgoutput">An amethyst is in the small bowl</span>&rdquo; originates from a
+predicate called <span class="code">(appearance $Object $Relation $Parent)</span>. The first
+step is to tell the library to refrain from printing such a message about any
+object that's currently in the bowl:
 </p>
 <textarea class="copyarea" id="copy7" readonly>
-(appearance $ #in #bowl)
-	%% Objects in the bowl have a blank appearance.
+~(appearance $ #in #bowl) %% Objects in the bowl have no appearance.
 </textarea>
 <div class="blkcode">
 <table>
-<tr><td class="both" colspan="2">(appearance $ #in #bowl)</td></tr>
-<tr><td class="left"></td><td class="right"><span class="comment">%% Objects in the bowl have a blank appearance.</span></td></tr>
+<tr><td class="both" colspan="2">~(appearance $ #in #bowl) <span class="comment">&emsp;%% Objects in the bowl have no appearance.</span></td></tr>
 </table>
 </div>
 <div class="copycode">
@@ -378,7 +376,7 @@ might be sufficient to drop a vague hint:
 		There appears to be something inside.
 	(endif)
 
-(appearance $ #in #bowl)
+~(appearance $ #in #bowl)
 </textarea>
 <div class="blkcode">
 <table>
@@ -388,17 +386,43 @@ might be sufficient to drop a vague hint:
 <tr><td class="left"></td><td class="right"><span class="tab"> </span>There appears to be something inside.</td></tr>
 <tr><td class="left"></td><td class="right">(endif)</td></tr>
 <tr><td class="blank" colspan="2"></td></tr>
-<tr><td class="both" colspan="2">(appearance $ #in #bowl)</td></tr>
+<tr><td class="both" colspan="2">~(appearance $ #in #bowl)</td></tr>
 </table>
 </div>
 <div class="copycode">
 <a class="copybtn" href="" onClick="document.getElementById('copy8').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
+<p>The library provides a predicate, <span class="code">(list objects $Rel $Obj)</span>, that
+prints a neutral sentence along the lines of “In the small bowl are an amethyst
+and a sapphire”, or nothing at all if there is no object in the specified
+location. Thus:
+</p>
+<textarea class="copyarea" id="copy9" readonly>
+(descr #bowl)
+	It's a small bowl.
+	(par)
+	(list objects #in *)
+
+~(appearance $ #in #bowl)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(descr #bowl)</td></tr>
+<tr><td class="left"></td><td class="right">It's a small bowl.</td></tr>
+<tr><td class="left"></td><td class="right">(par)</td></tr>
+<tr><td class="left"></td><td class="right">(list objects #in *)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">~(appearance $ #in #bowl)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy9').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
 <p>A more advanced technique is to use a <a href="choicepoints.html#multiqueries">multi-query</a> and a
 <a href="choicepoints.html#collect">collect statement</a> to print a list of all objects currently inside
 the bowl:
 </p>
-<textarea class="copyarea" id="copy9" readonly>
+<textarea class="copyarea" id="copy10" readonly>
 (descr #bowl)
 	It's a small bowl.
 	(collect $Obj)
@@ -406,7 +430,7 @@ the bowl:
 	(into $List)
 	You can see (a $List) in it.
 
-(appearance $ #in #bowl)
+~(appearance $ #in #bowl)
 </textarea>
 <div class="blkcode">
 <table>
@@ -417,22 +441,21 @@ the bowl:
 <tr><td class="left"></td><td class="right">(into $List)</td></tr>
 <tr><td class="left"></td><td class="right">You can see (a $List) in it.</td></tr>
 <tr><td class="blank" colspan="2"></td></tr>
-<tr><td class="both" colspan="2">(appearance $ #in #bowl)</td></tr>
+<tr><td class="both" colspan="2">~(appearance $ #in #bowl)</td></tr>
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy9').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>An entirely different approach is to allow objects to call attention to
 themselves, but to replace the stock message with a custom one. This is done by
 overriding <span class="code">(appearence $ $&nbsp;$)</span> with a rule that prints text:
 </p>
-<textarea class="copyarea" id="copy10" readonly>
+<textarea class="copyarea" id="copy11" readonly>
 #sapphire
 (appearance * $ $)
 	(* is handled)
 	A gleaming sapphire catches your eye.
-	(notice *)	%% Bind &ldquo;it&rdquo;
 </textarea>
 <div class="blkcode">
 <table>
@@ -440,17 +463,49 @@ overriding <span class="code">(appearence $ $&nbsp;$)</span> with a rule that pr
 <tr><td class="both" colspan="2">(appearance * $ $)</td></tr>
 <tr><td class="left"></td><td class="right">(* is handled)</td></tr>
 <tr><td class="left"></td><td class="right">A gleaming sapphire catches your eye.</td></tr>
-<tr><td class="left"></td><td class="right">(notice *)	<span class="comment">&emsp;%% Bind &ldquo;it&rdquo;</span></td></tr>
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy11').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>That rule did not check the location of the sapphire, so it would override the
 default message also when the sapphire makes an appearance as part of a room
 description, or in any other place. Without the line <span class="code">(*&nbsp;is
 handled)</span>, the message would also be printed while the object
 is still pristine.
+</p>
+<p>When the last two parameters are wildcards (as above), they can be omitted:
+</p>
+<textarea class="copyarea" id="copy12" readonly>
+#sapphire
+(appearance *)
+	(* is handled)
+	A gleaming sapphire catches your eye.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">#sapphire</td></tr>
+<tr><td class="both" colspan="2">(appearance *)</td></tr>
+<tr><td class="left"></td><td class="right">(* is handled)</td></tr>
+<tr><td class="left"></td><td class="right">A gleaming sapphire catches your eye.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy12').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>In story code, <span class="code">(appearance $ $&nbsp;$)</span> rules always take precedence
+over <span class="code">(appearance&nbsp;$)</span> rules. The way this works internally, is that
+the library queries <span class="code">(appearance $ $&nbsp;$)</span>, but there is only a single
+rule definition for that predicate in the library: It queries
+<span class="code">(appearance&nbsp;$)</span>, which in turn contains the default code for
+calling attention to handled objects.
+</p>
+<p>There's one more subtlety to be aware of: Whenever an appearance-rule succeeds,
+the object in question gets <i>noticed</i> by the library. This binds the
+appropriate pronoun (usually “it”) to the object. Therefore, if the
+appearance-rule doesn't print a sentence about the object, it should
+<i>fail</i> in order to prevent the noticing. That is why there is a tilde
+character in front of the rule head in some of the examples above.
 </p>
 <p>To summarize, movable items are more complicated than other objects, because
 there is a transfer of responsibility for calling attention to them. At first,
@@ -461,7 +516,7 @@ control over their appearance.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="moving.html">Chapter 5: Moving around</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 17, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 18, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

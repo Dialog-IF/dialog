@@ -329,6 +329,10 @@ void pp_expr(struct astnode *an) {
 		printf(") ");
 		pp_expr(an->children[1]);
 		break;
+	case AN_LINK_SELF:
+		printf("(link) ");
+		pp_expr(an->children[0]);
+		break;
 	case AN_LINK:
 		printf("(link ");
 		pp_expr(an->children[0]);
@@ -340,6 +344,10 @@ void pp_expr(struct astnode *an) {
 		pp_expr(an->children[0]);
 		printf(") ");
 		pp_expr(an->children[1]);
+		break;
+	case AN_LOG:
+		printf("(log) ");
+		pp_expr(an->children[0]);
 		break;
 	case AN_COLLECT:
 		printf("(collect ");
@@ -519,8 +527,10 @@ static void find_clause_vars(struct program *prg, struct clause *cl, struct astn
 		|| an->kind == AN_NEG_BLOCK
 		|| an->kind == AN_FIRSTRESULT
 		|| an->kind == AN_OUTPUTBOX
+		|| an->kind == AN_LINK_SELF
 		|| an->kind == AN_LINK
-		|| an->kind == AN_LINK_RES) {
+		|| an->kind == AN_LINK_RES
+		|| an->kind == AN_LOG) {
 			an->word = fresh_word(prg);
 			(void) resolve_clause_var(prg, an->word);
 		} else if(an->kind == AN_VARIABLE) {

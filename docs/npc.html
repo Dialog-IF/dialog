@@ -662,8 +662,9 @@ course do this manually, using dynamic predicates and
 structure to build upon.
 </p>
 <p>Parser-wise, the library does provide <a href="stdactions.html#stdcomm">a set of standard actions</a>
-for communicating with NPCs. These include the classical “ask about” and
-“tell about” actions, which redirect by default to a simple “talk to”.
+for communicating with NPCs. These include the classical “ask <i>x</i> about
+<i>y</i>” and “tell <i>x</i> about <i>y</i>” actions, which redirect by default
+via “talk to <i>x</i> about <i>y</i>” to a simple “talk to <i>x</i>”.
 </p>
 <p>The story author deals with the <span class="code">[talk to $]</span> action as with any
 other; namely by overriding the default action-handling predicates. For
@@ -690,25 +691,23 @@ instance:
 <div class="copycode">
 <a class="copybtn" href="" onClick="document.getElementById('copy11').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
-<p>The <span class="prginput">ASK</span> and <span class="prginput">TELL</span> verbs redirect to <span class="prginput">TALK
-TO</span> by default, but they can be overridden with more specific responses.
-Nowadays, it is customary to redirect one of
-<span class="prginput">ASK</span>/<span class="prginput">TELL</span> onto the other, as a synonym:
+<p>The <span class="prginput">ASK</span> and <span class="prginput">TELL</span> verbs redirect to a common
+<span class="prginput">TALK TO</span> action by default, but they can be overridden with more
+specific responses. However, modern players may expect games to treat
+<span class="prginput">ASK</span>, <span class="prginput">TELL</span>, and <span class="prginput">TALK TO</span> as
+synonyms.
 </p>
 <textarea class="copyarea" id="copy12" readonly>
 #librarian
 (name *)	librarian
 (male *)
 
-(perform [ask * about #book])
+(perform [talk to * about #book])
 	“I'd like to borrow this book.” (line)
 	“Certainly. May I see your library card, please?”
 
-(perform [ask * about $])
+(perform [talk to * about $])
 	(The *) has nothing to say about that.
-
-(instead of [tell $NPC about $Topic])
-	(try [ask $NPC about $Topic])
 </textarea>
 <div class="blkcode">
 <table>
@@ -716,15 +715,12 @@ Nowadays, it is customary to redirect one of
 <tr><td class="left">(name *)</td><td class="right">librarian</td></tr>
 <tr><td class="both" colspan="2">(male *)</td></tr>
 <tr><td class="blank" colspan="2"></td></tr>
-<tr><td class="both" colspan="2">(perform [ask * about #book])</td></tr>
+<tr><td class="both" colspan="2">(perform [talk to * about #book])</td></tr>
 <tr><td class="left"></td><td class="right">“I'd like to borrow this book.” (line)</td></tr>
 <tr><td class="left"></td><td class="right">“Certainly. May I see your library card, please?”</td></tr>
 <tr><td class="blank" colspan="2"></td></tr>
-<tr><td class="both" colspan="2">(perform [ask * about $])</td></tr>
+<tr><td class="both" colspan="2">(perform [talk to * about $])</td></tr>
 <tr><td class="left"></td><td class="right">(The *) has nothing to say about that.</td></tr>
-<tr><td class="blank" colspan="2"></td></tr>
-<tr><td class="both" colspan="2">(instead of [tell $NPC about $Topic])</td></tr>
-<tr><td class="left"></td><td class="right">(try [ask $NPC about $Topic])</td></tr>
 </table>
 </div>
 <div class="copycode">
@@ -746,7 +742,7 @@ valid topics, regardless of scope:
 (* is #in #townsquare)
 (topic *)
 
-(perform [ask #librarian about *])
+(perform [talk to #librarian about *])
 	“What's up with the oddly-shaped fountain in the town square?” (line)
 	(select)
 		“Ah, yes. Old Chancellor Fhtagn. May I recommend this excellent
@@ -765,7 +761,7 @@ valid topics, regardless of scope:
 <tr><td class="both" colspan="2">(* is #in #townsquare)</td></tr>
 <tr><td class="both" colspan="2">(topic *)</td></tr>
 <tr><td class="blank" colspan="2"></td></tr>
-<tr><td class="both" colspan="2">(perform [ask #librarian about *])</td></tr>
+<tr><td class="both" colspan="2">(perform [talk to #librarian about *])</td></tr>
 <tr><td class="left"></td><td class="right">“What's up with the oddly-shaped fountain in the town square?” (line)</td></tr>
 <tr><td class="left"></td><td class="right">(select)</td></tr>
 <tr><td class="left"></td><td class="right"><span class="tab"> </span>“Ah, yes. Old Chancellor Fhtagn. May I recommend this excellent</td></tr>
@@ -793,7 +789,7 @@ magazine?”
 (proper *)
 (topic *)
 
-(perform [ask #librarian about *])
+(perform [talk to #librarian about *])
 	“That would be under 823.9, Modern Period Fiction. A for Adams.”
 </textarea>
 <div class="blkcode">
@@ -803,7 +799,7 @@ magazine?”
 <tr><td class="both" colspan="2">(proper *)</td></tr>
 <tr><td class="both" colspan="2">(topic *)</td></tr>
 <tr><td class="blank" colspan="2"></td></tr>
-<tr><td class="both" colspan="2">(perform [ask #librarian about *])</td></tr>
+<tr><td class="both" colspan="2">(perform [talk to #librarian about *])</td></tr>
 <tr><td class="left"></td><td class="right">“That would be under 823.9, Modern Period Fiction. A for Adams.”</td></tr>
 </table>
 </div>
@@ -888,12 +884,12 @@ arbitrarily complex parser rules for topics.
 that was unrecognized by the parser. It can be handled as a special case:
 </p>
 <textarea class="copyarea" id="copy18" readonly>
-(perform [ask #librarian about ?])
+(perform [talk to #librarian about ?])
 	“I really don't know about that.”
 </textarea>
 <div class="blkcode">
 <table>
-<tr><td class="both" colspan="2">(perform [ask #librarian about ?])</td></tr>
+<tr><td class="both" colspan="2">(perform [talk to #librarian about ?])</td></tr>
 <tr><td class="left"></td><td class="right">“I really don't know about that.”</td></tr>
 </table>
 </div>
@@ -910,14 +906,14 @@ towards the end of the story source code, where they confess that they don't
 know much about the subject:
 </p>
 <textarea class="copyarea" id="copy19" readonly>
-%% The following must come after the more specific [ask #librarian about ...] rules.
-(perform [ask #librarian about $])
+%% The following must come after the more specific [talk to #librarian about ...] rules.
+(perform [talk to #librarian about $])
 	“I really don't know about that.”
 </textarea>
 <div class="blkcode">
 <table>
-<tr><td class="both" colspan="2"><span class="comment">%% The following must come after the more specific [ask #librarian about ...] rules.</span></td></tr>
-<tr><td class="both" colspan="2">(perform [ask #librarian about $])</td></tr>
+<tr><td class="both" colspan="2"><span class="comment">%% The following must come after the more specific [talk to #librarian about ...] rules.</span></td></tr>
+<tr><td class="both" colspan="2">(perform [talk to #librarian about $])</td></tr>
 <tr><td class="left"></td><td class="right">“I really don't know about that.”</td></tr>
 </table>
 </div>
@@ -927,20 +923,20 @@ know much about the subject:
 <p>The two techniques above can be combined:
 </p>
 <textarea class="copyarea" id="copy20" readonly>
-(perform [ask #librarian about ?])
+(perform [talk to #librarian about ?])
 	“I really don't know about that.”
 
-%% The following must come after the more specific [ask #librarian about ...] rules.
-(perform [ask #librarian about $Obj])
+%% The following must come after the more specific [talk to #librarian about ...] rules.
+(perform [talk to #librarian about $Obj])
 	“I really don't know much about (the $Obj).”
 </textarea>
 <div class="blkcode">
 <table>
-<tr><td class="both" colspan="2">(perform [ask #librarian about ?])</td></tr>
+<tr><td class="both" colspan="2">(perform [talk to #librarian about ?])</td></tr>
 <tr><td class="left"></td><td class="right">“I really don't know about that.”</td></tr>
 <tr><td class="blank" colspan="2"></td></tr>
-<tr><td class="both" colspan="2"><span class="comment">%% The following must come after the more specific [ask #librarian about ...] rules.</span></td></tr>
-<tr><td class="both" colspan="2">(perform [ask #librarian about $Obj])</td></tr>
+<tr><td class="both" colspan="2"><span class="comment">%% The following must come after the more specific [talk to #librarian about ...] rules.</span></td></tr>
+<tr><td class="both" colspan="2">(perform [talk to #librarian about $Obj])</td></tr>
 <tr><td class="left"></td><td class="right">“I really don't know much about (the $Obj).”</td></tr>
 </table>
 </div>
@@ -949,7 +945,7 @@ know much about the subject:
 </div>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="understanding.html">Chapter 10: Understanding player input</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 17, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 18, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

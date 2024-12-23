@@ -19,7 +19,7 @@ void eval_interrupt() {
 	interrupted = 1;
 }
 
-static value_t eval_deref(value_t v, struct eval_state *es) {
+value_t eval_deref(value_t v, struct eval_state *es) {
 	int pos;
 
 	while(v.tag == VAL_REF) {
@@ -1118,6 +1118,9 @@ static int eval_run(struct eval_state *es) {
 			assert(v.tag == VAL_NUM);
 			begin_link_res(es, v.value);
 			break;
+		case I_BEGIN_LOG:
+			o_begin_box("debugger");
+			break;
 		case I_BREAKPOINT:
 			if(!ci->subop && tr_line) {
 				report(LVL_NOTE, tr_line, "Query made to (breakpoint)");
@@ -1379,6 +1382,9 @@ static int eval_run(struct eval_state *es) {
 			if(!es->hide_links) {
 				o_end_link();
 			}
+			break;
+		case I_END_LOG:
+			o_end_box();
 			break;
 		case I_FIRST_CHILD:
 			predname = es->program->objvarpred[DYN_HASPARENT];
@@ -2514,6 +2520,45 @@ int eval_initial(struct eval_state *es, struct predname *predname, value_t *args
 	for(i = 0; i < predname->arity; i++) {
 		args[i] = eval_deref(args[i], es);
 	}
+
+	return status == ESTATUS_SUCCESS;
+}
+
+int eval_initial_multi(struct eval_state *es, struct predname *predname, value_t *args) {
+	int i, status;
+
+	assert(!es->dyn_callbacks);
+
+	pred_claim(predname->pred);
+	es->resume.pred = predname->pred;
+	if(predname->pred->initial_value_entry >= 0) {
+		es->resume.routine = predname->pred->initial_value_entry;
+	} else {
+		es->resume.routine = predname->pred->normal_entry;
+	}
+
+	for(i = 0; i < predname->arity; i++) {
+		es->arg[i] = args[i];
+	}
+
+	es->simple = EVAL_MULTI;
+	trace(es, TR_MQUERY, predname, args, 0);
+
+	interrupted = 0;
+	es->max_eval = 60000;
+	status = eval_run(es);
+
+	return status == ESTATUS_SUCCESS;
+}
+
+int eval_initial_next(struct eval_state *es) {
+	int status;
+
+	do_fail(es, &es->resume);
+
+	interrupted = 0;
+	es->max_eval = 60000;
+	status = eval_run(es);
 
 	return status == ESTATUS_SUCCESS;
 }

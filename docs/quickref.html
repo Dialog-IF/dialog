@@ -139,6 +139,13 @@ rendered into a rectangular area according to the given style class.
 <p class="noteline">Like <span class="code">(div&nbsp;$)</span>, but the output is rendered into the status bar
 area, which is created if necessary.
 </p>
+<p class="codeline">(link) <i>statement</i></p>
+<p class="noteline">The inner statement executes, succeeding at most once. The interpreter
+displays the output, optionally in the form of a hyperlink. If the
+hyperlink is selected by the player, the output from the inner
+statement is appended to the current input buffer, which is submitted.
+The statement must be a single word, or a single block of words.
+</p>
 <p class="codeline">(link $Words) <i>statement</i></p>
 <p class="noteline">The inner statement executes, succeeding at most once. The interpreter
 displays the output, optionally in the form of a hyperlink. If the
@@ -149,6 +156,11 @@ appended to the current input buffer, which is submitted.
 <p class="noteline">The inner statement executes, succeeding at most once. The interpreter
 displays the output, optionally in the form of a hyperlink. The
 hyperlink leads to the resource identified by <span class="code">$Id</span>.
+</p>
+<p class="codeline">(log) <i>statement</i></p>
+<p class="noteline">If running in the debugger, execute the inner statement in a stoppable
+environment. The output appears between line breaks, in a distinct
+style.
 </p>
 <p class="codeline">(now) <i>pseudo-query</i></p>
 <p class="noteline">Updates a dynamic predicate.
@@ -410,7 +422,7 @@ successful restore.
 </p>
 	<div class="footer">
 	<p class="nav">Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 17, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 18, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

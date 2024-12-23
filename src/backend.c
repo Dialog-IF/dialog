@@ -45,7 +45,7 @@ static void get_timestamp(char *dest, char *longdest) {
 
 void usage(char *prgname) {
 	fprintf(stderr, "Dialog compiler " VERSION ".\n");
-	fprintf(stderr, "Copyright 2018-2019 Linus Akesson.\n");
+	fprintf(stderr, "Copyright 2018-2020 Linus Akesson.\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Usage: %s [options] [source code filename ...]\n", prgname);
 	fprintf(stderr, "\n");
@@ -205,7 +205,7 @@ int main(int argc, char **argv) {
 
 	prg = new_program();
 	frontend_add_builtins(prg);
-	prg->optflags |= OPTF_BOUND_PARAMS | OPTF_TAIL_CALLS | OPTF_ENV_FRAMES | OPTF_SIMPLE_SELECT;
+	prg->optflags |= OPTF_BOUND_PARAMS | OPTF_TAIL_CALLS | OPTF_ENV_FRAMES | OPTF_SIMPLE_SELECT | OPTF_NO_LOG;
 	if(!aamachine) {
 		prg->optflags |= OPTF_NO_LINKS;
 	}

@@ -734,12 +734,9 @@ considered <span class="code">(very unlikely&nbsp;$)</span> by default, unless i
 few actions that might involve a room (such as <span class="code">[enter&nbsp;$]</span> or
 <span class="code">[go to&nbsp;$]</span>).
 </p>
-<p>Actions that involve the unrecognized topic (<span class="code">@?</span>) are also
-considered very unlikely by default.
-</p>
 <p>This predicate rarely needs to be touched outside of library code. But if you
-ever add a new action that involves a room object directly, or a topic, make
-sure to modify the rules for <span class="code">(very unlikely&nbsp;$)</span> as well as
+ever add a new action that involves a room object directly, make sure to adjust
+the rules for <span class="code">(very unlikely&nbsp;$)</span> as well as
 <span class="code">(unlikely&nbsp;$)<span class="code">.
 </p>
 <a id="rewrite"></a><h2>Synonyms</h2>
@@ -1152,10 +1149,25 @@ This can simplify text entry on mobile devices.
 <a class="copybtn" href="" onClick="document.getElementById('copy43').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Often, as above, we want both the link target and the clickable text to be the
-printed name of an object. The standard library provides a tersely named
-predicate, <span class="code">($)</span>, for this case:
+same. If the text is a single word, or a single block of words, a short form
+is available:
 </p>
 <textarea class="copyarea" id="copy44" readonly>
+	In the bowl a (link) { red marble } glistens in the sunlight.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">In the bowl a (link) { red marble } glistens in the sunlight.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy44').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>If we want both the link target and the clickable text to be the printed name
+of an object, we can use the tersely named predicate <span class="code">($)</span> from the
+standard library:
+</p>
+<textarea class="copyarea" id="copy45" readonly>
 	In the bowl a (#redmarble) glistens in the sunlight.
 </textarea>
 <div class="blkcode">
@@ -1164,11 +1176,11 @@ predicate, <span class="code">($)</span>, for this case:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy44').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy45').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
-<p>The same predicate is useful for describing exits:
+<p>The same predicate can be used for exits:
 </p>
-<textarea class="copyarea" id="copy45" readonly>
+<textarea class="copyarea" id="copy46" readonly>
 	An exit leads (#north).
 </textarea>
 <div class="blkcode">
@@ -1177,13 +1189,13 @@ predicate, <span class="code">($)</span>, for this case:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy45').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy46').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>To use the printed name of an object as a link target, but supply a different
 text, use the predicate <span class="code">($&nbsp;$)</span>. The first parameter is an object,
 and the second is a <a href="control.html#closures">closure</a>:
 </p>
-<textarea class="copyarea" id="copy46" readonly>
+<textarea class="copyarea" id="copy47" readonly>
 	In the bowl (#redmarble {something red}) glistens in the sunlight.
 </textarea>
 <div class="blkcode">
@@ -1192,7 +1204,7 @@ and the second is a <a href="control.html#closures">closure</a>:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy46').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy47').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Be aware, however, that hyperlinks are an optional feature of the Å-machine,
 and not every interpreter will support them. While it can be tempting to create
@@ -1208,7 +1220,7 @@ to the author.
 default <a href="items.html#appearance">appearances</a>, and queries to <span class="code">(a&nbsp;$)</span> and
 <span class="code">(A&nbsp;$)</span>, add the following rule definition to the source code:
 </p>
-<textarea class="copyarea" id="copy47" readonly>
+<textarea class="copyarea" id="copy48" readonly>
 (library links enabled)
 </textarea>
 <div class="blkcode">
@@ -1217,7 +1229,7 @@ default <a href="items.html#appearance">appearances</a>, and queries to <span cl
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy47').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy48').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Since link targets are appended to the current line of input, readers who are
 playing on a touchscreen device can type a verb using the on-screen keyboard,
@@ -1229,7 +1241,7 @@ attempt to click on them without first typing a verb. To handle this situation,
 the standard library provides an optional feature called <i>default
 actions</i>. It is enabled like this:
 </p>
-<textarea class="copyarea" id="copy48" readonly>
+<textarea class="copyarea" id="copy49" readonly>
 (default actions enabled)
 </textarea>
 <div class="blkcode">
@@ -1238,14 +1250,14 @@ actions</i>. It is enabled like this:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy48').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy49').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>When this feature is enabled, the parser will understand noun-only input as a
 request for the default action, which is <span class="code">examine</span>. The default
 action can be changed, and may depend on the object, as in the following
 example:
 </p>
-<textarea class="copyarea" id="copy49" readonly>
+<textarea class="copyarea" id="copy50" readonly>
 (default action (animate $Obj) [talk to $Obj])
 </textarea>
 <div class="blkcode">
@@ -1254,11 +1266,11 @@ example:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy49').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy50').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="miscfeat.html">Chapter 11: Miscellaneous features</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 17, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 18, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

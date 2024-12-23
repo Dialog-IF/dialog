@@ -908,6 +908,36 @@ static struct astnode *parse_expr(int parsemode, struct lexer *lexer, struct are
 				lexer->errorflag = 1;
 				return 0;
 			}
+		} else if(an->predicate->special == SP_LINK_SELF) {
+			an = mkast(AN_LINK_SELF, 1, arena, line);
+			status = next_token(lexer, PMODE_BODY);
+			if(lexer->errorflag) return 0;
+			if(status != 1) {
+				report(LVL_ERR, line, "Expected expression after (link).");
+				lexer->errorflag = 1;
+				return 0;
+			}
+			an->children[0] = parse_expr(PMODE_BODY, lexer, arena);
+			if(!an->children[0]) return 0;
+			if(contains_just(an->children[0])) {
+				report(LVL_ERR, line, "(just) not allowed inside (link).");
+				lexer->errorflag = 1;
+				return 0;
+			}
+			if(an->children[0]->kind != AN_BAREWORD) {
+				sub = an->children[0];
+				if(sub->kind == AN_BLOCK && sub->children[0]) {
+					sub = sub->children[0];
+					while(sub && sub->kind == AN_BAREWORD) {
+						sub = sub->next_in_body;
+					}
+				}
+				if(sub) {
+					report(LVL_ERR, line, "(link) may only be followed by a block of words or a single word.");
+					lexer->errorflag = 1;
+					return 0;
+				}
+			}
 		} else if(an->predicate->special == SP_LINK) {
 			sub = an->children[0];
 			an = mkast(AN_LINK, 2, arena, line);
@@ -950,6 +980,22 @@ static struct astnode *parse_expr(int parsemode, struct lexer *lexer, struct are
 			if(!sub->children[1]) return 0;
 			if(contains_just(sub->children[1])) {
 				report(LVL_ERR, line, "(just) not allowed inside (link resource $).");
+				lexer->errorflag = 1;
+				return 0;
+			}
+		} else if(an->predicate->special == SP_LOG) {
+			an = mkast(AN_LOG, 1, arena, line);
+			status = next_token(lexer, PMODE_BODY);
+			if(lexer->errorflag) return 0;
+			if(status != 1) {
+				report(LVL_ERR, line, "Expected expression after (log).");
+				lexer->errorflag = 1;
+				return 0;
+			}
+			an->children[0] = parse_expr(PMODE_BODY, lexer, arena);
+			if(!an->children[0]) return 0;
+			if(contains_just(an->children[0])) {
+				report(LVL_ERR, line, "(just) not allowed inside (log).");
 				lexer->errorflag = 1;
 				return 0;
 			}

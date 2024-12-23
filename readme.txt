@@ -1,5 +1,5 @@
-This archive contains version 0h/05 of the Dialog compiler and interactive
-debugger, bundled with documentation and version 0.32 of the Dialog Standard
+This archive contains version 0i/01 of the Dialog compiler and interactive
+debugger, bundled with documentation and version 0.33 of the Dialog Standard
 Library.
 
 Directory structure:
@@ -37,6 +37,33 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0i/01 Lib 0.33 (Manual revision 18):
+
+		Language: The initial values for ($ has parent $) are derived
+		from a compile-time multi-query.
+
+		Language: New syntax: (link) { ... } for simple lists of words.
+
+		Language: (log) { ... } for printing text in a different
+		colour, and only when running in the interactive debugger.
+
+		Library: The library defines no rewrite-rules anymore.
+
+		Library: Short form of appearance, '(appearance $)'. Objects
+		are noticed if the appearance predicate is queried succesfully.
+
+		Library: New standard action: '[talk to $Obj about $Topic]'.
+		Ask/tell redirect to it by default, and it in turn redirects to
+		'[talk to $Obj]' by default.
+
+		Library: Added '(list objects $ $)'.
+
+		Library: Fixed several cases of a hardcoded "is" where
+		plural-sensitivity was required.
+
+		Library: Rewrote some of the code dealing with unlikely
+		actions.
 
 	0h/05 Lib 0.32 (Manual revision 17):
 

@@ -115,9 +115,10 @@ static void remove_child_from(struct dyn_state *ds, uint16_t cnum, uint16_t pnum
 	}
 }
 
-static int set_parent(struct eval_state *es, struct dyn_state *ds, uint16_t onum, value_t parent, int keep_order) {
+static int set_parent(struct eval_state *es, struct dyn_state *ds, uint16_t onum, value_t parent, int append) {
 	struct dyn_var *v = &ds->obj[onum].var[DYN_HASPARENT];
 	uint8_t seen[es->program->nworldobj];
+	uint16_t *ptr;
 
 	if(parent.tag != VAL_OBJ && parent.tag != VAL_NONE) {
 		report(
@@ -133,14 +134,6 @@ static int set_parent(struct eval_state *es, struct dyn_state *ds, uint16_t onum
 		v->rendered = calloc(1, sizeof(value_t));
 	}
 
-	if(keep_order
-	&& v->size
-	&& parent.tag == v->rendered[0].tag
-	&& parent.value == v->rendered[0].value) {
-		// don't mess with the order of children
-		return 1;
-	}
-
 	if(v->size) {
 		assert(v->rendered[0].tag == VAL_OBJ);
 		remove_child_from(ds, onum, v->rendered[0].value);
@@ -149,8 +142,17 @@ static int set_parent(struct eval_state *es, struct dyn_state *ds, uint16_t onum
 	if(parent.tag == VAL_OBJ) {
 		v->size = 1;
 		v->rendered[0] = parent;
-		ds->obj[onum].sibling = ds->obj[parent.value].child;
-		ds->obj[parent.value].child = onum;
+		if(append) {
+			ptr = &ds->obj[parent.value].child;
+			while(*ptr != 0xffff) {
+				ptr = &ds->obj[*ptr].sibling;
+			}
+			*ptr = onum;
+			ds->obj[onum].sibling = 0xffff;
+		} else {
+			ds->obj[onum].sibling = ds->obj[parent.value].child;
+			ds->obj[parent.value].child = onum;
+		}
 
 		memset(seen, 0, es->program->nworldobj);
 		while(ds->obj[onum].var[DYN_HASPARENT].size) {
@@ -293,20 +295,51 @@ static int update_ovar(struct eval_state *es, struct dyn_state *ds, int onum, in
 	args[0] = (value_t) {VAL_OBJ, onum};
 	args[1] = eval_makevar(es);
 	if(eval_initial(es, es->program->objvarpred[vnum], args)) {
-		if(vnum == DYN_HASPARENT) {
-			return set_parent(es, ds, onum, args[1], 1);
-		} else {
-			v->size = 0;
-			return render_complex_value(v, args[1], es, es->program->objvarpred[vnum]);
-		}
+		assert(vnum != DYN_HASPARENT);
+		v->size = 0;
+		return render_complex_value(v, args[1], es, es->program->objvarpred[vnum]);
 	} else {
-		if(vnum == DYN_HASPARENT) {
-			return set_parent(es, ds, onum, (value_t) {VAL_NONE, 0}, 1);
-		} else {
-			v->size = 0;
-			return 1;
+		assert(vnum != DYN_HASPARENT);
+		v->size = 0;
+		return 1;
+	}
+}
+
+static int refresh_parents(struct eval_state *es, struct dyn_state *ds) {
+	value_t args[2], obj;
+	int more, success = 1;
+	struct predname *predname = es->program->objvarpred[DYN_HASPARENT];
+	int onum;
+
+	for(onum = 0; onum < ds->nobj; onum++) {
+		if(!ds->obj[onum].var[DYN_HASPARENT].changed) {
+			(void) set_parent(es, ds, onum, (value_t) {VAL_NONE, 0}, 1);
 		}
 	}
+
+	eval_reinitialize(es);
+	args[0] = eval_makevar(es);
+	args[1] = eval_makevar(es);
+	more = eval_initial_multi(es, predname, args);
+	while(more) {
+		obj = eval_deref(args[0], es);
+		if(obj.tag == VAL_OBJ) {
+			onum = obj.value;
+			if(!ds->obj[onum].var[DYN_HASPARENT].changed
+			&& !ds->obj[onum].var[DYN_HASPARENT].size) {
+				success &= set_parent(es, ds, onum, eval_deref(args[1], es), 1);
+			}
+		} else {
+			report(
+				LVL_ERR,
+				0,
+				"Initial parent defined with a non-object as the first parameter.");
+			success = 0;
+		}
+		more = eval_initial_next(es);
+	}
+
+	return success;
 }
 
 static int grow_dyn_state(struct dyn_state *ds, struct program *prg) {
@@ -316,6 +349,7 @@ static int grow_dyn_state(struct dyn_state *ds, struct program *prg) {
 	int onum, fnum, vnum;
 	value_t arg;
 	int success = 1;
+	int need_refresh_parents = 0;
 
 	init_evalstate(&es, prg);
 
@@ -368,7 +402,8 @@ static int grow_dyn_state(struct dyn_state *ds, struct program *prg) {
 			}
 			if(ds->nobjvar) {
 				o->var = calloc(ds->nobjvar, sizeof(struct dyn_var));
-				for(vnum = 0; vnum < ds->nobjvar; vnum++) {
+				need_refresh_parents = 1;
+				for(vnum = 1; vnum < ds->nobjvar; vnum++) {
 					success &= update_ovar(&es, ds, ds->nobj, vnum);
 				}
 			} else {
@@ -407,11 +442,19 @@ static int grow_dyn_state(struct dyn_state *ds, struct program *prg) {
 			}
 		}
 		while(ds->nobjvar < prg->nobjvar) {
-			for(onum = 0; onum < ds->nobj; onum++) {
-				success &= update_ovar(&es, ds, onum, ds->nobjvar);
+			if(ds->nobjvar == DYN_HASPARENT) {
+				need_refresh_parents = 1;
+			} else {
+				for(onum = 0; onum < ds->nobj; onum++) {
+					success &= update_ovar(&es, ds, onum, ds->nobjvar);
+				}
 			}
 			ds->nobjvar++;
 		}
+	}
+
+	if(need_refresh_parents) {
+		success &= refresh_parents(&es, ds);
 	}
 
 	free_evalstate(&es);
@@ -794,12 +837,14 @@ static void update_initial_values(struct program *prg, struct dyn_state *ds) {
 				update_oflag(&es, ds, onum, i);
 			}
 		}
-		for(i = 0; i < ds->nobjvar; i++) {
+		for(i = 1; i < ds->nobjvar; i++) {
 			if(!ds->obj[onum].var[i].changed) {
 				(void) update_ovar(&es, ds, onum, i);
 			}
 		}
 	}
+
+	(void) refresh_parents(&es, ds);
 
 	free_evalstate(&es);
 }
@@ -1334,7 +1379,7 @@ static int restart(struct debugger *dbg) {
 
 void usage(char *prgname) {
 	fprintf(stderr, DEBUGGERNAME ".\n");
-	fprintf(stderr, "Copyright 2018-2019 Linus Akesson.\n");
+	fprintf(stderr, "Copyright 2018-2020 Linus Akesson.\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Usage: %s [options] [source code filename ...]\n", prgname);
 	fprintf(stderr, "\n");

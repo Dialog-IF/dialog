@@ -519,9 +519,42 @@ part of the object tree:
 <div class="copycode">
 <a class="copybtn" href="" onClick="document.getElementById('copy22').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
+<h3>Initial object locations</h3>
+<p>The initial value of <span class="code">($ has parent $)</span> is computed by making a
+multi-query to the predicate at compile-time, and noting down the first parent
+encountered for each object.
+</p>
+<p>The following definitions:
+</p>
+<textarea class="copyarea" id="copy23" readonly>
+(edible #apple)
+(edible #lettuce)
+
+(#apple has parent #bowl)
+
+(*(edible $) has parent #fridge)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(edible #apple)</td></tr>
+<tr><td class="both" colspan="2">(edible #lettuce)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(#apple has parent #bowl)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(*(edible $) has parent #fridge)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy23').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>cause the multi-query to succeed three times, first with <span class="code">(#apple has
+parent #bowl)</span>, then with <span class="code">(#apple has parent #fridge)</span>, and
+finally with <span class="code">(#lettuce has parent #fridge)</span>. In the initial object
+tree, the apple will be located in the bowl, and the lettuce in the fridge.
+</p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="sugar.html">Chapter 7: Syntactic sugar</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 17, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 18, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

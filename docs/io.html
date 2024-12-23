@@ -566,6 +566,21 @@ sentence by clicking on e.g. a noun from a room description.
 <p>The link target must be a flat list of words and/or integers, like the ones
 obtained from <span class="code">(get input&nbsp;$)</span>. It can be computed at runtime.
 </p>
+<p>When the target is identical to the clickable text, a short form is available.
+The following syntax only works if the clickable text is a single word, or a
+single block of words:
+</p>
+<textarea class="copyarea" id="copy12" readonly>
+	Why don't you (link) {open the drawer}?
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">Why don't you (link) {open the drawer}?</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy12').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
 <p>Å-machine interpreters are not required to support hyperlinks at all, and some
 may provide an option to turn them off for players who find them distracting.
 The built-in predicate <span class="code">(interpreter supports links)</span> can be used to
@@ -579,7 +594,7 @@ would-be-clickable text shows up as normal text.
 web sites, using a common mechanism. A <i>resource</i> is defined with the
 following syntax:
 </p>
-<textarea class="copyarea" id="copy12" readonly>
+<textarea class="copyarea" id="copy13" readonly>
 (define resource <i>id</i>) <i>location</i>
 </textarea>
 <div class="blkcode">
@@ -588,7 +603,7 @@ following syntax:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy12').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy13').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>The <i>id</i> is any bound Dialog-value, such as an integer, a dictionary word,
 an object, or even a list.
@@ -602,7 +617,7 @@ into the <span class="tt">.aastory</span> file, and this is the recommended way 
 <p>When a resource has been defined, it's possible to link to it using the following
 syntax:
 </p>
-<textarea class="copyarea" id="copy13" readonly>
+<textarea class="copyarea" id="copy14" readonly>
 	(link resource $Id) <i>statement</i>
 </textarea>
 <div class="blkcode">
@@ -611,11 +626,11 @@ syntax:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy13').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy14').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Here is an example:
 </p>
-<textarea class="copyarea" id="copy14" readonly>
+<textarea class="copyarea" id="copy15" readonly>
 (define resource @manual)
 	feelies/manual.pdf
 
@@ -656,7 +671,7 @@ syntax:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy14').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy15').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Not every interpreter or backend supports links. Use <span class="code">(interpreter
 supports links)</span> to check for this feature at runtime. Alternatively,
@@ -676,7 +691,7 @@ resource. When defining a resource, it is possible to add an <i>alt-text</i>
 that can be displayed instead of the resource. The alt-text appears at the end
 of the resource definition, separated from the location by a semicolon:
 </p>
-<textarea class="copyarea" id="copy15" readonly>
+<textarea class="copyarea" id="copy16" readonly>
 (define resource <i>id</i>) <i>location</i>; <i>alt-text</i>
 </textarea>
 <div class="blkcode">
@@ -685,7 +700,7 @@ of the resource definition, separated from the location by a semicolon:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy15').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy16').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>If no alt-text is specified, the filename (i.e. location) is used as a default
 value. Only the actual filename is used as alt-text, not the full path.
@@ -696,7 +711,7 @@ the current interpreter is capable of displaying a given resource. If not,
 </p>
 <p>Example:
 </p>
-<textarea class="copyarea" id="copy16" readonly>
+<textarea class="copyarea" id="copy17" readonly>
 (define resource #lighthouse)
 	media/lighthouse.png; A small model of a lighthouse.
 
@@ -737,7 +752,7 @@ the current interpreter is capable of displaying a given resource. If not,
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy16').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy17').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>In the above example, the <span class="code">(div&nbsp;$)</span> splits the text into two
 paragraphs if the interpreter is able to embed <span class="tt">png</span> files. Otherwise,
@@ -768,7 +783,7 @@ the matched keyword. It is straightforward to implement this using ordinary
 rules in Dialog. However, for performance reasons the language also provides a
 built-in predicate:
 </p>
-<textarea class="copyarea" id="copy17" readonly>
+<textarea class="copyarea" id="copy18" readonly>
 (split $Input by $Keywords into $Left and $Right)
 </textarea>
 <div class="blkcode">
@@ -777,7 +792,7 @@ built-in predicate:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy17').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy18').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p><span class="code">$Input</span> and <span class="code">$Keywords</span> must be lists of simple values,
 i.e. they mustn't contain sublists.
@@ -792,7 +807,7 @@ keyword itself.
 <p>When invoked as a multi-query, the predicate backtracks over each matching
 position. Thus:
 </p>
-<textarea class="copyarea" id="copy18" readonly>
+<textarea class="copyarea" id="copy19" readonly>
 	*(split [the good , the bad and the ugly]
 		by [and ,]
 		into $Left and $Right)
@@ -805,7 +820,7 @@ position. Thus:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy18').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy19').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>will succeed twice: First, binding <span class="code">$Left</span> to <span class="code">[the
 good]</span> and <span class="code">$Right</span> to <span class="code">[the bad and the ugly]</span>,
@@ -816,7 +831,7 @@ bad]</span> and <span class="code">$Right</span> to <span class="code">[the ugly
 more of a set of keywords. The standard library uses it that way in the
 following rule definition:
 </p>
-<textarea class="copyarea" id="copy19" readonly>
+<textarea class="copyarea" id="copy20" readonly>
 ($X contains one of $Y)
 	(split $X by $Y into $ and $)
 </textarea>
@@ -827,7 +842,7 @@ following rule definition:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy19').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy20').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <a id="detobj"></a><h2>Determining objects from words</h2>
 <p>This section is mainly of concern for library programmers, so story authors may
@@ -836,7 +851,7 @@ safely skip it.
 <p>Dialog has a special construct for matching player input against in-world
 object names in a very efficient way:
 </p>
-<textarea class="copyarea" id="copy20" readonly>
+<textarea class="copyarea" id="copy21" readonly>
 	(determine object $Obj)
 		<i>object generator</i>
 	(from words)
@@ -853,7 +868,7 @@ object names in a very efficient way:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy20').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy21').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>This statement will backtrack over every object <span class="code">$Obj</span> for which:<br />
 </p>
@@ -864,7 +879,7 @@ object names in a very efficient way:
 in the word generator, and the object generator should contain a multi-query to
 backtrack over a set of objects. A canonical example is:
 </p>
-<textarea class="copyarea" id="copy21" readonly>
+<textarea class="copyarea" id="copy22" readonly>
 	(determine object $Obj)
 		*($Obj is in scope)
 	(from words)
@@ -881,7 +896,7 @@ backtrack over a set of objects. A canonical example is:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy21').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy22').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>A non-optimizing compiler could deal with this construct as follows: First,
 compile normal code for the object generator. Then, exhaust every branch of the
@@ -904,7 +919,7 @@ unoptimized case.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="dynamic.html">Chapter 6: Dynamic predicates</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 17, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 18, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>
