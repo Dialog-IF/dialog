@@ -1,0 +1,676 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<link rel="StyleSheet" href="style.css" type="text/css" />
+	<title>Chapter 3: Traits</title>
+</head>
+<body>
+	<div class="chapter">
+	<h1>Chapter 3: Traits</h1>
+	<div class="navlinks">(<a href="#storytraits">Custom traits</a>&nbsp;&bull; <a href="#linguistictrats">Linguistic predicates and traits</a>&nbsp;&bull; <a href="#fullnames">Full names</a>&nbsp;&bull; <a href="#categorytraits">Standard traits for categorizing objects</a>)</div>
+<p>Traits are single-parameter <a href="execution.html#predsrules">predicates</a> used by the standard
+library to categorize objects. For instance, the trait <span class="code">(supporter
+$)</span> <a href="execution.html#successfailure">succeeds</a> for an object that the player is
+allowed to put things on top of. The rule bodies of traits never contain
+any side effects (such as printing text).
+</p>
+<p>As far as the Dialog compiler is concerned, traits are just ordinary
+predicates.
+</p>
+<p>We declare that the table is a supporter by ensuring that the query
+<span class="code">(supporter #table)</span> succeeds. The easiest way to achieve this is
+with the rule definition:
+</p>
+<textarea class="copyarea" id="copy0" readonly>
+(supporter #table)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(supporter #table)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy0').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Trait predicates are supposed to fail for objects that aren't part of the
+category. For instance, if the player ever tries to put an object on top of
+themselves, the library will at some point make a query to <span class="code">(supporter
+#player)</span> to check whether this is allowed. That query will fail (unless,
+of course, we also add <span class="code">(supporter #player)</span> to our program).
+</p>
+<p>In the standard library, as a convention, traits are named with a category noun
+or adjective preceding the object, e.g. <span class="code">(openable&nbsp;$)</span>, whereas
+<a href="dynamic.html#perobjflag">dynamic per-object flags</a> have the object first, followed by
+&ldquo;is&rdquo; and an adjective, e.g. <span class="code">($&nbsp;is open)</span>. Most per-object
+flags also have a negated form, whereas traits do not. You may of course ignore
+these conventions in your own code, if you wish. The Dialog programming
+language makes no syntactical difference between traits and dynamic flags, and
+<span class="code">(now) (openable #door)</span> is under most circumstances a perfectly
+legal statement, transforming the trait into a dynamic predicate. The purpose
+of the naming convention is to make it easier to understand library code at a
+glance.
+</p>
+<a id="storytraits"></a><h2>Custom traits</h2>
+<p>We can easily define our own traits. For instance, we can invent a trait called
+<span class="code">(fruit&nbsp;$)</span>, to determine whether an object is a fruit. Let's
+define:
+</p>
+<textarea class="copyarea" id="copy1" readonly>
+(fruit #apple)
+(fruit #orange)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(fruit #apple)</td></tr>
+<tr><td class="both" colspan="2">(fruit #orange)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy1').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Now, querying <span class="code">(fruit&nbsp;$)</span> for some object will succeed if that
+object is the apple or the orange, but fail otherwise. Then we could have a
+generic object description for fruit:
+</p>
+<textarea class="copyarea" id="copy2" readonly>
+(descr $Obj)		(fruit $Obj) It looks yummy!
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left">(descr $Obj)</td><td class="right">(fruit $Obj) It looks yummy!</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy2').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>When the standard library wants to print the description of an object, it
+queries <span class="code">(descr&nbsp;$)</span> with the desired object as parameter. Dialog
+tries each <span class="code">(descr&nbsp;$)</span> rule definition in turn, in program order.
+When it gets to the fruit-rule above, the rule head matches, binding
+<span class="code">$Obj</span> to the object in question. Dialog starts to execute the rule
+body, which immediately makes a query to <span class="code">(fruit&nbsp;$)</span> for the given
+object. If that query succeeds, execution proceeds with the rest of the rule
+body, and &ldquo;It looks yummy!&rdquo; is printed. If it fails, the rule fails, and
+Dialog resumes to search through the remaining <span class="code">(descr&nbsp;$)</span> rules in
+the program.
+</p>
+<p>When a rule body begins with a query, Dialog provides <a href="sugar.html#nestedqueries">syntactic
+sugar</a> that allows us to move the query into the rule head. The following
+line of code is equivalent to the one in the previous example:
+</p>
+<textarea class="copyarea" id="copy3" readonly>
+(descr (fruit $))	It looks yummy!
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left">(descr (fruit $))</td><td class="right">It looks yummy!</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy3').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>It is possible to define <i>inheritance</i> relations between traits:
+</p>
+<textarea class="copyarea" id="copy4" readonly>
+(berry #blueberry)
+(berry #cherry)
+
+(fruit #apple)
+(fruit *(berry $))
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(berry #blueberry)</td></tr>
+<tr><td class="both" colspan="2">(berry #cherry)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(fruit #apple)</td></tr>
+<tr><td class="both" colspan="2">(fruit *(berry $))</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy4').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>That last rule is equivalent to:
+</p>
+<textarea class="copyarea" id="copy5" readonly>
+(fruit $Obj)		*(berry $Obj)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left">(fruit $Obj)</td><td class="right">*(berry $Obj)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy5').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>What it means is: <span class="code">$Obj</span> is a fruit given that <span class="code">$Obj</span> is
+a berry. The asterisk (<span class="code">*</span>) indicates a
+<a href="choicepoints.html#multiqueries">multi-query</a>. If you haven't gone down the rabbit hole of
+multi-queries yet, just memorize that inheritance definitions need to have an
+asterisk in front of the query in the rule body. The asterisk makes it possible
+to loop over every fruit in the game, for instance like this:
+</p>
+<textarea class="copyarea" id="copy6" readonly>
+(intro)
+	Welcome to the fruit game! Here you will meet \(and possibly eat\):
+	(line)
+	(exhaust) {
+		*(fruit $Obj)
+		(The $Obj).
+		(line)
+	}
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(intro)</td></tr>
+<tr><td class="left"></td><td class="right">Welcome to the fruit game! Here you will meet \(and possibly eat\):</td></tr>
+<tr><td class="left"></td><td class="right">(line)</td></tr>
+<tr><td class="left"></td><td class="right">(exhaust) {</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>*(fruit $Obj)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(The $Obj).</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(line)</td></tr>
+<tr><td class="left"></td><td class="right">}</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy6').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>We can easily add inheritance relations between our own traits and those of the
+standard library, in either direction. The following line of code adds a rule
+to the edibility-trait of the standard library, saying that all fruit are
+edible. This allows the player to <span class="prginput">EAT THE BLUEBERRY</span>:
+</p>
+<textarea class="copyarea" id="copy7" readonly>
+(edible *(fruit $))
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(edible *(fruit $))</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy7').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Here is a complete example with edible fruit and berries:
+</p>
+<textarea class="copyarea" id="copy8" readonly>
+#player
+(current player *)
+(* is #in #room)
+
+#room
+(name *)		tutorial room
+(room *)
+(look *)		This is a very nondescript room, dominated by a
+			wooden table. (notice #table)
+
+#table
+(name *)		wooden table
+(descr *)		It's a sturdy wooden table.
+			(if) ($ is #on *) (then)
+				There seems to be something on it.
+			(endif)
+(supporter *)
+(* is #in #room)
+
+#blueberry
+(name *)		blueberry
+(berry *)
+
+#cherry
+(name *)		dark red cherry
+(berry *)
+
+#apple
+(name *)		green apple
+(fruit *)
+
+%% All berries are fruit, and all fruit are edible.
+(fruit *(berry $))
+(edible *(fruit $))
+
+%% The following are not trait inheritance definitions (descr, dict, and the
+%% initial location are not traits), so no asterisk is required.
+
+(descr (fruit $))	Yummy!
+
+(dict (fruit $))	fruit
+(dict (berry $))	berry
+
+((fruit $) is #on #table)
+
+(intro)
+	Welcome to the fruit game! Here you will meet \(and possibly eat\):
+	(line)
+	(exhaust) {
+		*(fruit $Obj)
+		(The $Obj).
+		(line)
+	}
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">#player</td></tr>
+<tr><td class="both" colspan="2">(current player *)</td></tr>
+<tr><td class="both" colspan="2">(* is #in #room)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#room</td></tr>
+<tr><td class="left">(name *)</td><td class="right">tutorial room</td></tr>
+<tr><td class="both" colspan="2">(room *)</td></tr>
+<tr><td class="left">(look *)</td><td class="right">This is a very nondescript room, dominated by a</td></tr>
+<tr><td class="left"></td><td class="right">wooden table. (notice #table)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#table</td></tr>
+<tr><td class="left">(name *)</td><td class="right">wooden table</td></tr>
+<tr><td class="left">(descr *)</td><td class="right">It's a sturdy wooden table.</td></tr>
+<tr><td class="left"></td><td class="right">(if) ($ is #on *) (then)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>There seems to be something on it.</td></tr>
+<tr><td class="left"></td><td class="right">(endif)</td></tr>
+<tr><td class="both" colspan="2">(supporter *)</td></tr>
+<tr><td class="both" colspan="2">(* is #in #room)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#blueberry</td></tr>
+<tr><td class="left">(name *)</td><td class="right">blueberry</td></tr>
+<tr><td class="both" colspan="2">(berry *)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#cherry</td></tr>
+<tr><td class="left">(name *)</td><td class="right">dark red cherry</td></tr>
+<tr><td class="both" colspan="2">(berry *)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#apple</td></tr>
+<tr><td class="left">(name *)</td><td class="right">green apple</td></tr>
+<tr><td class="both" colspan="2">(fruit *)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2"><span class="comment">%% All berries are fruit, and all fruit are edible.</span></td></tr>
+<tr><td class="both" colspan="2">(fruit *(berry $))</td></tr>
+<tr><td class="both" colspan="2">(edible *(fruit $))</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2"><span class="comment">%% The following are not trait inheritance definitions (descr, dict, and the</span></td></tr>
+<tr><td class="both" colspan="2"><span class="comment">%% initial location are not traits), so no asterisk is required.</span></td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left">(descr (fruit $))</td><td class="right">Yummy!</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left">(dict (fruit $))</td><td class="right">fruit</td></tr>
+<tr><td class="left">(dict (berry $))</td><td class="right">berry</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">((fruit $) is #on #table)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(intro)</td></tr>
+<tr><td class="left"></td><td class="right">Welcome to the fruit game! Here you will meet \(and possibly eat\):</td></tr>
+<tr><td class="left"></td><td class="right">(line)</td></tr>
+<tr><td class="left"></td><td class="right">(exhaust) {</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>*(fruit $Obj)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(The $Obj).</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(line)</td></tr>
+<tr><td class="left"></td><td class="right">}</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy8').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Try this game! Try to examine the table, then <span class="prginput">SEARCH</span> or
+<span class="prginput">LOOK ON</span> it, then perhaps <span class="prginput">EAT BERRY</span> or <span class="prginput">EAT
+CHERRY</span>, and see if the description of the table really changes when
+it's empty.
+</p>
+<p>Did you notice that it wasn't possible to pick up the fruit in this game? They
+were presumably eaten directly off the table. Objects that can be picked up are
+called <i>items</i>, and we will discuss this trait at length in <a href="items.html">Chapter&nbsp;4</a>. But
+first, we will take a step back and see how the various traits provided by the
+standard library fit together.
+</p>
+<a id="linguistictrats"></a><h2>Linguistic predicates and traits</h2>
+<p>To print the name of an object, most of the time you'll want to use a predicate
+called <span class="code">(the&nbsp;$)</span>. This prints the correct determinate article for the given
+object, followed by its name. So, given the following object definition:
+</p>
+<textarea class="copyarea" id="copy9" readonly>
+#apple
+(name *)		green apple
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">#apple</td></tr>
+<tr><td class="left">(name *)</td><td class="right">green apple</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy9').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>querying <span class="code">(the #apple)</span> would result in the following text being printed:
+</p>
+<div class="blkoutput">the green apple</div><p>To print the name of an object together with an indeterminate article, use
+<span class="code">(a&nbsp;$)</span> instead. Querying <span class="code">(a&nbsp;#apple)</span> results in:
+</p>
+<div class="blkoutput">a green apple</div><p>If you want the article to start with an uppercase letter, use
+<span class="code">(The&nbsp;$)</span> or <span class="code">(A&nbsp;$)</span>, respectively.
+</p>
+<p>The standard library offers a lot of flexibility when it comes to declaring
+object names. We have seen the <span class="code">(name&nbsp;$)</span> predicate, which provides
+the actual noun expression. But a number of <i>linguistic traits</i> affect how
+that name gets printed:
+</p>
+<p class="codeline">(an $)</p>
+<p class="noteline">Specifies that &ldquo;an&rdquo; is the correct indeterminate article for this
+object name.
+</p>
+<p class="codeline">(proper $)</p>
+<p class="noteline">Specifies that this is a proper noun, so that neither &ldquo;a&rdquo; nor
+&ldquo;the&rdquo; should appear before it.
+</p>
+<p class="codeline">(plural $)</p>
+<p class="noteline">Specifies that this is a plural noun, so that &ldquo;some&rdquo; should be
+used instead of &ldquo;a&rdquo; or &ldquo;an&rdquo;. This also changes the verb forms
+printed by certain predicates (see below).
+</p>
+<p class="codeline">(pair $)</p>
+<p class="noteline">Inherits all the properties of a plural noun, but also changes the
+indeterminate article &ldquo;a&rdquo; into &ldquo;a pair of&rdquo;.
+</p>
+<p class="codeline">(uncountable $)</p>
+<p class="noteline">Specifies that the indeterminate article &ldquo;some&rdquo; should be used,
+but that the noun behaves like a singular in every other respect.
+</p>
+<p class="codeline">(singleton $)</p>
+<p class="noteline">Specifies that &ldquo;the&rdquo; should be used, even in situations where
+&ldquo;a&rdquo; or &ldquo;an&rdquo; are usually called for.
+</p>
+<p class="codeline">(your $)</p>
+<p class="noteline">Specifies that &ldquo;your&rdquo; should be used instead of &ldquo;a&rdquo; or
+&ldquo;the&rdquo;.
+</p>
+<p>Some examples:
+</p>
+<textarea class="copyarea" id="copy10" readonly>
+#orange
+(an *)
+(name *)		orange
+
+#book
+(proper *)
+(name *)		A Clockwork Orange
+
+#bookshelves
+(your *)
+(plural *)
+(name *)		bookshelves
+
+#boots
+(pair *)
+(name *)		boots
+
+#water
+(uncountable *)
+(name *)		water
+
+#sun
+(singleton *)
+(name *)		sun
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">#orange</td></tr>
+<tr><td class="both" colspan="2">(an *)</td></tr>
+<tr><td class="left">(name *)</td><td class="right">orange</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#book</td></tr>
+<tr><td class="both" colspan="2">(proper *)</td></tr>
+<tr><td class="left">(name *)</td><td class="right">A Clockwork Orange</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#bookshelves</td></tr>
+<tr><td class="both" colspan="2">(your *)</td></tr>
+<tr><td class="both" colspan="2">(plural *)</td></tr>
+<tr><td class="left">(name *)</td><td class="right">bookshelves</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#boots</td></tr>
+<tr><td class="both" colspan="2">(pair *)</td></tr>
+<tr><td class="left">(name *)</td><td class="right">boots</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#water</td></tr>
+<tr><td class="both" colspan="2">(uncountable *)</td></tr>
+<tr><td class="left">(name *)</td><td class="right">water</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#sun</td></tr>
+<tr><td class="both" colspan="2">(singleton *)</td></tr>
+<tr><td class="left">(name *)</td><td class="right">sun</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>To use an object name in a sentence, it is often necessary to select a matching
+verb form. Predicates are available for this, as well as for printing pronouns.
+To print the correct personal pronoun, for instance, use <span class="code">(it&nbsp;$)</span>.
+This will print the word &ldquo;it&rdquo; by default, but if the object has the plural
+trait, it will print the word &ldquo;they&rdquo; instead. And if the object happens to
+be the current player character, the word &ldquo;you&rdquo; is printed. There are
+several such predicates, corresponding to the rows of the following table. The
+columns displayed here, corresponding to how the linguistic traits have been
+set up, are not exhaustive.
+</p>
+<table class="datatable">
+<tr><th>Predicate</th><th>Singular</th><th>Plural</th><th>Current player</th></tr>
+<tr><td><span class="code">(a&nbsp;$)</span></td><td><span class="code">a</span>/<span class="code">an</span></td><td><span class="code">some</span></td><td><span class="code">yourself</span></td></tr>
+<tr><td><span class="code">(A&nbsp;$)</span></td><td><span class="code">A</span>/<span class="code">An</span></td><td><span class="code">Some</span></td><td><span class="code">You</span></td></tr>
+<tr><td><span class="code">(the&nbsp;$)</span></td><td><span class="code">the</span></td><td><span class="code">the</span></td><td><span class="code">yourself</span></td></tr>
+<tr><td><span class="code">(The&nbsp;$)</span></td><td><span class="code">The</span></td><td><span class="code">The</span></td><td><span class="code">You</span></td></tr>
+<tr><td><span class="code">(it&nbsp;$)</span></td><td><span class="code">it</span></td><td><span class="code">they</span></td><td><span class="code">you</span></td></tr>
+<tr><td><span class="code">(It&nbsp;$)</span></td><td><span class="code">It</span></td><td><span class="code">They</span></td><td><span class="code">You</span></td></tr>
+<tr><td><span class="code">(its&nbsp;$)</span></td><td><span class="code">its</span></td><td><span class="code">their</span></td><td><span class="code">your</span></td></tr>
+<tr><td><span class="code">(itself&nbsp;$)</span></td><td><span class="code">itself</span></td><td><span class="code">themselves</span></td><td><span class="code">yourself</span></td></tr>
+<tr><td><span class="code">(is&nbsp;$)</span></td><td><span class="code">is</span></td><td><span class="code">are</span></td><td><span class="code">are</span></td></tr>
+<tr><td><span class="code">(isn't&nbsp;$)</span></td><td><span class="code">isn't</span></td><td><span class="code">aren't</span></td><td><span class="code">aren't</span></td></tr>
+<tr><td><span class="code">(has&nbsp;$)</span></td><td><span class="code">has</span></td><td><span class="code">have</span></td><td><span class="code">have</span></td></tr>
+<tr><td><span class="code">(does&nbsp;$)</span></td><td><span class="code">does</span></td><td><span class="code">do</span></td><td><span class="code">do</span></td></tr>
+<tr><td><span class="code">(doesn't&nbsp;$)</span></td><td><span class="code">doesn't</span></td><td><span class="code">don't</span></td><td><span class="code">don't</span></td></tr>
+<tr><td><span class="code">(s&nbsp;$)</span></td><td><span class="code">(no space) s</span></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td><span class="code">(es&nbsp;$)</span></td><td><span class="code">(no space) es</span></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td><span class="code">(it $ is)</span></td><td><span class="code">it is</span></td><td><span class="code">they're</span></td><td><span class="code">you're</span></td></tr>
+<tr><td><span class="code">(the $ is)</span></td><td><span class="code">(the $) is</span></td><td><span class="code">(the $) are</span></td><td><span class="code">you're</span></td></tr>
+<tr><td><span class="code">(The $ is)</span></td><td><span class="code">(The $) is</span></td><td><span class="code">(The $) are</span></td><td><span class="code">You're</span></td></tr>
+</table>
+<p>The predicates <span class="code">(s&nbsp;$)</span> and <span class="code">(es&nbsp;$)</span> are used for
+attaching verb endings, e.g. <span class="code">(The&nbsp;$Obj) <span class="nobreak">ponder(s $Obj)</span>
+(its&nbsp;$Obj) existance.</span>
+</p>
+<p>For each of the objects in the previous example, the expression:
+</p>
+<textarea class="copyarea" id="copy11" readonly>
+	You see (a $Obj). (The $Obj is) drawing attention to (itself $Obj).
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">You see (a $Obj). (The $Obj is) drawing attention to (itself $Obj).</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy11').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>would produce:
+</p>
+<p><ul>
+<li>You see an orange. The orange is drawing attention to itself.</li>
+<li>You see A Clockwork Orange. A Clockwork Orange is drawing attention to itself.</li>
+<li>You see your bookshelves. Your bookshelves are drawing attention to themselves.</li>
+<li>You see a pair of boots. The boots are drawing attention to themselves.</li>
+<li>You see some water. The water is drawing attention to itself.</li>
+<li>You see the sun. The sun is drawing attention to itself.</li>
+</ul>
+</p>
+<p>And if <span class="code">$Obj</span> is the current player character, the output is:
+</p>
+<p><ul>
+<li>You see yourself. You're drawing attention to yourself.</li>
+</ul>
+</p>
+<p>When the parameter is a <a href="varsvalues.html#values">list</a> of several objects, such as
+<span class="code">[#orange #boots #book]</span>, that's handled too:
+</p>
+<div class="blkoutput">You see an orange, a pair of boots, and A Clockwork Orange. The orange,<br />
+the pair of boots, and A Clockwork Orange are drawing attention to<br />
+themselves.</div><p>There are two additional traits, <span class="code">(male&nbsp;$)</span> and <span class="code">(female
+$)</span>, that modify the pronouns accordingly.
+</p>
+<p>Note: Don't confuse <span class="code">(a&nbsp;$)</span> with <span class="code">(an&nbsp;$)</span>! The former is
+a predicate for printing the indeterminate article (usually &ldquo;a&rdquo;) followed
+by the name of the object. The latter is a trait, specifying that &ldquo;an&rdquo;
+should be used instead.  Thus, somewhere in the standard library, a rule
+definition for <span class="code">(a&nbsp;$)</span> contains a query to the predicate <span class="code">(an
+$)</span> in order to determine what article it needs to print.
+</p>
+<a id="fullnames"></a><h2>Full names</h2>
+<p>Two additional predicates deserve to be mentioned here: Whenever the standard
+library describes an action (e.g. to narrate an automatic action such as opening
+a door before walking through it, or as part of a disambiguating question), it
+prints the names of the involved objects using <span class="code">(the full&nbsp;$)</span> or
+<span class="code">(a full&nbsp;$)</span>. These predicates print the object name using
+<span class="code">(the&nbsp;$)</span> or <span class="code">(a&nbsp;$)</span>, and then, if the query
+<span class="code">(clarify location of&nbsp;$)</span> succeeds for the object, some additional
+information pertaining to its location is printed. By default, this flag is
+enabled for all non-singleton doors, so that the game might ask the player: Did
+you want to open the door to the north or the door to the east?
+</p>
+<a id="categorytraits"></a><h2>Standard traits for categorizing objects</h2>
+<p>The standard library categorizes objects using a system of traits. Most of
+these traits model one of the following three different aspects of an object:
+</p>
+<p><ul>
+<li>Where it may appear in the object tree.</li>
+<li>Whether the object can be manipulated at all.</li>
+<li>What actions may be carried out on the object.</li>
+</ul>
+</p>
+<h3>Traits that determine where an object appears in the object tree:</h3>
+<p>Arrows indicate inheritance.
+</p>
+<div class="img"><img src="inheritance1.png" /></div>
+<p><i>Container</i> objects allow the player to put other objects <span class="code">#in</span>
+them. <i>Supporter</i> objects allow the player to put other objects
+<span class="code">#on</span> them.
+</p>
+<p><i>Actor containers</i> are containers that the player is allowed to enter.
+<i>Actor supporters</i> are supporters that the player is allowed to climb on
+top of.
+</p>
+<p><i>Rooms</i> are actor containers with no parents in the object tree. They are
+organized into a map using connections; this will be explained in the chapter
+on <a href="moving.html#rooms">Moving around</a>. Some of those connections involve <i>doors</i>
+(physical doors or other kinds of gatekeepers). Doors are conceptually located
+in the liminal space between rooms, but for practical reasons they appear as
+children of rooms in the object tree: When the player enters a room, the
+library automatically moves adjacent door objects inside the room object.
+</p>
+<p>A less commonly used trait is <span class="code">(seat&nbsp;$)</span>, the category of objects
+that give the player a place to sit down. These can be divided into
+<i>on-seats</i> (that the player may sit on) and <i>in-seats</i> (that the
+player may sit in, such as armchairs). Some behaviour is common to all seats,
+for instance that when the player tries to go up, this is interpreted as a
+desire to leave the seat.
+</p>
+<p>Note that e.g. an on-seat is a kind of seat, but an on-seat is also a kind of
+actor supporter. If you are familiar with object-oriented programming, you may
+recognize this as a case of <i>multiple inheritance</i>. In class-based
+programming languages, where objects have inherent types that determine what
+code to execute, multiple inheritance can be problematic. But in languages such
+as Dialog, where rules are always applied in source code order, this is not the
+case.
+</p>
+<p>A <i>vehicle</i> is an object that moves with the player if the player attempts
+to go somewhere while the vehicle object is their parent. Usually, vehicles are
+either actor supporters or actor containers, but this is not enforced. For
+an example of a situation where a vehicle is neither a container or a
+supporter, the player might be <span class="code">#heldby</span> some giant non-player
+character, and directing that character to move around.
+</p>
+<p>The standard library defines twelve <i>directions</i> and seven
+<i>relations</i>. The directions are <span class="code">#north</span>,
+<span class="code">#northwest</span>, <span class="code">#west</span>, <span class="code">#southwest</span>,
+<span class="code">#south</span>, <span class="code">#southeast</span>, <span class="code">#east</span>,
+<span class="code">#northeast</span>, <span class="code">#up</span>, <span class="code">#down</span>,
+<span class="code">#in</span>, and <span class="code">#out</span>.  The relations are <span class="code">#in</span>,
+<span class="code">#on</span>, <span class="code">#wornby</span>, <span class="code">#under</span>,
+<span class="code">#behind</span>, <span class="code">#heldby</span>, and <span class="code">#partof</span>. Note that
+<span class="code">#in</span> is both a relation and a direction.
+</p>
+<p>Directions and relations are never part of the object tree. They only appear as
+predicate parameters, and inside action expressions. Both directions and
+relations have printed names, <span class="code">(name&nbsp;$)</span>, but the relations also have
+several <i>name variants</i>:
+</p>
+<table class="datatable">
+<tr><th>Relation</th><th><span class="code">(name&nbsp;$)</span></th><th><span class="code">(present-name&nbsp;$)</span></th><th><span class="code">(towards-name&nbsp;$)</span></th><th><span class="code">(reverse-name&nbsp;$)</span></th></tr>
+<tr><td><span class="code">#in</span></td><td>in</td><td>inside of</td><td>into</td><td>out of</td></tr>
+<tr><td><span class="code">#on</span></td><td>on</td><td>on top of</td><td>onto</td><td>off</td></tr>
+<tr><td><span class="code">#wornby</span></td><td>worn by</td><td>worn by</td><td>worn by</td><td>off</td></tr>
+<tr><td><span class="code">#under</span></td><td>under</td><td>under</td><td>under</td><td>out from under</td></tr>
+<tr><td><span class="code">#behind</span></td><td>behind</td><td>behind</td><td>behind</td><td>out from behind</td></tr>
+<tr><td><span class="code">#heldby</span></td><td>held by</td><td>held by</td><td>held by</td><td>away from</td></tr>
+<tr><td><span class="code">#partof</span></td><td>part of</td><td>part of</td><td>part of</td><td>away from</td></tr>
+</table>
+<h3>Traits that determine whether an object can be manipulated at all:</h3>
+<div class="img"><img src="inheritance2.png" /></div>
+<p>Dialog allows you to model objects that are understood by the parser, but do
+not really exist in the game world. For instance, a room description might call
+attention to a cockroach scuttling over the floor and disappearing into a hole
+in the wall. If the player then tries to do anything to the cockroach (such as
+<span class="prginput">EXAMINE</span> it), a response message about the cockroach not being
+here is preferable to a generic parser error.
+</p>
+<p>Actions involving <span class="code">(not here&nbsp;$)</span> objects generally fail with the
+message: &ldquo;<span class="code">(The $Obj)</span> is not here.&rdquo; Actions that involve the
+manipulation of <span class="code">(not reachable&nbsp;$)</span> objects fail with the message:
+&ldquo;You can't reach <span class="code">(The&nbsp;$Obj)</span>.&rdquo; For <span class="code">(intangible&nbsp;$)</span>
+objects, the message is: &ldquo;<span class="code">(The&nbsp;$Obj)</span> is intangible.&rdquo;
+</p>
+<p>For many actions, the player is allowed to refer to a collection of objects
+using the word <span class="prginput">ALL</span>. Objects that are <span class="code">(excluded from
+all&nbsp;$)</span> are silently omitted from such collections. This also
+applies to objects marked as <span class="code">(not here&nbsp;$)</span> or <span class="code">(not
+reachable&nbsp;$)</span>, via trait inheritance.
+</p>
+<p>Most objects in the game world cannot be picked up&mdash;by default, only items
+can. The standard response when the player tries to pick up a non-item is:
+&ldquo;You can't take <span class="code">(the&nbsp;$Obj)</span>.&rdquo; But if the object is <span class="code">(fine
+where it is&nbsp;$)</span>, that error message is replaced by: &ldquo;<span class="prgoutput">That's fine
+where it is.</span>&rdquo;
+</p>
+<h3>Traits that determine what actions may be carried out on an object:</h3>
+<div class="img"><img src="inheritance3.png" /></div>
+<p><i>Openable</i> objects can be opened (unless they are locked) and closed.
+<i>Lockable</i> objects can be locked and unlocked. Lockable objects are
+openable by inheritance.
+</p>
+<p><i>Items</i> can be picked up by the player. Anything that is carried by the
+player (usually items) can be dropped, or put inside containers or on top of
+supporters. <i>Wearable</i> objects can be worn or removed. Wearable objects
+are items by inheritance.
+</p>
+<p><i>Pushable</i> objects can be pushed from room to room. <i>Switchable</i>
+objects can be turned on or off. <i>Sharp</i> objects can be used to cut other
+objects.
+</p>
+<p><i>Edible</i> objects can be eaten, which causes them to be removed from the
+object tree. The player may drink <i>potable</i> objects, but those are not
+removed (the player only takes a sip).
+</p>
+<p><i>Consultable</i> objects can be consulted about various subject matters. That
+is, objects and other topics can be looked up in them.
+</p>
+<p><i>Animate</i> objects can be instructed to do things, although they will
+refuse by default. They can also be talked to, given things, or shown things.
+Again, the default implementations of those actions merely print a stock
+response.
+</p>
+<p><i>Male</i> and <i>female</i> are better described as linguistic traits, as
+their main function is to replace the default pronouns. They are included in
+the diagram because of their inheritance relation to the animate trait.
+</p>
+	<div class="footer">
+	<p class="nav">Onwards to &ldquo;<a href="items.html">Chapter 4: Items</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
+	<p class="tagline">The Dialog Manual, Revision 1, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	</div>
+	</div>
+</body>
+</html>

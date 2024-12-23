@@ -1,0 +1,638 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<link rel="StyleSheet" href="style.css" type="text/css" />
+	<title>Chapter 2: Objects and state</title>
+</head>
+<body>
+	<div class="chapter">
+	<h1>Chapter 2: Objects and state</h1>
+	<div class="navlinks">(<a href="#objects">Populating the game world</a>&nbsp;&bull; <a href="#predstoryintro">Defining new predicates</a>&nbsp;&bull; <a href="#objlocations">Object locations</a>&nbsp;&bull; <a href="#part2dynamic">Dynamic predicates</a>&nbsp;&bull; <a href="#hidden">Hidden objects</a>)</div>
+<a id="objects"></a><h2>Populating the game world</h2>
+<p>Things in the game world are represented by <a href="execution.html#parameters">objects</a>
+(hashtags) in the Dialog language. Dialog objects are <i>thin</i>; they are
+identifiers without any code or data inside them. They exist, as names, simply
+by virtue of being mentioned somewhere in the source code. But they have no
+contents. Instead, the game world is modelled using
+<a href="execution.html#predsrules">predicates</a>, where a predicate is a collection of
+<a href="execution.html#predsrules">rule definitions</a>.
+</p>
+<p>We will now extend our minimal example with two objects: A table (called
+<span class="code">#table</span>) and a chair (<span class="code">#chair</span>). We will give them names
+and descriptions, categorize them using traits (a kind of inheritable
+properties), and place them in their initial locations. All of this is achieved
+by defining rules:
+</p>
+<textarea class="copyarea" id="copy0" readonly>
+%% Rules describing the table:
+
+(name #table)		wooden table
+(descr #table)		It's a sturdy wooden table.
+(supporter #table)
+(#table is #in #room)
+
+%% Rules describing the chair:
+
+(name #chair)		chair
+(descr #chair)		It's a plastic chair, painted white.
+(on-seat #chair)
+(#chair is #in #room)
+
+%% These are the rules from the minimal story in the previous chapter:
+
+(current player #player)
+(#player is #in #room)
+(room #room)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2"><span class="comment">%% Rules describing the table:</span></td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left">(name #table)</td><td class="right">wooden table</td></tr>
+<tr><td class="left">(descr #table)</td><td class="right">It's a sturdy wooden table.</td></tr>
+<tr><td class="both" colspan="2">(supporter #table)</td></tr>
+<tr><td class="both" colspan="2">(#table is #in #room)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2"><span class="comment">%% Rules describing the chair:</span></td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left">(name #chair)</td><td class="right">chair</td></tr>
+<tr><td class="left">(descr #chair)</td><td class="right">It's a plastic chair, painted white.</td></tr>
+<tr><td class="both" colspan="2">(on-seat #chair)</td></tr>
+<tr><td class="both" colspan="2">(#chair is #in #room)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2"><span class="comment">%% These are the rules from the minimal story in the previous chapter:</span></td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(current player #player)</td></tr>
+<tr><td class="both" colspan="2">(#player is #in #room)</td></tr>
+<tr><td class="both" colspan="2">(room #room)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy0').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Every rule definition starts with a <i>rule head</i> (the part within
+parentheses), which must begin at the leftmost column of a line in the source
+code. The rule head is optionally followed by a <i>rule body</i> (that's the
+non-parenthesized text in the above example), which may continue onto
+subsequent lines, as long as those lines are indented by at least one space or
+tab character.
+</p>
+<p>A double-percent in the source code begins a <i>comment</i> that lasts to the
+end of the line.
+</p>
+<p>The rule body is a piece of code that can be executed. <a href="execution.html#printing">Plain text is
+an instruction</a> to print that text. Some special characters (<span class="code">#</span>,
+<span class="code">$</span>, <span class="code">@</span>, <span class="code">~</span>, <span class="code">*</span>, <span class="code">|</span>,
+<span class="code">\</span>, parentheses, brackets, and braces) need to be prefixed by a
+backslash (<span class="code">\</span>). No special treatment is required for apostrophes or
+double quotes.
+</p>
+<p>Other instructions may appear within parentheses in rule bodies: For instance,
+<span class="code">(line)</span> inserts a line break, and <span class="code">(par)</span> inserts a
+paragraph break. Text in the source code can be formatted freely, because it is
+broken down internally into a stream of words and punctuation characters, and
+then reassembled, with space characters automatically inserted in all the right
+places. This process eliminates the risk of duplicate or missing spaces, line
+breaks, and paragraph breaks.
+</p>
+<textarea class="copyarea" id="copy1" readonly>
+(descr #table)
+	It's a sturdy wooden table.
+	%% The following instruction inserts a paragraph break (a blank line).
+	(par)
+	%% The following instruction would normally insert a line break, but it
+	%% has no effect here because of the preceding paragraph break.
+	(line)
+	You got this table from your late aunt Margareth.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(descr #table)</td></tr>
+<tr><td class="left"></td><td class="right">It's a sturdy wooden table.</td></tr>
+<tr><td class="left"></td><td class="right"><span class="comment">%% The following instruction inserts a paragraph break (a blank line).</span></td></tr>
+<tr><td class="left"></td><td class="right">(par)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="comment">%% The following instruction would normally insert a line break, but it</span></td></tr>
+<tr><td class="left"></td><td class="right"><span class="comment">%% has no effect here because of the preceding paragraph break.</span></td></tr>
+<tr><td class="left"></td><td class="right">(line)</td></tr>
+<tr><td class="left"></td><td class="right">You got this table from your late aunt Margareth.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy1').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The resulting object description would look like this:
+</p>
+<div class="blkoutput">&gt; EXAMINE TABLE<br />
+It's a sturdy wooden table.<br />
+<br />
+You got this table from your late aunt Margareth.</div><p>To reduce the repetitiveness of coding by rules, Dialog provides a bit of
+syntactic sugar: It is possible to set a <a href="sugar.html#currtopic">current topic</a>, which
+is an object name, by mentioning that object at the leftmost column of a line.
+Then, whenever an asterisk (<span class="code">*</span>) appears in a position where an
+object name could go, it is understood as a reference to the current topic.
+This feature makes the code more concise, and easier to type out:
+</p>
+<textarea class="copyarea" id="copy2" readonly>
+#table
+(name *)		wooden table
+(descr *)		It's a sturdy wooden table.
+(supporter *)
+(* is #in #room)
+
+#chair
+(name *)		chair
+(descr *)		It's a plain chair, painted white.
+(on-seat *)
+(* is #in #room)
+
+(current player #player)
+(#player is #in #room)
+(room #room)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">#table</td></tr>
+<tr><td class="left">(name *)</td><td class="right">wooden table</td></tr>
+<tr><td class="left">(descr *)</td><td class="right">It's a sturdy wooden table.</td></tr>
+<tr><td class="both" colspan="2">(supporter *)</td></tr>
+<tr><td class="both" colspan="2">(* is #in #room)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#chair</td></tr>
+<tr><td class="left">(name *)</td><td class="right">chair</td></tr>
+<tr><td class="left">(descr *)</td><td class="right">It's a plain chair, painted white.</td></tr>
+<tr><td class="both" colspan="2">(on-seat *)</td></tr>
+<tr><td class="both" colspan="2">(* is #in #room)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(current player #player)</td></tr>
+<tr><td class="both" colspan="2">(#player is #in #room)</td></tr>
+<tr><td class="both" colspan="2">(room #room)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy2').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Thus, we have created two tangible objects in our room, given them source code
+names (<span class="code">#table</span>, <span class="code">#chair</span>), printed names (&ldquo;<span class="prgoutput">wooden
+table</span>&rdquo;, &ldquo;<span class="prgoutput">chair</span>&rdquo;), and descriptions to be revealed by the
+<span class="prginput">EXAMINE</span> verb. We have also categorized the objects: The table is
+a <i>supporter</i>, which means that the player is allowed to put things on top
+of it. The chair is an <i>on-seat</i>, which is a special kind of supporter
+that the player may sit on. The standard library defines many other standard
+categories that may be used by stories, and we'll take a closer look at them in
+the upcoming chapter on <a href="traits.html">Traits</a>. The predefined categories include
+<i>containers</i> and <i>in-seats</i> (such as armchairs), as well as
+<i>rooms</i>.
+</p>
+<p>We have also defined an <i>initial location</i> for each object. A location has
+two parts: A <i>relation</i> (<span class="code">#in</span>) and a <i>parent object</i>
+(<span class="code">#room</span>). In addition to <span class="code">#in</span>, the standard library
+supports the relations <span class="code">#on</span>, <span class="code">#under</span>,
+<span class="code">#behind</span>, <span class="code">#heldby</span>, <span class="code">#wornby</span>, and
+<span class="code">#partof</span>.
+</p>
+<p>The <span class="code">(descr&nbsp;$)</span> predicate prints the <i>external description</i> of
+an object; what it looks like when viewed from the outside. Another predicate,
+<span class="code">(look&nbsp;$)</span>, prints the <i>internal description</i> of an object,
+i.e. what it looks like from the inside. This is used for room descriptions.
+</p>
+<p>Let's add a room description to our example game:
+</p>
+<textarea class="copyarea" id="copy3" readonly>
+#player
+(current player *)
+(* is #in #room)
+
+#room
+(name *)		tutorial room
+(room *)
+(look *)		This is a very nondescript room, dominated by a wooden table.
+			(notice #table) %% Binds the word &ldquo;it&rdquo; to the table.
+
+#table
+(name *)		wooden table
+(descr *)		It's a sturdy wooden table.
+(supporter *)
+(* is #in #room)
+
+#chair
+(name *)		chair
+(descr *)		It's a plain chair, painted white.
+(on-seat *)
+(* is #in #room)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">#player</td></tr>
+<tr><td class="both" colspan="2">(current player *)</td></tr>
+<tr><td class="both" colspan="2">(* is #in #room)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#room</td></tr>
+<tr><td class="left">(name *)</td><td class="right">tutorial room</td></tr>
+<tr><td class="both" colspan="2">(room *)</td></tr>
+<tr><td class="left">(look *)</td><td class="right">This is a very nondescript room, dominated by a wooden table.</td></tr>
+<tr><td class="left"></td><td class="right">(notice #table) <span class="comment">&emsp;%% Binds the word &ldquo;it&rdquo; to the table.</span></td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#table</td></tr>
+<tr><td class="left">(name *)</td><td class="right">wooden table</td></tr>
+<tr><td class="left">(descr *)</td><td class="right">It's a sturdy wooden table.</td></tr>
+<tr><td class="both" colspan="2">(supporter *)</td></tr>
+<tr><td class="both" colspan="2">(* is #in #room)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#chair</td></tr>
+<tr><td class="left">(name *)</td><td class="right">chair</td></tr>
+<tr><td class="left">(descr *)</td><td class="right">It's a plain chair, painted white.</td></tr>
+<tr><td class="both" colspan="2">(on-seat *)</td></tr>
+<tr><td class="both" colspan="2">(* is #in #room)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy3').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Try this game! You can <span class="prginput">LOOK</span>, and then <span class="prginput">X IT</span>, and
+<span class="prginput">SIT</span> (on what? Answer <span class="prginput">CHAIR</span>).
+</p>
+<p>Did you miss the chair in the room description? In Dialog, as a general design
+principle, game objects do not call attention to themselves. They are assumed
+to be part of the scenery, and it is up to the story author to mention (or
+subtly hint at) their existence in the prose, like we did with the table. (We
+will see an important exception to this when we get to the chapter about
+<a href="items.html">Items</a>.)
+</p>
+<p>How does the game know that <span class="prginput">CHAIR</span> refers to the chair object?
+By default, the standard library assumes that every word that appears in the
+printed name of an object, i.e. the body of the <span class="code">(name&nbsp;$)</span> rule, can
+be used to refer to it. If the player types several words in succession, they
+must all refer to the same object, so <span class="prginput">WOODEN CHAIR</span> does not
+match any object in this game. We can easily add extra synonyms to an object,
+using the <span class="code">(dict&nbsp;$)</span> predicate:
+</p>
+<textarea class="copyarea" id="copy4" readonly>
+(dict #chair)		white plain
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left">(dict #chair)</td><td class="right">white plain</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy4').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Now the game would understand <span class="prginput">SIT ON THE WHITE CHAIR</span>, for
+instance. Add some synonyms to the game and try them out! What happens if you
+add &ldquo;wooden&rdquo; as a synonym for the chair, and type <span class="prginput">EXAMINE
+WOODEN</span>? What about <span class="prginput">SIT ON WOODEN</span>?
+</p>
+<a id="predstoryintro"></a><h2>Defining new predicates</h2>
+<p>It's easy to conjure up new predicates. We simply define one or more rules for
+them. For instance, we might want to put the primary construction material of
+our objects in a separate predicate that we call <span class="code">(material)</span>:
+</p>
+<textarea class="copyarea" id="copy5" readonly>
+(material)		caramelized sugar
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left">(material)</td><td class="right">caramelized sugar</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy5').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>This predicate can then be <a href="execution.html#predsrules">queried</a> from within rule bodies,
+like so:
+</p>
+<textarea class="copyarea" id="copy6" readonly>
+#table
+(name *)		(material) table
+(descr *)		It's a sturdy table made of (material).
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">#table</td></tr>
+<tr><td class="left">(name *)</td><td class="right">(material) table</td></tr>
+<tr><td class="left">(descr *)</td><td class="right">It's a sturdy table made of (material).</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy6').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>We can use <a href="varsvalues.html">variables</a> to pass parameters around. In the
+following example, a generic object description calls out to object-specific
+material and colour predicates. The standard library doesn't know about these
+predicates; we just created them by defining rules for them. The library
+queries <span class="code">(descr&nbsp;$)</span>, and we take it from there:
+</p>
+<textarea class="copyarea" id="copy7" readonly>
+#player
+(current player *)
+(* is #in #room)
+(descr *)		It's you.
+
+#room
+(name *)		tutorial room
+(room *)
+(look *)		This is a very nondescript room, dominated by a
+			wooden table. (notice #table)
+
+#table
+(name *)		table
+(material *)		caramelized sugar
+(colour *)		dark brown
+(supporter *)
+(* is #in #room)
+
+#chair
+(name *)		chair
+(material *)		plastic
+(colour *)		white
+(on-seat *)
+(* is #in #room)
+
+(descr $Obj)		It's (colour $Obj) and made of (material $Obj).
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">#player</td></tr>
+<tr><td class="both" colspan="2">(current player *)</td></tr>
+<tr><td class="both" colspan="2">(* is #in #room)</td></tr>
+<tr><td class="left">(descr *)</td><td class="right">It's you.</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#room</td></tr>
+<tr><td class="left">(name *)</td><td class="right">tutorial room</td></tr>
+<tr><td class="both" colspan="2">(room *)</td></tr>
+<tr><td class="left">(look *)</td><td class="right">This is a very nondescript room, dominated by a</td></tr>
+<tr><td class="left"></td><td class="right">wooden table. (notice #table)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#table</td></tr>
+<tr><td class="left">(name *)</td><td class="right">table</td></tr>
+<tr><td class="left">(material *)</td><td class="right">caramelized sugar</td></tr>
+<tr><td class="left">(colour *)</td><td class="right">dark brown</td></tr>
+<tr><td class="both" colspan="2">(supporter *)</td></tr>
+<tr><td class="both" colspan="2">(* is #in #room)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#chair</td></tr>
+<tr><td class="left">(name *)</td><td class="right">chair</td></tr>
+<tr><td class="left">(material *)</td><td class="right">plastic</td></tr>
+<tr><td class="left">(colour *)</td><td class="right">white</td></tr>
+<tr><td class="both" colspan="2">(on-seat *)</td></tr>
+<tr><td class="both" colspan="2">(* is #in #room)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left">(descr $Obj)</td><td class="right">It's (colour $Obj) and made of (material $Obj).</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy7').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Note that the rule for <span class="code">(descr #player)</span>, on line four, supersedes
+the generic rule for <span class="code">(descr $Obj)</span>, at the very last line. This is
+solely due to the order in which they appear in the source code. When coding in
+Dialog, make sure to always put specific rules before generic rules.
+</p>
+<p>Variables are local to the rule definition in which they appear: In the
+example, <span class="code">$Obj</span> is only available from within the last rule. If we
+were to use a variable named <span class="code">$Obj</span> inside one of the other rules,
+that would be a completely unrelated variable.
+</p>
+<p>Queries either <a href="execution.html#successfailure">fail or succeed</a>. When a predicate is
+queried, each rule definition is tried in program order, until a match is
+found. If there is no matching rule, the query fails. As a general rule of
+thumb, predicates that print text should be designed to always succeed.
+Therefore, we'll often want to put a catch-all rule at the end of the program,
+with a wildcard (<span class="code">$</span>) in the rule head:
+</p>
+<textarea class="copyarea" id="copy8" readonly>
+(material $)		an unknown material
+(colour $)		beige
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left">(material $)</td><td class="right">an unknown material</td></tr>
+<tr><td class="left">(colour $)</td><td class="right">beige</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy8').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The standard library provides a catch-all rule for <span class="code">(descr&nbsp;$)</span>,
+printing a stock message along the lines of &ldquo;It seems to be harmless&rdquo;. But
+for our material and colour predicates, we have to provide our own catch-all
+rules.
+</p>
+<a id="objlocations"></a><h2>Object locations</h2>
+<p>At runtime, objects of the game world are organized into <i>object trees</i>.
+Every object has (at most) one parent, and a relation (in, on, under, behind,
+held by, or worn by) to that parent. The <i>root</i> of a tree has no parent.
+Sometimes you will run into the expression &ldquo;the object tree of the game&rdquo;,
+as though every object were part of a single, huge tree with only one root.
+Technically, it is more correct to say &ldquo;the object forest of the game&rdquo;,
+because there can be more than one root object. Rooms don't have parents, so
+every room is the root of a tree.
+</p>
+<p>In the Dialog standard library, the object forest is encoded using two
+predicates: <span class="code">($Object has parent $Parent)</span> and <span class="code">($Object has
+relation $Relation)</span>.  For brevity, there's an <a href="sugar.html#accesspred">access
+predicate</a> that combines them into a single expression: <span class="code">($Object is
+$Relation $Parent)</span>. We have already seen that one defines the initial
+location of an object like this:
+</p>
+<textarea class="copyarea" id="copy9" readonly>
+(#chair is #in #room)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(#chair is #in #room)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy9').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>and, due to the access predicate, the above is equivalent to the following pair
+of definitions:
+</p>
+<textarea class="copyarea" id="copy10" readonly>
+(#chair has parent #room)
+(#chair has relation #in)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(#chair has parent #room)</td></tr>
+<tr><td class="both" colspan="2">(#chair has relation #in)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>From within a rule body, you may query the access predicate to determine the
+current location of an object:
+</p>
+<textarea class="copyarea" id="copy11" readonly>
+(descr #apple)
+	The apple
+	(if) (#apple is #in $Parent) (then)
+		in (the $Parent)
+	(endif)
+	looks yummy!
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(descr #apple)</td></tr>
+<tr><td class="left"></td><td class="right">The apple</td></tr>
+<tr><td class="left"></td><td class="right">(if) (#apple is #in $Parent) (then)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>in (the $Parent)</td></tr>
+<tr><td class="left"></td><td class="right">(endif)</td></tr>
+<tr><td class="left"></td><td class="right">looks yummy!</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy11').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The output of the above code might be:
+</p>
+<div class="blkoutput">The apple in the fruit basket looks yummy!</div><p>With a <a href="choicepoints.html#multiqueries">multi-query</a>, you can <a href="choicepoints.html#backtracking">backtrack</a>
+over every object that has a particular location:
+</p>
+<textarea class="copyarea" id="copy12" readonly>
+(descr #basket)
+	It's a plain fruit basket.
+	(exhaust) {
+		*($Child is #in $Obj)
+		There's (a $Child) inside.
+	}
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(descr #basket)</td></tr>
+<tr><td class="left"></td><td class="right">It's a plain fruit basket.</td></tr>
+<tr><td class="left"></td><td class="right">(exhaust) {</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>*($Child is #in $Obj)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>There's (a $Child) inside.</td></tr>
+<tr><td class="left"></td><td class="right">}</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy12').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<a id="part2dynamic"></a><h2>Dynamic predicates</h2>
+<p>The location of an object is <a href="dynamic.html">dynamic</a>, which means that it can be
+modified at runtime using the <span class="code">(now)</span> keyword:
+</p>
+<textarea class="copyarea" id="copy13" readonly>
+(descr #apple)
+	(if) (#apple is #in #basket) (then)
+		Yummy!
+	(else)
+		The apple seems to be very shy. As soon as you look at it, it
+		jumps of its own accord into the fruit basket.
+		(now) (#apple is #in #basket)
+	(endif)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(descr #apple)</td></tr>
+<tr><td class="left"></td><td class="right">(if) (#apple is #in #basket) (then)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>Yummy!</td></tr>
+<tr><td class="left"></td><td class="right">(else)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>The apple seems to be very shy. As soon as you look at it, it</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>jumps of its own accord into the fruit basket.</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(now) (#apple is #in #basket)</td></tr>
+<tr><td class="left"></td><td class="right">(endif)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy13').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The standard library also uses dynamic predicates to track the <i>internal
+state</i> of game world objects. For instance, <span class="code">($&nbsp;is closed)</span>
+succeeds when a particular openable object (such as a container, or a door) is
+currently closed. The <a href="sugar.html#accesspred">access predicate</a> <span class="code">($&nbsp;is
+open)</span> is defined as its negation, <span class="code">~($ is closed)</span>, allowing
+both forms to appear as queries, <span class="nobreak"><span class="code">now</span>-</span>expressions, and
+initial value definitions.
+</p>
+<p>A convenience predicate, <span class="code">(open or closed&nbsp;$)</span>, prints the word
+&ldquo;<span class="prgoutput">open</span>&rdquo; if the given object is open, and &ldquo;<span class="prgoutput">closed</span>&rdquo;
+otherwise. The same thing can of course be coded explicitly with an
+<a href="control.html#if">if&nbsp;statement</a>.
+</p>
+<textarea class="copyarea" id="copy14" readonly>
+#box
+(openable *)
+(* is closed)
+(descr *)
+	The box is (open or closed *).
+
+(intro)
+	Pandora looks at her box. (descr #box)
+
+	(now) ~(#box is closed)
+
+	She looks away for five seconds, and then looks at it again,
+	just to check. (descr #box)
+
+	(par) (bold) \*\*\* That's just life. \*\*\* (roman) (par)
+	(game over)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">#box</td></tr>
+<tr><td class="both" colspan="2">(openable *)</td></tr>
+<tr><td class="both" colspan="2">(* is closed)</td></tr>
+<tr><td class="both" colspan="2">(descr *)</td></tr>
+<tr><td class="left"></td><td class="right">The box is (open or closed *).</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(intro)</td></tr>
+<tr><td class="left"></td><td class="right">Pandora looks at her box. (descr #box)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left"></td><td class="right">(now) ~(#box is closed)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left"></td><td class="right">She looks away for five seconds, and then looks at it again,</td></tr>
+<tr><td class="left"></td><td class="right">just to check. (descr #box)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left"></td><td class="right">(par) (bold) \*\*\* That's just life. \*\*\* (roman) (par)</td></tr>
+<tr><td class="left"></td><td class="right">(game over)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy14').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The following dynamic predicates are used by the library:
+</p>
+<table class="datatable">
+<tr><th>Dynamic predicate</th><th>Negated version</th><th>&nbsp;</th></tr>
+<tr><td><span class="code">($&nbsp;is closed)</span></td><td><span class="code">($&nbsp;is open)</span></td><td>Changed by: <span class="prginput">OPEN</span>, <span class="prginput">CLOSE</span>.</td></tr>
+<tr><td><span class="code">($&nbsp;is locked)</span></td><td><span class="code">($&nbsp;is unlocked)</span></td><td>Changed by: <span class="prginput">LOCK</span>, <span class="prginput">UNLOCK</span>.</td></tr>
+<tr><td><span class="code">($&nbsp;is off)</span></td><td><span class="code">($&nbsp;is on)</span></td><td>Changed by: <span class="prginput">SWITCH ON</span>, <span class="prginput">SWITCH OFF</span>.</td></tr>
+<tr><td><span class="code">($&nbsp;is opaque)</span></td><td><span class="code">($&nbsp;is transparent)</span></td><td>Never changed by the library.</td></tr>
+<tr><td><span class="code">($&nbsp;is broken)</span></td><td><span class="code">($&nbsp;is in order)</span></td><td>Never changed by the library.</td></tr>
+<tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td><span class="code">($&nbsp;is handled)</span></td><td><span class="code">($&nbsp;is pristine)</span></td><td>Object has been moved by the player.</td></tr>
+<tr><td><span class="code">($&nbsp;is visited)</span></td><td><span class="code">($&nbsp;is unvisited)</span></td><td>The player has been inside this room.</td></tr>
+<tr><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td><span class="code">($&nbsp;is in scope)</span></td><td>&nbsp;</td><td>The player may refer to this object.</td></tr>
+<tr><td><span class="code">($&nbsp;is hidden)</span></td><td><span class="code">($&nbsp;is revealed)</span></td><td>Not suggested during disambiguation.</td></tr>
+</table>
+<a id="hidden"></a><h2>Hidden objects</h2>
+<p><i>Hidden objects</i>, <span class="code">($&nbsp;is hidden)</span>, can be in scope, but the
+library is careful not to mention them. Thus, if the player carries a pink
+slip, and the current room contains a pink elephant that is hidden, then
+<span class="prginput">EXAMINE PINK</span> will print the description of the slip, with no
+disambiguating questions asked. <span class="prginput">EXAMINE PINK ELEPHANT</span> will
+examine the elephant, as would <span class="prginput">EXAMINE PINK</span> if the slip weren't
+there. The idea is to improve the experience of replaying a game, while
+avoiding spoilers on the first playthrough.
+</p>
+<p>Hidden objects can be revealed either by directly updating the flag,
+<span class="code">(now) (#elephant is revealed)</span>, or by querying
+<span class="code">(reveal&nbsp;$)</span> for the given object. A hidden object is also revealed
+implicitly when its name is printed, or when <span class="code">(notice&nbsp;$)</span> is invoked
+on it.
+</p>
+	<div class="footer">
+	<p class="nav">Onwards to &ldquo;<a href="traits.html">Chapter 3: Traits</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
+	<p class="tagline">The Dialog Manual, Revision 1, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	</div>
+	</div>
+</body>
+</html>

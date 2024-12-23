@@ -1,0 +1,480 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<link rel="StyleSheet" href="style.css" type="text/css" />
+	<title>Chapter 7: More built-in predicates</title>
+</head>
+<body>
+	<div class="chapter">
+	<h1>Chapter 7: More built-in predicates</h1>
+	<div class="navlinks">(<a href="#typechecks">Checking the type of a value</a>&nbsp;&bull; <a href="#arithmetic">Numbers and arithmetic</a>&nbsp;&bull; <a href="#styles">Styles and formatting</a>&nbsp;&bull; <a href="#input">Input</a>&nbsp;&bull; <a href="#trace">Debugging</a>&nbsp;&bull; <a href="#system">System control</a>)</div>
+<a id="typechecks"></a><h2>Checking the type of a value</h2>
+<p>Dialog contains a set of built-in predicates for checking if a value is of a
+particular type. They are:
+</p>
+<p class="codeline">(unbound $X)</p>
+<p class="noteline">Succeeds if and only if <span class="code">$X</span> is currently an unbound variable.
+</p>
+<p class="codeline">(number $X)</p>
+<p class="noteline">Succeeds if and only if <span class="code">$X</span> is bound to a number.
+</p>
+<p class="codeline">(word $X)</p>
+<p class="noteline">Succeeds if and only if <span class="code">$X</span> is bound to a dictionary word.
+</p>
+<p class="codeline">(empty $X)</p>
+<p class="noteline">Succeeds if and only if <span class="code">$X</span> is bound to an empty list.
+</p>
+<p class="codeline">(non-empty $X)</p>
+<p class="noteline">Succeeds if and only if <span class="code">$X</span> is bound to a non-empty list.
+</p>
+<p class="codeline">(list $X)</p>
+<p class="noteline">Succeeds if and only if <span class="code">$X</span> is bound to a list (empty or non-empty).
+</p>
+<p>The last one comes with an extra feature:
+</p>
+<p class="codeline">(object $X)</p>
+<p class="noteline">If <span class="code">$X</span> is bound to an object, the query succeeds. If it is
+bound to anything else, the query fails. But if <span class="code">$X</span> is
+unbound, <span class="code">*(object $X)</span> backtracks over every object in the
+game.
+</p>
+<a id="arithmetic"></a><h2>Numbers and arithmetic</h2>
+<p>The Dialog language is designed for symbolic manipulation, predicate logic, and
+storytelling. Arithmetic is possible, but the syntax is rather clunky.
+</p>
+<p class="codeline">($A plus $B into $C)</p>
+<p class="noteline"><span class="code">A</span> and <span class="code">B</span> must be bound to numbers;
+<span class="code">C</span> is unified with their sum. If the result is outside the
+valid range of numbers, the query fails.
+</p>
+<p class="codeline">($A minus $B into $C)</p>
+<p class="noteline"><span class="code">A</span> and <span class="code">B</span> must be bound to numbers;
+<span class="code">C</span> is unified with their difference.  If the result is
+outside the valid range of numbers, the query fails.
+</p>
+<p class="codeline">($A times $B into $C)</p>
+<p class="noteline"><span class="code">A</span> and <span class="code">B</span> must be bound to numbers;
+<span class="code">C</span> is unified with their product. If the product is outside
+the valid range of numbers, the query succeeds, but the numeric result
+is unpredictable (i.e. it depends on the interpreter).
+</p>
+<p class="codeline">($A divided by $B into $C)</p>
+<p class="noteline"><span class="code">A</span> and <span class="code">B</span> must be bound to numbers;
+<span class="code">C</span> is unified with the (integer) quotient after dividing
+<span class="code">A</span> by <span class="code">B</span>. The query fails if <span class="code">B</span> is
+zero.
+</p>
+<p class="codeline">($A modulo $B into $C)</p>
+<p class="noteline"><span class="code">A</span> and <span class="code">B</span> must be bound to numbers;
+<span class="code">C</span> is unified with the remainder after dividing
+<span class="code">A</span> by <span class="code">B</span>. The query fails if <span class="code">B</span> is
+zero.
+</p>
+<p class="codeline">(random from $A to $B into $C)</p>
+<p class="noteline"><span class="code">A</span> and <span class="code">B</span> must be bound to numbers, such that
+<span class="code">B</span> is greater than or equal to <span class="code">A</span>. A random
+number in the range <span class="code">A</span> to <span class="code">B</span> (inclusive) is
+picked, and then unified with <span class="code">C</span>.
+</p>
+<p class="codeline">($A &lt; $B)</p>
+<p class="noteline">This predicate succeeds if and only if <span class="code">A</span> is numerically
+less than <span class="code">B</span>.
+</p>
+<p class="codeline">($A &gt; $B)</p>
+<p class="noteline">This predicate succeeds if and only if <span class="code">A</span> is numerically
+greater than <span class="code">B</span>.
+</p>
+<p>Common to all of the above predicates is that they fail if <span class="code">A</span> or
+<span class="code">B</span> is unbound, or bound to a non-number. <span class="code">C</span> may be
+bound or unbound; it is unified with the result of the computation.
+</p>
+<p>To check for numerical equality, use regular unification, i.e. <span class="code">($&nbsp;=
+$)</span>.
+</p>
+<p>All numbers in Dialog are restricted to the range <span class="nobreak">0&ndash;16383</span>
+(inclusive). This range directly supports four-digit numbers such as years and
+PIN codes. Pocket money should be fairly straightforward to implement by
+counting in cents; story authors (or library developers) that require more
+sophisticated number crunching will have to get creative.
+</p>
+<a id="styles"></a><h2>Styles and formatting</h2>
+<p>To change the current text style, use the built-in predicates
+<span class="code">(bold)</span>, <span class="code">(italic)</span>, <span class="code">(reverse)</span>, and
+<span class="code">(fixed pitch)</span> to enable each respective style, and
+<span class="code">(roman)</span> to disable all four.
+</p>
+<p>The built-in predicate <span class="code">(uppercase)</span> forces the next character to be
+printed in uppercase. The standard library uses this to define a number of
+convenient predicates such as:
+</p>
+<textarea class="copyarea" id="copy0" readonly>
+(The $Obj)	(uppercase) (the $Obj)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left">(The $Obj)</td><td class="right">(uppercase) (the $Obj)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy0').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>To clear the screen below the status bar area, use <span class="code">(clear)</span>. To
+clear the entire screen and disable the status bar, use <span class="code">(clear
+all)</span>. Be aware that on some interpreters, clearing interferes with the
+player's ability to scroll back and review earlier parts of the play session.
+</p>
+<p>The built-in predicate <span class="code">(space&nbsp;$)</span> prints a given number of spaces
+in succession. Its vertical counterpart, <span class="code">(par&nbsp;$)</span>, produces a given
+number of blank lines in succession.
+</p>
+<textarea class="copyarea" id="copy1" readonly>
+(program entry point)
+	(clear all)
+	(par 10)
+	(space 10)
+	(bold)
+	This text is printed in bold, starting at row 11, column 11.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">(clear all)</td></tr>
+<tr><td class="left"></td><td class="right">(par 10)</td></tr>
+<tr><td class="left"></td><td class="right">(space 10)</td></tr>
+<tr><td class="left"></td><td class="right">(bold)</td></tr>
+<tr><td class="left"></td><td class="right">This text is printed in bold, starting at row 11, column 11.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy1').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<a id="input"></a><h2>Input</h2>
+<p>User input is represented by dictionary words. The Dialog compiler collects all
+dictionary words mentioned explicitly in the source code (with the
+<span class="nobreak"><span class="code">@</span>-prefix</span> or as bare words inside lists), as well as
+every literal word that can come out of a <span class="code">(collect words)</span>
+expression. In addition, the system makes sure to provide a single-letter
+dictionary word for every character supported by the underlying platform.
+</p>
+<p>On a side note, don't worry about the Z-machine game dictionary getting bloated
+with every possible one-character word. It may appear so at the Dialog level,
+but the underlying runtime representation is different.
+</p>
+<p>There are three built-in predicates for obtaining input from the player. One
+waits for a single keypress, while the other two read a full line of input.
+</p>
+<h3>Get key</h3>
+<textarea class="copyarea" id="copy2" readonly>
+	(get key $Char)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">(get key $Char)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy2').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>This predicate waits for the player to type a character.
+</p>
+<p>Some interpreters indicate that the game is waiting for input by displaying a
+flashing cursor. Others don't, so story authors may wish to prompt the reader
+explicitly.
+</p>
+<p>The parameter, <span class="code">$Char</span>, is unified with a dictionary word
+representing the character that was typed, e.g. <span class="code">@e</span> if the
+<span class="prginput">E</span> key was pressed. Note that on the Z-machine, dictionary words
+are case-insensitive, so at least for the 26 letters of the English alphabet,
+there is no way to tell whether the player was holding shift or not.
+</p>
+<p>Some special keys correspond to dictionary words that can't be represented
+directly in Dialog source code. The dictionary words for these keys can be
+obtained at runtime, by querying the following built-in predicates:
+</p>
+<textarea class="copyarea" id="copy3" readonly>
+(word representing return $Char)
+(word representing space $Char)
+(word representing backspace $Char)
+(word representing up $Char)
+(word representing down $Char)
+(word representing left $Char)
+(word representing right $Char)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(word representing return $Char)</td></tr>
+<tr><td class="both" colspan="2">(word representing space $Char)</td></tr>
+<tr><td class="both" colspan="2">(word representing backspace $Char)</td></tr>
+<tr><td class="both" colspan="2">(word representing up $Char)</td></tr>
+<tr><td class="both" colspan="2">(word representing down $Char)</td></tr>
+<tr><td class="both" colspan="2">(word representing left $Char)</td></tr>
+<tr><td class="both" colspan="2">(word representing right $Char)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy3').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>A simple keypress dispatcher might look like this:
+</p>
+<textarea class="copyarea" id="copy4" readonly>
+(program entry point)
+	(get key $Key)
+	(handle keypress $Key)
+
+(handle keypress @a)
+	'A' was pressed.
+
+(handle keypress @b)
+	'B' was pressed.
+
+(handle keypress (word representing return $))
+	RETURN was pressed.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">(get key $Key)</td></tr>
+<tr><td class="left"></td><td class="right">(handle keypress $Key)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(handle keypress @a)</td></tr>
+<tr><td class="left"></td><td class="right">'A' was pressed.</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(handle keypress @b)</td></tr>
+<tr><td class="left"></td><td class="right">'B' was pressed.</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(handle keypress (word representing return $))</td></tr>
+<tr><td class="left"></td><td class="right">RETURN was pressed.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy4').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<h3>Get input</h3>
+<textarea class="copyarea" id="copy5" readonly>
+	(get input $WordList)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">(get input $WordList)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy5').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>This query blocks execution until the player types a line of input, followed by
+return. Different interpreters provide different levels of line-editing
+facilities, ranging from simple backspace handling all the way up to input
+history and spell checking.
+</p>
+<p>The parameter, <span class="code">$WordList</span>, is unified with a list where each
+element represents a word typed by the player. The punctuation characters full
+stop, comma, double quote, semicolon, and asterisk are treated as individual
+words; the remaining text is separated into words by whitespace. If a word is
+recognized as one that appears in the program-wide dictionary, then the element
+will be that dictionary word. Else, if the word is a decimal number in the
+range <span class="nobreak">0&ndash;16383</span>, the element will be that number. Otherwise, the
+element will be a list of characters, each character itself a dictionary word.
+</p>
+<p>For instance, the input <span class="prginput">TAKE&nbsp;02&nbsp;UNKNOWNWORD,X&nbsp;BALL</span> may,
+depending on the contents of the dictionary, be represented by the list:
+<span class="nobreak"><span class="code">[take 2 [u n k n o w n w o r d] , x ball]</span></span>
+</p>
+<p>In practice, unknown words are ignored by most rules dealing with player input.
+The reason for providing such words as lists of characters is to allow programs
+to print them back, e.g. to complain that a particular word wasn't understood.
+</p>
+<p>Special gotcha: Recall that zero-prefixed numbers in the source code, as well
+as numbers that are out of range, are treated as words. If <span class="code">007</span>
+appears in the program in such a way that it becomes part of the program-wide
+dictionary, then it will show up as a dictionary word in the list returned by
+<span class="code">(get input)</span>. Otherwise, it will be represented by the numerical
+value&nbsp;7.
+</p>
+<h3>Get raw input</h3>
+<textarea class="copyarea" id="copy6" readonly>
+	(get raw input $CharList)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">(get raw input $CharList)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy6').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>This query reads a line of input just like <span class="code">(get input $)</span>, but does
+not try to interpret it as a series of dictionary words or numbers.
+</p>
+<p>This is useful, for instance, for asking the player what their name is. It
+makes sense to treat the player's name as an opaque list of characters, just in
+case their first or last name is over nine letters long and happens to match a
+dictionary word: Recall that long dictionary words are truncated&mdash;and we
+generally do not want to truncate the player's name when we print it back.
+</p>
+<h3>Splitting input by keywords</h3>
+<p>During parsing, it is often necessary to scan a list for certain keywords, and
+then split it into two sublists, representing the elements on either side of
+the matched keyword. It is straightforward to implement this using ordinary
+rules in Dialog. However, for performance reasons the language also provides a
+built-in predicate:
+</p>
+<textarea class="copyarea" id="copy7" readonly>
+(split $Input by $Keywords into $Left and $Right)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(split $Input by $Keywords into $Left and $Right)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy7').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p><span class="code">$Keywords</span> must be a list of simple values (i.e. no unbound
+variables or sublists).  The <span class="code">$Input</span> list will be scanned, starting
+at its head, until the first element that also appears in
+<span class="code">$Keywords</span> is found. A list of the elements that came before the
+keyword is unified with <span class="code">$Left</span>, and a list of the elements that
+follow it is unified with <span class="code">$Right</span>. That is, neither
+<span class="code">$Left</span> nor <span class="code">$Right</span> includes the keyword itself.
+</p>
+<p>When invoked as a multi-query, the predicate backtracks over each matching
+position. Thus:
+</p>
+<textarea class="copyarea" id="copy8" readonly>
+	*(split [the good , the bad and the ugly]
+		by [and ,]
+		into $Left and $Right)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">*(split [the good , the bad and the ugly]</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>by [and ,]</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>into $Left and $Right)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy8').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>will succeed twice: First, binding <span class="code">$Left</span> to <span class="code">[the
+good]</span> and <span class="code">$Right</span> to <span class="code">[the bad and the ugly]</span>,
+and then a second time binding <span class="code">$Left</span> to <span class="code">[the good , the
+bad]</span> and <span class="code">$Right</span> to <span class="code">[the ugly]</span>.
+</p>
+<p>The split-by predicate can also be used to check whether a list contains one or
+more of a set of keywords. The standard library uses it that way in the
+following rule definition:
+</p>
+<textarea class="copyarea" id="copy9" readonly>
+($X contains one of $Y)
+	(split $X by $Y into $ and $)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">($X contains one of $Y)</td></tr>
+<tr><td class="left"></td><td class="right">(split $X by $Y into $ and $)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy9').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<a id="trace"></a><h2>Debugging</h2>
+<p>Two built-in predicates control <i>low-level tracing</i> of queries:
+</p>
+<p class="codeline">(trace on)</p>
+<p class="noteline">Enables tracing. Following this, debugging information will be printed
+when queries are made, and when rule bodies are entered.
+</p>
+<p class="codeline">(trace off)</p>
+<p class="noteline">Disables tracing.
+</p>
+<p>If your program source code contains a query to <span class="code">(trace on)</span>
+anywhere, the compiler will insert extra instructions all over the generated
+code, to deal with tracing. This is known as <i>instrumenting</i> the code, and
+it makes the program slower and larger. Thus, you'll only want to use these
+predicates temporarily, during debugging. The compiler prints a warning when it
+adds the extra instructions.
+</p>
+<p>Please be aware that the Dialog compiler optimizes your program, and you will
+be tracing the optimized code. This means that certain queries and rules will
+be missing from the debug printouts. And occasionally it may seem like a rule
+body is being entered even though it shouldn't (in which case the rule will
+typically fail right after the printout). Admittedly, tracing at this low level
+can make debugging harder than it needs to be, but it is highly useful when
+trying to speed up a program. In the future, an interactive debugger might be
+developed, for stepping through the program statements at a more intuitive
+level. Until then, tracing nevertheless offers a powerful complement to
+manually coded debug printouts.
+</p>
+<a id="system"></a><h2>System control</h2>
+<p>The following built-in predicates offer low-level control over the interpreter
+and the Dialog runtime. This is decidedly in the domain of library code, so
+story authors rarely need to worry about these predicates.
+</p>
+<p class="codeline">(quit)</p>
+<p class="noteline">Immediately terminates the program. This predicate neither fails nor
+succeeds.
+</p>
+<p class="codeline">(restart)</p>
+<p class="noteline">Resets the program to its initial state. The only part of the game
+state that may survive a restart is the state of the output machinery
+(including the current style and on-screen contents, and whether the
+transcript feature is on or off). If the operation succeeds, execution
+resumes from the start of the program. If there is an error, or the
+interpreter doesn't support restarting, execution continues normally,
+i.e. the query succeeds.
+</p>
+<p class="codeline">(save $ComingBack)</p>
+<p class="noteline">Attempts to save the current game state to a file. The interpreter
+takes care of asking the player for a filename. In the event of a save
+error, or if the operation was cancelled, the query fails. On success,
+the parameter is unified with&nbsp;0 if we just saved the state, and with&nbsp;1
+if we just restored the state from a file saved by this query.
+</p>
+<p class="codeline">(restore)</p>
+<p class="noteline">Attempts to restore the current game state from a file. The interpreter
+takes care of asking the player for a filename. The only part of the
+game state that may survive a restore is the state of the output
+machinery (including the current style and on-screen contents, and
+whether the transcript feature is on or off). If the operation
+succeeds, execution resumes after the query from which the save file
+was written. Otherwise, in the event of a load error or if the
+operation was cancelled, execution continues normally, i.e. the query
+succeeds.
+</p>
+<p class="codeline">(save undo $ComingBack)</p>
+<p class="noteline">Works just like <span class="code">(save&nbsp;$)</span>, but stores the game state in a
+buffer in memory. This operation is typically invoked once per move.
+</p>
+<p class="codeline">(undo)</p>
+<p class="noteline">Works like <span class="code">(restore)</span>, but restores the game state from the
+undo buffer. If there is no saved undo state, the predicate fails. If
+there's some other problem&mdash;such as the interpreter imposing a limit
+on the number of undo states that are retained in memory&mdash;the
+predicate succeeds, and execution continues normally.
+</p>
+<p class="codeline">(script on)</p>
+<p class="noteline">Enables the transcript feature. The interpreter takes care of asking
+the player for a filename. If the operation succeeds, the query suceeds.
+In case of an error, or if the operation was cancelled, the query
+fails.
+</p>
+<p class="codeline">(script off)</p>
+<p class="noteline">Disables the transcript feature. This predicate always succeeds.
+</p>
+<p class="codeline">(display memory statistics)</p>
+<p class="noteline">Prints a line of information specific to the compiler backend (there is
+currently only one), about the peak memory usage in the heap and
+auxiliary heap areas. The size of these areas can be adjusted by
+passing commandline options to the compiler. During debugging and
+testing, you may wish to invoke this predicate just before quitting, as
+it will tell you how close you are to the limits.
+</p>
+	<div class="footer">
+	<p class="nav">Onwards to &ldquo;<a href="beyondprg.html">Chapter 8: Beyond the program</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
+	<p class="tagline">The Dialog Manual, Revision 1, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	</div>
+	</div>
+</body>
+</html>

@@ -1,0 +1,468 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<link rel="StyleSheet" href="style.css" type="text/css" />
+	<title>Chapter 4: Items</title>
+</head>
+<body>
+	<div class="chapter">
+	<h1>Chapter 4: Items</h1>
+	<div class="navlinks">(<a href="#pristine">Pristine and handled objects</a>&nbsp;&bull; <a href="#synonyms">Plural forms</a>&nbsp;&bull; <a href="#appearance">Appearance</a>)</div>
+<p><i>Items</i> are objects that can be picked up by the player:
+</p>
+<textarea class="copyarea" id="copy0" readonly>
+#bowl
+(name *)		small bowl
+(descr *)		It's a small bowl.
+(item *)		%% This is what allows the player to pick up the bowl.
+(* is #on #table)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">#bowl</td></tr>
+<tr><td class="left">(name *)</td><td class="right">small bowl</td></tr>
+<tr><td class="left">(descr *)</td><td class="right">It's a small bowl.</td></tr>
+<tr><td class="left">(item *)</td><td class="right"><span class="comment">%% This is what allows the player to pick up the bowl.</span></td></tr>
+<tr><td class="both" colspan="2">(* is #on #table)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy0').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<a id="pristine"></a><h2>Pristine and handled objects</h2>
+<p>As a general rule, the standard library doesn't call attention to game objects.
+The story author is expected to mention them as part of the description of
+their parent object (such as the room).
+</p>
+<p>But there is an important exception: As soon as the player picks up an object
+(or otherwise moves it from its original location), the responsibility for
+mentioning that object is transferred to the library. We say that the object
+has become <i>handled</i> or, equivalently, that it is no longer <i>pristine</i>.
+</p>
+<p>There's a compelling pragmatic reason for this: When players are able to move
+objects around, those objects will eventually end up in strange locations,
+unanticipated by the story author. Players will put the flower pot on top of
+the bed, or take off their clothes and put them inside the ashtray, and the
+story author cannot be expected to provide custom text for every combination
+the player can think of. So, once objects start moving around, the library
+takes over the initiative in calling attention to them, using bland, default
+messages. They story author may then choose to override those messages on a
+case-by-case basis, and we will soon see how that's done in practice.
+</p>
+<p>For now, the important thing to remember is that items (and wearable objects)
+can move around, and therefore we should only call them out in room
+descriptions (and in the descriptions of containers and supporters) when they
+are in their pristine state. Whenever we include a movable object in our story,
+we have a responsibility to check this. It can be done with an if-statement as
+in the following example:
+</p>
+<textarea class="copyarea" id="copy1" readonly>
+#bowl
+(name *)		small bowl
+(descr *)		It's a small bowl.
+(item *)
+(* is #on #table)
+
+(descr #table)
+	It's wooden; possibly mahogany.
+	(if) (#bowl is pristine) (then)
+		A small bowl is placed exactly in its centre.
+	(endif)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">#bowl</td></tr>
+<tr><td class="left">(name *)</td><td class="right">small bowl</td></tr>
+<tr><td class="left">(descr *)</td><td class="right">It's a small bowl.</td></tr>
+<tr><td class="both" colspan="2">(item *)</td></tr>
+<tr><td class="both" colspan="2">(* is #on #table)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(descr #table)</td></tr>
+<tr><td class="left"></td><td class="right">It's wooden; possibly mahogany.</td></tr>
+<tr><td class="left"></td><td class="right">(if) (#bowl is pristine) (then)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>A small bowl is placed exactly in its centre.</td></tr>
+<tr><td class="left"></td><td class="right">(endif)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy1').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Non-movable objects will remain pristine forever, so they can be described
+without a check.
+</p>
+<p>Here is a complete example game with movable objects:
+</p>
+<textarea class="copyarea" id="copy2" readonly>
+(current player #player)
+
+#room
+(name *)		tutorial room
+(room *)
+(#player is #in *)
+(look *)		This is a very nondescript room, dominated by a
+			wooden table. (notice #table)
+
+#table
+(name *)		wooden table
+(dict *)		mahogany	%% Add a synonym.
+(supporter *)
+(* is #in #room)
+(descr *)		It's wooden; possibly mahogany.
+			(if) (#bowl is pristine) (then)
+				A small bowl is placed exactly in its centre.
+			(endif)
+
+#sapphire
+(name *)		sapphire
+(stone *)		%% This is a custom, story-specific trait.
+
+#amethyst
+(an *)			%% The indefinite article should be 'an'.
+(name *)		amethyst
+(stone *)
+
+#bowl
+(name *)		small bowl
+(item *)
+(container *)
+(* is #on #table)
+(descr *)		It's a small bowl.
+
+%% Some generic properties of stones:
+
+(item (stone $))
+((stone $) is #in #bowl)
+(descr (stone $Obj))
+	(The $Obj) looks very pretty.
+(dict (stone $))
+	precious stone gem
+(plural dict (stone $))
+	stones
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(current player #player)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#room</td></tr>
+<tr><td class="left">(name *)</td><td class="right">tutorial room</td></tr>
+<tr><td class="both" colspan="2">(room *)</td></tr>
+<tr><td class="both" colspan="2">(#player is #in *)</td></tr>
+<tr><td class="left">(look *)</td><td class="right">This is a very nondescript room, dominated by a</td></tr>
+<tr><td class="left"></td><td class="right">wooden table. (notice #table)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#table</td></tr>
+<tr><td class="left">(name *)</td><td class="right">wooden table</td></tr>
+<tr><td class="left">(dict *)</td><td class="right">mahogany	<span class="comment">&emsp;%% Add a synonym.</span></td></tr>
+<tr><td class="both" colspan="2">(supporter *)</td></tr>
+<tr><td class="both" colspan="2">(* is #in #room)</td></tr>
+<tr><td class="left">(descr *)</td><td class="right">It's wooden; possibly mahogany.</td></tr>
+<tr><td class="left"></td><td class="right">(if) (#bowl is pristine) (then)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>A small bowl is placed exactly in its centre.</td></tr>
+<tr><td class="left"></td><td class="right">(endif)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#sapphire</td></tr>
+<tr><td class="left">(name *)</td><td class="right">sapphire</td></tr>
+<tr><td class="left">(stone *)</td><td class="right"><span class="comment">%% This is a custom, story-specific trait.</span></td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#amethyst</td></tr>
+<tr><td class="left">(an *)</td><td class="right"><span class="comment">%% The indefinite article should be 'an'.</span></td></tr>
+<tr><td class="left">(name *)</td><td class="right">amethyst</td></tr>
+<tr><td class="both" colspan="2">(stone *)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">#bowl</td></tr>
+<tr><td class="left">(name *)</td><td class="right">small bowl</td></tr>
+<tr><td class="both" colspan="2">(item *)</td></tr>
+<tr><td class="both" colspan="2">(container *)</td></tr>
+<tr><td class="both" colspan="2">(* is #on #table)</td></tr>
+<tr><td class="left">(descr *)</td><td class="right">It's a small bowl.</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2"><span class="comment">%% Some generic properties of stones:</span></td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(item (stone $))</td></tr>
+<tr><td class="both" colspan="2">((stone $) is #in #bowl)</td></tr>
+<tr><td class="both" colspan="2">(descr (stone $Obj))</td></tr>
+<tr><td class="left"></td><td class="right">(The $Obj) looks very pretty.</td></tr>
+<tr><td class="both" colspan="2">(dict (stone $))</td></tr>
+<tr><td class="left"></td><td class="right">precious stone gem</td></tr>
+<tr><td class="both" colspan="2">(plural dict (stone $))</td></tr>
+<tr><td class="left"></td><td class="right">stones</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy2').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Try it! You might want to <span class="prginput">LOOK</span>, <span class="prginput">X TABLE</span>,
+<span class="prginput">LOOK IN BOWL</span>, <span class="prginput">GET ALL</span>, <span class="prginput">PUT STONE IN
+BOWL</span>, <span class="prginput">PUT STONE ON TABLE</span>, <span class="prginput">DROP ALL</span>...
+</p>
+<a id="synonyms"></a><h2>Plural forms</h2>
+<p><span class="code">(dict&nbsp;$)</span> and <span class="code">(plural dict&nbsp;$)</span> can be used to add
+synonyms to objects. In the example above, we added both singular and plural
+synonyms to all objects belonging to the <span class="code">(stone&nbsp;$)</span> category. A
+command such as <span class="prginput">GET STONES</span> will result in every stone being
+picked up, due to the plural form. In contrast, <span class="prginput">GET STONE</span>
+triggers a disambiguating question, where the game asks the player whether they
+meant to pick up the amethyst or the sapphire.
+</p>
+<a id="appearance"></a><h2>Appearance</h2>
+<p>You may have noticed a problem with the last example: When the player examines
+the bowl, there is no mention of the stones within. For an oldschool game, it
+may be acceptable to expect the player to <span class="prginput">SEARCH</span> or <span class="prginput">LOOK
+IN</span> the bowl in order to find them. But for modern, narrative-driven
+games, that approach is generally frowned upon. We could mention the stones in
+the description of the bowl. But there are two stones, so how do we do that? Do
+we check whether they are both pristine? I.e.:
+</p>
+<textarea class="copyarea" id="copy3" readonly>
+(descr #bowl)
+	It's a small bowl.
+	(if)
+		(#sapphire is pristine)
+		(#amethyst is pristine)
+	(then)
+		There are two precious stones in it.
+	(endif)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(descr #bowl)</td></tr>
+<tr><td class="left"></td><td class="right">It's a small bowl.</td></tr>
+<tr><td class="left"></td><td class="right">(if)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(#sapphire is pristine)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(#amethyst is pristine)</td></tr>
+<tr><td class="left"></td><td class="right">(then)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>There are two precious stones in it.</td></tr>
+<tr><td class="left"></td><td class="right">(endif)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy3').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>But what if the player only picks up the amethyst, and then puts it back? The
+sapphire is still in the bowl, but the story doesn't mention it, and the
+library only prints a stock message about the amethyst (because it is no longer
+pristine). Another option is to add lots of special cases:
+</p>
+<textarea class="copyarea" id="copy4" readonly>
+(descr #bowl)
+	It's a small bowl.
+	(if)
+		(#sapphire is pristine)
+		(#amethyst is pristine)
+	(then)
+		There are two precious stones in it.
+	(elseif)
+		*($Stone is one of [#sapphire #amethyst])
+		($Stone is pristine)
+	(then)
+		There's (a $Stone) in it.
+	(endif)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(descr #bowl)</td></tr>
+<tr><td class="left"></td><td class="right">It's a small bowl.</td></tr>
+<tr><td class="left"></td><td class="right">(if)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(#sapphire is pristine)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(#amethyst is pristine)</td></tr>
+<tr><td class="left"></td><td class="right">(then)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>There are two precious stones in it.</td></tr>
+<tr><td class="left"></td><td class="right">(elseif)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>*($Stone is one of [#sapphire #amethyst])</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>($Stone is pristine)</td></tr>
+<tr><td class="left"></td><td class="right">(then)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>There's (a $Stone) in it.</td></tr>
+<tr><td class="left"></td><td class="right">(endif)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy4').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>But this doesn't scale well, if there were more than two precious stones in the
+bowl to begin with. We also have the option to cop out entirely, and tell the
+library to narrate these objects already from the start:
+</p>
+<textarea class="copyarea" id="copy5" readonly>
+(descr #bowl)
+	It's a small bowl.
+
+(#sapphire is handled)
+(#amethyst is handled)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(descr #bowl)</td></tr>
+<tr><td class="left"></td><td class="right">It's a small bowl.</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(#sapphire is handled)</td></tr>
+<tr><td class="both" colspan="2">(#amethyst is handled)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy5').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Remember, handled is the opposite of pristine in this context. Now, when the
+player first examines the bowl, the game responds:
+</p>
+<div class="blkoutput">It's a small bowl.<br />
+<br />
+An amethyst is in the small bowl.<br />
+<br />
+A sapphire is in the small bowl.</div><p>But that's decidedly clunky. A somewhat better approach, although still a
+cop-out, is to print a vague message that encourages the player to look inside
+the bowl, without mentioning any details about what's inside:
+</p>
+<textarea class="copyarea" id="copy6" readonly>
+(descr #bowl)
+	It's a small bowl.
+	(if) ($ is #in #bowl) (then)
+		There appears to be something inside.
+	(endif)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(descr #bowl)</td></tr>
+<tr><td class="left"></td><td class="right">It's a small bowl.</td></tr>
+<tr><td class="left"></td><td class="right">(if) ($ is #in #bowl) (then)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>There appears to be something inside.</td></tr>
+<tr><td class="left"></td><td class="right">(endif)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy6').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>But this will backfire, in a sense, if the player takes the amethyst and then
+puts it back. Examining the bowl would then result in the following output:
+</p>
+<div class="blkoutput">It's a small bowl. There appears to be something inside.<br />
+<br />
+An amethyst is in the small bowl.</div><p>Here, the library called attention to the amethyst (handled), but not to the
+sapphire (pristine). The printed text is technically correct, but while the
+first paragraph encourages the player to look inside the bowl, the second
+paragraph takes that incentive away, and the player is mislead to believe that
+there's nothing in the bowl apart from the amethyst.
+</p>
+<p>Instead, the recommended way to handle this situation is to selectively
+override the <i>appearance text</i> that's printed for handled objects by the
+library. The message &ldquo;<span class="prgoutput">An amethyst is in the small bowl</span>&rdquo;
+originates from a predicate called <span class="code">(appearance $Object $Relation
+$Parent)</span>. The first step is to tell the library to refrain from printing
+such a message about any object that's currently in the bowl:
+</p>
+<textarea class="copyarea" id="copy7" readonly>
+(appearance $ #in #bowl)
+	%% Objects in the bowl have a blank appearance.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(appearance $ #in #bowl)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="comment">%% Objects in the bowl have a blank appearance.</span></td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy7').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Now that we have silenced those particular messages from the standard library,
+we must provide our own variant in the description of the bowl. But we have to
+be careful: With the rule above, we turned off automatic descriptions for any
+object in the bowl, not just the amethyst and the sapphire. So we have to take
+care of any foreign objects that might end up there too. In some situations, it
+might be sufficient to drop a vague hint:
+</p>
+<textarea class="copyarea" id="copy8" readonly>
+(descr #bowl)
+	It's a small bowl.
+	(if) ($ is #in #bowl) (then)
+		There appears to be something inside.
+	(endif)
+
+(appearance $ #in #bowl)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(descr #bowl)</td></tr>
+<tr><td class="left"></td><td class="right">It's a small bowl.</td></tr>
+<tr><td class="left"></td><td class="right">(if) ($ is #in #bowl) (then)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>There appears to be something inside.</td></tr>
+<tr><td class="left"></td><td class="right">(endif)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(appearance $ #in #bowl)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy8').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>A more advanced technique is to use a <a href="choicepoints.html#multiqueries">multi-query</a> and a
+<a href="choicepoints.html#collect">collect statement</a> to print a list of all objects currently inside
+the bowl:
+</p>
+<textarea class="copyarea" id="copy9" readonly>
+(descr #bowl)
+	It's a small bowl.
+	(collect $Obj)
+		*($Obj is #in #bowl)
+	(into $List)
+	You can see (a $List) in it.
+
+(appearance $ #in #bowl)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(descr #bowl)</td></tr>
+<tr><td class="left"></td><td class="right">It's a small bowl.</td></tr>
+<tr><td class="left"></td><td class="right">(collect $Obj)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>*($Obj is #in #bowl)</td></tr>
+<tr><td class="left"></td><td class="right">(into $List)</td></tr>
+<tr><td class="left"></td><td class="right">You can see (a $List) in it.</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(appearance $ #in #bowl)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy9').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>An entirely different approach is to allow objects to call attention to
+themselves, but to replace the stock message with a custom one. This is done by
+overriding <span class="code">(appearence $ $&nbsp;$)</span> with a rule that prints text:
+</p>
+<textarea class="copyarea" id="copy10" readonly>
+#sapphire
+(appearance * $ $)
+	(* is handled)
+	A gleaming sapphire catches your eye.
+	(notice *)	%% Bind &ldquo;it&rdquo;
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">#sapphire</td></tr>
+<tr><td class="both" colspan="2">(appearance * $ $)</td></tr>
+<tr><td class="left"></td><td class="right">(* is handled)</td></tr>
+<tr><td class="left"></td><td class="right">A gleaming sapphire catches your eye.</td></tr>
+<tr><td class="left"></td><td class="right">(notice *)	<span class="comment">&emsp;%% Bind &ldquo;it&rdquo;</span></td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>That rule did not check the location of the sapphire, so it would override the
+default message also when the sapphire makes an appearance as part of a room
+description, or in any other place. Without the line <span class="code">(*&nbsp;is
+handled)</span>, the message would also be printed while the object
+is still pristine.
+</p>
+<p>To summarize, movable items are more complicated than other objects, because
+there is a transfer of responsibility for calling attention to them. At first,
+while they are pristine, the story author should mention them as a natural part
+of the prose describing nearby objects (e.g. the room). As soon as they are
+handled, the library takes over, unless the story author explicitly reclaims
+control over their appearance.
+</p>
+	<div class="footer">
+	<p class="nav">Onwards to &ldquo;<a href="moving.html">Chapter 5: Moving around</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
+	<p class="tagline">The Dialog Manual, Revision 1, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	</div>
+	</div>
+</body>
+</html>

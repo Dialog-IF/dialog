@@ -1,0 +1,106 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<link rel="StyleSheet" href="style.css" type="text/css" />
+	<title>Chapter 1: Getting started</title>
+</head>
+<body>
+	<div class="chapter">
+	<h1>Chapter 1: Getting started</h1>
+	<div class="navlinks">(<a href="#liboverview">Architecture of the library</a>&nbsp;&bull; <a href="#examples">Running the code examples</a>&nbsp;&bull; <a href="#ministory">A minimal story</a>)</div>
+<p>The Dialog standard library is a framework for creating interactive stories in
+English, coded in the Dialog programming language. The library provides the
+basic implementation layer of an interactive game world&mdash;classification of
+objects, standard actions, parser&mdash;and encodes the knowledge
+required to deal with a multitude of special cases and gotchas.
+</p>
+<p>At roughly 5000&nbsp;lines of high-level code, the standard library is intended to
+be substantial yet accessible. Both casual readers and determined explorers are
+invited to dive into its inner workings, and see how everything fits together.
+</p>
+<p>The world provided by the library is deliberately bland, serving as a neutral
+backdrop for the stories that you will write. Dialog makes it easy to sketch
+the outlines of an interactive story or old-school text adventure by merely
+defining a couple of objects and extending the action-handling rules of the
+standard library. For more ambitious works, you are encouraged to read and
+modify the library code, adapting and reshaping the functionality, and wrapping
+it tightly around the characteristics of your particular story.
+</p>
+<a id="liboverview"></a><h2>Architecture of the library</h2>
+<p>The chart below illustrates the overall architecture of the standard library,
+and they ways in which it interfaces with story code. In the chart, blocks
+generally only make queries to blocks that are directly below them; that's a
+simplification, but it will do for now.
+</p>
+<div class="img"><img src="architecture.png" /></div>
+<a id="examples"></a><h2>Running the code examples</h2>
+<p>This part of the manual contains numerous examples, and readers are encouraged
+to try them out. Copy the source code, put it in a text file, compile it
+together with the standard library, and run the resulting story file using your
+favourite Z-code interpreter. A quick reminder:
+</p>
+<p><span class="tt">dialogc -t z8 story.dg stdlib.dg</span>
+</p>
+<p>where <span class="tt">story.dg</span> is your source code file, and <span class="tt">stdlib.dg</span> is the
+standard library source code file. The order of the filenames is significant;
+the story must appear before the library. In the above example, the output
+filename will be <span class="tt">story.z8</span> (based on the output format and the name of
+the first source code file), but this can be changed with the
+<span class="nobreak"><span class="tt">-o</span></span> option.
+</p>
+<p>You are encouraged to put the command in a makefile or batch file, to save
+typing.
+</p>
+<p>As you compile the example programs, you will get warnings about the lack of
+story title, author, and IFID. Since the example mini-stories aren't meant to
+be published, you may ignore these warnings. Before you release a work of IF
+written in Dialog, please add the required <a href="beyondprg.html#metadata">story metadata</a>,
+including a freshly-generated IFID.
+</p>
+<a id="ministory"></a><h2>A minimal story</h2>
+<p>The following is a perfectly functional, albeit simple, Dialog game:
+</p>
+<textarea class="copyarea" id="copy0" readonly>
+(current player #player)
+(#player is #in #room)
+(room #room)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(current player #player)</td></tr>
+<tr><td class="both" colspan="2">(#player is #in #room)</td></tr>
+<tr><td class="both" colspan="2">(room #room)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy0').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>This game has two objects (<span class="code">#player</span> and <span class="code">#room</span>) in
+addition to a handful of default objects provided by the standard library (such
+as <span class="code">#in</span>).
+</p>
+<p>The first line says that when the game starts, the player character is
+represented by the <span class="code">#player</span> object.
+</p>
+<p>The second line says that the <span class="code">#player</span> object is initially located
+inside another object, called <span class="code">#room</span>.
+</p>
+<p>The third line says that the object called <span class="code">#room</span> is, in fact, a
+room: This tells the library that the object can be entered, that it may have
+connections to other rooms, and so on.
+</p>
+<p>You should try this game now! There's not much of a plot, but you can poke
+around at the two objects (they can be referred to as <span class="prginput">ME</span> and
+<span class="prginput">HERE</span>), and try a few standard verbs such as <span class="prginput">LOOK</span>
+(<span class="prginput">L</span>), <span class="prginput">INVENTORY</span> (<span class="prginput">I</span>),
+<span class="prginput">JUMP</span>, and <span class="prginput">QUIT</span> (<span class="prginput">Q</span>).
+</p>
+	<div class="footer">
+	<p class="nav">Onwards to &ldquo;<a href="scenery.html">Chapter 2: Objects and state</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
+	<p class="tagline">The Dialog Manual, Revision 1, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	</div>
+	</div>
+</body>
+</html>

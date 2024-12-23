@@ -1,0 +1,376 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<link rel="StyleSheet" href="style.css" type="text/css" />
+	<title>Chapter 1: Flow of execution</title>
+</head>
+<body>
+	<div class="chapter">
+	<h1>Chapter 1: Flow of execution</h1>
+	<div class="navlinks">(<a href="#predsrules">Predicates and rules</a>&nbsp;&bull; <a href="#printing">Printing text</a>&nbsp;&bull; <a href="#parameters">Parameters, objects, and wildcards</a>&nbsp;&bull; <a href="#successfailure">Success and failure</a>)</div>
+<p>Dialog is heavily inspired by <i>Prolog</i>. Unless you've programmed in Prolog
+before, you may find the material in the first three or so chapters to be
+increasingly counter-intuitive, odd, or even downright crazy. But don't worry,
+we'll take it in small steps, and hopefully the concepts will click together in
+the end. If at any point you feel that the discussion is too abstract, don't
+hesitate to head over to <a href="libintro.html">Part&nbsp;II</a> for a while, and then come
+back.
+</p>
+<p>If you already know Prolog, you're still going to have to pay attention to the
+details, as there are both obvious and subtle differences between the two
+languages.
+</p>
+<a id="predsrules"></a><h2>Predicates and rules</h2>
+<p>This is what &ldquo;hello world&rdquo; looks like in Dialog:
+</p>
+<textarea class="copyarea" id="copy0" readonly>
+(program entry point)
+	Hello, world!
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">Hello, world!</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy0').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>A Dialog program is a list of <i>rule definitions</i>. A rule definition always
+begins at the very first column of a line, but it may span several lines.
+Subsequent lines of code that belong to the same rule have to be indented by at
+least one space or tab character.
+</p>
+<p>There can be multiple rules with the same name. If so, they are said to belong
+to the same <i>predicate</i>. The program above contains one predicate, built
+from a single rule definition. The head of the rule is <span class="code">(program entry
+point)</span>, and this is also the name of the predicate. The body of the rule
+is some text to be printed verbatim, in this case &ldquo;Hello, world!&rdquo; Program
+execution always begins with the predicate called <span class="code">(program entry
+point)</span>. Sometimes we will refer to this as the top-level predicate.
+</p>
+<p>A predicate may call upon another predicate, similar to subroutine calls in
+other programming languages. This is referred to as making a <i>query</i>. The
+following program produces exactly the same output as the previous one:
+</p>
+<textarea class="copyarea" id="copy1" readonly>
+(program entry point)
+	Hello (my own rule)!
+
+(my own rule)
+	, world
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">Hello (my own rule)!</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(my own rule)</td></tr>
+<tr><td class="left"></td><td class="right">, world</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy1').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The parentheses indicate that a query is to be made. When a query is made to a
+predicate, all rules defined for that predicate are consulted in program order,
+until one of them <i>succeeds</i>; we will return to the concept of success at
+the end of the present chapter. If the program comprises several source code
+files, the order of the rules is determined by the order in which the filenames
+appeared on the command line.
+</p>
+<p>Predicate names are case-sensitive.
+</p>
+<a id="printing"></a><h2>Printing text</h2>
+<p>Rule bodies contain statements to be executed. Plain text in a rule body is an
+instruction to print that text. Some special characters (<span class="code">#</span>,
+<span class="code">$</span>, <span class="code">@</span>, <span class="code">~</span>, <span class="code">*</span>, <span class="code">|</span>,
+<span class="code">\</span>, parentheses, brackets, and braces) need to be prefixed by a
+backslash (<span class="code">\</span>). No special treatment is required for apostrophes or
+double quotes.
+</p>
+<p>Comments in the source code are prefixed with <span class="code">%%</span> and last to the
+end of the line.
+</p>
+<p>Thus:
+</p>
+<textarea class="copyarea" id="copy2" readonly>
+(program entry point)
+	Hello y'all \( and "welcome" \) ! %% This is a comment.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">Hello y'all \( and "welcome" \) ! <span class="comment">&emsp;%% This is a comment.</span></td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy2').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>produces the output:
+</p>
+<div class="blkoutput">Hello y'all (and "welcome")!</div><p>Dialog is smart about punctuation and whitespace: It interprets the source code
+text as a stream of words and punctuation characters, and rebuilds the output
+from that stream, inserting whitespace as appropriate. It knows that no space
+should precede a comma, that a space should go before an opening parenthesis
+but not after it, and so on.
+</p>
+<textarea class="copyarea" id="copy3" readonly>
+(program entry point)
+	For instance
+	:This
+		text
+
+
+	\( which,to all intents&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;and purposes,is silly\( indeed
+	\) \)
+	, prints properly.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">For instance</td></tr>
+<tr><td class="left"></td><td class="right">:This</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>text</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left"></td><td class="right">\( which,to all intents&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;and purposes,is silly\( indeed</td></tr>
+<tr><td class="left"></td><td class="right">\) \)</td></tr>
+<tr><td class="left"></td><td class="right">, prints properly.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy3').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The output of that is:
+</p>
+<div class="blkoutput">For instance: This text (which, to all intents and purposes, is silly (indeed)), prints properly.</div><p>It is possible to override the automatic whitespace decisions on a case-by-case
+basis using the <i>built-in predicates</i> <span class="code">(space)</span> and <span class="code">(no
+space)</span>:
+</p>
+<textarea class="copyarea" id="copy4" readonly>
+(program entry point)
+	To (no space) gether (space) , apart.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">To (no space) gether (space) , apart.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy4').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The output of that is:
+</p>
+<div class="blkoutput">Together , apart.</div><p>Line breaks are inserted with the <span class="code">(line)</span> built-in predicate;
+paragraph breaks with <span class="code">(par)</span>. On the Z-machine, a paragraph break
+is implemented as a blank line of output.
+</p>
+<p>Several adjacent line breaks are merged into one, preventing accidental
+paragraph breaks. Likewise, several adjacent paragraph breaks are merged into
+one, along with any adjacent line breaks, preventing accidental runs of more
+than one blank line.
+</p>
+<p>The following program:
+</p>
+<textarea class="copyarea" id="copy5" readonly>
+(note)
+	(line) This goes on a line of its own. (line)
+
+(program entry point)
+	(note)
+	(note)
+	(par) This goes in a paragraph of its own. (par)
+	This
+
+	is
+
+	not broken up.
+	(note)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(note)</td></tr>
+<tr><td class="left"></td><td class="right">(line) This goes on a line of its own. (line)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">(note)</td></tr>
+<tr><td class="left"></td><td class="right">(note)</td></tr>
+<tr><td class="left"></td><td class="right">(par) This goes in a paragraph of its own. (par)</td></tr>
+<tr><td class="left"></td><td class="right">This</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left"></td><td class="right">is</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left"></td><td class="right">not broken up.</td></tr>
+<tr><td class="left"></td><td class="right">(note)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy5').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>produces the following output:
+</p>
+<div class="blkoutput">This goes on a line of its own.<br />
+This goes on a line of its own.<br />
+<br />
+This goes in a paragraph of its own.<br />
+<br />
+This is not broken up.<br />
+This goes on a line of its own.</div><a id="parameters"></a><h2>Parameters, objects, and wildcards</h2>
+<p>Predicates can have <i>parameters</i>. The name of a predicate, called its
+<i>signature</i>, is written with dollar signs as placeholders for the
+parameters. These may appear anywhere in the predicate name. For instance,
+<span class="code">(descr&nbsp;$)</span> is the signature of a predicate with one parameter, and
+in this case the parameter is at the end.
+</p>
+<p>In rule heads and queries, <i>values</i> may appear in place of these dollar
+signs. A common kind of value is the <i>object</i>. Objects in Dialog are
+short, programmer-friendly names that start with a <span class="code">#</span>&nbsp;character and
+refer to entities in the game world.
+</p>
+<p>Consider the following three rule definitions for the <span class="code">(descr&nbsp;$)</span>
+predicate:
+</p>
+<textarea class="copyarea" id="copy6" readonly>
+(descr #apple)	The apple looks yummy.
+(descr #door)	The oaken door is oaken.
+(descr $)	It looks pretty harmless.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left">(descr #apple)</td><td class="right">The apple looks yummy.</td></tr>
+<tr><td class="left">(descr #door)</td><td class="right">The oaken door is oaken.</td></tr>
+<tr><td class="left">(descr $)</td><td class="right">It looks pretty harmless.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy6').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>When a value appears inside a rule head, the given parameter must have that
+particular value in order for the rule to succeed. It is also possible to use
+dollar signs as wildcards in rule heads.
+</p>
+<p>Let's take a look at how the three rule definitions above might be used in a
+program. To print the description of an object, let's say the #door, one would
+make the query <span class="code">(descr #door)</span>. Dialog would consider each of the
+three rule definitions in program order. The first rule head doesn't match the
+query, but the second does. Thus, the text &ldquo;<span class="prgoutput">The oaken door is
+oaken.</span>&rdquo; is printed. The query <span class="code">(descr #orange)</span> would cause
+the text &ldquo;<span class="prgoutput">It looks pretty harmless.</span>&rdquo; to be printed.
+</p>
+<p>Note that the general rule, the one with the wildcard, appears last. This is
+crucial: If the general rule were to appear before e.g. the <span class="code">#door</span>
+rule in the source code, it would supersede that rule every time, and the door
+would be described as harmless.
+</p>
+<p>Signatures (predicate names) do not appear explicitly anywhere in the source
+code. They are implied by rule heads and queries, where parameter values are
+typically used instead of dollar signs.
+</p>
+<h3>Objects are thin</h3>
+<p>Dialog objects are <i>thin</i>, in the sense that each hashtag is a mere
+identifier, without any inherent behaviour or properties. This is in contrast
+with object-oriented programming languages, where code and data are organized
+inside objects and classes. In Dialog, the world is modelled using predicates
+that specify relations between objects, but the objects themselves are just
+names.
+</p>
+<p>Object names may contain alphanumeric characters (including a limited range of
+international glyphs), dashes (<span class="code">-</span>), and underscores
+(<span class="code">_</span>). They are case sensitive.
+</p>
+<a id="successfailure"></a><h2>Success and failure</h2>
+<p>If a query is made to a predicate, but there is no matching rule in the
+program, the query <i>fails</i>. When a rule makes a query, and that query
+fails, the rule also fails and is immediately abandoned. In this way, the
+failure condition might propagate to the calling rule, to its calling rule in
+turn, and so on, all the way to the top-level predicate. Here is a simple
+program that fails:
+</p>
+<textarea class="copyarea" id="copy7" readonly>
+(program entry point)
+	You see an orange. (descr #orange) Now what do you do?
+
+(descr #apple)	The apple looks yummy.
+(descr #door)	The oaken door is oaken.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">You see an orange. (descr #orange) Now what do you do?</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left">(descr #apple)</td><td class="right">The apple looks yummy.</td></tr>
+<tr><td class="left">(descr #door)</td><td class="right">The oaken door is oaken.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy7').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>This program will print &ldquo;<span class="prgoutput">You see an orange</span>&rdquo;. Then, because there
+is neither a rule for <span class="code">(descr #orange)</span> nor a rule for <span class="code">(descr
+$)</span>, the query <span class="code">(descr #orange)</span> fails. This causes the top
+rule, i.e. the program entry point, to fail, at which point the entire program
+terminates. Hence, &ldquo;<span class="prgoutput">Now what do you do?</span>&rdquo; is never printed.
+</p>
+<p>If failure would always propagate all the way to the top and terminate the
+program, it would be of little use. So of course, there's more to the story:
+Recall that a query to a predicate causes each of its rule definitions to be
+tried, in source code order, until a match is found. What happens when a rule
+fails, is that this search continues where it left off. Consider the following
+example:
+</p>
+<textarea class="copyarea" id="copy8" readonly>
+(program entry point)
+	(descr #apple)
+	Over and out.
+
+(descr #apple)
+	(the player dislikes #apple)
+	Yuck!
+
+(descr $)
+	It looks yummy!
+
+(the player dislikes #orange)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">(descr #apple)</td></tr>
+<tr><td class="left"></td><td class="right">Over and out.</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(descr #apple)</td></tr>
+<tr><td class="left"></td><td class="right">(the player dislikes #apple)</td></tr>
+<tr><td class="left"></td><td class="right">Yuck!</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(descr $)</td></tr>
+<tr><td class="left"></td><td class="right">It looks yummy!</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(the player dislikes #orange)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy8').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>A query is made: <span class="code">(descr #apple)</span>. There's a matching rule, and this
+rule makes a query in turn, to the predicate <span class="code">(the player
+dislikes&nbsp;$)</span>, with the parameter <span class="code">#apple</span>. But this time,
+there is no matching rule definition, so the query fails. This aborts the
+execution of the <span class="code">(descr #apple)</span> rule, and the quest to satisfy the
+original query, <span class="code">(descr #apple)</span>, resumes. And indeed there's
+another match: <span class="code">(descr&nbsp;$)</span> prints &ldquo;<span class="prgoutput">It looks yummy!</span>&rdquo;
+and succeeds. Thus, the program entry point rule will proceed to print
+&ldquo;<span class="prgoutput">Over and out</span>&rdquo;.
+</p>
+<p>The complete output is:
+</p>
+<div class="blkoutput">It looks yummy! Over and out.</div>	<div class="footer">
+	<p class="nav">Onwards to &ldquo;<a href="varsvalues.html">Chapter 2: Manipulating data</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
+	<p class="tagline">The Dialog Manual, Revision 1, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	</div>
+	</div>
+</body>
+</html>

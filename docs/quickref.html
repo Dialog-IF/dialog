@@ -1,0 +1,362 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<link rel="StyleSheet" href="style.css" type="text/css" />
+	<title>Appendix: Quick reference</title>
+</head>
+<body>
+	<div class="chapter">
+	<h1>Appendix: Quick reference</h1>
+<h3>The bare bones</h3>
+<p>Comments:
+</p>
+<p class="indented">From <span class="code">%%</span> to end of line.
+</p>
+<p>Special characters:
+</p>
+<p class="indented"><span class="code">#</span>, <span class="code">$</span>, <span class="code">@</span>, <span class="code">~</span>,
+<span class="code">*</span>, <span class="code">|</span>, <span class="code">\</span>, parentheses, brackets,
+and braces. Prefix by <span class="code">\</span> to print.
+</p>
+<p>Rule definitions:
+</p>
+<ul><li>The rule head is in the leftmost column.
+</li>
+<li>The rule body is a sequence of statements, not in the leftmost column. They form a conjunction.
+</li>
+<li>Multiple rule definitions for the same predicate are tried in order. They form a disjunction.
+</li>
+<li>Queries succeed or fail. Failure causes backtracking.
+</li>
+</ul><p>Statements:
+</p>
+<ul><li>Queries (normal, negated, or multi-) to predicates,
+</li>
+<li>text to be printed, or
+</li>
+<li>special syntax.
+</li>
+</ul><p>Value syntax:
+</p>
+<p class="codeline">#abc</p>
+<p class="noteline">Object name.
+</p>
+<p class="codeline">@abc</p>
+<p class="noteline">Dictionary word. The <span class="code">@</span> is optional inside list expressions.
+</p>
+<p class="codeline">$abc</p>
+<p class="noteline">Variable.
+</p>
+<p class="codeline">123</p>
+<p class="noteline">Number (the valid range is 0&ndash;16383).
+</p>
+<p class="codeline">[]</p>
+<p class="noteline">Empty list.
+</p>
+<p class="codeline">[ <i>element1</i> <i>element2</i> <i>element3</i> <i>...</i> ]</p>
+<p class="noteline">Complete list.
+</p>
+<p class="codeline">[ <i>element1</i> <i>element2</i> <i>element3</i> <i>...</i> | <i>tail</i> ]</p>
+<p class="noteline">Partial list.
+</p>
+<p class="codeline">*</p>
+<p class="noteline">Current topic.
+</p>
+<p>The current topic is set with an object name in the leftmost column.
+</p>
+<p>Unification:
+</p>
+<ul><li>Arguments are passed by unification.
+</li>
+<li>Simple values unify with themselves.
+</li>
+<li>Lists unify when each element unifies.
+</li>
+<li>Unbound variables unify (with values or unbound variables) by binding.
+</li>
+</ul><h3>Special syntax</h3>
+<p class="codeline">{ ... }</p>
+<p class="noteline">Conjunction.
+</p>
+<p class="codeline">~{ ... }</p>
+<p class="noteline">Negated conjunction.
+</p>
+<p class="codeline">... (or) ... (or) ...</p>
+<p class="noteline">Disjunction.
+</p>
+<p class="codeline">(if) ... (then) ... (elseif) ... (then) ... (else) ... (endif)</p>
+<p class="noteline">Conditions are evaluated at most once.
+Missing else-clause is assumed to be empty, i.e. succeeds.
+</p>
+<p class="codeline">(select) ... (or) ... (or) ... (stopping)</p>
+<p class="noteline">Branches entered one at a time, then the final branch repeats.
+</p>
+<p class="codeline">(select) ... (or) ... (or) ... (cycling)</p>
+<p class="noteline">Branches entered one at a time, then the cycle repeats.
+</p>
+<p class="codeline">(select) ... (or) ... (or) ... (at random)</p>
+<p class="noteline">Branches entered at random, avoiding repetition.
+</p>
+<p class="codeline">(select) ... (or) ... (or) ... (purely at random)</p>
+<p class="noteline">Branches entered at random, allowing repetition.
+</p>
+<p class="codeline">(select) ... (or) ... (or) ... (then at random)</p>
+<p class="noteline">First like <span class="code">(select) ... (stopping)</span>, then like <span class="code">(select) ... (at random)</span>.
+</p>
+<p class="codeline">(select) ... (or) ... (or) ... (then purely at random)</p>
+<p class="noteline">First like <span class="code">(select) ... (stopping)</span>, then like <span class="code">(select) ... (purely at random)</span>.
+</p>
+<p class="codeline">(exhaust) <i>statement</i></p>
+<p class="noteline">Backtracks over all solutions to the statement (typically a block).
+</p>
+<p class="codeline">(collect $Element) ... (into $List)</p>
+<p class="noteline">Backtracks over all solutions to the inner expression.
+Values bound to <span class="code">$Element</span> are collected in order and unified with <span class="code">$List</span>.
+</p>
+<p class="codeline">(collect words) ... (into $List)</p>
+<p class="noteline">Backtracks over all solutions to the inner expression, grabbing all output.
+Printed words are diverted into <span class="code">$List</span>, possibly out of order.
+</p>
+<p class="codeline">(collect words) ... (and check $List)</p>
+<p class="noteline">Backtracks over all solutions to the inner expression, grabbing all output.
+Succeeds if every value in <span class="code">$List</span> appears in the grabbed output.
+</p>
+<p class="codeline">(stoppable) <i>statement</i></p>
+<p class="noteline">The inner statement executes, succeeding at most once. The <span class="code">(stop)</span> built-in breaks out of
+the innermost stoppable environment. The stoppable environment itself always succeeds.
+</p>
+<p class="codeline">(status bar $Height) <i>statement</i></p>
+<p class="noteline">Like <span class="code">(stoppable)</span>, but all output is diverted to the status bar area,
+which is created if necessary.
+</p>
+<p class="codeline">(now) <i>pseudo-query</i></p>
+<p class="noteline">Updates a dynamic predicate.
+</p>
+<p class="codeline">(just)</p>
+<p class="noteline">Removes choice-points created since the current predicate was queried.
+</p>
+<p class="codeline">(global variable (name of predicate $))</p>
+<p class="noteline">Declares a global variable for holding simple values.
+</p>
+<p class="codeline">(global variable (name of predicate $) $MaxSize)</p>
+<p class="noteline">Declares a global variable for holding complex values. The size requirements are:
+1&nbsp;for simple values, and <span class="nobreak">1 + <i>N</i></span> for lists, where <i>N</i> is the total storage required for the elements inside.
+</p>
+<p class="codeline">(generate $N (name of predicate $))</p>
+<p class="noteline">Creates <span class="code">$N</span> anonymous objects, for which the predicate will succeed.
+</p>
+<h3>Built-in predicates</h3>
+<p>The list is sorted alphabetically, considering just the non-parameter words.
+</p>
+<p class="codeline">($X = $Y)</p>
+<p class="noteline">Unifies <span class="code">$X</span> with <span class="code">$Y</span>.
+</p>
+<p class="codeline">($X &lt; $Y)</p>
+<p class="noteline">Succeeds if <span class="code">$X</span> and <span class="code">$Y</span> are numbers, and <span class="code">$X</span> is strictly less than <span class="code">$Y</span>.
+</p>
+<p class="codeline">($X &gt; $Y)</p>
+<p class="noteline">Succeeds if <span class="code">$X</span> and <span class="code">$Y</span> are numbers, and <span class="code">$X</span> is strictly greater than <span class="code">$Y</span>.
+</p>
+<p class="codeline">(bold)</p>
+<p class="noteline">Enables bold text.
+</p>
+<p class="codeline">(clear)</p>
+<p class="noteline">Clears the main window (but not the status bar area).
+</p>
+<p class="codeline">(clear all)</p>
+<p class="noteline">Clears the screen and disables the status bar.
+</p>
+<p class="codeline">(compiler version)</p>
+<p class="noteline">Prints the name and version of the compiler.
+</p>
+<p class="codeline">(cursor to row $ column $)</p>
+<p class="noteline">In status bar: Moves cursor to given coordinates (1,&nbsp;1&nbsp;is top left).
+</p>
+<p class="codeline">(display memory statistics)</p>
+<p class="noteline">Displays a backend-specific line of memory usage statistics.
+</p>
+<p class="codeline">($X divided by $Y into $Z)</p>
+<p class="noteline">Unifies <span class="code">$Z</span> with the quotient after dividing <span class="code">$X</span> by <span class="code">$Y</span>.
+</p>
+<p class="codeline">(empty $X)</p>
+<p class="noteline">Succeeds if <span class="code">$X</span> is bound to an empty list.
+</p>
+<p class="codeline">(fail)</p>
+<p class="noteline">Fails. Equivalent in functionality to e.g. <span class="code">(1 = 2)</span>.
+</p>
+<p class="codeline">(fixed pitch)</p>
+<p class="noteline">Enables fixed-pitch text.
+</p>
+<p class="codeline">(get input $)</p>
+<p class="noteline">Reads a line of input from the player. Returns a list of words.
+</p>
+<p class="codeline">(get key $)</p>
+<p class="noteline">Waits for the player to press a key. Returns a single-character word.
+</p>
+<p class="codeline">(get raw input $)</p>
+<p class="noteline">Reads a line of input from the player. Returns a list of single-character words.
+</p>
+<p class="codeline">($X has parent $Y)</p>
+<p class="noteline">Dynamic predicate that succeeds when <span class="code">$X</span> is a direct child
+of <span class="code">$Y</span> in the object tree. Either parameter can be unbound.
+</p>
+<p class="codeline">($X is one of $Y)</p>
+<p class="noteline">Unifies <span class="code">$X</span> with each element of <span class="code">$Y</span> in turn.
+</p>
+<p class="codeline">(italic)</p>
+<p class="noteline">Enables italic text.
+</p>
+<p class="codeline">(line)</p>
+<p class="noteline">Requests a line break.
+</p>
+<p class="codeline">(list $X)</p>
+<p class="noteline">Succeeds if <span class="code">$X</span> is bound to a list (empty or non-empty).
+</p>
+<p class="codeline">($X minus $Y into $Z)</p>
+<p class="noteline">Unifies <span class="code">$Z</span> with the difference between <span class="code">$X</span> and <span class="code">$Y</span>.
+</p>
+<p class="codeline">($X modulo $Y into $Z)</p>
+<p class="noteline">Unifies <span class="code">$Z</span> with the remainder after dividing <span class="code">$X</span> by <span class="code">$Y</span>.
+</p>
+<p class="codeline">(non-empty $X)</p>
+<p class="noteline">Succeeds if <span class="code">$X</span> is bound to an non-empty list.
+</p>
+<p class="codeline">(no space)</p>
+<p class="noteline">Inhibits automatic whitespace before the next word or punctuation mark.
+</p>
+<p class="codeline">(number $X)</p>
+<p class="noteline">Succeeds if <span class="code">$X</span> is bound to a number.
+</p>
+<p class="codeline">(object $X)</p>
+<p class="noteline">Checks if <span class="code">$X</span> is an object, or&mdash;in a multi-query&mdash;backtracks over every object.
+</p>
+<p class="codeline">(par)</p>
+<p class="noteline">Requests a paragraph break.
+</p>
+<p class="codeline">(par $)</p>
+<p class="noteline">Prints <span class="code">$N</span> blank lines.
+</p>
+<p class="codeline">($X plus $Y into $Z)</p>
+<p class="noteline">Unifies <span class="code">$Z</span> with the sum of <span class="code">$X</span> and <span class="code">$Y</span>.
+</p>
+<p class="codeline">(quit)</p>
+<p class="noteline">Immediately terminates the interpreter.
+</p>
+<p class="codeline">(random from $X to $Y into $Z)</p>
+<p class="noteline">Unifies <span class="code">$Z</span> with a random number in the range <span class="code">$X</span> to <span class="code">$Y</span> inclusive.
+</p>
+<p class="codeline">(restart)</p>
+<p class="noteline">Restarts the program.
+</p>
+<p class="codeline">(restore)</p>
+<p class="noteline">Restores a saved game (the interpreter asks for a filename).
+</p>
+<p class="codeline">(reverse)</p>
+<p class="noteline">Enables reverse-video text.
+</p>
+<p class="codeline">(roman)</p>
+<p class="noteline">Disables all text styles (bold, italic, reverse, and fixed pitch).
+</p>
+<p class="codeline">(save)</p>
+<p class="noteline">Saves the current game (the interpreter asks for a filename).
+</p>
+<p class="codeline">(save undo)</p>
+<p class="noteline">Saves the current program state in memory.
+</p>
+<p class="codeline">(script off)</p>
+<p class="noteline">Disables transcription.
+</p>
+<p class="codeline">(script on)</p>
+<p class="noteline">Enables transcription (the interpreter asks for a filename).
+</p>
+<p class="codeline">(serial number)</p>
+<p class="noteline">Prints the serial number (compilation date) of the current program.
+</p>
+<p class="codeline">(space)</p>
+<p class="noteline">Forces whitespace before the next word or punctuation mark.
+</p>
+<p class="codeline">(space $N)</p>
+<p class="noteline">Prints <span class="code">$N</span> space characters.
+</p>
+<p class="codeline">(split $X by $Y into $Left and $Right)</p>
+<p class="noteline">Splits <span class="code">$X</span> into two halves around each occurrence of a keyword from <span class="code">$Y</span>.
+</p>
+<p class="codeline">(status bar width $)</p>
+<p class="noteline">Returns the current width of the status bar area (i.e. the screen), in characters.
+</p>
+<p class="codeline">(stop)</p>
+<p class="noteline">Breaks out of the innermost <span class="code">(stoppable)</span> environment.
+</p>
+<p class="codeline">($X times $Y into $Z)</p>
+<p class="noteline">Unifies <span class="code">$Z</span> with the product of <span class="code">$X</span> and <span class="code">$Y</span>.
+</p>
+<p class="codeline">(trace off)</p>
+<p class="noteline">Disables low-level tracing.
+</p>
+<p class="codeline">(trace on)</p>
+<p class="noteline">Enables low-level tracing.
+</p>
+<p class="codeline">(unbound $X)</p>
+<p class="noteline">Succeeds if <span class="code">$X</span> is currently unbound.
+</p>
+<p class="codeline">(undo)</p>
+<p class="noteline">Restores the program state at the time of the latest <span class="code">(save undo)</span>.
+</p>
+<p class="codeline">(word $X)</p>
+<p class="noteline">Succeeds if <span class="code">$X</span> is bound to a dictionary word.
+</p>
+<p class="codeline">(word representing backspace $Char)</p>
+<p class="noteline">Unifies <span class="code">$Char</span> with the single-character word that represents the backspace key.
+</p>
+<p class="codeline">(word representing down $Char)</p>
+<p class="noteline">Unifies <span class="code">$Char</span> with the single-character word that represents the down arrow key.
+</p>
+<p class="codeline">(word representing left $Char)</p>
+<p class="noteline">Unifies <span class="code">$Char</span> with the single-character word that represents the left arrow key.
+</p>
+<p class="codeline">(word representing return $Char)</p>
+<p class="noteline">Unifies <span class="code">$Char</span> with the single-character word that represents the return key.
+</p>
+<p class="codeline">(word representing right $Char)</p>
+<p class="noteline">Unifies <span class="code">$Char</span> with the single-character word that represents the right arrow key.
+</p>
+<p class="codeline">(word representing space $Char)</p>
+<p class="noteline">Unifies <span class="code">$Char</span> with the single-character word that represents the space key.
+</p>
+<p class="codeline">(word representing up $Char)</p>
+<p class="noteline">Unifies <span class="code">$Char</span> with the single-character word that represents the up arrow key.
+</p>
+<h3>Entry points and metadata predicates</h3>
+<p class="codeline">(error $ErrorCode entry point)</p>
+<p class="noteline">Execution restarts here when a fatal error has occurred.
+</p>
+<p class="codeline">(program entry point)</p>
+<p class="noteline">Normal execution starts here.
+</p>
+<p class="codeline">(story author)</p>
+<p class="noteline">Metadata: Defines the author of the story.
+</p>
+<p class="codeline">(story blurb)</p>
+<p class="noteline">Metadata: Defines the blurb for the story.
+</p>
+<p class="codeline">(story ifid)</p>
+<p class="noteline">Metadata: Defines the IFID of the story.
+</p>
+<p class="codeline">(story noun)</p>
+<p class="noteline">Metadata: Defines the noun (also known as the headline) of the story.
+</p>
+<p class="codeline">(story release $N)</p>
+<p class="noteline">Metadata: Defines the release number of the story.
+</p>
+<p class="codeline">(story title)</p>
+<p class="noteline">Metadata: Defines the title of the story.
+</p>
+	<div class="footer">
+	<p class="nav">Back to the <a href="index.html">Table of Contents</a></p>
+	<p class="tagline">The Dialog Manual, Revision 1, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	</div>
+	</div>
+</body>
+</html>

@@ -1,0 +1,157 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<link rel="StyleSheet" href="style.css" type="text/css" />
+	<title>Introduction</title>
+</head>
+<body>
+	<div class="chapter">
+	<h1>Introduction</h1>
+	<div class="navlinks">(<a href="#overview">Overview</a>&nbsp;&bull; <a href="#structmanual">Structure of the manual</a>&nbsp;&bull; <a href="#acknowledgements">Acknowledgements</a>)</div>
+<a id="overview"></a><h2>Overview</h2>
+<p>Dialog is a domain-specific language for creating interactive fiction. It is
+heavily inspired by Inform&nbsp;7 (Graham Nelson et al. 2006) and Prolog (Alain
+Colmerauer et al. 1972), and substantially different from both.
+</p>
+<p>An optimizing compiler translates high-level Dialog code into Z-code
+(version&nbsp;8), a platform-independent runtime format supported by a wide range of
+interpreters and tools.
+</p>
+<p>Dialog has been designed with three guiding principles in mind:
+</p>
+<p class="indented"><b>Lucidity:</b> Story authors must be able to read, understand, and
+modify the standard library. The same programming language constructs
+should be used to express everything from world modelling and narrative
+structure to parsing and low-level utility functions.
+</p>
+<p class="indented"><b>Minimalism:</b> The language should be elegant and small, and rest
+on a few powerful concepts that work well together. Being a high-level
+language, it should provide an abstraction of the underlying platform,
+and the details of the Z-machine should not shine through except where
+strictly necessary for performance reasons.
+</p>
+<p class="indented"><b>Performance:</b> The interactive fiction community settled on the
+Z-machine as a common platform partly for nostalgic reasons. Yet the
+majority of recent Z-code games are unplayable on vintage hardware. The
+new language must be designed from the ground up with efficient object
+code in mind, both in terms of execution speed and memory footprint.
+</p>
+<p>At its core, Dialog is a general-purpose, rule-based language in the <i>logic
+programming</i> family of languages. Most of the functionality pertaining to
+interactive storytelling, such as the world model and the parser, are
+implemented on top of this general-purpose language, in the form of a standard
+library. In other words, the library is implemented in terms of the same
+high-level constructs that are used to craft the story. Hopefully, this makes
+the standard library transparent to story authors, who are encouraged to extend
+and adapt the library to each particular story, as they see fit.
+</p>
+<p>In addition to adhering to the principles listed above, Dialog features:
+</p>
+<ul><li>A <b>concise, formal syntax</b>. Apart from a few built-in keywords and
+function names, Dialog source code is not confined to any particular
+natural language.
+</li>
+<li>A <b>comprehensive standard library</b> providing (among other
+features) an extensible parser that's capable of supporting arbitrarily
+complex actions. The standard library is currently limited to English
+stories, but it could be translated and adapted to other languages.
+</li>
+<li>A compiler that uses <b>advanced optimization</b> techniques to convert
+high-level rule definitions into compact, efficient Z-code that
+responds quickly to player input, even on resource-constrained
+platforms&mdash;including many vintage systems.
+</li>
+<li>A <b>fully open-source</b> implementation, provided under a 2-clause
+BSD license. Permission is granted to use, modify, and redistribute the
+compiler and standard library (with or without source code), in whole
+or in part, as long as attribution is given. Story authors are kindly
+asked, but not formally required, to include a traditionally-formatted
+banner in their works.
+</li>
+</ul><p>The name Dialog is suggestive of interactive storytelling, but it is also a nod
+to Prolog, which is a portmanteau of <i>programmation en logique</i>
+(programming in logic). That's why the name of the language appears to follow a
+North American spelling convention, even though the rest of this manual does
+not.
+</p>
+<p>The official homepage of Dialog is: <a href="https://linusakesson.net/dialog/">https://linusakesson.net/dialog/</a>
+</p>
+<a id="structmanual"></a><h2>Structure of the manual</h2>
+<p>The bulk of this manual is divided into two parts: <b>Part&nbsp;I</b> describes the
+Dialog programming language, starting with the basics and working its way
+through every language feature. This also serves as the official language
+specification. <b>Part&nbsp;II</b> describes the standard library, and starts with a
+hands-on tutorial, where a small game is built from scratch.
+</p>
+<p>Readers who prefer a coherent step-by-step exposition, where every concept is
+explained before it is used, are encouraged to start with <b>Part&nbsp;I</b> and
+read all chapters in order.
+</p>
+<p>Readers who are itching to get started should begin with <b>Part&nbsp;II</b>, play
+with the various examples, and optionally follow the hyperlinks back to
+<b>Part&nbsp;I</b> in order to dig deeper into the underlying mechanisms.
+</p>
+<a id="acknowledgements"></a><h2>Acknowledgements</h2>
+<p>Dialog has been my on-and-off spare time project for many years now, and I'm
+very happy to have reached a point where it can be released to the public.
+Working on Dialog has been an extraordinary journey for me personally, but I
+wouldn't have gotten very far without the maps and lanterns strewn about by the
+brave adventurers who navigated these twisty passages before me.
+</p>
+<p>The <i>Z-machine Standards Document</i> has been an invaluable source of
+information and insight. I stand in awe of the dozens of people who
+reverse-engineered and documented the Z-machine back in the 1990s, and
+described their findings in such a well-written and concise reference work.
+Thank you for that
+<b>David Beazley</b>,
+<b>Kevin Bracey</b>,
+<b>Paul David Doherty</b>,
+<b>David Fillmore</b>,
+<b>Russell Hoare</b>,
+<b>Mark Howell</b>,
+<b>George Janczuk</b>,
+<b>Stefan Jokisch</b>,
+<b>Marnix Klooster</b>,
+<b>Mark Knibbs</b>,
+<b>Peter Lisle</b>,
+<b>Graham Nelson</b>,
+<b>Jason C. Penney</b>,
+<b>Matthias Pfaller</b>,
+<b>Andrew Plotkin</b>,
+<b>Matthew Russotto</b>,
+<b>Chris Tham</b>,
+<b>Mike Threepoint</b>, and
+<b>Dannii Willis</b>.
+</p>
+<p>Writing and debugging a compiler involves hours of staring at disassembled
+code, and I thank <b>Mark Howell</b> and <b>Matthew Russotto</b> for creating
+and maintaining the <span class="tt">ztools</span> package, in particular <span class="tt">infodump</span>
+and <span class="tt">txd</span>.
+</p>
+<p>I've also used and abused the highly hackable Z-code interpreter
+<span class="tt">dumbfrotz</span>, part of the <span class="tt">frotz</span> family, for which <b>Stefan
+Jokisch</b>, <b>Galen Hazelwood</b>, <b>David Griffith</b>, and <b>Alembic
+Petrofsky</b> deserve credit.
+</p>
+<p>Last but not least, I extend my deepest gratitude to <b>Graham Nelson</b> and
+(where applicable) <b>Emily Short</b> for developing and releasing Inform&nbsp;6
+and&nbsp;7, for writing the <i>Inform Designer's Manual</i> and <i>Writing with
+Inform</i>, and for distilling so many years of community experience into the
+default Inform world model and Standard Rules. These treasure troves are
+overflowing with so many good ideas that it would have been irresponsible not
+to steal a substantial part of them, and incorporate them into my own standard
+library. Any shortcomings in the Dialog world model are of course my own fault.
+</p>
+<p>Lund, November 2018
+</p>
+<p>Linus Åkesson
+</p>
+	<div class="footer">
+	<p class="nav">Onwards to &ldquo;<a href="compiler.html">The Dialog compiler</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
+	<p class="tagline">The Dialog Manual, Revision 1, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	</div>
+	</div>
+</body>
+</html>

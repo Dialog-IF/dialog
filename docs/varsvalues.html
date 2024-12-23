@@ -1,0 +1,641 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<link rel="StyleSheet" href="style.css" type="text/css" />
+	<title>Chapter 2: Manipulating data</title>
+</head>
+<body>
+	<div class="chapter">
+	<h1>Chapter 2: Manipulating data</h1>
+	<div class="navlinks">(<a href="#variables">Local variables</a>&nbsp;&bull; <a href="#values">Values</a>&nbsp;&bull; <a href="#unification">Unification</a>&nbsp;&bull; <a href="#recursion">Partial lists and recursion</a>)</div>
+<a id="variables"></a><h2>Local variables</h2>
+<p>Recall that a dollar sign on its own is a wildcard. However, a dollar sign that
+is immediately followed by a word, with no whitespace in between, is a <i>local
+variable</i>. When incoming parameters have names, it becomes possible to pass
+them on to subqueries.
+</p>
+<p>Variable names, like object names, may contain alphanumeric characters
+(including a limited range of international glyphs), dashes (<span class="code">-</span>),
+and underscores (<span class="code">_</span>). They are case sensitive.
+</p>
+<textarea class="copyarea" id="copy0" readonly>
+(program entry point)
+	(descr #apple)
+	(descr #orange)
+	(descr #pear)
+
+(descr $Thing)
+	%% Here, $Thing is a variable that is passed to another query.
+	(The $Thing) looks yummy. (line)
+
+(The #apple)	The green apple
+(The #pear)	The juicy pear
+(The $)		That	%% Here, $ is a wildcard. Its value is ignored.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">(descr #apple)</td></tr>
+<tr><td class="left"></td><td class="right">(descr #orange)</td></tr>
+<tr><td class="left"></td><td class="right">(descr #pear)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(descr $Thing)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="comment">%% Here, $Thing is a variable that is passed to another query.</span></td></tr>
+<tr><td class="left"></td><td class="right">(The $Thing) looks yummy. (line)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left">(The #apple)</td><td class="right">The green apple</td></tr>
+<tr><td class="left">(The #pear)</td><td class="right">The juicy pear</td></tr>
+<tr><td class="left">(The $)</td><td class="right">That	<span class="comment">&emsp;%% Here, $ is a wildcard. Its value is ignored.</span></td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy0').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Since there is no explicit rule definition for <span class="code">(The #orange)</span>, the
+program will print:
+</p>
+<div class="blkoutput">The green apple looks yummy.<br />
+That looks yummy.<br />
+The juicy pear looks yummy.</div><p>It is also possible to print the value of a variable. In the case of objects,
+this will print the actual hashtag as it appears in the source code, so it is
+mainly useful for debugging:
+</p>
+<textarea class="copyarea" id="copy1" readonly>
+(program entry point)
+	(descr #apple)
+
+(descr $Tag)
+	No description for $Tag!
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">(descr #apple)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(descr $Tag)</td></tr>
+<tr><td class="left"></td><td class="right">No description for $Tag!</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy1').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>This will print:
+</p>
+<div class="blkoutput">No description for #apple!</div><p>With the help of variables, we can refine the process of rule matching. Recall
+that when a query is made, Dialog considers every rule in program order, and
+attempts to match the parameters. If the match is successful, the rule body
+starts to execute. In case of a failure, Dialog proceeds to try the next rule
+in the program.
+</p>
+<p>Ordinary parameter matching is a rather blunt instrument, so queries (sometimes
+called <i>guard conditions</i>) can be placed at the very beginning of a rule
+body to perform more sophisticated checks. If the guard condition
+succeeds, the rule applies, otherwise the search continues. Here is a very
+simplistic approach to world modelling:
+</p>
+<textarea class="copyarea" id="copy2" readonly>
+%% A rule with a blank body will succeed (assuming the parameters match).
+%% The (fruit $) predicate will succeed for #apple and #orange, but fail for
+%% anything else.
+
+(fruit #apple)
+(fruit #orange)
+
+(descr #door)	The oaken door is oaken.
+(descr $Obj)	(fruit $Obj) Yummy!
+(descr $)	It seems harmless.
+
+(program entry point)
+	Apple: (descr #apple) (line)
+	Door: (descr #door) (line)
+	Pencil: (descr #pencil) (line)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2"><span class="comment">%% A rule with a blank body will succeed (assuming the parameters match).</span></td></tr>
+<tr><td class="both" colspan="2"><span class="comment">%% The (fruit $) predicate will succeed for #apple and #orange, but fail for</span></td></tr>
+<tr><td class="both" colspan="2"><span class="comment">%% anything else.</span></td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(fruit #apple)</td></tr>
+<tr><td class="both" colspan="2">(fruit #orange)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left">(descr #door)</td><td class="right">The oaken door is oaken.</td></tr>
+<tr><td class="left">(descr $Obj)</td><td class="right">(fruit $Obj) Yummy!</td></tr>
+<tr><td class="left">(descr $)</td><td class="right">It seems harmless.</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">Apple: (descr #apple) (line)</td></tr>
+<tr><td class="left"></td><td class="right">Door: (descr #door) (line)</td></tr>
+<tr><td class="left"></td><td class="right">Pencil: (descr #pencil) (line)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy2').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The output is:
+</p>
+<div class="blkoutput">Apple: Yummy!<br />
+Door: The oaken door is oaken.<br />
+Pencil: It seems harmless.</div><p>The scope of a local variable is limited to the rule in which it appears.
+</p>
+<a id="values"></a><h2>Values</h2>
+<p>So far, we have seen one kind of value: the object. There are three more kinds
+of value in the Dialog programming language: Number, dictionary word, and list.
+</p>
+<h3>Number</h3>
+<p>A number is a non-negative integer in the range <span class="nobreak">0&ndash;16383</span>
+inclusive. The printed representation of a number is always in decimal form,
+with no unnecessary leading zeros. Numbers that appear in the source code must
+also adhere to this format: For instance, <span class="code">007</span> in the source code
+is regarded as a word of text. This makes a difference inside rule heads and
+queries, where <span class="code">007</span> would be considered part of the predicate name,
+and not a parameter.
+</p>
+<h3>Dictionary word</h3>
+<p>A dictionary word is very similar to an object, in that it is a nametag with no
+information stored inside. While objects represent elements of the game world,
+dictionary words represent words typed by the player. Dictionary words are
+prefixed with <span class="code">@</span> instead of <span class="code">#</span>. Aside from that, there
+are two crucial differences between objects and dictionary words:
+</p>
+<p>The first difference is that dictionary words are mangled and truncated
+according to the underlying dictionary format of the target platform. For the
+Z-machine, this involves converting the word to lower case, and removing all
+but the first nine letters of the word, so that e.g. <span class="code">@northeast</span>
+and <span class="code">@NorthEastern</span> are considered to be the same value. Some
+characters require multiple slots of storage, so that e.g.
+<span class="code">@north-east</span> is considered the same as <span class="code">@north-ea</span>.
+</p>
+<p>The second difference between objects and dictionary words is that there are
+certain language constructs (<i>dynamic predicates</i>, to be introduced in
+<a href="dynamic.html">Chapter&nbsp;5</a>) where only objects may appear as parameters.
+</p>
+<p>Dictionary words may contain any characters supported by the underlying
+platform, e.g. the <i>ZSCII character set</i> in the case of the Z-machine.
+Special characters such as parentheses are allowed, but they must be escaped by
+a backslash:
+</p>
+<textarea class="copyarea" id="copy3" readonly>
+	@\(
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">@\(</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy3').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>On the Z-machine, dictionary words are case insensitive.
+</p>
+<p>The printed representation of a dictionary word is the mangled version of the
+word (e.g. converted to lowercase and truncated), without the <span class="code">@</span>
+prefix. So the following program:
+</p>
+<textarea class="copyarea" id="copy4" readonly>
+(program entry point)
+	Let's go @NORTH-WEST today!
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">Let's go @NORTH-WEST today!</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy4').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>would print:
+</p>
+<div class="blkoutput">Let's go north-we today!</div><h3>List</h3>
+<p>A list is an ordered sequence of values. Lists are enclosed in square brackets
+in the source code:
+</p>
+<textarea class="copyarea" id="copy5" readonly>
+(program entry point)
+	This is a list containing three integers: [1 2 3]
+	This is an empty list: []
+	A list may contain values of different kinds: [@hello #world [2 3] 4]
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">This is a list containing three integers: [1 2 3]</td></tr>
+<tr><td class="left"></td><td class="right">This is an empty list: []</td></tr>
+<tr><td class="left"></td><td class="right">A list may contain values of different kinds: [@hello #world [2 3] 4]</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy5').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>In the final expression above, the third element of the list is itself a list,
+containing the two values 2 and 3.
+</p>
+<p>When a dictionary word appears inside a list, it is possible (and recommended)
+to omit the <span class="code">@</span> character.
+</p>
+<p>Printing a list is possible, and highly useful during debugging. The program:
+</p>
+<textarea class="copyarea" id="copy6" readonly>
+(program entry point)
+	Have a look at [#this inscrutable list]!
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">Have a look at [#this inscrutable list]!</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy6').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>will print out (note the truncated dictionary word):
+</p>
+<div class="blkoutput">Have a look at [#this inscrutab list]!</div><h3>Unbound variables</h3>
+<p>In addition to the four kinds of value we have seen (object, dictionary word,
+number, and list), there is a fifth kind, which is more of a pseudo-value: the
+<i>unbound variable</i>. If a local variable appears in a rule body without
+first being mentioned in the rule head, for instance, it will be unbound.
+Unbound variables are allowed wherever values are allowed. They can appear as
+parameters to queries, and even inside lists.
+</p>
+<p>The wildcard that we saw earlier (<span class="code">$</span>) is in fact an unbound
+variable, although it also has the special property of being anonymous: Two
+instances of <span class="code">$</span> do not refer to the same variable.
+</p>
+<p>The printed representation of an unbound variable is always <span class="code">$</span>,
+regardless of its name.
+</p>
+<textarea class="copyarea" id="copy7" readonly>
+(program entry point)
+	This list contains an unbound variable: [one $Two three]
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">This list contains an unbound variable: [one $Two three]</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy7').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The output is:
+</p>
+<div class="blkoutput">This list contains an unbound variable: [one $ three]</div><a id="unification"></a><h2>Unification</h2>
+<p>At the heart of Dialog is a mechanism called <i>unification</i>. This is an
+operation that takes two values, and ensures that they are the same afterwards.
+If this cannot be done, the operation fails.
+</p>
+<p>Unification is provided by a built-in predicate in Dialog, with the signature
+<span class="code">($&nbsp;=&nbsp;$)</span>. The equals sign has no special properties; it is treated
+as a regular word.
+</p>
+<p>Two identical values, e.g. <span class="code">#apple</span> and <span class="code">#apple</span>, unify
+successfully. Two values that differ, e.g. <span class="code">#apple</span> and
+<span class="code">#orange</span>, do not unify, so the operation fails. Thus, unification
+can be used to check for equality:
+</p>
+<textarea class="copyarea" id="copy8" readonly>
+(program entry point)
+	(#apple = #apple)
+	This text will be printed.
+	(#apple = #orange)
+	This will not, because the rule has failed by now.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">(#apple = #apple)</td></tr>
+<tr><td class="left"></td><td class="right">This text will be printed.</td></tr>
+<tr><td class="left"></td><td class="right">(#apple = #orange)</td></tr>
+<tr><td class="left"></td><td class="right">This will not, because the rule has failed by now.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy8').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>An unbound variable successfully unifies with any value, but this also has the
+effect of <i>binding</i> the variable to that value. Thus:
+</p>
+<textarea class="copyarea" id="copy9" readonly>
+(program entry point)
+	($X = #apples)
+	(#oranges = $Y)
+	I like $X and $Y.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">($X = #apples)</td></tr>
+<tr><td class="left"></td><td class="right">(#oranges = $Y)</td></tr>
+<tr><td class="left"></td><td class="right">I like $X and $Y.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy9').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>will print:
+</p>
+<div class="blkoutput">I like #apples and #oranges.</div><p>Observe that the same operation that was used to check for equality can be used
+for assignment. It is also symmetrical: The unbound variable can appear either
+to the left or to the right of the equals sign.
+</p>
+<p>But once the variable is bound, it sticks to that value:
+</p>
+<textarea class="copyarea" id="copy10" readonly>
+(program entry point)
+	($X = #apples)
+	I like $X
+	($X = #oranges)
+	and $X.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">($X = #apples)</td></tr>
+<tr><td class="left"></td><td class="right">I like $X</td></tr>
+<tr><td class="left"></td><td class="right">($X = #oranges)</td></tr>
+<tr><td class="left"></td><td class="right">and $X.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>will print:
+</p>
+<div class="blkoutput">I like #apples</div><p>and then the second unification fails, because <span class="code">$X</span> resolves to
+<span class="code">#apples</span>, which is different from <span class="code">#oranges</span>. As a
+result, the top-level predicate of this example fails, and the program
+terminates.
+</p>
+<p>Two lists unify if their elements unify, at each and every position. This may
+have the side-effect of binding unbound variables inside the lists. Consider:
+</p>
+<textarea class="copyarea" id="copy11" readonly>
+(program entry point)
+	($X = [#apples #pears $])
+	($X = [$ #pears #oranges])
+	I like $X.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">($X = [#apples #pears $])</td></tr>
+<tr><td class="left"></td><td class="right">($X = [$ #pears #oranges])</td></tr>
+<tr><td class="left"></td><td class="right">I like $X.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy11').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The first unification operation will bind <span class="code">$X</span> to the list
+<span class="code">[#apples #pears $]</span>, the last element of which is an anonymous
+unbound variable. The second unification operation will attempt to unify that
+list with another list, <span class="code">[$ #pears #oranges]</span>. This will succeed,
+and by now three bindings are in place: The first anonymous variable is bound
+to <span class="code">#oranges</span>, the second anonymous variable is bound to
+<span class="code">#apples</span>, and <span class="code">$X</span> is bound to <span class="code">[#apples #pears
+#oranges]</span>. The output of the program is:
+</p>
+<div class="blkoutput">I like [#apples #pears #oranges].</div><p>Finally, it is possible to unify two unbound variables with each other. This
+creates a hidden link between them, entangling them, so that if one of them is
+later bound to a value, the other one will also become bound to the same value:
+</p>
+<textarea class="copyarea" id="copy12" readonly>
+(program entry point)
+	($X = $Y)
+	([spooky action at a distance] = $X)
+	This is $Y.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">($X = $Y)</td></tr>
+<tr><td class="left"></td><td class="right">([spooky action at a distance] = $X)</td></tr>
+<tr><td class="left"></td><td class="right">This is $Y.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy12').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The output of the program is:
+</p>
+<div class="blkoutput">This is [spooky action at a distance].</div><h3>Parameters are passed by unification</h3>
+<p>Now, here's the kicker: In Dialog (and Prolog, for that matter), parameters to
+predicates are passed by unification. Remember that when a predicate is
+queried, the query is compared to each of the rule heads, in program order,
+until a match is found. That comparison is in fact carried out by attempting to
+unify each parameter of the query with the corresponding parameter of the rule
+head.
+</p>
+<p>This has a very interesting and useful consequence, which is that parameters
+can be used interchangeably as inputs or outputs:
+</p>
+<textarea class="copyarea" id="copy13" readonly>
+(#rock beats #scissors)
+(#scissors beats #paper)
+(#paper beats #rock)
+
+(program entry point)
+	(#rock beats $X)	%% Parameters are: Input, output.
+	When your opponent makes a fist, you'd better not play $X.
+	($Y beats #rock)	%% Parameters are: Output, input.
+	When your opponent makes a fist, you should play $Y.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(#rock beats #scissors)</td></tr>
+<tr><td class="both" colspan="2">(#scissors beats #paper)</td></tr>
+<tr><td class="both" colspan="2">(#paper beats #rock)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">(#rock beats $X)	<span class="comment">&emsp;%% Parameters are: Input, output.</span></td></tr>
+<tr><td class="left"></td><td class="right">When your opponent makes a fist, you'd better not play $X.</td></tr>
+<tr><td class="left"></td><td class="right">($Y beats #rock)	<span class="comment">&emsp;%% Parameters are: Output, input.</span></td></tr>
+<tr><td class="left"></td><td class="right">When your opponent makes a fist, you should play $Y.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy13').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The first query <span class="code">(#rock beats $X)</span> tells Dialog to search for a rule
+head with the signature <span class="code">($&nbsp;beats&nbsp;$)</span>, and attempt to unify
+<span class="code">#rock</span> with the first parameter in the rule head, and the unbound
+variable <span class="code">$X</span> with the second. This succeeds on the very first rule
+encountered, and as a side effect, <span class="code">$X</span> is now bound to
+<span class="code">#scissors</span>. That rule has no body, so it succeeds, and control
+returns to the top-level predicate.
+</p>
+<p>For the second query <span class="code">($Y beats #rock)</span>, Dialog searches for a rule
+head with the signature <span class="code">($&nbsp;beats&nbsp;$)</span>, and attempts to unify the
+unbound variable <span class="code">$Y</span> with the first parameter, and
+<span class="code">#rock</span> with the second. It gets to the first rule: <span class="code">$Y</span>
+would unify successfully will <span class="code">#rock</span> from the rule head, because
+<span class="code">$Y</span> is unbound. But <span class="code">#rock</span> does not equal
+<span class="code">#scissors</span>, so this unification fails. Hence, the first rule was
+not a match. Now the second rule is considered: <span class="code">$Y</span> is still
+unbound, and would unify perfectly fine with <span class="code">#scissors</span>. But
+<span class="code">#rock</span> from the query doesn't unify with <span class="code">#paper</span> from
+the rule head, so the unification operation fails again. Finally, Dialog tries
+the third rule: <span class="code">$Y</span> unifies successfully with <span class="code">#paper</span>,
+and <span class="code">#rock</span> unifies with <span class="code">#rock</span>. This time the operation
+is successful! The rule body is empty, so it succeeds too, and control returns
+to the top-level predicate.
+</p>
+<p>The output of the program is:
+</p>
+<div class="blkoutput">When your opponent plays rock, you'd better not play #scissors. When your opponent plays rock, you should play #paper.</div><a id="recursion"></a><h2>Partial lists and recursion</h2>
+<p>Dialog has a special syntax for matching the head (first element) and tail
+(remaining elements) of a list. Recall that a list is usually a sequence of
+values in brackets:
+</p>
+<textarea class="copyarea" id="copy14" readonly>
+	[1 2 3 4]
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">[1 2 3 4]</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy14').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Such a sequence can be unified with a special expression, called a <i>partial
+list</i>:
+</p>
+<textarea class="copyarea" id="copy15" readonly>
+	[$Head | $Tail]
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">[$Head | $Tail]</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy15').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The unification succeeds if <span class="code">$Head</span> unifies with the first element
+of the list, and <span class="code">$Tail</span> unifies with a list containing the rest of
+the elements. Unification of a partial list and an empty list fails, because
+there is no head element to extract. Here is an example of extracting the head
+and tail of a list:
+</p>
+<textarea class="copyarea" id="copy16" readonly>
+(program entry point)
+	([1 2 3 4] = [$A | $B])
+	A is $A.
+	B is $B.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">([1 2 3 4] = [$A | $B])</td></tr>
+<tr><td class="left"></td><td class="right">A is $A.</td></tr>
+<tr><td class="left"></td><td class="right">B is $B.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy16').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Here is the output:
+</p>
+<div class="blkoutput">A is 1. B is [2 3 4].</div><p>Unification works both ways, so the same syntax can be used to construct a list
+from a head and a tail:
+</p>
+<textarea class="copyarea" id="copy17" readonly>
+(program entry point)
+	($A = 1)
+	($B = [2 3 4])
+	Tacking on a new head: [$A | $B]
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">($A = 1)</td></tr>
+<tr><td class="left"></td><td class="right">($B = [2 3 4])</td></tr>
+<tr><td class="left"></td><td class="right">Tacking on a new head: [$A | $B]</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy17').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The output is:
+</p>
+<div class="blkoutput">Tacking on a new head: [1 2 3 4]</div><p>The syntax is not limited to just a single head: Any number of elements can be
+matched (or tacked on) from the beginning of the list. However, the tail is
+always represented by a single expression (usually a variable) after the
+vertical bar (<span class="code">|</span>). So:
+</p>
+<textarea class="copyarea" id="copy18" readonly>
+(program entry point)
+	([$First $Second | $Rest] = [a b c d e])
+	([$Second $First | $Rest] = $Result)
+	The result is $Result.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">([$First $Second | $Rest] = [a b c d e])</td></tr>
+<tr><td class="left"></td><td class="right">([$Second $First | $Rest] = $Result)</td></tr>
+<tr><td class="left"></td><td class="right">The result is $Result.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy18').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>produces the following output:
+</p>
+<div class="blkoutput">The result is [b a c d e].</div><p>Partial lists are very useful in combination with <i>recursive code</i>, i.e.
+predicates that query themselves. Here is an example that considers each
+element of a list in turn using recursive calls:
+</p>
+<textarea class="copyarea" id="copy19" readonly>
+(program entry point)
+	(observe objects [#banana #orange #apple #apple])
+
+(observe objects [])
+	You don't see any more fruit.
+
+(observe objects [$Head | $Tail])
+	You see (a $Head). (line)
+	(observe objects $Tail)
+
+(a #banana)	a banana
+(a #apple)	an apple
+(a $)		an unknown fruit
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">(observe objects [#banana #orange #apple #apple])</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(observe objects [])</td></tr>
+<tr><td class="left"></td><td class="right">You don't see any more fruit.</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(observe objects [$Head | $Tail])</td></tr>
+<tr><td class="left"></td><td class="right">You see (a $Head). (line)</td></tr>
+<tr><td class="left"></td><td class="right">(observe objects $Tail)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left">(a #banana)</td><td class="right">a banana</td></tr>
+<tr><td class="left">(a #apple)</td><td class="right">an apple</td></tr>
+<tr><td class="left">(a $)</td><td class="right">an unknown fruit</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy19').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The output is:
+</p>
+<div class="blkoutput">You see a banana.<br />
+You see an unknown fruit.<br />
+You see an apple.<br />
+You see an apple.<br />
+You don't see any more fruit.</div>	<div class="footer">
+	<p class="nav">Onwards to &ldquo;<a href="choicepoints.html">Chapter 3: Choice points</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
+	<p class="tagline">The Dialog Manual, Revision 1, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	</div>
+	</div>
+</body>
+</html>

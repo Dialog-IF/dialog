@@ -1,0 +1,5294 @@
+
+(library version)
+	Library version 0.12.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Global variables
+
+%% The following variables may be queried directly from the story, but the
+%% library gets confused if you modify them directly with (now). Instead, use
+%% the predicates mentioned in the comments:
+
+%% Update with (select player $):
+(global variable (current player $))
+
+%% Update with (enter $) or (move player to $ $):
+(global variable (current room $))
+
+%% Update with (increase score by $) or (decrease score by $):
+(global variable (current score $))
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Relations
+
+(relation #in)		%% Note: #in is also a direction
+(relation #on)
+(relation #partof)
+(relation #heldby)
+(relation #wornby)
+(relation #under)
+(relation #behind)
+
+(name #in)		in
+(name #on)		on
+(name #partof)		part of
+(name #heldby)		held by
+(name #wornby)		worn by
+(name #under)		under
+(name #behind)		behind
+
+(Name #partof)		As part of
+
+(dict #in)		inside into through
+(dict #on)		onto atop upon
+
+(dict #partof)		(just) (fail)
+(dict #heldby)		(just) (fail)
+(dict #wornby)		(just) (fail)
+
+(present-name #in)	inside
+(present-name #on)	on top of
+(present-name $Rel)	(name $Rel)
+
+(towards-name #in)	into
+(towards-name #on)	onto
+(towards-name $Rel)	(name $Rel)
+
+(reverse-name #in)	out of
+(reverse-name #on)	off
+(reverse-name #partof)	away from
+(reverse-name #heldby)	away from
+(reverse-name #wornby)	off
+(reverse-name #under)	out from under
+(reverse-name #behind)	out from behind
+
+(the (relation $Rel))	(name $Rel)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Directions
+
+%% Directions are given special treatment during parsing, so there is no need
+%% for (dict $) rules here. See (parse direction $ $).
+
+#north
+(direction *)
+(name *)		north
+
+#south
+(direction *)
+(name *)		south
+
+#east
+(direction *)
+(name *)		east
+
+#west
+(direction *)
+(name *)		west
+
+#northeast
+(direction *)
+(name *)		northeast
+
+#northwest
+(direction *)
+(name *)		northwest
+
+#southwest
+(direction *)
+(name *)		southwest
+
+#southeast
+(direction *)
+(name *)		southeast
+
+#up
+(direction *)
+(name *)		up
+
+#down
+(direction *)
+(name *)		down
+
+#in			%% Note: #in is also a relation
+(direction *)
+
+#out
+(direction *)
+(name *)		out
+
+(proper (direction $))
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Common traits and per-object flags
+
+%% Negations
+
+@($Obj is open)			~($Obj is closed)
+@($Obj is unlocked)		~($Obj is locked)
+@($Obj is on)			~($Obj is off)
+@($Obj is revealed)		~($Obj is hidden)
+@($Obj is pristine)		~($Obj is handled)
+@($Obj is unvisited)		~($Obj is visited)
+@($Obj is transparent)		~($Obj is opaque)
+@($Obj is in order)		~($Obj is broken)
+
+%% Inheritance relations
+
+(actor container $Obj)		*(room $Obj)
+(animate $Obj)			*(female $Obj)
+(animate $Obj)			*(male $Obj)
+(container $Obj)		*(actor container $Obj)
+(item $Obj)			*(wearable $Obj)
+(supporter $Obj)		*(actor supporter $Obj)
+(excluded from all $Obj)	*(not here $Obj)
+(excluded from all $Obj)	*(room $Obj)
+(actor container $Obj)		*(in-seat $Obj)
+(actor supporter $Obj)		*(on-seat $Obj)
+(seat $Obj)			*(in-seat $Obj)
+(seat $Obj)			*(on-seat $Obj)
+(openable $Obj)			*(lockable $Obj)
+(plural $Obj)			*(pair $Obj)
+
+%% "Edison's Lament: No switch is ever in the right position."
+%% (From "The Grand List Of Console Role Playing Game Clichés")
+%% Of course, you can override these defaults on an object-by-object basis:
+
+((openable $) is closed)
+((lockable $) is locked)
+((switchable $) is off)
+((openable $) is opaque)
+
+%% Convenience predicate:
+
+(reveal $Obj)
+	(now) ($Obj is revealed)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Rules to prevent compiler warnings
+
+%% The following rule definitions have no effect on the behaviour of the
+%% program, but they prevent warnings about undefined predicates. They have
+%% zero impact on performance.
+
+%% These are typically static traits:
+
+(an $)			(fail)
+(door $)		(fail)
+(edible $)		(fail)
+(female $)		(fail)
+(fine where it is $)	(fail)
+(inherently dark $)	(fail)
+(intangible $)		(fail)
+(item $)		(fail)
+(lockable $)		(fail)
+(male $)		(fail)
+(not here $)		(fail)
+(openable $)		(fail)
+(out of reach $)	(fail)
+(pair $)		(fail)
+(potable $)		(fail)
+(proper $)		(fail)
+(pushable $)		(fail)
+(sharp $)		(fail)
+(singleton $)		(fail)
+(switchable $)		(fail)
+(uncountable $)		(fail)
+(wearable $)		(fail)
+(vehicle $)		(fail)
+(your $)		(fail)
+(on-seat $)		(fail)
+(in-seat $)		(fail)
+(consultable $)		(fail)
+
+%% These typically involve rule bodies with further conditions:
+
+($ provides light)	(fail)
+
+%% These are typically dynamic (i.e. per-object flags):
+
+($ is broken)		(fail)
+($ is hidden)		(fail)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Rooms and doors
+
+(name (room $))		location
+(room header $Room)	(Name $Room)
+(look (room $R))	You are here.
+
+%% Given a room and a direction, what room (if any) is reachable that way?
+
+(from $Here go $Dir to room $Room)
+	*(from $Here go $Dir to $Target)
+	(if) (room $Target) (then)
+		($Target = $Room)
+	(elseif) (direction $Target) (then)
+		(from $Here go $Target to room $Room)
+	(else)
+		(door $Target)
+		~($Target blocks passage)
+		(from $Here through $Target to $Room)
+	(endif)
+
+%% Given a room and a direction, what object, door and/or room is visible
+%% that way?
+
+(from $Room go $Dir to object $Obj)
+	(from $Room go $Dir to $Point)
+	(if) (direction $Point) (then)
+		*(from $Room go $Point to object $Obj)
+	(elseif) (door $Point) (then)
+		{
+			~($Point blocks light)
+			(from $Room through $Point to $Obj)
+		(or)
+			($Obj = $Point)
+		}
+	(else)
+		($Obj = $Point)
+	(endif)
+
+(the (current room $))	this location
+
+(name (door $))		door
+
+($Door blocks passage)
+	($Door is closed)
+
+($Door blocks light)
+	($Door is opaque)
+	($Door is closed)
+
+@(from $Room go $Dir through $Door to $Target)
+	*(from $Room go $Dir to $Door)
+	*(from $Room through $Door to $Target)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Access rules
+
+(light reaches ceiling (room $Ceil))
+	~(inherently dark $Ceil)
+
+(light reaches ceiling $Ceil)
+	*($Obj provides light)
+	(visibility ceiling of $Obj is $Ceil)
+
+(visibility ceiling of (room $R) is $R)
+
+(visibility ceiling of $Obj is $Parent)
+	($Obj is #in $Parent)
+	($Parent is opaque)
+	($Parent is closed)
+
+(visibility ceiling of $Obj is $Ceil)
+	($Obj has parent $Parent)
+	(visibility ceiling of $Parent is $Ceil)
+
+(player can see)
+	(current player $Player)
+	(visibility ceiling of $Player is $Ceil)
+	(light reaches ceiling $Ceil)
+
+($Obj is visible to $Actor)
+	(visibility ceiling of $Actor is $Ceil)
+	(if) (visibility ceiling of $Obj is $Ceil) (then)
+		{
+			(light reaches ceiling $Ceil)
+		(or)
+			($Obj has ancestor $Actor)
+		}
+	(else)
+		(room $Ceil)
+		(light reaches ceiling $Ceil)
+		{
+			(from $Ceil go $ to $Obj)
+		(or)
+			(from $Ceil through $Door to $Obj)
+			~($Door blocks light)
+		}
+	(endif)
+
+(reachability ceiling of $O is $Ceil)
+	(if) ($O is $Rel $Parent) (then)
+		(if) ($Rel = #in) ($Parent is closed) (then)
+			($Parent = $Ceil)
+		(else)
+			(reachability ceiling of $Parent is $Ceil)
+		(endif)
+	(else)
+		($O = $Ceil)
+	(endif)
+
+~($Obj is reachable by $)
+	(out of reach $Obj)
+
+($Obj is reachable by $Actor)
+	(reachability ceiling of $Actor is $Ceil)
+	(reachability ceiling of $Obj is $Ceil)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Scope
+
+%% This predicate can be extended by the game, typically using rules that check
+%% certain conditions, e.g. what the current room is:
+
+(add $ to scope)	(fail)
+
+%% These rules should be left as they are:
+
+(rebuild scope)
+	(now) ~($ is in scope)
+	(current player $Actor)
+	(visibility ceiling of $Actor is $Ceil)
+	(if) (light reaches ceiling $Ceil) (then)
+		(now) ($Ceil is in scope)
+		(exhaust) {
+			*($Child is #in $Ceil)
+			(recursively add $Child to scope)
+		}
+	(else)
+		%% in the dark
+		(recursively add $Actor to scope)
+	(endif)
+	(current room $Room)
+	(now) ($Room is in scope) %% i.e. even if we're in darkness
+	(exhaust) {
+		*(from $Room go $ to $Obj)
+		~(direction $Obj)
+		(now) ($Obj is in scope)
+	}
+	(exhaust) {
+		*(from $Room through $Door to $Other)
+		~($Door blocks light)
+		(now) ($Other is in scope)
+	}
+	(exhaust) {
+		*(add $Obj to scope)
+		(now) ($Obj is in scope)
+	}
+	(if) (player's it refers to $Obj) ~($Obj is in scope) (then)
+		(now) ~(player's it refers to $)
+	(endif)
+	(if) (narrator's it refers to $Obj) ~($Obj is in scope) (then)
+		(now) ~(narrator's it refers to $)
+	(endif)
+	(if) (him refers to $Obj) ~($Obj is in scope) (then)
+		(now) ~(him refers to $)
+	(endif)
+	(if) (her refers to $Obj) ~($Obj is in scope) (then)
+		(now) ~(her refers to $)
+	(endif)
+	(if)
+		(them refers to $ObjList)
+		*($Obj is one of $ObjList)
+		~($Obj is in scope)
+	(then)
+		(now) ~(them refers to $)
+	(endif)
+
+(recursively add $Obj to scope)
+	(now) ($Obj is in scope)
+	(exhaust) {
+		*($Sub is $Rel $Obj)
+		~{ ($Obj is opaque) ($Obj is closed) ($Rel = #in) }
+		(recursively add $Sub to scope)
+	}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Select player, enter a room or other location, move floating objects
+
+(select player $Player)
+	(clear all pronouns)
+	(now) (current player $Player)
+	(update environment around player)
+
+(move player to $Rel $Loc)
+	(current player $Player)
+	(now) ($Player is $Rel $Loc)
+	(update environment around player)
+
+(enter $Room)
+	(move player to #in $Room)
+	(narrate entering $Room)
+
+(enter $Room by $Vehicle)
+	(now) ($Vehicle is #in $Room)
+	(now) ($Vehicle is handled)
+	(update environment around player)
+	(narrate entering $Room)
+
+(update environment around player)
+	(current player $Player)
+	($Player is in room $Room)
+	(now) (current room $Room)
+	(if) ($Room is unvisited) (player can see) (then)
+		(now) ($Room is visited)
+	(endif)
+	(exhaust) {
+		*($Room attracts $Object)
+		(now) ($Object is #in $Room)
+	}
+
+(narrate entering (room $))
+	(par)
+	(try [look])
+
+(narrate entering $Obj)
+	You get into (the $Obj).
+
+(prevent entering $Obj)
+	(when $Obj won't accept actor #in)
+
+(narrate failing to leave $ $)
+	There doesn't appear to be an exit in that direction.
+
+%% Extend the following predicate to simulate objects occupying multiple rooms:
+
+($Room attracts $Door)
+	*(from $Room go $ to $Door)
+	(door $Door)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Standard actions
+
+%% LOOK <dir>
+
+(understand [examine | $Words] as [look $Dir])
+	*(understand $Words as direction $Dir)
+
+(understand [look | $Words] as [look $Dir])
+	*(understand $Words as direction $Dir)
+
+(unlikely [look $])
+
+(prevent [look $])
+	~(player can see)
+	You can't see in the darkness.
+
+(perform [look $Dir])
+	(if)
+		(current player $Player)
+		(visibility ceiling of $Player is $Room)
+		(room $Room)
+		(from $Room go $Dir to $Target)
+	(then)
+		(if) (direction $Target) (then)
+			(try [look $Target])
+		(elseif) (door $Target) ~($Target blocks light) (then)
+			(from $Room through $Target to $OtherRoom)
+			(if) ($OtherRoom is visited) (then)
+				Through (the $Target) you see (a $OtherRoom).
+			(else)
+				You can't quite make out what's on the other
+				side of (the $Target).
+			(endif)
+		(elseif) (room $Target) ($Target is unvisited) (then)
+			You can't get a good view of what's in that direction.
+		(else)
+			(Name $Dir) from here (is $Target) (a $Target).
+		(endif)
+	(else)
+		You see nothing unexpected
+		(if) ($Dir = #up) (then)
+			above.
+		(elseif) ($Dir = #down) (then)
+			below.
+		(else)
+			in that direction.
+		(endif)
+	(endif)
+
+%% LOOK <rel> <obj>
+
+(understand [look | $Words] as [look $Rel $Obj])
+	*(split $Words by relation $Rel into [] and $MoreWords)
+	*(understand $MoreWords as single object $Obj)
+
+(unlikely [look #in $Obj])
+	~(container $Obj)
+
+(unlikely [look #on $Obj])
+	~(supporter $Obj)
+
+%% Reachability not required, but visibility:
+
+(refuse [look $ $Obj])
+	(just)
+	{
+		(when $Obj is not here)
+		(or) (when $Obj is out of sight)
+	}
+
+(before [look #in $Obj])
+	($Obj is opaque)
+	($Obj is closed)
+	(first try [open $Obj])
+
+(instead of [look #in (current room $)])
+	(try [look])
+
+(instead of [look #in $Obj])
+	{ (room $Obj) (or) (door $Obj) }
+	(current room $Here)
+	{
+		(from $Here go $Dir to $Obj)
+	(or)
+		(from $Here through $Door to $Obj)
+		(from $Here go $Dir to $Door)
+	}
+	(direction $Dir)
+	(try [look $Dir])
+
+(prevent [look #in $Obj])
+	~(container $Obj)
+	(The $Obj) can't contain things.
+
+(prevent [look #in $Obj])
+	($Obj is opaque)
+	($Obj is closed)
+	(current player $Player)
+	~(visibility ceiling of $Player is $Obj)
+	(if) (openable $Obj) (then)
+		(The $Obj is) closed.
+	(else)
+		You can't look inside (the $Obj).
+	(endif)
+
+(prevent [look #behind (room $Obj)])
+	Looking behind (the $Obj) doesn't make sense.
+
+(perform [look $Rel $Obj])
+	(collect $C)
+		*($C is $Rel $Obj)
+		(now) ($C is revealed)
+	(into $List)
+	(if) (empty $List) (then)
+		(if) (#in = $Rel) (then)
+			(The $Obj is) empty.
+		(else)
+			(if) ($Rel is one of [#under #behind]) (then)
+				You find
+			(else)
+				There's
+			(endif)
+			nothing (present-name $Rel) (the $Obj).
+		(endif)
+	(else)
+		(Name $Rel) (the $Obj) you see (a $List). (notice $List)
+	(endif)
+
+%% EXAMINE <obj>
+
+(rewrite [x | $Words] into [examine | $Words])
+(rewrite [look at | $Words] into [examine | $Words])
+(rewrite [l at | $Words] into [examine | $Words])
+(rewrite [watch | $Words] into [examine | $Words])
+(rewrite [describe | $Words] into [examine | $Words])
+(rewrite [check | $Words] into [examine | $Words])
+
+(understand [examine | $Words] as [examine $Obj])
+	*(understand $Words as non-all object $Obj)
+
+(understand [look | $Words] as [examine $Obj])
+	*(understand $Words as non-all object $Obj)
+
+(understand [who am i] as [examine $Player])
+	(current player $Player)
+
+~(refuse [examine $]) %% No need for reachability.
+
+(instead of [examine (room $Obj)])
+	(current room $Here)
+	~($Here = $Obj)
+	(if)
+		(from $Here go $Dir to $Obj)
+	(then)
+		(try [look $Dir])
+	(elseif)
+		(from $Here through $Door to $Obj)
+		~($Door blocks light)
+		(from $Here go $Dir to $Door)
+	(then)
+		(try [look $Dir])
+	(else)
+		You can't get a good view of (the $Obj) from here.
+	(endif)
+
+(perform [examine $Obj])
+	(current player $Player)
+	(visibility ceiling of $Player is $Obj)
+	(look $Obj)
+
+(perform [examine $Obj])
+	(descr $Obj)
+	(if) (supporter $Obj) (then)
+		(if) (fungibility enabled) (then)
+			(collect $Child)
+				*($Child is #on $Obj)
+			(into $OnList)
+			(fungibility-enabled appearance $OnList #on $Obj)
+		(else)
+			(exhaust) {
+				*($Child is #on $Obj)
+				(par)
+				(appearance $Child #on $Obj)
+			}
+		(endif)
+	(endif)
+	(if) (container $Obj) ~{ ($Obj is opaque) ($Obj is closed) } (then)
+		(if) (fungibility enabled) (then)
+			(collect $Child)
+				*($Child is #in $Obj)
+			(into $InList)
+			(fungibility-enabled appearance $InList #in $Obj)
+		(else)
+			(exhaust) {
+				*($Child is #in $Obj)
+				(par)
+				(appearance $Child #in $Obj)
+			}
+		(endif)
+	(endif)
+	(par)
+
+%% LOOK
+
+(rewrite [l | $Words] into [look | $Words])
+
+(understand [look])
+(understand [look around] as [look])
+(understand [where am i] as [look])
+
+(describe action [look])
+	look around
+
+(perform [look])
+	(current player $Player)
+	(visibility ceiling of $Player is $Ceil)
+	(if) (light reaches ceiling $Ceil) (then)
+		(location headline)
+		(line)
+		(look $Ceil)
+		($Player is $Rel $Loc)
+		(make appearances $Rel $Loc)
+		(par)
+	(else)
+		(bold) (darkness headline) (roman)
+		(line)
+		(narrate darkness)
+	(endif)
+
+%% SEARCH <obj>
+
+(understand [search | $Words] as [search $Obj])
+	*(understand $Words as non-all object $Obj)
+
+(instead of [search (current room $R)])
+	(try [look])
+
+(perform [search $O])
+	(if) ($O is closed) ($O is opaque) (then)
+		($InList = [])
+	(else)
+		(collect $C) *($C is #in $O) (reveal $C) (into $InList)
+	(endif)
+	(collect $C) *($C is #on $O) (reveal $C) (into $OnList)
+	(collect $C) *($C is #behind $O) (reveal $C) (into $BehindList)
+	(collect $C) *($C is #under $O) (reveal $C) (into $UnderList)
+	(if) (nonempty $InList) (then)
+		(if) ($InList = [$InObj]) (then)
+			(A $InObj) (is $InObj) in (the $O).
+		(else)
+			In (the $O) you find (a $InList).
+		(endif)
+		(notice $InList)
+	(endif)
+	(if) (nonempty $OnList) (then)
+		(if) ($OnList = [$OnObj]) (then)
+			(A $OnObj) (is $OnObj) on (the $O).
+		(else)
+			On (the $O) you find (a $OnList).
+		(endif)
+		(notice $OnList)
+	(endif)
+	(if) (nonempty $BehindList) (then)
+		You find (a $BehindList) behind (the $O).
+		(notice $BehindList)
+	(endif)
+	(if) (nonempty $UnderList) (then)
+		You find (a $UnderList) under (the $O).
+		(notice $UnderList)
+	(endif)
+	(if)
+		(empty $InList)
+		(empty $OnList)
+		(empty $BehindList)
+		(empty $UnderList)
+	(then)
+		You find nothing of interest.
+	(endif)
+
+%% FEEL <obj>
+
+(rewrite [touch | $Words] into [feel | $Words])
+(rewrite [finger | $Words] into [feel | $Words])
+(rewrite [rub | $Words] into [feel | $Words])
+(rewrite [prod | $Words] into [feel | $Words])
+
+(understand [feel | $Words] as [feel $Obj])
+	*(understand $Words as non-all object $Obj)
+
+(perform [feel $Obj])
+	(feel $Obj)
+
+%% LISTEN TO <obj>
+%% LISTEN
+
+(rewrite [hear | $Words] into [listen | $Words])
+(rewrite [listen to | $Words] into [listen | $Words])
+
+(understand [listen | $Words] as [listen to $Obj])
+	*(understand $Words as single object $Obj)
+
+%% Don't require reachability:
+
+(refuse [listen to $Obj])
+	(just) (when $Obj is not here)
+
+(perform [listen to $Obj])
+	(if) (current player $Obj) (then)
+		You can hear the familiar rumble of your blood stream
+		and the faint whine of your nervous system.
+	(elseif) (animate $Obj) (then)
+		(The $Obj) (is $Obj) silent.
+	(elseif) (room $Obj) (then)
+		You hear nothing in particular.
+	(else)
+		You hear no particular sound coming from (the $Obj).
+	(endif)
+
+(understand [listen])
+
+(instead of [listen])
+	(current room $Room)
+	(try [listen to $Room])
+
+%% KISS <obj>
+
+(rewrite [hug | $Words] into [kiss | $Words])
+(rewrite [embrace | $Words] into [kiss | $Words])
+(rewrite [love | $Words] into [kiss | $Words])
+
+(understand [kiss | $Words] as [kiss $Obj])
+	*(understand $Words as single object $Obj preferably animate)
+
+(prevent [kiss $Obj])
+	(current player $Player)
+	{
+		($Obj = $Player)
+	(or)
+		($Obj is part of $Player)
+	}
+	Your feelings for yourself are primarily of a platonic nature.
+
+(perform [kiss $Obj])
+	(The $Obj is) unmoved by your display of affection.
+
+%% JUMP
+
+(rewrite [skip | $Words] into [jump | $Words])
+(rewrite [hop | $Words] into [jump | $Words])
+(rewrite [bounce | $Words] into [jump | $Words])
+
+(understand [jump])
+(understand [exercise] as [jump])
+
+(perform [jump])
+	You enjoy a bit of jumping on the spot.
+
+%% DANCE
+
+(rewrite [jive] into [dance])
+(rewrite [shake] into [dance])
+(rewrite [twirl] into [dance])
+(rewrite [spin] into [dance])
+
+(understand [dance])
+
+(perform [dance])
+	You practise your moves.
+
+%% WAVE <obj>
+%% WAVE
+
+(understand [wave | $Words] as [wave $Obj])
+	*(understand $Words as object $Obj preferably held)
+
+(unlikely [wave $Obj])
+	(current player $Player)
+	~($Obj is #heldby $Player)
+	~($Obj is part of $Player)
+
+(before [wave $Obj])
+	(ensure $Obj is held)
+
+(prevent [wave $Obj])
+	(current player $Player)
+	~($Obj is part of $Player)
+	(when $Obj isn't directly held)
+
+(perform [wave $Obj])
+	You wave (the $Obj) in the air, with no apparent consequences.
+
+(understand [wave])
+
+(perform [wave])
+	You wave your hands in the air.
+
+%% SING
+
+(rewrite [hum] into [sing])
+(understand [sing])
+
+(perform [sing])
+	You hum a few notes.
+
+%% THROW <obj> AT <obj>
+%% THROW <obj>
+%% THROW <obj> <dir>
+
+(rewrite [throw away | $Words] into [throw | $Words])
+
+(understand [throw | $Words] as [throw $A at $B])
+	*(split $Words by [at on to in into onto] into $Left and $Right)
+	*(understand $Left as object $A preferably held)
+	*(understand $Right as single object $B)
+
+(understand [throw | $Words] as [throw $Obj])
+	*(understand $Words as object $Obj preferably held)
+
+(understand [throw | $Words] as [throw $Obj $Dir])
+	(last $Words $Last)
+	(parse direction [$Last] $Dir)
+	(reverse $Words [$ | $RevWords])
+	(reverse $RevWords $Left)
+	*(understand $Left as object $Obj preferably held)
+
+(unlikely [throw $Obj | $])
+	(current player $Actor)
+	~($Obj has ancestor $Actor)
+
+(perform [throw $Obj])
+	At what?
+	(asking for object in [throw $Obj at []])
+
+(instead of [throw $Obj $Dir])
+	(current room $Here)
+	(if) (from $Here go $Dir to object $Target) (then)
+		(try [throw $Obj at $Target])
+	(else)
+		(try [throw $Obj])
+	(endif)
+
+%% The target doesn't have to be reachable:
+
+(refuse [throw $Obj at $Target])
+	(just)
+	{
+		(when $Obj is not here)
+		(or) (when $Target is not here)
+		(or) (when $Obj is out of reach)
+	}
+
+(before [throw $Obj at $])
+	(current player $Actor)
+	($Obj has ancestor $Actor)
+	(ensure $Obj is held)
+
+(prevent [throw $Obj at $])
+	~(current player $Obj)
+	(when $Obj isn't directly held)
+
+(perform [throw $Obj at $Target])
+	Throwing (the $Obj) at (the $Target) would achieve little.
+	(tick) (stop)
+
+%% THINK
+
+(understand [think])
+
+(perform [think])
+	That would be a good first step.
+	(line) \( Try HINT if you are desperate. \) (line)
+
+%% SLEEP
+
+(understand [sleep])
+(understand [nap] as [sleep])
+(understand [take nap] as [sleep])
+(understand [take a nap] as [sleep])
+(understand [fall asleep] as [sleep])
+(understand [dream] as [sleep])
+
+(perform [sleep])
+	You're not all that sleepy.
+
+%% TAKE <obj>
+%% TAKE <obj> FROM <obj>
+
+(rewrite [pick up | $Words] into [take | $Words])
+(rewrite [grab | $Words] into [take | $Words])
+(rewrite [snatch | $Words] into [take | $Words])
+(rewrite [steal | $Words] into [take | $Words])
+(rewrite [acquire | $Words] into [take | $Words])
+(rewrite [hold | $Words] into [take | $Words])
+(rewrite [gather | $Words] into [take | $Words])
+
+(understand [take | $Words] as [take $Obj from $Parent])
+	*(split $Words by [from] into $Left and $Right)
+	*(understand $Right as single object $Parent)
+	*(understand $Left as object $Obj preferably child of $Parent)
+
+(understand [remove | $Words] as [take $Obj from $Parent])
+	*(split $Words by [from] into $Left and $Right)
+	*(understand $Right as single object $Parent)
+	*(understand $Left as object $Obj preferably child of $Parent)
+
+(understand [take | $Words] as [take $Obj])
+	*(understand $Words as object $Obj preferably takable)
+
+(understand [get | $Words] as [take $Obj from $Parent])
+	*(split $Words by [from] into $Left and $Right)
+	*(understand $Right as single object $Parent)
+	*(understand $Left as object $Obj preferably child of $Parent)
+
+(understand [get | $Words] as [take $Obj])
+	*(understand $Words as object $Obj preferably takable)
+
+(unlikely [take $Obj])
+	{ (current player $Actor) ($Obj is $Rel $Actor) ($Rel is one of [#heldby #wornby]) }
+	(or) ~(item $Obj)
+	(or) ($Obj has relation #partof)
+
+(unlikely [take $Obj from $Parent])
+	~($Obj has ancestor $Parent)
+
+(prevent [take $Obj from $Parent])
+	~($Obj has ancestor $Parent)
+	(if) (animate $Parent) (then)
+		(The $Parent) (does $Parent) not have (the $Obj).
+	(elseif) (container $Parent) (then)
+		(The $Obj) (isn't $Obj) in (the $Parent).
+	(elseif) (supporter $Parent) (then)
+		(The $Obj) (isn't $Obj) on (the $Parent).
+	(else)
+		That's not where (the $Obj) (is $Obj).
+	(endif)
+
+(perform [take $Obj from $Parent])
+	(current player $Player)
+	($Obj is recursively worn by $Player)
+	{
+		($Parent = $Player)
+	(or)
+		($Parent has ancestor $Player)
+	}
+	(try [remove $Obj])
+
+(perform [take $Obj from $])
+	(try [take $Obj])
+
+(prevent [take $Obj])
+	(when $Obj is already held)
+	(or) (when $Obj is fine where it is)
+	(or) (when $Obj is part of something)
+	(or) (when $Obj can't be taken)
+
+(narrate taking $Obj)
+	(current player $Actor)
+	You take (the $Obj)
+	(if) ($Obj is $Rel $Parent) ~($Actor has ancestor $Parent) (then)
+		(reverse-name $Rel) (the $Parent)
+	(endif)
+	.
+
+(perform [take $Obj])
+	(narrate taking $Obj)
+	(current player $Actor)
+	(now) ($Obj is #heldby $Actor)
+	(now) ($Obj is handled)
+
+%% REMOVE <obj>
+
+(rewrite [doff | $Words] into [remove | $Words])
+(rewrite [shed | $Words] into [remove | $Words])
+(rewrite [loosen | $Words] into [remove | $Words])
+
+(understand [take | $Words] as [remove $Obj])
+	*(split $Words by [off] into $Left and $Right)
+	{
+		($Left = [])
+		*(understand $Right as object $Obj preferably worn)
+	(or)
+		($Right = [])
+		*(understand $Left as object $Obj preferably worn)
+	}
+
+(understand [remove | $Words] as [remove $Obj])
+	*(understand $Words as object $Obj preferably worn)
+
+(understand [disrobe | $Words] as [remove $Obj])
+	*(understand $Words as object $Obj preferably worn)
+
+(unlikely [remove $Obj])
+	(current player $Actor)
+	~($Obj is #wornby $Actor)
+
+(instead of [remove $Obj])
+	~(wearable $Obj)
+	~($Obj has relation #partof)
+	(item $Obj)
+	(try [take $Obj])
+
+(prevent [remove $Obj])
+	(when $Obj is part of something)
+
+(prevent [remove $Obj])
+	(current player $Actor)
+	~($Obj is recursively worn by $Actor)
+	But you aren't wearing (the $Obj).
+
+(narrate removing $Obj)
+	You take off (the $Obj).
+
+(perform [remove $Obj])
+	(narrate removing $Obj)
+	(current player $Actor)
+	(now) ($Obj is #heldby $Actor)
+	(now) ($Obj is handled)
+
+%% WEAR <obj>
+
+(rewrite [don | $Words] into [wear | $Words])
+
+(understand [wear | $Words] as [wear $Obj])
+	*(understand $Words as object $Obj preferably held)
+
+(understand [put | $Words] as [wear $Obj])
+	*(split $Words by [on] into $Left and $Right)
+	{
+		($Left = [])
+		*(understand $Right as object $Obj preferably held)
+	(or)
+		($Right = [])
+		*(understand $Left as object $Obj preferably held)
+	}
+
+(unlikely [wear $Obj])
+	~(wearable $Obj)
+
+(unlikely [wear $Obj])
+	(current player $Actor)
+	($Obj is #wornby $Actor)
+
+(before [wear $Obj])
+	(wearable $Obj)
+	(current player $Actor)
+	~($Obj is nested #wornby $Actor)
+	(ensure $Obj is held)
+
+(prevent [wear $Obj])
+	(current player $Actor)
+	($Obj is recursively worn by $Actor)
+	You are already wearing (the $Obj).
+
+(prevent [wear $Obj])
+	~(wearable $Obj)
+	(The $Obj) can't be worn.
+
+(prevent [wear $Obj])
+	(when $Obj isn't directly held)
+
+(narrate wearing $Obj)
+	You put on (the $Obj).
+
+(perform [wear $Obj])
+	(narrate wearing $Obj)
+	(current player $Actor)
+	(now) ($Obj is #wornby $Actor)
+	(now) ($Obj is handled)
+
+%% PUT <obj> <rel> <obj>
+
+(rewrite [set down | $Words] into [put | $Words])
+(rewrite [lay down | $Words] into [put | $Words])
+(rewrite [lay | $Words] into [put | $Words])
+(rewrite [put away | $Words] into [put | $Words])
+(rewrite [put down | $Words] into [put | $Words])
+(rewrite [drop | $Words] into [put | $Words])
+(rewrite [drop down | $Words] into [put | $Words])
+
+(rewrite [stash | $Words] into [hide | $Words])
+(rewrite [stuff | $Words] into [hide | $Words])
+
+(understand [put | $Words] as [put $Obj $Rel $Dest])
+	*(split $Words by relation $Rel into $Left and $Right)
+	*(understand $Right as single object $Dest)
+	*(understand $Left as object $Obj preferably held excluding $Dest)
+
+(understand [hide | $Words] as [put $Obj $Rel $Dest])
+	*(split $Words by relation $Rel into $Left and $Right)
+	~($Rel = #on)
+	*(understand $Right as single object $Dest)
+	*(understand $Left as object $Obj preferably held excluding $Dest)
+
+(understand [insert | $Words] as [put $Obj #in $Dest])
+	*(split $Words by [in inside into through] into $Left and $Right)
+	*(understand $Right as single object $Dest)
+	*(understand $Left as object $Obj preferably held excluding $Dest)
+
+(unlikely [put $Obj $ $])
+	(current player $Actor)
+	~($Obj has ancestor $Actor)
+
+(unlikely [put $ #on $Dest])
+	~(supporter $Dest)
+
+(unlikely [put $ #in $Dest])
+	~(container $Dest)
+
+(unlikely [put $Obj $ $Obj])
+
+(unlikely [put $Obj $ $Dest])
+	($Dest has ancestor $Obj)
+
+(before [put $Obj $Rel $Dest])
+	~($Obj is $Rel $Dest)
+	(ensure $Obj is held)
+
+(before [put $ #in $Dest])
+	($Dest is closed)
+	(first try [open $Dest])
+
+(instead of [put (current player $) #in $Dest])
+	(try [enter $Dest])
+
+(instead of [put (current player $) #on $Dest])
+	(try [climb $Dest])
+
+(instead of [put $Obj $Rel $Dest])
+	(current player $Player)
+	($Player is $Rel $Dest)
+	(try [drop $Obj])
+
+(prevent [put $Obj $Rel $Dest])
+	(when $Obj is already $Rel $Dest)
+	(or) (when $Obj isn't directly held)
+
+(prevent [put $Obj $Rel $Dest])
+	($Dest is nested $OldRel $Obj)
+	(The $Obj) can't be placed
+	(if) ~($OldRel is one of [#in #on]) (then)
+		(towards-name $Rel) something that's
+	(endif)
+	(present-name $OldRel) (itself $Obj).
+
+(prevent [put $Obj $Rel $Obj])
+	You can't put (the $Obj) (towards-name $Rel) (itself $Obj).
+
+(prevent [put $ $Rel $Dest])
+	(when $Dest won't accept $Rel)
+
+(prevent [put $ #in $Dest])
+	(when $Dest is closed)
+
+(narrate putting $Obj $Rel $Dest)
+	You put (the $Obj) (name $Rel) (the $Dest).
+
+(perform [put $Obj $Rel $Dest])
+	(narrate putting $Obj $Rel $Dest)
+	(now) ($Obj is $Rel $Dest)
+	(now) ($Obj is handled)
+
+%% DROP <obj>
+
+(rewrite [let go of | $Words] into [put | $Words])
+
+(understand [put | $Words] as [drop $Obj])
+	*(split $Words by [down] into $Left and [])
+	*(understand $Left as object $Obj preferably held)
+
+(understand [put | $Words] as [drop $Obj])
+	*(understand $Words as object $Obj preferably held)
+
+(unlikely [drop $Obj])
+	(current player $Actor)
+	~($Obj has ancestor $Actor)
+
+(before [drop $Obj])
+	(current player $Actor)
+	($Obj has ancestor $Actor)
+	~($Obj has relation #partof)
+	(ensure $Obj is held)
+
+(prevent [drop $Obj])
+	(when $Obj is part of something)
+	(or) (when $Obj isn't directly held)
+
+(narrate dropping $Obj)
+	(current player $Actor)
+	($Actor is $Rel $Loc)
+	(The $Obj) fall(s $Obj)
+	(if) ($Rel = #on) (then)
+		onto (the $Loc).
+	(else)
+		to the ground.
+	(endif)
+
+(perform [drop $Obj])
+	(narrate dropping $Obj)
+	(current player $Actor)
+	($Actor is $Rel $Loc)
+	(now) ($Obj is $Rel $Loc)
+	(now) ($Obj is handled)
+
+%% INVENTORY
+
+(understand [inventory])
+(understand [i] as [inventory])
+(understand [inv] as [inventory])
+(understand [take inventory] as [inventory])
+(understand [get inventory] as [inventory])
+
+(describe action [inventory])
+	take inventory
+
+(perform [inventory])
+	(current player $Actor)
+	(collect $C) *($C is #heldby $Actor) (into $HeldList)
+	(collect $C) *($C is #wornby $Actor) (into $WornList)
+	You have
+	(if) (empty $HeldList) (then)
+		no possessions
+	(else)
+		(a $HeldList)
+	(endif)
+	. You're
+	(if) (empty $WornList) (then)
+		not wearing anything
+	(else)
+		wearing (a $WornList)
+	(endif)
+	. (line)
+
+%% EXITS
+
+(understand [exits])
+(understand [list exits] as [exits])
+(understand [list the exits] as [exits])
+(understand [map] as [exits])
+
+(describe action [exits])
+	list the exits
+
+(prevent [exits])
+	~(player can see)
+	You can't be sure of where the exits are in the darkness.
+
+(perform [exits])
+	(current room $Room)
+	(if)
+		~{
+			*(from $Room go $Dir to $Target)
+			(direction $Dir)
+			{ (room $Target) (or) (door $Target) }
+		}
+	(then)
+		There are no obvious exits here.
+	(else)
+		Obvious exits are: (line)
+		(exhaust) {
+			*(from $Room go $Dir to $Target)
+			(direction $Dir)
+			(if) (door $Target) (then)
+				(Name $Dir)
+				through (a $Target)
+				(if) ($Target is closed) (then)
+					\(currently closed\)
+				(elseif)
+					(from $Room through $Target to $R)
+					($R is visited)
+				(then)
+					to
+					(if) (inherently dark $R) (then)
+						darkness
+					(else)
+						(the $R)
+					(endif)
+				(endif)
+				. (line)
+			(elseif) (room $Target) (then)
+				(Name $Dir)
+				(if) ($Target is visited) (then)
+					to
+					(if) (inherently dark $Target) (then)
+						darkness
+					(else)
+						(the $Target)
+					(endif)
+				(endif)
+				. (line)
+			(endif)
+		}
+	(endif)
+
+%% EXIST (misspelled EXITS, just for the giggles)
+
+(understand [exist])
+
+(perform [exist])
+	So you do.
+
+%% WAIT
+
+(rewrite [z] into [wait])
+
+(understand [wait])
+
+(perform [wait])
+	A moment slips away.
+
+%% GIVE <obj> TO <obj>
+%% GIVE <obj>
+
+(rewrite [offer | $Words] into [give | $Words])
+
+(understand [give | $Words] as [give $Obj to $Dest])
+	*(split $Words by [to] into $Left and $Right)
+	*(understand $Right as single object $Dest preferably animate)
+	*(understand $Left as object $Obj preferably held excluding $Dest)
+
+(understand [give | $Words] as [give $Obj to $Dest])
+	*(split $Words anywhere into $Left and $Right)
+	*(understand $Left as single object $Dest preferably animate)
+	*(understand $Right as object $Obj preferably held excluding $Dest)
+
+(understand [give | $Words] as [give $Obj])
+	*(understand $Words as object $Obj preferably held)
+
+(unlikely [give $Obj to $Obj])
+
+(unlikely [give $Obj to $])
+	(current player $Player)
+	~($Obj has ancestor $Player)
+
+(unlikely [give $ to $Dest])
+	~(animate $Dest)
+
+(unlikely [give $])
+
+(perform [give $Obj])
+	To whom?
+	(asking for object in [give $Obj to []])
+
+(before [give $Obj to $])
+	(ensure $Obj is held)
+
+(prevent [give $Obj to $])
+	(when $Obj isn't directly held)
+
+(perform [give $ to $Dest])
+	(if) (animate $Dest) (then)
+		(The $Dest) (doesn't $Dest) appear to be interested.
+	(else)
+		Giving things to (the $Dest) doesn't appear to work.
+	(endif)
+	(tick) (stop)
+
+%% SHOW <obj> TO <obj>
+%% SHOW <obj>
+
+(understand [show | $Words] as [show $Obj to $Dest])
+	*(split $Words by [to] into $Left and $Right)
+	*(understand $Right as single object $Dest preferably animate)
+	*(understand $Left as object $Obj preferably held excluding $Dest)
+
+(understand [show | $Words] as [show $Obj to $Dest])
+	*(split $Words anywhere into $Left and $Right)
+	*(understand $Left as single object $Dest preferably animate)
+	*(understand $Right as object $Obj preferably held excluding $Dest)
+
+(understand [show | $Words] as [show $Obj])
+	*(understand $Words as object $Obj preferably held)
+
+(unlikely [show $Obj to $Obj])
+
+(unlikely [show $Obj to $])
+	(item $Obj)
+	(current player $Actor)
+	~($Obj is nested #heldby $Actor)
+
+(unlikely [show $ to $Dest])
+	~(animate $Dest)
+
+(unlikely [show $])
+
+(refuse [show $Obj to $Person])
+	(just)
+	{
+		(when $Obj is not here)
+		(or) (when $Person is not here)
+		(or) (when $Obj is out of reach)
+	}
+
+(perform [show $Obj])
+	To whom?
+	(asking for object in [show $Obj to []])
+
+(before [show $Obj to $])
+	(item $Obj)
+	(ensure $Obj is held)
+
+(prevent [show $Obj to $])
+	(item $Obj)
+	(when $Obj isn't directly held)
+
+(perform [show $ to $Dest])
+	(if) (animate $Dest) (then)
+		(The $Dest) (doesn't $Dest) appear to be interested.
+	(else)
+		Showing things to (the $Dest) has no effect.
+	(endif)
+	(tick) (stop)
+
+%% OPEN <obj>
+
+(rewrite [unwrap | $Words] as [open | $Words])
+(rewrite [uncover | $Words] as [open | $Words])
+
+(understand [open | $Words] as [open $Obj])
+	*(understand $Words as non-all object $Obj)
+
+(unlikely [open $Obj])
+	~(openable $Obj) (or) ($Obj is open)
+
+(before [open $Obj])
+	($Obj is closed)
+	($Obj is locked)
+	(current player $Player)
+	*($Key is nested #heldby $Player)
+	($Key unlocks $Obj)
+	~($Key is hidden)
+	(first try [unlock $Obj with $Key])
+
+(prevent [open $Obj])
+	~(openable $Obj)
+	(The $Obj) (doesn't $Obj) open.
+
+(prevent [open (openable $Obj)])
+	($Obj is open)
+	(The $Obj is) already open.
+
+(prevent [open $Obj])
+	($Obj is locked)
+	(The $Obj is) locked.
+
+(narrate opening $Obj)
+	You open (the $Obj)
+	(collect $Child)
+		*($Child is #in $Obj)
+		(reveal $Child)
+	(into $List)
+	(if) (nonempty $List) (then)
+		, revealing (a $List)
+		(notice $List)
+	(endif)
+	.
+
+(perform [open $Obj])
+	(narrate opening $Obj)
+	(now) ($Obj is open)
+
+%% CLOSE <obj>
+
+(rewrite [shut | $Words] into [close | $Words])
+(rewrite [cover | $Words] as [close | $Words])
+
+(understand [close | $Words] as [close $Obj])
+	*(understand $Words as non-all object $Obj)
+
+(unlikely [close $Obj])
+	~(openable $Obj) (or) ($Obj is closed)
+
+(prevent [close $Obj])
+	~(openable $Obj)
+	(The $Obj) can't be closed.
+
+(prevent [close $Obj])
+	($Obj is closed)
+	(The $Obj is) already closed.
+
+(narrate closing $Obj)
+	You close (the $Obj).
+
+(perform [close $Obj])
+	(narrate closing $Obj)
+	(now) ($Obj is closed)
+
+%% UNLOCK <obj> WITH <obj>
+%% UNLOCK <obj>
+
+(understand [unlock | $Words] as [unlock $Obj with $Key])
+	*(split $Words by [with] into $Left and $Right)
+	*(understand $Left as non-all object $Obj)
+	*(understand $Right as single object $Key preferably held)
+
+(understand [unlock | $Words] as [unlock $Obj])
+	*(understand $Words as non-all object $Obj)
+
+(unlikely [unlock $Obj | $])
+	~(lockable $Obj) (or) ($Obj is unlocked)
+
+(before [unlock $ with $Key])
+	(ensure $Key is held)
+
+(instead of [unlock $Obj])
+	(current player $Player)
+	*($Key is nested #heldby $Player)
+	($Key unlocks $Obj)
+	~($Key is hidden)
+	(line) \(with (the $Key)\) (line)
+	(try [unlock $Obj with $Key])
+
+(prevent [unlock $Obj | $])
+	~(lockable $Obj)
+	(The $Obj) can't be unlocked.
+
+(prevent [unlock (lockable $Obj) | $])
+	($Obj is unlocked)
+	(The $Obj is) already unlocked.
+
+(perform [unlock $Obj])
+	With what?
+	(asking for object in [unlock $Obj with []])
+
+(prevent [unlock $Obj with $Key])
+	~($Key unlocks $Obj)
+	You fail to unlock (the $Obj) with (the $Key).
+
+(narrate unlocking $Obj with $Key)
+	You unlock (the $Obj) with (the $Key).
+
+(perform [unlock $Obj with $Key])
+	(narrate unlocking $Obj with $Key)
+	(now) ($Obj is unlocked)
+
+%% LOCK <obj> WITH <obj>
+%% LOCK <obj>
+
+(understand [lock | $Words] as [lock $Obj with $Key])
+	*(split $Words by [with] into $Left and $Right)
+	*(understand $Left as non-all object $Obj)
+	*(understand $Right as single object $Key preferably held)
+
+(understand [lock | $Words] as [lock $Obj])
+	*(understand $Words as non-all object $Obj)
+
+(unlikely [lock $Obj | $])
+	~(lockable $Obj)
+	(or) ($Obj is locked)
+
+(before [lock $ with $Key])
+	(ensure $Key is held)
+
+(instead of [lock $Obj])
+	(current player $Player)
+	*($Key is nested #heldby $Player)
+	($Key unlocks $Obj)
+	~($Key is hidden)
+	(line) \(with (the $Key)\) (line)
+	(try [lock $Obj with $Key])
+
+(prevent [lock $Obj | $])
+	~(lockable $Obj)
+	(The $Obj) can't be locked.
+
+(prevent [lock (lockable $Obj) | $])
+	($Obj is locked)
+	(The $Obj is) already locked.
+
+(perform [lock $Obj])
+	With what?
+	(asking for object in [lock $Obj with []])
+
+(prevent [lock $Obj with $Key])
+	~($Key unlocks $Obj)
+	You fail to lock (the $Obj) with (the $Key).
+
+(narrate locking $Obj with $Key)
+	You lock (the $Obj) with (the $Key).
+
+(perform [lock $Obj with $Key])
+	(narrate locking $Obj with $Key)
+	(now) ($Obj is locked)
+
+%% SWITCH ON <obj>
+
+(understand [turn | $Words] as [switch on $Obj])
+	*(split $Words by [on] into $Left and $Right)
+	{
+		($Left = [])
+		*(understand $Right as non-all object $Obj)
+	(or)
+		($Right = [])
+		*(understand $Left as non-all object $Obj)
+	}
+
+(understand [switch | $Words] as [switch on $Obj])
+	*(split $Words by [on] into $Left and $Right)
+	{
+		($Left = [])
+		*(understand $Right as non-all object $Obj)
+	(or)
+		($Right = [])
+		*(understand $Left as non-all object $Obj)
+	}
+
+(understand [switch | $Words] as [switch on $Obj])
+	*(understand $Words as single object $Obj)
+	(switchable $Obj)
+	($Obj is off)
+
+(unlikely [switch on $Obj])
+	~(switchable $Obj) (or) ($Obj is on)
+
+(describe action [switch on $Obj])
+	switch (the full $Obj) on
+
+(prevent [switch on $Obj])
+	~(switchable $Obj)
+	(The $Obj) can't be switched on.
+
+(prevent [switch on $Obj])
+	($Obj is on)
+	(The $Obj) is already on.
+
+(narrate switching on $Obj)
+	You switch (the $Obj) on.
+
+(perform [switch on $Obj])
+	(narrate switching on $Obj)
+	(now) ($Obj is on)
+
+%% SWITCH OFF <obj>
+
+(understand [turn | $Words] as [switch off $Obj])
+	*(split $Words by [off] into $Left and $Right)
+	{
+		($Left = [])
+		*(understand $Right as non-all object $Obj)
+	(or)
+		($Right = [])
+		*(understand $Left as non-all object $Obj)
+	}
+
+(understand [switch | $Words] as [switch off $Obj])
+	*(split $Words by [off] into $Left and $Right)
+	{
+		($Left = [])
+		*(understand $Right as non-all object $Obj)
+	(or)
+		($Right = [])
+		*(understand $Left as non-all object $Obj)
+	}
+
+(understand [switch | $Words] as [switch off $Obj])
+	*(understand $Words as single object $Obj)
+	(switchable $Obj)
+	($Obj is on)
+
+(unlikely [switch off $Obj])
+	~(switchable $Obj) (or) ($Obj is off)
+
+(describe action [switch off $Obj])
+	switch (the full $Obj) off
+
+(prevent [switch off $Obj])
+	($Obj is off)
+	(The $Obj) is already off.
+
+(prevent [switch off $Obj])
+	~(switchable $Obj)
+	(The $Obj) can't be turned off.
+
+(narrate switching off $Obj)
+	You switch (the $Obj) off.
+
+(perform [switch off $Obj])
+	(narrate switching off $Obj)
+	(now) ($Obj is off)
+
+%% SQUEEZE <obj>
+
+(rewrite [squash | $Words] into [squeeze | $Words])
+
+(understand [squeeze | $Words] as [squeeze $Obj])
+	*(understand $Words as non-all object $Obj)
+
+(perform [squeeze $Obj])
+	You give (the $Obj) a bit of a squeeze.
+
+%% FIX <obj>
+
+(rewrite [repair | $Words] into [fix | $Words])
+(rewrite [mend | $Words] into [fix | $Words])
+
+(understand [fix | $Words] as [fix $Obj])
+	*(understand $Words as non-all object $Obj)
+
+(unlikely [fix $Obj])
+	($Obj is in order)
+
+(prevent [fix $Obj])
+	($Obj is in order)
+	You can't find anything wrong with (the $Obj).
+
+(perform [fix $Obj])
+	You don't know how to repair (the $Obj).
+	(tick) (stop)
+
+%% TASTE <obj>
+
+(rewrite [lick | $Words] into [taste | $Words])
+(rewrite [relish | $Words] into [taste | $Words])
+(rewrite [savour | $Words] into [taste | $Words])
+
+(understand [taste | $Words] as [taste $Obj])
+	*(understand $Words as non-all object $Obj)
+
+(unlikely [taste $Obj])
+	~(edible $Obj)
+	~(potable $Obj)
+
+(prevent [taste $Obj])
+	~(edible $Obj)
+	~(potable $Obj)
+	Don't be gross.
+
+(perform [taste $Obj])
+	You savour the taste of (the $Obj).
+
+%% FLY
+
+(understand [fly])
+
+(perform [fly])
+	You lack the ability.
+
+%% BITE <obj>
+
+(rewrite [chew | $Words] into [bite | $Words])
+(rewrite [gnaw at | $Words] into [bite | $Words])
+(rewrite [gnaw | $Words] into [bite | $Words])
+
+(understand [bite | $Words] as [bite $Obj])
+	*(understand $Words as single object $Obj)
+
+(perform [bite (animate $Obj)])
+	(try [attack $Obj])
+
+(perform [bite $Obj])
+	(try [eat $Obj])
+
+%% EAT <obj>
+
+(rewrite [devour | $Words] into [eat | $Words])
+(rewrite [ingest | $Words] into [eat | $Words])
+(rewrite [munch | $Words] into [eat | $Words])
+(rewrite [swallow | $Words] into [eat | $Words])
+
+(understand [eat | $Words] as [eat $Obj])
+	*(understand $Words as non-all object $Obj)
+
+(unlikely [eat $Obj])
+	~(edible $Obj)
+	~(potable $Obj)
+
+(before [eat $Obj])
+	(item $Obj)
+	(ensure $Obj is held)
+
+(instead of [eat $Obj])
+	~(edible $Obj)
+	(potable $Obj)
+	(try [drink $Obj])
+
+(prevent [eat $Obj])
+	(current player $Player)
+	{
+		($Obj = $Player)
+	(or)
+		($Obj is part of $Player)
+	}
+	Cannibalism isn't the answer to this one.
+
+(prevent [eat $Obj])
+	~(edible $Obj)
+	(The $Obj) (isn't $Obj) edible.
+
+(prevent [eat $Obj])
+	(item $Obj)
+	(when $Obj isn't directly held)
+
+(narrate eating $Obj)
+	You eat (the $Obj).
+
+(perform [eat $Obj])
+	(narrate eating $Obj)
+	(now) ($Obj is nowhere)
+	(now) ($Obj is handled)
+
+%% DRINK <obj>
+
+(rewrite [sip | $Words] into [drink | $Words])
+(rewrite [quaff | $Words] into [drink | $Words])
+
+(understand [drink | $Words] as [drink $Obj])
+	*(understand $Words as non-all object $Obj)
+
+(unlikely [drink $Obj])
+	~(potable $Obj)
+
+(before [drink $Obj])
+	(item $Obj)
+	(ensure $Obj is held)
+
+(prevent [drink $Obj])
+	~(potable $Obj)
+	You can't drink (the $Obj).
+
+(prevent [drink $Obj])
+	(item $Obj)
+	(when $Obj isn't directly held)
+
+(perform [drink $Obj])
+	You take a sip from (the $Obj).
+
+%% CUT <obj> WITH <obj>
+%% CUT <obj>
+
+(rewrite [sever | $Words] into [cut | $Words])
+(rewrite [slice | $Words] into [cut | $Words])
+(rewrite [prune | $Words] into [cut | $Words])
+(rewrite [chop | $Words] into [cut | $Words])
+(rewrite [cut off | $Words] into [cut | $Words])
+(rewrite [chop off | $Words] into [cut | $Words])
+
+(understand [cut | $Words] as [cut $A with $B])
+	*(split $Words by [with] into $Left and $Right)
+	*(understand $Left as non-all object $A)
+	*(understand $Right as single object $B)
+
+(understand [cut | $Words] as [cut $Obj])
+	*(understand $Words as non-all object $Obj)
+
+(understand [cut | $Words] as [cut $Obj])
+	*(split $Words by [off] into $Left and [])
+	*(understand $Left as non-all object $Obj)
+
+(unlikely [cut $ with $Obj])
+	~(sharp $Obj)
+
+(perform [cut $Obj])
+	With what?
+	(asking for object in [cut $Obj with []])
+
+(prevent [cut $ with $Obj])
+	~(sharp $Obj)
+	(The $Obj is) too blunt for that. %% Funny when Obj is the player.
+
+(perform [cut $Obj with $])
+	You consider cutting
+	(if) ($Obj is part of $Player) (current player $Player) (then)
+		off
+	(endif)
+	(the $Obj), but reject the idea.
+
+%% USE <obj>
+
+(understand [use | $Words] as $Action)
+	*(understand $Words as single object $Obj)
+	(if)
+		(implicit action is $Implicit)
+		~(implicit action wants direction)
+	(then)
+		(recover implicit action $Implicit $Obj into $Action)
+	(else)
+		($Action = [use $Obj])
+	(endif)
+
+(instead of [use (door $Door)])
+	(try [enter $Door])
+
+(perform [use $])
+	How? Please be more specific.
+	(stop)
+
+%% CONSULT <obj> ABOUT <topic>
+
+(understand [consult | $Words] as [consult $Obj about $Topic])
+	*(split $Words by [about] into $Left and $Right)
+	*(understand $Left as single object $Obj)
+	*(understand $Right as topic $Topic)
+
+(understand [look up | $Words] as [consult $Obj about $Topic])
+	*(split $Words by [in] into $Left and $Right)
+	*(understand $Right as single object $Obj)
+	*(understand $Left as topic $Topic)
+
+(describe action [consult $Obj about $Topic])
+	consult (the full $Obj) about (describe topic $Topic)
+
+(refuse [consult $Obj about $])
+	(just) {
+		(when $Obj is not here)
+		(or) (when $Obj is out of reach)
+	}
+
+(prevent [consult $Obj about $])
+	~(consultable $Obj)
+	You can't look things up in (the $Obj).
+
+(perform [consult $Obj about $Topic])
+	You find no information about (describe topic $Topic) in (the $Obj).
+
+%% ASK/TELL <obj> ABOUT <topic> (redirected to TALK TO by default)
+
+(understand [ask | $Words] as [ask $Person about $Topic])
+	*(split $Words by [about] into $Left and $Right)
+	*(understand $Left as single object $Person preferably animate)
+	*(understand $Right as topic $Topic)
+
+(understand [tell | $Words] as [tell $Person about $Topic])
+	*(split $Words by [about] into $Left and $Right)
+	*(understand $Left as single object $Person preferably animate)
+	*(understand $Right as topic $Topic)
+
+(describe action [ask $Person about $Topic])
+	ask (the full $Person) about (describe topic $Topic)
+
+(describe action [tell $Person about $Topic])
+	tell (the full $Person) about (describe topic $Topic)
+
+(understand [ask | $Words] as [ask $Obj])
+	*(understand $Words as single object $Obj preferably animate)
+
+(understand [tell | $Words] as [tell $Obj])
+	*(understand $Words as single object $Obj preferably animate)
+
+(describe action [ask $Person])
+	ask (the full $Person) something
+
+(describe action [tell $Person])
+	tell (the full $Person) something
+
+%% Don't require reachability:
+
+(refuse [ask $Obj | $])
+	(just) (when $Obj is not here)
+
+(refuse [tell $Obj about $])
+	(just) (when $Obj is not here)
+
+(refuse [tell $Obj])
+	(just) (when $Obj is not here)
+
+(perform [ask $Person about $])
+	(try [talk to $Person])
+
+(perform [tell $Person about $])
+	(try [talk to $Person])
+
+(perform [ask $Obj])
+	(try [talk to $Obj])
+
+(perform [tell $Obj])
+	(try [talk to $Obj])
+
+%% TALK TO <obj>
+%% TALK
+
+(rewrite [talk to | $Words] into [talk | $Words])
+(rewrite [speak to | $Words] into [talk | $Words])
+(rewrite [speak | $Words] into [talk | $Words])
+
+(understand [talk | $Words] as [talk to $Obj])
+	*(understand $Words as single object $Obj preferably animate)
+
+(understand [talk])
+
+(unlikely [talk to $Obj])
+	~(animate $Obj)
+
+(perform [talk])
+	To whom?
+	(asking for object in [talk to []])
+
+%% Don't require reachability:
+
+(refuse [talk to $Obj])
+	(just) (when $Obj is not here)
+
+(perform [talk to (current player $)])
+	You mumble a few well-chosen words to yourself.
+
+(perform [talk to $])
+	There is no reply.
+
+%% CURSE
+
+(understand [curse])
+(understand [swear] as [curse])
+
+(perform [curse])
+	You mumble a few well-chosen words to yourself.
+
+%% SHOUT TO <obj> (redirected to TALK TO by default)
+%% SHOUT (redirected to TALK by default)
+
+(rewrite [yell | $Words] into [shout | $Words])
+(rewrite [scream | $Words] into [shout | $Words])
+
+(understand [shout to | $Words] as [shout to $Obj])
+	*(understand $Words as single object $Obj preferably animate)
+
+(unlikely [shout to $Obj])
+	~(animate $Obj)
+
+(refuse [shout to $Obj])
+	(just) (when $Obj is not here)
+
+(perform [shout to $Obj])
+	(try [talk to $Obj])
+
+(understand [shout])
+
+(perform [shout])
+	To whom?
+	(asking for object in [shout to []])
+
+%% PRAY
+
+(understand [pray])
+
+(perform [pray])
+	There is no answer.
+
+%% SHRUG
+
+(understand [shrug])
+
+(perform [shrug])
+	You shrug indifferently.
+
+%% CALL <obj> (redirected to SHOUT TO by default)
+%% CALL (redirected to SHOUT by default)
+%% Stories containing a phone would override these.
+
+(rewrite [call to | $Words] into [call | $Words])
+
+(understand [call | $Words] as [call $Obj])
+	*(understand $Words as single object $Obj preferably animate)
+
+(unlikely [call $Obj])
+	~(animate $Obj)
+
+(refuse [call $Obj])
+	(just) (when $Obj is not here)
+
+(perform [call $Obj])
+	(try [shout to $Obj])
+
+(understand [call])
+
+(perform [call])
+	(try [shout])
+
+%% GREET <obj> (redirected to TALK TO by default)
+%% GREET
+
+(rewrite [hello | $Words] into [greet | $Words])
+(rewrite [hi | $Words] into [greet | $Words])
+
+(understand [greet | $Words] as [greet $Obj])
+	*(understand $Words as single object $Obj preferably animate)
+
+(unlikely [greet $Obj])
+	~(animate $Obj)
+
+(refuse [greet $Obj])
+	(just) (when $Obj is not here)
+
+(perform [greet $Obj])
+	(try [talk to $Obj])
+
+(understand [greet])
+
+(perform [greet])
+	You say hello to nobody in particular.
+
+%% TELL <obj> TO | <action>
+
+(understand [tell | $Words] as [tell $Actor to | $Action])
+	*(split $Words by [, to] into $Left and $Right)
+	*(understand $Left as single object $Actor preferably animate)
+	(rewrite $Right into $Simplified)
+	*(understand $Simplified as $Action)
+
+(understand [ask | $Words] as [tell $Actor to | $Action])
+	*(split $Words by [, to] into $Left and $Right)
+	*(understand $Left as single object $Actor preferably animate)
+	(rewrite $Right into $Simplified)
+	*(understand $Simplified as $Action)
+
+(understand [ask | $Words] as [tell $Actor to give $Obj to $Player])
+	*(split $Words by [for] into $Left and $Right)
+	*(understand $Left as single object $Actor preferably animate)
+	*(understand $Right as object $Obj preferably child of $Actor)
+	(current player $Player)
+
+%% The rule for "name comma action" is further down in the file.
+
+(unlikely [tell $Addressee to | $])
+	~(animate $Addressee)
+
+(describe action [tell $Actor to give $Obj to (current player $)])
+	ask (the full $Actor) for (the full $Obj)
+
+(describe action [tell $Actor to | $Action])
+	tell (the full $Actor) to (describe action $Action)
+
+(refuse [tell $NPC to | $])
+	(just) (when $NPC is not here)
+
+(instead of [tell $NPC to greet])
+	(try [greet $NPC])
+
+(perform [tell $Actor to | $])
+	(if) (animate $Actor) (then)
+		(The $Actor) refuse(s $Actor).
+	(else)
+		(The $Actor) (doesn't $Actor) take orders.
+	(endif)
+
+%% SMELL <obj>
+
+(rewrite [sniff | $Words] into [smell | $Words])
+(rewrite [inhale | $Words] into [smell | $Words])
+
+(understand [smell | $Words] as [smell $Obj])
+	*(understand $Words as non-all object $Obj)
+
+(refuse [smell $Obj])
+	(just) (when $Obj is not here)
+
+(perform [smell $Obj])
+	(The $Obj) smell(s $Obj) as expected.
+
+(understand [smell])
+
+(perform [smell])
+	You sniff at the air, perceiving nothing out of the ordinary.
+
+%% WAKE UP
+
+(rewrite [awake | $Words] into [wake | $Words])
+(rewrite [awaken | $Words] into [wake | $Words])
+
+(understand [wake up])
+(understand [wake] as [wake up])
+(understand [pinch | $Words] as [wake up])
+	*(understand $Words as single object $Obj)
+	(current player $Player)
+	{
+		($Obj = $Player)
+	(or)
+		($Obj is part of $Player)
+	}
+
+(perform [wake up])
+	You try to will yourself to wake up, but nothing obvious happens.
+
+%% CLIMB <obj>
+
+(rewrite [get up on | $Words] into [climb | $Words])
+(rewrite [get up onto | $Words] into [climb | $Words])
+(rewrite [get onto | $Words] into [climb | $Words])
+(rewrite [get on | $Words] into [climb | $Words])
+(rewrite [stand on | $Words] into [climb | $Words])
+(rewrite [sit on top of | $Words] into [climb | $Words])
+(rewrite [sit on | $Words] into [climb | $Words])
+(rewrite [lie on | $Words] into [climb | $Words])
+(rewrite [lie down on | $Words] into [climb | $Words])
+(rewrite [go up on | $Words] into [climb | $Words])
+(rewrite [go up onto | $Words] into [climb | $Words])
+(rewrite [go onto | $Words] into [climb | $Words])
+(rewrite [go on | $Words] into [climb | $Words])
+(rewrite [step on | $Words] into [climb | $Words])
+(rewrite [step onto | $Words] into [climb | $Words])
+(rewrite [climb up on | $Words] into [climb | $Words])
+(rewrite [climb up onto | $Words] into [climb | $Words])
+(rewrite [climb onto | $Words] into [climb | $Words])
+(rewrite [climb on | $Words] into [climb | $Words])
+(rewrite [jump to | $Words] into [climb | $Words])
+(rewrite [mount | $Words] into [climb | $Words])
+(rewrite [scale | $Words] into [climb | $Words])
+
+(understand [climb | $Words] as [climb $Obj])
+	*(understand $Words as single object $Obj preferably supporter)
+
+(unlikely [climb $Obj])
+	~(actor supporter $Obj)
+
+(unlikely [climb $Obj])
+	(current player $Actor)
+	($Obj has ancestor $Actor)
+
+(unlikely [climb $Obj])
+	(current player $Actor)
+	($Actor is nested #on $Obj)
+
+(describe action [climb $Obj])
+	get onto (the full $Obj)
+
+(instead of [climb (room $Room)])
+	~(actor supporter $Room)
+	(try [go #up])
+
+(instead of [climb (actor container $Obj)])
+	~(actor supporter $Obj)
+	(seat $Obj)
+	(try [enter $Obj])
+
+(prevent [climb $Obj])
+	(current player $Actor)
+	{
+		(when $Actor is already #on $Obj)
+		(or) (when $Obj won't accept actor #on)
+	}
+
+(prevent [climb $Dest])
+	(current player $Actor)
+	($Dest is nested $OldRel $Actor)
+	You can't get onto something that's (present-name $OldRel) yourself.
+
+(narrate climbing $Obj)
+	You get onto (the $Obj).
+
+(perform [climb $Obj])
+	(narrate climbing $Obj)
+	(current player $Actor)
+	(now) ($Actor is #on $Obj)
+
+%% ENTER <obj>
+
+(rewrite [get in | $Words] into [enter | $Words])
+(rewrite [get into | $Words] into [enter | $Words])
+(rewrite [get inside | $Words] into [enter | $Words])
+(rewrite [go in | $Words] into [enter | $Words])
+(rewrite [go into | $Words] into [enter | $Words])
+(rewrite [go inside | $Words] into [enter | $Words])
+(rewrite [sit in | $Words] into [enter | $Words])
+(rewrite [sit inside | $Words] into [enter | $Words])
+(rewrite [lie in | $Words] into [enter | $Words])
+(rewrite [enter in | $Words] into [enter | $Words])
+(rewrite [enter into | $Words] into [enter | $Words])
+(rewrite [climb in | $Words] into [enter | $Words])
+(rewrite [climb into | $Words] into [enter | $Words])
+(rewrite [climb inside | $Words] into [enter | $Words])
+(rewrite [cross | $Words] into [enter | $Words])
+(rewrite [jump into | $Words] into [enter | $Words])
+
+(understand [enter | $Words] as [enter $Obj])
+	*(understand $Words as single object $Obj preferably container)
+
+(understand [go | $Words] as [enter $Obj])
+	*(understand $Words as single object $Obj)
+	{ (door $Obj) (or) ~(room $Obj) (actor container $Obj) }
+
+(unlikely [enter $Obj])
+	~(actor container $Obj)
+	~(door $Obj)
+
+(unlikely [enter $Obj])
+	(current player $Actor)
+	($Obj has ancestor $Actor)
+
+(unlikely [enter $Obj])
+	(current player $Actor)
+	($Actor is nested #in $Obj)
+
+(describe action [enter $Obj])
+	get into (the full $Obj)
+
+~(refuse [enter (room $)])
+
+(instead of [enter (room $Room)])
+	(current room $Here)
+	~($Here = $Room)
+	(if)
+		(from $Here go $Dir to $Room)
+	(or)
+		(from $Here through $Door to $Room)
+		(from $Here go $Dir to $Door)
+	(then)
+		(direction $Dir) %% Assure the compiler that $Dir is bound.
+		(try [go $Dir])
+	(else)
+		(The $Room) isn't here.
+		(tick) (stop)
+	(endif)
+
+(instead of [enter (door $Obj)])
+	(current room $Room)
+	(from $Room go $Dir to $Obj)
+	(direction $Dir) %% Assure the compiler that $Dir is bound.
+	(try [go $Dir])
+
+(instead of [enter (wearable $Obj)])
+	(try [wear $Obj])
+
+(instead of [enter (actor supporter $Obj)])
+	~(actor container $Obj)
+	(seat $Obj)
+	(try [climb $Obj])
+
+(prevent [enter $Obj])
+	(current player $Actor)
+	{
+		(when $Actor is already #in $Obj)
+		(or) (prevent entering $Obj)
+	}
+
+(prevent [enter $Dest])
+	(current player $Actor)
+	($Dest is nested $OldRel $Actor)
+	You can't get into something that's (present-name $OldRel) yourself.
+
+(perform [enter $Obj])
+	(narrate entering $Obj)
+	(current player $Actor)
+	(now) ($Actor is #in $Obj)
+
+%% SIT
+
+(understand [sit])
+
+(unlikely [sit])
+
+(perform [sit])
+	On what?
+	(asking for object in [climb []])
+
+%% STAND
+
+(rewrite [stand up] into [stand])
+
+(understand [stand])
+
+(describe action [stand])
+	stand up
+
+(instead of [stand])
+	(current player $Player)
+	($Player has parent $Obj)
+	~(room $Obj)
+	(try [leave $Obj])
+
+(perform [stand])
+	You're already standing up.
+	(tick) (stop)
+
+%% LEAVE <obj>
+%% LEAVE
+
+(rewrite [exit | $Words] into [leave | $Words])
+
+(understand [leave | $Words] as [leave $Obj])
+	*(understand $Words as single object $Obj)
+
+(understand [get out of | $Words] as [leave $Obj])
+	*(understand $Words as single object $Obj preferably container)
+
+(understand [get off of | $Words] as [leave $Obj])
+	*(understand $Words as single object $Obj preferably supporter)
+
+(understand [get off | $Words] as [leave $Obj])
+	*(understand $Words as single object $Obj preferably supporter)
+
+(understand [jump off | $Words] as [leave $Obj])
+	*(understand $Words as single object $Obj preferably supporter)
+
+(understand [leave])
+(understand [get out] as [leave])
+(understand [get off] as [leave])
+
+(understand [jump off] as [leave])
+	(current player $Player)
+	($Player has relation #on)
+
+(describe action [leave $Obj])
+	(current player $Player)
+	($Player is $Rel $Obj)
+	get (reverse-name $Rel) (the $Obj)
+
+(describe action [leave])
+	(current player $Player)
+	($Player is $Rel $Obj)
+	~(room $Obj)
+	get (reverse-name $Rel) (the $Obj)
+
+(unlikely [leave $Obj])
+	(current player $Actor)
+	~{
+		($Actor has ancestor $Obj)
+	(or)
+		($Obj is nested #wornby $Actor)
+	}
+
+(refuse [leave (room $Room)])
+	~(current room $Room)
+	But you aren't in (the $Room).
+
+(perform [leave])
+	(current player $Player)
+	($Player has parent $Obj)
+	(if) (room $Obj) (then)
+		(try [go #out])
+	(else)
+		(try [leave $Obj])
+	(endif)
+
+(before [leave $Obj])
+	(current player $Actor)
+	($Actor has ancestor $Obj)
+	(recursively leave descendants of $Obj)
+
+(instead of [leave $Obj])
+	(current player $Actor)
+	($Obj is nested #wornby $Actor)
+	(try [remove $Obj])
+
+(instead of [leave (current room $)])
+	(try [go #out])
+
+(prevent [leave $Obj])
+	(current player $Player)
+	~($Player has parent $Obj)
+	You're not
+	(if) (supporter $Obj) (then)
+		(if) (container $Obj) (then)
+			in or
+		(endif)
+		on top of
+	(else)
+		inside
+	(endif)
+	(the $Obj).
+
+(narrate leaving $Obj)
+	You
+	(current player $Player)
+	(if) ($Player is $Rel $Obj) (then)
+		get (reverse-name $Rel)
+	(else)
+		leave
+	(endif)
+	(the $Obj).
+
+(perform [leave $Obj])
+	(narrate leaving $Obj)
+	(current player $Player)
+	($Obj is $NewRel $NewObj)
+	(now) ($Player is $NewRel $NewObj)
+
+%% GO TO <room>
+
+%% It is only possible to go to visited rooms and non-hidden objects in this
+%% way.
+
+(rewrite [go to | $Words] into [go | $Words])
+(rewrite [approach | $Words] into [go | $Words])
+
+(understand [go | $Words] as [go to $Room])
+	(filter $Words into $Filtered)
+	(nonempty $Filtered)
+	*(room $Room)
+	($Room is visited)
+	(collect words)
+		*(dict $Room)
+	(and check $Filtered)
+
+(unlikely [go to (current room $)])
+
+~(refuse [go to $])
+
+(perform [go to $Room])
+	(current room $Here)
+	(if) ($Here = $Room) (then)
+		You are already in (the $Room).
+		(tick) (stop)
+	(elseif) (shortest path from $Here to $Room is $Path) (then)
+		(exhaust) {
+			*($Dir is one of $Path)
+			(line) \( attempting to go (name $Dir) \) (line)
+			(try [go $Dir])
+			(tick)
+			(par)
+		}
+		(inhibit next tick)
+	(else)
+		You don't know how to get to (the $Room) from here.
+		(tick) (stop)
+	(endif)
+
+%% FIND <obj>
+
+%% FIND takes the player to the room that currently contains the object.
+%% For objects that move around autonomously, it may be a good idea to override
+%% this rule, to say e.g. "you don't know where the cat might be right now".
+%% Note that floating objects, including doors, will remain in the room where
+%% they were last encountered. This will usually put the player on the expected
+%% side of doors.
+
+(rewrite [look for | $Words] into [find | $Words])
+
+(understand [find | $Words] as [find $Obj])
+	{
+		(filter $Words into $Filtered)
+		(nonempty $Filtered)
+		*(room $Room)
+		($Room is visited)
+		*($Obj has ancestor $Room)
+		~($Obj is in scope) %% Prevent double matches due to next branch.
+		~($Obj is hidden)
+		(collect words)
+			*(dict $Obj)
+		(and check $Filtered)
+	(or)
+		%% The purpose of this branch is to support pronouns, as well
+		%% as not-here objects that are in scope.
+		*(understand $Words as single object $Obj)
+		~(room $Obj)
+	}
+
+(unlikely [find $Obj])
+	($Obj is nowhere)
+
+~(refuse [find $])
+
+(prevent [find $Obj])
+	(when $Obj is already held)
+
+(prevent [find $Obj])
+	($Obj is in room $Room)
+	(current room $Room)
+	(The $Obj) (is $Obj)
+	(if) ($Obj is $Rel $Loc) ~(room $Loc) (then)
+		(name $Rel) (the $Loc)
+	(else)
+		here
+	(endif)
+	.
+
+(prevent [find $Obj])
+	($Obj is in room $Room)
+	(current room $Here)
+	~(shortest path from $Here to $Room is $)
+	You don't know how to get to (the $Obj) from here.
+
+(perform [find $Obj])
+	(if) ($Obj is in room $Room) (then)
+		(line) \( attempting to go to (the $Room) \) (line)
+		(try [go to $Room])
+	(else)
+		You don't know where to find (the $Obj).
+	(endif)
+
+%% Navigation by direction:
+
+%% What the player types is eventually translated into one of:
+
+%% [leave $Room $Dir]
+%% [leave $Room $Dir by $Vehicle]
+%% [leave $Room $Dir with $Obj]
+
+%% These are generally the ones to override/extend.
+
+%% The default rules for the aforementioned actions invoke '(prevent entering
+%% $Room)' and '(narrate entering $Room)'. These predicates can of course also
+%% be overridden. Thus, entering a room is not an action of its own, but is
+%% an inherent part of leaving a room.
+
+%% GO <direction>
+
+(rewrite [go further | $Words] into [go | $Words])
+(rewrite [crawl | $Words] into [go | $Words])
+(rewrite [walk | $Words] into [go | $Words])
+
+%% The rule for just typing a list of directions (without a verb) is further
+%% down in the file.
+
+(understand [go | $Words] as [go $Dir])
+	*(understand $Words as direction $Dir)
+
+(understand [leave | $Words] as [go $Dir])
+	*(understand $Words as direction $Dir)
+
+(understand [get | $Words] as [go $Dir])
+	*(understand $Words as direction $Dir)
+
+(understand [climb | $Words] as [go $Dir])
+	*(understand $Words as direction $Dir)
+
+(understand [go] as [go #out])
+
+(understand [enter] as [go #in])
+
+(understand [climb] as [go $Dir])
+	(current room $Room)
+	*($Dir is one of [#up #down])
+	(from $Room go $Dir to $)
+
+(unlikely-complex [go $DirList])
+	(just)
+	(if) (direction $DirList) (then)
+		($Dir = $DirList)
+	(else)
+		%% Only consider the first direction in the list.
+		([+ $Dir | $] = $DirList)
+	(endif)
+	(current room $Room)
+	~{
+		(from $Room go $Dir to $Target)
+		{ (room $Target) (or) (door $Target) (or) (direction $Target) }
+	}
+
+(before [go $Dir])
+	(current player $Actor)
+	~{ ($Dir = #down) ($Actor has relation #on) }
+	~{ ($Dir = #out) ($Actor has relation #in) }
+	~{ ($Dir = #up) ($Actor has parent $Parent) (seat $Parent) }
+	(recursively leave non-vehicles)
+
+(before [go $Dir])
+	(current player $Actor)
+	~{ ($Dir = #down) ($Actor has relation #on) }
+	~{ ($Dir = #out) ($Actor has relation #in) }
+	(current room $Room)
+	(from $Room go $Dir to $Target)
+	(door $Target)
+	($Target is closed)
+	(first try [open $Target])
+
+(instead of [go #up])
+	(current player $Player)
+	($Player has parent $Obj)
+	(seat $Obj)
+	(try [leave $Obj])
+
+(instead of [go #down])
+	(current player $Actor)
+	($Actor is #on $Obj)
+	(try [leave $Obj])
+
+(instead of [go #out])
+	(current player $Actor)
+	($Actor is #in $Obj)
+	~(room $Obj)
+	(try [leave $Obj])
+
+(prevent [go $])
+	(current player $Actor)
+	($Actor is $Rel $Obj)
+	~(room $Obj)
+	(when $Actor is $Rel $Obj)
+
+(perform [go $Dir])
+	(current player $Actor)
+	(current room $Room)
+	(if) ($Actor has parent $Room) (then)
+		(try [leave $Room $Dir])
+	(else)
+		($Actor has parent $Vehicle)
+		(try [leave $Room $Dir by $Vehicle])
+	(endif)
+
+%% PUSH <obj> <dir>
+
+(rewrite [move | $Words] into [push | $Words])
+(rewrite [shove | $Words] into [push | $Words])
+(rewrite [shift | $Words] into [push | $Words])
+(rewrite [press | $Words] into [push | $Words])
+
+(understand [push | $Words] as [push $Obj $Dir])
+	*(split $Words anywhere into $Left and $Right)
+	*(understand $Right as direction $Dir)
+	*(understand $Left as single object $Obj)
+
+(unlikely [push $Obj $])
+	~(pushable $Obj)
+
+(before [push $ $])
+	(recursively leave non-vehicles)
+
+(before [push $ $Dir])
+	(current room $Room)
+	(from $Room go $Dir to $Target)
+	(door $Target)
+	($Target is closed)
+	(first try [open $Target])
+
+(prevent [push $Obj $])
+	~(pushable $Obj)
+	(The $Obj) can't be pushed from place to place.
+
+(prevent [push $ $])
+	(current player $Actor)
+	($Actor is $Rel $Obj)
+	~{ ($Rel = #in) (room $Obj) }
+	(when $Actor is $Rel $Obj)
+
+(perform [push $Obj $Dir])
+	(current room $Room)
+	(try [leave $Room $Dir with $Obj])
+
+%% PUSH <obj>
+
+(understand [push | $Words] as [push $Obj])
+	*(understand $Words as non-all object $Obj)
+
+(perform [push (pushable $Obj)])
+	In what direction?
+	(asking for direction in [push $Obj []])
+
+(perform [push (room $)])
+	Pushing on your surroundings has no effect.
+
+(perform [push (item $Obj)])
+	You give (the $Obj) a bit of a push.
+
+(perform [push $Obj])
+	You apply a bit of force to (the $Obj), but (it $Obj) (doesn't $Obj) budge.
+
+%% PULL <obj>
+
+(rewrite [yank | $Words] into [pull | $Words])
+(rewrite [drag | $Words] into [pull | $Words])
+(rewrite [tug | $Words] into [pull | $Words])
+(rewrite [tow | $Words] into [pull | $Words])
+(rewrite [pull on | $Words] into [pull | $Words])
+
+(understand [pull | $Words] as [pull $Obj])
+	*(understand $Words as non-all object $Obj)
+
+(perform [pull $Obj])
+	You yank at (the $Obj), but
+	(if) (item $Obj) (then)
+		nothing noteworthy happens.
+	(else)
+		(it $Obj) won't budge.
+	(endif)
+
+%% TURN <obj>
+
+(rewrite [rotate | $Words] into [turn | $Words])
+(rewrite [twist | $Words] into [turn | $Words])
+(rewrite [screw | $Words] into [turn | $Words])
+(rewrite [unscrew | $Words] into [turn | $Words])
+
+(understand [turn | $Words] as [turn $Obj])
+	*(understand $Words as non-all object $Obj)
+
+(prevent [turn (room $Obj)])
+	You can't turn (the $Obj).
+
+(perform [turn $Obj])
+	Turning (the $Obj) has no apparent effect.
+
+%% READ <obj>
+
+(understand [read | $Words] as [read $Obj])
+	*(understand $Words as non-all object $Obj)
+
+(prevent [read $])
+	~(player can see)
+	It is too dark to read.
+
+(perform [read $Obj])
+	There's nothing written on (the $Obj).
+
+%% FLUSH <obj>
+%% FLUSH
+
+(understand [flush | $Words] as [flush $Obj])
+	*(understand $Words as non-all object $Obj)
+
+(perform [flush $Obj])
+	You don't know how to flush (the $Obj).
+	(tick) (stop)
+
+(understand [flush])
+
+(perform [flush])
+	Flush what?
+	(asking for object in [flush []])
+
+%% SWIM IN <obj>
+%% SWIM
+
+(rewrite [bathe | $Words] into [swim | $Words])
+
+(understand [swim in | $Words] as [swim in $Obj])
+	*(understand $Words as single object $Obj)
+
+(perform [swim in $Obj])
+	You can't swim in (the $Obj).
+	(tick) (stop)
+
+(understand [swim])
+
+(perform [swim])
+	In what?
+	(asking for object in [swim in []])
+
+%% CLEAN <obj>
+
+(rewrite [brush | $Words] into [clean | $Words])
+(rewrite [shine | $Words] into [clean | $Words])
+(rewrite [polish | $Words] into [clean | $Words])
+(rewrite [sweep | $Words] into [clean | $Words])
+(rewrite [dust | $Words] into [clean | $Words])
+(rewrite [wipe | $Words] into [clean | $Words])
+(rewrite [scrub | $Words] into [clean | $Words])
+
+(understand [clean | $Words] as [clean $Obj])
+	*(understand $Words as non-all object $Obj)
+
+(perform [clean $Obj])
+	You make a half-hearted attempt at cleaning (the $Obj).
+
+%% TIE <obj> TO <obj>
+%% TIE <obj>
+
+(rewrite [bind | $Words] into [tie | $Words])
+(rewrite [attach | $Words] into [tie | $Words])
+(rewrite [fasten | $Words] into [tie | $Words])
+
+(understand [tie | $Words] as [tie $A to $B])
+	*(split $Words by [to on onto around] into $Left and $Right)
+	*(understand $Left as single object $A)
+	(if) ($Right = [itself]) (then)
+		($B = $A)
+	(else)
+		*(understand $Right as single object $B)
+	(endif)
+
+(understand [tie | $Words] as [tie $Obj])
+	*(understand $Words as single object $Obj)
+
+(unlikely [tie $])
+
+(perform [tie $Obj])
+	To what?
+	(asking for object in [tie $Obj to []])
+
+(perform [tie $A to $B])
+	There's no obvious way to tie (the $A) to (the $B).
+	(tick) (stop)
+
+%% UNTIE <obj> FROM <obj>
+%% UNTIE <obj>
+
+(understand [untie | $Words] as [untie $A from $B])
+	*(split $Words by [from] into $Left and $Right)
+	*(understand $Left as single object $A)
+	(if) ($Right = [itself]) (then)
+		($B = $A)
+	(else)
+		*(understand $Right as single object $B)
+	(endif)
+
+(unlikely [untie $Obj from $])
+	(unlikely [untie $Obj])
+
+(understand [untie | $Words] as [untie $Obj])
+	*(understand $Words as non-all object $Obj)
+
+(perform [untie $Obj])
+	(The $Obj) isn't tied to anything.
+	(tick) (stop)
+
+(perform [untie $Obj from $OtherObj])
+	(The $Obj) isn't tied to (the $OtherObj).
+	(tick) (stop)
+
+%% ATTACK <obj> WITH <obj>
+%% ATTACK <obj>
+
+(rewrite [break | $Words] into [attack | $Words])
+(rewrite [smash | $Words] into [attack | $Words])
+(rewrite [hit | $Words] into [attack | $Words])
+(rewrite [slap | $Words] into [attack | $Words])
+(rewrite [kick | $Words] into [attack | $Words])
+(rewrite [fight | $Words] into [attack | $Words])
+(rewrite [torture | $Words] into [attack | $Words])
+(rewrite [wreck | $Words] into [attack | $Words])
+(rewrite [crack | $Words] into [attack | $Words])
+(rewrite [destroy | $Words] into [attack | $Words])
+(rewrite [murder | $Words] into [attack | $Words])
+(rewrite [kill | $Words] into [attack | $Words])
+(rewrite [punch | $Words] into [attack | $Words])
+(rewrite [thump | $Words] into [attack | $Words])
+
+(understand [attack | $Words] as [attack $A with $B])
+	*(split $Words by [with] into $Left and $Right)
+	*(understand $Left as non-all object $A)
+	*(understand $Right as object $B preferably held)
+
+(unlikely [attack $ with $Obj])
+	~(item $Obj)
+
+(unlikely [attack $ with $Obj])
+	(current player $Actor)
+	~($Obj has ancestor $Actor)
+
+(before [attack $ with $Obj])
+	(ensure $Obj is held)
+
+(prevent [attack $ with $Obj])
+	(when $Obj isn't directly held)
+
+(perform [attack $Obj with $])
+	(try [attack $Obj])
+
+(understand [attack | $Words] as [attack $Obj])
+	*(understand $Words as single object $Obj)
+
+(perform [attack $Obj])
+	You consider attacking (the $Obj), but reject the idea.
+
+%% LEAVE <room> <dir>
+%% LEAVE <room> <dir> BY <vehicle>
+%% LEAVE <room> <dir> WITH <object>
+
+(describe action [leave $Room $Dir])
+	leave (the $Room) going (name $Dir)
+
+(describe action [leave $Room $Dir by $Obj])
+	leave (the $Room) by (the $Obj) going (name $Dir)
+
+(describe action [leave $Room $Dir with $Obj])
+	leave (the $Room) pushing (the $Obj) (name $Dir)
+
+(instead of [leave $Room $Dir])
+	(from $Room go $Dir to $Target)
+	(direction $Target)
+	(try [leave $Room $Target])
+
+(prevent [leave $Room $Dir])
+	(if) (from $Room go $Dir to $Target) (then)
+		(if) (door $Target) (then)
+			{
+				(when $Target blocks passage)
+			(or)
+				(from $Room through $Target to $OtherRoom)
+				(prevent entering $OtherRoom)
+			}
+		(elseif) (room $Target) (then)
+			(prevent entering $Target)
+		(else)
+			(narrate failing to leave $Room $Dir)
+		(endif)
+	(else)
+		(if) ($Dir is one of [#out #in]) (then)
+			In what direction?
+			(asking for direction in [go []])
+		(else)
+			(narrate failing to leave $Room $Dir)
+		(endif)
+	(endif)
+
+(narrate leaving $Room $Dir)
+	You
+	(if) ($Dir is one of [#up #down]) (then)
+		climb
+	(elseif) (player can see) (then)
+		walk
+	(else)
+		feel your way
+	(endif)
+	(name $Dir)
+	(if) (from $Room go $Dir to $Target) (door $Target) (then)
+		through (the $Target)
+	(endif)
+	.
+
+(perform [leave $Room $Dir])
+	(narrate leaving $Room $Dir)
+	(from $Room go $Dir to room $Target)
+	(enter $Target)
+
+(instead of [leave $Room $Dir with $Obj])
+	(from $Room go $Dir to $Target)
+	(direction $Target)
+	(try [leave $Room $Target with $Obj])
+
+(prevent [leave $Room $Dir with $])
+	(prevent [leave $Room $Dir])
+
+(narrate leaving $ $Dir with $Obj)
+	You push (the $Obj) (name $Dir).
+	(par)
+
+(perform [leave $Room $Dir with $PushObj])
+	(narrate leaving $Room $Dir with $PushObj)
+	(from $Room go $Dir to room $NewRoom)
+	(now) ($PushObj is #in $NewRoom)
+	(now) ($PushObj is handled)
+	(enter $NewRoom)
+
+(instead of [leave $Room $Dir by $Obj])
+	(from $Room go $Dir to $Target)
+	(direction $Target)
+	(try [leave $Room $Target by $Obj])
+
+(prevent [leave $Room $Dir by $])
+	(prevent [leave $Room $Dir])
+
+(narrate leaving $ $Dir by $Obj)
+	You drive (the $Obj) (name $Dir).
+	(par)
+
+(perform [leave $Room $Dir by $Vehicle])
+	(narrate leaving $Room $Dir by $Vehicle)
+	(from $Room go $Dir to room $NewRoom)
+	(enter $NewRoom by $Vehicle)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Commands
+
+@(understand command $Action)
+	(understand $Action)
+	(command $Action)
+
+(describe action (command $Action))
+	issue the (exhaust) { *($Word is one of $Action) $Word } command
+
+%% AGAIN and UNDO are treated as a special cases in the toplevel parser.
+
+(rewrite [g] into [again])
+
+%% QUIT
+
+(rewrite [q] into [quit])
+
+(understand command [quit])
+(perform [quit])
+	Really quit? \(y (no space) / (no space) n\)
+	(if) (yesno) (then)
+		(display quit message)
+		(line)
+		(quit)
+	(endif)
+	(stop)
+
+(display quit message)
+	(par)
+	Thanks for playing!
+
+%% RESTART
+
+(understand command [restart])
+(perform [restart])
+	Restart the game from the beginning? \(y (no space) / (no space) n\)
+	(if) (yesno) (then)
+		(restart)
+		Failed to restart.
+	(endif)
+	(stop)
+
+%% SAVE
+
+(understand command [save])
+(perform [save])
+	(if) (save $ComingBack) (then)
+		(if) ($ComingBack = 1) (then)
+			(roman)
+			Game state restored successfully.
+			(line)
+			(location headline)
+		(else)
+			Game state saved successfully.
+		(endif)
+	(else)
+		Failed to save the game state.
+	(endif)
+	(stop)
+
+%% RESTORE
+
+(understand command [restore])
+(perform [restore])
+	(restore)
+	Failed to restore the game state.
+	(stop)
+
+%% TRANSCRIPT
+
+(rewrite [script | $Words] into [transcript | $Words])
+
+(understand command [transcript on])
+(understand [transcript] as [transcript on])
+
+(perform [transcript on])
+	(if) (transcript on) (then)
+		Transcript enabled.
+	(else)
+		Failed to enable transcript.
+		(stop)
+	(endif)
+
+(understand command [transcript off])
+
+(perform [transcript off])
+	(transcript off)
+	Transcript disabled.
+
+%% SCORE
+
+(understand command [score])
+	(scoring enabled)
+
+(perform [score])
+	(scoring enabled)
+	(current score $Score)
+	You currently have $Score
+	(if) ($Score = 1) (then) point (else) points (endif)
+	(if) (maximum score $Max) (then)
+		out of a maximum of $Max
+	(endif)
+	.
+
+%% NOTIFY
+
+(understand command [notify on])
+	(scoring enabled)
+
+(perform [notify on])
+	(scoring enabled)
+	(now) (score notifications are on)
+	Enabling score notifications.
+
+(understand command [notify off])
+	(scoring enabled)
+
+(perform [notify off])
+	(scoring enabled)
+	(now) ~(score notifications are on)
+	Score notifications have been turned off.
+
+%% PRONOUNS
+
+(understand command [pronouns])
+(perform [pronouns])
+	"Me" refers to yourself. (line)
+	(collect $Obj)
+		(player's it refers to $Obj)
+	(or)
+		(narrator's it refers to $Obj)
+	(into $ItList)
+	(if) (nonempty $ItList) (then) "It" refers to (or-listing $ItList). (line) (endif)
+	(if) (her refers to $Her) (then) "Her" refers to (the $Her). (line) (endif)
+	(if) (him refers to $Him) (then) "Him" refers to (the $Him). (line) (endif)
+	(if) (them refers to $Them) (then) "Them" refers to (the $Them). (line) (endif)
+
+%% VERBOSE / BRIEF / SUPERBRIEF
+
+(understand command [verbose])
+(understand [brief] as [verbose])
+(understand [superbrief] as [verbose])
+(perform [verbose])
+	The verbosity level of this story is not adjustable.
+	(stop)
+
+%% VERSION
+
+(understand command [version])
+(understand [banner] as [version])
+(perform [version])
+	(banner)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Understanding actions with special syntax
+
+%% Rules for understanding actions that do not begin with a verb should go
+%% here. This allows the other rules (that do begin with a verb) to be lumped
+%% together into a single, efficient lookup operation.
+
+(understand $Words as [go $Dir])
+	~(implicit action wants direction)
+	*(understand $Words as direction $Dir)
+
+(understand $Words as [tell $Actor to | $Action])
+	*(split $Words by [,] into $Left and $Right)
+	*(understand $Left as single object $Actor preferably animate)
+	(object $Actor) %% Significant when allowing parse errors.
+	(rewrite $Right into $Simplified)
+	*(understand $Simplified as $Action)
+
+(understand $Words as $Words)
+	(understand $Words)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Dealing with actions
+
+%% If the player enters multiple actions on one line ("get lamp. n"), they
+%% are parsed and carried out one at a time.
+
+%% A complex action ("get all") is broken down, and the simple actions are
+%% carried out in turn.
+
+%% A (simple) action may invoke preliminary actions (e.g. open the door
+%% before walking through it). These are carried out in turn.
+
+%% After the preliminary actions (before) have been carried out, the action
+%% is potentially refused. Normally, actions that involve unreachable objects
+%% are refused; this is overridden by actions, such as look at, that don't
+%% require reachability.
+
+%% If the action wasn't refused, it will be handled by the (instead of $)
+%% predicate. This predicate can be overridden for special cases in the story.
+%% The default behaviour is to further break down handling into two stages:
+%% Prevent and perform.
+%% They are separate because it's convenient to be able to override
+%% e.g. what happens when you put the twig in the fire without also overriding
+%% the default checks, such as whether you are holding the twig.
+
+%% (prevent $) should print something and succeed if the player character
+%% tries, but there's a problem with completing the action. When prevent
+%% succeeds, time is advanced (tick), and further actions are stopped.
+
+%% If prevent fails, (perform $) is invoked to carry out the action. For the
+%% eighteen core actions in this standard library, the perform rules call out
+%% to a separate (narrate ...) rule, for stories that wish to override the
+%% narration without affecting the default operations on the object tree.
+
+%% Note that the world model is updated after narrating. This allows the
+%% narrate rule to query the world as it used to be, before carrying out the
+%% operation, in order to say for instance 'you take the worm out of the can'.
+
+%% If something dramatic happens, an overriding rule should advance time if
+%% necessary and (stop). So if the player types "n. n", and the first action
+%% implies opening a door, which implies unlocking the door, and the unlocking
+%% triggers a cutscene, then opening the door is cancelled, and the second "n"
+%% is also ignored.
+
+%% After a non-command action, time is advanced using (tick). This can be
+%% inhibited by querying (inhibit next tick).
+
+%% Throughout this procedure, as soon as a refuse or prevent rule succeeds (or
+%% (stop) is invoked), the entire procedure stops, and further actions are
+%% ignored.
+
+(describe action $Action)
+	(describe self-describing action $Action)
+
+(describe self-describing action [])
+
+(describe self-describing action [(word $W) | $More])
+	(just)
+	$W
+	(describe self-describing action $More)
+
+(describe self-describing action [$Obj | $More])
+	(the full $Obj)
+	(describe self-describing action $More)
+
+(try $Action)
+	~{ (refuse $Action) (stop) }
+	(exhaust) *(before $Action)
+	~{ (refuse $Action) (stop) }
+	(instead of $Action)
+
+(try $)
+	%% Try always succeeds; this prevents accidental double-triggers.
+
+(first try $Action)
+	(line) \( first attempting to (describe action $Action) \) (line)
+	(try $Action)
+	(tick)
+	(par)
+
+(refuse $Action)
+	*($Obj is one of $Action)
+	(object $Obj)
+	~(direction $Obj)
+	~(relation $Obj)
+	{
+		(when $Obj is not here)
+		(or) (when $Obj is out of reach)
+	}
+
+(before $)	(fail)
+
+(instead of $Action)
+	~{ (prevent $Action) (tick) (stop) }
+	(perform $Action)
+
+(prevent $)	(fail)
+
+(perform $)
+
+(try-complex [$Verb | $ComplexObjects])
+	(if) ([] is one of $ComplexObjects) (then)
+		You're not aware of any such thing! (line) (fail)
+	(elseif) ([+ | $FirstMulti] is one of $ComplexObjects) (then)
+		%% If at least two actions are implied,
+		%% describe each one in turn.
+		(if) ~{ *($Obj is one of $FirstMulti) (direction $Obj) } (then)
+			(strip decorations from $FirstMulti into $Stripped)
+			(notice player's $Stripped) %% Set 'them'.
+		(endif)
+		(exhaust) {
+			*(expand complex objlist $ComplexObjects $ObjList)
+			(line) Trying to (describe action [$Verb | $ObjList]):
+			(try-decorated $Verb $ObjList)
+		}
+	(else)
+		*(expand complex objlist $ComplexObjects $ObjList)
+		(try-decorated $Verb $ObjList)
+	(endif)
+
+(try-decorated $Verb $ObjList)
+	(strip decorations from $ObjList into $CleanList)
+	(if)
+		*($Obj is one of $CleanList)
+		(object $Obj)
+		~(direction $Obj)
+		~(relation $Obj)
+		~(room $Obj)
+	(then)
+		(notice player's $Obj)
+	(endif)
+	(exhaust) {
+		*($Obj is one of $CleanList)
+		(object $Obj)
+		(now) ~($Obj is hidden)
+	}
+	($Action = [$Verb | $CleanList])
+	(try $Action)
+	(if) (command $Action) (then)
+		(now) (narrator's it is protected)
+	(else)
+		(tick)
+	(endif)
+	(par)
+
+(strip decorations from [] into [])
+
+(strip decorations from [[a $Obj] | $MoreIn] into [$Obj | $MoreOut])
+	(strip decorations from $MoreIn into $MoreOut)
+
+(strip decorations from [$Obj | $MoreIn] into [$Obj | $MoreOut])
+	(strip decorations from $MoreIn into $MoreOut)
+
+(expand complex objlist [] [])
+	(just)
+
+(expand complex objlist [[+ | $ObjList] | $MoreIn] [$Obj | $MoreOut])
+	(just)
+	*($Obj is one of $ObjList)
+	*(expand complex objlist $MoreIn $MoreOut)
+
+(expand complex objlist [$Other | $MoreIn] [$Other | $MoreOut])
+	*(expand complex objlist $MoreIn $MoreOut)
+
+(unlikely-complex [$Verb | $ComplexObjList])
+	*(expand complex objlist $ComplexObjList $SimpleObjList)
+	(strip decorations from $SimpleObjList into $Stripped)
+	(unlikely [$Verb | $Stripped])
+
+%% Current and nearby rooms are in scope, but they're rarely what the
+%% player means. The following rules ensure that most actions that mention
+%% rooms directly are considered unlikely.
+
+(unlikely $Action)
+	(unlikely due to room $Action)
+
+(unlikely due to room $Action)
+	~($Action = [leave $])
+	~($Action = [go to $])
+	~($Action = [enter $])
+	*($Obj is one of $Action)
+	(room $Obj)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Daemons
+
+(inhibit next tick)
+	(now) (inhibiting next tick)
+
+(tick)
+	(if) (inhibiting next tick) (then)
+		(now) ~(inhibiting next tick)
+	(else)
+		(exhaust) *(on every tick)
+	(endif)
+
+%% Stories may add rules to this predicate, or to (on every tick in $):
+
+(on every tick)
+	(current room $Room)
+	*(on every tick in $Room)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Numbers
+
+(parse numeral @zero into 0)
+(parse numeral @one into 1)
+(parse numeral @two into 2)
+(parse numeral @three into 3)
+(parse numeral @four into 4)
+(parse numeral @five into 5)
+(parse numeral @six into 6)
+(parse numeral @seven into 7)
+(parse numeral @eight into 8)
+(parse numeral @nine into 9)
+(parse numeral @ten into 10)
+(parse numeral @eleven into 11)
+(parse numeral @twelve into 12)
+(parse numeral @thirteen into 13)
+(parse numeral @fourteen into 14)
+(parse numeral @fifteen into 15)
+(parse numeral @sixteen into 16)
+(parse numeral @seventeen into 17)
+(parse numeral @eighteen into 18)
+(parse numeral @nineteen into 19)
+(parse numeral $N into $N) (number $N)
+
+(understand [$Word] as number $N)
+	(parse numeral $Word into $N)
+
+(spell out 1)		one
+(spell out 2)		two
+(spell out 3)		three
+(spell out 4)		four
+(spell out 5)		five
+(spell out 6)		six
+(spell out 7)		seven
+(spell out 8)		eight
+(spell out 9)		nine
+(spell out 10)		ten
+(spell out 11)		eleven
+(spell out 12)		twelve
+(spell out 13)		thirteen
+(spell out 14)		fourteen
+(spell out 15)		fifteen
+(spell out 16)		sixteen
+(spell out 17)		seventeen
+(spell out 18)		eighteen
+(spell out 19)		nineteen
+(spell out $N)		$N
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Printing the names of objects and object lists
+
+(a [])			nothing
+(a (list $List))	(a-listing $List)
+
+(the [])		something	%% May appear in incomplete actions.
+(the full [])		something	%% May appear in incomplete actions.
+(the [1])		someone		%% May appear in incomplete actions.
+(the full [1])		someone		%% May appear in incomplete actions.
+
+(the [a $Obj])			(a $Obj)
+(the [+ | $List])		(the-listing $List)
+(the (list $List))		(the-listing $List)
+
+(the full [a $Obj])		(a full $Obj)
+(the full [+ | $List])		(the-full-listing $List)
+(the full (list $List))		(the-full-listing $List)
+
+(it [$Single])			(it $Single)
+(its [$Single])			(its $Single)
+(itself [$Single])		(itself $Single)
+(is [$Single])			(is $Single)
+(isn't [$Single])		(isn't $Single)
+(has [$Single])			(has $Single)
+(does [$Single])		(does $Single)
+(s [$Single])			(s $Single)
+(es [$Single])			(es $Single)
+(the [$Single] is)		(the $Single is)
+(it [$Single] is)		(it $Single is)
+
+(it (nonempty $List))		they
+(its (nonempty $List))		their
+(itself (nonempty $List))	themselves
+(is (nonempty $List))		are
+(isn't (nonempty $List))	aren't
+(has (nonempty $List))		have
+(does (nonempty $List))		do
+(s (nonempty $List))
+(es (nonempty $List))
+(the (nonempty $List) is)	(the $List) are
+(it (nonempty $List) is)	they're
+
+(the full $Obj)		
+	(the $Obj)
+	(add location information for $Obj)
+
+(a full $Obj)
+	(a $Obj)
+	(add location information for $Obj)
+
+(add location information for $Obj)
+	(if) (clarify location of $Obj) ~(direction $Obj) ~(relation $Obj) (then)
+		(if)
+			(current room $Room)
+			(from $Room go $Dir to $Obj)
+			(direction $Dir)
+		(then)
+			(if) ($Dir = #down) (then)
+				below
+			(elseif) ($Dir = #up) (then)
+				above
+			(else)
+				to the (name $Dir)
+			(endif)
+		(elseif)
+			($Obj is $Rel $Loc)
+			~(room $Loc)
+		(then)
+			that's (name $Rel) (the full $Loc)
+		(endif)
+	(endif)
+
+(clarify location of (door $Obj))
+	~(singleton $Obj)
+
+(a ($Obj is hidden))	(reveal $Obj) (fail) %% Proceed with normal handling.
+(the ($Obj is hidden))	(reveal $Obj) (fail) %% Proceed with normal handling.
+
+(a $Obj)		(current player $Obj) yourself
+(A $Obj)		(current player $Obj) You
+(the $Obj)		(current player $Obj) yourself
+(The $Obj)		(current player $Obj) You
+(it $Obj)		(current player $Obj) you
+(its $Obj)		(current player $Obj) your
+(itself $Obj)		(current player $Obj) yourself
+(is $Obj)		(current player $Obj) are
+(isn't $Obj)		(current player $Obj) aren't
+(has $Obj)		(current player $Obj) have
+(does $Obj)		(current player $Obj) do
+(s $Obj)		(current player $Obj)
+(es $Obj)		(current player $Obj)
+(the $Obj is)		(current player $Obj) you're
+(it $Obj is)		(current player $Obj) you're
+
+(a (proper $Obj))	(name $Obj)
+(the (proper $Obj))	(name $Obj)
+
+(a (your $Obj))		your (name $Obj)
+(the (your $Obj))	your (name $Obj)
+
+(a (singleton $Obj))	(the $Obj)
+
+(a (pair $Obj))		a pair of (name $Obj)
+
+(a (uncountable $Obj))	some (name $Obj)
+
+(a (plural $Obj))	some (name $Obj)
+(it (plural $))		they
+(itself (plural $))	themselves
+(its (plural $))	their
+(it (plural $) is)	they're
+(s (plural $))
+(es (plural $))
+(is (plural $))		are
+(isn't (plural $))	aren't
+(has (plural $))	have
+(does (plural $))	do
+
+(a (an $Obj))		an (name $Obj)
+
+(it (female $))		she
+(itself (female $))	herself
+(its (female $))	her
+(it (female $) is)	she's
+
+(it (male $))		he
+(itself (male $))	himself
+(its (male $))		his
+(it (male $) is)	he's
+
+(a $Obj)		a (name $Obj)
+(the $Obj)		the (name $Obj)
+(it $)			it
+(itself $)		itself
+(its $)			its
+(s $)			(no space) s
+(es $)			(no space) es
+(is $)			is
+(isn't $)		isn't
+(has $)			has
+(does $)		does
+(the $O is)		(the $O) (is $O)
+(it $O is)		(it $O) (is $O)
+
+(doesn't $Obj)		(does $Obj) (no space) n't
+
+(name $)
+
+(Name $Obj)		(uppercase) (name $Obj)
+(A $Obj)		(uppercase) (a $Obj)
+(The $Obj)		(uppercase) (the $Obj)
+(It $Obj)		(uppercase) (it $Obj)
+(The $Obj is)		(uppercase) (the $Obj is)
+
+(open or closed $Obj)
+	(if) ($Obj is open) (then)
+		open
+	(else)
+		closed
+	(endif)
+
+(a-listing $List)
+	(listing $List @a 0)
+(the-listing $List)
+	(listing $List @t 0)
+(the-full-listing $List)
+	(listing $List @f 0)
+(or-listing $List)
+	(listing $List @o 0)
+
+(listing [] $ 0)
+	nothing
+(listing [$Head | $Tail] $Variant $NPrinted)
+	(if) (fungibility enabled) (then)
+		(combine-fungible $Tail $Head $NInc $Rest)
+	(else)
+		($Rest = $Tail)
+	(endif)
+	(if) (empty $Rest) (then)
+		(if) ($NPrinted > 1) (then)
+			,
+		(endif)
+		(if) ($NPrinted > 0) (then)
+			(if) ($Variant = @o) (then)
+				or
+			(else)
+				and
+			(endif)
+		(endif)
+	(else)
+		(if) ($NPrinted > 0) (then)
+			,
+		(endif)
+	(endif)
+	(if) (fungibility enabled) ($NInc > 1) (then)
+		(spell out $NInc) (plural name $Head)
+	(elseif) ($Variant = @a) (then)
+		(a $Head)
+	(elseif) ($Variant = @f) (then)
+		(the full $Head)
+	(else)
+		(the $Head)
+	(endif)
+	($NPrinted plus 1 into $NPp1)
+	(if) (nonempty $Rest) (then)
+		(listing $Rest $Variant $NPp1)
+	(endif)
+
+(list of objects $Rel $Loc)
+	(collect $Obj)
+		*($Obj is $Rel $Loc)
+	(into $List)
+	(a $List)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Generating dictionary words for objects
+
+(dict (your $))
+	my
+
+(dict (pair $))
+	pair
+
+(plural dict (pair $))
+	pairs
+
+(dict (openable $Obj))
+	(if) ($Obj is open) (then)
+		open opened
+	(else)
+		closed
+	(endif)
+
+(dict (lockable $Obj))
+	(if) ($Obj is locked) (then)
+		locked
+	(else)
+		unlocked
+	(endif)
+
+(dict (room $Obj))
+	(if) (current room $Obj) (then)
+		wall walls room here this location surroundings area
+	(endif)
+	(if) (inherently dark $Obj) ~(light reaches ceiling $Obj) (then)
+		dark darkness
+	(endif)
+
+%% By default, any word mentioned in the name rule is included:
+
+(dict $Obj)
+	(name $Obj)
+
+(plural dict $O)
+	(plural name $O)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Setting the pronouns from an object
+
+(notice $Obj)
+	(if) (object $Obj) (then)
+		(reveal $Obj)
+		(if) (plural $Obj) (or) (pair $Obj) (then)
+			(now) (them refers to [$Obj])
+		(elseif) (female $Obj) (then)
+			(now) (her refers to $Obj)
+		(elseif) (male $Obj) (then)
+			(now) (him refers to $Obj)
+		(else)
+			(now) (narrator's it refers to $Obj)
+			(now) (narrator's it is protected)
+			(if) (player's it refers to $Obj) (then)
+				(now) ~(player's it refers to $)
+			(endif)
+		(endif)
+	(elseif) (list $Obj) (then)
+		(if) ($Obj = [$Single]) (then)
+			(notice $Single)
+		(else)
+			(length of $Obj into $N)
+			(if) ($N < 16) (then)
+				(now) (them refers to $Obj)
+			(endif)
+		(endif)
+	(endif)
+
+(notice player's $Obj)
+	(if) ~(current player $Obj) (then)
+		(if) (plural $Obj) (or) (pair $Obj) (then)
+			(now) (them refers to [$Obj])
+		(elseif) (list $Obj) (then)
+			(if) ($Obj = [$Single]) (then)
+				(notice player's $Single)
+			(else)
+				(length of $Obj into $N)
+				(if) ($N < 16) (then)
+					(now) (them refers to $Obj)
+				(endif)
+			(endif)
+		(elseif) (female $Obj) (then)
+			(now) (her refers to $Obj)
+		(elseif) (male $Obj) (then)
+			(now) (him refers to $Obj)
+		(else)
+			(now) (player's it refers to $Obj)
+			(if) (narrator's it refers to $Obj) (then)
+				(now) ~(narrator's it refers to $)
+			(endif)
+		(endif)
+	(endif)
+
+(clear all pronouns)
+	(now) ~(player's it refers to $)
+	(now) ~(narrator's it refers to $)
+	(now) ~(her refers to $)
+	(now) ~(him refers to $)
+	(now) ~(them refers to $)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Default descriptions etc.
+
+(descr (current player $))
+	Well, there you are.
+
+(descr (door $Door))
+	~($Door blocks light)
+	(current room $Room)
+	(from $Room through $Door to $R)
+	Through (the $Door) you see (the $R).
+
+(descr (door $Door))
+	(openable $Door)
+	(The $Door is) currently (open or closed $Door).
+
+(descr $O)
+	(current room $Room)
+	*(from $Room go $Dir to $O)
+	(direction $Dir)
+	(The $O) is (name $Dir) from here.
+
+(descr $Obj)
+	(It $Obj) seem(s $Obj) to be harmless.
+
+(look $Obj)
+	($Obj has parent $Parent)
+	(look $Parent)
+
+(feel (room $))
+	You poke around at your surroundings. They feel as expected.
+
+(feel $Obj)
+	(The $Obj) feel(s $Obj) as expected.
+
+(appearance (item $Obj) #in (room $Room))
+	($Obj is handled)
+	You see (a $Obj) here.
+	(notice $Obj)
+
+(appearance (item $Obj) $Rel $Loc)
+	($Obj is handled)
+	(A $Obj) (is $Obj) (name $Rel) (the $Loc).
+	(notice $Obj)
+
+(appearance (list $List) $Rel $Loc)
+	(fungibility enabled)
+	(if) ($Rel = #in) (room $Loc) (then)
+		You see (a $List) here.
+	(else)
+		(A $List) are (name $Rel) (the $Loc).
+	(endif)
+	(notice $List)
+
+(make appearances $Rel $Loc)
+	(if)
+		~{ ($Loc is opaque) ($Loc is closed) ($Rel = #in) }
+		($Loc is $ParentRel $ParentLoc)
+	(then)
+		(make appearances $ParentRel $ParentLoc)
+	(endif)
+	(if) (fungibility enabled) (then)
+		(collect $Obj)
+			*($Obj is $Rel $Loc)
+			~($Obj is hidden)
+		(into $ObjList)
+		(fungibility-enabled appearance $ObjList $Rel $Loc)
+	(else)
+		(exhaust) {
+			*($Object is $Rel $Loc)
+			~($Object is hidden)
+			(par)
+			(appearance $Object $Rel $Loc)
+		}
+	(endif)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Fungibility
+
+(fungibility enabled)	(fail)	%% Override this from the story.
+
+(fungible $A $A)
+
+(truly fungible $A $B)
+	(fungible $A $B)
+	($A is $Rel $Parent)
+	($B is $Rel $Parent)
+
+(combine-fungible [] $ 1 [])
+(combine-fungible [$Head | $Tail] $Key $N $Excluded)
+	(if) (truly fungible $Head $Key) (then)
+		(combine-fungible $Tail $Key $NMore $Excluded)
+		($NMore plus 1 into $N)
+	(else)
+		(combine-fungible $Tail $Key $N $MoreExcl)
+		($Excluded = [$Head | $MoreExcl])
+	(endif)
+
+(strip-fungible [] [])
+(strip-fungible [$HeadIn | $MoreIn] [$HeadOut | $MoreOut])
+	(combine-fungible $MoreIn $HeadIn $N $Rest)
+	(if) (1 < $N) (then)
+		($HeadOut = [a $HeadIn]) %% Decorated.
+	(else)
+		($HeadOut = $HeadIn)
+	(endif)
+	(strip-fungible $Rest $MoreOut)
+
+(fungibility-enabled appearance [] $ $)
+
+(fungibility-enabled appearance [$Head | $Tail] $Rel $Loc)
+	(combine-fungible $Tail $Head $NInc $Rest)
+	(if) ($NInc = 1) (then)
+		(appearance $Head $Rel $Loc)
+	(else)
+		(remove from $Tail matching $Rest into $Similar)
+		(appearance [$Head | $Similar] $Rel $Loc)
+	(endif)
+	(fungibility-enabled appearance $Rest $Rel $Loc)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Common complaints and prevent-checks
+
+(when $O is out of sight)
+	(current player $Actor)
+	~($O is visible to $Actor)
+	(visibility ceiling of $Actor is $Ceil)
+	(if) (light reaches ceiling $Ceil) (then)
+		You can't see any such thing.
+	(else)
+		You can't see well enough to do that in the darkness.
+	(endif)
+
+(when $O is already held)
+	(current player $Actor)
+	{
+		($O is #heldby $Actor)
+		You're already holding (the $O).
+	(or)
+		($O is recursively worn by $Actor)
+		You're already wearing (the $O).
+	}
+
+(when $O isn't directly held)
+	(current player $Actor)
+	~($O is #heldby $Actor)
+	You're not holding (the $O).
+
+(when $Obj is not here)
+	(not here $Obj)
+	(The $Obj) (isn't $Obj) here.
+
+(when $O is out of reach)
+	(current player $Actor)
+	~($O is reachable by $Actor)
+	(if) ($O is visible to $Actor) (then)
+		You can't reach (the $O).
+	(else)
+		(The $O) (isn't $O) here.
+	(endif)
+
+(when (intangible $O) is out of reach)
+	(The $O is) intangible.
+
+(when $O is part of something)
+	($O is #partof $Parent)
+	That's part of (the $Parent).
+
+(when $Obj is fine where it is)
+	(fine where it is $Obj)
+	(if) (animate $Obj) (then)
+		(uppercase) (it $Obj is)
+	(elseif) (plural $Obj) (then)
+		Those are
+	(else)
+		That's
+	(endif)
+	fine where (it $Obj) (is $Obj).
+
+(when ~(item $O) can't be taken)
+	You can't take (the $O).
+
+~(when (supporter $O) won't accept #on)
+
+~(when (container $O) won't accept #in)
+
+(when $O won't accept $Rel)
+	(if) ($Rel is one of [#under #behind]) (then)
+		Putting things (name $Rel) (the $O) would achieve little.
+	(else)
+		You can't put things (name $Rel) (the $O).
+	(endif)
+
+~(when (actor supporter $O) won't accept actor #on)
+
+~(when (actor container $O) won't accept actor #in)
+
+(when $O won't accept actor $Rel)
+	(if) ($Rel is one of [#under #behind]) (then)
+		Going (name $Rel) (the $O) would achieve little.
+	(else)
+		It's not possible to get (towards-name $Rel) (the $O).
+	(endif)
+
+(when $O is already $Rel $Dest)
+	($O is $Rel $Dest)
+	(The $O is) already (name $Rel) (the $Dest).
+
+(when $O is $Rel $Parent)
+	($O is $Rel $Parent)
+	(The $O) will have to get (reverse-name $Rel) (the $Parent) first.
+
+(when $Obj is closed)
+	($Obj is closed)
+	(The $Obj is) closed.
+
+(when $Obj blocks passage)
+	($Obj blocks passage)
+	(if) ($Obj is closed) (then)
+		(The $Obj is) closed.
+	(else)
+		(The $Obj) (doesn't $Obj) allow you to pass.
+	(endif)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Program entry, main loop, status bar, score
+
+(program entry point)
+	(par 2)
+	(stoppable) (intro)
+	(par)
+	(update environment around player)
+	(read-parse-act loop)
+
+(intro)
+	(banner)
+
+(read-parse-act loop)
+	%% Tail-recursion is important here:
+	(read-parse-act) (fail) (or) (read-parse-act loop)
+
+(read-parse-act)
+	(stoppable) {
+		(if) (scoring enabled) (score notifications are on) (then)
+			(reported score is $Reported)
+			(current score $Score)
+			(if) ($Score < $Reported) (then)
+				($Reported minus $Score into $Diff)
+				\( Your score has gone down by (spell out $Diff)
+				point (if) ~(1 = $Diff) (then) (no space) s (endif)
+				. \)
+				(par)
+				(now) (reported score is $Score)
+			(elseif) ($Score > $Reported) (then)
+				($Score minus $Reported into $Diff)
+				\( Your score has gone up by (spell out $Diff)
+				point (if) ~(1 = $Diff) (then) (no space) s (endif)
+				. \)
+				(par)
+				(now) (reported score is $Score)
+			(endif)
+		(endif)
+		(redraw status bar)
+		> (get input $Words)
+		(parse commandline $Words)
+	}
+	(if) (narrator's it is protected) (then)
+		(now) ~(narrator's it is protected)
+	(elseif) (player's it refers to $) (then)
+		%% The narrator's it is short-lived, except when
+		%% 'it' unambiguously refers to it.
+		(now) ~(narrator's it refers to $)
+	(endif)
+	(par)
+
+(redraw status bar)
+	(status bar 1) {
+		(status headline)
+		(score headline)
+	}
+
+(status headline)
+	(current player $Player)
+	(if) (player can see) (then)
+		(current room $Room)
+		(room header $Room)
+		($Player is $Rel $Loc)
+		(if) ~{ ($Rel = #in) ($Loc = $Room) } (then)
+			\( (name $Rel) (the $Loc) \)
+		(endif)
+	(else)
+		(darkness headline)
+	(endif)
+
+(location headline)
+	(current player $Player)
+	(if) (player can see) (then)
+		(current room $Room)
+		(bold) (room header $Room) (roman)
+		($Player is $Rel $Loc)
+		(if) ~{ ($Rel = #in) ($Loc = $Room) } (then)
+			\( (name $Rel) (the $Loc) \)
+		(endif)
+	(else)
+		(bold) (darkness headline) (roman)
+	(endif)
+
+(darkness headline)
+	In the dark
+
+(narrate darkness)
+	You are surrounded by darkness.
+	(current player $Player)
+	(visibility ceiling of $Player is $Ceil)
+	(notice $Ceil)
+
+(current score 0)
+(reported score is 0)
+
+(score notifications are on)
+	(scoring enabled)
+
+(increase score by $Delta)
+	(current score $Old)
+	($Old plus $Delta into $New)
+	(now) (current score $New)
+
+(decrease score by $Delta)
+	(current score $Old)
+	($Old minus $Delta into $New)
+	(now) (current score $New)
+
+(score headline)
+	(if) (scoring enabled) (then)
+		(status bar width $Width)
+		($Width minus 17 into $Pos)
+		(cursor to row 1 column $Pos)
+		(current score $Score)
+		Score: $Score
+		(if) (maximum score $Max) (then)
+			of $Max
+		(endif)
+	(endif)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Banner and default metadata
+
+%% There is no formal requirement to print the banner, but it's appreciated
+%% and useful to the community and yourself.
+
+(banner)
+	(par)
+	(bold) (story title or default) (roman) (line)
+	(story noun) by (story author or default).
+	(line)
+	(story release $RelNum)
+	Release $RelNum.
+	Serial number (serial number).
+	(line)
+	(compiler version).
+	(library version)
+	(exhaust) { *(extension version) }
+	(par)
+
+%% Library extensions can add their name and version number to the banner:
+
+(extension version)	(fail)
+
+%% The following predicates help to conserve space when a title or author is
+%% provided. The compiler is smart enough to eliminate the second rule if the
+%% first is known to succeed:
+
+(story title or default)	(story title)
+(story title or default)	An Interactive Fiction
+
+(story author or default)	(story author)
+(story author or default)	Anonymous
+
+%% Don't warn about querying these; however, this does not disable the warning
+%% about them not being defined (for a sufficiently large story):
+
+(story title)		(fail)
+(story author)		(fail)
+
+%% We can safely supply defaults for the following:
+
+(story release 1)
+
+(story noun)	
+	An interactive fiction
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Game over
+
+(game over)
+	(par)
+	(game over status bar)
+	(if) (scoring enabled) (then)
+		(current score $Score)
+		Game over. You scored $Score
+		(if) ($Score = 1) (then) point (else) points (endif)
+		(if) (maximum score $Max) (then)
+			out of $Max
+		(endif)
+		.
+		(par)
+	(endif)
+	(game-over loop)
+
+(game over status bar)
+	(status bar 1) {
+		Game Over
+		(score headline)
+	}
+
+(game-over loop)
+	(game-over iteration) (fail) (or) (game-over loop)
+
+(game-over iteration)
+	(line)
+	Would you like to:
+	RESTART,
+	RESTORE a saved game,
+	UNDO the last move,
+	(if) (amusing enabled) (then)
+		see a list of AMUSING things to do,
+	(endif)
+	or QUIT?
+	> (get input $Words)
+	(stoppable) (parse game over $Words)
+
+(parse game over [restart])
+	(restart)
+
+(parse game over [restore])
+	(try [restore])
+
+(parse game over [undo])
+	(if) (undo) (or) (then)
+		Failed to undo last turn.
+	(endif)
+
+(parse game over [amusing])
+	(amusing enabled)
+	(amusing)
+
+(parse game over [quit])
+	(display quit message)
+	(line)
+	(quit)
+
+(parse game over [q])
+	(parse game over [quit])
+
+(parse game over $)
+	Please type one of the given words.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Parser: Global variables
+
+(global variable (reported score is $))
+(global variable (last command was $) 128)
+(global variable (implicit action is $) 16)
+
+(global variable (player's it refers to $))
+(global variable (narrator's it refers to $))
+(global variable (her refers to $))
+(global variable (him refers to $))
+(global variable (them refers to $) 16)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Parser: Rewrite
+
+%% Fallback rewrite rule does nothing.
+
+(rewrite $A into $A)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Parser: Directions
+
+%% Directions are treated separately from other objects for performance
+%% reasons. They are not in scope.
+
+(understand $Words as direction $Output)
+	(parse direction list $Words $ObjList)
+	(mark multi-object $ObjList into $Output)
+
+(parse direction list $Words [$Head | $Tail])
+	*(split $Words by [, and] into $Left and $Right)
+	(just)
+	*(parse direction $Left $Head)
+	*(parse direction list $Right $Tail)
+
+(parse direction list $Words [$Dir])
+	*(parse direction $Words $Dir)
+
+(parse direction [to | $Words] $Dir)
+	(just)
+	*(parse direction $Words $Dir)
+
+(parse direction [the | $Words] $Dir)
+	(just)
+	*(parse direction $Words $Dir)
+
+%% Something like this would work, assuming the corresponding dict rules were
+%% added:
+%%
+%% (parse direction $Input $Dir)
+%% 	(nonempty $Input)
+%% 	*(direction $Dir)
+%% 	(collect words)
+%% 		*(dict $Dir)
+%% 	(and check $Input)
+%%
+%% But the following is faster, because of indexing:
+
+(parse direction [n] #north)
+(parse direction [north] #north)
+(parse direction [northern] #north)
+(parse direction [s] #south)
+(parse direction [south] #south)
+(parse direction [southern] #south)
+(parse direction [e] #east)
+(parse direction [east] #east)
+(parse direction [eastern] #east)
+(parse direction [w] #west)
+(parse direction [west] #west)
+(parse direction [western] #west)
+(parse direction [ne] #northeast)
+(parse direction [northeast] #northeast)
+(parse direction [north-east] #northeast)
+(parse direction [nw] #northwest)
+(parse direction [northwest] #northwest)
+(parse direction [north-west] #northwest)
+(parse direction [sw] #southwest)
+(parse direction [southwest] #southwest)
+(parse direction [south-west] #southwest)
+(parse direction [se] #southeast)
+(parse direction [southeast] #southeast)
+(parse direction [south-east] #southeast)
+(parse direction [u] #up)
+(parse direction [up] #up)
+(parse direction [ceiling] #up)
+(parse direction [sky] #up)
+(parse direction [above] #up)
+(parse direction [d] #down)
+(parse direction [down] #down)
+(parse direction [below] #down)
+(parse direction [in] #in)
+(parse direction [inside] #in)
+(parse direction [into] #in)
+(parse direction [inwards] #in)
+(parse direction [through] #in)
+(parse direction [out] #out)
+(parse direction [outside] #out)
+(parse direction [outwards] #out)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Parser: Objects
+
+%% Nouns in complex actions are represented as:
+%%	an object $Obj,
+%%	a decorated object [a $Obj],
+%%	a list of objects (possibly decorated) [+ $Obj1 $Obj2 ...], or
+%%	an error code [], [,], [all]
+%% No output or other side effects are produced by the following rules.
+%% Policy/ExcludeList are ignored when there's just one matching object.
+%% Ambiguous expressions result in backtracking.
+
+(understand $Words as non-all object $Output)
+	*(parse $Words as object $Output 0 [] 0)
+(understand $Words as single object $Object)
+	*(parse $Words as single object $Object 0)
+
+(understand $Words as object $Output preferably child of $Parent)
+	*(parse $Words as object $Output $Parent [] 1)
+
+(understand $Words as object $Output preferably takable)
+	*(parse $Words as object $Output 1 [] 1)
+
+(understand $Words as object $Output preferably held)
+	*(parse $Words as object $Output 2 [] 1)
+(understand $Words as single object $Output preferably held)
+	*(parse $Words as single object $Output 2)
+(understand $Words as object $Output preferably held excluding $ExcludeObj)
+	*(parse $Words as object $Output 2 [$ExcludeObj] 1)
+
+(understand $Words as single object $Output preferably animate)
+	*(parse $Words as single object $Output 3)
+
+(understand $Words as object $Output preferably worn)
+	*(parse $Words as object $Output 4 [] 1)
+
+(understand $Words as single object $Output preferably supporter)
+	*(parse $Words as single object $Output 5)
+
+(understand $Words as single object $Output preferably container)
+	*(parse $Words as single object $Output 6)
+
+(verify object policy 1 $Obj)	%% takable
+	(item $Obj)
+	~($Obj has relation #partof)
+	~{
+		($Obj is $Rel $Player)
+		($Rel is one of [#heldby #wornby])
+		(current player $Player)
+	}
+
+(verify object policy 2 $Obj)	%% held
+	($Obj is #heldby $Player)
+	(current player $Player)
+
+(verify object policy 3 $Obj)	%% animate
+	(animate $Obj)
+
+(verify object policy 4 $Obj)	%% worn
+	($Obj is #wornby $Player)
+	(current player $Player)
+
+(verify object policy 5 $Obj)	%% supporter
+	(supporter $Obj)
+
+(verify object policy 6 $Obj)	%% container
+	(container $Obj)
+
+(parse $Words as object $Output $Policy $ExcludeList $AllAllowed)
+	*(split $Words by [but except] into $Left and $Right)
+	*(parse noun list $Left as $BaseList $Policy $ExcludeList $AllAllowed)
+	*(parse negative noun $Right from $BaseList into $ObjList)
+	(mark multi-object $ObjList into $Output)
+
+(parse $Words as object $Output $Policy $ExcludeList $AllAllowed)
+	*(parse noun list $Words as $ObjList $Policy $ExcludeList $AllAllowed)
+	(mark multi-object $ObjList into $Output)
+
+(parse $ as object $ErrCode $Policy $ $)
+	(allowing parse errors)
+	(if) ($Policy = 3) (then)
+		%% Will result in 'someone' instead of 'something' in response.
+		($ErrCode = [1])
+	(else)
+		($ErrCode = [])
+	(endif)
+
+(parse $Words as single object $Output $Policy)
+	*(parse $Words as object $ObjList $Policy [] 0)
+	(if) ($ObjList = [+ | $]) (then)
+		(allowing parse errors)
+		($Output = [,])
+	(else)
+		($Output = $ObjList)
+	(endif)
+
+(mark multi-object [$Single] into $Single)
+	~(word $Single)
+(mark multi-object [$Head | $Tail] into [+ $Head | $Tail])
+	(object $Head)
+(mark multi-object $Other into $Other)
+
+(parse noun list $Words as $ObjList $Policy $ExcludeList $AllAllowed)
+	(split $Words by [, and] into $Left and $Right)
+	*(parse basic noun $Left as $LeftObj $Policy $ExcludeList $AllAllowed)
+	*(parse noun list $Right as $RightObj $Policy $ExcludeList $AllAllowed)
+	(append $LeftObj $RightObj $ObjList)
+
+(parse noun list $Words as $ObjList $Policy $ExcludeList $AllAllowed)
+	*(parse basic noun $Words as $ObjList $Policy $ExcludeList $AllAllowed)
+
+(parse negative noun [$Number | $Words] from $BaseList into $Result)
+	{
+		($Number is one of [a an])
+		($N = 1)
+	(or)
+		(parse numeral $Number into $N)
+	}
+	(just)
+	(if) (empty $Words) (then)
+		(take $N from $BaseList into $NegList)
+	(else)
+		*(parse indefinite $Words as $NegList $N $BaseList [])
+	(endif)
+	(remove from $BaseList matching $NegList into $Result)
+
+(parse negative noun $Words from $BaseList into $Result)
+	*(parse object name $Words as $NegList 0 $BaseList [])
+	(remove from $BaseList matching $NegList into $Result)
+
+(parse basic noun [me] as [$Obj] $ $ $)
+	(current player $Obj)
+(parse basic noun [myself] as [$Obj] $ $ $)
+	(current player $Obj)
+(parse basic noun [self] as [$Obj] $ $ $)
+	(current player $Obj)
+(parse basic noun [yourself] as [$Obj] $ $ $)
+	(current player $Obj)
+(parse basic noun [you] as [$Obj] $ $ $)
+	(current player $Obj)
+
+(parse basic noun [it] as [$Obj] $ $ $)
+	{
+		(player's it refers to $Obj)
+	(or)
+		(narrator's it refers to $Obj)
+	}
+(parse basic noun [that] as [$Obj] $ $ $)
+	{
+		(player's it refers to $Obj)
+	(or)
+		(narrator's it refers to $Obj)
+	}
+(parse basic noun [some] as [$Obj] $ $ $)
+	(parse basic noun [it] as [$Obj] $ $ $)
+	(uncountable $Obj)
+(parse basic noun [her] as [$Obj] $ $ $)
+	(her refers to $Obj)
+(parse basic noun [him] as [$Obj] $ $ $)
+	(him refers to $Obj)
+(parse basic noun [them] as $ObjList $ $ $)
+	(them refers to $ObjList)
+
+(parse basic noun [everything] as $Result $Policy $ExcludeList $AllAllowed)
+	(parse basic noun [all] as $Result $Policy $ExcludeList $AllAllowed)
+
+(parse basic noun [all] as [all] $ $ 0)
+	(allowing parse errors)
+	(just)
+
+(parse basic noun [all] as $ 0 $ 1)			%% anything
+	(just)
+	(fail)
+
+(parse basic noun [all] as $Result (object $Policy) $ExcludeList 1)
+	(just)
+	(collect $Obj)
+		*($Obj has parent $Policy)
+		($Obj is in scope)
+		~($Obj is hidden)
+		~(excluded from all $Obj)
+	(into $Candidates)
+	(apply policy to $Candidates $Policy $ExcludeList $Result)
+
+(parse basic noun [all] as $Result $Policy $ExcludeList 1)
+	(just)
+	(collect $Obj)
+		*($Obj is in scope)
+		~(excluded from all $Obj)
+		~($Obj is hidden)
+		(verify object policy $Policy $Obj)
+	(into $Candidates)
+	(apply policy to $Candidates $Policy $ExcludeList $Result)
+
+(parse basic noun [all | $Words] as $ObjList $Policy $ExcludeList $)
+	*(parse object name $Words as $ObjList 1 $Policy $ExcludeList)
+(parse basic noun [every | $Words] as $ObjList $Policy $ExcludeList $)
+	*(parse object name $Words as $ObjList 1 $Policy $ExcludeList)
+(parse basic noun [each | $Words] as $ObjList $Policy $ExcludeList $)
+	*(parse object name $Words as $ObjList 1 $Policy $ExcludeList)
+
+(parse basic noun [a | $Words] as $ObjList $Policy $ExcludeList $)
+	*(parse indefinite $Words as $ObjList 1 $Policy $ExcludeList)
+(parse basic noun [an | $Words] as $ObjList $Policy $ExcludeList $)
+	*(parse indefinite $Words as $ObjList 1 $Policy $ExcludeList)
+(parse basic noun [any | $Words] as $ObjList $Policy $ExcludeList $)
+	*(parse indefinite $Words as $ObjList 1 $Policy $ExcludeList)
+(parse basic noun [some | $Words] as $ObjList $Policy $ExcludeList $)
+	*(parse indefinite $Words as $ObjList 1 $Policy $ExcludeList)
+(parse basic noun [$Number | $Words] as $ObjList $Policy $ExcludeList $)
+	(nonempty $Words)
+	(parse numeral $Number into $N)
+	*(parse indefinite $Words as $ObjList $N $Policy $ExcludeList)
+
+(parse basic noun $Words as $ObjList $Policy $ExcludeList $)
+	%% This is the common case.
+	*(parse object name $Words as $ObjList 0 $Policy $ExcludeList)
+
+(parse indefinite $Words as $Result $Limit $Policy $ExcludeList)
+	*(parse object name $Words as $ObjList 1 $Policy $ExcludeList)
+	(if) ($Limit = 1) ($ObjList = [$First $ | $]) (then)
+		($Result = [[a $First]]) %% Decorate the result.
+	(else)
+		(take $Limit from $ObjList into $Result)
+		(nonempty $Result)
+	(endif)
+
+(parse object name $Words as $Result $All $Policy $ExcludeList)
+	(filter $Words into $Filtered)
+	(nonempty $Filtered)
+	(collect $Obj)
+		%% catch expressions like 'open the eastern window'
+		($Filtered = [$Head | $Tail])
+		(nonempty $Tail)
+		(parse direction [$Head] $Dir)
+		(current room $Room)
+		*(from $Room go $Dir to object $Obj)
+		(collect words)
+			*(dict $Obj)
+		(and check $Tail)
+	(or)
+		%% this is the normal case
+		*($Obj is in scope)
+		(collect words)
+			*(dict $Obj)
+		(or)
+			*(plural dict $Obj)
+		(and check $Filtered)
+	(into $Candidates)
+	(nonempty $Candidates)
+	(apply policy to $Candidates $Policy $ExcludeList $CleanList)
+	(if)
+		%% Optimize for the common case.
+		($CleanList = [$])
+	(or)
+		%% E.g. get all wooden.
+		($All = 1)
+	(or)
+		%% A plural word causes all matching objects to be returned.
+		%% It has already been established that they all match every
+		%% mentioned plural word.
+		([$FirstObj | $] = $CleanList)
+		(collect words)
+			*(plural dict $FirstObj)
+		(into $PluralWords)
+		*($PluralWord is one of $PluralWords)
+		($PluralWord is one of $Filtered)
+	(then)
+		($Result = $CleanList)
+	(else)
+		%% Backtrack over each matching object, for disambiguation.
+		(if) (fungibility enabled) (then)
+			(strip-fungible $CleanList $UniqueList)
+			*($Obj is one of $UniqueList)
+			($Result = [$Obj])
+		(else)
+			*($Obj is one of $CleanList)
+			($Result = [$Obj])
+		(endif)
+	(endif)
+
+(filter [] into [])
+	(just)
+
+(filter [of | $MoreIn] into $MoreOut)
+	(just)
+	(filter $MoreIn into $MoreOut)
+
+(filter [the | $MoreIn] into $MoreOut)
+	(just)
+	(filter $MoreIn into $MoreOut)
+
+(filter [this | $MoreIn] into $MoreOut)
+	(just)
+	(filter $MoreIn into $MoreOut)
+
+(filter [that | $MoreIn] into $MoreOut)
+	(just)
+	(filter $MoreIn into $MoreOut)
+
+(filter [$Other | $MoreIn] into [$Other | $MoreOut])
+	(filter $MoreIn into $MoreOut)
+
+(apply policy to $Input $Policy $ExcludeList $Output)
+	(if) ($Policy = 0) (then)
+		%% anything
+		($Result1 = $Input)
+	(elseif) (object $Policy) (then)
+		%% child of $Policy
+		(collect $Obj)
+			*($Obj is one of $Input)
+			($Obj has parent $Policy)
+		(into $Result1)
+	(else)
+		%% takable, held, worn, animate, supporter, container
+		(collect $Obj)
+			*($Obj is one of $Input)
+			(verify object policy $Policy $Obj)
+		(into $Result1)
+	(endif)
+	(if) (empty $ExcludeList) (then)
+		%% Optimize the common case.
+		($Output = $Result1)
+	(else)
+		(remove from $Result1 matching $ExcludeList into $Output)
+	(endif)
+	(nonempty $Output)
+
+(apply policy to $Input $ $ $Input)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Topics
+
+(describe topic (object $Obj))
+	(the full $Obj)
+
+(describe topic $)
+	something
+
+(understand $Words as topic $Obj)
+	*(understand $Words as single object $Obj)
+
+(understand $WordList as topic $Topic)
+	*($Word is one of $WordList)
+	(topic keyword $Word implies $Topic)
+
+(topic keyword $Keyword implies $Keyword)
+	(topic keyword $Keyword)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Parser: Toplevel
+
+%% Parse and attempt each action in turn, and abort if one fails.
+%% That's because an action may modify the scope, which affects the parsing of
+%% subsequent actions.
+
+(parse commandline [])
+	Come again?
+
+(parse commandline [\* | $])
+	%% By convention used by testers to put comments in a transcript.
+
+(parse commandline $Words)
+	(now) ~(allowing parse errors)
+	(rebuild scope)
+	(parse action sequence $Words)
+
+(parse action sequence $Words)
+	(if) (split $Words by [. ; then] into $Left and $Right) (then)
+		(parse action $Left)
+		(rebuild scope)
+		(parse action sequence $Right)
+	(else)
+		(parse action $Words)
+	(endif)
+
+(parse action [])
+
+(parse action $Words)
+	%% The first step is to rewrite simple synonyms:
+
+	(rewrite $Words into $Simplified)
+
+	%% Next, we handle AGAIN:
+
+	(if) ($Simplified = [again]) (last command was $ActualWords) (then)
+	(else)
+		($ActualWords = $Simplified)
+		(now) (last command was $ActualWords)
+	(endif)
+
+	%% Handle UNDO:
+
+	(if) ($ActualWords = [undo]) (then)
+		(if) (undo) (then)
+			Failed to undo last turn.
+		(else)
+			There are no more turns to undo!
+		(endif)
+		(stop)
+	(else)
+		%% The command wasn't UNDO.
+		%% Before proceeding, save the current undo state:
+
+		(if) (save undo 1) (then)
+			(roman)
+			Undoing the last turn.
+			(line)
+			(location headline)
+			(now) (last command was [undo])
+			(now) ~(implicit action is $)
+			(now) ~(implicit action wants direction)
+			(stop)
+		(endif)
+
+		%% Parse the action. Special treatment if we've asked for
+		%% clarification, and a noun was entered on its own:
+
+		(collect $A)
+			(implicit action is $Implicit)
+			(if) (implicit action wants direction) (then)
+				*(understand $ActualWords as direction $O)
+			(else)
+				%% We don't know the correct policy, so
+				%% fall back on 'non-all'.
+				*(understand $ActualWords as non-all object $O)
+			(endif)
+			(recover implicit action $Implicit $O into $A)
+		(or)
+			*(understand $ActualWords as $A)
+		(into $AllCandidatesWithDup)
+
+		%% Since we may have multiple matches, do some sieving:
+
+		(remove duplicates $AllCandidatesWithDup $AllCandidates)
+		(if) ($AllCandidates = [$Single]) (then)
+			%% Optimize the common case.
+			(now) ~(implicit action is $)
+			(now) ~(implicit action wants direction)
+			(try-complex $Single)
+		(else)
+			(sieve action candidates $AllCandidates $ActualWords)
+		(endif)
+	(endif)
+
+(sieve action candidates $AllCandidates $ActualWords)
+	(if) (nonempty $AllCandidates) (then)
+		(now) ~(implicit action is $)
+		(now) ~(implicit action wants direction)
+		(collect $A)
+			*($A is one of $AllCandidates)
+			~(unlikely-complex $A)
+		(into $LikelyCandidates)
+		(if) (nonempty $LikelyCandidates) (then)
+			%% Consider only the likely candidates.
+			(consider action candidates $LikelyCandidates)
+		(else)
+			%% All candidates were deemed unlikely, but some
+			%% candidates are more unlikely than others. Here, we
+			%% decide that most actions that involve rooms are
+			%% very unlikely.
+			(collect $A)
+				*($A is one of $AllCandidates)
+				~(unlikely due to room $A)
+			(into $SomewhatLikely)
+			(if) (nonempty $SomewhatLikely) (then)
+				(consider action candidates $SomewhatLikely)
+			(else)
+				(consider action candidates $AllCandidates)
+			(endif)
+		(endif)
+	(elseif)
+		%% We were unable to parse the action.
+
+		%% Occasionally people like to separate actions by commas or
+		%% 'AND', but this is problematic. We can only deal with it as
+		%% a last resort, because in order to parse the part after the
+		%% separator, we need to have the right scope, and therefore we
+		%% first have to execute what's to the left of the separator.
+
+		*(split $ActualWords by [, and] into $Left and $Right)
+		*(understand $Left as $)
+	(then)
+		(parse action $Left)
+		(rebuild scope)
+		(parse action $Right)
+	(else)
+		%% Everything has failed. Can we understand a partial action,
+		%% in order to print an informative error message?
+
+		%% The multi-query inside the if-condition is unnecessary
+		%% (if-conditions are only evaluated once), but the compiler is
+		%% able to opmitize predicates better if they're consistently
+		%% queried in the same mode.
+
+		(now) (allowing parse errors)
+		(if) *(understand $ActualWords as $BadAction) (then)
+			(if) ([all] is one of $BadAction) (then)
+				\( The word "all" is not allowed in that
+				context. Please be more specific. \)
+			(elseif) ([,] is one of $BadAction) (then)
+				\( You're not allowed to use multiple objects
+				in that context. Please do it step by step. \)
+			(else)
+				\( I only understood you as far as wanting to
+				(describe action $BadAction)
+				. \)
+			(endif)
+		(else)
+			\( I'm sorry, I didn't understand what you wanted to
+			do. \)
+		(endif)
+		(stop)
+	(endif)
+
+(consider action candidates $List)
+	(if) ($List = [$Single]) (then)
+		%% Optimize the common case.
+		(try-complex $Single)
+	(else)
+		(disambiguate action $List $ComplexAction)
+		(try-complex $ComplexAction)
+	(endif)
+
+(disambiguate action $List $Result)
+	(collect $Action)
+		*($Action is one of $List)
+		~{
+			*($Action recursively contains $Obj)
+			($Obj is hidden)
+		}
+	(into $NonSpoilery)
+	(if) (empty $NonSpoilery) (then)
+		($AskList = $List)
+	(else)
+		($AskList = $NonSpoilery)
+	(endif)
+	(if) ($AskList = [$Single]) (then)
+		($Result = $Single)
+	(else)
+		Did you want to: (line)
+		(enumerate actions $AskList 1 $Last)
+		\( Type the corresponding number, or a blank line to cancel. \)
+		(line)
+		{
+			(get number from 1 to $Last $Input)
+			(nth $AskList $Input $Result)
+		(or)
+			(stop)
+		}
+	(endif)
+
+(enumerate actions [$Item1 $Item2] $N $Np1)
+	(just)
+	$N . (describe action $Item1) , or (line)
+	($N plus 1 into $Np1)
+	$Np1 . (describe action $Item2) ? (line)
+(enumerate actions [$Item1 $Item2 | $] 9 10)
+	(just)
+	(enumerate actions [$Item1 $Item2] 9 10)
+	\(List truncated.\) (line)
+(enumerate actions [$Head | $Tail] $N $Last)
+	$N . (describe action $Head) , (line)
+	($N plus 1 into $Np1)
+	(enumerate actions $Tail $Np1 $Last)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Asking for clarification
+
+(asking for object in $Action)
+	(now) (implicit action is $Action)
+	(now) ~(implicit action wants direction)
+	(stop)
+
+(asking for direction in $Action)
+	(now) (implicit action is $Action)
+	(now) (implicit action wants direction)
+	(stop)
+
+(recover implicit action [] $ into [])
+
+(recover implicit action [[] | $More] $Obj into [$Obj | $More])
+
+(recover implicit action [$Other | $MoreIn] $Obj into [$Other | $MoreOut])
+	(recover implicit action $MoreIn $Obj into $MoreOut)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Miscellaneous input routines
+
+%% Asking a yes/no question:
+
+(yesno)
+	(space) > (get input $Words)
+	(if) ($Words = [yes]) (or) ($Words = [y]) (then)
+	(elseif) ($Words = [no]) (or) ($Words = [n]) (then)
+		(fail)
+	(else)
+		Please answer yes or no
+		(yesno)
+	(endif)
+
+%% Asking for a number:
+
+(get number from $First to $Last $N)
+	$First - $Last > (get input $Input)
+	(understand $Input as number $N)
+	~($N < $First)
+	~($N > $Last)
+
+%% Waiting for a keypress:
+
+(any key)
+	(get key $)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Finding the shortest path from one room to another, using obvious exits.
+
+(shortest path from $A to $B is $Path)
+	(find paths from $A)
+	($B has distance $ from start)
+	(build path from $A to $B [] $Path)
+
+(find paths from $Start)
+	(now) ~($ has distance $ from start)
+	(now) ~($ is to be considered)
+	(now) ($Start has distance 0 from start)
+	(now) ($Start is to be considered)
+	(stoppable) (iteratively find paths)
+
+(iteratively find paths)
+	(find paths subroutine) (fail) (or) (iteratively find paths)
+
+(find paths subroutine)
+	(if) ($First is to be considered) (then)
+		%% There's at least one room left to consider.
+
+		%% Of all the rooms left to consider, pick the one with the
+		%% shortest known distance from the starting room:
+
+		($First has distance $FirstDist from start)
+		(collect $Node)
+			*($Node is to be considered)
+		(into [$ | $Considered])
+		(find nearest $Considered $FirstDist $First into $Nearest)
+
+		%% Remove it from the set of rooms left to consider (because
+		%% we're considering it now):
+
+		(now) ~($Nearest is to be considered)
+
+		%% Obtain its shortest known distance from the starting room,
+		%% and add 1. This will be the distance to each of its
+		%% neighbours, if we go there via the room under consideration.
+
+		($Nearest has distance $D from start)
+		($D plus 1 into $Dp1)
+
+		%% Consider each neighbouring room (that the player has seen):
+
+		(exhaust) {
+			*(from $Nearest go $ to room $Dest)
+			($Dest is visited)
+
+			%% Only proceed if there is no known path to the
+			%% neighbouring room, or if the new path is shorter:
+
+			(if) ($Dest has distance $OldDist from start) (then)
+				($Dp1 < $OldDist)
+			(endif)
+
+			%% Store the new path and distance:
+
+			(now) ($Dest has distance $Dp1 from start)
+			(now) (last hop before $Dest is $Nearest)
+
+			%% We must consider the neighbours of this neighbour:
+
+			(now) ($Dest is to be considered)
+		}
+	(else)
+		(stop)
+	(endif)
+
+%% Run through the list of rooms, and return the one with the shortest distance
+%% from the starting room:
+
+(find nearest [] $ $ArgMin into $ArgMin)
+(find nearest [$Head | $Tail] $Min $ArgMin into $Output)
+	(if) ($Head has distance $D from start) ($D < $Min) (then)
+		(find nearest $Tail $D $Head into $Output)
+	(else)
+		(find nearest $Tail $Min $ArgMin into $Output)
+	(endif)
+
+%% Reconstruct the full path from the 'last hop' links:
+
+(build path from $Start to $Start $SoFar $SoFar)
+(build path from $Start to $End $SoFar $Path)
+	(last hop before $End is $Last)
+	(from $Last go $Dir to room $End)
+	(build path from $Start to $Last [$Dir | $SoFar] $Path)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Updating and traversing the object tree
+
+@($Obj is $Rel $Parent)
+	%% The order of the following queries is critical when $Obj is unbound.
+	*($Obj has parent $Parent)
+	*($Obj has relation $Rel)
+
+@($Obj is nowhere)
+	~($Obj has parent $)
+
+%% Determine what room ultimately surrounds a particular object:
+
+((room $Room) is in room $Room)
+
+($Obj is in room $Room)
+	($Obj has parent $Loc)
+	($Loc is in room $Room)
+
+%% The following three predicates may be called with either parameter unbound.
+%% They will traverse the object tree in the most efficient way for each case.
+
+($Obj has ancestor $Ancestor)
+	(if) (unbound $Obj) (then)
+		*($Sub has parent $Ancestor)
+		{
+			($Obj = $Sub) (or)
+			*($Obj has ancestor $Sub)
+		}
+	(else)
+		($Obj has parent $Parent)
+		{
+			($Parent = $Ancestor) (or)
+			*($Parent has ancestor $Ancestor)
+		}
+	(endif)
+
+($Obj is nested $Rel $Loc)
+	(if) (unbound $Obj) (then)
+		*($Sub is $Rel $Loc)
+		{
+			($Obj = $Sub) (or)
+			*($Obj has ancestor $Sub)
+		}
+	(else)
+		($Obj has parent $Parent)
+		{
+			($Obj has relation $Rel)
+			($Parent = $Loc)
+		(or)
+			*($Parent is nested $Rel $Loc)
+		}
+	(endif)
+
+($Obj is part of $Ancestor)
+	(if) (unbound $Obj) (then)
+		*($Sub is #partof $Ancestor)
+		{
+			($Obj = $Sub) (or)
+			*($Obj is part of $Sub)
+		}
+	(else)
+		($Obj is #partof $Parent)
+		{
+			($Parent = $Ancestor) (or)
+			*($Parent is part of $Ancestor)
+		}
+	(endif)
+
+($Obj is recursively worn by $Actor)
+	($Obj is #wornby $Actor)
+
+($Obj is recursively worn by $Actor)
+	($Obj is #partof $OtherObj)
+	($OtherObj is recursively worn by $Actor)
+
+%% The following predicates are useful when writing before-rules:
+
+(ensure $Obj is held)
+	(current player $Actor)
+	(if) ($Obj is recursively worn by $Actor) (then)
+		(first try [remove $Obj])
+	(elseif) (item $Obj) ~($Obj is #heldby $Actor) (then)
+		(first try [take $Obj])
+	(endif)
+
+(recursively leave non-vehicles)
+	(current player $Actor)
+	($Actor has parent $Obj)
+	~(room $Obj)
+	~(vehicle $Obj)
+	(first try [leave $Obj])
+	(recursively leave non-vehicles)
+
+(recursively leave descendants of $Obj)
+	(current player $Actor)
+	($Actor has parent $FirstObj)
+	~($FirstObj = $Obj)
+	(first try [leave $FirstObj])
+	(recursively leave descendants of $Obj)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% List manipulation
+
+(append [] $A $A)
+(append [$A | $MoreA] $B [$A | $C])
+	(append $MoreA $B $C)
+
+(remove from [] matching $ into [])
+	(just)
+(remove from [$In | $MoreIn] matching $Keys into $MoreOut)
+	($In is one of $Keys)
+	(just)
+	(remove from $MoreIn matching $Keys into $MoreOut)
+(remove from [$In | $MoreIn] matching $Keys into [$In | $MoreOut])
+	(remove from $MoreIn matching $Keys into $MoreOut)
+
+(remove duplicates [] [])
+	(just)
+(remove duplicates [$Head | $MoreIn] $MoreOut)
+	($Head is one of $MoreIn)
+	(just)
+	(remove duplicates $MoreIn $MoreOut)
+(remove duplicates [$Head | $MoreIn] [$Head | $MoreOut])
+	(remove duplicates $MoreIn $MoreOut)
+
+(length of [] into 0)
+(length of [$ | $More] into $Np1)
+	(length of $More into $N)
+	($N plus 1 into $Np1)
+
+(nth [$Head | $] 1 $Head)
+(nth [$ | $Tail] $N $Result)
+	($N minus 1 into $Nm1)
+	(nth $Tail $Nm1 $Result)
+
+(last [$Last] $Last)
+(last [$ | $Tail] $Last)
+	(last $Tail $Last)
+
+(take 0 from $ into [])
+(take $N from [$Head | $MoreIn] into [$Head | $MoreOut])
+	($N minus 1 into $Nm1)
+	(take $Nm1 from $MoreIn into $MoreOut)
+
+($X contains one of $Y)
+	(split $X by $Y into $ and $)
+
+($ contains sublist [])
+($List contains sublist [$Head | $Tail])
+	(split $List by [$Head] into $ and $Rest)
+	(append $Tail $ $Rest)
+
+($List recursively contains $Element)
+	*($Obj is one of $List)
+	{
+		($Obj = $Element)
+	(or)
+		(nonempty $Obj)
+		($Obj recursively contains $Element)
+	}
+
+(reverse $Input $Output)
+	(reverse-sub $Input $Output [])
+
+(reverse-sub [] $Output $Output)
+(reverse-sub [$Head | $Tail] $Output $SoFar)
+	(reverse-sub $Tail $Output [$Head | $SoFar])
+
+(split [$First $Second | $Tail] anywhere into [$First] and [$Second | $Tail])
+(split [$First | $More] anywhere into [$First | $Left] and $Right)
+	*(split $More anywhere into $Left and $Right)
+
+(split $Input by relation $Rel into $Left and $Right)
+	(nonempty $Input)
+	*(relation $Rel)
+	(collect words)
+		*(dict $Rel)
+	(into $WordSet)
+	(nonempty $WordSet)
+	*(split $Input by $WordSet into $Left and $Right)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Get rid of some compiler warnings
+
+(plural name $)		(fail)
+(from $ go $ to $)	(fail)
+($ unlocks $)		(fail)
+(from $ through $ to $)	(fail)
+(topic keyword $)	(fail)
+(on every tick in $)	(fail)
+(scoring enabled)	(fail)
+(maximum score $)	(fail)
+(amusing enabled)	(fail)
+(amusing)		(fail)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Fatal runtime errors
+
+(error $Code entry point)
+	(roman) \( Technical trouble:
+	(report fatal error $Code)
+	Attempting to recover with UNDO. \) (line)
+	(if) (undo) (or) (then)
+		Undo failed!
+	(endif)
+
+(report fatal error 1)	Heap space exhausted.
+(report fatal error 2)	Auxiliary heap space exhausted.
+(report fatal error 3)	Type error: Expected object.
+(report fatal error 4)	Type error: Expected simple value.
+(report fatal error $)	Invalid error code!

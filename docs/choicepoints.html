@@ -1,0 +1,843 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<link rel="StyleSheet" href="style.css" type="text/css" />
+	<title>Chapter 3: Choice points</title>
+</head>
+<body>
+	<div class="chapter">
+	<h1>Chapter 3: Choice points</h1>
+	<div class="navlinks">(<a href="#disjunctions">Disjunctions</a>&nbsp;&bull; <a href="#backtracking">Backtracking</a>&nbsp;&bull; <a href="#multiqueries">Multi-queries</a>&nbsp;&bull; <a href="#exhaust">Visiting all solutions</a>&nbsp;&bull; <a href="#collect">Collecting values</a>&nbsp;&bull; <a href="#collectwords">Collecting words</a>&nbsp;&bull; <a href="#just">Just</a>)</div>
+<a id="disjunctions"></a><h2>Disjunctions</h2>
+<p>So far, we have seen that rule bodies can contain text and values to be
+printed, as well as queries to be made to predicates. As soon as a query fails,
+the entire rule fails. Hence, the rule can be regarded as a <i>conjunction</i>
+(boolean &ldquo;and&rdquo;) of queries.
+</p>
+<p>It is also possible, using special syntax, to put <i>disjunctions</i> (boolean
+&ldquo;or&rdquo;) into rule bodies. The <span class="code">(or)</span> keyword may look like a query,
+but is in fact an infix operator. Here is an example:
+</p>
+<textarea class="copyarea" id="copy0" readonly>
+(program entry point)
+	Apple: (descr #apple) (line)
+	Steak: (descr #steak) (line)
+	Door: (descr #door) (line)
+
+(descr $Obj)
+	(tasty $Obj) Yummy!
+(descr $)
+	You see nothing unexpected about it.
+
+(tasty $Obj)
+	(fruit $Obj)
+	(or)
+	($Obj = #steak) (player eats meat)
+
+(fruit #apple)
+(player eats meat)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">Apple: (descr #apple) (line)</td></tr>
+<tr><td class="left"></td><td class="right">Steak: (descr #steak) (line)</td></tr>
+<tr><td class="left"></td><td class="right">Door: (descr #door) (line)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(descr $Obj)</td></tr>
+<tr><td class="left"></td><td class="right">(tasty $Obj) Yummy!</td></tr>
+<tr><td class="both" colspan="2">(descr $)</td></tr>
+<tr><td class="left"></td><td class="right">You see nothing unexpected about it.</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(tasty $Obj)</td></tr>
+<tr><td class="left"></td><td class="right">(fruit $Obj)</td></tr>
+<tr><td class="left"></td><td class="right">(or)</td></tr>
+<tr><td class="left"></td><td class="right">($Obj = #steak) (player eats meat)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(fruit #apple)</td></tr>
+<tr><td class="both" colspan="2">(player eats meat)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy0').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The output is:
+</p>
+<div class="blkoutput">Apple: Yummy!<br />
+Steak: Yummy!<br />
+Door: You see nothing unexpected about it.</div><p>There can be more than two subexpressions in a disjunction; just separate them
+all with <span class="code">(or)</span> keywords, e.g. <span class="code">a (or) b (or) c</span>. When
+Dialog reaches a disjunction, it will attempt to enter the first subexpression.
+If that subexpression succeeds, the entire disjunction succeeds. But if it
+fails, Dialog tries the second subexpression, and so on.
+</p>
+<p>Note that the <span class="code">(or)</span> operator has low precedence: It includes
+everything to the left and right of itself. Therefore, if we try to move the
+<span class="code">tasty</span> condition verbatim into the <span class="code">Yummy</span> rule itself,
+we run into trouble:
+</p>
+<textarea class="copyarea" id="copy1" readonly>
+%% This will not work as desired:
+
+(descr $Obj)
+	(fruit $Obj) (or) ($Obj = #steak) (player eats meat)
+	Yummy!
+(descr $)
+	You see nothing unexpected about it.
+
+(fruit #apple)
+(player eats meat)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2"><span class="comment">%% This will not work as desired:</span></td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(descr $Obj)</td></tr>
+<tr><td class="left"></td><td class="right">(fruit $Obj) (or) ($Obj = #steak) (player eats meat)</td></tr>
+<tr><td class="left"></td><td class="right">Yummy!</td></tr>
+<tr><td class="both" colspan="2">(descr $)</td></tr>
+<tr><td class="left"></td><td class="right">You see nothing unexpected about it.</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(fruit #apple)</td></tr>
+<tr><td class="both" colspan="2">(player eats meat)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy1').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Now if we try to describe the apple, only the first leg of the
+<span class="code">(or)</span> expression will execute, and the query to <span class="code">(descr
+$)</span> will succeed without printing anything.
+</p>
+<p>Another special syntax comes to the rescue: Curly braces <span class="code">{ ... }</span>
+can be used to organize Dialog code into <i>blocks</i>. The <span class="code">(or)</span>
+operation extends as far as it can to the left and right, but it won't go
+beyond the limits of its containing block. Thus:
+</p>
+<textarea class="copyarea" id="copy2" readonly>
+%% The following version is correct:
+
+(descr $Obj)
+	{ (fruit $Obj) (or) ($Obj = #steak) (player eats meat) }
+	Yummy!
+(descr $)
+	You see nothing unexpected about it.
+
+(fruit #apple)
+(player eats meat)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2"><span class="comment">%% The following version is correct:</span></td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(descr $Obj)</td></tr>
+<tr><td class="left"></td><td class="right">{ (fruit $Obj) (or) ($Obj = #steak) (player eats meat) }</td></tr>
+<tr><td class="left"></td><td class="right">Yummy!</td></tr>
+<tr><td class="both" colspan="2">(descr $)</td></tr>
+<tr><td class="left"></td><td class="right">You see nothing unexpected about it.</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(fruit #apple)</td></tr>
+<tr><td class="both" colspan="2">(player eats meat)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy2').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<a id="backtracking"></a><h2>Backtracking</h2>
+<p>Now consider the following predicate, which determines who is considered
+royalty in some fictional world:
+</p>
+<textarea class="copyarea" id="copy3" readonly>
+(royalty #king)
+(royalty #queen)
+
+(royalty $Person)
+	{
+		(the mother of $Person is $Parent)
+	(or)
+		(the father of $Person is $Parent)
+	}
+	(royalty $Parent)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(royalty #king)</td></tr>
+<tr><td class="both" colspan="2">(royalty #queen)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(royalty $Person)</td></tr>
+<tr><td class="left"></td><td class="right">{</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(the mother of $Person is $Parent)</td></tr>
+<tr><td class="left"></td><td class="right">(or)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(the father of $Person is $Parent)</td></tr>
+<tr><td class="left"></td><td class="right">}</td></tr>
+<tr><td class="left"></td><td class="right">(royalty $Parent)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy3').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>To check whether a person is royalty, unless they're the actual king or queen,
+we first consider their mother (in the first leg of the disjunction). Let's
+say the query succeeds, binding <span class="code">$Parent</span> to whoever is the mother
+of <span class="code">$Person</span>. Because the first leg succeeded, so does the entire
+disjunction. And if the parent turns out to be royalty, then the entire rule
+succeeds. But otherwise, we're in a position where <span class="code">$Parent</span> is
+bound, and the recursive call to <span class="code">(royalty&nbsp;$)</span> has failed. When this
+happens, Dialog needs to <i>unbind</i> <span class="code">$Parent</span>, before going back
+to explore the second leg of the disjunction. This is called
+<i>backtracking</i>.
+</p>
+<p>Here is how backtracking works: When Dialog first encounters a disjunction, it
+creates a <i>choice point</i>. This is a bit like saving the state of a game: A
+snapshot is made of all relevant variables, and later on we can restore the
+snapshot and explore a different path forward. And we have already seen the
+condition that causes Dialog to revert back to the last choice point: It is
+failure (to satisfy a query).
+</p>
+<p>On failure, all variable bindings are rolled back to their state at the time
+when the choice point was created, including any variable bindings made from
+within subroutine calls. But of course, side-effects cannot be undone: What's
+printed is printed. This can be used to narrate what's going on while the
+program is searching for a solution:
+</p>
+<textarea class="copyarea" id="copy4" readonly>
+(program entry point)
+	{
+		($X = #door)
+	(or)
+		($X = #foot)
+	(or)
+		($X = #apple)
+	(or)
+		($X = #pencil)
+	}
+	Checking (the $X).
+	(fruit $X) %% If the query fails, the most recent choice point is restored.
+	Yes, it's a fruit!
+
+(fruit #apple)
+
+(the #apple)	the green apple
+(the #door)	the oaken door
+(the #foot)	my left foot
+(the #pencil)	the pencil
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">{</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>($X = #door)</td></tr>
+<tr><td class="left"></td><td class="right">(or)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>($X = #foot)</td></tr>
+<tr><td class="left"></td><td class="right">(or)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>($X = #apple)</td></tr>
+<tr><td class="left"></td><td class="right">(or)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>($X = #pencil)</td></tr>
+<tr><td class="left"></td><td class="right">}</td></tr>
+<tr><td class="left"></td><td class="right">Checking (the $X).</td></tr>
+<tr><td class="left"></td><td class="right">(fruit $X) <span class="comment">&emsp;%% If the query fails, the most recent choice point is restored.</span></td></tr>
+<tr><td class="left"></td><td class="right">Yes, it's a fruit!</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(fruit #apple)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left">(the #apple)</td><td class="right">the green apple</td></tr>
+<tr><td class="left">(the #door)</td><td class="right">the oaken door</td></tr>
+<tr><td class="left">(the #foot)</td><td class="right">my left foot</td></tr>
+<tr><td class="left">(the #pencil)</td><td class="right">the pencil</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy4').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The output is:
+</p>
+<div class="blkoutput">Checking the oaken door. Checking my left foot. Checking the green apple. Yes, it's a fruit!</div><h3>Backtracking during rule matching</h3>
+<p>Recall that when a query is made, Dialog considers each rule definition in
+turn, in program order, unifying the parameters of the query with the
+parameters of the rule head. In case of a match, the rule body starts to
+execute. We've also seen, that if a failure occurs while executing the body,
+Dialog proceeds to check the next rule in the predicate, and it keeps doing
+this until one of the rules succeeds.
+</p>
+<p>Now we are in a position to understand what is actually going on: Before
+attempting to unify the parameters with those of a rule head, Dialog creates a
+choice point. In case of failure, the query parameters (and all other variables
+that have been bound since) are restored to their original state, and the next
+rule is attempted.
+</p>
+<p>However, there is one critical difference between queries and disjunctions: As
+soon as a rule succeeds, that query is considered over and done. So on success,
+Dialog simply discards any choice points that were created as part of the query.
+</p>
+<a id="multiqueries"></a><h2>Multi-queries</h2>
+<p>Sometimes when we query a predicate, we want to be able to go back and
+reconsider every matching rule, even if we already found one that was
+successful. That is, we want to inhibit the default behaviour of discarding
+choice points as soon as a rule succeeds. This is done by putting an asterisk
+(<span class="code">*</span>) before the query, which turns it into a <i>multi-query</i>.
+</p>
+<p>No whitespace is allowed between the asterisk and the opening parenthesis.
+</p>
+<p>Here is an example:
+</p>
+<textarea class="copyarea" id="copy5" readonly>
+(program entry point)
+	*(fruit $Obj)	%% This is a multi-query. Also, $Obj is unbound here.
+	$Obj is a fruit.
+	(colour $Obj)
+	We found a fruit that is also a colour!
+
+(colour #blue)
+(colour #orange)
+
+(fruit #apple)
+(fruit #orange)
+(fruit #banana)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">*(fruit $Obj)	<span class="comment">&emsp;%% This is a multi-query. Also, $Obj is unbound here.</span></td></tr>
+<tr><td class="left"></td><td class="right">$Obj is a fruit.</td></tr>
+<tr><td class="left"></td><td class="right">(colour $Obj)</td></tr>
+<tr><td class="left"></td><td class="right">We found a fruit that is also a colour!</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(colour #blue)</td></tr>
+<tr><td class="both" colspan="2">(colour #orange)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(fruit #apple)</td></tr>
+<tr><td class="both" colspan="2">(fruit #orange)</td></tr>
+<tr><td class="both" colspan="2">(fruit #banana)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy5').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The output of the program is:
+</p>
+<div class="blkoutput">#apple is a fruit. #orange is a fruit. We found a fruit that is also a colour!</div><p>A multi-query behaves like a disjunction, in that it installs a choice point
+for going back and trying something else (in this case, attempting to match the
+query with the next rule in the program). Unlike a normal query, it doesn't
+resemble a traditional subroutine call, because it can effectively
+&ldquo;return&rdquo; more than once.
+</p>
+<p>The multi-query may set up choice points of its own, for instance using
+<span class="code">(or)</span> expressions or by making nested multi-queries. All of these
+choice points remain in effect after the multi-query returns. This provides a
+very powerful mechanism for searching through a database of relations:
+</p>
+<textarea class="copyarea" id="copy6" readonly>
+(#lisa is a child of #marge)
+(#lisa is a child of #homer)
+(#bart is a child of #marge)
+(#bart is a child of #homer)
+(#homer is a child of #mona)
+(#homer is a child of #abraham)
+(#herb is a child of #mona)
+(#herb is a child of #abraham)
+
+(male #bart)
+(male #homer)
+(male #herb)
+(male #abraham)
+
+($X is the father of $Y)
+	*($Y is a child of $X)
+	(male $X)
+
+($X is a grandfather of $Y)
+	*($Y is a child of $Parent)
+	*($X is the father of $Parent)
+
+(program entry point)
+	($X is a grandfather of #lisa)
+	The answer is $X.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(#lisa is a child of #marge)</td></tr>
+<tr><td class="both" colspan="2">(#lisa is a child of #homer)</td></tr>
+<tr><td class="both" colspan="2">(#bart is a child of #marge)</td></tr>
+<tr><td class="both" colspan="2">(#bart is a child of #homer)</td></tr>
+<tr><td class="both" colspan="2">(#homer is a child of #mona)</td></tr>
+<tr><td class="both" colspan="2">(#homer is a child of #abraham)</td></tr>
+<tr><td class="both" colspan="2">(#herb is a child of #mona)</td></tr>
+<tr><td class="both" colspan="2">(#herb is a child of #abraham)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(male #bart)</td></tr>
+<tr><td class="both" colspan="2">(male #homer)</td></tr>
+<tr><td class="both" colspan="2">(male #herb)</td></tr>
+<tr><td class="both" colspan="2">(male #abraham)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">($X is the father of $Y)</td></tr>
+<tr><td class="left"></td><td class="right">*($Y is a child of $X)</td></tr>
+<tr><td class="left"></td><td class="right">(male $X)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">($X is a grandfather of $Y)</td></tr>
+<tr><td class="left"></td><td class="right">*($Y is a child of $Parent)</td></tr>
+<tr><td class="left"></td><td class="right">*($X is the father of $Parent)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">($X is a grandfather of #lisa)</td></tr>
+<tr><td class="left"></td><td class="right">The answer is $X.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy6').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Output:
+</p>
+<div class="blkoutput">The answer is #abraham.</div><p>Multi-queries provide a clean mechanism for going back and trying various
+options. This gives the code a declarative flavour, which can often improve
+readability.
+</p>
+<p>Although the declarative style makes it easy to see what problem we're trying
+to solve, it may not be obvious at first how the code in the previous example
+works. The following detailed description may help:
+</p>
+<p class="indented">A query is first made to <span class="code">($&nbsp;is a grandfather of&nbsp;$)</span>, with
+the second parameter bound to <span class="code">#lisa</span>. That rule in turn
+makes a multi-query, <span class="code">*(#lisa is a child of $Parent)</span>, with
+the purpose of backtracking over Lisa's parents. At first, this matches
+the very first rule in the program, binding <span class="code">$Parent</span> to
+<span class="code">#marge</span>. However, because this was a multi-query, a choice
+point remains in effect for coming back and looking for another parent
+of Lisa later.
+</p>
+<p class="indented">Next, an attempt is made to bind <span class="code">$X</span> to the father of
+<span class="code">#marge</span>. This invokes the father-rule, which in turn makes
+another multi-query, in this case <span class="code">*(#marge is a child of
+$X)</span>. But Marge's parents aren't in the database, so this
+multi-query fails. The failure makes Dialog backtrack to the last
+choice point, unbinding <span class="code">$Parent</span> as it goes, and proceeding
+to look for another of Lisa's parents, starting with the second rule of
+the program. This succeeds, and <span class="code">$Parent</span> is now bound to
+<span class="code">#homer</span>.
+</p>
+<p class="indented">A query is now made to determine the father of <span class="code">#homer</span>.
+We're in the father-rule again, making a multi-query: <span class="code">*(#homer is
+a child of $X)</span>. This will first bind <span class="code">$X</span> to
+<span class="code">#mona</span>, but <span class="code">(male #mona)</span> fails. Thanks to the
+choice point created by the recent multi-query, Dialog goes back and
+binds <span class="code">$X</span> to <span class="code">#abraham</span> instead. Now, starting
+with <span class="code">(male #abraham)</span>, everything succeeds, and we end up
+in the top-level rule again, with <span class="code">$X</span> bound to
+<span class="code">#abraham</span>. Because the original query <span class="code">($X is a
+grandfather of #lisa)</span> was a regular (non-multi) query, we also
+know that any choice points created inside it have now been discarded;
+a regular query is guaranteed to return at most once.
+</p>
+<p>That example illustrates a general class of problems in the spirit of the
+pencil-and-paper game Sudoku: Dialog searches through the parameter space by
+tentatively binding variables to values and checking that all constraints are
+met, backtracking when they are not, until one or more solutions are found.
+The main difference between the family tree example and Sudoku is that in the
+latter, all the variables are lined up on a grid from the start, whereas in the
+former, the variables are parameters of recursive queries.
+</p>
+<p>In interactive fiction, this technique can be useful for working with small
+relational databases, as in the example. But its biggest strength is in parsing
+and disambiguation: It is possible to implement a parser in a clean,
+declarative style that takes input (such as <span class="prginput">NORTH,&nbsp;EAST</span>), and
+backtracks over various possible interpretations (such as &ldquo;Go north and
+east&rdquo; and &ldquo;Tell Mrs. North to go east&rdquo;), which can then be weighed
+against each other based on their likelihood from a semantical point of view.
+This is indeed the approach taken by the Dialog standard library.
+</p>
+<p>Now that we know about multi-queries, we are better equipped to deal with
+lists. There's a very handy built-in predicate called <span class="code">($&nbsp;is one of
+$)</span> that takes two parameters&mdash;a value and a list&mdash;and attempts to
+unify the value with each member of the list in turn. If both parameters are
+bound, a regular query to <span class="code">($&nbsp;is one of&nbsp;$)</span> can be used to check
+whether the value is in the list:
+</p>
+<textarea class="copyarea" id="copy7" readonly>
+(descr $Obj)	($Obj is one of [#apple #orange #banana]) Yummy!
+(descr $Obj)	You see nothing unexpected about it.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left">(descr $Obj)</td><td class="right">($Obj is one of [#apple #orange #banana]) Yummy!</td></tr>
+<tr><td class="left">(descr $Obj)</td><td class="right">You see nothing unexpected about it.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy7').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>But with the help of a multi-query, the same predicate can be used as a list
+iterator. Here is a more elegant re-implementation of an earlier example:
+</p>
+<textarea class="copyarea" id="copy8" readonly>
+(program entry point)
+	*($X is one of [#door #foot #apple #pencil])
+	Checking (the $X).
+	(fruit $X)
+	Yes, it's a fruit!
+
+(fruit #apple)
+
+(the #apple)	the green apple
+(the #door)	the oaken door
+(the #foot)	my left foot
+(the #pencil)	the pencil
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">*($X is one of [#door #foot #apple #pencil])</td></tr>
+<tr><td class="left"></td><td class="right">Checking (the $X).</td></tr>
+<tr><td class="left"></td><td class="right">(fruit $X)</td></tr>
+<tr><td class="left"></td><td class="right">Yes, it's a fruit!</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(fruit #apple)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left">(the #apple)</td><td class="right">the green apple</td></tr>
+<tr><td class="left">(the #door)</td><td class="right">the oaken door</td></tr>
+<tr><td class="left">(the #foot)</td><td class="right">my left foot</td></tr>
+<tr><td class="left">(the #pencil)</td><td class="right">the pencil</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy8').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The output is:
+</p>
+<div class="blkoutput">Checking the oaken door. Checking my left foot. Checking the green apple. Yes, it's a fruit!</div><p>Incidentally, <span class="code">($&nbsp;is one of&nbsp;$)</span> is a built-in predicate for
+performance reasons only. We could have defined it ourselves like this:
+</p>
+<textarea class="copyarea" id="copy9" readonly>
+($Element is one of [$Element | $])
+($Element is one of [$ | $Tail])
+	*($Element is one of $Tail)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">($Element is one of [$Element | $])</td></tr>
+<tr><td class="both" colspan="2">($Element is one of [$ | $Tail])</td></tr>
+<tr><td class="left"></td><td class="right">*($Element is one of $Tail)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy9').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Note the asterisk in front of the recursive call. By making this a multi-query,
+<span class="code">$Element</span> iterates over the entire <span class="code">$Tail</span>, and we
+simply propagate each of those successful returns up to our caller. The base
+case of the recursion is implicit, in that neither of the rules will match an
+empty list.
+</p>
+<a id="exhaust"></a><h2>Visiting all solutions</h2>
+<p>A Dialog statement can be prefixed with the <span class="code">(exhaust)</span> keyword.
+This will cause Dialog to consider every nook and cranny of the search tree,
+without remaining on the first successful branch. The statement (usually a
+block) executes, backtracking is performed on success as well as on failure,
+and in the end the entire <span class="code">(exhaust)</span> construct succeeds. Here is an
+example:
+</p>
+<textarea class="copyarea" id="copy10" readonly>
+(program entry point)
+	(exhaust) {
+		*($X is one of [#door #foot #apple #pencil])
+		(line) Checking (the $X).
+		(fruit $X)
+		Yes, it's a fruit!
+	}
+	(line) The program continues, but $X is unbound again.
+
+(fruit #apple)
+
+(the #apple)	the green apple
+(the #door)	the oaken door
+(the #foot)	my left foot
+(the #pencil)	the pencil
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">(exhaust) {</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>*($X is one of [#door #foot #apple #pencil])</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(line) Checking (the $X).</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(fruit $X)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>Yes, it's a fruit!</td></tr>
+<tr><td class="left"></td><td class="right">}</td></tr>
+<tr><td class="left"></td><td class="right">(line) The program continues, but $X is unbound again.</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(fruit #apple)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left">(the #apple)</td><td class="right">the green apple</td></tr>
+<tr><td class="left">(the #door)</td><td class="right">the oaken door</td></tr>
+<tr><td class="left">(the #foot)</td><td class="right">my left foot</td></tr>
+<tr><td class="left">(the #pencil)</td><td class="right">the pencil</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The output is:
+</p>
+<div class="blkoutput">Checking the oaken door.<br />
+Checking my left foot.<br />
+Checking the green apple. Yes, it's a fruit!<br />
+Checking the pencil.<br />
+The program continues, but $ is unbound again.</div><p>Incidentally,
+</p>
+<textarea class="copyarea" id="copy11" readonly>
+	(exhaust) <i>statement</i>
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">(exhaust) <i>statement</i></td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy11').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>is exactly equivalent to
+</p>
+<textarea class="copyarea" id="copy12" readonly>
+	{ <i>statement</i> (fail) (or) }
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">{ <i>statement</i> (fail) (or) }</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy12').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>where <span class="code">(fail)</span> is a built-in predicate that always fails.
+</p>
+<a id="collect"></a><h2>Collecting values</h2>
+<p>Computing our way through all the solutions of a query is useful, but sometimes
+we would like to collect the results of those computations into a list, and
+then perform some work on the list as a whole. This can be done with the
+following special syntax:
+</p>
+<textarea class="copyarea" id="copy13" readonly>
+	(collect $Element)
+		...
+	(into $List)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">(collect $Element)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>...</td></tr>
+<tr><td class="left"></td><td class="right">(into $List)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy13').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The ellipsis represents some code that is expected to bind
+<span class="code">$Element</span> to a value.  That value is remembered, and backtracking
+is performed until all possibilities have been exhausted. The collected values
+are placed into a list, in the order in which they were encountered, and that
+list is then unified with the output parameter, <span class="code">$List</span>.
+</p>
+<p>Example:
+</p>
+<textarea class="copyarea" id="copy14" readonly>
+(program entry point)
+	(collect $F)
+		*(fruit $F)
+	(into $FruitList)
+	Come and buy! $FruitList!
+
+(fruit #apple)
+(fruit #orange)
+(fruit #banana)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">(collect $F)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>*(fruit $F)</td></tr>
+<tr><td class="left"></td><td class="right">(into $FruitList)</td></tr>
+<tr><td class="left"></td><td class="right">Come and buy! $FruitList!</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(fruit #apple)</td></tr>
+<tr><td class="both" colspan="2">(fruit #orange)</td></tr>
+<tr><td class="both" colspan="2">(fruit #banana)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy14').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The output is:
+</p>
+<div class="blkoutput">Come and buy! [#apple #orange #banana]!</div><p>Note that the query to <span class="code">(fruit&nbsp;$)</span> must be a multi-query, otherwise
+only the first fruit is returned. The first statement inside a
+collect-expression is nearly always a multi-query.
+</p>
+<a id="collectwords"></a><h2>Collecting words</h2>
+<p>There is also a special variant of the collect-into syntax:
+</p>
+<textarea class="copyarea" id="copy15" readonly>
+	(collect words)
+		...
+	(into $List)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">(collect words)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>...</td></tr>
+<tr><td class="left"></td><td class="right">(into $List)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy15').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>This makes Dialog execute the inner statements, while diverting all output into
+a list of dictionary words. That list is then unified with the output
+parameter. Typically, a game has a rule for printing the name of an object.
+This construct makes it possible to gather all the words that make up that
+name, in order to match them against player input.
+</p>
+<p>For performance reasons, <span class="code">(collect words)</span> is allowed to return the
+words in any order, and duplicate elements may or may not be culled from the
+list.
+</p>
+<p>Example:
+</p>
+<textarea class="copyarea" id="copy16" readonly>
+(name #apple)	green apple
+(dict #apple)	yummy		%% Extra synonyms can be listed here.
+
+(name #door)	mysterious door
+(dict #door)	oaken oak
+
+%% By default, include any words mentioned in the name rule:
+(dict $Obj)	(name $Obj)
+
+(program entry point)
+	(exhaust) {
+		*($Obj is one of [#apple #door])
+		(collect words)
+			*(dict $Obj)
+		(into $List)
+		The (name $Obj) can be referred to using the words $List.
+		(line)
+	}
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left">(name #apple)</td><td class="right">green apple</td></tr>
+<tr><td class="left">(dict #apple)</td><td class="right">yummy		<span class="comment">&emsp;%% Extra synonyms can be listed here.</span></td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left">(name #door)</td><td class="right">mysterious door</td></tr>
+<tr><td class="left">(dict #door)</td><td class="right">oaken oak</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2"><span class="comment">%% By default, include any words mentioned in the name rule:</span></td></tr>
+<tr><td class="left">(dict $Obj)</td><td class="right">(name $Obj)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">(exhaust) {</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>*($Obj is one of [#apple #door])</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(collect words)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span><span class="tab"> </span>*(dict $Obj)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(into $List)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>The (name $Obj) can be referred to using the words $List.</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(line)</td></tr>
+<tr><td class="left"></td><td class="right">}</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy16').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The output is:
+</p>
+<div class="blkoutput">The green apple can be referred to using the words [yummy green apple].<br />
+The mysterious door can be referred to using the words [oaken oak mysteriou door].</div><p>Finally, there is a special variant of the special variant. This one is
+particularly useful when implementing parsers:
+</p>
+<textarea class="copyarea" id="copy17" readonly>
+	(collect words)
+		...
+	(and check $Input)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">(collect words)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>...</td></tr>
+<tr><td class="left"></td><td class="right">(and check $Input)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy17').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Here, Dialog executes the inner statements, collects the words, and then it
+checks whether every element of the given list (<span class="code">$Input</span>) is present
+in the collection. This is typically used for matching player input against
+in-world object names. Doing it this way is considerably faster and more memory
+efficient than using a <span class="code">(collect words) ... (into&nbsp;$)</span> statement.
+</p>
+<a id="just"></a><h2>Just</h2>
+<p>We have seen that the rules of a predicate work together as a disjunction. Each
+rule is tried in turn, and failure causes Dialog to backtrack and resume with
+the next rule. When a rule succeeds, the backtracking may or may not stop: This
+depends on whether the caller was making a multi-query or a regular query. But
+sometimes, it makes sense to give the callee, i.e. the set of rules that make
+up the predicate being queried, influence over when to stop the backtracking.
+</p>
+<p>This is achieved with the <span class="code">(just)</span> statement. When a rule invokes
+<span class="code">(just)</span>&mdash;and this can happen anywhere inside the rule
+body&mdash;Dialog discards any choice points created since the beginning of the
+present query.
+</p>
+<p>Consider again the example in the previous section, where a list of synonyms is
+provided for each object by a <span class="code">(dict&nbsp;$)</span> rule. When a multi-query is
+made to that predicate, Dialog inevitably finds its way to the generic
+<span class="code">(dict&nbsp;$)</span> rule that also throws in all of the words making up the
+object's printed name. It is conceivable that a game has a few objects that the
+player should not be able to refer to using their printed names. A common
+example is the object that represents the player character inside the game
+world. Suppose (although this is not necessarily a good idea in practice) that
+you want this object to print as &ldquo;you&rdquo;, but parse only as &ldquo;me&rdquo;:
+</p>
+<textarea class="copyarea" id="copy18" readonly>
+(name #player)	you
+(dict #player)	(just) me
+
+(name #door)	mysterious door
+(dict #door)	oaken oak	%% Extra synonyms.
+
+%% By default, include any words mentioned in the name rule:
+(dict $Obj)	(name $Obj)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left">(name #player)</td><td class="right">you</td></tr>
+<tr><td class="left">(dict #player)</td><td class="right">(just) me</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left">(name #door)</td><td class="right">mysterious door</td></tr>
+<tr><td class="left">(dict #door)</td><td class="right">oaken oak	<span class="comment">&emsp;%% Extra synonyms.</span></td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2"><span class="comment">%% By default, include any words mentioned in the name rule:</span></td></tr>
+<tr><td class="left">(dict $Obj)</td><td class="right">(name $Obj)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy18').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Here, when a multi-query is made for <span class="code">*(dict #player)</span>, Dialog sets
+up a choice point as usual, and enters the first matching rule. But this rule
+uses the <span class="code">(just)</span> keyword, immediately discarding the choice point.
+The upshot of this is that the generic rule, <span class="code">(dict $Obj)</span>, is never
+considered for the <span class="code">#player</span>.
+</p>
+<p>To recap, <span class="code">(just)</span> discards any choice points that have been created
+so far while dealing with the current query. This includes choice points
+created by inner multi-queries, and it even extends a little bit outside the
+present rule, to the backtracking-over-matching-rules mechanism. But it doesn't
+go any further than that. Code such as <span class="code">(just) (just)</span> is redundant;
+the second <span class="code">(just)</span> has no effect.
+</p>
+	<div class="footer">
+	<p class="nav">Onwards to &ldquo;<a href="control.html">Chapter 4: More control structures</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
+	<p class="tagline">The Dialog Manual, Revision 1, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	</div>
+	</div>
+</body>
+</html>

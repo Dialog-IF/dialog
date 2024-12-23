@@ -1,0 +1,559 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<link rel="StyleSheet" href="style.css" type="text/css" />
+	<title>Chapter 5: Dynamic predicates</title>
+</head>
+<body>
+	<div class="chapter">
+	<h1>Chapter 5: Dynamic predicates</h1>
+	<div class="navlinks">(<a href="#globalflag">Global flags</a>&nbsp;&bull; <a href="#perobjflag">Per-object flags</a>&nbsp;&bull; <a href="#globalvars">Global variables</a>&nbsp;&bull; <a href="#perobjvar">Per-object variables</a>&nbsp;&bull; <a href="#hasparent">Has parent</a>)</div>
+<p>So far, every example of world modelling that we have seen has been eerily
+static. An apple is yummy, and will remain so forever. The description of a
+steak might depend on whether the player eats meat or not, but we haven't seen
+any language facility that would allow us to adjust the vegetarianism of
+the player during gameplay, or even to change who the current player is.
+</p>
+<p>Dialog supports four kinds of <i>dynamic predicates</i>. They are called
+<i>global flags</i>, <i>per-object flags</i>, <i>global variables</i>, and
+<i>per-object variables</i>.
+</p>
+<a id="globalflag"></a><h2>Global flags</h2>
+<p>A <i>global flag</i> is a predicate with no parameters, and no side effects. It
+can either succeed (once) or fail. To set a global flag, use the
+<span class="code">(now)</span> keyword:
+</p>
+<textarea class="copyarea" id="copy0" readonly>
+	(now) (player eats meat)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">(now) (player eats meat)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy0').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>To clear it, use <span class="code">(now)</span> together with a negation:
+</p>
+<textarea class="copyarea" id="copy1" readonly>
+	(now) ~(player eats meat)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">(now) ~(player eats meat)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy1').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>We are allowed to define static rules for the global flag, but they won't be
+accessible at runtime, because queries will merely check the current value of
+the flag.
+</p>
+<p>However, the compiler will look at the static rules to determine the initial
+value of the global flag. If there are no rules defined, the flag will be off
+at the start of the program.
+</p>
+<textarea class="copyarea" id="copy2" readonly>
+(player eats meat) %% Flag is initially set.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(player eats meat) <span class="comment">&emsp;%% Flag is initially set.</span></td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy2').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Note that there is no need to declare anywhere that <span class="code">(player eats
+meat)</span> is a dynamic predicate. That follows implicitly from the fact that
+we try to use <span class="code">(now)</span> on it. However, if&mdash;due to the use of
+<span class="code">(now)</span>&mdash;a predicate is dynamic, then the compiler will enforce certain
+restrictions on the static rules that define its initial value, for instance
+that they have no side-effects, and that they don't depend on the value of
+other dynamic predicates.
+</p>
+<a id="perobjflag"></a><h2>Per-object flags</h2>
+<p>A <i>per-object flag</i> is a predicate with one parameter, and no side
+effects. When queried with a particular object as parameter, it will either
+succeed (once) or fail. To set the flag for a particular object, use the
+<span class="code">(now)</span> keyword:
+</p>
+<textarea class="copyarea" id="copy3" readonly>
+	(now) (#door is open)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">(now) (#door is open)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy3').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Per-object flags may only be set for objects (e.g. not lists or numbers). If an
+attempt is made to set the flag when the parameter isn't bound to an object, a
+fatal runtime error occurs.
+</p>
+<p>To clear the flag, use <span class="code">(now)</span> together with a negated query:
+</p>
+<textarea class="copyarea" id="copy4" readonly>
+	(now) ~(#door is open)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">(now) ~(#door is open)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy4').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>It is safe to attempt to clear the flag for a non-object: Nothing happens in
+that case.
+</p>
+<p>It is also possible to clear the flag for every object in the game, by
+supplying an anonymous variable as parameter. This is faster than iterating
+over each object in turn:
+</p>
+<textarea class="copyarea" id="copy5" readonly>
+	(now) ~($ is open)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">(now) ~($ is open)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy5').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>But it is not possible to set the flag for every object in the game in this
+way; that triggers a runtime error. The rationale for this is that an unbound
+variable (such <span class="nobreak">as&nbsp;<span class="code">$</span>)</span> may take on any value, e.g. a
+number or list, and per-object flags may only be set for objects.
+</p>
+<p>To check if the flag is set for a particular object, simply query the predicate:
+</p>
+<textarea class="copyarea" id="copy6" readonly>
+	The door is (if) (#door is open) (then) open (else) closed (endif).
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">The door is (if) (#door is open) (then) open (else) closed (endif).</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy6').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>If the parameter is bound to anything other than an object, the predicate
+fails, without generating a fatal error: A per-object flag may only be set for
+objects, but it can be queried for any value.
+</p>
+<p>If the parameter is unbound, the query binds it to an object for which the flag
+is set (failing if there are none). With a multi-query, it is possible to
+backtrack over all objects that have the flag set:
+</p>
+<textarea class="copyarea" id="copy7" readonly>
+(#reddoor is open)
+(#bluedoor is open)
+(#greendoor is open)
+
+(program entry point)
+	(now) ~(#bluedoor is open)
+	(collect $Thing)
+		*($Thing is open)
+	(into $List)
+	The open things are: $List
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(#reddoor is open)</td></tr>
+<tr><td class="both" colspan="2">(#bluedoor is open)</td></tr>
+<tr><td class="both" colspan="2">(#greendoor is open)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">(now) ~(#bluedoor is open)</td></tr>
+<tr><td class="left"></td><td class="right">(collect $Thing)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>*($Thing is open)</td></tr>
+<tr><td class="left"></td><td class="right">(into $List)</td></tr>
+<tr><td class="left"></td><td class="right">The open things are: $List</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy7').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>This produces the output:
+</p>
+<div class="blkoutput">The open things are: [#reddoor #greendoor]</div><p>Let's pause for a while and consider a matter of design philosophy. I have
+claimed that in Dialog, objects are nothing but names, and the world is
+modelled using relations, represented by predicates. When it comes to
+per-object flags (and per-object variables, to be introduced below), that
+standpoint is starting to look tenuous. To be sure, dynamic predicates are
+designed to look and behave just like ordinary predicates when you query them.
+And in order to change the state of the game world, you issue now-commands that
+appear to modify predicates rather than objects. But at the same time, there
+are restrictions on how you can update those predicates, so that, in effect,
+what you can do is more or less exactly what you could do by storing flags (and
+properties) inside objects.
+</p>
+<p>In the end, whether you choose to regard a dynamic per-object flag as something
+that resides inside the object, or in a separate data structure that represents
+the dynamic predicate, is entirely up to you. The actual runtime representation
+is irrelevant, and the compiler will in fact choose among different
+representations based on how the predicate is accessed from various parts of
+the program.
+</p>
+<a id="globalvars"></a><h2>Global variables</h2>
+<p><i>Global variables</i> are dynamic predicates with a single parameter. To
+distinguish them from per-object flags, global variables have to be
+<i>declared</i>, using special syntax. There are two forms of global variable
+declarations, and we'll start with the simplest one:
+</p>
+<textarea class="copyarea" id="copy8" readonly>
+(global variable <i>(signature)</i>)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(global variable <i>(signature)</i>)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy8').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>starting at the leftmost column of a line. For instance:
+</p>
+<textarea class="copyarea" id="copy9" readonly>
+(global variable (current player $))
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(global variable (current player $))</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy9').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The initial value of the global variable can be specified with an ordinary rule
+definition:
+</p>
+<textarea class="copyarea" id="copy10" readonly>
+(current player #bob)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(current player #bob)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>But it is also possible to provide the initial value inside the global variable
+declaration itself:
+</p>
+<textarea class="copyarea" id="copy11" readonly>
+(global variable (current player #bob))
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(global variable (current player #bob))</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy11').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>To change the value of a global variable, use the <span class="code">(now)</span> keyword:
+</p>
+<textarea class="copyarea" id="copy12" readonly>
+(now) (current player #alice)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(now) (current player #alice)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy12').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Note that the above is a low-level operation. When working with the standard
+library, the predicate <span class="code">(select player&nbsp;$)</span> should be used to change
+the current player. But we'll get to that in Part&nbsp;II.
+</p>
+<p>A global variable declared in this way may only contain a <i>simple value</i>.
+Simple values are objects, numbers, dictionary words, and the empty list.
+Attempting to set the global variable to a non-empty list or an unbound
+variable will generate a fatal runtime error.
+</p>
+<p>It is also possible to <i>unset</i> the global variable, using <span class="code">~</span>,
+so that subsequent queries to the predicate will fail. The parameter must be an
+anonymous variable. The following line of code could be pronounced &ldquo;Now, the
+current player is nobody&rdquo;, or, in case you're a logician, &ldquo;Now, it is not
+the case that the current player is anybody&rdquo;:
+</p>
+<textarea class="copyarea" id="copy13" readonly>
+	(now) ~(current player $)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">(now) ~(current player $)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy13').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>This is also the default state of a global variable, if no initial value is
+defined.
+</p>
+<p>As usual, we can query the predicate with a bound parameter (to check if the
+global variable has that particular value), or with an unbound variable (to
+obtain the current value). Either query will fail if the global variable is
+unset.
+</p>
+<p>Occasionally, we need a global variable that can hold complex data. This is
+allowed, but we have to decide ahead of time what the maximum space
+requirements are:
+</p>
+<textarea class="copyarea" id="copy14" readonly>
+(global variable (my global list is $) 42) %% Allocate 42 words.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(global variable (my global list is $) 42) <span class="comment">&emsp;%% Allocate 42 words.</span></td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy14').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>A simple value occupies one word. A list occupies one word plus the space
+required for each of its members. A simple trick is to count the number of
+elements and opening brackets in the printed representation of the value: For
+instance, [a [b c]] occupies five words in total. It is legal to store unbound
+variables inside a global variable declared this way, but any hidden links
+between them will be gone when the global variable is read out. An unbound
+variable occupies one word.
+</p>
+<p>Attempting to store a too-large value in a complex global variable will result
+in a fatal runtime error.
+</p>
+<p>It is currently not possible to define the initial value of a complex global
+variable. It is always unset from the start, but you may of course set it early
+during program execution.
+</p>
+<p>In the following example, a complex global variable is used to implement an
+<span class="prginput">AGAIN</span> command:
+</p>
+<textarea class="copyarea" id="copy15" readonly>
+(global variable (last input $) 64)
+
+(ask for command $Result)
+	&gt; (get input $Words)
+	(if) ($Words = [again]) (or) ($Words = [g]) (then)
+		(last input $Result)
+	(else)
+		($Result = $Words)
+		(now) (last input $Result)
+	(endif)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(global variable (last input $) 64)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(ask for command $Result)</td></tr>
+<tr><td class="left"></td><td class="right">&gt; (get input $Words)</td></tr>
+<tr><td class="left"></td><td class="right">(if) ($Words = [again]) (or) ($Words = [g]) (then)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(last input $Result)</td></tr>
+<tr><td class="left"></td><td class="right">(else)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>($Result = $Words)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(now) (last input $Result)</td></tr>
+<tr><td class="left"></td><td class="right">(endif)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy15').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<a id="perobjvar"></a><h2>Per-object variables</h2>
+<p>A <i>per-object variable</i> (sometimes referred to as an object property) is a
+predicate with two parameters, and no side effects. The first parameter is
+always an object, and the second parameter is always a simple value (object,
+number, empty list, or dictionary word). A per-object variable can also be
+unset for a given object.
+</p>
+<p>When a per-object variable is queried with the first parameter bound to an
+object, the second parameter will be unified with the current value of the
+variable. As usual, this can be used to check for a particular value:
+</p>
+<textarea class="copyarea" id="copy16" readonly>
+	(if) (#troll wields #axe) (then) ... (endif)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">(if) (#troll wields #axe) (then) ... (endif)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy16').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>or to read the current value:
+</p>
+<textarea class="copyarea" id="copy17" readonly>
+(narrate fight with $Enemy) %% Assume $Enemy is bound
+	($Enemy wields $Weapon)
+	(The $Enemy) swings (the $Weapon) at you.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(narrate fight with $Enemy) <span class="comment">&emsp;%% Assume $Enemy is bound</span></td></tr>
+<tr><td class="left"></td><td class="right">($Enemy wields $Weapon)</td></tr>
+<tr><td class="left"></td><td class="right">(The $Enemy) swings (the $Weapon) at you.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy17').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The query fails if the variable is unset.
+</p>
+<p>When a per-object variable is queried with an unbound first parameter, Dialog
+backtracks over every object in the game, and attempts to unify the second
+parameter with the current value of the corresponding per-object variable. This
+is potentially a very slow operation, at least on vintage hardware, and the
+compiler will print a warning if you attempt to do it. To get rid of the
+warning, you can explicitly backtrack over all objects yourself, by querying
+<span class="code">*(object&nbsp;$)</span>, and then checking the property.
+</p>
+<textarea class="copyarea" id="copy18" readonly>
+	($X wields #axe) The axe is currently in the hands of (the $X).
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">($X wields #axe) The axe is currently in the hands of (the $X).</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy18').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>To change the value of a per-object variable, use the <span class="code">(now)</span>
+keyword:
+</p>
+<textarea class="copyarea" id="copy19" readonly>
+	(now) (#troll wields #club)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">(now) (#troll wields #club)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy19').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Again, the first parameter must be an object, and the second parameter must be
+a simple value. If this is not the case, a fatal runtime error occurs.
+</p>
+<p>To unset the per-object variable, use the following syntax, where the second
+parameter must be an anonymous variable:
+</p>
+<textarea class="copyarea" id="copy20" readonly>
+	(now) ~(#troll wields $)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">(now) ~(#troll wields $)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy20').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The following is also allowed, and faster than doing it explicitly for each
+object:
+</p>
+<textarea class="copyarea" id="copy21" readonly>
+	(now) ~($ wields $) %% Nobody wields anything anymore.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">(now) ~($ wields $) <span class="comment">&emsp;%% Nobody wields anything anymore.</span></td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy21').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>As with the other dynamic predicates, the initial value of a per-object
+variable is defined with ordinary rules:
+</p>
+<textarea class="copyarea" id="copy22" readonly>
+(#troll wields #club)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(#troll wields #club)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy22').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<a id="hasparent"></a><h2>Has parent</h2>
+<p>There is one built-in per-object variable with special properties. This is the
+<span class="code">($&nbsp;has parent&nbsp;$)</span> predicate. It is used to track where in the game
+world objects are located. In other words, it is an abstraction of the
+low-level Z-machine object tree operations.
+</p>
+<p>In many ways, <span class="code">($&nbsp;has parent&nbsp;$)</span> works just like any other
+per-object variable: It is queried and modified in the same way, and when it is
+modified, the first parameter must always be an object. But it has the
+additional restriction that the second parameter must also be an object. The
+flip side of this restriction is that reverse lookup operations&mdash;backtracking
+over every child of a particular object&mdash;can be implemented very efficiently.
+</p>
+<p>The <span class="code">($&nbsp;has parent&nbsp;$)</span> property can be unset in order to detach an
+object from the object tree.
+</p>
+<p>Here are some examples:
+</p>
+<p class="codeline">(#troll has parent $Room)</p>
+<p class="noteline">Determine where the troll is.
+</p>
+<p class="codeline">*($Obj has parent #library)</p>
+<p class="noteline">Backtrack over every object in the library.
+</p>
+<p class="codeline">(now) (#troll has parent #cave)</p>
+<p class="noteline">Set the parent object of the troll. Under the hood, this will also
+update the linked structures representing the children of the cave, and
+the children of the previous parent of the troll.
+</p>
+<p class="codeline">(now) ~(#axe has parent $)</p>
+<p class="noteline">Remove the axe from play (i.e. detach it from the object tree).
+</p>
+<p>You are responsible for maintaining a well-formed object tree. The Z-machine
+standard forbids cycles, such as a pair of boxes inside each other, but Dialog
+doesn't monitor your tree operations to detect breaches. Be wary of updating
+the object tree while there is an ongoing iteration: An untimely change of a
+sibling pointer could easily divert the iterating code into a different part of
+the object tree.
+</p>
+<p>That being said, Dialog guarantees that you can safely iterate over all objects
+with a particular parent, and move them (or a subset of them) to a different
+part of the object tree:
+</p>
+<textarea class="copyarea" id="copy23" readonly>
+(exhaust) {
+	*($Obj has parent #safe)
+	(now) ($Obj has parent #knapsack)
+}
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(exhaust) {</td></tr>
+<tr><td class="left"></td><td class="right">*($Obj has parent #safe)</td></tr>
+<tr><td class="left"></td><td class="right">(now) ($Obj has parent #knapsack)</td></tr>
+<tr><td class="both" colspan="2">}</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy23').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+	<div class="footer">
+	<p class="nav">Onwards to &ldquo;<a href="sugar.html">Chapter 6: Syntactic sugar</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
+	<p class="tagline">The Dialog Manual, Revision 1, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	</div>
+	</div>
+</body>
+</html>

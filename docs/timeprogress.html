@@ -1,0 +1,475 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<link rel="StyleSheet" href="style.css" type="text/css" />
+	<title>Chapter 8: Ticks, scenes, and progress</title>
+</head>
+<body>
+	<div class="chapter">
+	<h1>Chapter 8: Ticks, scenes, and progress</h1>
+	<div class="navlinks">(<a href="#timedevents">Timed code</a>&nbsp;&bull; <a href="#cutscenes">Cutscenes</a>&nbsp;&bull; <a href="#intro">The intro</a>&nbsp;&bull; <a href="#score">Keeping score</a>&nbsp;&bull; <a href="#part2status">The status bar</a>&nbsp;&bull; <a href="#gameover">Game over</a>)</div>
+<a id="timedevents"></a><h2>Timed code</h2>
+<p>As we've seen earlier (<a href="actions.html#tickstop">Stopping and ticking</a>), the standard
+library measures time in <i>ticks</i>. One tick corresponds to one action. The
+library makes a <a href="choicepoints.html#multiqueries">multi-query</a> to the predicate <span class="code">(on every
+tick)</span> on every tick. By default, this predicate contains a rule that in
+turn makes a multi-query to <span class="code">(on every tick in&nbsp;$)</span>, with the current
+room as parameter.
+</p>
+<p>To add flavour text to a location, you can combine this mechanism with
+a <a href="control.html#select">select statement</a>:
+</p>
+<textarea class="copyarea" id="copy0" readonly>
+(on every tick in #library)
+	(select)
+		Somebody tries to hold back a sneeze.
+	(or)
+		You hear the rustle of pages turned.
+	(or)
+		The librarian gives you a stern look.
+	(or)
+	(or) %% Don't print on every single turn.
+	(or)
+	(or)
+	(at random)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(on every tick in #library)</td></tr>
+<tr><td class="left"></td><td class="right">(select)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>Somebody tries to hold back a sneeze.</td></tr>
+<tr><td class="left"></td><td class="right">(or)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>You hear the rustle of pages turned.</td></tr>
+<tr><td class="left"></td><td class="right">(or)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>The librarian gives you a stern look.</td></tr>
+<tr><td class="left"></td><td class="right">(or)</td></tr>
+<tr><td class="left"></td><td class="right">(or) <span class="comment">&emsp;%% Don't print on every single turn.</span></td></tr>
+<tr><td class="left"></td><td class="right">(or)</td></tr>
+<tr><td class="left"></td><td class="right">(or)</td></tr>
+<tr><td class="left"></td><td class="right">(at random)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy0').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>For fine-grained control, you can use a <a href="dynamic.html#globalvars">global variable</a> to
+implement <i>timed events</i>:
+</p>
+<textarea class="copyarea" id="copy1" readonly>
+(global variable (dragon's anger level 0))
+
+(narrate entering #lair)
+	(now) (dragon's anger level 0)
+	(fail) %% Proceed with the default '(narrate entering $)' rule.
+
+(on every tick in #lair)
+	(#dragon is #in #lair)	%% Only proceed if the dragon is here.
+	(dragon's anger level $Anger)
+	(narrate dragon's anger $Anger)
+	($Anger plus 1 into $NewAnger)
+	(now) (dragon's anger level $NewAnger)
+
+(narrate dragon's anger 0)
+	The dragon gives you a skeptical look.
+(narrate dragon's anger 1)
+	The dragon huffs and puffs.
+(narrate dragon's anger 2)
+	The dragon looks at you with narrowed eyes.
+(narrate dragon's anger 3)
+	The dragon roars! You'd better get out.
+(narrate dragon's anger 4)
+	The dragon almost hits you with a burst of flame. You flee.
+	(enter #outsideLair)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(global variable (dragon's anger level 0))</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(narrate entering #lair)</td></tr>
+<tr><td class="left"></td><td class="right">(now) (dragon's anger level 0)</td></tr>
+<tr><td class="left"></td><td class="right">(fail) <span class="comment">&emsp;%% Proceed with the default '(narrate entering $)' rule.</span></td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(on every tick in #lair)</td></tr>
+<tr><td class="left"></td><td class="right">(#dragon is #in #lair)	<span class="comment">&emsp;%% Only proceed if the dragon is here.</span></td></tr>
+<tr><td class="left"></td><td class="right">(dragon's anger level $Anger)</td></tr>
+<tr><td class="left"></td><td class="right">(narrate dragon's anger $Anger)</td></tr>
+<tr><td class="left"></td><td class="right">($Anger plus 1 into $NewAnger)</td></tr>
+<tr><td class="left"></td><td class="right">(now) (dragon's anger level $NewAnger)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(narrate dragon's anger 0)</td></tr>
+<tr><td class="left"></td><td class="right">The dragon gives you a skeptical look.</td></tr>
+<tr><td class="both" colspan="2">(narrate dragon's anger 1)</td></tr>
+<tr><td class="left"></td><td class="right">The dragon huffs and puffs.</td></tr>
+<tr><td class="both" colspan="2">(narrate dragon's anger 2)</td></tr>
+<tr><td class="left"></td><td class="right">The dragon looks at you with narrowed eyes.</td></tr>
+<tr><td class="both" colspan="2">(narrate dragon's anger 3)</td></tr>
+<tr><td class="left"></td><td class="right">The dragon roars! You'd better get out.</td></tr>
+<tr><td class="both" colspan="2">(narrate dragon's anger 4)</td></tr>
+<tr><td class="left"></td><td class="right">The dragon almost hits you with a burst of flame. You flee.</td></tr>
+<tr><td class="left"></td><td class="right">(enter #outsideLair)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy1').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>To model a scene that plays out in the background for several moves, use a
+global flag and a tick handler:
+</p>
+<textarea class="copyarea" id="copy2" readonly>
+(perform [read #notice])
+	Auction! Today! In the marketplace!
+	(now) (auction scene is running)
+
+(on every tick in #marketplace)
+	(auction scene is running)
+	"Who can give me five dollars for this lovely
+	(select) spatula (or) glass bead (or) stuffed wombat (at random)?"
+	shouts the auctioneer at the top of his lungs.
+
+(perform [wave])
+	(current room #marketplace)
+	(auction scene is running)
+	Just as you are about to place a bid, an unexpected thunderstorm
+	emerges from a gaping plot hole. "Auction suspended", says the
+	auctioneer.
+	(now) ~(auction scene is running)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(perform [read #notice])</td></tr>
+<tr><td class="left"></td><td class="right">Auction! Today! In the marketplace!</td></tr>
+<tr><td class="left"></td><td class="right">(now) (auction scene is running)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(on every tick in #marketplace)</td></tr>
+<tr><td class="left"></td><td class="right">(auction scene is running)</td></tr>
+<tr><td class="left"></td><td class="right">"Who can give me five dollars for this lovely</td></tr>
+<tr><td class="left"></td><td class="right">(select) spatula (or) glass bead (or) stuffed wombat (at random)?"</td></tr>
+<tr><td class="left"></td><td class="right">shouts the auctioneer at the top of his lungs.</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(perform [wave])</td></tr>
+<tr><td class="left"></td><td class="right">(current room #marketplace)</td></tr>
+<tr><td class="left"></td><td class="right">(auction scene is running)</td></tr>
+<tr><td class="left"></td><td class="right">Just as you are about to place a bid, an unexpected thunderstorm</td></tr>
+<tr><td class="left"></td><td class="right">emerges from a gaping plot hole. "Auction suspended", says the</td></tr>
+<tr><td class="left"></td><td class="right">auctioneer.</td></tr>
+<tr><td class="left"></td><td class="right">(now) ~(auction scene is running)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy2').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<a id="cutscenes"></a><h2>Cutscenes</h2>
+<p>In their simplest form, cutscenes are just large blocks of text and perhaps a
+couple of modifications to the object tree. As such, they can appear anywhere
+in the program. If a cutscene is triggered by an action handler or a tick
+callback, it is customary to end the scene with <span class="code">(stop)</span> or
+<span class="nobreak"><span class="code">(tick)&nbsp;(stop)</span></span>, to inhibit any subsequent actions
+mentioned in the player's input. For instance:
+</p>
+<textarea class="copyarea" id="copy3" readonly>
+(perform [pull #handle])
+	You grab the handle of the machine, and hesitate for a moment. Is
+	this really safe?
+
+	(par)
+
+	But you have no choice. You pull the handle. Sparks hum in the air
+	as you are sucked into the vortex of the machine.
+
+	(par)
+
+	You find yourself in a barn.
+
+	(move player to #on #haystack)
+	(try [look])
+	(tick) (stop)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(perform [pull #handle])</td></tr>
+<tr><td class="left"></td><td class="right">You grab the handle of the machine, and hesitate for a moment. Is</td></tr>
+<tr><td class="left"></td><td class="right">this really safe?</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left"></td><td class="right">(par)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left"></td><td class="right">But you have no choice. You pull the handle. Sparks hum in the air</td></tr>
+<tr><td class="left"></td><td class="right">as you are sucked into the vortex of the machine.</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left"></td><td class="right">(par)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left"></td><td class="right">You find yourself in a barn.</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left"></td><td class="right">(move player to #on #haystack)</td></tr>
+<tr><td class="left"></td><td class="right">(try [look])</td></tr>
+<tr><td class="left"></td><td class="right">(tick) (stop)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy3').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>If the cutscene can be triggered in multiple ways, put it <a href="scenery.html#predstoryintro">in a
+separate predicate</a> and query that from as many places in the code as you
+wish.
+</p>
+<p>To prevent a cutscene from occurring twice, use a <a href="dynamic.html#globalflag">global flag</a>:
+</p>
+<textarea class="copyarea" id="copy4" readonly>
+(perform [pull #handle])
+	(if) (have teleported to barn) (then)
+		Nothing happens when you pull the handle.
+	(else)
+		(teleport to barn cutscene)
+	(endif)
+
+(teleport to barn cutscene)
+	<i>...</i>
+	(now) (have teleported to barn)
+	(stop)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(perform [pull #handle])</td></tr>
+<tr><td class="left"></td><td class="right">(if) (have teleported to barn) (then)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>Nothing happens when you pull the handle.</td></tr>
+<tr><td class="left"></td><td class="right">(else)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(teleport to barn cutscene)</td></tr>
+<tr><td class="left"></td><td class="right">(endif)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(teleport to barn cutscene)</td></tr>
+<tr><td class="left"></td><td class="right"><i>...</i></td></tr>
+<tr><td class="left"></td><td class="right">(now) (have teleported to barn)</td></tr>
+<tr><td class="left"></td><td class="right">(stop)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy4').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<a id="intro"></a><h2>The intro</h2>
+<p>When a story begins, the standard library queries the <span class="code">(intro)</span>
+predicate, which story authors are encouraged to override.
+</p>
+<p>The default implementation of <span class="code">(intro)</span> just prints the <i>story
+banner</i> by querying <span class="code">(banner)</span>. The banner includes version
+information for the compiler and the standard library. By convention, stories
+should print the banner at some point during play. With Dialog, there is no
+formal requirement to print the banner at all, but it is helpful to the
+community and to your future self, and it looks professional.
+</p>
+<textarea class="copyarea" id="copy5" readonly>
+(intro)
+	"In medias res?" exclaimed the broad-shouldered Baron furiously.
+	"We find it preposterously cliché!"
+
+	(banner)
+
+	(try [look])
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(intro)</td></tr>
+<tr><td class="left"></td><td class="right">"In medias res?" exclaimed the broad-shouldered Baron furiously.</td></tr>
+<tr><td class="left"></td><td class="right">"We find it preposterously cliché!"</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left"></td><td class="right">(banner)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left"></td><td class="right">(try [look])</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy5').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<a id="score"></a><h2>Keeping score</h2>
+<p>The player's progress can be tracked by a global score variable. This feature
+needs to be enabled, by including the following rule definition somewhere in
+the story:
+</p>
+<textarea class="copyarea" id="copy6" readonly>
+(scoring enabled)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(scoring enabled)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy6').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>For scored games, the current score is displayed in the status bar.
+</p>
+<p>Points can be added to the score with <span class="code">(increase score by&nbsp;$)</span>, and
+subtracted with <span class="code">(decrease score by&nbsp;$)</span>. These predicates fail if
+the score would end up outside the valid range of integers in Dialog, which is
+<span class="nobreak">0&ndash;16383</span> inclusive.
+</p>
+<p>After every move, the standard library will mention if the score has gone up or
+down, and by how much.
+</p>
+<p>If you know what the maximum score is, you can declare it:
+</p>
+<textarea class="copyarea" id="copy7" readonly>
+(maximum score 30)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(maximum score 30)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy7').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>When declared, the maximum score is mentioned by the default implementation of
+the <span class="prginput">SCORE</span> command, in the status bar, as well as by the
+<span class="code">(game over)</span> predicate. It does not affect the operation of
+<span class="code">(increase score by&nbsp;$)</span>.
+</p>
+<a id="part2status"></a><h2>The status bar</h2>
+<p>It is straightforward to supply your own, custom status bar. Define a rule for
+the predicate <span class="code">(redraw status bar)</span>, and make use of <a href="control.html#statusbar">the
+status bar functionality</a> built into the Dialog programming language.
+</p>
+<p>The standard library defines <span class="code">(status headline)</span>, which can be used
+to print the location of the player character in the usual way. That would
+normally be the current room header, followed by something like &ldquo;<span class="prgoutput">(on the
+chair)</span>&rdquo; if the player character is the child of a non-room object. But
+if the player character is in a dark location, control is instead passed to
+<span class="code">(darkness headline)</span>, which usually prints &ldquo;<span class="prgoutput">In the
+dark</span>&rdquo;.
+</p>
+<textarea class="copyarea" id="copy8" readonly>
+(redraw status bar)
+
+	%% Draw a thicker status bar with the name of the current player in the
+	%% upper right corner.
+
+	(status bar 3) {
+		(move cursor to row 2 column 2)
+		(status headline)
+
+		(status bar width $W)
+		($W minus 20 into $Pos)
+		(move cursor to row 2 column $Pos)
+
+		(current player $Player)
+		(name $Player)
+	}
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(redraw status bar)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left"></td><td class="right"><span class="comment">%% Draw a thicker status bar with the name of the current player in the</span></td></tr>
+<tr><td class="left"></td><td class="right"><span class="comment">%% upper right corner.</span></td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left"></td><td class="right">(status bar 3) {</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(move cursor to row 2 column 2)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(status headline)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(status bar width $W)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>($W minus 20 into $Pos)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(move cursor to row 2 column $Pos)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(current player $Player)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>(name $Player)</td></tr>
+<tr><td class="left"></td><td class="right">}</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy8').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<a id="gameover"></a><h2>Game over</h2>
+<p>When the game is over, it is customary to print a final message enclosed by
+asterisks, in bold text:
+</p>
+<textarea class="copyarea" id="copy9" readonly>
+	(par) (bold) \*\*\* You have won! \*\*\* (roman) (par)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">(par) (bold) \*\*\* You have won! \*\*\* (roman) (par)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy9').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Then you usually query the predicate <span class="code">(game over)</span>, which:
+</p>
+<ul><li>Invokes <span class="code">(game over status bar)</span> which sets the status bar
+to &ldquo;Game over&rdquo;, unless you override it.
+</li>
+<li>Reports the final score (if scoring is enabled), and the maximum
+score (if one has been declared).
+</li>
+<li>Enters an infinite loop where the player is asked if they wish to
+<span class="prginput">RESTART</span>, <span class="prginput">RESTORE</span>, <span class="prginput">UNDO</span> the
+last move, or <span class="prginput">QUIT</span>.
+</li>
+</ul><p>Here is an example of a (very small) cutscene that ends the game:
+</p>
+<textarea class="copyarea" id="copy10" readonly>
+(perform [eat #apple])
+	The apple is yummy. You feel that your mission has come to an end.
+
+	(par) (bold) \*\*\* You are no longer hungry. \*\*\* (roman) (par)
+
+	(game over)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(perform [eat #apple])</td></tr>
+<tr><td class="left"></td><td class="right">The apple is yummy. You feel that your mission has come to an end.</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left"></td><td class="right">(par) (bold) \*\*\* You are no longer hungry. \*\*\* (roman) (par)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="left"></td><td class="right">(game over)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>A fifth option can be added to the game-over menu: <span class="prginput">AMUSING</span>.
+First, add the option to the menu with the following rule definition:
+</p>
+<textarea class="copyarea" id="copy11" readonly>
+(amusing enabled)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(amusing enabled)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy11').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Then, implement a predicate called <span class="code">(amusing)</span> that prints a list of
+amusing things the player might want to try:
+</p>
+<textarea class="copyarea" id="copy12" readonly>
+(amusing)
+	(par)
+	Have you tried...
+	(par)
+	(space 10) ...eating the transmogrifier? (line)
+	(space 10) ...xyzzy? (line)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(amusing)</td></tr>
+<tr><td class="left"></td><td class="right">(par)</td></tr>
+<tr><td class="left"></td><td class="right">Have you tried...</td></tr>
+<tr><td class="left"></td><td class="right">(par)</td></tr>
+<tr><td class="left"></td><td class="right">(space 10) ...eating the transmogrifier? (line)</td></tr>
+<tr><td class="left"></td><td class="right">(space 10) ...xyzzy? (line)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy12').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+	<div class="footer">
+	<p class="nav">Onwards to &ldquo;<a href="understanding.html">Chapter 9: Understanding player input</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
+	<p class="tagline">The Dialog Manual, Revision 1, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	</div>
+	</div>
+</body>
+</html>

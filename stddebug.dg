@@ -1,0 +1,84 @@
+
+(extension version)
+	Debugging extension 1.0.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Informative actions
+
+(understand command [scope])
+(perform [scope])
+	The current scope is: (line)
+	(exhaust) {
+		*($Obj is in scope)
+		$Obj:
+		%% Prevent (the $) from revealing hidden objects
+		(if) ($Obj is hidden) (then)
+			(the $Obj)
+			(now) ($Obj is hidden)
+		(else)
+			(the $Obj)
+		(endif)
+		(line)
+	}
+
+(understand command [allrooms])
+(perform [allrooms])
+	All rooms: (line)
+	(exhaust) {
+		*(room $Room)
+		$Room: (The $Room)
+		(if) ($Room is visited) (then) \(visited\) (endif)
+		(line)
+	}
+
+(understand command [meminfo])
+(perform [meminfo])
+	(display memory statistics)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Manipulative actions
+
+(understand [teleport | $Words] as [teleport $Room])
+	*(room $Room)
+	(collect words)
+		*(dict $Room)
+	(and check $Words)
+
+(describe action [teleport $Room])
+	teleport to (the full $Room)
+
+~(refuse [teleport $])
+
+(perform [teleport $Room])
+	(inhibit next tick)
+	(enter $Room)
+
+(understand [purloin | $Words] as [purloin $Obj])
+	*(item $Obj)
+	(collect words)
+		*(dict $Obj)
+	(and check $Words)
+
+~(refuse [purloin $])
+
+(perform [purloin $Obj])
+	(inhibit next tick)
+	(current player $Player)
+	(now) ($Obj is #heldby $Player)
+	(now) ($Obj is handled)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Action tracing
+
+(understand command [actions on])
+(perform [actions on])
+	(now) (tracing actions)
+
+(understand command [actions off])
+(perform [actions off])
+	(now) ~(tracing actions)
+
+(try $Action)
+	(tracing actions)
+	(line) ACTION: $Action \( (describe action $Action) \) (line)
+	(fail)
