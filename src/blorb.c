@@ -8,6 +8,8 @@
 #include <unistd.h>
 
 #include "common.h"
+#include "arena.h"
+#include "ast.h"
 #include "blorb.h"
 #include "report.h"
 
@@ -35,7 +37,7 @@ static void addstr_escape(char *str, int allow_par) {
 			n += 5;
 		} else if(str[i] == '<' || str[i] == '>') {
 			n += 4;
-		} else if(str[i] == '\r' && str[i + 1] == '\r') {
+		} else if(str[i] == '\n' && str[i + 1] == '\n') {
 			i++;
 			n += 5;
 		} else {
@@ -68,14 +70,14 @@ static void addstr_escape(char *str, int allow_par) {
 			}
 			memcpy(buf + n, "&gt;", 4);
 			n += 4;
-		} else if(allow_par && str[i] == '\r' && str[i + 1] == '\r') {
+		} else if(allow_par && str[i] == '\n' && str[i + 1] == '\n') {
 			do {
 				i++;
-			} while(str[i + 1] == '\r');
+			} while(str[i + 1] == '\n');
 			memcpy(buf + n, "<br/>", 5);
 			n += 5;
 			pend_space = 0;
-		} else if(str[i] == ' ' || str[i] == '\r') {
+		} else if(str[i] == ' ' || str[i] == '\n') {
 			pend_space = 1;
 		} else {
 			if(pend_space) {
@@ -90,12 +92,100 @@ static void addstr_escape(char *str, int allow_par) {
 	free(buf);
 }
 
-static void addnull() {
-	if(strpos + 1 > strsize) {
-		strsize = strpos + 8;
-		strbuf = realloc(strbuf, strsize);
+static void build_ifiction(struct program *prg, uint8_t *imgdata, int imgwidth, int imgheight, char *coveralt, int zver) {
+	char buf[64];
+
+	addstr("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+	addstr("<ifindex version=\"1.0\" xmlns=\"http://babel.ifarchive.org/protocol/iFiction/\">\n");
+	addstr("  <story>\n");
+	addstr("    <identification>\n");
+	addstr("      <ifid>");
+	addstr(prg->meta_ifid);
+	addstr("</ifid>\n");
+	addstr("      <format>zcode</format>\n");
+	addstr("    </identification>\n");
+	addstr("    <bibliographic>\n");
+	addstr("      <title>");
+	addstr_escape(prg->meta_title, 0);
+	addstr("</title>\n");
+	addstr("      <author>");
+	addstr_escape(prg->meta_author, 0);
+	addstr("</author>\n");
+	addstr("      <headline>");
+	addstr_escape(prg->meta_noun, 0);
+	addstr("</headline>\n");
+	addstr("      <group>Dialog</group>\n");
+	if(prg->meta_blurb) {
+		addstr("      <description>");
+		addstr_escape(prg->meta_blurb, 1);
+		addstr("</description>\n");
 	}
-	strbuf[strpos++] = 0;
+	addstr("    </bibliographic>\n");
+	if(imgdata) {
+		if(imgwidth > 1200 || imgheight > 1200) {
+			report(LVL_ERR, 0, "Maximum dimensions for cover image: 1200 x 1200 pixels.");
+			exit(1);
+		}
+		addstr("    <cover>\n");
+		addstr("      <format>png</format>\n");
+		snprintf(buf, sizeof(buf), "%d", imgheight);
+		addstr("      <height>");
+		addstr(buf);
+		addstr("</height>\n");
+		snprintf(buf, sizeof(buf), "%d", imgwidth);
+		addstr("      <width>");
+		addstr(buf);
+		addstr("</width>\n");
+		if(coveralt) {
+			addstr("      <description>");
+			addstr_escape(coveralt, 0);
+			addstr("</description>\n");
+		}
+		addstr("    </cover>\n");
+	}
+	addstr("    <releases>\n");
+	addstr("      <attached>\n");
+	addstr("        <release>\n");
+	addstr("          <releasedate>");
+	addstr(prg->meta_reldate);
+	addstr("</releasedate>\n");
+	addstr("          <version>");
+	snprintf(buf, sizeof(buf), "%d", prg->meta_release);
+	addstr(buf);
+	addstr("</version>\n");
+	addstr("          <compiler>Dialog compiler</compiler>\n");
+	addstr("          <compilerversion>" VERSION "</compilerversion>\n");
+	addstr("        </release>\n");
+	addstr("      </attached>\n");
+	addstr("    </releases>\n");
+	addstr("    <colophon>\n");
+	addstr("      <generator>Dialog compiler</generator>\n");
+	addstr("      <generatorversion>" VERSION "</generatorversion>\n");
+	addstr("      <originated>");
+	addstr(prg->meta_reldate);
+	addstr("</originated>\n");
+	addstr("    </colophon>\n");
+	if(zver) {
+		addstr("    <zcode>\n");
+		addstr("      <version>");
+		snprintf(buf, sizeof(buf), "%d", zver);
+		addstr(buf);
+		addstr("</version>\n");
+		addstr("      <serial>");
+		addstr(prg->meta_serial);
+		addstr("</serial>\n");
+		addstr("      <release>");
+		snprintf(buf, sizeof(buf), "%d", prg->meta_release);
+		addstr(buf);
+		addstr("</release>\n");
+		addstr("      <compiler>Dialog compiler version " VERSION "</compiler>\n");
+		if(imgdata) {
+			addstr("      <coverpicture>1</coverpicture>\n");
+		}
+		addstr("    </zcode>\n");
+	}
+	addstr("  </story>\n");
+	addstr("</ifindex>\n");
 }
 
 static void put32(uint32_t x, FILE *f) {
@@ -154,19 +244,12 @@ void emit_blorb(
 	char *fname,
 	uint8_t *zimage,
 	uint32_t zlength,
-	char *ifid,
-	char *serial,
-	char *author,
-	char *title,
-	char *noun,
-	char *blurb,
-	int release,
-	char *reldate,
+	struct program *prg,
+	int zver,
 	char *coverfname,
 	char *coveralt)
 {
 	FILE *f;
-	char buf[64];
 	int nres;
 	uint32_t imgsize;
 	int imgwidth, imgheight;
@@ -174,111 +257,11 @@ void emit_blorb(
 
 	if(coverfname) {
 		imgdata = loadpng(coverfname, &imgsize, &imgwidth, &imgheight);
-		if(imgwidth > 1200 || imgheight > 1200) {
-			report(LVL_ERR, 0, "Maximum dimensions for cover image: 1200 x 1200 pixels.");
-			exit(1);
-		}
 	} else if(coveralt) {
 		report(LVL_WARN, 0, "Ignoring alt-text since no cover image filename was given.");
 	}
 
-	addstr("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-	addstr("<ifindex version=\"1.0\" xmlns=\"http://babel.ifarchive.org/protocol/iFiction/\">\n");
-	addstr("  <story>\n");
-	addstr("    <identification>\n");
-	if(!ifid) {
-		report(LVL_ERR, 0, "An IFID declaration is mandatory for the blorb output format.");
-		exit(1);
-	}
-	addstr("      <ifid>");
-	addstr(ifid);
-	addstr("</ifid>\n");
-	addstr("      <format>zcode</format>\n");
-	addstr("    </identification>\n");
-	addstr("    <bibliographic>\n");
-	if(!title) {
-		title = "An Interactive Fiction";
-	}
-	if(!noun) {
-		noun = "An Interactive Fiction";
-	}
-	if(!author) {
-		author = "Anonymous";
-	}
-	addstr("      <title>");
-	addstr_escape(title, 0);
-	addstr("</title>\n");
-	addstr("      <author>");
-	addstr_escape(author, 0);
-	addstr("</author>\n");
-	addstr("      <headline>");
-	addstr_escape(noun, 0);
-	addstr("</headline>\n");
-	addstr("      <group>Dialog</group>\n");
-	if(blurb) {
-		addstr("      <description>");
-		addstr_escape(blurb, 1);
-		addstr("</description>\n");
-	}
-	addstr("    </bibliographic>\n");
-	if(imgdata) {
-		addstr("    <cover>\n");
-		addstr("      <format>png</format>\n");
-		snprintf(buf, sizeof(buf), "%d", imgheight);
-		addstr("      <height>");
-		addstr(buf);
-		addstr("</height>\n");
-		snprintf(buf, sizeof(buf), "%d", imgwidth);
-		addstr("      <width>");
-		addstr(buf);
-		addstr("</width>\n");
-		if(coveralt) {
-			addstr("      <description>");
-			addstr_escape(coveralt, 0);
-			addstr("</description>\n");
-		}
-		addstr("    </cover>\n");
-	}
-	addstr("    <releases>\n");
-	addstr("      <attached>\n");
-	addstr("        <release>\n");
-	addstr("          <releasedate>");
-	addstr(reldate);
-	addstr("</releasedate>\n");
-	addstr("          <version>");
-	snprintf(buf, sizeof(buf), "%d", release);
-	addstr(buf);
-	addstr("</version>\n");
-	addstr("          <compiler>Dialog compiler</compiler>\n");
-	addstr("          <compilerversion>" VERSION "</compilerversion>\n");
-	addstr("        </release>\n");
-	addstr("      </attached>\n");
-	addstr("    </releases>\n");
-	addstr("    <colophon>\n");
-	addstr("      <generator>Dialog compiler</generator>\n");
-	addstr("      <generatorversion>" VERSION "</generatorversion>\n");
-	addstr("      <originated>");
-	addstr(reldate);
-	addstr("</originated>\n");
-	addstr("    </colophon>\n");
-	addstr("    <zcode>\n");
-	addstr("      <version>8</version>\n");
-	addstr("      <serial>");
-	addstr(serial);
-	addstr("</serial>\n");
-	addstr("      <release>");
-	addstr(buf);
-	addstr("</release>\n");
-	addstr("      <compiler>Dialog compiler version " VERSION "</compiler>\n");
-	if(imgdata) {
-		addstr("      <coverpicture>1</coverpicture>\n");
-	}
-	addstr("    </zcode>\n");
-	addstr("  </story>\n");
-	addstr("</ifindex>\n");
-
-	addnull();
-	if(strpos & 1) addnull();
+	build_ifiction(prg, imgdata, imgwidth, imgheight, coveralt, zver);
 
 	f = fopen(fname, "wb");
 	if(!f) {
@@ -289,7 +272,14 @@ void emit_blorb(
 	nres = 1 + !!imgdata;
 
 	fwrite("FORM", 4, 1, f);
-	put32(4 + 8 + 4 + 12 * nres + 8 + ((zlength + 1) & ~1) + (imgdata? 8 + 4 + 8 + ((imgsize + 1) & ~1) : 0) + 8 + strpos, f);
+	put32(
+		4 +
+		8 + 4 + 12 * nres +
+		8 + ((zlength + 1) & ~1) +
+		(imgdata?
+			8 + 4 +
+			8 + ((imgsize + 1) & ~1) : 0) +
+		8 + ((strpos + 1) & ~1), f);
 	fwrite("IFRS", 4, 1, f);
 
 	fwrite("RIdx", 4, 1, f);
@@ -323,6 +313,7 @@ void emit_blorb(
 	fwrite("IFmd", 4, 1, f);
 	put32(strpos, f);
 	fwrite(strbuf, strpos, 1, f);
+	if(strpos & 1) fputc(0, f);
 
 	fclose(f);
 }

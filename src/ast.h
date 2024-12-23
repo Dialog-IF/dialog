@@ -40,6 +40,7 @@ enum {
 	AN_STOPPABLE,
 	AN_STATUSBAR,
 	AN_OUTPUTBOX,
+	AN_LINK
 };
 
 enum {
@@ -133,6 +134,7 @@ enum {
 	BI_WORDREP_RIGHT,
 
 	BI_HAVE_UNDO,
+	BI_HAVE_LINK,
 
 	BI_PROGRAM_ENTRY,
 	BI_ERROR_ENTRY,
@@ -260,6 +262,7 @@ struct predicate {
 #define PREDF_DEFINED			0x00010000
 #define PREDF_DYN_LINKAGE		0x00020000
 #define PREDF_INVOKED_NORMALLY		0x00040000
+#define PREDF_NEEDS_LABEL		0x00080000
 
 #define PREDF_INVOKED (PREDF_INVOKED_NORMALLY | PREDF_INVOKED_FOR_WORDS | PREDF_INVOKED_BY_PROGRAM | PREDF_INVOKED_BY_DEBUGGER)
 
@@ -285,12 +288,18 @@ struct endings_way {
 	struct endings_point	more;
 };
 
+struct boxclassline {
+	struct boxclassline	*next;
+	char			*data;
+};
+
 struct boxclass {
 	uint16_t		width, height;
 	uint16_t		margintop, marginbottom;
 	uint16_t		flags;
 	uint16_t		style;	// STYLE_*
 	struct word		*class;
+	struct boxclassline	*css_lines;
 };
 
 #define BOXF_RELWIDTH		0x0001
@@ -343,12 +352,22 @@ struct program {
 	struct word		**clausevars;
 	int			nclausevar;
 	int			nalloc_var;
+	char			*meta_author;
+	char			*meta_title;
+	char			*meta_noun;
+	char			*meta_blurb;
+	char			*meta_ifid;
+	char			*meta_serial;
+	char			*meta_reldate;
+	int			meta_release;
 };
 
 #define OPTF_BOUND_PARAMS	0x00000001
 #define OPTF_TAIL_CALLS		0x00000002
 #define OPTF_NO_TRACE		0x00000004
 #define OPTF_ENV_FRAMES		0x00000008
+#define OPTF_SIMPLE_SELECT	0x00000010
+#define OPTF_NO_LINKS		0x00000020
 
 typedef void (*word_visitor_t)(struct word *);
 

@@ -31,11 +31,11 @@
 #define DEBUGGERNAME "Dialog Interactive Debugger (dgdebug) version " VERSION
 
 struct debugger {
+	int			nfilename;
+	char			**filenames;
 	struct eval_state	es;
 	struct dyn_state	ds;
 	struct program		*prg;
-	int			nfilename;
-	char			**filenames;
 	struct timespec		*timestamps;
 	int			randomseed;
 	int			status;

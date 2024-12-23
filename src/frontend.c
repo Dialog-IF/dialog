@@ -48,6 +48,7 @@ struct specialspec {
 	{SP_IF,			0,				1,	{"if"}},
 	{SP_INTO,		0,				2,	{"into", 0}},
 	{SP_JUST,		0,				1,	{"just"}},
+	{SP_LINK,		0,				2,	{"link", 0}},
 	{SP_MATCHING_ALL_OF,	0,				4,	{"matching", "all", "of", 0}},
 	{SP_NOW,		0,				1,	{"now"}},
 	{SP_OR,			0,				1,	{"or"}},
@@ -131,6 +132,7 @@ struct builtinspec {
 	{BI_WORDREP_LEFT,	0, 0,				4,	{"word", "representing", "left", 0}},
 	{BI_WORDREP_RIGHT,	0, 0,				4,	{"word", "representing", "right", 0}},
 	{BI_HAVE_UNDO,		0, 0,				3,	{"interpreter", "supports", "undo"}},
+	{BI_HAVE_LINK,		0, 0,				3,	{"interpreter", "supports", "links"}},
 	{BI_PROGRAM_ENTRY,	PREDNF_DEFINABLE_BI, 0,		3,	{"program", "entry", "point"}},
 	{BI_ERROR_ENTRY,	PREDNF_DEFINABLE_BI, 0,		4,	{"error", 0, "entry", "point"}},
 	{BI_QUERY,		0, 0,				2,	{"query", 0}},
@@ -534,6 +536,10 @@ int trace_invocations_body(struct astnode **anptr, int flags, uint8_t *bound, st
 			memcpy(bound_sub, bound, cl->nvar);
 			(void) trace_invocations_body(&an->children[1], flags, bound_sub, cl, 0, prg);
 			break;
+		case AN_LINK:
+			memcpy(bound_sub, bound, cl->nvar);
+			(void) trace_invocations_body(&an->children[1], flags, bound_sub, cl, 0, prg);
+			break;
 		case AN_NEG_BLOCK:
 			for(i = 0; i < an->nchild; i++) {
 				memcpy(bound_sub, bound, cl->nvar);
@@ -911,7 +917,7 @@ static int body_can_succeed(struct program *prg, struct astnode *an, struct word
 			if(query_known_to_succeed(prg, an, objvar, onum, max_depth - 1)) {
 				return 0;
 			}
-		} else {
+		} else if(an->kind != AN_BAREWORD) {
 			return 1;
 		}
 		an = an->next_in_body;
@@ -1173,6 +1179,7 @@ static void extract_wordmap_from_body(struct wordmap_tally *tallies, int tally_o
 			case AN_FIRSTRESULT:
 			case AN_STOPPABLE:
 			case AN_OUTPUTBOX:
+			case AN_LINK:
 			case AN_OR:
 			case AN_SELECT:
 			case AN_EXHAUST:
@@ -1442,6 +1449,7 @@ int body_succeeds(struct astnode *an) {
 			}
 			break;
 		case AN_OUTPUTBOX:
+		case AN_LINK:
 			return 0;
 			break;
 		}
@@ -1777,7 +1785,9 @@ static void enumerate_select_statements(struct program *prg, struct astnode *an,
 	int i;
 
 	while(an) {
-		if(an->kind == AN_SELECT && an->subkind != SEL_P_RANDOM) {
+		if(an->kind == AN_SELECT
+		&& an->subkind != SEL_P_RANDOM
+		&& !(an->subkind == SEL_STOPPING && an->nchild == 2 && (prg->optflags & OPTF_SIMPLE_SELECT))) {
 			if(mapping) {
 				an->value = *mapping++;
 				assert(an->value < prg->nselect);
@@ -2033,7 +2043,7 @@ static void add_to_buf(char **buf, int *nalloc, int *pos, char ch) {
 	(*buf)[(*pos)++] = ch;
 }
 
-int decode_output(char **bufptr, struct astnode *an, int *p_space, int *p_nl, struct arena *arena, char *context) {
+static int decode_output(char **bufptr, struct astnode *an, int *p_space, int *p_nl, struct arena *arena, char *context) {
 	int post_space = 0, nl_printed = 0;
 	int i;
 	char last = 0;
@@ -2080,13 +2090,13 @@ int decode_output(char **bufptr, struct astnode *an, int *p_space, int *p_nl, st
 			post_space = 0;
 		} else if(an->kind == AN_RULE && an->predicate->builtin == BI_LINE) {
 			while(nl_printed < 1) {
-				add_to_buf(&buf, &nalloc, &pos, '\r');
+				add_to_buf(&buf, &nalloc, &pos, '\n');
 				nl_printed++;
 				post_space = 0;
 			}
 		} else if(an->kind == AN_RULE && an->predicate->builtin == BI_PAR) {
 			while(nl_printed < 2) {
-				add_to_buf(&buf, &nalloc, &pos, '\r');
+				add_to_buf(&buf, &nalloc, &pos, '\n');
 				nl_printed++;
 				post_space = 0;
 			}
@@ -2428,27 +2438,37 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 		struct boxclass *bc = &prg->boxclasses[i];
 		char *css = decode_metadata_str(BI_STYLEDEF, bc->class, prg, &lexer.temp_arena);
 		char *param, *str;
+		struct boxclassline *bcl, **bclptr;
 
 		bc->width = 100;
 		bc->height = 1;
 		bc->flags = BOXF_RELWIDTH;
 		bc->margintop = 0;
 		bc->marginbottom = 0;
+		bclptr = &bc->css_lines;
 		if(css) {
 			param = arena_alloc(&lexer.temp_arena, strlen(css) + 1);
 			while((str = strtok(css, ";"))) {
+				while(strchr(" \t\r\n", *str)) str++;
+
+				bcl = arena_alloc(&prg->arena, sizeof(*bcl));
+				bcl->data = arena_strdup(&prg->arena, str);
+				*bclptr = bcl;
+				bclptr = &bcl->next;
+
 				for(j = 0; str[j]; j++) {
 					if(str[j] >= 'A' && str[j] <= 'Z') str[j] ^= ' ';
 				}
-				if(2 == sscanf(str, " width : %d %s", &j, param)) {
+
+				if(2 == sscanf(str, "width : %d %s", &j, param)) {
 					if(!strcmp(param, "%")) {
 						bc->width = j;
 						bc->flags |= BOXF_RELWIDTH;
-					} else if(!strcmp(param, "em")) {
+					} else if(!strcmp(param, "em") || !strcmp(param, "ch")) {
 						bc->width = j;
 						bc->flags &= ~BOXF_RELWIDTH;
 					}
-				} else if(2 == sscanf(str, " height : %d %s", &j, param)) {
+				} else if(2 == sscanf(str, "height : %d %s", &j, param)) {
 					if(!strcmp(param, "%")) {
 						bc->height = j;
 						bc->flags |= BOXF_RELHEIGHT;
@@ -2456,15 +2476,15 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 						bc->height = j;
 						bc->flags &= ~BOXF_RELHEIGHT;
 					}
-				} else if(2 == sscanf(str, " margin-top : %d %s", &j, param)) {
+				} else if(2 == sscanf(str, "margin-top : %d %s", &j, param)) {
 					if(!strcmp(param, "em")) {
 						bc->margintop = j;
 					}
-				} else if(2 == sscanf(str, " margin-bottom : %d %s", &j, param)) {
+				} else if(2 == sscanf(str, "margin-bottom : %d %s", &j, param)) {
 					if(!strcmp(param, "em")) {
 						bc->marginbottom = j;
 					}
-				} else if(1 == sscanf(str, " float : %s", param)) {
+				} else if(1 == sscanf(str, "float : %s", param)) {
 					if(!strcmp(param, "left")) {
 						bc->flags &= ~BOXF_FLOATRIGHT;
 						bc->flags |= BOXF_FLOATLEFT;
@@ -2472,21 +2492,23 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 						bc->flags &= ~BOXF_FLOATLEFT;
 						bc->flags |= BOXF_FLOATRIGHT;
 					}
-				} else if(1 == sscanf(str, " font-style : %s", param)) {
+				} else if(1 == sscanf(str, "font-style : %s", param)) {
 					if(!strcmp(param, "italic") || !strcmp(param, "oblique")) {
 						bc->style = STYLE_ITALIC;
 					}
-				} else if(1 == sscanf(str, " font-weight : %s", param)) {
+				} else if(1 == sscanf(str, "font-weight : %s", param)) {
 					if(!strcmp(param, "bold")) {
 						bc->style = STYLE_BOLD;
 					}
 				}
+
 				css = 0;
 			}
 		}
+		*bclptr = 0;
 		if(verbose >= 3) {
 			printf("Box class @%s:\n", bc->class->name);
-			printf("\tWidth:\t%d%s\n", bc->width, (bc->flags & BOXF_RELWIDTH)? "%" : " em");
+			printf("\tWidth:\t%d%s\n", bc->width, (bc->flags & BOXF_RELWIDTH)? "%" : " ch");
 			printf("\tHeight:\t%d%s\n", bc->height, (bc->flags & BOXF_RELHEIGHT)? "%" : " em");
 			printf("\tMargin-top:\t%d em\n", bc->margintop);
 			printf("\tMargin-bottom:\t%d em\n", bc->marginbottom);
@@ -2496,6 +2518,9 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 			printf("\tStyle:\t%s\n",
 				(bc->style == STYLE_ITALIC)? "italic" :
 				(bc->style == STYLE_BOLD)? "bold" : "inherit");
+			for(bcl = bc->css_lines; bcl; bcl = bcl->next) {
+				printf("\tCSS: \"%s\"\n", bcl->data);
+			}
 		}
 	}
 

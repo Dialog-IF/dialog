@@ -1,6 +1,6 @@
 
 (library version)
-	Library version 0.25.
+	Library version 0.26.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -37,6 +37,16 @@
 
 (style class @initial-spacer)
 	margin-bottom: 2em;
+
+(style class @title)
+	font-family: Geneva, sans-serif;
+	font-weight: bold;
+	font-size: 1.4em;
+	margin-top: 1em;
+
+(style class @roomheader)
+	margin-top: .3em;
+	font-family: Geneva, sans-serif;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Relations
@@ -723,8 +733,7 @@
 (perform [look])
 	(current player $Player)
 	(current visibility ceiling $Ceil)
-	(location headline)
-	(line)
+	(div @roomheader) (location headline)
 	(if) (player can see) (then)
 		(look $Ceil)
 		($Player is $Rel $Loc)
@@ -2950,8 +2959,7 @@
 		(if) ($ComingBack = 1) (then)
 			(roman)
 			Game state restored successfully.
-			(line)
-			(location headline)
+			(div @roomheader) (location headline)
 		(else)
 			Game state saved successfully.
 		(endif)
@@ -3075,6 +3083,18 @@
 	(into $List)
 	(now) (current actor $OldActor)
 	*($Action is one of $List)
+
+(understand $Words as $Action)
+	(default actions enabled)
+	*(understand $Words as non-all object $Obj)
+	(if) (object $Obj) (then)
+		(default action $Obj $Action)
+	(else)
+		($Obj = [a $RealObj])
+		(default action $RealObj $Action)
+	(endif)
+
+(default action $Obj [examine $Obj])
 
 (understand $Words as $Words)
 	(understand $Words)
@@ -3426,8 +3446,20 @@
 (a ($Obj is hidden))	(reveal $Obj) (fail) %% Proceed with normal handling.
 (the ($Obj is hidden))	(reveal $Obj) (fail) %% Proceed with normal handling.
 
-(a $Obj)		(current player $Obj) yourself
-(A $Obj)		(current player $Obj) You
+(a (current player $Obj))
+	(if) (library links enabled) (interpreter supports links) (then)
+		(link [myself]) yourself
+	(else)
+		yourself
+	(endif)
+
+(A (current player $Obj))
+	(if) (library links enabled) (interpreter supports links) (then)
+		(link [me]) You
+	(else)
+		You
+	(endif)
+
 (the $Obj)		(current player $Obj) yourself
 (The $Obj)		(current player $Obj) You
 (it $Obj)		(current player $Obj) you
@@ -3445,19 +3477,19 @@
 (it $Obj is)		(current player $Obj) you're
 (That's $Obj)		(current player $Obj) You're
 
-(a (proper $Obj))	(name $Obj)
+(a (proper $Obj))	(maybe link $Obj)
 (the (proper $Obj))	(name $Obj)
 
-(a (your $Obj))		your (name $Obj)
+(a (your $Obj))		your (maybe link $Obj)
 (the (your $Obj))	your (name $Obj)
 
-(a (singleton $Obj))	(the $Obj)
+(a (singleton $Obj))	(maybe link $Obj {(the $_)})
 
-(a (pair $Obj))		a pair of (name $Obj)
+(a (pair $Obj))		a pair of (maybe link $Obj)
 
-(a (uncountable $Obj))	some (name $Obj)
+(a (uncountable $Obj))	some (maybe link $Obj)
 
-(a (plural $Obj))	some (name $Obj)
+(a (plural $Obj))	some (maybe link $Obj)
 (it (plural $))		they
 (them (plural $))	them
 (itself (plural $))	themselves
@@ -3472,7 +3504,7 @@
 (that (plural $))	those
 (That's (plural $))	Those are
 
-(a (an $Obj))		an (name $Obj)
+(a (an $Obj))		an (maybe link $Obj)
 
 (it (female $))		she
 (them (female $))	her
@@ -3486,7 +3518,7 @@
 (its (male $))		his
 (it (male $) is)	he's
 
-(a $Obj)		a (name $Obj)
+(a $Obj)		a (maybe link $Obj)
 (the $Obj)		the (name $Obj)
 (it $)			it
 (them $)		it
@@ -3516,6 +3548,36 @@
 (The $Obj is)		(uppercase) (the $Obj is)
 (That $Obj)		(uppercase) (that $Obj)
 
+($Obj)
+	($Obj {(name $Obj)})
+
+($Obj $Text)
+	(if) (interpreter supports links) (then)
+		(collect words)
+			(name $Obj)
+		(into $Words)
+		(link $Words) (query $Text)
+	(else)
+		(query $Text)
+	(endif)
+
+(maybe link $Obj)
+	(maybe link $Obj {(name $_)})
+
+(maybe link $Obj $Closure)
+	(if) (library links enabled) (then)
+		(if) (current player $Obj) (then)
+			($Words = [myself])
+		(else)
+			(collect words)
+				(query $Closure $Obj)
+			(into $Words)
+		(endif)
+		(link $Words) (query $Closure $Obj)
+	(else)
+		(query $Closure $Obj)
+	(endif)
+
 (open or closed $Obj)
 	(if) ($Obj is open) (then)
 		open
@@ -3530,7 +3592,7 @@
 (the-full-listing $List)
 	(listing $List {(the full $_)} @and 0)
 (the-full-or-listing $List)
-	(listing $List {(the full $_)} @or 0)
+	(listing $List {(maybe link $_ {(the full $_)})} @or 0)
 (or-listing $List)
 	(listing $List {(the $_)} @or 0)
 
@@ -3549,7 +3611,12 @@
 		(if) ($NPrinted > 0) (then) , (endif)
 	(endif)
 	(if) (fungibility enabled) ($NInc > 1) (then)
-		(spell out $NInc) (plural name $Head)
+		(spell out $NInc)
+		(if) (library links enabled) (interpreter supports links) (then)
+			($Head {(plural name $Head)})
+		(else)
+			(plural name $Head)
+		(endif)
 	(else)
 		(query $PrintClosure $Head)
 	(endif)
@@ -4019,7 +4086,7 @@
 
 (banner)
 	(par)
-	(bold) (story title or default) (unstyle) (line)
+	(div @title) (story title or default)
 	(story noun) by (story author or default).
 	(line)
 	(story release $RelNum)
@@ -4091,15 +4158,36 @@
 (game over menu)
 	(line)
 	Would you like to:
-	RESTART,
-	RESTORE a saved game,
+	(if) (library links enabled) (then)
+		(link [restart]) RESTART ,
+		(link [restore]) RESTORE a saved game,
+	(else)
+		RESTART,
+		RESTORE a saved game,
+	(endif)
 	(if) (interpreter supports undo) (then)
-		UNDO the last move,
+		(if) (library links enabled) (then)
+			(link [undo]) UNDO
+		(else)
+			UNDO
+		(endif)
+		the last move,
 	(endif)
 	(if) (amusing enabled) (then)
-		see a list of AMUSING things to do,
+		see a list of
+		(if) (library links enabled) (then)
+			(link [amusing]) AMUSING
+		(else)
+			AMUSING
+		(endif)
+		things to do,
 	(endif)
-	or QUIT?
+	or
+	(if) (library links enabled) (then)
+		(link [quit]) QUIT ?
+	(else)
+		QUIT?
+	(endif)
 	> (get input $Words)
 	(stoppable) (parse game over $Words)
 
@@ -4741,7 +4829,9 @@
 	(else)
 		Did you want to: (line)
 		(enumerate actions $AskList 1 $)
-		\( Type the corresponding number \)
+		(if) ~{ (library links enabled) (interpreter supports links) } (then)
+			\( Type the corresponding number \)
+		(endif)
 		(par)
 		> (get input $Words)
 		{
@@ -4789,17 +4879,24 @@
 		(identical except object $T1 $T2 $NextPos $TargetPos $O1)
 	(endif)
 
+(enumerate action $N $Action)
+	(library links enabled)
+	$N . (link [$N]) (describe action $Action)
+
+(enumerate action $N $Action)
+	$N . (describe action $Action)
+
 (enumerate actions [$Item1 $Item2] $N $Np1)
 	(just)
-	$N . (describe action $Item1) , or (line)
+	(enumerate action $N $Item1) , or (line)
 	($N plus 1 into $Np1)
-	$Np1 . (describe action $Item2) ? (line)
+	(enumerate action $Np1 $Item2) ? (line)
 (enumerate actions [$Item1 $Item2 | $] 9 10)
 	(just)
 	(enumerate actions [$Item1 $Item2] 9 10)
 	\(List truncated.\) (line)
 (enumerate actions [$Head | $Tail] $N $Last)
-	$N . (describe action $Head) , (line)
+	(enumerate action $N $Head) , (line)
 	($N plus 1 into $Np1)
 	(enumerate actions $Tail $Np1 $Last)
 
@@ -5137,16 +5234,18 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Get rid of some compiler warnings
 
-(plural name $)		(fail)
-(from $ go $ to $)	(fail)
-($ unlocks $)		(fail)
-(from $ through $ to $)	(fail)
-(topic keyword $)	(fail)
-(on every tick in $)	(fail)
-(scoring enabled)	(fail)
-(maximum score $)	(fail)
-(amusing enabled)	(fail)
-(amusing)		(fail)
+(plural name $)			(fail)
+(from $ go $ to $)		(fail)
+($ unlocks $)			(fail)
+(from $ through $ to $)		(fail)
+(topic keyword $)		(fail)
+(on every tick in $)		(fail)
+(scoring enabled)		(fail)
+(maximum score $)		(fail)
+(amusing enabled)		(fail)
+(amusing)			(fail)
+(library links enabled)		(fail)
+(default actions enabled)	(fail)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Fatal runtime errors

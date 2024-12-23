@@ -9,7 +9,7 @@
 <body>
 	<div class="chapter">
 	<h1>Chapter 9: Understanding player input</h1>
-	<div class="navlinks">(<a href="#complexactions">Complex actions</a>&nbsp;&bull; <a href="#parsingprocess">The parsing process</a>&nbsp;&bull; <a href="#parsingactions">Parsing actions</a>&nbsp;&bull; <a href="#newactions">Defining new actions</a>&nbsp;&bull; <a href="#parsingobj">Parsing object names</a>&nbsp;&bull; <a href="#parsedir">Directions and numbers</a>&nbsp;&bull; <a href="#parsetopics">Topics</a>&nbsp;&bull; <a href="#unlikely">Adjusting the likelihood of actions</a>&nbsp;&bull; <a href="#rewrite">Synonyms</a>&nbsp;&bull; <a href="#askingforclar">Asking for clarification</a>&nbsp;&bull; <a href="#understandorder">Rule order</a>&nbsp;&bull; <a href="#newaction">Example: Defining a new action</a>)</div>
+	<div class="navlinks">(<a href="#complexactions">Complex actions</a>&nbsp;&bull; <a href="#parsingprocess">The parsing process</a>&nbsp;&bull; <a href="#parsingactions">Parsing actions</a>&nbsp;&bull; <a href="#newactions">Defining new actions</a>&nbsp;&bull; <a href="#parsingobj">Parsing object names</a>&nbsp;&bull; <a href="#parsedir">Directions and numbers</a>&nbsp;&bull; <a href="#parsetopics">Topics</a>&nbsp;&bull; <a href="#unlikely">Adjusting the likelihood of actions</a>&nbsp;&bull; <a href="#rewrite">Synonyms</a>&nbsp;&bull; <a href="#askingforclar">Asking for clarification</a>&nbsp;&bull; <a href="#understandorder">Rule order</a>&nbsp;&bull; <a href="#newaction">Example: Defining a new action</a>&nbsp;&bull; <a href="#liblinks">Hyperlinks</a>)</div>
 <p>Actions originate from the <i>parser</i>, a central part of the standard
 library. The detailed inner workings of the parser are beyond the scope of this
 manual (but interested readers are encouraged to look at the source code of the
@@ -1131,9 +1131,133 @@ is holding the peeler, that's probably their tool of choice for peeling:
 <div class="copycode">
 <a class="copybtn" href="" onClick="document.getElementById('copy42').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
+<a id="liblinks"></a><h2>Hyperlinks</h2>
+<p>When a Dialog program is compiled to run on the Å-machine, the text may contain
+<a href="io.html#hyperlinks">clickable links</a> that resolve into text input. Selecting a link
+has the same effect as typing the words of the link target and pressing return.
+This can simplify text entry on mobile devices.
+</p>
+<p>Links are created using the special <span class="code">(link&nbsp;$)&nbsp;...</span> syntax:
+</p>
+<textarea class="copyarea" id="copy43" readonly>
+	In the bowl a (link [red marble]) { red marble } glistens in the sunlight.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">In the bowl a (link [red marble]) { red marble } glistens in the sunlight.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy43').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Often, as above, we want both the link target and the clickable text to be the
+printed name of an object. The standard library provides a tersely named
+predicate, <span class="code">($)</span>, for this case:
+</p>
+<textarea class="copyarea" id="copy44" readonly>
+	In the bowl a (#redmarble) glistens in the sunlight.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">In the bowl a (#redmarble) glistens in the sunlight.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy44').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The same predicate is useful for describing exits:
+</p>
+<textarea class="copyarea" id="copy45" readonly>
+	An exit leads (#north).
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">An exit leads (#north).</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy45').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>To use the printed name of an object as a link target, but supply a different
+text, use the predicate <span class="code">($&nbsp;$)</span>. The first parameter is an object,
+and the second is a <a href="control.html#closures">closure</a>:
+</p>
+<textarea class="copyarea" id="copy46" readonly>
+	In the bowl (#redmarble {something red}) glistens in the sunlight.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">In the bowl (#redmarble {something red}) glistens in the sunlight.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy46').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Be aware, however, that hyperlinks are an optional feature of the Å-machine,
+and not every interpreter will support them. While it can be tempting to create
+a jarring effect by having links resolve into unexpected input text, some
+players will simply not see it.
+</p>
+<p>By default, library-generated messages never contain hyperlinks. The behaviour
+of the library should be consistent with the rest of the story, and whether or
+not to sprinkle room descriptions with clickable links is a decision best left
+to the author.
+</p>
+<p>To enable clickable links in disambiguation messages, the game over menu,
+default <a href="items.html#appearance">appearances</a>, and queries to <span class="code">(a&nbsp;$)</span> and
+<span class="code">(A&nbsp;$)</span>, add the following rule definition to the source code:
+</p>
+<textarea class="copyarea" id="copy47" readonly>
+(library links enabled)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(library links enabled)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy47').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Since link targets are appended to the current line of input, readers who are
+playing on a touchscreen device can type a verb using the on-screen keyboard,
+and then complete the sentence by tapping on a recently printed object name.
+Compass directions can of course be used directly as commands.
+</p>
+<p>However, when we turn our nouns into hyperlinks, players will (understandably)
+attempt to click on them without first typing a verb. To handle this situation,
+the standard library provides an optional feature called <i>default
+actions</i>. It is enabled like this:
+</p>
+<textarea class="copyarea" id="copy48" readonly>
+(default actions enabled)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(default actions enabled)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy48').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>When this feature is enabled, the parser will understand noun-only input as a
+request for the default action, which is <span class="code">examine</span>. The default
+action can be changed, and may depend on the object, as in the following
+example:
+</p>
+<textarea class="copyarea" id="copy49" readonly>
+(default action (animate $Obj) [talk to $Obj])
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(default action (animate $Obj) [talk to $Obj])</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy49').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="miscfeat.html">Chapter 10: Miscellaneous features</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 10, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 11, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

@@ -9,7 +9,7 @@
 <body>
 	<div class="chapter">
 	<h1>Chapter 5: Input and output</h1>
-	<div class="navlinks">(<a href="#div">Divisions and style classes</a>&nbsp;&bull; <a href="#styles">Inline styles and formatting</a>&nbsp;&bull; <a href="#statusbar">The status bar</a>&nbsp;&bull; <a href="#progressbar">Visualizing progress</a>&nbsp;&bull; <a href="#clear">Clearing the screen</a>&nbsp;&bull; <a href="#input">Input</a>&nbsp;&bull; <a href="#split">Splitting input by keywords</a>&nbsp;&bull; <a href="#detobj">Determining objects from words</a>)</div>
+	<div class="navlinks">(<a href="#div">Divisions and style classes</a>&nbsp;&bull; <a href="#styles">Inline styles and formatting</a>&nbsp;&bull; <a href="#statusbar">The status bar</a>&nbsp;&bull; <a href="#progressbar">Visualizing progress</a>&nbsp;&bull; <a href="#clear">Clearing the screen</a>&nbsp;&bull; <a href="#input">Input</a>&nbsp;&bull; <a href="#hyperlinks">Hyperlinks</a>&nbsp;&bull; <a href="#split">Splitting input by keywords</a>&nbsp;&bull; <a href="#detobj">Determining objects from words</a>)</div>
 <a id="div"></a><h2>Divisions and style classes</h2>
 <p>As we saw in the <a href="execution.html#printing">introductory chapter</a>, text inside rule bodies
 gets printed. The text is treated as a sequence of words and punctuation.
@@ -79,6 +79,18 @@ and choose among them, or ignore them altogether.
 <div class="copycode">
 <a class="copybtn" href="" onClick="document.getElementById('copy1').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
+<p>The Å-machine backend copies all style definitions verbatim into the story
+file, whiche makes them available to interpreters at runtime. The official
+javascript Å-machine interpreter in turn hands them over to the web browser.
+Thus, with this particular setup, the full set of CSS properties are supported.
+</p>
+<p>Nevertheless, authors are advised to think of styling as optional icing on the
+cake, and to avoid encoding critical information in the style hints. Be
+considerate of the people who choose to engage with your story using a screen
+reader, or who prefer to play on vintage hardware. Never change the text colour
+without also changing the background colour, as the player may be using an
+interpreter with a dark or light default background.
+</p>
 <p>The Z-machine backend only supports a limited number of style attributes. For
 divs in the main text area, they are:
 </p>
@@ -290,6 +302,13 @@ during gameplay. When reducing the size of the status bar area (e.g. drawing a
 status bar of height 1em after having drawn one of height 2em), be aware that
 some interpreters hide the extraneous lines, while others regard them as being
 part of the main window.
+</p>
+<p>The Å-machine backend treats status bar styling like it does div styling in
+general: All style properties are passed to the interpreter, which is then free
+to interpret them according to the CSS standard or ignore them. The official
+javascript interpreter simply hands them over to the web browser. The same
+advice applies as for general divs: Don't assume that the reader will use an
+interpreter that obeys all style hints.
 </p>
 <p>It is not possible to save the game state (to a file or undo buffer) from
 within the status bar area, or to enter a nested <span class="code">(status bar&nbsp;$)</span>
@@ -505,6 +524,51 @@ dictionary, then it will show up as a dictionary word in the list returned by
 <span class="code">(get input&nbsp;$)</span>. Otherwise, it will be represented by the numerical
 value&nbsp;7.
 </p>
+<a id="hyperlinks"></a><h2>Hyperlinks</h2>
+<p>The Å-machine backend supports a form of <i>hyperlinks</i>, for the purpose of
+simplifying text entry on mobile devices. The syntax is:
+</p>
+<textarea class="copyarea" id="copy10" readonly>
+	(link $Target) <i>statement</i>
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">(link $Target) <i>statement</i></td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The following example creates a piece of text, &ldquo;clickable&rdquo;. Clicking on
+the text has the same effect as typing the words <span class="prginput">THE LINKED TEXT</span>
+and pressing return.
+</p>
+<textarea class="copyarea" id="copy11" readonly>
+	Here is some (link [the linked text]) { clickable } text.
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="left"></td><td class="right">Here is some (link [the linked text]) { clickable } text.</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy11').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Note that the words are appended to the end of the current contents of the
+input buffer, so that the player might type a verb, and then complete the
+sentence by clicking on e.g. a noun from a room description.
+</p>
+<p>The link target must be a flat list of words and/or integers, like the ones
+obtained from <span class="code">(get input&nbsp;$)</span>. It can be computed at runtime.
+</p>
+<p>Å-machine interpreters are not required to support hyperlinks at all, and some
+may provide an option to turn them off for players who find them distracting.
+The built-in predicate <span class="code">(interpreter supports links)</span> can be used to
+check whether hyperlinks are supported and enabled. When they are not, the
+would-be-clickable text shows up as normal text.
+</p>
+<p>Hyperlinks are always disabled on the Z-machine backend.
+</p>
 <a id="split"></a><h2>Splitting input by keywords</h2>
 <p>During parsing, it is often necessary to scan a list for certain keywords, and
 then split it into two sublists, representing the elements on either side of
@@ -512,7 +576,7 @@ the matched keyword. It is straightforward to implement this using ordinary
 rules in Dialog. However, for performance reasons the language also provides a
 built-in predicate:
 </p>
-<textarea class="copyarea" id="copy10" readonly>
+<textarea class="copyarea" id="copy12" readonly>
 (split $Input by $Keywords into $Left and $Right)
 </textarea>
 <div class="blkcode">
@@ -521,7 +585,7 @@ built-in predicate:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy12').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p><span class="code">$Input</span> and <span class="code">$Keywords</span> must be lists of simple values,
 i.e. they mustn't contain sublists.
@@ -536,7 +600,7 @@ keyword itself.
 <p>When invoked as a multi-query, the predicate backtracks over each matching
 position. Thus:
 </p>
-<textarea class="copyarea" id="copy11" readonly>
+<textarea class="copyarea" id="copy13" readonly>
 	*(split [the good , the bad and the ugly]
 		by [and ,]
 		into $Left and $Right)
@@ -549,7 +613,7 @@ position. Thus:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy11').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy13').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>will succeed twice: First, binding <span class="code">$Left</span> to <span class="code">[the
 good]</span> and <span class="code">$Right</span> to <span class="code">[the bad and the ugly]</span>,
@@ -560,7 +624,7 @@ bad]</span> and <span class="code">$Right</span> to <span class="code">[the ugly
 more of a set of keywords. The standard library uses it that way in the
 following rule definition:
 </p>
-<textarea class="copyarea" id="copy12" readonly>
+<textarea class="copyarea" id="copy14" readonly>
 ($X contains one of $Y)
 	(split $X by $Y into $ and $)
 </textarea>
@@ -571,7 +635,7 @@ following rule definition:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy12').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy14').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <a id="detobj"></a><h2>Determining objects from words</h2>
 <p>This section is mainly of concern for library programmers, so story authors may
@@ -580,7 +644,7 @@ safely skip it.
 <p>Dialog has a special construct for matching player input against in-world
 object names in a very efficient way:
 </p>
-<textarea class="copyarea" id="copy13" readonly>
+<textarea class="copyarea" id="copy15" readonly>
 	(determine object $Obj)
 		<i>object generator</i>
 	(from words)
@@ -597,7 +661,7 @@ object names in a very efficient way:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy13').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy15').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>This statement will backtrack over every object <span class="code">$Obj</span> for which:<br />
 </p>
@@ -608,7 +672,7 @@ object names in a very efficient way:
 in the word generator, and the object generator should contain a multi-query to
 backtrack over a set of objects. A canonical example is:
 </p>
-<textarea class="copyarea" id="copy14" readonly>
+<textarea class="copyarea" id="copy16" readonly>
 	(determine object $Obj)
 		*($Obj is in scope)
 	(from words)
@@ -625,7 +689,7 @@ backtrack over a set of objects. A canonical example is:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy14').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy16').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>A non-optimizing compiler could deal with this construct as follows: First,
 compile normal code for the object generator. Then, exhaust every branch of the
@@ -648,7 +712,7 @@ unoptimized case.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="dynamic.html">Chapter 6: Dynamic predicates</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 10, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 11, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

@@ -1,13 +1,11 @@
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
-#include <getopt.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
-#include <time.h>
 
 #include "common.h"
 #include "arena.h"
@@ -18,6 +16,7 @@
 #include "report.h"
 #include "zcode.h"
 #include "blorb.h"
+#include "backend_z.h"
 
 #define TWEAK_BINSEARCH 16
 
@@ -129,30 +128,20 @@ static uint16_t *extflagreaders = 0;
 
 static uint16_t undoflag_global, undoflag_mask;
 
+static uint16_t *glbflag_global, *glbflag_mask;
+
 int next_free_prop = 1;
 uint16_t propdefault[64];
 
 static int tracing_enabled;
 
-struct datatable *datatable;
-int ndatatable;
+static struct datatable *datatable;
+static int ndatatable;
 
-struct wordtable *wordtable;
-int nwordtable;
+static struct wordtable *wordtable;
+static int nwordtable;
 
 static struct backend_wobj *backendwobj;
-
-static struct arena zarena;
-
-void get_timestamp(char *dest, char *longdest) {
-	time_t t = 0;
-	struct tm *tm;
-
-	time(&t);
-	tm = localtime(&t);
-	snprintf(dest, 8, "%02d%02d%02d", tm->tm_year % 100, tm->tm_mon + 1, tm->tm_mday);
-	snprintf(longdest, 11, "%04d-%02d-%02d", 1900 + tm->tm_year, tm->tm_mon + 1, tm->tm_mday);
-}
 
 void set_global_label(uint16_t lab, uint16_t val) {
 	assert(lab < nalloc_global_label);
@@ -808,7 +797,7 @@ int cmp_dictword(const void *a, const void *b) {
 	return 0;
 }
 
-static void prepare_dictionary(struct program *prg) {
+void prepare_dictionary_z(struct program *prg) {
 	int i, n;
 	uint8_t pentets[9];
 	uint8_t zbuf[MAXSTRING];
@@ -1104,7 +1093,8 @@ static int decode_word_output(struct program *prg, char **bufptr, struct cinstr 
 			for(i = 0; i < 3; i++) {
 				if(ci->oper[i].tag == OPER_WORD) {
 					w = prg->allwords[ci->oper[i].value];
-					if(post_space && !strchr(NO_SPACE_BEFORE, w->name[0])) {
+					if(post_space == 2
+					|| (post_space == 1 && !strchr(NO_SPACE_BEFORE, w->name[0]))) {
 						add_to_buf(&buf, &nalloc, &pos, ' ');
 					}
 					for(j = 0; w->name[j]; j++) {
@@ -1126,11 +1116,11 @@ static int decode_word_output(struct program *prg, char **bufptr, struct cinstr 
 			}
 			post_space = 1;
 			ninstr++;
-		} else if(ci->op == I_BUILTIN && ci->oper[2].value == BI_NOSPACE) {
-			post_space = 0;
+		} else if(ci->op == I_BUILTIN && prg->predicates[ci->oper[2].value]->builtin == BI_NOSPACE) {
+			if(post_space == 1) post_space = 0;
 			ninstr++;
-		} else if(ci->op == I_BUILTIN && ci->oper[2].value == BI_SPACE) {
-			post_space = 1;
+		} else if(ci->op == I_BUILTIN && prg->predicates[ci->oper[2].value]->builtin == BI_SPACE) {
+			post_space = 2;
 			ninstr++;
 		} else {
 			break;
@@ -1203,9 +1193,13 @@ static int generate_output(struct program *prg, struct routine *r, struct cinstr
 					assert(!pre_space);
 					zi = append_instr(r, Z_STORE);
 					zi->oper[0] = SMALL(REG_SPACE);
-					zi->oper[1] = SMALL(1);
+					zi->oper[1] = SMALL(0);
 				}
 			}
+		}
+		if(post_space == 2) {
+			zi = append_instr(r, Z_CALL1N);
+			zi->oper[0] = ROUTINE(R_SPACE);
 		}
 	}
 
@@ -1825,6 +1819,8 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 					}
 				}
 				break;
+			case I_BEGIN_LINK:
+				break;
 			case I_BUILTIN:
 				assert(ci->oper[2].tag == OPER_PRED);
 				id = prg->predicates[ci->oper[2].value]->builtin;
@@ -2153,6 +2149,8 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 					zi->oper[1] = SMALL_OR_LARGE(prg->boxclasses[ci->oper[0].value].marginbottom);
 				}
 				break;
+			case I_END_LINK:
+				break;
 			case I_FIRST_CHILD:
 				o1 = generate_value(r, ci->oper[0], prg, t1);
 				zi = append_instr(r, Z_CALL2S);
@@ -2399,8 +2397,8 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				break;
 			case I_IF_GFLAG:
 				assert(ci->oper[0].tag == OPER_GFLAG);
-				id = ((struct backend_pred *) prg->globalflagpred[ci->oper[0].value]->pred->backend)->user_global;
-				mask = ((struct backend_pred *) prg->globalflagpred[ci->oper[0].value]->pred->backend)->user_flag_mask;
+				id = glbflag_global[ci->oper[0].value];
+				mask = glbflag_mask[ci->oper[0].value];
 				zi = append_instr(r, Z_TEST);
 				zi->oper[0] = USERGLOBAL(id);
 				zi->oper[1] = SMALL_OR_LARGE(mask);
@@ -3369,8 +3367,8 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				break;
 			case I_SET_GFLAG:
 				assert(ci->oper[0].tag == OPER_GFLAG);
-				id = ((struct backend_pred *) prg->globalflagpred[ci->oper[0].value]->pred->backend)->user_global;
-				mask = ((struct backend_pred *) prg->globalflagpred[ci->oper[0].value]->pred->backend)->user_flag_mask;
+				id = glbflag_global[ci->oper[0].value];
+				mask = glbflag_mask[ci->oper[0].value];
 				if(ci->subop) {
 					zi = append_instr(r, Z_OR);
 					zi->oper[0] = USERGLOBAL(id);
@@ -3867,37 +3865,28 @@ static void initial_values(struct program *prg, uint8_t *zcore, uint16_t addr_gl
 	set_initial_reg(zcore + addr_globals, REG_LTMAX, lttop);
 }
 
-const static char ifid_template[] = "NNNNNNNN-NNNN-NNNN-NNNN-NNNNNNNNNNNN";
-
-int match_template(const char *txt, const char *template) {
-	for(;;) {
-		if(*template == 'N') {
-			if(!((*txt >= '0' && *txt <= '9') || (*txt >= 'A' && *txt <= 'Z'))) {
-				return 0;
-			}
-		} else if(*template != *txt) {
-			return 0;
-		}
-		if(!*template) return 1;
-		template++;
-		txt++;
-	}
-}
-
-void backend(char *filename, char *format, char *coverfname, char *coveralt, int heapsize, int auxsize, int ltssize, int strip, int linecount, struct program *prg) {
+void backend_z(
+	char *filename,
+	char *format,
+	char *coverfname,
+	char *coveralt,
+	int heapsize,
+	int auxsize,
+	int ltssize,
+	int strip,
+	struct program *prg,
+	struct arena *arena)
+{
 	int nglobal;
 	uint16_t addr_abbrevtable, addr_abbrevstr, addr_objtable, addr_globals, addr_static, addr_heap, addr_heapend, addr_aux, addr_lts, addr_dictionary, addr_seltable;
 	uint32_t org;
 	uint32_t filesize;
-	char compiletime[8], reldate[16];
 	int i, j, k;
 	struct backend_wobj *wobj;
 	struct global_string *gs;
 	struct predname *predname;
 	struct predicate *pred;
 	uint16_t checksum = 0;
-	char *ifid, *author, *title, *noun, *blurb;
-	uint16_t release = 0;
 	uint16_t entrypc, himem;
 	int n_extflag = 0;
 	uint16_t *extflagarrays = 0;
@@ -3971,11 +3960,18 @@ void backend(char *filename, char *format, char *coverfname, char *coveralt, int
 	assert(undoflag_global == 0);	// hardcoded in runtime_z.c
 	assert(undoflag_mask == 1);	// hardcoded in runtime_z.c
 
+	glbflag_global = malloc(prg->nglobalflag * sizeof(uint16_t));
+	glbflag_mask = malloc(prg->nglobalflag * sizeof(uint16_t));
+
 	for(i = 0; i < prg->nglobalflag; i++) {
+		glbflag_global[i] = alloc_user_flag(&glbflag_mask[i]);
 		predname = prg->globalflagpred[i];
-		pred = predname->pred;
-		bp = pred->backend;
-		bp->user_global = alloc_user_flag(&bp->user_flag_mask);
+		if(predname) {
+			pred = predname->pred;
+			bp = pred->backend;
+			bp->user_global = glbflag_global[i];
+			bp->user_flag_mask = glbflag_mask[i];
+		}
 	}
 
 	for(i = 0; i < prg->nglobalvar; i++) {
@@ -4098,40 +4094,6 @@ void backend(char *filename, char *format, char *coverfname, char *coveralt, int
 #if 0
 	printf("routines traced\n");
 #endif
-
-	ifid = decode_metadata_str(BI_STORY_IFID, 0, prg, &zarena);
-	if(!ifid) {
-		if(linecount > 100) {
-			report(LVL_WARN, 0, "No IFID declared.");
-		}
-	} else if(!match_template(ifid, ifid_template)) {
-		report(LVL_WARN, find_builtin(prg, BI_STORY_IFID)->pred->clauses[0]->line, "Ignoring invalid IFID. It should have the format %s, where N is an uppercase hexadecimal digit.", ifid_template);
-		ifid = 0;
-	}
-
-	author = decode_metadata_str(BI_STORY_AUTHOR, 0, prg, &zarena);
-	if(!author && linecount > 100) {
-		report(LVL_WARN, 0, "No author declared.");
-	}
-	title = decode_metadata_str(BI_STORY_TITLE, 0, prg, &zarena);
-	if(!title && linecount > 100) {
-		report(LVL_WARN, 0, "No title declared.");
-	}
-	noun = decode_metadata_str(BI_STORY_NOUN, 0, prg, &zarena);
-	blurb = decode_metadata_str(BI_STORY_BLURB, 0, prg, &zarena);
-
-	predname = find_builtin(prg, BI_STORY_RELEASE);
-	if(predname && (pred = predname->pred)->nclause) {
-		if(pred->clauses[0]->body || pred->clauses[0]->params[0]->kind != AN_INTEGER) {
-			report(LVL_ERR, pred->clauses[0]->line, "Malformed story release declaration. Use e.g. (story release 1).");
-			exit(1);
-		}
-		release = pred->clauses[0]->params[0]->value;
-	} else {
-		if(linecount > 100) {
-			report(LVL_WARN, 0, "No release number declared.");
-		}
-	}
 
 	addr_heap = 0x0040;
 	addr_heapend = addr_heap + 2 * heapsize;
@@ -4309,8 +4271,8 @@ void backend(char *filename, char *format, char *coverfname, char *coveralt, int
 	zcore = calloc(1, filesize);
 
 	zcore[0x00] = zversion;
-	zcore[0x02] = release >> 8;
-	zcore[0x03] = release & 0xff;
+	zcore[0x02] = prg->meta_release >> 8;
+	zcore[0x03] = prg->meta_release & 0xff;
 	zcore[0x04] = himem >> 8;
 	zcore[0x05] = himem & 0xff;
 	zcore[0x06] = entrypc >> 8;
@@ -4324,6 +4286,7 @@ void backend(char *filename, char *format, char *coverfname, char *coveralt, int
 	zcore[0x0e] = addr_static >> 8;
 	zcore[0x0f] = addr_static & 0xff;
 	zcore[0x11] = 0x10;	// flags2: need undo
+	for(i = 0; i < 6; i++) zcore[0x12 + i] = prg->meta_serial[i];
 	zcore[0x18] = addr_abbrevtable >> 8;
 	zcore[0x19] = addr_abbrevtable & 0xff;
 	zcore[0x1a] = (filesize / packfactor) >> 8;
@@ -4428,16 +4391,13 @@ void backend(char *filename, char *format, char *coverfname, char *coveralt, int
 	set_initial_reg(zcore + addr_globals, REG_C000, 0xc000);
 	set_initial_reg(zcore + addr_globals, REG_E000, 0xe000);
 
-	get_timestamp(compiletime, reldate);
-	for(i = 0; i < 6; i++) zcore[0x12 + i] = compiletime[i];
-
 	memset(zcore + addr_heap, 0x1f, heapsize * 2);
 	memset(zcore + addr_aux, 0x3f, auxsize * 2);
 
-	if(ifid) {
-		assert(strlen(ifid) == 36);
+	if(prg->meta_ifid) {
+		assert(strlen(prg->meta_ifid) == 36);
 		memcpy(zcore + addr_heap, "UUID://", 7);
-		memcpy(zcore + addr_heap + 7, ifid, 36);
+		memcpy(zcore + addr_heap + 7, prg->meta_ifid, 36);
 		memcpy(zcore + addr_heap + 7 + 36, "//", 3);
 	}
 
@@ -4504,7 +4464,18 @@ void backend(char *filename, char *format, char *coverfname, char *coveralt, int
 			report(LVL_WARN, 0, "Ignoring cover image options for the %s output format.", format);
 		}
 	} else if(!strcmp(format, "zblorb")) {
-		emit_blorb(filename, zcore, filesize, ifid, compiletime, author, title, noun, blurb, release, reldate, coverfname, coveralt);
+		if(!prg->meta_ifid) {
+			report(LVL_ERR, 0, "An IFID declaration is mandatory for the blorb output format.");
+			exit(1);
+		}
+		emit_blorb(
+			filename,
+			zcore,
+			filesize,
+			prg,
+			zversion,
+			coverfname,
+			coveralt);
 	} else {
 		assert(0);
 		exit(1);
@@ -4513,162 +4484,4 @@ void backend(char *filename, char *format, char *coverfname, char *coveralt, int
 	if(tracing_enabled) {
 		report(LVL_NOTE, 0, "In this build, the code has been instrumented to allow tracing.");
 	}
-}
-
-void usage(char *prgname) {
-	fprintf(stderr, "Dialog compiler " VERSION ".\n");
-	fprintf(stderr, "Copyright 2018-2019 Linus Akesson.\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "Usage: %s [options] [source code filename ...]\n", prgname);
-	fprintf(stderr, "\n");
-	fprintf(stderr, "Options:\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "--version   -V    Display the program version.\n");
-	fprintf(stderr, "--help      -h    Display this information.\n");
-	fprintf(stderr, "--verbose   -v    Increase verbosity (may be used multiple times).\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "--output    -o    Set output filename.\n");
-	fprintf(stderr, "--format    -t    Set output format (zblorb, z8, or z5).\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "--heap      -H    Set main heap size (default 1000 words).\n");
-	fprintf(stderr, "--aux       -A    Set aux heap size (default 500 words).\n");
-	fprintf(stderr, "--long-term -L    Set long-term heap size (default 500 words).\n");
-	fprintf(stderr, "--strip     -s    Strip internal object names.\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "Only for zblorb format:\n");
-	fprintf(stderr, "\n");
-	fprintf(stderr, "--cover     -c    Cover image filename (PNG, max 1200x1200).\n");
-	fprintf(stderr, "--cover-alt -a    Textual description of cover image.\n");
-	exit(1);
-}
-
-int main(int argc, char **argv) {
-	struct option longopts[] = {
-		{"help", 0, 0, 'h'},
-		{"version", 0, 0, 'V'},
-		{"verbose", 0, 0, 'v'},
-		{"output", 1, 0, 'o'},
-		{"format", 1, 0, 't'},
-		{"cover", 1, 0, 'c'},
-		{"cover-alt", 1, 0, 'a'},
-		{"heap", 1, 0, 'H'},
-		{"aux", 1, 0, 'A'},
-		{"long-term", 1, 0, 'L'},
-		{"strip", 0, 0, 's'},
-		{0, 0, 0, 0}
-	};
-
-	char *prgname = argv[0];
-	char *outname = 0;
-	char *format = "zblorb";
-	char *coverfname = 0;
-	char *coveralt = 0;
-	int auxsize = 500, heapsize = 1000, ltssize = 500;
-	int strip = 0;
-	int opt, i;
-	struct program *prg;
-
-	arena_init(&zarena, 1024);
-
-	comp_init();
-
-	do {
-		opt = getopt_long(argc, argv, "?hVvo:t:c:a:H:A:L:s", longopts, 0);
-		switch(opt) {
-			case 0:
-			case '?':
-			case 'h':
-				usage(prgname);
-				break;
-			case 'V':
-				fprintf(stderr, "Dialog compiler " VERSION "\n");
-				exit(0);
-			case 'v':
-				verbose++;
-				break;
-			case 'o':
-				outname = strdup(optarg);
-				break;
-			case 't':
-				format = strdup(optarg);
-				break;
-			case 'c':
-				coverfname = strdup(optarg);
-				break;
-			case 'a':
-				coveralt = strdup(optarg);
-				break;
-			case 'H':
-				heapsize = strtol(optarg, 0, 10);
-				if(heapsize < 23 || heapsize > 8192) {
-					report(LVL_ERR, 0, "Bad main heap size (max 8192 words)");
-					exit(1);
-				}
-				break;
-			case 'A':
-				auxsize = strtol(optarg, 0, 10);
-				if(auxsize < 1 || auxsize > 16351) {
-					report(LVL_ERR, 0, "Bad aux heap size (max 16351 words)");
-					exit(1);
-				}
-				break;
-			case 'L':
-				ltssize = strtol(optarg, 0, 10);
-				if(ltssize < 1 || ltssize > 16351) {
-					report(LVL_ERR, 0, "Bad long-term heap size (max 16351 words)");
-					exit(1);
-				}
-				break;
-			case 's':
-				strip = 1;
-				break;
-			default:
-				if(opt >= 0) {
-					report(LVL_ERR, 0, "Unimplemented option '%c'", opt);
-					exit(1);
-				}
-				break;
-		}
-	} while(opt >= 0);
-
-	if(strcmp(format, "zblorb")
-	&& strcmp(format, "z8")
-	&& strcmp(format, "z5")) {
-		report(LVL_ERR, 0, "Unsupported output format \"%s\".", format);
-		exit(1);
-	}
-
-	if(!outname) {
-		if(optind < argc) {
-			outname = malloc(strlen(argv[optind]) + 8);
-			strcpy(outname, argv[optind]);
-			for(i = strlen(outname) - 1; i >= 0; i--) {
-				if(outname[i] == '.') break;
-			}
-			if(i < 0) {
-				i = strlen(outname);
-			}
-			outname[i++] = '.';
-			strcpy(outname + i, format);
-		} else {
-			report(LVL_ERR, 0, "No output filename specified, and none can be deduced from the input filenames.");
-			exit(1);
-		}
-	}
-
-	prg = new_program();
-	frontend_add_builtins(prg);
-	prg->optflags |= OPTF_BOUND_PARAMS | OPTF_TAIL_CALLS | OPTF_ENV_FRAMES;
-	prg->optflags |= OPTF_NO_TRACE; // This gets cleared by the frontend if (trace on) is reachable.
-
-	if(!frontend(prg, argc - optind, argv + optind, prepare_dictionary)) {
-		exit(1);
-	}
-
-	backend(outname, format, coverfname, coveralt, heapsize, auxsize, ltssize, strip, prg->totallines, prg);
-
-	free_program(prg);
-	arena_free(&zarena);
-
-	return 0;
 }

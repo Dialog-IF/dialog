@@ -275,6 +275,16 @@ void o_print_str(const char *utf8) {
 	}
 }
 
+void o_begin_link(const char *utf8) {
+	o_print_str("<[");
+	o_print_str(utf8);
+	o_print_str("] ");
+}
+
+void o_end_link() {
+	o_print_str(">");
+}
+
 void o_progress_bar(int position, int total) {
 	int i;
 

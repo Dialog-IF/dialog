@@ -1,5 +1,5 @@
-This archive contains version 0f/07 of the Dialog compiler and interactive
-debugger, bundled with documentation and version 0.24 of the dialog Standard
+This archive contains version 0g/01 of the Dialog compiler and interactive
+debugger, bundled with documentation and version 0.26 of the dialog Standard
 Library.
 
 Directory structure:
@@ -37,6 +37,18 @@ Project website:
 	https://linusakesson.net/dialog/
 
 Release notes:
+
+	0g/01 Lib 0.26 (Manual revision 11):
+
+		Compiler: Aa-machine backend. Hyperlinks.
+
+		Library: Hyperlink-related features.
+
+	Library bugfix release 0.25:
+
+		When parsing commands to a non-player character, understand
+		nouns based on their relation to the actor rather than the
+		player.
 
 	0f/07 Lib 0.24 (Manual revision 10):
 

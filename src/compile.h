@@ -85,6 +85,7 @@ enum {
 	I_IF_GVAR_EQ,		// -- global var number, simple value, implicit routine, subop = negate
 	I_IF_OVAR_EQ,		// -- object var number, object, simple value, implicit routine, subop = negate
 	I_IF_HAVE_UNDO,		// -- implicit routine, subop = negate
+	I_IF_HAVE_LINK,		// -- implicit routine, subop = negate
 
 	I_GET_GVAR_R,		// F- global var number, dest ref
 	I_GET_GVAR_V,		// F- global var number, dest value
@@ -108,6 +109,8 @@ enum {
 
 	I_BEGIN_BOX,		// F- word id, subop = status
 	I_END_BOX,		// -- word id, subop = status
+	I_BEGIN_LINK,		// -- value
+	I_END_LINK,		// --
 
 	I_TRANSCRIPT,		// F- subop = enable/disable
 
@@ -136,9 +139,10 @@ enum {
 	TR_QDONE,
 	TR_NOW,
 	TR_NOTNOW,
-	TR_REPORT,
 	TR_DETOBJ,
+	TR_REPORT,
 	TR_LINE,
+	N_TR_KIND,
 };
 
 typedef struct value {

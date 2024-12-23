@@ -635,6 +635,54 @@ void pp_value(struct eval_state *es, value_t v, int with_at, int with_plus) {
 	}
 }
 
+static void begin_link(struct eval_state *es, value_t v) {
+	char buf[256];
+	int pos = 0, len, i;
+	value_t list, v2, v3;
+
+	list = eval_deref(v, es);
+	while(list.tag == VAL_PAIR) {
+		v = eval_deref(es->heap[list.value + 0], es);
+		if(v.tag == VAL_DICT) {
+			len = strlen(es->program->dictwordnames[v.value]->name);
+			if(pos + 1 + len >= sizeof(buf)) break;
+			if(pos) buf[pos++] = ' ';
+			strcpy(buf + pos, es->program->dictwordnames[v.value]->name);
+			pos += len;
+		} else if(v.tag == VAL_DICTEXT) {
+			for(i = 0; i < 2; i++) {
+				v2 = es->heap[v.value + i];
+				while(v2.tag == VAL_PAIR) {
+					v3 = es->heap[v2.value + 0];
+					if(v3.tag == VAL_DICT) {
+						len = strlen(es->program->dictwordnames[v3.value]->name);
+						if(pos + 1 + len >= sizeof(buf)) break;
+						if(pos) buf[pos++] = ' ';
+						strcpy(buf + pos, es->program->dictwordnames[v3.value]->name);
+						pos += len;
+					}
+					v2 = es->heap[v2.value + 1];
+				}
+				if(v2.tag == VAL_DICT) {
+					len = strlen(es->program->dictwordnames[v2.value]->name);
+					if(pos + 1 + len >= sizeof(buf)) break;
+					if(pos) buf[pos++] = ' ';
+					strcpy(buf + pos, es->program->dictwordnames[v2.value]->name);
+					pos += len;
+				}
+			}
+		} else if(v.tag == VAL_NUM) {
+			if(pos + 1 + 5 >= sizeof(buf)) break;
+			if(pos) buf[pos++] = ' ';
+			pos += snprintf(buf + pos, sizeof(buf) - pos, "%d", v.value);
+		}
+		list = eval_deref(es->heap[list.value + 1], es);
+	}
+	buf[pos] = 0;
+
+	o_begin_link(buf);
+}
+
 void trace(struct eval_state *es, int kind, struct predname *predname, value_t *args, line_t line) {
 	int i, j, level;
 	static const char *tracename[] = {
@@ -644,8 +692,8 @@ void trace(struct eval_state *es, int kind, struct predname *predname, value_t *
 		"FOUND (",
 		"NOW (",
 		"NOW ~(",
-		"Query succeeded: (",
 		"LOOKUP ",
+		"Query succeeded: (",
 	};
 	char buf[128];
 
@@ -678,6 +726,7 @@ void trace(struct eval_state *es, int kind, struct predname *predname, value_t *
 			o_print_word(")");
 		}
 		if(line) {
+			o_space();
 			snprintf(buf, sizeof(buf), "%s:%d", FILEPART(line), LINEPART(line));
 			o_print_word(buf);
 		}
@@ -964,6 +1013,9 @@ static int eval_run(struct eval_state *es) {
 				o_set_style(es->divstyle);
 			}
 			break;
+		case I_BEGIN_LINK:
+			begin_link(es, value_of(ci->oper[0], es));
+			break;
 		case I_BREAKPOINT:
 			if(!ci->subop && tr_line) {
 				report(LVL_NOTE, tr_line, "Query made to (breakpoint)");
@@ -1197,6 +1249,9 @@ static int eval_run(struct eval_state *es) {
 			}
 			o_set_style(STYLE_ROMAN);
 			o_set_style(es->divstyle);
+			break;
+		case I_END_LINK:
+			o_end_link();
 			break;
 		case I_FIRST_CHILD:
 			predname = es->program->objvarpred[DYN_HASPARENT];
@@ -1446,6 +1501,10 @@ static int eval_run(struct eval_state *es) {
 				v0.value > v1.value;
 			if(ci->subop ^ res) perform_branch(ci->implicit, es, &pp, &pc);
 			break;
+		case I_IF_HAVE_LINK:
+			res = 1;
+			if(ci->subop ^ res) perform_branch(ci->implicit, es, &pp, &pc);
+			break;
 		case I_IF_HAVE_UNDO:
 			res = 1;
 			if(ci->subop ^ res) perform_branch(ci->implicit, es, &pp, &pc);
@@ -1490,7 +1549,7 @@ static int eval_run(struct eval_state *es) {
 		case I_IF_GFLAG:
 			assert(ci->oper[0].tag == OPER_GFLAG);
 			predname = es->program->globalflagpred[ci->oper[0].value];
-			if(!check_dyn_dependency(es, pp, predname)) {
+			if(predname && !check_dyn_dependency(es, pp, predname)) {
 				pred_release(pp.pred);
 				return ESTATUS_ERR_DYN;
 			}

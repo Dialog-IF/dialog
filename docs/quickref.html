@@ -139,6 +139,12 @@ rendered into a rectangular area according to the given style class.
 <p class="noteline">Like <span class="code">(div&nbsp;$)</span>, but the output is rendered into the status bar
 area, which is created if necessary.
 </p>
+<p class="codeline">(link $Words) <i>statement</i></p>
+<p class="noteline">The inner statement executes, succeeding at most once. The interpreter
+displays the output, optionally in the form of a hyperlink. If the
+hyperlink is selected by the player, the given <span class="code">$Words</span> are
+appended to the current input buffer, which is submitted.
+</p>
 <p class="codeline">(now) <i>pseudo-query</i></p>
 <p class="noteline">Updates a dynamic predicate.
 </p>
@@ -206,8 +212,15 @@ area, which is created if necessary.
 <p class="noteline">Dynamic predicate that succeeds when <span class="code">$X</span> is a direct child
 of <span class="code">$Y</span> in the object tree. Either parameter can be unbound.
 </p>
+<p class="codeline">(interpreter supports links)</p>
+<p class="noteline">Succeeds if the current interpreter claims to support hyperlinks, and
+they are currently enabled. This can change at runtime, for instance if
+a game is saved and subsequently restored on a different interpreter.
+</p>
 <p class="codeline">(interpreter supports undo)</p>
-<p class="noteline">Succeeds if the current interpreter claims to support undo.
+<p class="noteline">Succeeds if the current interpreter claims to support undo. This can
+change at runtime, for instance if a game is saved and subsequently
+restored on a different interpreter.
 </p>
 <p class="codeline">($X is one of $Y)</p>
 <p class="noteline">Unifies <span class="code">$X</span> with each element of <span class="code">$Y</span> in turn.
@@ -375,7 +388,7 @@ successful restore.
 </p>
 	<div class="footer">
 	<p class="nav">Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 10, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 11, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

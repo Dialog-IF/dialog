@@ -838,6 +838,24 @@ static struct astnode *parse_expr(int parsemode, struct lexer *lexer, struct are
 				lexer->errorflag = 1;
 				return 0;
 			}
+		} else if(an->predicate->special == SP_LINK) {
+			sub = an->children[0];
+			an = mkast(AN_LINK, 2, arena, line);
+			an->children[0] = sub;
+			status = next_token(lexer, PMODE_BODY);
+			if(lexer->errorflag) return 0;
+			if(status != 1) {
+				report(LVL_ERR, line, "Expected expression after (link $).");
+				lexer->errorflag = 1;
+				return 0;
+			}
+			an->children[1] = parse_expr(PMODE_BODY, lexer, arena);
+			if(!an->children[1]) return 0;
+			if(contains_just(an->children[1])) {
+				report(LVL_ERR, line, "(just) not allowed inside (link $).");
+				lexer->errorflag = 1;
+				return 0;
+			}
 		} else if(an->predicate->special == SP_IF) {
 			an = parse_if(lexer, arena);
 			if(!an) return 0;
