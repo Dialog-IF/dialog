@@ -202,6 +202,9 @@ which is created if necessary.
 <p class="noteline">Dynamic predicate that succeeds when <span class="code">$X</span> is a direct child
 of <span class="code">$Y</span> in the object tree. Either parameter can be unbound.
 </p>
+<p class="codeline">(interpreter supports undo)</p>
+<p class="noteline">Succeeds if the current interpreter claims to support undo.
+</p>
 <p class="codeline">($X is one of $Y)</p>
 <p class="noteline">Unifies <span class="code">$X</span> with each element of <span class="code">$Y</span> in turn.
 </p>
@@ -246,6 +249,9 @@ of <span class="code">$Y</span> in the object tree. Either parameter can be unbo
 </p>
 <p class="codeline">(random from $X to $Y into $Z)</p>
 <p class="noteline">Unifies <span class="code">$Z</span> with a random number in the range <span class="code">$X</span> to <span class="code">$Y</span> inclusive.
+</p>
+<p class="codeline">(repeat forever)</p>
+<p class="noteline">Provides an infinite supply of choice points. Generally invoked with a multi-query.
 </p>
 <p class="codeline">(restart)</p>
 <p class="noteline">Restarts the program.
@@ -353,9 +359,12 @@ of <span class="code">$Y</span> in the object tree. Either parameter can be unbo
 <p class="codeline">(story title)</p>
 <p class="noteline">Metadata: Defines the title of the story.
 </p>
+<p class="codeline">(removable word endings)</p>
+<p class="noteline">Defines one or more word endings that can be removed when parsing user input.
+</p>
 	<div class="footer">
 	<p class="nav">Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 1, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 2, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

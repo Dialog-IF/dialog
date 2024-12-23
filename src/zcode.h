@@ -62,8 +62,6 @@ struct zinstr {
 // However, if static analysis shows that a predicate is only invoked by simple calls,
 // then REG_SIMPLEREF is known to refer to REG_SIMPLE, and doesn't have to be preserved.
 //
-// Note that REG_CUT may have to be saved too, when non-tail calls are made. See below.
-//
 // For a non-tail multi-call, point REG_SIMPLEREF to REG_CHOICE.
 // For a non-tail simple call, point REG_SIMPLEREF to REG_SIMPLE, and copy REG_CHOICE to REG_SIMPLE.
 
@@ -92,35 +90,34 @@ struct zinstr {
 #define REG_CONT		0x12	/* where to jump after successful end of clause */
 #define REG_ENV			0x13	/* current env frame, unpacked before tail call */
 #define REG_CHOICE		0x14	/* current choice frame, unpacked on failure */
-#define REG_CUT			0x15	/* saved choice frame at start of current predicate */
-#define REG_SIMPLE		0x16	/* saved choice frame at start of simple call */
-#define REG_SIMPLEREF		0x17	/* indirect reference to REG_CHOICE (multi) or REG_SIMPLE (simple)*/
-#define REG_PAIR		0x18
-#define REG_TRAIL		0x19	/* index into aux area of last used trail cell */
-#define REG_COLL		0x1a	/* index into aux area of first free coll cell */
-#define REG_TOP			0x1b	/* top of heap (which grows upwards) */
-#define REG_STOP		0x1c
-#define REG_TRACING		0x1d
-#define REG_COLLCHK		0x1e
-#define REG_FAILJMP		0x1f	/* catch/throw reference for failing */
-#define REG_FATALJMP		0x20	/* catch/throw reference for runtime errors */
-#define REG_MINAUX		0x21	/* for memory statistics */
-#define REG_UPPER		0x22	/* is an uppercase letter pending? */
+#define REG_SIMPLE		0x15	/* saved choice frame at start of simple call */
+#define REG_SIMPLEREF		0x16	/* indirect reference to REG_CHOICE (multi) or REG_SIMPLE (simple)*/
+#define REG_PAIR		0x17
+#define REG_TRAIL		0x18	/* index into aux area of last used trail cell */
+#define REG_COLL		0x19	/* index into aux area of first free coll cell */
+#define REG_TOP			0x1a	/* top of heap (which grows upwards) */
+#define REG_STOP		0x1b
+#define REG_TRACING		0x1c
+#define REG_COLLCHK		0x1d
+#define REG_FAILJMP		0x1e	/* catch/throw reference for failing */
+#define REG_FATALJMP		0x1f	/* catch/throw reference for runtime errors */
+#define REG_MINAUX		0x20	/* for memory statistics */
+#define REG_UPPER		0x21	/* is an uppercase letter pending? */
 
 /* useful constants */
 
-#define REG_2000		0x23
-#define REG_3FFF		0x24
-#define REG_4000		0x25
-#define REG_8000		0x26
-#define REG_C000		0x27
-#define REG_FFFF		0x28
-#define REG_AUXBASE		0x29
-#define REG_NIL			0x2a	/* 1fff */
-#define REG_R_SPA		0x2b	/* R_SPACE_PRINT_AUTO */
-#define REG_R_USIMPLE		0x2c	/* R_UNIFY_SIMPLE */
+#define REG_2000		0x22
+#define REG_3FFF		0x23
+#define REG_4000		0x24
+#define REG_8000		0x25
+#define REG_C000		0x26
+#define REG_FFFF		0x27
+#define REG_AUXBASE		0x28
+#define REG_NIL			0x29	/* 1fff */
+#define REG_R_SPA		0x2a	/* R_SPACE_PRINT_AUTO */
+#define REG_R_USIMPLE		0x2b	/* R_UNIFY_SIMPLE */
 
-#define REG_A			0x2d
+#define REG_A			0x2c	/* need 13 registers, one more than max arity */
 #define REG_X			0x39
 
 #define REG_PUSH		0x100
@@ -173,6 +170,7 @@ struct zinstr {
 #define Z_JG		(0x03)
 #define Z_DEC_JL	(0x04)
 #define Z_INC_JG	(0x05)
+#define Z_JIN		(0x06)
 #define Z_TEST		(0x07)
 #define Z_OR		(0x08)
 #define Z_AND		(0x09)
@@ -213,6 +211,7 @@ struct zinstr {
 #define Z_READCHAR	(ZVAR | 0x16)
 #define Z_SCANTABLE	(ZVAR | 0x17)
 #define Z_CALLVN	(ZVAR | 0x19)
+#define Z_TOKENISE	(ZVAR | 0x1b)
 #define Z_COPY_TABLE	(ZVAR | 0x1d)
 
 #define Z_SAVE		(OP_EXT | 0x00)
@@ -229,6 +228,7 @@ struct zinstr {
 #define Z_JGE		(OP_NOT | Z_JL)
 #define Z_JLE		(OP_NOT | Z_JG)
 #define Z_JNA		(OP_NOT | Z_JA)
+#define Z_JIN_N		(OP_NOT | Z_JIN)
 #define Z_TESTN		(OP_NOT | Z_TEST)
 #define Z_GET_CHILD_N	(OP_NOT | Z_GET_CHILD)
 #define Z_GET_SIBLING_N	(OP_NOT | Z_GET_SIBLING)
@@ -256,7 +256,6 @@ enum {
 	CHOICE_CONT,
 	CHOICE_TRAIL,
 	CHOICE_TOP,
-	CHOICE_CUT,
 	CHOICE_SIMPLE,
 	CHOICE_SIMPLEREF,
 	CHOICE_SIZEOF
@@ -299,7 +298,7 @@ enum {
 	G_DICT_TABLE,
 	G_OBJECT_ID_END,
 	G_SELTABLE,
-	G_PROGRAM_ENTRY_POINT,
+	G_CONSTRUCTORS,
 	G_ERROR_ENTRY_POINT,
 
 	G_FIRST_FREE
@@ -350,10 +349,8 @@ enum {
 	R_GET_PAIR_RV,
 	R_GET_PAIR_RR,
 
-	R_ALLOCATE,	// these four must be consecutive
-	R_ALLOCATE_C,
+	R_ALLOCATE,
 	R_ALLOCATE_S,
-	R_ALLOCATE_CS,
 
 	R_DEALLOCATE,
 	R_DEALLOCATE_S,
@@ -394,7 +391,12 @@ enum {
 	R_SCRIPT_ON_PRED,
 	R_GET_KEY,
 	R_GET_INPUT_PRED,
+	R_TRY_STEMMING,
+	R_COPY_INPUT_WORD,
 	R_GET_RAW_INPUT_PRED,
+
+	R_REPEAT_PRED,
+	R_REPEAT_SUB,
 	R_OBJECT_PRED,
 	R_OBJECT_SUB,
 	R_HASPARENT_PRED,
@@ -439,6 +441,7 @@ enum {
 	R_PRINTHEX,
 	R_PRINTHEX8,
 	R_PRINT_N_ZSCII,
+	R_PRINT_N_BYTES,
 	R_SERIALNUMBER_PRED,
 	R_COMPILERVERSION_PRED,
 	R_DUMP_GLOBALS,

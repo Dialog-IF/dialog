@@ -9,7 +9,7 @@
 <body>
 	<div class="chapter">
 	<h1>Chapter 3: Choice points</h1>
-	<div class="navlinks">(<a href="#disjunctions">Disjunctions</a>&nbsp;&bull; <a href="#backtracking">Backtracking</a>&nbsp;&bull; <a href="#multiqueries">Multi-queries</a>&nbsp;&bull; <a href="#exhaust">Visiting all solutions</a>&nbsp;&bull; <a href="#collect">Collecting values</a>&nbsp;&bull; <a href="#collectwords">Collecting words</a>&nbsp;&bull; <a href="#just">Just</a>)</div>
+	<div class="navlinks">(<a href="#disjunctions">Disjunctions</a>&nbsp;&bull; <a href="#backtracking">Backtracking</a>&nbsp;&bull; <a href="#multiqueries">Multi-queries</a>&nbsp;&bull; <a href="#exhaust">Visiting all solutions</a>&nbsp;&bull; <a href="#collect">Collecting values</a>&nbsp;&bull; <a href="#collectwords">Collecting words</a>&nbsp;&bull; <a href="#just">Just</a>&nbsp;&bull; <a href="#repeat">Infinite loops</a>)</div>
 <a id="disjunctions"></a><h2>Disjunctions</h2>
 <p>So far, we have seen that rule bodies can contain text and values to be
 printed, as well as queries to be made to predicates. As soon as a query fails,
@@ -834,9 +834,40 @@ present rule, to the backtracking-over-matching-rules mechanism. But it doesn't
 go any further than that. Code such as <span class="code">(just) (just)</span> is redundant;
 the second <span class="code">(just)</span> has no effect.
 </p>
+<a id="repeat"></a><h2>Infinite loops</h2>
+<p>The built-in predicate <span class="code">(repeat forever)</span> provides an unlimited
+supply of choice points. This can be used to create infinite loops (such as the
+main game loop or the game-over menu).
+</p>
+<textarea class="copyarea" id="copy19" readonly>
+(program entry point)
+	*(repeat forever)
+	This gets printed over and over. (line)
+	(fail)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">*(repeat forever)</td></tr>
+<tr><td class="left"></td><td class="right">This gets printed over and over. (line)</td></tr>
+<tr><td class="left"></td><td class="right">(fail)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy19').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>In the above example, the query to <span class="code">(fail)</span> makes Dialog backtrack
+to the multi-query to <span class="code">(repeat forever)</span>, which will keep on
+returning, successfully, over and over again.
+</p>
+<p>It is possible to break out of the infinite loop by discarding the choice-point
+created by <span class="code">(repeat forever)</span>. This can be done explicitly using
+<span class="code">(just)</span>, or implicitly by successfully returning from a regular
+(non-multi) query.
+</p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="control.html">Chapter 4: More control structures</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 1, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 2, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

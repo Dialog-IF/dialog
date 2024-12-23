@@ -285,32 +285,11 @@ exhaust:
 <div class="copycode">
 <a class="copybtn" href="" onClick="document.getElementById('copy5').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
-<p>Infinite loops <b>must</b> be implemented using a combination of backtracking
-and tail recursion, with no local variables in the recursive rule. Otherwise
-some memory will leak with every iteration, and the program will eventually
-crash. The following is safe:
+<p>Tail-call optimization is backend-dependent. This means that infinite loops
+must be implemented using <span class="code">(repeat forever)</span>. If they are
+implemented using recursion, some memory might leak with every iteration, and
+the program will eventually crash.
 </p>
-<textarea class="copyarea" id="copy6" readonly>
-(command loop)
-	(command iteration) (fail) (or) (command loop)
-
-(command iteration)
-	&gt; (get input $Words)
-	(deal with command $Words)
-</textarea>
-<div class="blkcode">
-<table>
-<tr><td class="both" colspan="2">(command loop)</td></tr>
-<tr><td class="left"></td><td class="right">(command iteration) (fail) (or) (command loop)</td></tr>
-<tr><td class="blank" colspan="2"></td></tr>
-<tr><td class="both" colspan="2">(command iteration)</td></tr>
-<tr><td class="left"></td><td class="right">&gt; (get input $Words)</td></tr>
-<tr><td class="left"></td><td class="right">(deal with command $Words)</td></tr>
-</table>
-</div>
-<div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy6').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
-</div>
 <h3>Asymptotic complexity of per-object flags</h3>
 <p>Per-object flags are implemented in one of two ways. Most flags are stored in
 some array-like structure indexed by object number, which means that checking
@@ -358,7 +337,7 @@ characters is probably more trouble than it's worth.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="quickref.html">Appendix: Quick reference</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 1, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 2, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

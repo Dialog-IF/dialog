@@ -274,8 +274,47 @@ stop, comma, double quote, semicolon, and asterisk are treated as individual
 words; the remaining text is separated into words by whitespace. If a word is
 recognized as one that appears in the program-wide dictionary, then the element
 will be that dictionary word. Else, if the word is a decimal number in the
-range <span class="nobreak">0&ndash;16383</span>, the element will be that number. Otherwise, the
-element will be a list of characters, each character itself a dictionary word.
+range <span class="nobreak">0&ndash;16383</span>, the element will be that number.
+</p>
+<p>If the word was neither recognized, nor found to be a decimal number, then
+Dialog will attempt to remove certain word endings, and check whether the
+remaining part of the word exists in the dictionary. This procedure is
+necessary for games written in e.g. German, whereas English games generally do
+not require it.
+</p>
+<p>To specify removable endings, add one or more rule definitions to the predicate
+<span class="code">(removable word endings)</span>. Each rule body should consist of one or
+more word endings:
+</p>
+<textarea class="copyarea" id="copy6" readonly>
+(removable word endings)
+	%% German adjective endings
+	en es em e
+
+(removable word endings)
+	%% German noun endings
+	e en s es
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(removable word endings)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="comment">%% German adjective endings</span></td></tr>
+<tr><td class="left"></td><td class="right">en es em e</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(removable word endings)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="comment">%% German noun endings</span></td></tr>
+<tr><td class="left"></td><td class="right">e en s es</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy6').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>The part that remains after removing the ending is referred to as the
+<i>stem</i> of the word. If the stem consists of at least two letters, and
+exists in the program-wide dictionary, then that dictionary word is returned.
+</p>
+<p>If all else fails, the word of input will be represented by a list of
+characters, each character itself a dictionary word.
 </p>
 <p>For instance, the input <span class="prginput">TAKE&nbsp;02&nbsp;UNKNOWNWORD,X&nbsp;BALL</span> may,
 depending on the contents of the dictionary, be represented by the list:
@@ -293,7 +332,7 @@ dictionary, then it will show up as a dictionary word in the list returned by
 value&nbsp;7.
 </p>
 <h3>Get raw input</h3>
-<textarea class="copyarea" id="copy6" readonly>
+<textarea class="copyarea" id="copy7" readonly>
 	(get raw input $CharList)
 </textarea>
 <div class="blkcode">
@@ -302,7 +341,7 @@ value&nbsp;7.
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy6').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy7').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>This query reads a line of input just like <span class="code">(get input $)</span>, but does
 not try to interpret it as a series of dictionary words or numbers.
@@ -320,7 +359,7 @@ the matched keyword. It is straightforward to implement this using ordinary
 rules in Dialog. However, for performance reasons the language also provides a
 built-in predicate:
 </p>
-<textarea class="copyarea" id="copy7" readonly>
+<textarea class="copyarea" id="copy8" readonly>
 (split $Input by $Keywords into $Left and $Right)
 </textarea>
 <div class="blkcode">
@@ -329,7 +368,7 @@ built-in predicate:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy7').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy8').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p><span class="code">$Keywords</span> must be a list of simple values (i.e. no unbound
 variables or sublists).  The <span class="code">$Input</span> list will be scanned, starting
@@ -342,7 +381,7 @@ follow it is unified with <span class="code">$Right</span>. That is, neither
 <p>When invoked as a multi-query, the predicate backtracks over each matching
 position. Thus:
 </p>
-<textarea class="copyarea" id="copy8" readonly>
+<textarea class="copyarea" id="copy9" readonly>
 	*(split [the good , the bad and the ugly]
 		by [and ,]
 		into $Left and $Right)
@@ -355,7 +394,7 @@ position. Thus:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy8').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy9').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>will succeed twice: First, binding <span class="code">$Left</span> to <span class="code">[the
 good]</span> and <span class="code">$Right</span> to <span class="code">[the bad and the ugly]</span>,
@@ -366,7 +405,7 @@ bad]</span> and <span class="code">$Right</span> to <span class="code">[the ugly
 more of a set of keywords. The standard library uses it that way in the
 following rule definition:
 </p>
-<textarea class="copyarea" id="copy9" readonly>
+<textarea class="copyarea" id="copy10" readonly>
 ($X contains one of $Y)
 	(split $X by $Y into $ and $)
 </textarea>
@@ -377,7 +416,7 @@ following rule definition:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy9').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <a id="trace"></a><h2>Debugging</h2>
 <p>Two built-in predicates control <i>low-level tracing</i> of queries:
@@ -454,6 +493,10 @@ there's some other problem&mdash;such as the interpreter imposing a limit
 on the number of undo states that are retained in memory&mdash;the
 predicate succeeds, and execution continues normally.
 </p>
+<p class="codeline">(interpreter supports undo)</p>
+<p class="noteline">Succeeds if and only if the current interpreter declares that it
+supports undo functionality.
+</p>
 <p class="codeline">(script on)</p>
 <p class="noteline">Enables the transcript feature. The interpreter takes care of asking
 the player for a filename. If the operation succeeds, the query suceeds.
@@ -473,7 +516,7 @@ it will tell you how close you are to the limits.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="beyondprg.html">Chapter 8: Beyond the program</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 1, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 2, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

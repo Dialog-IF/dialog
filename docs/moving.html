@@ -342,6 +342,24 @@ objects:
 <p>If you try it out, you'll find that it's possible to walk around and examine
 the floor from within either room.
 </p>
+<p>For very simple regions, another option is to use <a href="sugar.html#slash">slash
+expressions</a>:
+</p>
+<textarea class="copyarea" id="copy7" readonly>
+(#foyer/#study/#library attracts #floor)
+
+(from #foyer/#study/#library go #down to #floor)
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(#foyer/#study/#library attracts #floor)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(from #foyer/#study/#library go #down to #floor)</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy7').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
 <a id="light"></a><h2>Light and darkness</h2>
 <p>An object is <i>illuminated</i> by another object when there is a path between
 them, via child-parent relations in the object tree, that doesn't pass through
@@ -352,7 +370,7 @@ sources. Hence, most objects are illuminated by default. But it is possible to
 disable the ambient lighting for any room, by adding a rule to the
 <span class="code">(inherently dark&nbsp;$)</span> predicate:
 </p>
-<textarea class="copyarea" id="copy7" readonly>
+<textarea class="copyarea" id="copy8" readonly>
 #cave
 (name *)		cave
 (room *)
@@ -367,12 +385,12 @@ disable the ambient lighting for any room, by adding a rule to the
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy7').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy8').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Now, if the player enters that room, they will be in darkness unless the room
 is illuminated by some other object that provides light:
 </p>
-<textarea class="copyarea" id="copy8" readonly>
+<textarea class="copyarea" id="copy9" readonly>
 #lamp
 (name *)		lamp
 (item *)
@@ -387,13 +405,13 @@ is illuminated by some other object that provides light:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy8').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy9').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Rule definitions for the <span class="code">($&nbsp;provides light)</span> predicate often
 contain conditions in the rule body. For instance, a flashlight might provide
 light when it is switched on:
 </p>
-<textarea class="copyarea" id="copy9" readonly>
+<textarea class="copyarea" id="copy10" readonly>
 #flashlight
 (name *)		flashlight
 (item *)
@@ -410,14 +428,14 @@ light when it is switched on:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy9').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Note: The standard library makes a <a href="choicepoints.html#multiqueries">multi-query</a> to
 <span class="code">($&nbsp;provides light)</span>, in order to iterate over every object that
 currently provides light. Be sure to add asterisks to the rule body as
 required, for instance if you define a trait for light-providing objects:
 </p>
-<textarea class="copyarea" id="copy10" readonly>
+<textarea class="copyarea" id="copy11" readonly>
 ($Obj provides light)
 	*(lamp $Obj) %% The asterisk is crucial.
 	($Obj is on)
@@ -430,7 +448,7 @@ required, for instance if you define a trait for light-providing objects:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy10').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy11').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>The standard library provides a predicate, <span class="code">(player can see)</span>, that
 succeeds when the current player character is illuminated.
@@ -473,7 +491,7 @@ along its perimeter (e.g. doors and neighbouring rooms) are also in scope.
 predicate <span class="code">(add $ to scope)</span>, typically with some condition, like
 this:
 </p>
-<textarea class="copyarea" id="copy11" readonly>
+<textarea class="copyarea" id="copy12" readonly>
 (add #mother to scope)
 	(current room #phonebooth)
 </textarea>
@@ -484,7 +502,7 @@ this:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy11').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy12').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>That rule allows the parser to recognize e.g. <span class="prginput">CALL MOTHER</span> when
 the player is in the phone booth.
@@ -499,7 +517,7 @@ room on the other side, is determined by the predicates <span class="code">($&nb
 passage)</span> and <span class="code">($&nbsp;blocks light)</span>, respectively. In the
 standard library, they are defined as follows:
 </p>
-<textarea class="copyarea" id="copy12" readonly>
+<textarea class="copyarea" id="copy13" readonly>
 ($Door blocks passage)
 	($Door is closed)
 
@@ -518,7 +536,7 @@ standard library, they are defined as follows:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy12').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy13').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Openable objects are closed and opaque by default. If you are implementing a
 physical door, remember to declare it openable, <span class="code">(openable&nbsp;*)</span>, and
@@ -532,7 +550,7 @@ use an access predicate that defines both rules in one go: <span class="code">(f
 $Direction through $Door to $Target)</span>. Let's build a door using the
 high-level method:
 </p>
-<textarea class="copyarea" id="copy13" readonly>
+<textarea class="copyarea" id="copy14" readonly>
 #foyer
 (room *)
 (name *)		grand foyer
@@ -583,7 +601,7 @@ high-level method:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy13').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy14').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Doors are automatically treated as floating objects, so in the above game,
 you'll be able to <span class="prginput">EXAMINE DOOR</span>, <span class="prginput">OPEN DOOR</span>,
@@ -599,7 +617,7 @@ and closed, unless you specify otherwise.
 <p>Keys are associated with lockable objects using the predicate
 <span class="code">($&nbsp;unlocks&nbsp;$)</span>.
 </p>
-<textarea class="copyarea" id="copy14" readonly>
+<textarea class="copyarea" id="copy15" readonly>
 #door
 (door *)
 (lockable *)
@@ -626,7 +644,7 @@ and closed, unless you specify otherwise.
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy14').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy15').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>The standard actions are set up so that an attempt to walk through a closed
 door first triggers an automatic <span class="nobreak"><span class="code">[open&nbsp;$]</span></span> action,
@@ -637,7 +655,7 @@ the latter only happens if the player is holding the right key at the time.
 <p>Now that we know about locked doors and keys, we can create a small, playable
 puzzle game:
 </p>
-<textarea class="copyarea" id="copy15" readonly>
+<textarea class="copyarea" id="copy16" readonly>
 #library
 (room *)
 (singleton *)
@@ -760,7 +778,7 @@ puzzle game:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy15').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy16').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <a id="moveplayer"></a><h2>Moving the player character</h2>
 <p>The standard library uses a few <a href="dynamic.html#globalvars">global variables</a> internally, of
@@ -774,7 +792,7 @@ player&nbsp;$)</span>.
 variable directly from within story code, you are expected to supply an initial
 value for it:
 </p>
-<textarea class="copyarea" id="copy16" readonly>
+<textarea class="copyarea" id="copy17" readonly>
 (current player #me)
 </textarea>
 <div class="blkcode">
@@ -783,12 +801,12 @@ value for it:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy16').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy17').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>Likewise, it is straightforward to define the initial location of the player
 character:
 </p>
-<textarea class="copyarea" id="copy17" readonly>
+<textarea class="copyarea" id="copy18" readonly>
 (#me is #in #study)
 </textarea>
 <div class="blkcode">
@@ -797,7 +815,7 @@ character:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy17').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy18').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>But the location of the current player character must be changed with a query
 to either <span class="code">(move player to $Relation $Parent)</span> or <span class="code">(enter
@@ -824,7 +842,7 @@ But it is straightforward to modify the library to relax those conditions.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="actions.html">Chapter 6: Actions</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 1, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 2, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

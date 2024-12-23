@@ -1,6 +1,6 @@
 
 (library version)
-	Library version 0.13.
+	Library version 0.14.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -454,10 +454,7 @@
 
 %% LOOK <dir>
 
-(understand [examine | $Words] as [look $Dir])
-	*(understand $Words as direction $Dir)
-
-(understand [look | $Words] as [look $Dir])
+(understand [examine/look | $Words] as [look $Dir])
 	*(understand $Words as direction $Dir)
 
 (unlikely [look $])
@@ -580,17 +577,9 @@
 
 %% EXAMINE <obj>
 
-(rewrite [x | $Words] into [examine | $Words])
-(rewrite [look at | $Words] into [examine | $Words])
-(rewrite [l at | $Words] into [examine | $Words])
-(rewrite [watch | $Words] into [examine | $Words])
-(rewrite [describe | $Words] into [examine | $Words])
-(rewrite [check | $Words] into [examine | $Words])
+(rewrite [look/l at | $Words] into [examine | $Words])
 
-(understand [examine | $Words] as [examine $Obj])
-	*(understand $Words as non-all object $Obj)
-
-(understand [look | $Words] as [examine $Obj])
+(understand [examine/watch/describe/check/look | $Words] as [examine $Obj])
 	*(understand $Words as non-all object $Obj)
 
 (understand [who am i] as [examine $Player])
@@ -653,8 +642,6 @@
 	(par)
 
 %% LOOK
-
-(rewrite [l | $Words] into [look | $Words])
 
 (understand [look])
 (understand [look around] as [look])
@@ -731,12 +718,7 @@
 
 %% FEEL <obj>
 
-(rewrite [touch | $Words] into [feel | $Words])
-(rewrite [finger | $Words] into [feel | $Words])
-(rewrite [rub | $Words] into [feel | $Words])
-(rewrite [prod | $Words] into [feel | $Words])
-
-(understand [feel | $Words] as [feel $Obj])
+(understand [feel/touch/finger/rub/prod | $Words] as [feel $Obj])
 	*(understand $Words as non-all object $Obj)
 
 (perform [feel $Obj])
@@ -745,10 +727,9 @@
 %% LISTEN TO <obj>
 %% LISTEN
 
-(rewrite [hear | $Words] into [listen | $Words])
 (rewrite [listen to | $Words] into [listen | $Words])
 
-(understand [listen | $Words] as [listen to $Obj])
+(understand [listen/hear | $Words] as [listen to $Obj])
 	*(understand $Words as single object $Obj)
 
 %% Don't require reachability:
@@ -768,7 +749,7 @@
 		You hear no particular sound coming from (the $Obj).
 	(endif)
 
-(understand [listen])
+(understand [listen/hear] as [listen])
 
 (instead of [listen])
 	(current room $Room)
@@ -776,11 +757,7 @@
 
 %% KISS <obj>
 
-(rewrite [hug | $Words] into [kiss | $Words])
-(rewrite [embrace | $Words] into [kiss | $Words])
-(rewrite [love | $Words] into [kiss | $Words])
-
-(understand [kiss | $Words] as [kiss $Obj])
+(understand [kiss/hug/embrace/love | $Words] as [kiss $Obj])
 	*(understand $Words as single object $Obj preferably animate)
 
 (prevent [kiss $Obj])
@@ -797,24 +774,14 @@
 
 %% JUMP
 
-(rewrite [skip | $Words] into [jump | $Words])
-(rewrite [hop | $Words] into [jump | $Words])
-(rewrite [bounce | $Words] into [jump | $Words])
-
-(understand [jump])
-(understand [exercise] as [jump])
+(understand [jump/skip/hop/bounce/exercise] as [jump])
 
 (perform [jump])
 	You enjoy a bit of jumping on the spot.
 
 %% DANCE
 
-(rewrite [jive] into [dance])
-(rewrite [shake] into [dance])
-(rewrite [twirl] into [dance])
-(rewrite [spin] into [dance])
-
-(understand [dance])
+(understand [dance/jive/shake/twirl/spin] as [dance])
 
 (perform [dance])
 	You practise your moves.
@@ -848,8 +815,7 @@
 
 %% SING
 
-(rewrite [hum] into [sing])
-(understand [sing])
+(understand [sing/hum] as [sing])
 
 (perform [sing])
 	You hum a few notes.
@@ -938,32 +904,13 @@
 %% TAKE <obj> FROM <obj>
 
 (rewrite [pick up | $Words] into [take | $Words])
-(rewrite [grab | $Words] into [take | $Words])
-(rewrite [snatch | $Words] into [take | $Words])
-(rewrite [steal | $Words] into [take | $Words])
-(rewrite [acquire | $Words] into [take | $Words])
-(rewrite [hold | $Words] into [take | $Words])
-(rewrite [gather | $Words] into [take | $Words])
 
-(understand [take | $Words] as [take $Obj from $Parent])
+(understand [take/grab/snatch/steal/acquire/hold/gather/get/remove | $Words] as [take $Obj from $Parent])
 	*(split $Words by [from] into $Left and $Right)
 	*(understand $Right as single object $Parent)
 	*(understand $Left as object $Obj preferably child of $Parent)
 
-(understand [remove | $Words] as [take $Obj from $Parent])
-	*(split $Words by [from] into $Left and $Right)
-	*(understand $Right as single object $Parent)
-	*(understand $Left as object $Obj preferably child of $Parent)
-
-(understand [take | $Words] as [take $Obj])
-	*(understand $Words as object $Obj preferably takable)
-
-(understand [get | $Words] as [take $Obj from $Parent])
-	*(split $Words by [from] into $Left and $Right)
-	*(understand $Right as single object $Parent)
-	*(understand $Left as object $Obj preferably child of $Parent)
-
-(understand [get | $Words] as [take $Obj])
+(understand [take/grab/snatch/steal/acquire/hold/gather/get | $Words] as [take $Obj])
 	*(understand $Words as object $Obj preferably takable)
 
 (unlikely [take $Obj])
@@ -1021,10 +968,6 @@
 
 %% REMOVE <obj>
 
-(rewrite [doff | $Words] into [remove | $Words])
-(rewrite [shed | $Words] into [remove | $Words])
-(rewrite [loosen | $Words] into [remove | $Words])
-
 (understand [take | $Words] as [remove $Obj])
 	*(split $Words by [off] into $Left and $Right)
 	{
@@ -1035,10 +978,7 @@
 		*(understand $Left as object $Obj preferably worn)
 	}
 
-(understand [remove | $Words] as [remove $Obj])
-	*(understand $Words as object $Obj preferably worn)
-
-(understand [disrobe | $Words] as [remove $Obj])
+(understand [remove/doff/shed/loosen/disrobe/undress | $Words] as [remove $Obj])
 	*(understand $Words as object $Obj preferably worn)
 
 (unlikely [remove $Obj])
@@ -1070,20 +1010,14 @@
 
 %% WEAR <obj>
 
-(rewrite [don | $Words] into [wear | $Words])
+(rewrite [put on | $Words] into [wear | $Words])
 
-(understand [wear | $Words] as [wear $Obj])
+(understand [wear/don | $Words] as [wear $Obj])
 	*(understand $Words as object $Obj preferably held)
 
 (understand [put | $Words] as [wear $Obj])
-	*(split $Words by [on] into $Left and $Right)
-	{
-		($Left = [])
-		*(understand $Right as object $Obj preferably held)
-	(or)
-		($Right = [])
-		*(understand $Left as object $Obj preferably held)
-	}
+	*(split $Words by [on] into $Left and [])
+	*(understand $Left as object $Obj preferably held)
 
 (unlikely [wear $Obj])
 	~(wearable $Obj)
@@ -1121,23 +1055,16 @@
 
 %% PUT <obj> <rel> <obj>
 
-(rewrite [set down | $Words] into [put | $Words])
-(rewrite [lay down | $Words] into [put | $Words])
-(rewrite [lay | $Words] into [put | $Words])
-(rewrite [put away | $Words] into [put | $Words])
-(rewrite [put down | $Words] into [put | $Words])
-(rewrite [drop | $Words] into [put | $Words])
-(rewrite [drop down | $Words] into [put | $Words])
+(rewrite [set/lay/drop down | $Words] into [put | $Words])
+(rewrite [put away/down | $Words] into [put | $Words])
+(rewrite [let go of | $Words] into [drop | $Words])
 
-(rewrite [stash | $Words] into [hide | $Words])
-(rewrite [stuff | $Words] into [hide | $Words])
-
-(understand [put | $Words] as [put $Obj $Rel $Dest])
+(understand [put/lay/drop | $Words] as [put $Obj $Rel $Dest])
 	*(split $Words by relation $Rel into $Left and $Right)
 	*(understand $Right as single object $Dest)
 	*(understand $Left as object $Obj preferably held excluding $Dest)
 
-(understand [hide | $Words] as [put $Obj $Rel $Dest])
+(understand [hide/stash/stuff | $Words] as [put $Obj $Rel $Dest])
 	*(split $Words by relation $Rel into $Left and $Right)
 	~($Rel = #on)
 	*(understand $Right as single object $Dest)
@@ -1213,13 +1140,11 @@
 
 %% DROP <obj>
 
-(rewrite [let go of | $Words] into [put | $Words])
-
-(understand [put | $Words] as [drop $Obj])
+(understand [put/lay/drop | $Words] as [drop $Obj])
 	*(split $Words by [down] into $Left and [])
 	*(understand $Left as object $Obj preferably held)
 
-(understand [put | $Words] as [drop $Obj])
+(understand [put/lay/drop | $Words] as [drop $Obj])
 	*(understand $Words as object $Obj preferably held)
 
 (unlikely [drop $Obj])
@@ -1255,11 +1180,8 @@
 
 %% INVENTORY
 
-(understand [inventory])
-(understand [i] as [inventory])
-(understand [inv] as [inventory])
-(understand [take inventory] as [inventory])
-(understand [get inventory] as [inventory])
+(understand [inventory/i/inv] as [inventory])
+(understand [take/get inventory] as [inventory])
 
 (describe action [inventory])
 	take inventory
@@ -1352,9 +1274,7 @@
 
 %% WAIT
 
-(rewrite [z] into [wait])
-
-(understand [wait])
+(understand [wait/z] as [wait])
 
 (perform [wait])
 	A moment slips away.
@@ -1362,19 +1282,17 @@
 %% GIVE <obj> TO <obj>
 %% GIVE <obj>
 
-(rewrite [offer | $Words] into [give | $Words])
-
-(understand [give | $Words] as [give $Obj to $Dest])
+(understand [give/offer | $Words] as [give $Obj to $Dest])
 	*(split $Words by [to] into $Left and $Right)
 	*(understand $Right as single object $Dest preferably animate)
 	*(understand $Left as object $Obj preferably held excluding $Dest)
 
-(understand [give | $Words] as [give $Obj to $Dest])
+(understand [give/offer | $Words] as [give $Obj to $Dest])
 	*(split $Words anywhere into $Left and $Right)
 	*(understand $Left as single object $Dest preferably animate)
 	*(understand $Right as object $Obj preferably held excluding $Dest)
 
-(understand [give | $Words] as [give $Obj])
+(understand [give/offer | $Words] as [give $Obj])
 	*(understand $Words as object $Obj preferably held)
 
 (unlikely [give $Obj to $Obj])
@@ -1464,10 +1382,7 @@
 
 %% OPEN <obj>
 
-(rewrite [unwrap | $Words] as [open | $Words])
-(rewrite [uncover | $Words] as [open | $Words])
-
-(understand [open | $Words] as [open $Obj])
+(understand [open/unwrap/uncover | $Words] as [open $Obj])
 	*(understand $Words as non-all object $Obj)
 
 (unlikely [open $Obj])
@@ -1512,10 +1427,7 @@
 
 %% CLOSE <obj>
 
-(rewrite [shut | $Words] into [close | $Words])
-(rewrite [cover | $Words] as [close | $Words])
-
-(understand [close | $Words] as [close $Obj])
+(understand [close/shut/cover | $Words] as [close $Obj])
 	*(understand $Words as non-all object $Obj)
 
 (unlikely [close $Obj])
@@ -1635,17 +1547,7 @@
 
 %% SWITCH ON <obj>
 
-(understand [turn | $Words] as [switch on $Obj])
-	*(split $Words by [on] into $Left and $Right)
-	{
-		($Left = [])
-		*(understand $Right as non-all object $Obj)
-	(or)
-		($Right = [])
-		*(understand $Left as non-all object $Obj)
-	}
-
-(understand [switch | $Words] as [switch on $Obj])
+(understand [turn/switch | $Words] as [switch on $Obj])
 	*(split $Words by [on] into $Left and $Right)
 	{
 		($Left = [])
@@ -1683,17 +1585,7 @@
 
 %% SWITCH OFF <obj>
 
-(understand [turn | $Words] as [switch off $Obj])
-	*(split $Words by [off] into $Left and $Right)
-	{
-		($Left = [])
-		*(understand $Right as non-all object $Obj)
-	(or)
-		($Right = [])
-		*(understand $Left as non-all object $Obj)
-	}
-
-(understand [switch | $Words] as [switch off $Obj])
+(understand [turn/switch | $Words] as [switch off $Obj])
 	*(split $Words by [off] into $Left and $Right)
 	{
 		($Left = [])
@@ -1731,9 +1623,7 @@
 
 %% SQUEEZE <obj>
 
-(rewrite [squash | $Words] into [squeeze | $Words])
-
-(understand [squeeze | $Words] as [squeeze $Obj])
+(understand [squeeze/squash | $Words] as [squeeze $Obj])
 	*(understand $Words as non-all object $Obj)
 
 (perform [squeeze $Obj])
@@ -1741,10 +1631,7 @@
 
 %% FIX <obj>
 
-(rewrite [repair | $Words] into [fix | $Words])
-(rewrite [mend | $Words] into [fix | $Words])
-
-(understand [fix | $Words] as [fix $Obj])
+(understand [fix/repair/mend | $Words] as [fix $Obj])
 	*(understand $Words as non-all object $Obj)
 
 (unlikely [fix $Obj])
@@ -1760,11 +1647,7 @@
 
 %% TASTE <obj>
 
-(rewrite [lick | $Words] into [taste | $Words])
-(rewrite [relish | $Words] into [taste | $Words])
-(rewrite [savour | $Words] into [taste | $Words])
-
-(understand [taste | $Words] as [taste $Obj])
+(understand [taste/lick/relish/savour | $Words] as [taste $Obj])
 	*(understand $Words as non-all object $Obj)
 
 (unlikely [taste $Obj])
@@ -1788,11 +1671,9 @@
 
 %% BITE <obj>
 
-(rewrite [chew | $Words] into [bite | $Words])
 (rewrite [gnaw at | $Words] into [bite | $Words])
-(rewrite [gnaw | $Words] into [bite | $Words])
 
-(understand [bite | $Words] as [bite $Obj])
+(understand [bite/chew/gnaw | $Words] as [bite $Obj])
 	*(understand $Words as single object $Obj)
 
 (perform [bite (animate $Obj)])
@@ -1803,12 +1684,7 @@
 
 %% EAT <obj>
 
-(rewrite [devour | $Words] into [eat | $Words])
-(rewrite [ingest | $Words] into [eat | $Words])
-(rewrite [munch | $Words] into [eat | $Words])
-(rewrite [swallow | $Words] into [eat | $Words])
-
-(understand [eat | $Words] as [eat $Obj])
+(understand [eat/devour/ingest/munch/swallow | $Words] as [eat $Obj])
 	*(understand $Words as non-all object $Obj)
 
 (unlikely [eat $Obj])
@@ -1851,10 +1727,7 @@
 
 %% DRINK <obj>
 
-(rewrite [sip | $Words] into [drink | $Words])
-(rewrite [quaff | $Words] into [drink | $Words])
-
-(understand [drink | $Words] as [drink $Obj])
+(understand [drink/sip/quaff | $Words] as [drink $Obj])
 	*(understand $Words as non-all object $Obj)
 
 (unlikely [drink $Obj])
@@ -1878,22 +1751,18 @@
 %% CUT <obj> WITH <obj>
 %% CUT <obj>
 
-(rewrite [sever | $Words] into [cut | $Words])
-(rewrite [slice | $Words] into [cut | $Words])
-(rewrite [prune | $Words] into [cut | $Words])
-(rewrite [chop | $Words] into [cut | $Words])
 (rewrite [cut off | $Words] into [cut | $Words])
 (rewrite [chop off | $Words] into [cut | $Words])
 
-(understand [cut | $Words] as [cut $A with $B])
+(understand [cut/sever/slice/prune/chop | $Words] as [cut $A with $B])
 	*(split $Words by [with] into $Left and $Right)
 	*(understand $Left as non-all object $A)
 	*(understand $Right as single object $B)
 
-(understand [cut | $Words] as [cut $Obj])
+(understand [cut/sever/slice/prune/chop | $Words] as [cut $Obj])
 	*(understand $Words as non-all object $Obj)
 
-(understand [cut | $Words] as [cut $Obj])
+(understand [cut/chop/slice | $Words] as [cut $Obj])
 	*(split $Words by [off] into $Left and [])
 	*(understand $Left as non-all object $Obj)
 
@@ -2021,9 +1890,8 @@
 
 (rewrite [talk to | $Words] into [talk | $Words])
 (rewrite [speak to | $Words] into [talk | $Words])
-(rewrite [speak | $Words] into [talk | $Words])
 
-(understand [talk | $Words] as [talk to $Obj])
+(understand [talk/speak | $Words] as [talk to $Obj])
 	*(understand $Words as single object $Obj preferably animate)
 
 (understand [talk])
@@ -2048,8 +1916,7 @@
 
 %% CURSE
 
-(understand [curse])
-(understand [swear] as [curse])
+(understand [curse/swear] as [curse])
 
 (perform [curse])
 	You mumble a few well-chosen words to yourself.
@@ -2057,10 +1924,7 @@
 %% SHOUT TO <obj> (redirected to TALK TO by default)
 %% SHOUT (redirected to TALK by default)
 
-(rewrite [yell | $Words] into [shout | $Words])
-(rewrite [scream | $Words] into [shout | $Words])
-
-(understand [shout to | $Words] as [shout to $Obj])
+(understand [shout/yell/scream to | $Words] as [shout to $Obj])
 	*(understand $Words as single object $Obj preferably animate)
 
 (unlikely [shout to $Obj])
@@ -2072,7 +1936,7 @@
 (perform [shout to $Obj])
 	(try [talk to $Obj])
 
-(understand [shout])
+(understand [shout/yell/scream] as [shout])
 
 (perform [shout])
 	To whom?
@@ -2118,10 +1982,7 @@
 %% GREET <obj> (redirected to TALK TO by default)
 %% GREET
 
-(rewrite [hello | $Words] into [greet | $Words])
-(rewrite [hi | $Words] into [greet | $Words])
-
-(understand [greet | $Words] as [greet $Obj])
+(understand [greet/hello/hi | $Words] as [greet $Obj])
 	*(understand $Words as single object $Obj preferably animate)
 
 (unlikely [greet $Obj])
@@ -2133,20 +1994,14 @@
 (perform [greet $Obj])
 	(try [talk to $Obj])
 
-(understand [greet])
+(understand [greet/hello/hi] as [greet])
 
 (perform [greet])
 	You say hello to nobody in particular.
 
 %% TELL <obj> TO | <action>
 
-(understand [tell | $Words] as [tell $Actor to | $Action])
-	*(split $Words by [, to] into $Left and $Right)
-	*(understand $Left as single object $Actor preferably animate)
-	(rewrite $Right into $Simplified)
-	*(understand $Simplified as $Action)
-
-(understand [ask | $Words] as [tell $Actor to | $Action])
+(understand [tell/ask | $Words] as [tell $Actor to | $Action])
 	*(split $Words by [, to] into $Left and $Right)
 	*(understand $Left as single object $Actor preferably animate)
 	(rewrite $Right into $Simplified)
@@ -2184,10 +2039,7 @@
 
 %% SMELL <obj>
 
-(rewrite [sniff | $Words] into [smell | $Words])
-(rewrite [inhale | $Words] into [smell | $Words])
-
-(understand [smell | $Words] as [smell $Obj])
+(understand [smell/sniff/inhale | $Words] as [smell $Obj])
 	*(understand $Words as non-all object $Obj)
 
 (refuse [smell $Obj])
@@ -2196,18 +2048,15 @@
 (perform [smell $Obj])
 	(The $Obj) smell(s $Obj) as expected.
 
-(understand [smell])
+(understand [smell/sniff/inhale] as [smell])
 
 (perform [smell])
 	You sniff at the air, perceiving nothing out of the ordinary.
 
 %% WAKE UP
 
-(rewrite [awake | $Words] into [wake | $Words])
-(rewrite [awaken | $Words] into [wake | $Words])
-
 (understand [wake up])
-(understand [wake] as [wake up])
+(understand [wake/awake/awaken] as [wake up])
 (understand [pinch | $Words] as [wake up])
 	*(understand $Words as single object $Obj)
 	(current player $Player)
@@ -2222,30 +2071,14 @@
 
 %% CLIMB <obj>
 
-(rewrite [get up on | $Words] into [climb | $Words])
-(rewrite [get up onto | $Words] into [climb | $Words])
-(rewrite [get onto | $Words] into [climb | $Words])
-(rewrite [get on | $Words] into [climb | $Words])
-(rewrite [stand on | $Words] into [climb | $Words])
+(rewrite [go/get/step/climb up on/onto | $Words] into [climb | $Words])
+(rewrite [go/get/step/climb on/onto | $Words] into [climb | $Words])
 (rewrite [sit on top of | $Words] into [climb | $Words])
-(rewrite [sit on | $Words] into [climb | $Words])
-(rewrite [lie on | $Words] into [climb | $Words])
-(rewrite [lie down on | $Words] into [climb | $Words])
-(rewrite [go up on | $Words] into [climb | $Words])
-(rewrite [go up onto | $Words] into [climb | $Words])
-(rewrite [go onto | $Words] into [climb | $Words])
-(rewrite [go on | $Words] into [climb | $Words])
-(rewrite [step on | $Words] into [climb | $Words])
-(rewrite [step onto | $Words] into [climb | $Words])
-(rewrite [climb up on | $Words] into [climb | $Words])
-(rewrite [climb up onto | $Words] into [climb | $Words])
-(rewrite [climb onto | $Words] into [climb | $Words])
-(rewrite [climb on | $Words] into [climb | $Words])
-(rewrite [jump to | $Words] into [climb | $Words])
-(rewrite [mount | $Words] into [climb | $Words])
-(rewrite [scale | $Words] into [climb | $Words])
+(rewrite [sit/stand/lie on | $Words] into [climb | $Words])
+(rewrite [sit/lie down on | $Words] into [climb | $Words])
+(rewrite [jump to/onto | $Words] into [climb | $Words])
 
-(understand [climb | $Words] as [climb $Obj])
+(understand [climb/mount/scale | $Words] as [climb $Obj])
 	*(understand $Words as single object $Obj preferably supporter)
 
 (unlikely [climb $Obj])
@@ -2293,24 +2126,10 @@
 
 %% ENTER <obj>
 
-(rewrite [get in | $Words] into [enter | $Words])
-(rewrite [get into | $Words] into [enter | $Words])
-(rewrite [get inside | $Words] into [enter | $Words])
-(rewrite [go in | $Words] into [enter | $Words])
-(rewrite [go into | $Words] into [enter | $Words])
-(rewrite [go inside | $Words] into [enter | $Words])
-(rewrite [sit in | $Words] into [enter | $Words])
-(rewrite [sit inside | $Words] into [enter | $Words])
-(rewrite [lie in | $Words] into [enter | $Words])
-(rewrite [enter in | $Words] into [enter | $Words])
-(rewrite [enter into | $Words] into [enter | $Words])
-(rewrite [climb in | $Words] into [enter | $Words])
-(rewrite [climb into | $Words] into [enter | $Words])
-(rewrite [climb inside | $Words] into [enter | $Words])
-(rewrite [cross | $Words] into [enter | $Words])
-(rewrite [jump into | $Words] into [enter | $Words])
+(rewrite [go/get/enter/climb/jump in/into/inside | $Words] into [enter | $Words])
+(rewrite [sit/lie in/inside | $Words] into [enter | $Words])
 
-(understand [enter | $Words] as [enter $Obj])
+(understand [enter/cross | $Words] as [enter $Obj])
 	*(understand $Words as single object $Obj preferably container)
 
 (understand [go | $Words] as [enter $Obj])
@@ -2413,25 +2232,17 @@
 %% LEAVE <obj>
 %% LEAVE
 
-(rewrite [exit | $Words] into [leave | $Words])
-
-(understand [leave | $Words] as [leave $Obj])
+(understand [leave/exit | $Words] as [leave $Obj])
 	*(understand $Words as single object $Obj)
 
-(understand [get out of | $Words] as [leave $Obj])
+(understand [get/jump/go out/off of | $Words] as [leave $Obj])
 	*(understand $Words as single object $Obj preferably container)
 
-(understand [get off of | $Words] as [leave $Obj])
+(understand [get/jump/go off | $Words] as [leave $Obj])
 	*(understand $Words as single object $Obj preferably supporter)
 
-(understand [get off | $Words] as [leave $Obj])
-	*(understand $Words as single object $Obj preferably supporter)
-
-(understand [jump off | $Words] as [leave $Obj])
-	*(understand $Words as single object $Obj preferably supporter)
-
-(understand [leave])
-(understand [get out] as [leave])
+(understand [leave/exit] as [leave])
+(understand [get/jump out] as [leave])
 (understand [get off] as [leave])
 
 (understand [jump off] as [leave])
@@ -2518,10 +2329,7 @@
 %% It is only possible to go to visited rooms and non-hidden objects in this
 %% way.
 
-(rewrite [go to | $Words] into [go | $Words])
-(rewrite [approach | $Words] into [go | $Words])
-
-(understand [go | $Words] as [go to $Room])
+(understand [go/approach | $Words] as [go to $Room])
 	(filter $Words into $Filtered)
 	(nonempty $Filtered)
 	*(room $Room)
@@ -2588,6 +2396,9 @@
 
 ~(refuse [find $])
 
+(prevent [find (not here $Obj)])
+	You don't know where to find (the $Obj).
+
 (prevent [find $Obj])
 	(when $Obj is already held)
 
@@ -2633,26 +2444,16 @@
 
 %% GO <direction>
 
-(rewrite [go further | $Words] into [go | $Words])
-(rewrite [crawl | $Words] into [go | $Words])
-(rewrite [walk | $Words] into [go | $Words])
-
 %% The rule for just typing a list of directions (without a verb) is further
 %% down in the file.
 
-(understand [go | $Words] as [go $Dir])
+(rewrite [go/walk/crawl to | $Words] into [go | $Words])
+(rewrite [go/walk/crawl further | $Words] into [go | $Words])
+
+(understand [go/walk/crawl/leave/get/climb | $Words] as [go $Dir])
 	*(understand $Words as direction $Dir)
 
-(understand [leave | $Words] as [go $Dir])
-	*(understand $Words as direction $Dir)
-
-(understand [get | $Words] as [go $Dir])
-	*(understand $Words as direction $Dir)
-
-(understand [climb | $Words] as [go $Dir])
-	*(understand $Words as direction $Dir)
-
-(understand [go] as [go #out])
+(understand [go/walk/crawl] as [go #out])
 
 (understand [enter] as [go #in])
 
@@ -2728,12 +2529,7 @@
 
 %% PUSH <obj> <dir>
 
-(rewrite [move | $Words] into [push | $Words])
-(rewrite [shove | $Words] into [push | $Words])
-(rewrite [shift | $Words] into [push | $Words])
-(rewrite [press | $Words] into [push | $Words])
-
-(understand [push | $Words] as [push $Obj $Dir])
+(understand [push/move/shove/shift/press/roll | $Words] as [push $Obj $Dir])
 	*(split $Words anywhere into $Left and $Right)
 	*(understand $Right as direction $Dir)
 	*(understand $Left as single object $Obj)
@@ -2767,7 +2563,7 @@
 
 %% PUSH <obj>
 
-(understand [push | $Words] as [push $Obj])
+(understand [push/move/shove/shift/press | $Words] as [push $Obj])
 	*(understand $Words as non-all object $Obj)
 
 (perform [push (pushable $Obj)])
@@ -2785,13 +2581,9 @@
 
 %% PULL <obj>
 
-(rewrite [yank | $Words] into [pull | $Words])
-(rewrite [drag | $Words] into [pull | $Words])
-(rewrite [tug | $Words] into [pull | $Words])
-(rewrite [tow | $Words] into [pull | $Words])
-(rewrite [pull on | $Words] into [pull | $Words])
+(rewrite [pull/yank/drag/tug/tow on | $Words] into [pull | $Words])
 
-(understand [pull | $Words] as [pull $Obj])
+(understand [pull/yank/drag/tug/tow | $Words] as [pull $Obj])
 	*(understand $Words as non-all object $Obj)
 
 (perform [pull $Obj])
@@ -2804,12 +2596,7 @@
 
 %% TURN <obj>
 
-(rewrite [rotate | $Words] into [turn | $Words])
-(rewrite [twist | $Words] into [turn | $Words])
-(rewrite [screw | $Words] into [turn | $Words])
-(rewrite [unscrew | $Words] into [turn | $Words])
-
-(understand [turn | $Words] as [turn $Obj])
+(understand [turn/rotate/twist/screw/unscrew | $Words] as [turn $Obj])
 	*(understand $Words as non-all object $Obj)
 
 (prevent [turn (room $Obj)])
@@ -2849,16 +2636,14 @@
 %% SWIM IN <obj>
 %% SWIM
 
-(rewrite [bathe | $Words] into [swim | $Words])
-
-(understand [swim in | $Words] as [swim in $Obj])
+(understand [swim/bathe in | $Words] as [swim in $Obj])
 	*(understand $Words as single object $Obj)
 
 (perform [swim in $Obj])
 	You can't swim in (the $Obj).
 	(tick) (stop)
 
-(understand [swim])
+(understand [swim/bathe] as [swim])
 
 (perform [swim])
 	In what?
@@ -2866,15 +2651,7 @@
 
 %% CLEAN <obj>
 
-(rewrite [brush | $Words] into [clean | $Words])
-(rewrite [shine | $Words] into [clean | $Words])
-(rewrite [polish | $Words] into [clean | $Words])
-(rewrite [sweep | $Words] into [clean | $Words])
-(rewrite [dust | $Words] into [clean | $Words])
-(rewrite [wipe | $Words] into [clean | $Words])
-(rewrite [scrub | $Words] into [clean | $Words])
-
-(understand [clean | $Words] as [clean $Obj])
+(understand [clean/brush/shine/polish/sweep/dust/wipe/scrub | $Words] as [clean $Obj])
 	*(understand $Words as non-all object $Obj)
 
 (perform [clean $Obj])
@@ -2883,11 +2660,7 @@
 %% TIE <obj> TO <obj>
 %% TIE <obj>
 
-(rewrite [bind | $Words] into [tie | $Words])
-(rewrite [attach | $Words] into [tie | $Words])
-(rewrite [fasten | $Words] into [tie | $Words])
-
-(understand [tie | $Words] as [tie $A to $B])
+(understand [tie/bind/attach/fasten | $Words] as [tie $A to $B])
 	*(split $Words by [to on onto around] into $Left and $Right)
 	*(understand $Left as single object $A)
 	(if) ($Right = [itself]) (then)
@@ -2896,7 +2669,7 @@
 		*(understand $Right as single object $B)
 	(endif)
 
-(understand [tie | $Words] as [tie $Obj])
+(understand [tie/bind/attach/fasten | $Words] as [tie $Obj])
 	*(understand $Words as single object $Obj)
 
 (unlikely [tie $])
@@ -2938,22 +2711,7 @@
 %% ATTACK <obj> WITH <obj>
 %% ATTACK <obj>
 
-(rewrite [break | $Words] into [attack | $Words])
-(rewrite [smash | $Words] into [attack | $Words])
-(rewrite [hit | $Words] into [attack | $Words])
-(rewrite [slap | $Words] into [attack | $Words])
-(rewrite [kick | $Words] into [attack | $Words])
-(rewrite [fight | $Words] into [attack | $Words])
-(rewrite [torture | $Words] into [attack | $Words])
-(rewrite [wreck | $Words] into [attack | $Words])
-(rewrite [crack | $Words] into [attack | $Words])
-(rewrite [destroy | $Words] into [attack | $Words])
-(rewrite [murder | $Words] into [attack | $Words])
-(rewrite [kill | $Words] into [attack | $Words])
-(rewrite [punch | $Words] into [attack | $Words])
-(rewrite [thump | $Words] into [attack | $Words])
-
-(understand [attack | $Words] as [attack $A with $B])
+(understand [attack/break/smash/hit/slap/kick/fight/torture/wreck/crack/destroy/murder/kill/punch/thump | $Words] as [attack $A with $B])
 	*(split $Words by [with] into $Left and $Right)
 	*(understand $Left as non-all object $A)
 	*(understand $Right as object $B preferably held)
@@ -2974,7 +2732,7 @@
 (perform [attack $Obj with $])
 	(try [attack $Obj])
 
-(understand [attack | $Words] as [attack $Obj])
+(understand [attack/break/smash/hit/slap/kick/fight/torture/wreck/crack/destroy/murder/kill/punch/thump | $Words] as [attack $Obj])
 	*(understand $Words as single object $Obj)
 
 (perform [attack $Obj])
@@ -3087,15 +2845,10 @@
 (describe action (command $Action))
 	issue the (exhaust) { *($Word is one of $Action) $Word } command
 
-%% AGAIN and UNDO are treated as a special cases in the toplevel parser.
-
-(rewrite [g] into [again])
-
 %% QUIT
 
-(rewrite [q] into [quit])
-
-(understand command [quit])
+(command [quit])
+(understand [quit/q] as [quit])
 (perform [quit])
 	Really quit? \(y (no space) / (no space) n\)
 	(if) (yesno) (then)
@@ -3148,10 +2901,9 @@
 
 %% TRANSCRIPT
 
-(rewrite [script | $Words] into [transcript | $Words])
-
-(understand command [transcript on])
-(understand [transcript] as [transcript on])
+(command [transcript on])
+(understand [transcript/script on] as [transcript on])
+(understand [transcript/script] as [transcript on])
 
 (perform [transcript on])
 	(if) (transcript on) (then)
@@ -3161,7 +2913,8 @@
 		(stop)
 	(endif)
 
-(understand command [transcript off])
+(command [transcript off])
+(understand [transcript/script off] as [transcript off])
 
 (perform [transcript off])
 	(transcript off)
@@ -3218,8 +2971,7 @@
 %% VERBOSE / BRIEF / SUPERBRIEF
 
 (understand command [verbose])
-(understand [brief] as [verbose])
-(understand [superbrief] as [verbose])
+(understand [brief/superbrief] as [verbose])
 (perform [verbose])
 	The verbosity level of this story is not adjustable.
 	(stop)
@@ -4054,14 +3806,10 @@
 	(update environment around player)
 	(stoppable) (intro)
 	(par)
-	(read-parse-act loop)
+	*(repeat forever) (read-parse-act) (fail)
 
 (intro)
 	(banner)
-
-(read-parse-act loop)
-	%% Tail-recursion is important here:
-	(read-parse-act) (fail) (or) (read-parse-act loop)
 
 (read-parse-act)
 	(stoppable) {
@@ -4229,7 +3977,7 @@
 		.
 		(par)
 	(endif)
-	(game-over loop)
+	*(repeat forever) (game over menu) (fail)
 
 (game over status bar)
 	(status bar 1) {
@@ -4237,15 +3985,14 @@
 		(score headline)
 	}
 
-(game-over loop)
-	(game-over iteration) (fail) (or) (game-over loop)
-
-(game-over iteration)
+(game over menu)
 	(line)
 	Would you like to:
 	RESTART,
 	RESTORE a saved game,
-	UNDO the last move,
+	(if) (interpreter supports undo) (then)
+		UNDO the last move,
+	(endif)
 	(if) (amusing enabled) (then)
 		see a list of AMUSING things to do,
 	(endif)
@@ -4294,6 +4041,10 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Parser: Rewrite
+
+(rewrite [x | $Words] into [examine | $Words])
+(rewrite [l | $Words] into [look | $Words])
+(rewrite [g] into [again])
 
 %% Fallback rewrite rule does nothing.
 
@@ -4773,7 +4524,9 @@
 	%% Handle UNDO:
 
 	(if) ($ActualWords = [undo]) (then)
-		(if) (undo) (then)
+		(if) ~(interpreter supports undo) (then)
+			This interpreter doesn't support undo.
+		(elseif) (undo) (then)
 			Failed to undo last turn.
 		(else)
 			There are no more turns to undo!
@@ -5006,10 +4759,11 @@
 	(now) ~($ is to be considered)
 	(now) ($Start has distance 0 from start)
 	(now) ($Start is to be considered)
-	(stoppable) (iteratively find paths)
-
-(iteratively find paths)
-	(find paths subroutine) (fail) (or) (iteratively find paths)
+	(stoppable) {
+		*(repeat forever)
+		(find paths subroutine)
+		(fail)
+	}
 
 (find paths subroutine)
 	(if) ($First is to be considered) (then)

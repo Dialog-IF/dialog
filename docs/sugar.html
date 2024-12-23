@@ -9,7 +9,7 @@
 <body>
 	<div class="chapter">
 	<h1>Chapter 6: Syntactic sugar</h1>
-	<div class="navlinks">(<a href="#accesspred">Access predicates</a>&nbsp;&bull; <a href="#currtopic">The current topic</a>&nbsp;&bull; <a href="#nestedqueries">Nested queries in rule heads</a>&nbsp;&bull; <a href="#generate">Automated object generation</a>)</div>
+	<div class="navlinks">(<a href="#accesspred">Access predicates</a>&nbsp;&bull; <a href="#currtopic">The current topic</a>&nbsp;&bull; <a href="#nestedqueries">Nested queries in rule heads</a>&nbsp;&bull; <a href="#slash">Alternatives in rule heads</a>&nbsp;&bull; <a href="#generate">Automated object generation</a>)</div>
 <p>Dialog provides a small amount of syntactic sugar, i.e. optional syntax
 variations that can help make certain code more readable and succinct.
 </p>
@@ -501,11 +501,107 @@ is recommended to simplify:
 <p>Nested rule-expressions may only appear in rule heads, never inside rule
 bodies.
 </p>
+<a id="slash"></a><h2>Alternatives in rule heads</h2>
+<p>Dialog provides a shorthand syntax for specifying alternatives in rule heads. A
+set of simple values (dictionary words, objects, numbers, or the empty list)
+separated by forward slashes is called a <i>slash expression</i>. It is
+transformed into a nested multi-query to the built-in predicate <span class="code">($&nbsp;is one
+of&nbsp;$)</span>:
+</p>
+<textarea class="copyarea" id="copy27" readonly>
+(descr #apple/#banana/#orange)
+	Yummy!
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(descr #apple/#banana/#orange)</td></tr>
+<tr><td class="left"></td><td class="right">Yummy!</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy27').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>is equivalent to
+</p>
+<textarea class="copyarea" id="copy28" readonly>
+(descr *($ is one of [#apple #banana #orange]))
+	Yummy!
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(descr *($ is one of [#apple #banana #orange]))</td></tr>
+<tr><td class="left"></td><td class="right">Yummy!</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy28').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>which in turn is equivalent to
+</p>
+<textarea class="copyarea" id="copy29" readonly>
+(descr $X)
+	*($X is one of [#apple #banana #orange])
+	Yummy!
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(descr $X)</td></tr>
+<tr><td class="left"></td><td class="right">*($X is one of [#apple #banana #orange])</td></tr>
+<tr><td class="left"></td><td class="right">Yummy!</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy29').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>where X represents some internally generated name.
+</p>
+<p>Slash expressions are very useful when dealing with user input and synonyms.
+Here is an example from the standard library:
+</p>
+<textarea class="copyarea" id="copy30" readonly>
+(rewrite [go/get/step/climb up on/onto | $Words] into [climb | $Words])
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(rewrite [go/get/step/climb up on/onto | $Words] into [climb | $Words])</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy30').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Because these expressions expand into multi-queries, they can also function as
+output parameters:
+</p>
+<textarea class="copyarea" id="copy31" readonly>
+(bird #blackbird/#duck/#penguin)
+
+(program entry point)
+	(exhaust) {
+		*(bird $B)
+		$B is a bird.
+	}
+</textarea>
+<div class="blkcode">
+<table>
+<tr><td class="both" colspan="2">(bird #blackbird/#duck/#penguin)</td></tr>
+<tr><td class="blank" colspan="2"></td></tr>
+<tr><td class="both" colspan="2">(program entry point)</td></tr>
+<tr><td class="left"></td><td class="right">(exhaust) {</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>*(bird $B)</td></tr>
+<tr><td class="left"></td><td class="right"><span class="tab"> </span>$B is a bird.</td></tr>
+<tr><td class="left"></td><td class="right">}</td></tr>
+</table>
+</div>
+<div class="copycode">
+<a class="copybtn" href="" onClick="document.getElementById('copy31').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+</div>
+<p>Slash-expressions may only appear in rule heads, never inside rule bodies.
+</p>
 <a id="generate"></a><h2>Automated object generation</h2>
 <p>Sometimes it is desirable to instantiate several identical objects in a game.
 It is possible to create each object manually, like this:
 </p>
-<textarea class="copyarea" id="copy27" readonly>
+<textarea class="copyarea" id="copy32" readonly>
 (green grape #ggrape1)
 (green grape #ggrape2)
 (green grape #ggrape3)
@@ -548,13 +644,13 @@ It is possible to create each object manually, like this:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy27').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy32').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>However, Dialog provides a convenient mechanism for automating the process. The
 following is functionally equivalent to the above example, although the printed
 representations of these objects will be different:
 </p>
-<textarea class="copyarea" id="copy28" readonly>
+<textarea class="copyarea" id="copy33" readonly>
 (generate 3 (green grape $))
 
 (generate 5 (blue grape $))
@@ -585,14 +681,14 @@ representations of these objects will be different:
 </table>
 </div>
 <div class="copycode">
-<a class="copybtn" href="" onClick="document.getElementById('copy28').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
+<a class="copybtn" href="" onClick="document.getElementById('copy33').select(); document.execCommand('copy'); return false;">[Copy to clipboard]</a>
 </div>
 <p>The printed representation of a generated object is a hash character followed
 by some unique number, since these objects have no source-code names.
 </p>
 	<div class="footer">
 	<p class="nav">Onwards to &ldquo;<a href="builtins.html">Chapter 7: More built-in predicates</a>&rdquo; &bull; Back to the <a href="index.html">Table of Contents</a></p>
-	<p class="tagline">The Dialog Manual, Revision 1, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
+	<p class="tagline">The Dialog Manual, Revision 2, by <a href="https://linusakesson.net/">Linus &Aring;kesson</a></p>
 	</div>
 	</div>
 </body>

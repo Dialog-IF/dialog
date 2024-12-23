@@ -1,5 +1,3 @@
-#define _XOPEN_SOURCE 500
-
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
@@ -13,6 +11,7 @@
 
 #define MAXWORDLENGTH 256
 #define MAXRULEWORDS 32
+#define MAXNESTEDEXPR 32
 #define BUCKETS 1024
 
 struct evalvar {
@@ -62,7 +61,7 @@ struct builtinspec {
 	int predflags;
 	int nword;
 	char *word[8];
-} builtinspec[NBUILTIN] = {
+} builtinspec[] = {
 	{BI_LESSTHAN,		0,				3,	{0, "<", 0}},
 	{BI_GREATERTHAN,	0,				3,	{0, ">", 0}},
 	{BI_PLUS,		0,				5,	{0, "plus", 0, "into", 0}},
@@ -73,6 +72,7 @@ struct builtinspec {
 	{BI_RANDOM,		0,				7,	{"random", "from", 0, "to", 0, "into", 0}},
 	{BI_FAIL,		PREDF_FAIL,			1,	{"fail"}},
 	{BI_STOP,		PREDF_SUCCEEDS,			1,	{"stop"}},
+	{BI_REPEAT,		PREDF_SUCCEEDS,			2,	{"repeat", "forever"}},
 	{BI_NUMBER,		0,				2,	{"number", 0}},
 	{BI_LIST,		0,				2,	{"list", 0}},
 	{BI_EMPTY,		0,				2,	{"empty", 0}},
@@ -124,6 +124,8 @@ struct builtinspec {
 	{BI_WORDREP_DOWN,	0,				4,	{"word", "representing", "down", 0}},
 	{BI_WORDREP_LEFT,	0,				4,	{"word", "representing", "left", 0}},
 	{BI_WORDREP_RIGHT,	0,				4,	{"word", "representing", "right", 0}},
+	{BI_HAVE_UNDO,		0,				3,	{"interpreter", "supports", "undo"}},
+	{BI_CONSTRUCTORS,	PREDF_DEFINABLE_BI,		1,	{""}}, // cannot appear in source code
 	{BI_PROGRAM_ENTRY,	PREDF_DEFINABLE_BI,		3,	{"program", "entry", "point"}},
 	{BI_ERROR_ENTRY,	PREDF_DEFINABLE_BI,		4,	{"error", 0, "entry", "point"}},
 	{BI_STORY_IFID,		PREDF_DEFINABLE_BI,		2,	{"story", "ifid"}},
@@ -132,6 +134,7 @@ struct builtinspec {
 	{BI_STORY_NOUN,		PREDF_DEFINABLE_BI,		2,	{"story", "noun"}},
 	{BI_STORY_BLURB,	PREDF_DEFINABLE_BI,		2,	{"story", "blurb"}},
 	{BI_STORY_RELEASE,	PREDF_DEFINABLE_BI,		3,	{"story", "release", 0}},
+	{BI_ENDINGS,		PREDF_DEFINABLE_BI,		3,	{"removable", "word", "endings"}},
 };
 
 int hashfunc(char *name) {
@@ -183,6 +186,8 @@ void create_worldobj(struct word *w) {
 struct predicate *find_predicate(int nword, struct word **words) {
 	int i, j, len;
 	struct predicate *pred;
+
+	assert(nword);
 
 	for(i = 0; i < npredicate; i++) {
 		if(predicates[i]->nword == nword) {
@@ -334,6 +339,17 @@ int next_token(struct token *t, FILE *f, int parsemode) {
 			at_start = (column == 1);
 			t->kind = ch;
 			return 1 + at_start;
+		} else if(ch == '/') {
+			at_start = (column == 1);
+			if(parsemode == PMODE_BODY) {
+				buf[pos++] = '/';
+				buf[pos] = 0;
+				t->kind = TOK_BAREWORD;
+				t->word = find_word(buf);
+			} else {
+				t->kind = ch;
+			}
+			return 1 + at_start;
 		} else if(ch == '*') {
 			at_start = (column == 1);
 			ch = fgetc(f);
@@ -390,7 +406,7 @@ int next_token(struct token *t, FILE *f, int parsemode) {
 						exit(1);
 					}
 					buf[pos++] = ch;
-				} else if(ch == EOF || strchr("\n\r\t $#[|](){}@~*%", ch)) {
+				} else if(ch == EOF || strchr("\n\r\t $#[|](){}@~*%/", ch)) {
 					if(ch != EOF) ungetc(ch, f);
 					buf[pos] = 0;
 					if(parsemode != PMODE_BODY) {
@@ -423,6 +439,22 @@ int next_token(struct token *t, FILE *f, int parsemode) {
 			}
 		}
 	}
+}
+
+int look_ahead_for_slash(FILE *f) {
+	int ch;
+	int found;
+
+	do {
+		ch = fgetc(f);
+		column++;
+	} while(ch == ' ' || ch == '\t' || ch == '\r');
+
+	found = (ch == '/');
+
+	if(ch != EOF) ungetc(ch, f);
+
+	return found;
 }
 
 struct astnode *parse_expr(int parsemode);
@@ -1090,7 +1122,7 @@ void trace_invocations() {
 
 	tracequeue = malloc(npredicate * sizeof(struct predicate *));
 
-	pred = find_builtin(BI_PROGRAM_ENTRY);
+	pred = find_builtin(BI_CONSTRUCTORS);
 	pred->flags |= PREDF_INVOKED_SIMPLE | PREDF_INVOKED_MULTI;
 	trace_invoke_pred(pred, PREDF_INVOKED_NORMALLY, 0, 0);
 
@@ -1150,7 +1182,7 @@ void find_dynamic(struct astnode *an, line_t line) {
 
 struct clause *parse_clause(int is_macro) {
 	struct astnode *an, **dest, **folddest;
-	struct astnode *nestednodes[MAXRULEWORDS];
+	struct astnode *nestednodes[MAXNESTEDEXPR];
 	int nnested = 0, nested_nonvar = 0;
 	struct clause *cl;
 	int i, j;
@@ -1480,6 +1512,8 @@ struct astnode *parse_expr(int parsemode) {
 			(*dest)->predicate = stoppred;
 		} else if(an->predicate->special == SP_IF) {
 			an = parse_if();
+		} else if(an->predicate->builtin == BI_REPEAT) {
+			report(LVL_WARN, an->line, "(repeat forever) not invoked as a multi-query.");
 		}
 		break;
 	case '{':
@@ -1590,7 +1624,7 @@ struct astnode *parse_expr(int parsemode) {
 }
 
 struct astnode *parse_expr_nested(struct astnode **nested_rules, int *nnested, int parsemode, int *nonvar_detected) {
-	struct astnode *an, *var, *sub, **dest;
+	struct astnode *an, *var, *sub, **dest, *list;
 	int negated = 0;
 
 	switch(tok.kind) {
@@ -1617,6 +1651,10 @@ struct astnode *parse_expr_nested(struct astnode **nested_rules, int *nnested, i
 		if(negated) an->kind = AN_NEG_RULE;
 		if(!an->nchild) {
 			report(LVL_ERR, line, "Nested rule must have at least one parameter.");
+			exit(1);
+		}
+		if(*nnested >= MAXNESTEDEXPR) {
+			report(LVL_ERR, an->line, "Too many nested expressions.");
 			exit(1);
 		}
 		if(an->children[0]->kind == AN_VARIABLE) {
@@ -1672,7 +1710,53 @@ struct astnode *parse_expr_nested(struct astnode **nested_rules, int *nnested, i
 		report(LVL_ERR, line, "Unexpected block in rule-head.");
 		exit(1);
 	default:
-		return parse_expr(parsemode);
+		an = parse_expr(parsemode);
+		if(parsemode != PMODE_BODY && look_ahead_for_slash(f)) {
+			if(*nnested >= MAXNESTEDEXPR) {
+				report(LVL_ERR, an->line, "Too many nested expressions.");
+				exit(1);
+			}
+			list = mkast(AN_PAIR);
+			list->line = an->line;
+			list->nchild = 2;
+			list->children = malloc(2 * sizeof(struct astnode *));
+			list->children[0] = an;
+			dest = &list->children[1];
+			do {
+				status = next_token(&tok, f, parsemode);
+				assert(status && tok.kind == '/');
+				status = next_token(&tok, f, parsemode);
+				if(!status) {
+					report(LVL_ERR, list->line, "Syntax error near end of slash-expression.");
+					exit(1);
+				}
+				an = parse_expr(parsemode);
+				if(an->kind == AN_VARIABLE
+				|| an->kind == AN_PAIR) {
+					report(LVL_ERR, an->line, "Invalid kind of value inside a slash-expression.");
+					exit(1);
+				}
+				*dest = mkast(AN_PAIR);
+				(*dest)->nchild = 2;
+				(*dest)->children = malloc(2 * sizeof(struct astnode *));
+				(*dest)->children[0] = an;
+				dest = &(*dest)->children[1];
+			} while(look_ahead_for_slash(f));
+			*dest = mkast(AN_EMPTY_LIST);
+			var = mkast(AN_VARIABLE);
+			var->word = fresh_word();
+			an = mkast(AN_RULE);
+			an->subkind = RULE_MULTI;
+			an->predicate = find_builtin(BI_IS_ONE_OF);
+			an->nchild = 2;
+			an->children = malloc(2 * sizeof(struct astnode *));
+			an->children[0] = mkast(AN_VARIABLE);
+			an->children[0]->word = var->word;
+			an->children[1] = list;
+			nested_rules[(*nnested)++] = an;
+			an = var;
+		}
+		return an;
 	}
 }
 
@@ -2052,7 +2136,7 @@ int eval_clause(struct clause *cl, struct astnode **outer_bindings, int *cutflag
 	int i;
 	struct evalvar *vars = 0, *v;
 	struct astnode **bound_outer = calloc(cl->predicate->arity, sizeof(struct astnode *));
-	struct astnode *an, **inner_bindings;
+	struct astnode *an, **inner_bindings, *sub;
 
 	for(i = 0; i < cl->predicate->arity; i++) {
 		bound_outer[i] = outer_bindings[i];
@@ -2121,6 +2205,36 @@ int eval_clause(struct clause *cl, struct astnode **outer_bindings, int *cutflag
 					report(LVL_ERR, cl->line, "Too complex right-hand side in predicate evaluated at compile time (5).");
 					exit(1);
 				}
+			} else if(an->predicate->builtin == BI_IS_ONE_OF && an->children[0]->kind == AN_VARIABLE) {
+				for(v = vars; v; v = v->next) {
+					if(v->name == an->children[0]->word) {
+						break;
+					}
+				}
+				if(v
+				&& *v->pointer
+				&& (*v->pointer)->kind == AN_TAG) {
+					for(sub = an->children[1]; sub && sub->kind == AN_PAIR; sub = sub->children[1]) {
+						if(sub->children[0]->kind == AN_VARIABLE) {
+							sub = 0;
+							break;
+						}
+						if(sub->children[0]->kind == AN_TAG
+						&& sub->children[0]->word == (*v->pointer)->word) {
+							break;
+						}
+					}
+					if(sub && sub->kind == AN_EMPTY_LIST) {
+						return 0;
+					}
+					if(!(sub && sub->kind == AN_PAIR)) {
+						report(LVL_ERR, cl->line, "Too complex right-hand side in predicate evaluated at compile time (7).");
+						exit(1);
+					}
+				} else {
+					report(LVL_ERR, cl->line, "Too complex right-hand side in predicate evaluated at compile time (6).");
+					exit(1);
+				}
 			} else if(an->predicate->special || an->predicate->builtin) {
 				report(LVL_ERR, cl->line, "Too complex right-hand side in predicate evaluated at compile time (1).");
 				exit(1);
@@ -2131,7 +2245,7 @@ int eval_clause(struct clause *cl, struct astnode **outer_bindings, int *cutflag
 						an->line,
 						"Initial state of dynamic predicate depends on the state of another dynamic predicate, %s.",
 						an->predicate->printed_name);
-					// todo print due to what line the present predicate is dynamic,
+					// todo print due to what line the present predicate is dynamic
 					exit(1);
 				}
 				inner_bindings = calloc(an->predicate->arity, sizeof(struct astnode *));
@@ -2267,8 +2381,8 @@ int eval_pred(struct predicate *pred, struct astnode **bindings) {
 
 void eval_initial_values() {
 	int i, j;
-	struct predicate *pred;
-	struct astnode *bindings[2];
+	struct predicate *pred, *con;
+	struct astnode *bindings[2], *an;
 	struct dynamic *dyn;
 
 	for(i = 0; i < npredicate; i++) {
@@ -2278,9 +2392,41 @@ void eval_initial_values() {
 				dyn->initial_global_flag = eval_pred(pred, 0);
 			} else if(pred->arity == 1) {
 				if(pred->flags & PREDF_GLOBAL_VAR) {
-					bindings[0] = 0;
-					if(eval_pred(pred, bindings)) {
-						dyn->initial_global_value = bindings[0];
+					if(pred->nclause
+					&& !pred->clauses[0]->body
+					&& pred->clauses[0]->params[0]->kind != AN_VARIABLE) {
+						if(dyn->global_bufsize > 1) {
+							// Handle complex initial values at runtime.
+
+							an = mkast(AN_NOW);
+							an->nchild = 1;
+							an->children = malloc(sizeof(struct astnode *));
+							an->children[0] = mkast(AN_RULE);
+							an->children[0]->line = pred->clauses[0]->line;
+							an->children[0]->predicate = pred;
+							an->children[0]->nchild = 1;
+							an->children[0]->children = malloc(sizeof(struct astnode *));
+							an->children[0]->children[0] = pred->clauses[0]->params[0];
+
+							an->next_in_body = mkast(AN_RULE);
+							an->next_in_body->predicate = find_builtin(BI_FAIL);
+
+							con = find_builtin(BI_CONSTRUCTORS);
+							con->nclause++;
+							con->clauses = realloc(con->clauses, con->nclause * sizeof(struct clause *));
+							memmove(con->clauses + 1, con->clauses, (con->nclause - 1) * sizeof(struct clause *));
+							con->clauses[0] = calloc(1, sizeof(struct clause));
+							con->clauses[0]->predicate = con;
+							con->clauses[0]->line = pred->clauses[0]->line;
+							con->clauses[0]->body = an;
+						} else {
+							dyn->initial_global_value = pred->clauses[0]->params[0];
+						}
+					} else {
+						bindings[0] = 0;
+						if(eval_pred(pred, bindings)) {
+							dyn->initial_global_value = bindings[0];
+						}
 					}
 				} else {
 					dyn->initial_flag = calloc(nworldobj, 1);
@@ -2346,6 +2492,14 @@ void build_dictionary() {
 					find_dict_words(pred->clauses[j]->params[k], 0);
 				}
 				find_dict_words(pred->clauses[j]->body, !!(pred->flags & PREDF_INVOKED_FOR_WORDS));
+			}
+		}
+		if(pred->flags & PREDF_GLOBAL_VAR) {
+			find_dict_words(pred->dynamic->initial_global_value, 0);
+		}
+		if(pred->arity == 2 && pred->dynamic) {
+			for(j = 0; j < nworldobj; j++) {
+				find_dict_words(pred->dynamic->initial_value[j], 0);
 			}
 		}
 	}
@@ -2460,7 +2614,7 @@ int body_succeeds(struct astnode *an) {
 }
 
 int frontend(int nfile, char **fname) {
-	struct clause *clause, **clause_dest, *first_clause;
+	struct clause *clause, **clause_dest, *first_clause, *cl;
 	struct predicate *pred;
 	struct astnode *an, **anptr;
 	struct word *words[8];
@@ -2540,7 +2694,7 @@ int frontend(int nfile, char **fname) {
 	find_predicate(3, words)->special = SP_GENERATE;
 	find_predicate(3, words)->flags |= PREDF_META;
 
-	for(i = 0; i < NBUILTIN; i++) {
+	for(i = 0; i < sizeof(builtinspec) / sizeof(*builtinspec); i++) {
 		for(j = 0; j < builtinspec[i].nword; j++) {
 			words[j] = builtinspec[i].word[j]?
 				find_word(builtinspec[i].word[j])
@@ -2712,7 +2866,7 @@ int frontend(int nfile, char **fname) {
 				}
 				if(clause->body->children[0]->kind != AN_VARIABLE) {
 					/* (global variable (inner declaration #foo)) so we add a separate rule for the initial value */
-					struct clause *cl = calloc(1, sizeof(*cl));
+					cl = calloc(1, sizeof(*cl));
 					cl->predicate = clause->body->predicate;
 					cl->params = clause->body->children;
 					cl->body = 0;
@@ -2742,8 +2896,8 @@ int frontend(int nfile, char **fname) {
 				}
 				for(i = 0; i < clause->params[0]->value; i++) {
 					char buf[32];
-					struct clause *cl = calloc(1, sizeof(*cl));
 
+					cl = calloc(1, sizeof(*cl));
 					cl->predicate = clause->body->predicate;
 					cl->params = malloc(cl->predicate->arity * sizeof(struct astnode *));
 					cl->params[0] = mkast(AN_TAG);
@@ -2772,7 +2926,7 @@ int frontend(int nfile, char **fname) {
 				clause->line);
 			for(; an; an = an->next_in_body) {
 				if(an->kind == AN_RULE || an->kind == AN_NEG_RULE) {
-					struct clause *cl = calloc(1, sizeof(*cl));
+					cl = calloc(1, sizeof(*cl));
 					cl->predicate = an->predicate;
 					cl->params = an->children;
 					cl->body = deepcopy_astnode(clause->body, clause->line);
@@ -2803,6 +2957,12 @@ int frontend(int nfile, char **fname) {
 				(*anptr)->next_in_body = an = mkast(AN_RULE);
 				an->line = pred->clauses[j]->line;
 				an->predicate = failpred;
+				pred->flags |= PREDF_CONTAINS_JUST;
+			} else {
+				if(!(pred->flags & PREDF_CONTAINS_JUST)
+				&& contains_just(pred->clauses[j]->body)) {
+					pred->flags |= PREDF_CONTAINS_JUST;
+				}
 			}
 		}
 	}
@@ -2817,16 +2977,27 @@ int frontend(int nfile, char **fname) {
 #if 0
 	for(i = 0; i < npredicate; i++) {
 		if(!predicates[i]->special
-		&& !(predicates[i]->flags & PREDF_MACRO)) {
-			pp_predicate(predicates[i]);
+		&& !(predicates[i]->flags & PREDF_MACRO)
+		&& !(predicates[i]->flags & PREDF_DYNAMIC)) {
+			printf("%s %s\n",
+				(predicates[i]->flags & PREDF_CONTAINS_JUST)? "J" : " ",
+				predicates[i]->printed_name);
 		}
 	}
 #endif
 
+	pred = find_builtin(BI_CONSTRUCTORS);
+	cl = calloc(1, sizeof(*cl));
+	cl->predicate = pred;
+	cl->body = mkast(AN_RULE);
+	cl->body->subkind = RULE_SIMPLE;
+	cl->body->predicate = find_builtin(BI_PROGRAM_ENTRY);
+	add_clause(cl, pred);
+
 	trace_invocations();
 
 	if(!(pred = find_builtin(BI_ERROR_ENTRY))->nclause) {
-		struct clause *cl = calloc(1, sizeof(*cl));
+		cl = calloc(1, sizeof(*cl));
 		cl->predicate = pred;
 		cl->params = calloc(1, sizeof(struct astnode *));
 		cl->params[0] = mkast(AN_VARIABLE);
@@ -2838,7 +3009,7 @@ int frontend(int nfile, char **fname) {
 	}
 
 	if(!(pred = find_builtin(BI_PROGRAM_ENTRY))->nclause) {
-		struct clause *cl = calloc(1, sizeof(*cl));
+		cl = calloc(1, sizeof(*cl));
 		cl->predicate = pred;
 		cl->body = mkast(AN_RULE);
 		cl->body->subkind = RULE_SIMPLE;
@@ -2932,14 +3103,14 @@ int frontend(int nfile, char **fname) {
 		}
 	} while(flag);
 
-#if 0
-	for(i = 0; i < npredicate; i++) {
-		if(!predicates[i]->special
-		&& !(predicates[i]->flags & PREDF_MACRO)) {
-			pp_predicate(predicates[i]);
+	if(verbose >= 3) {
+		for(i = 0; i < npredicate; i++) {
+			if(!predicates[i]->special
+			&& !(predicates[i]->flags & PREDF_MACRO)) {
+				pp_predicate(predicates[i]);
+			}
 		}
 	}
-#endif
 
 #if 0
 	for(i = 0; i < nworldobj; i++) {
@@ -2960,6 +3131,7 @@ int frontend(int nfile, char **fname) {
 
 #if 0
 	for(i = 0; i < npredicate; i++) {
+		struct dynamic *dyn;
 		pred = predicates[i];
 		if((dyn = pred->dynamic)) {
 			pp_predicate(pred);
