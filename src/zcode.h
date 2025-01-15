@@ -77,8 +77,8 @@ struct zinstr {
 //	3	a normal space has been printed
 //	4 + n	a line feed has been printed, followed by n extra blank lines
 
-#define REG_STACK		0x00
-#define REG_LOCAL		0x01
+#define REG_STACK		0x00 // Register 0 means push to or pop from the stack
+#define REG_LOCAL		0x01 // The first 15 registers are local to the current routine
 
 #define REG_TEMP		0x10
 #define REG_SPACE		0x11	/* see above */
@@ -111,7 +111,7 @@ struct zinstr {
 #define REG_STYLE		0x2b	/* default style for current div */
 #define REG_NSPAN		0x2c	/* current number of nested span elements */
 
-/* useful constants */
+/* useful constants - referencing registers takes only one byte in the compiled story file, while using a "large" (>255) constant takes two, and if a constant is used often enough that can add up! */
 
 #define REG_2000		0x2d
 #define REG_3FFF		0x2e
@@ -125,8 +125,16 @@ struct zinstr {
 #define REG_R_SPA		0x36	/* R_SPACE_PRINT_AUTO */
 #define REG_R_USIMPLE		0x37	/* R_UNIFY_SIMPLE */
 
-#define REG_A			0x38	/* need 13 registers, one more than max arity */
-#define REG_X			0x45
+/* Adding my new registers at the end first to check for conflicts */
+#define REG_FGCOLOR 0x38
+#define REG_BGCOLOR 0x39
+
+// Predicate parameters
+#define REG_A			0x40	/* need 13 registers, one more than max arity */
+#define REG_X			(REG_A+13)
+
+// Z-machine has 256 registers, so as long as REG_A is 0xf2 or less, we'll be fine
+// Any unused registers above that are used for globals in user code
 
 #define REG_PUSH		0x100
 #define DEST_USERGLOBAL(x)	(0x200 | (x))
@@ -145,7 +153,7 @@ struct zinstr {
 #define RFALSE		0xffe
 #define RTRUE		0xfff
 
-#define Z_END		0xffff
+#define Z_END		0xffff // A fake opcode used as a sentinel value to mark the end of a routine
 
 // Note: The list of opcodes at https://zspec.jaredreisinger.com/zz03-opcodes is much easier to use for this than the official one!
 
@@ -371,6 +379,7 @@ enum {
 	R_ENABLE_STYLE,
 	R_RESET_STYLE,
 	R_SET_STYLE,
+	R_SET_COLORS,
 
 	R_IS_WORD,
 	R_IS_UNKNOWN_WORD,

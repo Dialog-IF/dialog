@@ -619,9 +619,30 @@ struct rtroutine rtroutines[] = {
 	},
 	{
 		R_RESET_STYLE,
-		0,
+		1,
+			// 0: temporary variable
 		(struct zinstr []) {
 			{Z_CALL2N, {ROUTINE(R_SET_STYLE), VALUE(REG_STYLE)}},
+			// Now for the new stuff: use REG_FGCOLOR and REG_BGCOLOR to reset the colors
+			
+			{Z_JL, {VALUE(REG_FGCOLOR), SMALL(0)}, 0, 1}, // Is the foreground color negative? If so, we should do a "standard" setting instead of a "true" setting
+			{Z_TRUECOLOR, {VALUE(REG_FGCOLOR), VALUE(REG_FFFF)}}, // Pass -1 as the background color to not change it
+			{Z_JUMP, {REL_LABEL(2)}}, // And move on to the background color
+			
+			{OP_LABEL(1)}, // Foreground color is negative, we need to do some math
+			{Z_SUB, {VALUE(REG_FFFF), VALUE(REG_FGCOLOR)}, REG_LOCAL+0}, // Subtract the color code from -1 to convert it into a non-negative number
+			{Z_COLOR, {VALUE(REG_LOCAL+0), SMALL(0)}}, // Pass 0 as the background color to not change it
+			
+			{OP_LABEL(2)}, // Now for the background
+			{Z_JL, {VALUE(REG_BGCOLOR), SMALL(0)}, 0, 3}, // Second verse, same as the first
+			{Z_TRUECOLOR, {VALUE(REG_FFFF), VALUE(REG_BGCOLOR)}},
+			{Z_RFALSE}, // No need to do any more work after this, we can just return false
+			
+			{OP_LABEL(3)}, // Background is negative
+			{Z_SUB, {VALUE(REG_FFFF), VALUE(REG_BGCOLOR)}, REG_LOCAL+0},
+			{Z_COLOR, {SMALL(0), VALUE(REG_LOCAL+0)}},
+			
+			// End new stuff
 			{Z_RFALSE},
 			{Z_END},
 		}
@@ -635,6 +656,19 @@ struct rtroutine rtroutines[] = {
 			{Z_JNZ, {VALUE(REG_STATUSBAR)}, 0, RFALSE},
 			{Z_TEXTSTYLE, {SMALL(0)}},
 			{Z_TEXTSTYLE, {VALUE(REG_LOCAL+0)}},
+			{Z_RFALSE},
+			{Z_END},
+		}
+	},
+	{
+		R_SET_COLORS,
+		2,
+			// 0 (param): foreground color to use
+			// 1 (param): background color to use
+		(struct zinstr []) {
+			{Z_STORE, {SMALL(REG_FGCOLOR), VALUE(REG_LOCAL+0)}},
+			{Z_STORE, {SMALL(REG_BGCOLOR), VALUE(REG_LOCAL+1)}},
+			{Z_CALL1N, {ROUTINE(R_RESET_STYLE)}},
 			{Z_RFALSE},
 			{Z_END},
 		}
