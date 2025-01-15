@@ -1827,7 +1827,6 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 					zi->oper[0] = ROUTINE(R_SET_COLORS);
 					zi->oper[1] = LARGE((uint16_t)(prg->boxclasses[ci->oper[0].value].color));
 					zi->oper[2] = LARGE((uint16_t)(prg->boxclasses[ci->oper[0].value].bgcolor));
-					zi->oper[3] = SMALL(0); // No need to save the previous values on the stack, because this is a status area
 					
 					zi = append_instr(r, Z_CALLVN);
 					zi->oper[0] = ROUTINE(R_BEGIN_STATUS);
@@ -1847,7 +1846,6 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				zi->oper[0] = ROUTINE(R_SET_COLORS);
 				zi->oper[1] = LARGE((uint16_t)(prg->boxclasses[ci->oper[0].value].color));
 				zi->oper[2] = LARGE((uint16_t)(prg->boxclasses[ci->oper[0].value].bgcolor));
-				zi->oper[3] = SMALL(1); // And we want to save the previous values, to restore afterward
 				
 				if(ci->subop == BOX_SPAN) {
 					zi = append_instr(r, Z_CALL2N);
@@ -2231,7 +2229,9 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				assert(ci->oper[0].tag == OPER_BOX);
 				zi = append_instr(r, Z_CALL1N);
 				zi->oper[0] = ROUTINE(R_END_STATUS);
-				// We do *not* reset the colors here
+				// Reset colors too, TODO is this right?
+				zi = append_instr(r, Z_CALL1N);
+				zi->oper[0] = ROUTINE(R_RESET_COLORS);
 				break;
 			case I_END_BOX:
 				assert(ci->oper[0].tag == OPER_BOX);

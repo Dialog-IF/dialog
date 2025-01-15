@@ -671,9 +671,7 @@ struct rtroutine rtroutines[] = {
 		3,
 			// 0 (param): foreground color to use
 			// 1 (param): background color to use
-			// 2 (param): if 1, save the previous values on the stack; if 0, don't
 		(struct zinstr []) {
-			{Z_JZ, {VALUE(REG_LOCAL+2)}, 0, 1},
 			// Push BGCOLOR, then FGCOLOR
 			{Z_CALL2N, {ROUTINE(R_AUX_PUSH1), VALUE(REG_BGCOLOR)}},
 			{Z_CALL2N, {ROUTINE(R_AUX_PUSH1), VALUE(REG_FGCOLOR)}},
