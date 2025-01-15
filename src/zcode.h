@@ -153,7 +153,7 @@ struct zinstr {
 #define RFALSE		0xffe
 #define RTRUE		0xfff
 
-#define Z_END		0xffff // A fake opcode used as a sentinel value to mark the end of a routine
+#define Z_END		0xffff // A fake "opcode" used as a sentinel value to mark the end of a routine
 
 // Note: The list of opcodes at https://zspec.jaredreisinger.com/zz03-opcodes is much easier to use for this than the official one!
 
@@ -379,7 +379,9 @@ enum {
 	R_ENABLE_STYLE,
 	R_RESET_STYLE,
 	R_SET_STYLE,
+	
 	R_SET_COLORS,
+	R_RESET_COLORS,
 
 	R_IS_WORD,
 	R_IS_UNKNOWN_WORD,

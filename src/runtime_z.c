@@ -31,6 +31,8 @@ struct rtroutine rtroutines[] = {
 			{Z_STORE, {SMALL(REG_STATUSBAR), SMALL(0)}},
 			{Z_STORE, {SMALL(REG_STYLE), SMALL(0)}},
 			{Z_STORE, {SMALL(REG_NSPAN), SMALL(0)}},
+			{Z_STORE, {SMALL(REG_FGCOLOR), LARGE(0xFFFE)}},
+			{Z_STORE, {SMALL(REG_BGCOLOR), LARGE(0xFFFE)}},
 			{Z_SET_WINDOW, {SMALL(0)}},
 			{Z_CALL1N, {ROUTINE(R_RESET_STYLE)}},
 
@@ -626,21 +628,25 @@ struct rtroutine rtroutines[] = {
 			// Now for the new stuff: use REG_FGCOLOR and REG_BGCOLOR to reset the colors
 			
 			{Z_JL, {VALUE(REG_FGCOLOR), SMALL(0)}, 0, 1}, // Is the foreground color negative? If so, we should do a "standard" setting instead of a "true" setting
-			{Z_TRUECOLOR, {VALUE(REG_FGCOLOR), VALUE(REG_FFFF)}}, // Pass -1 as the background color to not change it
+			{Z_TRUECOLOR, {VALUE(REG_FGCOLOR), LARGE(0xFFFE)}}, // Pass -2 as the background color to not change it
 			{Z_JUMP, {REL_LABEL(2)}}, // And move on to the background color
 			
 			{OP_LABEL(1)}, // Foreground color is negative, we need to do some math
 			{Z_SUB, {VALUE(REG_FFFF), VALUE(REG_FGCOLOR)}, REG_LOCAL+0}, // Subtract the color code from -1 to convert it into a non-negative number
 			{Z_COLOR, {VALUE(REG_LOCAL+0), SMALL(0)}}, // Pass 0 as the background color to not change it
+	//		{Z_PRINTLIT, {}, 0, 0, "FG: "},
+	//		{Z_PRINTNUM, {VALUE(REG_LOCAL+0)}},
 			
 			{OP_LABEL(2)}, // Now for the background
 			{Z_JL, {VALUE(REG_BGCOLOR), SMALL(0)}, 0, 3}, // Second verse, same as the first
-			{Z_TRUECOLOR, {VALUE(REG_FFFF), VALUE(REG_BGCOLOR)}},
+			{Z_TRUECOLOR, {LARGE(0xFFFE), VALUE(REG_BGCOLOR)}},
 			{Z_RFALSE}, // No need to do any more work after this, we can just return false
 			
 			{OP_LABEL(3)}, // Background is negative
 			{Z_SUB, {VALUE(REG_FFFF), VALUE(REG_BGCOLOR)}, REG_LOCAL+0},
 			{Z_COLOR, {SMALL(0), VALUE(REG_LOCAL+0)}},
+	//		{Z_PRINTLIT, {}, 0, 0, "BG: "},
+	//		{Z_PRINTNUM, {VALUE(REG_LOCAL+0)}},
 			
 			// End new stuff
 			{Z_RFALSE},
@@ -662,12 +668,41 @@ struct rtroutine rtroutines[] = {
 	},
 	{
 		R_SET_COLORS,
-		2,
+		3,
 			// 0 (param): foreground color to use
 			// 1 (param): background color to use
+			// 2 (param): if 1, save the previous values on the stack; if 0, don't
 		(struct zinstr []) {
+			{Z_JZ, {VALUE(REG_LOCAL+2)}, 0, 1},
+			// Push BGCOLOR, then FGCOLOR
+			{Z_CALL2N, {ROUTINE(R_AUX_PUSH1), VALUE(REG_BGCOLOR)}},
+			{Z_CALL2N, {ROUTINE(R_AUX_PUSH1), VALUE(REG_FGCOLOR)}},
+			
+			{OP_LABEL(1)},
+			// If either of them is INHERIT (-1), don't update the register, just leave it as it is
+			{Z_JE, {VALUE(REG_LOCAL+0), VALUE(REG_FFFF)}, 0, 2},
 			{Z_STORE, {SMALL(REG_FGCOLOR), VALUE(REG_LOCAL+0)}},
+			
+			{OP_LABEL(2)},
+			{Z_JE, {VALUE(REG_LOCAL+1), VALUE(REG_FFFF)}, 0, 3},
 			{Z_STORE, {SMALL(REG_BGCOLOR), VALUE(REG_LOCAL+1)}},
+			
+			{OP_LABEL(3)},
+			{Z_CALL1N, {ROUTINE(R_RESET_STYLE)}},
+			{Z_RFALSE},
+			{Z_END},
+		}
+	},
+	{
+		R_RESET_COLORS, // Pull saved color values off the stack and restore them
+						// We don't have to do this for styles because that's handled within BEGIN_ and END_ for the boxes and spans, but the Dialog assembler can't pass more than three arguments to a routine (it doesn't support Z_CALLVN2), so we just assemble a separate routine call instead
+		0,
+		(struct zinstr []) {
+			// Pull FGCOLOR, then BGCOLOR
+			{Z_DEC, {SMALL(REG_COLL)}},
+			{Z_LOADW, {VALUE(REG_AUXBASE), VALUE(REG_COLL)}, REG_FGCOLOR},
+			{Z_DEC, {SMALL(REG_COLL)}},
+			{Z_LOADW, {VALUE(REG_AUXBASE), VALUE(REG_COLL)}, REG_BGCOLOR},
 			{Z_CALL1N, {ROUTINE(R_RESET_STYLE)}},
 			{Z_RFALSE},
 			{Z_END},
