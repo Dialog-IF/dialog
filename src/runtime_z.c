@@ -2,6 +2,9 @@
 
 #include "zcode.h"
 
+// rtroutine: ident number, local count, array of instructions
+// zinstr: opcode, array of operands, store, branch, string
+
 struct rtroutine rtroutines[] = {
 	{
 		R_ENTRY,
