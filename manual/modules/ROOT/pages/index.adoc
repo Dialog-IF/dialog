@@ -1,0 +1,4 @@
+= Dialog
+:page-role: -toc
+
+This is the Dialog manual.

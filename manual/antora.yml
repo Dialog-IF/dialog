@@ -1,0 +1,9 @@
+name: dialog
+title: Dialog
+version: 0.1
+nav:
+  - modules/ROOT/nav.adoc
+  - modules/lang/nav.adoc
+
+
+
