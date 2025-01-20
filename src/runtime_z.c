@@ -628,7 +628,7 @@ struct rtroutine rtroutines[] = {
 			// Now for the new stuff: use REG_FGCOLOR and REG_BGCOLOR to reset the colors
 			
 			{Z_JL, {VALUE(REG_FGCOLOR), SMALL(0)}, 0, 1}, // Is the foreground color negative? If so, we should do a "standard" setting instead of a "true" setting
-			{Z_TRUECOLOR, {VALUE(REG_FGCOLOR), LARGE(0xFFFE)}}, // Pass -2 as the background color to not change it
+			{Z_TRUECOLOR, {VALUE(REG_FGCOLOR), LARGE(0xFFFE)}}, // Pass -2 as the background color to not change it (0 means black with this opcode)
 			{Z_JUMP, {REL_LABEL(2)}}, // And move on to the background color
 			
 			{OP_LABEL(1)}, // Foreground color is negative, we need to do some math
@@ -3450,49 +3450,49 @@ struct rtroutine rtroutines[] = {
 			// 0 (param): height (msb indicates relative)
 			// 1: temp
 		(struct zinstr []) {
-			{Z_JZ, {VALUE(REG_STATUSBAR)}, 0, 1},
+			{Z_JZ, {VALUE(REG_STATUSBAR)}, 0, 1}, // If already in a status bar, crash
 
 			{OP_LABEL(9)},
 			{Z_THROW, {SMALL(FATAL_IO), VALUE(REG_FATALJMP)}},
 
 			{OP_LABEL(1)},
-			{Z_JNZ, {VALUE(REG_NSPAN)}, 0, 9},
+			{Z_JNZ, {VALUE(REG_NSPAN)}, 0, 9}, // If already in a span, crash
 
-			{Z_CALL1N, {ROUTINE(R_LINE)}},
-			{Z_INC, {SMALL(REG_STATUSBAR)}},
+			{Z_CALL1N, {ROUTINE(R_LINE)}}, // Print a newline (why?)
+			{Z_INC, {SMALL(REG_STATUSBAR)}}, // Mark that we're now in a status bar
 
-			{Z_LOADB, {SMALL(0), SMALL(0x20)}, REG_LOCAL+1},	// screen height
+			{Z_LOADB, {SMALL(0), SMALL(0x20)}, REG_LOCAL+1},	// Load screen height into a temporary
 
-			{Z_JGE, {VALUE(REG_LOCAL+0), SMALL(0)}, 0, 2},
-			{Z_AND, {VALUE(REG_LOCAL+0), SMALL(0xff)}, REG_LOCAL+0},
-			{Z_MUL, {VALUE(REG_LOCAL+1), VALUE(REG_LOCAL+0)}, REG_LOCAL+0},
+			{Z_JGE, {VALUE(REG_LOCAL+0), SMALL(0)}, 0, 2}, // If the height given has its MSB unset (i.e. it's positive), it's an absolute height; go to label 2
+			{Z_AND, {VALUE(REG_LOCAL+0), SMALL(0xff)}, REG_LOCAL+0}, // Remove the MSB now that we've tested it
+			{Z_MUL, {VALUE(REG_LOCAL+1), VALUE(REG_LOCAL+0)}, REG_LOCAL+0}, // Interpret it as a percentage of the screen height
 			{Z_DIV, {VALUE(REG_LOCAL+0), SMALL(100)}, REG_LOCAL+0},
 			{OP_LABEL(2)},
 
-			{Z_JGE, {VALUE(REG_LOCAL+0), SMALL(1)}, 0, 4},
+			{Z_JGE, {VALUE(REG_LOCAL+0), SMALL(1)}, 0, 4}, // If the calculated height is zero, treat it as one instead
 			{Z_STORE, {SMALL(REG_LOCAL+0), SMALL(1)}},
 			{OP_LABEL(4)},
 
-			{Z_JLE, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+1)}, 0, 5},
+			{Z_JLE, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+1)}, 0, 5}, // If it's greater than the screen height, set it to the screen height instead
 			{Z_STORE, {SMALL(REG_LOCAL+0), VALUE(REG_LOCAL+1)}},
 			{OP_LABEL(5)},
 
-			{Z_STORE, {SMALL(REG_CURRSPLIT), VALUE(REG_LOCAL+0)}},
+			{Z_STORE, {SMALL(REG_CURRSPLIT), VALUE(REG_LOCAL+0)}}, // Store the calculated height in REG_CURRSPLIT
 
-			{Z_SPLIT_WINDOW, {VALUE(REG_LOCAL+0)}},
+			{Z_SPLIT_WINDOW, {VALUE(REG_LOCAL+0)}}, // And actually split the screen
 			{Z_SET_WINDOW, {SMALL(1)}},
 
-			{Z_CALL1S, {ROUTINE(R_GET_FULLWIDTH)}, REG_XFULLSIZE},
+			{Z_CALL1S, {ROUTINE(R_GET_FULLWIDTH)}, REG_XFULLSIZE}, // Update REG_XFULLSIZE
 
-			{Z_TEXTSTYLE, {SMALL(0)}},
-			{Z_TEXTSTYLE, {SMALL(1)}},
+			{Z_TEXTSTYLE, {SMALL(0)}}, // Turn off all text styles
+			{Z_TEXTSTYLE, {SMALL(1)}}, // Turn on reverse video style
 
 			{OP_LABEL(7)},
 			{Z_SET_CURSOR, {VALUE(REG_LOCAL+0), SMALL(1)}},
 			{Z_STORE, {SMALL(REG_TEMP), VALUE(REG_XFULLSIZE)}},	// known to be >= 40
 
 			{OP_LABEL(8)},
-			{Z_PRINTLIT, {}, 0, 0, "         "},
+			{Z_PRINTLIT, {}, 0, 0, "         "}, // Print nine reversed spaces
 			{Z_SUB, {VALUE(REG_TEMP), SMALL(9)}, REG_TEMP},
 			{Z_JGE, {VALUE(REG_TEMP), SMALL(10)}, 0, 8},
 

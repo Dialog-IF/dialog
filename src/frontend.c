@@ -2910,16 +2910,16 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 					}
 				} else if(1 == sscanf(str, "font-style : %s", param)) {
 					if(!strcmp(param, "italic") || !strcmp(param, "oblique")) {
-						bc->style = STYLE_ITALIC;
+						bc->style |= STYLE_ITALIC;
 					}
 				} else if(1 == sscanf(str, "font-weight : %s", param)) {
 					if(!strcmp(param, "bold")) {
-						bc->style = STYLE_BOLD;
+						bc->style |= STYLE_BOLD;
 					}
 				} else if(1 == sscanf(str, "font-family : %s", param)) {
 					// %s stops at first whitespace, so use str:
 					if(strstr(str, "monospace")) {
-						bc->style = STYLE_FIXED;
+						bc->style |= STYLE_FIXED;
 					}
 				} else if(1 == sscanf(str, "color : #%x", &tmp_int)) { // Foreground color, "true" version
 					bc->color = hex_color_to_zcolor(tmp_int);

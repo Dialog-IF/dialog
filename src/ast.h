@@ -342,7 +342,8 @@ struct boxclass {
 	uint16_t		width, height;
 	uint16_t		margintop, marginbottom;
 	uint16_t		flags;
-	uint16_t		style;	// STYLE_*
+	uint16_t		style;	// Which of the STYLE_* flags to turn on
+	uint16_y		unstyle; // Which of the STYLE_* flags to turn off (as opposed to leaving in their current state)
 	int16_t			color;	// For color on the Z-machine
 	int16_t			bgcolor;
 	struct word		*class;

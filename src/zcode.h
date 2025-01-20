@@ -18,6 +18,7 @@ struct zinstr {
 // Variable form 2OP: 110nnnnn aabbccdd (oper types: 00 large, 01 small, 10 reg, 11 no more opers)
 // Variable form VAR: 111nnnnn aabbccdd
 // Extended form VAR: 10111110 nnnnnnnn aabbccdd
+// There's also a super-extended form that can take up to eight arguments, but this is not supported by Dialog's assembler
 
 #define OP_NOP		0x1fff
 #define OP_EXT		0x1000
@@ -134,17 +135,17 @@ struct zinstr {
 #define REG_X			(REG_A+13)
 
 // Z-machine has 256 registers, so as long as REG_A is 0xf2 or less, we'll be fine
-// Any unused registers above that are used for globals in user code
+// Any unused registers above that are used for temporaries as needed, then above that, user globals, and Dialog will adapt to however many we leave it
 
-#define REG_PUSH		0x100
+#define REG_PUSH		0x100 // TODO: Why is this needed? Register 0 already means pushing to the stack
 #define DEST_USERGLOBAL(x)	(0x200 | (x))
 
-#define LARGE(x)		(0x10000 | (x))
-#define REF(x)			(0x20000 | (x))
-#define ROUTINE(x)		(0x30000 | (x))
-#define REL_LABEL(x)		(0x40000 | (x))
-#define SMALL(x)		(0x50000 | (x))
-#define VALUE(x)		(0x60000 | (x))
+#define LARGE(x)		(0x10000 | (x)) // "Large" (word-sized) constant
+#define REF(x)			(0x20000 | (x)) // Address of array in RAM
+#define ROUTINE(x)		(0x30000 | (x)) // Packed address of routine in ROM
+#define REL_LABEL(x)		(0x40000 | (x)) // Address of label when used as param - this is needed for the Z_JUMP opcode, which takes the offset as a parameter instead of in the usual branch field of the instruction
+#define SMALL(x)		(0x50000 | (x)) // "Small" (byte-sized) constant
+#define VALUE(x)		(0x60000 | (x)) // Register (local, global, or stack), by value
 #define USERGLOBAL(x)		(0x70000 | (x))
 #define SMALL_USERGLOBAL(x)	(0x80000 | (x))
 
@@ -270,8 +271,9 @@ struct zinstr {
 // 0x0e-0x0f: [undefined]
 // 0x10-0x1d are only defined in version 6, for windowing
 // 0x1e-0x1f: [undefined]
+// 0x20-0xff: [free for interpreter use]
 
-// Negated versions of all the branching opcodes
+// Negated versions of all the branch opcodes - setting the highest bit of the branch offset negates the condition
 #define Z_VERIFY_N	(OP_NOT | Z_VERIFY)
 #define Z_JNZ		(OP_NOT | Z_JZ)
 #define Z_JNE		(OP_NOT | Z_JE)
@@ -323,7 +325,7 @@ struct routine {
 	struct routine	*next_in_hash;
 };
 
-struct rtroutine { // "Runtime routine", what Inform would call a veneer function
+struct rtroutine { // "Runtime routine", what Inform would call a veneer function - this struct is used for defining them in the source code more elegantly
 	int		rnumber;
 	int		nlocal;
 	struct zinstr	*instr;
@@ -332,7 +334,7 @@ struct rtroutine { // "Runtime routine", what Inform would call a veneer functio
 extern struct rtroutine rtroutines[];
 extern const int nrtroutine;
 
-enum {
+enum { // Locations in RAM
 	G_AUXBASE = 1,
 	G_AUXSIZE,
 	G_HEAPBASE,
@@ -355,7 +357,7 @@ enum {
 	G_FIRST_FREE
 };
 
-enum {
+enum { // Runtime routines
 	R_ENTRY,
 	R_OUTERLOOP,
 	R_UNICODE,	// put this before innerloop so that txd will resume
@@ -538,7 +540,7 @@ enum {
 	R_FIRST_FREE
 };
 
-enum {
+enum { // Fatal error codes
 	FATAL_HEAP = 1,
 	FATAL_AUX,
 	FATAL_EXPECTED_OBJ,
