@@ -2,3 +2,4 @@
 ** xref:execution.adoc[Execution]
 ** xref:varsvalues.adoc[Manipulating data]
 ** xref:choicepoints.adoc[Choicepoints]
+** xref:control.adoc[More control structures]
