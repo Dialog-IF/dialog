@@ -38,6 +38,11 @@ Project website:
 
 Release notes:
 
+	0m/04, Lib 0.46 (Manual revision 31):
+
+		Compiler: Enables the color and background-color CSS properties on 
+		Z-machine.
+
 	0m/03, Lib 0.46 (Manual revision 31):
 
 		Library: Changed how darkness is handled: Unlit objects are now
