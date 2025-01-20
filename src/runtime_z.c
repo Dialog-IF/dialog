@@ -659,7 +659,7 @@ struct rtroutine rtroutines[] = {
 			// 0 (param): style(s) to set
 		(struct zinstr []) {
 			{Z_JNZ, {VALUE(REG_FORWORDS)}, 0, RFALSE},
-			{Z_JNZ, {VALUE(REG_STATUSBAR)}, 0, RFALSE},
+		//	{Z_JNZ, {VALUE(REG_STATUSBAR)}, 0, RFALSE},
 			{Z_TEXTSTYLE, {SMALL(0)}},
 			{Z_TEXTSTYLE, {VALUE(REG_LOCAL+0)}},
 			{Z_RFALSE},
@@ -3514,7 +3514,7 @@ struct rtroutine rtroutines[] = {
 	//		{Z_TEXTSTYLE, {SMALL(0)}}, // Turn off all text styles
 	//		{Z_TEXTSTYLE, {SMALL(1)}}, // Turn on reverse video style
 			// We're now leaving this for authors to handle instead
-			{Z_CALL1N, {ROUTINE(R_RESET_STYLE)}},
+			{Z_CALL1N, {ROUTINE(R_RESET_STYLE)}}, //Turn on whichever styles are currently set
 
 			{OP_LABEL(7)},
 			{Z_SET_CURSOR, {VALUE(REG_LOCAL+0), SMALL(1)}},
@@ -3573,7 +3573,7 @@ struct rtroutine rtroutines[] = {
 	},
 	{
 		R_BEGIN_BOX_LEFT,
-		3,
+		2,
 			// 0 (param): width (msb indicates relative)
 			// 1 (param): top margin
 		(struct zinstr []) {
@@ -3615,7 +3615,7 @@ struct rtroutine rtroutines[] = {
 	},
 	{
 		R_BEGIN_BOX_RIGHT,
-		3,
+		2,
 			// 0 (param): width (msb indicates relative)
 			// 1 (param): top margin
 		(struct zinstr []) {

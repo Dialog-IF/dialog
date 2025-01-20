@@ -2958,7 +2958,7 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 				(bc->flags & BOXF_FLOATRIGHT)? "right" : "none");
 			printf("\tReverse:\t%s\n",
 				(bc->style & STYLE_REVERSE)? "yes" :
-				(bc->unstyle | STYLE_REVERSE)? "no" : "inherit");
+				(bc->unstyle & STYLE_REVERSE)? "no" : "inherit");
 			printf("\tItalic:\t%s\n",
 				(bc->style & STYLE_ITALIC)? "yes" :
 				(bc->unstyle & STYLE_ITALIC)? "no" : "inherit");
@@ -2967,7 +2967,7 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 				(bc->unstyle & STYLE_BOLD)? "no" : "inherit");
 			printf("\tMonospace:\t%s\n",
 				(bc->style & STYLE_FIXED)? "yes" :
-				(bc->unstyle | STYLE_FIXED)? "no" : "inherit");
+				(bc->unstyle & STYLE_FIXED)? "no" : "inherit");
 			if(bc->color < 0) { // Print negatives in decimal
 				printf("\tColor:\t%d\n", bc->color);
 			} else { // Positives in hex

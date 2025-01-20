@@ -1832,7 +1832,7 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 					// But to replicate the traditional behavior, we're going to apply reverse-video style unless it's specifically been turned off (by setting it in the unstyle value)
 					zi = append_instr(r, Z_CALLVN);
 					zi->oper[0] = ROUTINE(R_INIT_BOX_STYLE);
-					zi->oper[1] = SMALL(prg->boxclasses[ci->oper[0].value].style | (prg->boxclasses[ci->oper[0].value].unstyle | STYLE_REVERSE ? 0 : STYLE_REVERSE)); // OR STYLE_REVERSE into this value unless STYLE_REVERSE is found in the unstyle value
+					zi->oper[1] = SMALL(prg->boxclasses[ci->oper[0].value].style | ((prg->boxclasses[ci->oper[0].value].unstyle & STYLE_REVERSE) ? 0 : STYLE_REVERSE)); // OR STYLE_REVERSE into this value unless STYLE_REVERSE is found in the unstyle value
 					zi->oper[2] = SMALL(prg->boxclasses[ci->oper[0].value].unstyle);
 					
 					zi = append_instr(r, Z_CALLVN);
