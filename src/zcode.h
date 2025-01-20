@@ -77,8 +77,8 @@ struct zinstr {
 //	3	a normal space has been printed
 //	4 + n	a line feed has been printed, followed by n extra blank lines
 
-#define REG_STACK		0x00
-#define REG_LOCAL		0x01
+#define REG_STACK		0x00 // Register 0 means push to or pop from the stack
+#define REG_LOCAL		0x01 // The first 15 registers are local to the current routine
 
 #define REG_TEMP		0x10
 #define REG_SPACE		0x11	/* see above */
@@ -111,7 +111,7 @@ struct zinstr {
 #define REG_STYLE		0x2b	/* default style for current div */
 #define REG_NSPAN		0x2c	/* current number of nested span elements */
 
-/* useful constants */
+/* useful constants - referencing registers takes only one byte in the compiled story file, while using a "large" (>255) constant takes two, and if a constant is used often enough that can add up! */
 
 #define REG_2000		0x2d
 #define REG_3FFF		0x2e
@@ -125,8 +125,16 @@ struct zinstr {
 #define REG_R_SPA		0x36	/* R_SPACE_PRINT_AUTO */
 #define REG_R_USIMPLE		0x37	/* R_UNIFY_SIMPLE */
 
-#define REG_A			0x38	/* need 13 registers, one more than max arity */
-#define REG_X			0x45
+/* Adding my new registers at the end first to check for conflicts */
+#define REG_FGCOLOR 0x38
+#define REG_BGCOLOR 0x39
+
+// Predicate parameters
+#define REG_A			0x40	/* need 13 registers, one more than max arity */
+#define REG_X			(REG_A+13)
+
+// Z-machine has 256 registers, so as long as REG_A is 0xf2 or less, we'll be fine
+// Any unused registers above that are used for globals in user code
 
 #define REG_PUSH		0x100
 #define DEST_USERGLOBAL(x)	(0x200 | (x))
@@ -145,17 +153,26 @@ struct zinstr {
 #define RFALSE		0xffe
 #define RTRUE		0xfff
 
-#define Z_END		0xffff
+#define Z_END		0xffff // A fake "opcode" used as a sentinel value to mark the end of a routine
+
+// Note: The list of opcodes at https://zspec.jaredreisinger.com/zz03-opcodes is much easier to use for this than the official one!
 
 #define Z_RTRUE		(Z0OP | 0x0)
 #define Z_RFALSE	(Z0OP | 0x1)
 #define Z_PRINTLIT	(Z0OP | 0x2)
+// 0x3: PRINT_RET
+// 0x4: NOP
+// 0x5: [illegal] (this slot was used for SAVE in earlier versions)
+// 0x6: [illegal] (this slot was used for RESTORE in earlier versions)
 #define Z_RESTART	(Z0OP | 0x7)
 #define Z_RET_POPPED	(Z0OP | 0x8)
 #define Z_CATCH		(Z0OP | 0x9)
 #define Z_QUIT		(Z0OP | 0xa)
 #define Z_NEW_LINE	(Z0OP | 0xb)
+// 0xc: [illegal] (this slot was used for SHOW_STATUS in earlier versions)
 #define Z_VERIFY	(Z0OP | 0xd)
+// 0xe: [used to indicate the first byte for an EXT opcode]
+// 0xf: PIRACY
 
 #define Z_JZ		(Z1OP | 0x0)
 #define Z_GET_SIBLING	(Z1OP | 0x1)
@@ -174,6 +191,8 @@ struct zinstr {
 #define Z_LOAD		(Z1OP | 0xe)
 #define Z_CALL1N	(Z1OP | 0xf)
 
+// These are the 2OP opcodes, but no specific flag is used for that
+// 0x00: [undefined]
 #define Z_JE		(0x01)
 #define Z_JL		(0x02)
 #define Z_JG		(0x03)
@@ -192,6 +211,7 @@ struct zinstr {
 #define Z_LOADB		(0x10)
 #define Z_GETPROP	(0x11)
 #define Z_GETPROPADDR	(0x12)
+// 0x13: GETNEXTPROP
 #define Z_ADD		(0x14)
 #define Z_SUB		(0x15)
 #define Z_MUL		(0x16)
@@ -199,18 +219,23 @@ struct zinstr {
 #define Z_MOD		(0x18)
 #define Z_CALL2S	(0x19)
 #define Z_CALL2N	(0x1a)
+#define Z_COLOR		(0x1b)
 #define Z_THROW		(0x1c)
+// 0x1d-0x1f: [undefined]
 
 #define Z_CALLVS	(ZVAR | 0x00)
 #define Z_STOREW	(ZVAR | 0x01)
 #define Z_STOREB	(ZVAR | 0x02)
+// 0x03: PUT_PROP
 #define Z_AREAD		(ZVAR | 0x04)
 #define Z_PRINTCHAR	(ZVAR | 0x05)
 #define Z_PRINTNUM	(ZVAR | 0x06)
 #define Z_RANDOM	(ZVAR | 0x07)
 #define Z_PUSH		(ZVAR | 0x08)
+// 0x09: PULL
 #define Z_SPLIT_WINDOW	(ZVAR | 0x0a)
 #define Z_SET_WINDOW	(ZVAR | 0x0b)
+// 0x0c: CALL_VS2
 #define Z_ERASE_WINDOW	(ZVAR | 0x0d)
 #define Z_ERASE_LINE	(ZVAR | 0x0e)
 #define Z_SET_CURSOR	(ZVAR | 0x0f)
@@ -218,21 +243,35 @@ struct zinstr {
 #define Z_TEXTSTYLE	(ZVAR | 0x11)
 #define Z_BUFFER_MODE	(ZVAR | 0x12)
 #define Z_OUTPUT_STREAM	(ZVAR | 0x13)
+// 0x14: INPUT_STREAM
+// 0x15: SOUND_EFFECT
 #define Z_READCHAR	(ZVAR | 0x16)
 #define Z_SCANTABLE	(ZVAR | 0x17)
+// 0x18: NOT
 #define Z_CALLVN	(ZVAR | 0x19)
+// 0x1a: CALL_VN2 (the version that takes up to 7 args instead of up to 3)
 #define Z_TOKENISE	(ZVAR | 0x1b)
+// 0x1c: ENCODE_TEXT
 #define Z_COPY_TABLE	(ZVAR | 0x1d)
+// 0x1e: PRINT_TABLE
+// 0x1f: CHECK_ARG_COUNT
 
 #define Z_SAVE		(OP_EXT | 0x00)
 #define Z_RESTORE	(OP_EXT | 0x01)
 #define Z_LSHIFT	(OP_EXT | 0x02)
 #define Z_ASHIFT	(OP_EXT | 0x03)
+// 0x04: SET_FONT
+// 0x05-0x08 are only defined in version 6, for graphics
 #define Z_SAVE_UNDO	(OP_EXT | 0x09)
 #define Z_RESTORE_UNDO	(OP_EXT | 0x0a)
 #define Z_PRINT_UNICODE	(OP_EXT | 0x0b)
 #define Z_CHECK_UNICODE	(OP_EXT | 0x0c)
+#define Z_TRUECOLOR	(OP_EXT | 0x0d) // As a side note, I'm surprised this didn't use 2OP 0x1d, which would put it closer to Z_COLOR
+// 0x0e-0x0f: [undefined]
+// 0x10-0x1d are only defined in version 6, for windowing
+// 0x1e-0x1f: [undefined]
 
+// Negated versions of all the branching opcodes
 #define Z_VERIFY_N	(OP_NOT | Z_VERIFY)
 #define Z_JNZ		(OP_NOT | Z_JZ)
 #define Z_JNE		(OP_NOT | Z_JE)
@@ -284,7 +323,7 @@ struct routine {
 	struct routine	*next_in_hash;
 };
 
-struct rtroutine {
+struct rtroutine { // "Runtime routine", what Inform would call a veneer function
 	int		rnumber;
 	int		nlocal;
 	struct zinstr	*instr;
@@ -340,6 +379,9 @@ enum {
 	R_ENABLE_STYLE,
 	R_RESET_STYLE,
 	R_SET_STYLE,
+	
+	R_SET_COLORS,
+	R_RESET_COLORS,
 
 	R_IS_WORD,
 	R_IS_UNKNOWN_WORD,

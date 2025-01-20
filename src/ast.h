@@ -343,9 +343,24 @@ struct boxclass {
 	uint16_t		margintop, marginbottom;
 	uint16_t		flags;
 	uint16_t		style;	// STYLE_*
+	int16_t			color;	// For color on the Z-machine
+	int16_t			bgcolor;
 	struct word		*class;
 	struct boxclassline	*css_lines;
 };
+
+// The Z-machine provides two different ways of specifying colors: "true" colors, represented by fifteen-bit numbers with five bits each for red, green, and blue; and "standard" colors, represented by magic numbers. (It's _sort of_ one bit each for red, green, and blue, except there are also magic numbers for "keep the current color" and "use the default color".)
+// "Standard" colors are more widely supported, and conveniently Z-machine words are *sixteen* bits each, so if we adjust those magic numbers to be negative, there's no ambiguity between them. To convert back to the original magic numbers, subtract these values from -1. (INHERIT should be 0, INITIAL should be 1, BLACK should be 2, and so on.)
+#define COLOR_INHERIT	(-1)
+#define COLOR_INITIAL	(-2)
+#define COLOR_BLACK		(-3)
+#define COLOR_RED		(-4)
+#define COLOR_GREEN		(-5)
+#define COLOR_YELLOW	(-6)
+#define COLOR_BLUE		(-7)
+#define COLOR_MAGENTA	(-8)
+#define COLOR_CYAN		(-9)
+#define COLOR_WHITE		(-10)
 
 #define BOXF_RELWIDTH		0x0001
 #define BOXF_RELHEIGHT		0x0002

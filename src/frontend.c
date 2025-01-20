@@ -2857,6 +2857,8 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 		bc->flags = BOXF_RELWIDTH;
 		bc->margintop = 0;
 		bc->marginbottom = 0;
+		bc->color = COLOR_INHERIT; // If no color specified, inherit from parent
+		bc->bgcolor = COLOR_INHERIT;
 		bclptr = &bc->css_lines;
 		if(css) {
 			param = arena_alloc(&lexer.temp_arena, strlen(css) + 1);
@@ -2867,8 +2869,10 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 				bcl->data = arena_strdup(&prg->arena, str);
 				*bclptr = bcl;
 				bclptr = &bcl->next;
+				
+				unsigned int tmp_int; // For parsing color hex codes
 
-				for(j = 0; str[j]; j++) {
+				for(j = 0; str[j]; j++) { // Convert to lowercase (assume ASCII)
 					if(str[j] >= 'A' && str[j] <= 'Z') str[j] ^= ' ';
 				}
 
@@ -2917,6 +2921,14 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 					if(strstr(str, "monospace")) {
 						bc->style = STYLE_FIXED;
 					}
+				} else if(1 == sscanf(str, "color : #%x", &tmp_int)) { // Foreground color, "true" version
+					bc->color = hex_color_to_zcolor(tmp_int);
+				} else if(1 == sscanf(str, "color : %s", param)) { // Foreground color, "standard" version
+					bc->color = named_color_to_zcolor(param);
+				} else if(1 == sscanf(str, "background-color : #%x", &tmp_int)) { // Background color, "true" version
+					bc->bgcolor = hex_color_to_zcolor(tmp_int);
+				} else if(1 == sscanf(str, "background-color : %s", param)) { // Background color, "standard" version
+					bc->bgcolor = named_color_to_zcolor(param);
 				}
 
 				css = 0;
@@ -2935,6 +2947,16 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 			printf("\tStyle:\t%s\n",
 				(bc->style == STYLE_ITALIC)? "italic" :
 				(bc->style == STYLE_BOLD)? "bold" : "inherit");
+			if(bc->color < 0){ // Print negatives in decimal
+				printf("\tColor:\t%d\n", bc->color);
+			}else{ // Positives in hex
+				printf("\tColor:\t#%x\n", bc->color);
+			}
+			if(bc->bgcolor < 0){ // And same for background color
+				printf("\tBackground-color:\t%d\n", bc->bgcolor);
+			}else{
+				printf("\tBackground-color:\t#%x\n", bc->bgcolor);
+			}
 			for(bcl = bc->css_lines; bcl; bcl = bcl->next) {
 				printf("\tCSS: \"%s\"\n", bcl->data);
 			}
@@ -3034,4 +3056,39 @@ int frontend_inject_query(struct program *prg, struct predname *predname, struct
 	comp_cleanup();
 
 	return !prg->errorflag;
+}
+
+// Color utilities
+int16_t hex_color_to_zcolor(int hex){
+	// 24-bit value: #RRGGBB
+	uint8_t red = hex >> 16;
+	uint8_t green = (hex >> 8) & 0xFF;
+	uint8_t blue = hex & 0xFF;
+	// But Z-machine uses 15-bit value with five bits for each, in BGR order
+	return ((blue>>3)<<10) | ((green>>3)<<5) | (red>>3) ;
+}
+int16_t named_color_to_zcolor(char *name){
+	if(!strcmp(name, "inherit")){
+		return COLOR_INHERIT;
+	}else if(!strcmp(name, "initial")){
+		return COLOR_INITIAL;
+	}else if(!strcmp(name, "black")){
+		return COLOR_BLACK;
+	}else if(!strcmp(name, "red")){
+		return COLOR_RED;
+	}else if(!strcmp(name, "green")){
+		return COLOR_GREEN;
+	}else if(!strcmp(name, "yellow")){
+		return COLOR_YELLOW;
+	}else if(!strcmp(name, "blue")){
+		return COLOR_BLUE;
+	}else if(!strcmp(name, "magenta")){
+		return COLOR_MAGENTA;
+	}else if(!strcmp(name, "cyan")){
+		return COLOR_CYAN;
+	}else if(!strcmp(name, "white")){
+		return COLOR_WHITE;
+	}else{ // Unrecognized name
+		return COLOR_INHERIT;
+	}
 }

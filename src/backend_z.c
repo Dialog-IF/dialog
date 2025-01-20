@@ -1824,6 +1824,11 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				assert(ci->oper[0].tag == OPER_BOX);
 				if(ci->subop == AREA_TOP) {
 					zi = append_instr(r, Z_CALLVN);
+					zi->oper[0] = ROUTINE(R_SET_COLORS);
+					zi->oper[1] = LARGE((uint16_t)(prg->boxclasses[ci->oper[0].value].color));
+					zi->oper[2] = LARGE((uint16_t)(prg->boxclasses[ci->oper[0].value].bgcolor));
+					
+					zi = append_instr(r, Z_CALLVN);
 					zi->oper[0] = ROUTINE(R_BEGIN_STATUS);
 					zi->oper[1] = SMALL_OR_LARGE(
 						prg->boxclasses[ci->oper[0].value].height |
@@ -1836,6 +1841,12 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				break;
 			case I_BEGIN_BOX:
 				assert(ci->oper[0].tag == OPER_BOX);
+				// We have to set the colors separately from starting the box/span, because the Dialog assembler can't pass more than three parameters to a single routine (it doesn't support Z_CALLVN2)
+				zi = append_instr(r, Z_CALLVN);
+				zi->oper[0] = ROUTINE(R_SET_COLORS);
+				zi->oper[1] = LARGE((uint16_t)(prg->boxclasses[ci->oper[0].value].color));
+				zi->oper[2] = LARGE((uint16_t)(prg->boxclasses[ci->oper[0].value].bgcolor));
+				
 				if(ci->subop == BOX_SPAN) {
 					zi = append_instr(r, Z_CALL2N);
 					zi->oper[0] = ROUTINE(R_BEGIN_SPAN);
@@ -2218,6 +2229,9 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				assert(ci->oper[0].tag == OPER_BOX);
 				zi = append_instr(r, Z_CALL1N);
 				zi->oper[0] = ROUTINE(R_END_STATUS);
+				// Reset colors too, TODO is this right?
+				zi = append_instr(r, Z_CALL1N);
+				zi->oper[0] = ROUTINE(R_RESET_COLORS);
 				break;
 			case I_END_BOX:
 				assert(ci->oper[0].tag == OPER_BOX);
@@ -2233,6 +2247,9 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 					zi->oper[0] = ROUTINE(R_END_BOX);
 					zi->oper[1] = SMALL_OR_LARGE(prg->boxclasses[ci->oper[0].value].marginbottom);
 				}
+				// Reset the colors - since we're doing the color-setting in a separate routine, we might as well do the resetting in a separate routine too, even though this could also be called within the various R_END_* routines
+				zi = append_instr(r, Z_CALL1N);
+				zi->oper[0] = ROUTINE(R_RESET_COLORS);
 				break;
 			case I_END_LINK:
 			case I_END_LINK_RES:

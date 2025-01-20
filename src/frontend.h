@@ -19,3 +19,7 @@ void frontend_add_builtins(struct program *prg);
 char *decode_metadata_str(int builtin, struct word *param, struct program *prg, struct arena *arena);
 int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t dictmap_callback);
 int frontend_inject_query(struct program *prg, struct predname *predname, struct predname *tailpred, struct word *prompt, const uint8_t *str);
+
+// Color-processing utilities, since we have to do this both for foreground color and background color
+int16_t hex_color_to_zcolor(int hex);
+int16_t named_color_to_zcolor(char *name);
