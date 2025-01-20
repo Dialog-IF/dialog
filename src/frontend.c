@@ -2966,8 +2966,8 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 				(bc->style & STYLE_BOLD)? "yes" :
 				(bc->unstyle & STYLE_BOLD)? "no" : "inherit");
 			printf("\tMonospace:\t%s\n",
-				(bc->style & STYLE_MONOSPACE)? "yes" :
-				(bc->unstyle | STYLE_MONOSPACE)? "no" : "inherit");
+				(bc->style & STYLE_FIXED)? "yes" :
+				(bc->unstyle | STYLE_FIXED)? "no" : "inherit");
 			if(bc->color < 0) { // Print negatives in decimal
 				printf("\tColor:\t%d\n", bc->color);
 			} else { // Positives in hex
