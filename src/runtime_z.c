@@ -667,6 +667,33 @@ struct rtroutine rtroutines[] = {
 		}
 	},
 	{
+		R_INIT_BOX_STYLE,
+		2,
+			// 0 (param): styles to set for this box class
+			// 1 (param): styles to unset for this box class
+			//		(The compiler takes care of inverting the second one for us)
+		(struct zinstr []) {
+			{Z_CALL2N, {ROUTINE(R_AUX_PUSH1), VALUE(REG_STYLE)}}, // Save the previous value of REG_STYLE
+			{Z_AND, {VALUE(REG_STYLE), VALUE(REG_LOCAL+1)}, REG_STYLE}, // Unset the bits from the second parameter in REG_STYLE
+			{Z_AND, {VALUE(REG_LOCAL+0), SMALL(0x7F)}, REG_LOCAL+0},
+			{Z_OR, {VALUE(REG_STYLE), VALUE(REG_LOCAL+0)}, REG_STYLE}, // Then set the low bits from the first parameter - this means we can have a style class that e.g. unsets italic, sets bold, and leaves reverse-video untouched
+	//		{Z_CALL1N, {ROUTINE(R_RESET_STYLE)}}, // And apply REG_STYLE to the text
+				// This will be called immediately after by R_BEGIN_whatever, no reason to call it twice
+			{Z_RFALSE},
+			{Z_END},
+		}
+	},
+	{
+		R_END_BOX_STYLE,
+		0,
+		(struct zinstr []) {
+			{Z_DEC, {SMALL(REG_COLL)}}, // Pull the previous value of REG_STYLE back off the stack
+			{Z_LOADW, {VALUE(REG_AUXBASE), VALUE(REG_COLL)}, REG_STYLE},
+			{Z_RFALSE},
+			{Z_END},
+		}
+	},
+	{
 		R_SET_COLORS,
 		3,
 			// 0 (param): foreground color to use
@@ -686,7 +713,7 @@ struct rtroutine rtroutines[] = {
 			{Z_STORE, {SMALL(REG_BGCOLOR), VALUE(REG_LOCAL+1)}},
 			
 			{OP_LABEL(3)},
-			{Z_CALL1N, {ROUTINE(R_RESET_STYLE)}},
+	//		{Z_CALL1N, {ROUTINE(R_RESET_STYLE)}}, // This will get called after handling the style too, no need to call it twice
 			{Z_RFALSE},
 			{Z_END},
 		}
@@ -3484,8 +3511,10 @@ struct rtroutine rtroutines[] = {
 
 			{Z_CALL1S, {ROUTINE(R_GET_FULLWIDTH)}, REG_XFULLSIZE}, // Update REG_XFULLSIZE
 
-			{Z_TEXTSTYLE, {SMALL(0)}}, // Turn off all text styles
-			{Z_TEXTSTYLE, {SMALL(1)}}, // Turn on reverse video style
+	//		{Z_TEXTSTYLE, {SMALL(0)}}, // Turn off all text styles
+	//		{Z_TEXTSTYLE, {SMALL(1)}}, // Turn on reverse video style
+			// We're now leaving this for authors to handle instead
+			{Z_CALL1N, {ROUTINE(R_RESET_STYLE)}},
 
 			{OP_LABEL(7)},
 			{Z_SET_CURSOR, {VALUE(REG_LOCAL+0), SMALL(1)}},
@@ -3517,7 +3546,7 @@ struct rtroutine rtroutines[] = {
 		(struct zinstr []) {
 			{Z_JG, {VALUE(REG_STATUSBAR), SMALL(1)}, 0, 1},
 			{Z_SET_WINDOW, {SMALL(0)}},
-			{Z_TEXTSTYLE, {SMALL(0)}},
+		//	{Z_TEXTSTYLE, {SMALL(0)}}, // This is now up to the game instead
 
 			{OP_LABEL(1)},
 			{Z_STORE, {SMALL(REG_SPACE), SMALL(5)}},
@@ -3528,22 +3557,15 @@ struct rtroutine rtroutines[] = {
 	},
 	{
 		R_BEGIN_BOX,
-		2,
-			// 0 (param): style
-			// 1 (param): top margin
+		1,
+			// 0 (param): top margin
 		(struct zinstr []) {
-			{Z_JZ, {VALUE(REG_NSPAN)}, 0, 2},
+			{Z_JZ, {VALUE(REG_NSPAN)}, 0, 1},
 
 			{Z_THROW, {SMALL(FATAL_IO), VALUE(REG_FATALJMP)}},
 
-			{OP_LABEL(2)},
-			{Z_CALL2N, {ROUTINE(R_PAR_N), VALUE(REG_LOCAL+1)}},
-			{Z_CALL2N, {ROUTINE(R_AUX_PUSH1), VALUE(REG_STYLE)}},
-			{Z_JZ, {VALUE(REG_LOCAL+0)}, 0, 1},
-
-			{Z_AND, {VALUE(REG_LOCAL+0), SMALL(0x7f)}, REG_STYLE},
-
 			{OP_LABEL(1)},
+			{Z_CALL2N, {ROUTINE(R_PAR_N), VALUE(REG_LOCAL+0)}},
 			{Z_CALL1N, {ROUTINE(R_RESET_STYLE)}},
 			{Z_RFALSE},
 			{Z_END},
@@ -3553,10 +3575,11 @@ struct rtroutine rtroutines[] = {
 		R_BEGIN_BOX_LEFT,
 		3,
 			// 0 (param): width (msb indicates relative)
-			// 1 (param): style
-			// 2 (param): top margin
+			// 1 (param): top margin
 		(struct zinstr []) {
 			{Z_JNE, {VALUE(REG_STATUSBAR), SMALL(1)}, 0, 1},
+			
+			{Z_CALL1N, {ROUTINE(R_RESET_STYLE)}}, // Experiment: allowing styles in the status bar as well
 
 			{Z_JGE, {VALUE(REG_LOCAL+0), SMALL(0)}, 0, 2},
 			{Z_AND, {VALUE(REG_LOCAL+0), SMALL(0xff)}, REG_LOCAL+0},
@@ -3585,7 +3608,7 @@ struct rtroutine rtroutines[] = {
 
 			{OP_LABEL(1)},
 			// not inside top status area
-			{Z_CALLVN, {ROUTINE(R_BEGIN_BOX), VALUE(REG_LOCAL+1), VALUE(REG_LOCAL+2)}},
+			{Z_CALLVN, {ROUTINE(R_BEGIN_BOX), VALUE(REG_LOCAL+1)}},
 			{Z_RFALSE},
 			{Z_END},
 		}
@@ -3594,10 +3617,11 @@ struct rtroutine rtroutines[] = {
 		R_BEGIN_BOX_RIGHT,
 		3,
 			// 0 (param): width (msb indicates relative)
-			// 1 (param): style
-			// 2 (param): top margin
+			// 1 (param): top margin
 		(struct zinstr []) {
 			{Z_JNE, {VALUE(REG_STATUSBAR), SMALL(1)}, 0, 1},
+			
+			{Z_CALL1N, {ROUTINE(R_RESET_STYLE)}}, // Experiment: allowing styles in the status bar as well
 
 			{Z_JGE, {VALUE(REG_LOCAL+0), SMALL(0)}, 0, 2},
 			{Z_AND, {VALUE(REG_LOCAL+0), SMALL(0xff)}, REG_LOCAL+0},
@@ -3626,23 +3650,16 @@ struct rtroutine rtroutines[] = {
 
 			{OP_LABEL(1)},
 			// not inside top status area
-			{Z_CALLVN, {ROUTINE(R_BEGIN_BOX), VALUE(REG_LOCAL+1), VALUE(REG_LOCAL+2)}},
+			{Z_CALLVN, {ROUTINE(R_BEGIN_BOX), VALUE(REG_LOCAL+1)}},
 			{Z_RFALSE},
 			{Z_END},
 		}
 	},
 	{
 		R_BEGIN_SPAN,
-		1,
-			// 0 (param): style
+		0,
 		(struct zinstr []) {
 			{Z_CALL1N, {ROUTINE(R_SYNC_SPACE)}},
-			{Z_CALL2N, {ROUTINE(R_AUX_PUSH1), VALUE(REG_STYLE)}},
-			{Z_JZ, {VALUE(REG_LOCAL+0)}, 0, 1},
-
-			{Z_AND, {VALUE(REG_LOCAL+0), SMALL(0x7f)}, REG_STYLE},
-
-			{OP_LABEL(1)},
 			{Z_CALL1N, {ROUTINE(R_RESET_STYLE)}},
 			{Z_INC, {SMALL(REG_NSPAN)}},
 			{Z_RFALSE},
@@ -3653,9 +3670,6 @@ struct rtroutine rtroutines[] = {
 		R_END_SPAN,
 		0,
 		(struct zinstr []) {
-			{Z_DEC, {SMALL(REG_COLL)}},
-			{Z_LOADW, {VALUE(REG_AUXBASE), VALUE(REG_COLL)}, REG_STYLE},
-			{Z_CALL1N, {ROUTINE(R_RESET_STYLE)}},
 			{Z_DEC, {SMALL(REG_NSPAN)}},
 			{Z_RFALSE},
 			{Z_END},
@@ -3691,9 +3705,6 @@ struct rtroutine rtroutines[] = {
 		1,
 			// 0 (param): bottom margin
 		(struct zinstr []) {
-			{Z_DEC, {SMALL(REG_COLL)}},
-			{Z_LOADW, {VALUE(REG_AUXBASE), VALUE(REG_COLL)}, REG_STYLE},
-			{Z_CALL1N, {ROUTINE(R_RESET_STYLE)}},
 			{Z_CALL2N, {ROUTINE(R_PAR_N), VALUE(REG_LOCAL+0)}},
 			{Z_RFALSE},
 			{Z_END},

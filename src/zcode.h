@@ -382,6 +382,8 @@ enum { // Runtime routines
 	R_RESET_STYLE,
 	R_SET_STYLE,
 	
+	R_INIT_BOX_STYLE,
+	R_END_BOX_STYLE,
 	R_SET_COLORS,
 	R_RESET_COLORS,
 
