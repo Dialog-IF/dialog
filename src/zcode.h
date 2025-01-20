@@ -248,7 +248,7 @@ struct zinstr {
 // 0x15: SOUND_EFFECT
 #define Z_READCHAR	(ZVAR | 0x16)
 #define Z_SCANTABLE	(ZVAR | 0x17)
-// 0x18: NOT
+#define Z_NOT (ZVAR | 0x18)
 #define Z_CALLVN	(ZVAR | 0x19)
 // 0x1a: CALL_VN2 (the version that takes up to 7 args instead of up to 3)
 #define Z_TOKENISE	(ZVAR | 0x1b)

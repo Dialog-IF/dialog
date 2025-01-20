@@ -671,11 +671,11 @@ struct rtroutine rtroutines[] = {
 		2,
 			// 0 (param): styles to set for this box class
 			// 1 (param): styles to unset for this box class
-			//		(The compiler takes care of inverting the second one for us)
 		(struct zinstr []) {
 			{Z_CALL2N, {ROUTINE(R_AUX_PUSH1), VALUE(REG_STYLE)}}, // Save the previous value of REG_STYLE
+			{Z_NOT, {VALUE(REG_LOCAL+1)}, REG_LOCAL+1},
 			{Z_AND, {VALUE(REG_STYLE), VALUE(REG_LOCAL+1)}, REG_STYLE}, // Unset the bits from the second parameter in REG_STYLE
-			{Z_AND, {VALUE(REG_LOCAL+0), SMALL(0x7F)}, REG_LOCAL+0},
+			{Z_AND, {VALUE(REG_LOCAL+0), SMALL(0x7f)}, REG_LOCAL+0},
 			{Z_OR, {VALUE(REG_STYLE), VALUE(REG_LOCAL+0)}, REG_STYLE}, // Then set the low bits from the first parameter - this means we can have a style class that e.g. unsets italic, sets bold, and leaves reverse-video untouched
 	//		{Z_CALL1N, {ROUTINE(R_RESET_STYLE)}}, // And apply REG_STYLE to the text
 				// This will be called immediately after by R_BEGIN_whatever, no reason to call it twice
@@ -695,7 +695,7 @@ struct rtroutine rtroutines[] = {
 	},
 	{
 		R_SET_COLORS,
-		3,
+		2,
 			// 0 (param): foreground color to use
 			// 1 (param): background color to use
 		(struct zinstr []) {

@@ -1833,7 +1833,7 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 					zi = append_instr(r, Z_CALLVN);
 					zi->oper[0] = ROUTINE(R_INIT_BOX_STYLE);
 					zi->oper[1] = SMALL(prg->boxclasses[ci->oper[0].value].style | (prg->boxclasses[ci->oper[0].value].unstyle | STYLE_REVERSE ? 0 : STYLE_REVERSE)); // OR STYLE_REVERSE into this value unless STYLE_REVERSE is found in the unstyle value
-					zi->oper[2] = LARGE(~(prg->boxclasses[ci->oper[0].value].unstyle)); // We pass this as a sixteen-bit number instead of an eight-bit number so that it doesn't clobber the top bits of REG_STYLE, which might be used to store something else at some point
+					zi->oper[2] = SMALL(prg->boxclasses[ci->oper[0].value].unstyle);
 					
 					zi = append_instr(r, Z_CALLVN);
 					zi->oper[0] = ROUTINE(R_BEGIN_STATUS);
@@ -1856,7 +1856,7 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				zi = append_instr(r, Z_CALLVN);
 				zi->oper[0] = ROUTINE(R_INIT_BOX_STYLE);
 				zi->oper[1] = SMALL(prg->boxclasses[ci->oper[0].value].style);
-				zi->oper[2] = LARGE(~(prg->boxclasses[ci->oper[0].value].unstyle)); // We pass this as a sixteen-bit number instead of an eight-bit number so that it doesn't clobber the top bits of REG_STYLE, which might be used to store something else at some point
+				zi->oper[2] = SMALL(prg->boxclasses[ci->oper[0].value].unstyle);
 				
 				if(ci->subop == BOX_SPAN) {
 					zi = append_instr(r, Z_CALL1N);
