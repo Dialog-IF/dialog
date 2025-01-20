@@ -1,3 +1,4 @@
 * Language
 ** xref:execution.adoc[Execution]
 ** xref:varsvalues.adoc[Manipulating data]
+** xref:choicepoints.adoc[Choicepoints]
