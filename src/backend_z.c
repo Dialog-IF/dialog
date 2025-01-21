@@ -809,7 +809,7 @@ void prepare_dictionary_z(struct program *prg) {
 	uint32_t uchar;
 	char chbuf[2];
 	struct word *w;
-	char runtime[7] = {8, 13, 32, 16, 17, 18, 19};
+	char runtime[7] = {8, 13, 32, 16, 17, 18, 19}; // Special characters added for runtime purposes: these are the codes for the keypresses backspace, enter, up, down, left, right
 
 	for(i = 0; i < 7; i++) {
 		chbuf[0] = runtime[i];
@@ -1681,22 +1681,23 @@ static void generate_proceed(struct routine *r, int query_kind) {
 	zi->oper[0] = VALUE(REG_CONT);
 }
 
+// Take a wordmap from the compiler and encode it into our backend-specific wordtables and datatables
 static int generate_wordmap(struct wordmap *map, int *nptr) {
 	int n, j, k, id, len;
 	uint8_t data[1 + 2 * MAXWORDMAP];
 	uint16_t words[map->nmap * 2];
 
 	n = map->nmap;
-	if(map->map[n - 1].key == 0xffff) n--;
+	if(map->map[n - 1].key == 0xffff) n--; // If the final entry is a useless one, it'll be encoded as zero anyway, we don't need to look at it specifically
 	assert(n > 0);
 	*nptr = n;
-	for(j = 0; j < n; j++) {
-		words[2 * j + 0] = map->map[j].key;
-		if(map->map[j].count > MAXWORDMAP) {
+	for(j = 0; j < n; j++) { // For each entry in the wordmap, we encode two 16-bit words in our wordtable
+		words[2 * j + 0] = map->map[j].key; // The first is the key, a dict_id
+		if(map->map[j].count > MAXWORDMAP) { // The second is zero if this word maps to more than 32 world objects; if so, the map wouldn't be any use
 			words[2 * j + 1] = 0;
-		} else if(map->map[j].count == 1) {
+		} else if(map->map[j].count == 1) { // Or an object ID if this word maps to a single world object
 			words[2 * j + 1] = 1 + map->map[j].onumtable[0];
-		} else {
+		} else { // Or otherwise, a pointer to an array in the datatable containing the world objects it maps to
 			len = 1;
 			for(k = 0; k < map->map[j].count; k++) {
 				id = 1 + map->map[j].onumtable[k];
@@ -1709,29 +1710,29 @@ static int generate_wordmap(struct wordmap *map, int *nptr) {
 				}
 			}
 			data[0] = len - 1;
-			for(k = 0; k < ndatatable; k++) {
+			for(k = 0; k < ndatatable; k++) { // See if any datatable contains exactly this set of objects already (e.g. if there's a set of objects that has several shared synonyms)
 				if(datatable[k].length == len
 				&& !memcmp(datatable[k].data, data, len)) {
 					break;
 				}
 			}
-			if(k == ndatatable) {
+			if(k == ndatatable) { // If not, make a new datatable to hold it
 				datatable = realloc(datatable, ++ndatatable * sizeof(*datatable));
 				datatable[k].label = make_global_label();
 				datatable[k].length = len;
 				datatable[k].data = malloc(len);
 				memcpy(datatable[k].data, data, len);
 			}
-			words[2 * j + 1] = 0x8000 | datatable[k].label;
+			words[2 * j + 1] = 0x8000 | datatable[k].label; // We set the high bit of the word to indicate that this is a pointer instead of a world object ID
 		}
 	}
-	for(j = 0; j < nwordtable; j++) {
+	for(j = 0; j < nwordtable; j++) { // See if any wordtable contains exactly this set of word-to-object mappings already - we call generate_wordmap every time we encounter an I_CHECK_WORDMAP instruction, which means it could happen several times under the same circumstances
 		if(wordtable[j].length == n * 2
 		&& !memcmp(wordtable[j].words, words, n * 2 * sizeof(uint16_t))) {
 			break;
 		}
 	}
-	if(j == nwordtable) {
+	if(j == nwordtable) { // If not, make a new wordtable to hold it
 		wordtable = realloc(wordtable, ++nwordtable * sizeof(*wordtable));
 		wordtable[j].label = make_global_label();
 		wordtable[j].length = n * 2;
@@ -4640,25 +4641,76 @@ void backend_z(
 
 	for(i = 0; i < nwordtable; i++) {
 		uint16_t addr = global_labels[wordtable[i].label];
-		//printf("WT %d ", wordtable[i].length);
+		if(verbose >= 3) printf("Wordtable #%d, length %d", i, wordtable[i].length);
 		for(j = 0; j < wordtable[i].length; j++) {
+			if(verbose >= 3 && j % 8 == 0) printf("\n\t");
 			uint16_t value = wordtable[i].words[j];
 			if(value & 0x8000) value = global_labels[value & 0x7fff];
 			zcore[addr++] = value >> 8;
 			zcore[addr++] = value & 0xff;
-			//printf("%04x", wordtable[i].words[j]);
+			if(verbose >= 3) {
+				if(j % 2 == 0) { // This is the dictionary word
+					if((value & 0x3e00) == 0x3e00) { // Single character
+						if((value & 0xff) < 33) { // Control character
+							printf("\\x%02x ", value & 0xff);
+						} else {
+							printf("'%c' ", value & 0xff);
+						}
+					} else if(value & 0x2000) { // Longer word
+						printf("%s ", dictionary[value & 0x1fff].word->name);
+					} else {
+						printf("%04x ", value); // What is this?
+					}
+				} else { // This is what it maps to
+					if(value == 0) { // Filler word
+						printf("(none) ");
+					} else if(value <= 0x1fff) { // World object
+					//	printf("obj%d=\n", value);
+						printf("#%s ", prg->worldobjnames[value-1]->name);
+					} else { // Datatable
+						for(k = 0; k < ndatatable; k++) {
+							if(global_labels[datatable[k].label] == value) {
+								printf("->%d ", k);
+								break;
+							}
+						}
+						if(k == ndatatable) {
+							printf("%04x ", value); // No data table found...
+						}
+					}
+				}
+			}
 		}
-		//printf("\n");
+		if(verbose >= 3) printf("\n");
 	}
-
+	
 	for(i = 0; i < ndatatable; i++) {
+		k = 0; // Used as scratch space for verbose output
 		uint16_t addr = global_labels[datatable[i].label];
-		//printf("DT %d ", datatable[i].length);
+		if(verbose >= 3) printf("Datatable #%d, length %d, address %04x", i, datatable[i].length, global_labels[datatable[i].label]);
 		for(j = 0; j < datatable[i].length; j++) {
+			if(verbose >= 3 && k % 4 == 0 && !(k & 0x80)) printf("\n\t");
 			zcore[addr++] = datatable[i].data[j];
-			//printf("%02x", datatable[i].data[j]);
+			if(verbose >= 3) {
+				// One byte if less than 0xe0
+				// Otherwise, 0xe0 | high byte, then low byte
+				if(k & 0x80) {
+					// Nothing
+					k &= 0x7f;
+				} else if(datatable[i].data[j] >= 0xe0) { // High byte
+					uint16_t tmp = (uint16_t)(datatable[i].data[j] & 0x1f) << 8 | datatable[i].data[j+1];
+				//	printf("Values %02x %02x = long %04x\n", datatable[i].data[j], datatable[i].data[j+1], tmp);
+					printf("#%s ", prg->worldobjnames[tmp-1]->name);
+					k ++;
+					k |= 0x80; // Skip next output, it's the low byte of this one
+				} else {
+				//	printf("Short %02x\n", datatable[i].data[j]);
+					printf("#%s ", prg->worldobjnames[datatable[i].data[j]-1]->name);
+					k ++;
+				}
+			}
 		}
-		//printf("\n");
+		if(verbose >= 3) printf("\n");
 	}
 
 	zcore[addr_dictionary + 0] = NSTOPCHAR;
