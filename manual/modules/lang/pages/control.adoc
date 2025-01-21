@@ -328,7 +328,8 @@ the code for that cutscene can invoke `(stop)` to prevent spending time on takin
 
 
 
-Back to xref:choicepoints.adoc[] or onwards to TBA.
+Back to xref:choicepoints.adoc[] or onwards to
+xref:io.adoc[].
 
 TODO:
 
