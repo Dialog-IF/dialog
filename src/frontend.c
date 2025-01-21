@@ -2911,28 +2911,34 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 				} else if(1 == sscanf(str, "font-style : %s", param)) {
 					if(!strcmp(param, "italic") || !strcmp(param, "oblique")) {
 						bc->style |= STYLE_ITALIC;
-					}else if(!strcmp(param, "normal")) {
+					} else if(!strcmp(param, "normal")) {
 						bc->unstyle |= STYLE_ITALIC;
 					}
 				} else if(1 == sscanf(str, "font-weight : %s", param)) {
 					if(!strcmp(param, "bold")) {
 						bc->style |= STYLE_BOLD;
-					}else if(!strcmp(param, "normal")) {
+					} else if(!strcmp(param, "normal")) {
 						bc->unstyle |= STYLE_BOLD;
 					}
 				} else if(1 == sscanf(str, "font-family : %s", param)) {
 					// %s stops at first whitespace, so use str instead
 					if(strstr(str, "monospace")) {
 						bc->style |= STYLE_FIXED;
-					}else if(strcmp(param, "inherit")) { // Something that's not monospace was specified, and it was *not* inherit
+					} else if(strcmp(param, "inherit")) { // Something that's not monospace was specified, and it was *not* inherit
 						bc->unstyle |= STYLE_FIXED;
 					}
 				} else if(1 == sscanf(str, "font-decoration : %s", param)) {
 					if(strstr(str, "reverse")) { // This is not a standard CSS property, but there is no standard CSS property for reverse video, and unrecognized property values are explicitly not an error in CSS
 						bc->style |= STYLE_REVERSE;
-					}else if(strcmp(param, "inherit")) { // As above, something that's not reverse was specified, and it's *not* inherit
+					} else if(strcmp(param, "inherit")) { // As above, something that's not reverse was specified, and it's *not* inherit
 						bc->unstyle |= STYLE_REVERSE;
 					}
+				} else if(1 == sscanf(str, "display : %s", param)) {
+					if(!strcmp(param, "none")) { // display:none indicates that a span/div should be sent to the transcript but not to the screen, like the quote boxes in Trinity
+						bc->style |= STYLE_INVISIBLE;
+					}
+					// Currently we don't have an opposite to this - everything inside a display:none element is hidden in standard CSS, which is what the Å web interpreter uses
+					// But on the Z-machine, it would be possible to do something with the unstyle property to undo this on a child element
 				} else if(1 == sscanf(str, "color : #%x", &tmp_int)) { // Foreground color, "true" version
 					bc->color = hex_color_to_zcolor(tmp_int);
 				} else if(1 == sscanf(str, "color : %s", param)) { // Foreground color, "standard" version
@@ -2968,6 +2974,9 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 			printf("\tMonospace:\t%s\n",
 				(bc->style & STYLE_FIXED)? "yes" :
 				(bc->unstyle & STYLE_FIXED)? "no" : "inherit");
+			if(bc->style & STYLE_INVISIBLE) {
+				printf("\tUndisplayed\n");
+			}
 			if(bc->color < 0) { // Print negatives in decimal
 				printf("\tColor:\t%d\n", bc->color);
 			} else { // Positives in hex

@@ -81,7 +81,7 @@ struct zinstr {
 #define REG_STACK		0x00 // Register 0 means push to or pop from the stack
 #define REG_LOCAL		0x01 // The first 15 registers are local to the current routine
 
-#define REG_TEMP		0x10
+#define REG_TEMP		0x10	// Used as scratch space by the compiler
 #define REG_SPACE		0x11	/* see above */
 #define REG_CONT		0x12	/* where to jump after successful end of clause */
 #define REG_ENV			0x13	/* current env frame, unpacked before tail call */

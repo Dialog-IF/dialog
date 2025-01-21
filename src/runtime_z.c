@@ -1,6 +1,7 @@
 #include <stdint.h>
 
 #include "zcode.h"
+#include "common.h" // for STYLE_INVISIBLE
 
 // rtroutine: ident number, local count, array of instructions
 // zinstr: opcode, array of operands, store, branch, string
@@ -673,6 +674,10 @@ struct rtroutine rtroutines[] = {
 			// 1 (param): styles to unset for this box class
 		(struct zinstr []) {
 			{Z_CALL2N, {ROUTINE(R_AUX_PUSH1), VALUE(REG_STYLE)}}, // Save the previous value of REG_STYLE
+			{Z_JE, {VALUE(REG_STYLE), SMALL(STYLE_INVISIBLE)}, 0, RFALSE}, // Then if we're currently in an invisible box, don't save anything, the style should remain invisible until we exit the original invisible box
+			
+			{Z_TEST, {VALUE(REG_LOCAL+0), SMALL(STYLE_INVISIBLE)}, 0, 1}, // If this is invisible, we handle that separately
+			
 			{Z_NOT, {VALUE(REG_LOCAL+1)}, REG_LOCAL+1},
 			{Z_AND, {VALUE(REG_STYLE), VALUE(REG_LOCAL+1)}, REG_STYLE}, // Unset the bits from the second parameter in REG_STYLE
 			{Z_AND, {VALUE(REG_LOCAL+0), SMALL(0x7f)}, REG_LOCAL+0},
@@ -680,15 +685,28 @@ struct rtroutine rtroutines[] = {
 	//		{Z_CALL1N, {ROUTINE(R_RESET_STYLE)}}, // And apply REG_STYLE to the text
 				// This will be called immediately after by R_BEGIN_whatever, no reason to call it twice
 			{Z_RFALSE},
+			
+			{OP_LABEL(1)}, // This box is invisible
+			{Z_STORE, {SMALL(REG_STYLE), SMALL(STYLE_INVISIBLE)}}, // So just store that bit, the rest doesn't matter
+			{Z_OUTPUT_STREAM, {VALUE(REG_FFFF)}}, // Z_OUTPUT_STREAM -1 turns off printing to the main screen, while allowing printing to any other streams (like the transcript)
+			{Z_RFALSE},
+			
 			{Z_END},
 		}
 	},
 	{
 		R_END_BOX_STYLE,
-		0,
+		1,
+			// 0: previous value of REG_STYLE for checking things
 		(struct zinstr []) {
+			{Z_STORE, {SMALL(REG_LOCAL+0), VALUE(REG_STYLE)}}, // Save the current value of REG_STYLE to check something
 			{Z_DEC, {SMALL(REG_COLL)}}, // Pull the previous value of REG_STYLE back off the stack
 			{Z_LOADW, {VALUE(REG_AUXBASE), VALUE(REG_COLL)}, REG_STYLE},
+			// Now we need to check if REG_LOCAL+0 is invisible, and REG_STYLE is not (i.e. we just exited an invisible box into a visible one)
+			{Z_JNE, {VALUE(REG_LOCAL+0), SMALL(STYLE_INVISIBLE)}, 0, RFALSE},
+			{Z_JE, {VALUE(REG_STYLE), SMALL(STYLE_INVISIBLE)}, 0, RFALSE},
+			// If so, turn output stream 1 back on
+			{Z_OUTPUT_STREAM, {SMALL(1)}},
 			{Z_RFALSE},
 			{Z_END},
 		}
