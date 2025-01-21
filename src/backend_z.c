@@ -4689,12 +4689,14 @@ void backend_z(
 		uint16_t addr = global_labels[datatable[i].label];
 		if(verbose >= 3) printf("Datatable #%d, length %d, address %04x", i, datatable[i].length, global_labels[datatable[i].label]);
 		for(j = 0; j < datatable[i].length; j++) {
-			if(verbose >= 3 && k % 4 == 0 && !(k & 0x80)) printf("\n\t");
+			if(verbose >= 3 && k % 4 == 0 && !(k & 0x80) && j!=0) printf("\n\t");
 			zcore[addr++] = datatable[i].data[j];
 			if(verbose >= 3) {
 				// One byte if less than 0xe0
 				// Otherwise, 0xe0 | high byte, then low byte
-				if(k & 0x80) {
+				if(j == 0) {
+					// The first byte is the length of the table, not an object number
+				} else if(k & 0x80) {
 					// Nothing
 					k &= 0x7f;
 				} else if(datatable[i].data[j] >= 0xe0) { // High byte
