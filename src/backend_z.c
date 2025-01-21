@@ -1828,12 +1828,18 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 					zi->oper[1] = LARGE((uint16_t)(prg->boxclasses[ci->oper[0].value].color));
 					zi->oper[2] = LARGE((uint16_t)(prg->boxclasses[ci->oper[0].value].bgcolor));
 					
+					// Note that this is a change to the behavior - traditionally status areas ignored styles
+					// But to replicate the traditional behavior, we're going to apply reverse-video style unless it's specifically been turned off (by setting it in the unstyle value)
+					zi = append_instr(r, Z_CALLVN);
+					zi->oper[0] = ROUTINE(R_INIT_BOX_STYLE);
+					zi->oper[1] = SMALL(prg->boxclasses[ci->oper[0].value].style | ((prg->boxclasses[ci->oper[0].value].unstyle & STYLE_REVERSE) ? 0 : STYLE_REVERSE)); // OR STYLE_REVERSE into this value unless STYLE_REVERSE is found in the unstyle value
+					zi->oper[2] = SMALL(prg->boxclasses[ci->oper[0].value].unstyle);
+					
 					zi = append_instr(r, Z_CALLVN);
 					zi->oper[0] = ROUTINE(R_BEGIN_STATUS);
 					zi->oper[1] = SMALL_OR_LARGE(
 						prg->boxclasses[ci->oper[0].value].height |
 						((prg->boxclasses[ci->oper[0].value].flags & BOXF_RELHEIGHT)? 0x8000 : 0));
-					zi->oper[2] = SMALL(prg->boxclasses[ci->oper[0].value].style);
 				} else {
 					zi = append_instr(r, Z_CALL1N);
 					zi->oper[0] = ROUTINE(R_BEGIN_NOSTATUS);
@@ -1847,10 +1853,14 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				zi->oper[1] = LARGE((uint16_t)(prg->boxclasses[ci->oper[0].value].color));
 				zi->oper[2] = LARGE((uint16_t)(prg->boxclasses[ci->oper[0].value].bgcolor));
 				
+				zi = append_instr(r, Z_CALLVN);
+				zi->oper[0] = ROUTINE(R_INIT_BOX_STYLE);
+				zi->oper[1] = SMALL(prg->boxclasses[ci->oper[0].value].style);
+				zi->oper[2] = SMALL(prg->boxclasses[ci->oper[0].value].unstyle);
+				
 				if(ci->subop == BOX_SPAN) {
-					zi = append_instr(r, Z_CALL2N);
+					zi = append_instr(r, Z_CALL1N);
 					zi->oper[0] = ROUTINE(R_BEGIN_SPAN);
-					zi->oper[1] = SMALL(prg->boxclasses[ci->oper[0].value].style);
 				} else {
 					zi = append_instr(r, Z_CALLVN);
 					if(prg->boxclasses[ci->oper[0].value].flags & BOXF_FLOATLEFT) {
@@ -1858,19 +1868,16 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 						zi->oper[1] = SMALL_OR_LARGE(
 							prg->boxclasses[ci->oper[0].value].width |
 							((prg->boxclasses[ci->oper[0].value].flags & BOXF_RELWIDTH)? 0x8000 : 0));
-						zi->oper[2] = SMALL(prg->boxclasses[ci->oper[0].value].style);
-						zi->oper[3] = SMALL_OR_LARGE(prg->boxclasses[ci->oper[0].value].margintop);
+						zi->oper[2] = SMALL_OR_LARGE(prg->boxclasses[ci->oper[0].value].margintop);
 					} else if(prg->boxclasses[ci->oper[0].value].flags & BOXF_FLOATRIGHT) {
 						zi->oper[0] = ROUTINE(R_BEGIN_BOX_RIGHT);
 						zi->oper[1] = SMALL_OR_LARGE(
 							prg->boxclasses[ci->oper[0].value].width |
 							((prg->boxclasses[ci->oper[0].value].flags & BOXF_RELWIDTH)? 0x8000 : 0));
-						zi->oper[2] = SMALL(prg->boxclasses[ci->oper[0].value].style);
-						zi->oper[3] = SMALL_OR_LARGE(prg->boxclasses[ci->oper[0].value].margintop);
+						zi->oper[2] = SMALL_OR_LARGE(prg->boxclasses[ci->oper[0].value].margintop);
 					} else {
 						zi->oper[0] = ROUTINE(R_BEGIN_BOX);
-						zi->oper[1] = SMALL(prg->boxclasses[ci->oper[0].value].style);
-						zi->oper[2] = SMALL_OR_LARGE(prg->boxclasses[ci->oper[0].value].margintop);
+						zi->oper[1] = SMALL_OR_LARGE(prg->boxclasses[ci->oper[0].value].margintop);
 					}
 				}
 				break;
@@ -2229,7 +2236,8 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				assert(ci->oper[0].tag == OPER_BOX);
 				zi = append_instr(r, Z_CALL1N);
 				zi->oper[0] = ROUTINE(R_END_STATUS);
-				// Reset colors too, TODO is this right?
+				zi = append_instr(r, Z_CALL1N);
+				zi->oper[0] = ROUTINE(R_END_BOX_STYLE);
 				zi = append_instr(r, Z_CALL1N);
 				zi->oper[0] = ROUTINE(R_RESET_COLORS);
 				break;
@@ -2248,6 +2256,8 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 					zi->oper[1] = SMALL_OR_LARGE(prg->boxclasses[ci->oper[0].value].marginbottom);
 				}
 				// Reset the colors - since we're doing the color-setting in a separate routine, we might as well do the resetting in a separate routine too, even though this could also be called within the various R_END_* routines
+				zi = append_instr(r, Z_CALL1N);
+				zi->oper[0] = ROUTINE(R_END_BOX_STYLE);
 				zi = append_instr(r, Z_CALL1N);
 				zi->oper[0] = ROUTINE(R_RESET_COLORS);
 				break;

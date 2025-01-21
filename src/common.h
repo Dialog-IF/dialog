@@ -16,10 +16,11 @@ extern int verbose;
 #define NO_SPACE_BEFORE ".,:;!?)]}>%-"
 #define NO_SPACE_AFTER "([{<-"
 
-#define STYLE_ROMAN	0
+#define STYLE_ROMAN	0 // All styles off
 #define STYLE_REVERSE	1
 #define STYLE_BOLD	2
 #define STYLE_ITALIC	4
 #define STYLE_FIXED	8
 #define STYLE_DEBUG	16
 #define STYLE_INPUT	32
+#define STYLE_INVISIBLE 128 // display:none
