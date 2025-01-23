@@ -3926,19 +3926,19 @@ void comp_builtin(struct program *prg, int builtin) {
 		break;
 	case BI_REPEAT:
 		lab = make_routine_id();
-		ci = add_instr(I_PUSH_CHOICE);
+		ci = add_instr(I_PUSH_CHOICE); // push choice point: jump to l1 with 0 arguments
 		ci->oper[0] = (value_t) {OPER_NUM, 0};
 		ci->oper[1] = (value_t) {OPER_RLAB, lab};
-		ci = add_instr(I_PROCEED);
+		ci = add_instr(I_PROCEED); // succeed
 		ci->subop = 0;
 		end_routine(0xffff, &pred->arena);
-		begin_routine(lab);
-		ci = add_instr(I_POP_CHOICE);
+		begin_routine(lab); // l1:
+		ci = add_instr(I_POP_CHOICE); // pop choice point with 0 arguments
 		ci->oper[0] = (value_t) {OPER_NUM, 0};
-		ci = add_instr(I_PUSH_CHOICE);
+		ci = add_instr(I_PUSH_CHOICE); // push choice point: jump to l1 with 0 arguments
 		ci->oper[0] = (value_t) {OPER_NUM, 0};
 		ci->oper[1] = (value_t) {OPER_RLAB, lab};
-		ci = add_instr(I_PROCEED);
+		ci = add_instr(I_PROCEED); // succeed
 		ci->subop = 0;
 		end_routine(0xffff, &pred->arena);
 		break;
@@ -3985,42 +3985,42 @@ void comp_builtin(struct program *prg, int builtin) {
 			labloop = make_routine_id();
 
 			lab = make_routine_id();
-			ci = add_instr(I_IF_OBJ);
+			ci = add_instr(I_IF_OBJ); // if obj(arg0) then goto finished
 			ci->oper[0] = (value_t) {OPER_ARG, 0};
 			ci->implicit = lab;
-			ci = add_instr(I_IF_BOUND);
+			ci = add_instr(I_IF_BOUND); // if bound(arg0) then fail
 			ci->oper[0] = (value_t) {OPER_ARG, 0};
-			ci = add_instr(I_NEXT_OBJ_PUSH);
+			ci = add_instr(I_NEXT_OBJ_PUSH); // push choice point: call loop with next object after obj0 as an extra argument
 			ci->oper[0] = (value_t) {VAL_OBJ, 0};
 			ci->oper[1] = (value_t) {OPER_RLAB, labloop};
-			ci = add_instr(I_UNIFY);
+			ci = add_instr(I_UNIFY); // attempt to unify arg0 with obj0
 			ci->oper[0] = (value_t) {OPER_ARG, 0};
 			ci->oper[1] = (value_t) {VAL_OBJ, 0};
-			ci = add_instr(I_PROCEED);
+			ci = add_instr(I_PROCEED); // succeed
 			ci->subop = 0;
 			end_routine(0xffff, &pred->arena);
 
-			begin_routine(labloop);
-			ci = add_instr(I_POP_CHOICE);
+			begin_routine(labloop); // loop:
+			ci = add_instr(I_POP_CHOICE); // pop choice point with 2 args
 			ci->oper[0] = (value_t) {OPER_NUM, 2};
-			ci = add_instr(I_ASSIGN);
+			ci = add_instr(I_ASSIGN); // set tmp0 = arg1 (the pushed next object)
 			ci->oper[0] = (value_t) {OPER_TEMP, 0};
 			ci->oper[1] = (value_t) {OPER_ARG, 1};
-			ci = add_instr(I_NEXT_OBJ_PUSH);
+			ci = add_instr(I_NEXT_OBJ_PUSH); // push choice point: call loop with next object after tmp0 as an extra argument
 			ci->oper[0] = (value_t) {OPER_TEMP, 0};
 			ci->oper[1] = (value_t) {OPER_RLAB, labloop};
-			ci = add_instr(I_UNIFY);
+			ci = add_instr(I_UNIFY); // unify arg0 with tmp0
 			ci->oper[0] = (value_t) {OPER_ARG, 0};
 			ci->oper[1] = (value_t) {OPER_TEMP, 0};
-			ci = add_instr(I_PROCEED);
+			ci = add_instr(I_PROCEED); // succeed
 			ci->subop = 0;
 			end_routine(0xffff, &pred->arena);
 
-			begin_routine(lab);
-			ci = add_instr(I_PROCEED);
+			begin_routine(lab); // finished:
+			ci = add_instr(I_PROCEED); // succeed
 			ci->subop = 0;
 			end_routine(0xffff, &pred->arena);
-		} else {
+		} else { // If no objects in the program, always fail
 			ci = add_instr(I_JUMP);
 			ci->oper[0] = (value_t) {OPER_FAIL};
 			end_routine(0xffff, &pred->arena);
