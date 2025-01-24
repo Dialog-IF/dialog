@@ -85,6 +85,7 @@ struct builtinspec {
 	{BI_DIVIDED,		0, 0,				6,	{0, "divided", "by", 0, "into", 0}},
 	{BI_MODULO,		0, 0,				5,	{0, "modulo", 0, "into", 0}},
 	{BI_RANDOM,		0, 0,				7,	{"random", "from", 0, "to", 0, "into", 0}},
+	{BI_DIV_WIDTH,		0, 0,				4, {"current", "div", "width", 0}},
 	{BI_FAIL,		0, PREDF_FAIL,			1,	{"fail"}},
 	{BI_STOP,		0, PREDF_SUCCEEDS|PREDF_STOP|PREDF_MIGHT_STOP,	1,	{"stop"}},
 	{BI_REPEAT,		0, PREDF_SUCCEEDS,		2,	{"repeat", "forever"}},

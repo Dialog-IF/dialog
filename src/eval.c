@@ -1183,6 +1183,8 @@ static int eval_compute(struct eval_state *es, int op, int a, int b, int *res) {
 			return 1;
 		}
 		break;
+	case BI_DIV_WIDTH: // Not implemented in the debugger, just fail
+		break;
 	default:
 		printf("unimplemented computation %d\n", op);
 		assert(0); exit(1);

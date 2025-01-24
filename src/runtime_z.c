@@ -2284,6 +2284,22 @@ struct rtroutine rtroutines[] = {
 		}
 	},
 	{
+		R_DIV_WIDTH,
+		2,
+			// 0 (param): unused
+			// 1 (param): unused
+			// Returns result
+			// These params give it the same signature as the other calculation routines, which makes compilation simpler; including two extra bytes in a call to a seldom-used routine is an acceptable cost for this
+		(struct zinstr []) {
+			{Z_JNZ, {VALUE(REG_STATUSBAR)}, 0, 1}, // If we're in a status area, we've already calculated this, we can just return it
+			{Z_CALL1S, {ROUTINE(R_GET_FULLWIDTH)}, REG_XFULLSIZE}, // Otherwise, update it to ensure we don't get a stale value
+			{OP_LABEL(1)},
+			{Z_OR, {VALUE(REG_XFULLSIZE), VALUE(REG_4000)}, REG_PUSH}, // This register holds the full width of the current div; OR it with $4000 to mark it as a number
+			{Z_RET_POPPED},
+			{Z_END},
+		}
+	},
+	{
 		R_GREATER_THAN,
 		2,
 			// 0 (param): first tagged reference

@@ -2190,6 +2190,11 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				case BI_RANDOM:
 					zi->oper[0] = ROUTINE(R_RANDOM);
 					break;
+				case BI_DIV_WIDTH:
+					zi->oper[0] = ROUTINE(R_DIV_WIDTH);
+					o0 = SMALL(0); // Unused
+					o1 = SMALL(0); // Unused
+					break;
 				default:
 					assert(0); exit(1);
 				}

@@ -1172,6 +1172,36 @@ static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an,
 		post_rule_trace(prg, cl, an, seen);
 		return 0;
 	}
+	
+	if(an->predicate->builtin == BI_DIV_WIDTH) { // Like above, but without arguments; we assemble the same IR opcode, but pass nil instead of any actual arguments
+		if(do_trace) {
+			ci = add_instr(I_COMPUTE_V);
+			ci->oper[2] = (value_t) {OPER_ARG, 0};
+		} else {
+			if(an->children[0]->kind == AN_VARIABLE) { // Variable
+				if(!an->children[0]->word->name[0]) { // Anonymous variable
+					ci = add_instr(I_COMPUTE_R);
+					ci->oper[2] = (value_t) {OPER_TEMP, ntemp++};
+				} else if(seen[(vnum = findvar(cl, an->children[0]->word))]) { // Existing variable
+					ci = add_instr(I_COMPUTE_V);
+					ci->oper[2] = (value_t) {OPER_VAR, vnum};
+				} else { // New variable
+					ci = add_instr(I_COMPUTE_R);
+					ci->oper[2] = (value_t) {OPER_VAR, vnum};
+					seen[vnum] = 1;
+				}
+			} else { // Literal value
+				v3 = comp_value(cl, an->children[0], seen, known_args);
+				ci = add_instr(I_COMPUTE_V);
+				ci->oper[2] = v3;
+			}
+		}
+		ci->subop = an->predicate->builtin;
+		ci->oper[0] = (value_t) {VAL_NIL, 0}; // Not used, but it's nice not to add a whole new I_COMPUTE_*_WITHOUT_ARGS instruction; I_COMPUTE_* takes two inputs and unifies its third parameter with the output, so we just pass zero for those first two, and they'll be ignored by the backend
+		ci->oper[1] = (value_t) {VAL_NIL, 0};
+		post_rule_trace(prg, cl, an, seen);
+		return 0;
+	}
 
 	if(an->predicate->builtin == BI_IS_ONE_OF
 	&& (prg->optflags & OPTF_BOUND_PARAMS)

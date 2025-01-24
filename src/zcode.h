@@ -454,6 +454,7 @@ enum { // Runtime routines
 	R_DIVIDED,
 	R_MODULO,
 	R_RANDOM,
+	R_DIV_WIDTH,
 	R_GREATER_THAN,
 
 	R_FAIL_PRED,

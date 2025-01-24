@@ -1571,6 +1571,9 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				break;
 			case I_COMPUTE_V:
 			case I_COMPUTE_R:
+				if(ci->subop == BI_DIV_WIDTH){ // This isn't supported by the Å-machine currently, so just fail without doing any further processing
+					ai = add_instr(AA_FAIL);
+				}
 				if(ci->op == I_COMPUTE_V
 				&& ci->oper[2].tag != OPER_VAR
 				&& ci->oper[2].tag != OPER_ARG
