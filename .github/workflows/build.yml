@@ -13,11 +13,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: install dependencies
+      run: sudo apt install gcc-mingw-w64 frotz
     - name: make
       run: make --directory=./src
-    - name: Set up MinGW
-      uses: egor-tensin/setup-mingw@v2
-      with:
-        platform: x86
     - name: make (windows)
       run: make --directory=./src dgdebug.exe dialogc.exe

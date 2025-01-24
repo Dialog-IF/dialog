@@ -1,6 +1,8 @@
 *.o
 dgdebug
 dialogc
+dgdebug.exe
+dialogc.exe
 *.dg
 *.z5
 *.z8
