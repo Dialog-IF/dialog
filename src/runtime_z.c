@@ -3427,6 +3427,7 @@ struct rtroutine rtroutines[] = {
 
 			// For a known word, push a number of objects and return true.
 			{Z_JG, {VALUE(REG_LOCAL+1), REF(G_OBJECT_ID_END)}, 0, 2},
+			{Z_JL, {VALUE(REG_LOCAL+1), SMALL(0)}, 0, 2}, // This is a signed comparison, and values ≥ $8000 should also be interpreted as pointers, not as object numbers!
 
 			// Special treatment for single-element lists: The
 			// object table is located before the wordmaps, so
