@@ -1,0 +1,204 @@
+def split_word(word): # Returns list of single-character words
+	var tmp, accumulator, buffer
+	
+	word = deref(word)
+	
+	if word & $E000:
+		# Extended dictionary word, stored on the heap (label 1)
+		word = word & $1FFF
+		tmp = word[0] # 16 bits
+		if tmp > $8000:
+			return tmp # Unknown word, stored as list of characters (label 5)
+		# Regular word + ending
+		accumulator = tmp[2] # 16 bits
+		word = tmp
+	
+	elif word < $2000:
+		# (label 2)
+		fail()
+	
+	elif word < $3E00:
+		# Regular dictionary word (label 3)
+		accumulator = []
+	
+	elif word >= $4000:
+		# Integer (label 4)
+		tmp = word & $3FFF
+		if tmp == 0:
+			return [tmp] # PUSH_LIST_V
+		accumulator = []
+		do: # (label 7)
+			word = tmp % 10
+			word = word | $4000
+			accumulator = [word | accumulator] # PUSH_PAIR_VV
+			tmp = tmp / 10
+		while tmp != 0
+		return accumulator
+	
+	else:
+		# Single-character dictionary word (label 6)
+		return [tmp] # PUSH_LIST_V
+	
+	# Prepend characters to list (label 9)
+	buffer = scratch_space_addr
+	# Convert `word` to a pointer into the dictionary table
+	word = word & $1FFF
+	word = word * 6
+	word = word + dict_table_addr
+	print_to_buffer(word, buffer) # Uses output stream 3
+	tmp = buffer[0] # Length of what was printed
+	buffer ++ # Pointer to the actual text
+	
+	do: # (label 10)
+		word = buffer[tmp] # 8 bits
+		if $30 <= word <= $39:
+			# Convert digit character to int
+			word = word + ($200 - $30)
+		word = word + $3E00 # Convert to dictionary word (label 12)
+		accumulator = [word | accumulator] # PUSH_PAIR_VV
+	while --tmp > 0
+	
+	return accumulator
+
+def join_word(chars): # Returns a single word, in whatever format
+	var tmp, buffer, tmp2
+	
+	chars = deref(chars)
+	tmp = chars & $E000
+	if tmp != $C000: # Not a list
+		fail() # (label 1)
+	
+	tmp = chars & $1FFF
+	tmp2 = tmp[2] # 16 bits
+	tmp2 = deref(tmp2)
+	if tmp2 == []: # We were given a singleton list
+		tmp2 = tmp[0]
+		if $3E00 <= tmp2 < $4000: # It's a single character
+			return tmp2
+	
+	# (label 3)
+	tmp2 = heap_top # Save this for later
+	buffer = malloc(1+134+1+2*1) # One word for the text buffer length, 134 words for the text buffer, one word for the parse buffer length, 4 bytes for the parse buffer (just long enough to hold one word)
+	buffer[0] = 2*134 # Length byte
+	tmp = buffer + 2
+	tmp = join_word_sub(chars, 2*134, tmp)
+	if tmp == 0: # join_word_sub returns 0 to indicate error
+		heap_top = tmp2 # Deallocate the memory we used
+		fail() # (label 1)
+	
+	# (label 2)
+	buffer[1] = tmp
+	tmp = buffer + 2+2*134 # 2 bytes for the length word, then 134 two-byte words for the buffer itself, so this puts us after the text buffer at the very beginning of the parse buffer
+	tmp[0] = 1 # Indicate that we want no more than one word parsed
+	tokenize(buffer, tmp)
+	tmp = parse_input(tmp, buffer)
+	heap_top = tmp2 # Deallocate all the extra space we used
+	
+	tmp = deref(tmp)
+	if tmp == []:
+		fail() # (label 1)
+	tmp = tmp & $1FFF
+	return tmp[0]
+
+def join_word_sub(chars, bufsize, buffer): # Prints each element of `chars`, in sequence, into `buffer`; returns total number of characters written, or 0 on error
+	# Note that despite the name, `chars` doesn't need to consist of characters! It can also contain dictionary words (of all sorts) and integers
+	var element, original, tmp
+	original = buffer # Save this for later
+	
+	do:
+		chars = chars & $1FFF
+		element = chars[0]
+		element = deref(element)
+		
+		if element >= $4000:
+			# It's a number (label 3)
+			if bufsize < 8: return 0
+			element = element & $3FFF
+			print_to_buffer(element, buffer) # Uses output stream 3
+			finalize_after_printing()
+		elif element >= $3E00:
+			# It's a single-character word
+			if bufsize == 0: return 0
+			element = element & $00FF
+			if element <= $0020: return 0
+			if element in '.,";*()': return 0
+			buffer[0] = element
+			bufsize --
+			buffer ++
+		elif element & $E000 == $E000: # (label 4)
+			# It's an extended word
+			element = element & $1FFF
+			tmp = element[0]
+			if tmp < $8000:
+				tmp = element
+			# (label 8)
+			tmp = join_word_sub(tmp, bufsize, buffer)
+			if tmp == 0: return 0
+			buffer = buffer + tmp
+			bufsize = bufsize - tmp
+		elif element < $2000: # (label 5)
+			# It's an object, that's not supposed to be there!
+			return 0
+		else:
+			# It's a regular word
+			if bufsize < 12: return 0
+			# Convert element to a pointer into the dict table
+			element = element & $1FFF
+			element = element * 6
+			element = element + dict_table_addr
+			print_to_buffer(element, buffer) # Uses output stream 3
+			finalize_after_printing()
+		
+		# (label 6)
+		chars = chars[2]
+		chars = deref(chars)
+		element = chars & $E000
+	while element == $C000 # As long as the type bits keep indicating a pair
+	
+	if chars != []: return 0
+	
+	return buffer - original # Number of chars written
+	
+	def finalize_after_printing(): # (label 7)
+		# turn off output stream 3
+		element = buffer[0] # Now being used as a temporary to hold the number of bytes written
+		tmp = buffer+2
+		buffer[0:element] = tmp[0:element] # Move everything two bytes backward in memory, to overwrite the size word
+		buffer = buffer + element
+		bufsize = bufsize - element
+
+def divide_pairs(word): # My new routine I want to write!
+	var index, textbuffer, parsebuffer, result, end, tmp, oldheap
+	oldheap = heap_top
+	word = deref(word)
+	result = []
+	
+	# If it's a single character, return []
+	# If it's a number, return []
+	
+	textbuffer = malloc(1+64) # There shouldn't be any need for a word longer than 64 words = 128 bytes
+	textbuffer[0] = 2*64
+	parsebuffer = malloc(1+2*2) # We're going to be parsing exactly two words, each takes two words = four bytes
+	parsebuffer[0] = 2
+	
+	# Print the word into textbuffer[3:]
+	
+	index = textbuffer + 3
+	tmp = textbuffer[0]
+	end = textbuffer + tmp
+	# I'm sure there's a cleverer way to do this but I'm more focused on working than cleverness for now
+	
+	do:
+		index[-1] = index[0]
+		index[0] = ' '
+		tokenize(textbuffer, parsebuffer)
+		tmp = parse_input(parsebuffer, textbuffer)
+		
+		# Look at the first entry of the pair
+		# See if it's a standard dictionary word
+		# If so, result = [tmp | result]
+		
+	while ++index < end
+	
+	heap_top = oldheap
+	return result
