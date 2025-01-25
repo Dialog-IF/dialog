@@ -178,7 +178,7 @@ errors. If everything looks fine, it launches the program. You can then play
 your game normally.
 
 When the game is asking for input, you may instead choose to type an arbitrary
-xref:lang:execution.adoc#query[query],
+xref:lang:execution.adoc#predicates[query],
 xref:lang:choicepoints.adoc#multi-query[multi-query],
 or
 xref:lang:dynamic.adoc[now-statement].

@@ -48,6 +48,7 @@ rules that define its initial value, for instance that they have no
 side-effects, and that they don't depend on the value of other dynamic
 predicates.
 
+[#perobjectflags]
 == Per-object flags
 
 A _per-object flag_ is a predicate with one parameter, and no side effects. When

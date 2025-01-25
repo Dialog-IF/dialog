@@ -9,7 +9,7 @@ xref:lang:execution.adoc#parameters[objects]
 Dialog objects are _thin_; they are identifiers without any code or data inside
 them. They exist, as names, simply by virtue of being mentioned somewhere in the
 source code. But they have no contents. Instead, the game world is modelled
-using xref:lang:execution.adoc#query[predicates]
+using xref:lang:execution.adoc#predicates[predicates]
 where a predicate is a collection of rule definitions.
 
 We will now extend our minimal example with two objects: A table (called
@@ -116,14 +116,14 @@ current topic. This feature makes the code more concise, and easier to type out:
 ----
 
 Thus, we have created two tangible objects in our room, given them source code
-names (`#table`, `#chair`), printed names (“#wooden
-table”, “chair”), and descriptions to be revealed by the
+names (`#table`, `#chair`), printed names (“wooden table”, “chair”),
+and descriptions to be revealed by the
 `EXAMINE` verb. We have also categorized the objects: The table is a
 _supporter_, which means that the player is allowed to put things on top of it.
 The chair is an _on-seat_, which is a special kind of supporter that the player
 may sit on. The standard library defines many other standard categories that may
 be used by stories, and we'll take a closer look at them in the upcoming chapter on
-TRAITS.
+xref:traits.adoc[traits].
 The predefined categories include _containers_ and
 _in-seats_ (such as armchairs), as well as _rooms_.
 
@@ -268,7 +268,7 @@ our objects in a separate predicate that we call `(material)`:
 ----
 
 This predicate can then be
-xref:lang:execution.adoc#query[queried] from within
+xref:lang:execution.adoc#predicates[queried] from within
 rule bodies, like so:
 
 [source]
@@ -467,9 +467,10 @@ xref:lang:control.adoc#if[if statement].
 
 The following dynamic predicates are used by the library:
 
-[frame=none,grid=none]
+[frame=none,grid=none,options=header]
 |===
-|*Dynamic predicate* |*Negated version* |
+|Dynamic predicate | Negated version |
+
 |`($ is closed)` |`($ is open)` |Changed by: `OPEN`,
 `CLOSE`.
 
@@ -512,9 +513,8 @@ printed, or when `(notice $)` is invoked on it.
 
 '''
 
-Back to xref:intro.adoc[] or onwards to TRAITS.
+Back to xref:intro.adoc[] or onwards to xref:traits.adoc[].
 
 TODO:
 
-* Fix link to TRAITS
 * Fix link to ITEMS

@@ -1,8 +1,6 @@
 = The Dialog Manual
 :page-role: -toc
 
-This is the Dialog manual.
-
 This is Revision {man-ver} of the Dialog Manual.
 It describes *version {lang-ver}* of the Dialog language,
 and *version {lib-ver}* of its standard library.

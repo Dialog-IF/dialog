@@ -241,6 +241,7 @@ this is allowed:
 It is possible to change the topic at any time, and even to return to an earlier
 topic in a different part of the source code.
 
+[#nested]
 == Nested queries in rule heads
 
 As we have seen in many of the examples, predicates are often used to categorize
