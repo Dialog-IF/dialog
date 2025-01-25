@@ -4,6 +4,7 @@ version: 0m
 nav:
   - modules/ROOT/nav.adoc
   - modules/lang/nav.adoc
+  - modules/lib/nav.adoc
 asciidoc:
   attributes:
     lang-ver: 0m
