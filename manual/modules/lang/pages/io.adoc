@@ -521,6 +521,240 @@ When they are not, the would-be-clickable text shows up as normal text.
 
 Hyperlinks are always disabled on the Z-machine backend.
 
+== Resources
+
+The Å-machine backend supports embedded graphics, as well as links to external web sites, using a common mechanism. A _resource_ is defined with the following syntax:
+
+[source]
+----
+(define resource <id>) <location>
+----
+
+The _id_ is any bound Dialog-value, such as an integer, a dictionary word, an object, or even a list.
+
+The _location_ is either a URL with one of the schemes `http`, `https`, or `mailto`,
+or a local filename.
+Local files are copied into the `.aastory` file,
+and this is the recommended way to work with _feelies_ and embedded graphics.
+
+=== Links to resources
+
+When a resource has been defined, it's possible to link to it using the following syntax:
+
+[source]
+----
+    (link resource $Id) <statement>
+----
+
+Here is an example:
+
+[source]
+----
+(define resource @manual)
+	feelies/manual.pdf
+
+(define resource @web)
+	https://example.com/
+
+(understand command [about])
+(perform [about])
+
+	Please make sure to check out the (link resource @manual) {printed
+	manual} that was bundled with the game.
+
+	(par)
+
+	For more works by the same author, head over to
+	(link resource @web) {example.com}.
+----
+
+Not every interpreter or backend supports links.
+Use `(interpreter supports links)` to check for this feature at runtime.
+Alternatively, make sure that all of your sentences with links also make sense as plain text.
+
+It is up to the interpreter to decide what happens when the player clicks on a link to a resource.
+The Å-machine web interpreter opens the file or web site in a new browser tab.
+
+=== Embedded resources
+
+It is also possible to _embed_ a resource, such as a picture, into the story text.
+This is done with the built-in predicate `(embed resource $)`.
+
+In general, interpreters won't be able to embed every conceivable kind of resource.
+When defining a resource, it is possible to add an `alt-text` that can be displayed instead of the resource.
+The alt-text appears at the end of the resource definition, separated from the location by a semicolon:
+
+[source]
+----
+(define resource <id>) <location>; <alt-text>
+----
+
+If no alt-text is specified, the filename (i.e. location) is used as a default value.
+Only the actual filename is used as alt-text, not the full path.
+
+The built-in predicate `(interpreter can embed $)` checks whether the current interpreter is capable of
+displaying a given resource.
+If not, `(embed resource $)` will display the alt-text instead.
+
+Example:
+
+[source]
+----
+(define resource #lighthouse)
+	media/lighthouse.png; A small model of a lighthouse.
+
+(style class @center)
+	margin-top: 1em;
+	margin-bottom: 1em;
+	text-align: center;
+
+#lighthouse
+(name *)	lighthouse
+(dict *)	small tiny model silver
+(descr *)
+	It's a tiny model of a lighthouse, made of silver.
+	(if) (interpreter can embed *) (then)
+		(div @center) (embed resource *)
+	(endif)
+	The lighthouse glistens in the moonlight.
+----
+
+In the above example, the `(div $)` splits the text into two paragraphs if the interpreter is able to
+embed png files.
+Otherwise, there will be no paragraph break, and no alt-text.
+
+With an eye towards future extensibility, this language feature has been designed to be open-ended.
+Resources could conceivably be any kind of multimedia, including sound and animation.
+Interpreters are supposed to restrict this vast space of possibilities to a manageable set
+of supported file formats.
+The current version of the Å-machine web interpreter, for instance,
+only embeds graphics in `png` or `jpeg` format.
+Other backends (Z-machine, debugger) just print the alt-text.
+
+=== About local filenames
+
+Local path names are interpreted relative to the _resource directory_,
+which defaults to the current working directory.
+A different resource directory can be specified with the `-r` option to `dialogc`.
+
+All resources bundled into an `.aastory` file must have unique filenames, regardless of their path.
+Thus, you can't define one resource with the filename “hero/face.png” and another with the filename “heroine/face.png”.
+This restriction might be relaxed in future versions.
+
+== Debugging
+
+If the program is currently running inside the interactive debugger,
+`(log)` _statement_ will execute the inner statement—usually a block—in a stoppable environment.
+Output from the statement will appear between line breaks, in a distinct style.
+This is useful for adding temporary printouts to the code. For instance:
+
+[source]
+----
+(program entry point)
+	(log) { Program started. X = $X }
+	($X = 42)
+	Hello,
+	(log) $X
+	world!
+----
+
+looks like this in the debugger:
+
+```
+Program started. X = $
+Hello,
+42
+world!
+```
+
+but like this when the code is compiled:
+
+```
+Hello, world!
+```
+
+The following built-in predicates are also useful for debugging:
+
+`(breakpoint)`::
+If the program is currently running inside the interactive debugger,
+suspend execution and print the current source code filename and line number.
+When execution resumes, this query succeeds.
++
+Outside of the debugger, the query simply succeeds.
+
+`(trace on)`::
+Enables tracing.
+Following this, debugging information will be printed when queries are made, and when rule bodies are entered.
+The interactive debugger will also report when solutions are found, and when dynamic predicates are updated.
+
+`(trace off)`::
+Disables tracing.
+
+If the program source code contains a query to `(trace on)` anywhere, the compiler backend will insert extra
+instructions all over the generated code, to deal with tracing.
+This is known as instrumenting the code, and it makes the program slower and larger.
+Thus, you'll only want to use these predicates temporarily, during debugging.
+The compiler prints a warning when it adds the extra instructions.
+
+Please be aware that the Dialog compiler and debugger do optimize your program,
+and you will be tracing the optimized code, so certain queries and rules will be missing from the
+debug printouts.
+You will generally want to do all your tracing in the debugger,
+which mercifully turns off some of the more confusing optimizations.
+That being said, tracing the optimized Z- or Å-code can be useful when trying to speed up a program.
+
+== Determining objects from words
+
+This section is mainly of concern for library programmers, so story authors may safely skip it.
+
+Dialog has a special construct for matching player input against in-world object names in a very efficient way:
+
+[source]
+----
+	(determine object $Obj)
+		<object generator>
+	(from words)
+		<word generator>
+	(matching all of $Input)
+----
+
+This statement will backtrack over every object `$Obj` for which:
+
+- _object generator_ succeeds, and
+- _word generator_, when exhausted, emits at least every word in the `$Input` list.
+
+The variable `$Obj` should appear both in the object generator and in the word generator,
+and the object generator should contain a multi-query to backtrack over a set of objects.
+A canonical example is:
+
+[source]
+----
+	(determine object $Obj)
+		*($Obj is in scope)
+	(from words)
+		*(dict $Obj)
+	(matching all of $Input)
+----
+
+A non-optimizing compiler could deal with this construct as follows:
+First, compile normal code for the object generator.
+Then, exhaust every branch of the word generator,
+collecting all its output into a temporary list of words.
+Finally, check that every word of $Input appears in the temporary list.
+
+However, the Dialog compiler and debugger both perform the following optimization:
+At compile-time, they analyze the word generator statically, and construct a reverse lookup table,
+mapping words of input to objects.
+At runtime, this table is consulted first, based on `$Input`,
+to determine what objects the player might be referring to.
+So, for instance, if the input is `LARGE HAT`, and there are only two game objects for which
+`(dict $Obj)` can produce both of those words, then `$Obj` will now be bound to
+each of those two objects in turn.
+But if there are dozens of large hats, `$Obj` may instead be left unbound;
+the compiler is allowed to make a trade-off between speed and memory footprint.
+Either way, after this step, the operation proceeds as in the unoptimized case.
+
+
 '''
 
 Back to xref:control.adoc[] or onwards to TBD.
@@ -528,4 +762,5 @@ Back to xref:control.adoc[] or onwards to TBD.
 TODO:
 
 - tracing link
-- <statement> should be _statement_
+- <statement> should be _statement_, etc.
+- bold text in the debugger output snippet
