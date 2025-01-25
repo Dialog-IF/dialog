@@ -757,7 +757,8 @@ Either way, after this step, the operation proceeds as in the unoptimized case.
 
 '''
 
-Back to xref:control.adoc[] or onwards to TBD.
+Back to xref:control.adoc[] or onwards to
+xref:dynamic.adoc[].
 
 TODO:
 

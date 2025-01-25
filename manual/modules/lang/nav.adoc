@@ -4,3 +4,4 @@
 ** xref:choicepoints.adoc[Choicepoints]
 ** xref:control.adoc[More control structures]
 ** xref:io.adoc[Input and output]
+** xref:dynamic.adoc[Dynamic predicates]
