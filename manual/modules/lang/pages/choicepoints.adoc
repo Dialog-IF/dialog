@@ -188,6 +188,7 @@ However, there is one critical difference between queries and disjunctions:
 As soon as a rule succeeds, that query is considered over and done.
 So on success, Dialog simply discards any lingering choice points that were created as part of the query.
 
+[#multi-query]
 == Multi-queries
 
 Sometimes when we query a predicate, we want to be able to go back and reconsider every matching rule,

@@ -1,4 +1,49 @@
-= Dialog
+= The Dialog Manual
 :page-role: -toc
 
 This is the Dialog manual.
+
+This is Revision {man-ver} of the Dialog Manual.
+It describes *version {lang-ver}* of the Dialog language,
+and *version {lib-ver}* of its standard library.
+Dialog is currently in its _beta_ stage,
+which means that the language may still undergo
+significant changes.
+
+== Preface
+
+* xref:intro.adoc[]
+* xref:software.adoc[]
+
+== Part I: Programming Language
+
+xref:lang:execution.adoc[]
+
+xref:lang:varsvalues.adoc[]
+
+xref:lang:choicepoints.adoc[]
+
+xref:lang:control.adoc[]
+
+xref:lang:io.adoc[]
+
+xref:lang:dynamic.adoc[]
+
+xref:lang:sugar.adoc[]
+
+xref:lang:builtins.adoc[]
+
+xref:lang:beyondprg.adoc[]
+
+xref:lang:quickref.adoc[]
+
+== Part II: The Standard Library
+
+_Coming Soon_
+
+'''
+
+TODO:
+- top level toc list under each main page link
+- centering the top mast
+- columns for Part I vs. Part II

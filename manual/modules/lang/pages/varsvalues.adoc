@@ -90,6 +90,7 @@ Pencil: It seems harmless.
 
 The scope of a local variable is limited to the rule in which it appears.
 
+[#values]
 == Values
 
 So far, we have seen one kind of value: the object.

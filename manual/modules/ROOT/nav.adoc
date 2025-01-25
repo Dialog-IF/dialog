@@ -1,1 +1,3 @@
 * xref:index.adoc[]
+* xref:intro.adoc[]
+* xref:software.adoc[]

@@ -136,6 +136,7 @@ Negated rules could be thought of as having an implicit `(just) (fail)` at the e
 	(fruit $Obj)
 ----
 
+[#select-var]
 == Selecting among variations
 
 When writing interactive fiction, it can be nice to be able to add a bit of random variation to the output,

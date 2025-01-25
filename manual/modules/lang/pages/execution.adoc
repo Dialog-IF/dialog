@@ -9,6 +9,7 @@ for a while, and then come back.
 
 If you already know Prolog, you're still going to have to pay attention to the details, as there are both obvious and subtle differences between the two languages.
 
+[#query]
 == Predicates and rules
 
 This is what “hello world” looks like in Dialog:
@@ -145,6 +146,7 @@ This is not broken up.
 This goes on a line of its own.
 ```
 
+[#parameters]
 == Parameters, objects, and wildcards
 
 Predicates can have _parameters_.

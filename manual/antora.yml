@@ -1,9 +1,16 @@
 name: dialog
 title: Dialog
-version: 0.1
+version: 0m
 nav:
   - modules/ROOT/nav.adoc
   - modules/lang/nav.adoc
+asciidoc:
+  attributes:
+    lang-ver: 0m
+    lib-ver: 0.46
+    man-ver: 31
+    home-page: https://linusakesson.net/dialog/
+    aa-home-page: https://linusakesson.net/dialog/aamachine/
 
 
 
