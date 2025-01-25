@@ -3,6 +3,7 @@
 Dialog provides a small amount of syntactic sugar, i.e. optional syntax
 variations that can help make certain code more readable and succinct.
 
+[#accesspred]
 == Access predicates
 
 Whereas normal predicates describe what will happen when the program is running,
@@ -185,6 +186,7 @@ declarations.
 Like normal rule definitions, access predicate definitions can appear anywhere
 in the source code, i.e. before or after the rules in which they are used.
 
+[#current-topic]
 == The current topic
 
 Rules that belong to the same predicate form a kind of disjunction, but unlike a

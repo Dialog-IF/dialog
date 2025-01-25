@@ -1,5 +1,6 @@
 = Chapter 4: More control structures
 
+[#if]
 == If-statements
 
 We have seen how execution can be directed into different branches based on arbitrary conditions,

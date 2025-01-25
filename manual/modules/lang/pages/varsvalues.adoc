@@ -1,5 +1,6 @@
 = Chapter 2: Manipulating data
 
+[#local-variables]
 == Local Variables
 
 Recall that a dollar sign on its own is a wildcard.

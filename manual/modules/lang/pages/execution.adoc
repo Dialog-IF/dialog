@@ -53,6 +53,7 @@ determined by the order in which the filenames appeared on the command line.
 
 Predicate names are case-sensitive.
 
+[#printing]
 == Printing text
 
 Rule bodies contain statements to be executed. Plain text in a rule body is an instruction to print that text.
@@ -191,6 +192,7 @@ In Dialog, the world is modelled using predicates that specify relations between
 Object names may contain alphanumeric characters (including a limited range of international glyphs), plus (`+`), minus (`-`), and underscore (`_`) characters.
 They are case sensitive.
 
+[#success-failure]
 == Success and failure
 
 If a query is made to a predicate, but there is no matching rule in the program, the query _fails_.

@@ -106,6 +106,7 @@ Thus:
 (player eats meat)
 ----
 
+[#backtracking]
 == Backtracking
 
 Now consider the following predicate, which determines who is considered royalty in some fictional world:
