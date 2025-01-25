@@ -433,7 +433,7 @@ You don't see any more fruit.
 
 
 '''
-Back to xref:execution.adoc[], onwards to xref:choicepoints.adoc[].
+Back to xref:execution.adoc[] or onwards to xref:choicepoints.adoc[].
 
 TODO:
 - tracing link
