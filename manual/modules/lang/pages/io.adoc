@@ -82,21 +82,21 @@ as the player may be using an interpreter with a dark or light default backgroun
 
 The Z-machine backend, and the 8-bit Å-machine interpreter, only support a limited number of style attributes. For divs and spans in the main text area, they are:
 
-`font-style`::
+font-style::
 Supported values are `italic` and `inherit`.
 
-`font-weight`::
+font-weight::
 Supported values are `bold` and `inherit`.
 
-`font-family`::
+font-family::
 The value is checked for the presence or absence of the keyword `monospace`.
 
-`margin-top`::
+margin-top::
 This attribute only affects divs.
 The value must be an integer followed by the keyword `em`, with no whitespace in between.
 The size of the resulting margin is the given number of blank lines.
 
-`margin-bottom`::
+margin-bottom::
 This attribute only affects divs.
 The value must be an integer followed by the keyword `em`, with no whitespace in between.
 The size of the resulting margin is the given number of blank lines.
@@ -247,24 +247,24 @@ But it is good practice to specify widths in `ch` and heights in `em`.
 The Z-machine backend, and the 8-bit Å-machine interpreter, obey the following style attributes in
 the top status area:
 
-`height`::
+height::
 For the top-level `(status bar $)` div only: The desired height, expressed as an integer followed by the word `em`.
 
-`width`::
+width::
 For divs nested inside the top status area:
 The desired width, as an integer followed by a unit.
 Supported units are `ch` and `%`.
 One `ch` represents the width of a character in the fixed-pitch font.
 
-`float`::
+float::
 For divs nested inside the top status area:
 The desired location within the surrounding div.
 Must be either `left` or `right`.
 
-`margin-top`::
+margin-top::
 Works as it does for ordinary divs, but is ignored for the top-level `(status bar $)` itself.
 
-`margin-bottom`::
+margin-bottom::
 Works as it does for ordinary divs, but is ignored for the top-level `(status bar $)` itself.
 
 
@@ -681,19 +681,19 @@ Hello, world!
 
 The following built-in predicates are also useful for debugging:
 
-`(breakpoint)`::
+(breakpoint)::
 If the program is currently running inside the interactive debugger,
 suspend execution and print the current source code filename and line number.
 When execution resumes, this query succeeds.
 +
 Outside of the debugger, the query simply succeeds.
 
-`(trace on)`::
+(trace on)::
 Enables tracing.
 Following this, debugging information will be printed when queries are made, and when rule bodies are entered.
 The interactive debugger will also report when solutions are found, and when dynamic predicates are updated.
 
-`(trace off)`::
+(trace off)::
 Disables tracing.
 
 If the program source code contains a query to `(trace on)` anywhere, the compiler backend will insert extra

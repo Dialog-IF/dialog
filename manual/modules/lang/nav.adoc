@@ -6,4 +6,5 @@
 ** xref:io.adoc[Input and output]
 ** xref:dynamic.adoc[Dynamic predicates]
 ** xref:sugar.adoc[Syntactic sugar]
+** xref:builtins.adoc[More built-in predicates]
 

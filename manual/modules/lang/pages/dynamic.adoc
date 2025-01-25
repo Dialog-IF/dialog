@@ -318,18 +318,18 @@ from the object tree.
 
 Here are some examples:
 
-`(#troll has parent $Room)`::
+(#troll has parent $Room)::
 Determine where the troll is.
 
-`($Obj has parent #library)`::
+($Obj has parent #library)::
 Backtrack over every object in the library.
 
-`(now) (#troll has parent #cave)`::
+(now) (#troll has parent #cave)::
 Set the parent object of the troll. Under the hood, this will also update the
 linked structures representing the children of the cave, and the children of the
 previous parent of the troll.
 
-`(now) ~(#axe has parent $)`::
+(now) ~(#axe has parent $)::
 Remove the axe from play (i.e. detach it from the object tree).
 
 You are responsible for maintaining a well-formed object tree. This means that
