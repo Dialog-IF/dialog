@@ -378,4 +378,7 @@ will be located in the bowl, and the lettuce in the fridge.
 
 '''
 
-Back to xref:io.adoc[] or onwards to TBA.
+Back to xref:io.adoc[] or onwards to xref:sugar.adoc[].
+
+TODO:
+- italics in code examples

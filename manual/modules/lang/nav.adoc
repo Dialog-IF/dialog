@@ -5,3 +5,5 @@
 ** xref:control.adoc[More control structures]
 ** xref:io.adoc[Input and output]
 ** xref:dynamic.adoc[Dynamic predicates]
+** xref:sugar.adoc[Syntactic sugar]
+
