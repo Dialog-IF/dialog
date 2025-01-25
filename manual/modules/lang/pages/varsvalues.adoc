@@ -123,7 +123,7 @@ Non-alphabetical characters require multiple slots of storage in the Z-machine, 
 The printed representation of a dictionary word is the essential part followed by the optional part.
 No `@` prefix is printed, and there is usually no visible seam between the two parts of the word.
 However, during
-tracing,
+xref:io.adoc#debugging[tracing],
 dictionary words are displayed with a plus sign (`+`) separating the essential part from the optional part.
 
 Dictionary words may contain any characters supported by the underlying platform, e.g.
@@ -435,5 +435,3 @@ You don't see any more fruit.
 '''
 Back to xref:execution.adoc[] or onwards to xref:choicepoints.adoc[].
 
-TODO:
-- tracing link

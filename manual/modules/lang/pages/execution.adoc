@@ -242,7 +242,7 @@ Thus, the program entry point rule will proceed to print “Over and out”.
 The complete output is:
 
 ```
-The complete output is:
+It looks yummy! Over and out.
 ```
 
 '''

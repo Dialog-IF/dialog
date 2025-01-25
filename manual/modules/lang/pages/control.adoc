@@ -28,7 +28,7 @@ Dialog provides traditional `if`, `then`, `elseif`, `else`, and `endif` keywords
 ----
 	(if) _condition_ (then)
 		_statements_
-	(elseif) __other condition_ (then)
+	(elseif) _other condition_ (then)
 		_statements_
 	(elseif) _other condition_ (then)
 		_statements_

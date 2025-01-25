@@ -40,12 +40,15 @@ The following example assumes that style classes `@bold` and `@italic` have been
 
 The output, depending on which hints appear in the style class definitions and to what extent they are supported by the interpreter, could be:
 
+[source,subs="quotes"]
+```
 _Lorem Ipsum_, he, *emphasized*.
+```
 
 Style classes are identified by words, but these words don't end up in the game dictionary
 (unless they're also used elsewhere, of course).
 This is particularly relevant if removable word endings are used (see the
-input section
+xref:#input[input section]
 below).
 
 What a given class is supposed to look like is determined by compile-time queries to the
@@ -357,7 +360,7 @@ Digits are represented by numbers.
 
 A few non-printable keys are recognized, and reported using special dictionary words:
 
-.Table
+[frame=none,grid=none]
 |===
 | Key | Special dictionary word
 
@@ -385,7 +388,8 @@ A few non-printable keys are recognized, and reported using special dictionary w
 |===
 
 These special dictionary words aren't supposed to be printed.
-In the debugger, they will come out as their source-code representation, which is useful during tracing.
+In the debugger, they will come out as their source-code representation, which is useful during
+xref:#debugging[tracing].
 Other interpreters may print them differently, or not at all.
 
 A simple keypress dispatcher can look like this:
@@ -641,6 +645,7 @@ All resources bundled into an `.aastory` file must have unique filenames, regard
 Thus, you can't define one resource with the filename “hero/face.png” and another with the filename “heroine/face.png”.
 This restriction might be relaxed in future versions.
 
+[#debugging]
 == Debugging
 
 If the program is currently running inside the interactive debugger,
@@ -760,7 +765,3 @@ Either way, after this step, the operation proceeds as in the unoptimized case.
 
 Back to xref:control.adoc[] or onwards to
 xref:dynamic.adoc[].
-
-TODO:
-
-- tracing link
