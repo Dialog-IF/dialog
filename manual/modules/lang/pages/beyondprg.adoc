@@ -348,10 +348,10 @@ may introduce functionality for dealing with unsupported characters.
 
 The `(uppercase)` built-in predicate is currently limited to English
 letters (A–Z) for the Z-machine backend. It should at least be upgraded to
-support the so called default extra characters in the ZSCII character set, which
+support the so-called default extra characters in the ZSCII character set, which
 cover the needs of several European languages. The Å-machine backend and the
 debugger have full support.
 
 '''
 
-Back to the xref:builtins.adoc[] or onwards to TBA.
+Back to the xref:builtins.adoc[] or onwards to xref:quickref.adoc[].
