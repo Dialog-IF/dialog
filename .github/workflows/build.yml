@@ -19,3 +19,5 @@ jobs:
       run: make --directory=./src
     - name: make (windows)
       run: make --directory=./src dgdebug.exe dialogc.exe
+    - name: make test
+      run: make test

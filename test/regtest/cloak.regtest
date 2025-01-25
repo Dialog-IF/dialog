@@ -1,0 +1,80 @@
+* walkthrough
+
+Hurrying through the rainswept November night, you're glad to see the bright
+lights of the Opera House. It's surprising that there aren't more people about
+but, hey, what do you expect in a cheap demo game...?
+
+
+A port of Roger Firth's reference game by Linus Åkesson.
+
+You are standing in a spacious hall, splendidly decorated in red and gold, with
+glittering chandeliers overhead. The entrance from the street is to the north,
+and there are doorways south and west.
+
+> w
+
+
+You walk west.
+
+
+The walls of this small room were clearly once lined with hooks, though now only
+one remains. The exit is a door to the east.
+
+> x me
+
+
+You have no possessions. You're wearing a velvet cloak.
+
+> remove cloak
+
+
+You take off the velvet cloak.
+
+> put cloak on hook
+
+
+You put the velvet cloak on the small brass hook.
+
+(Your score has gone up by one point.)
+
+> e
+
+
+You walk east.
+
+
+You are standing in a spacious hall, splendidly decorated in red and gold, with
+glittering chandeliers overhead. The entrance from the street is to the north,
+and there are doorways south and west.
+
+> x gold
+
+
+(I only understood you as far as wanting to examine something.)
+
+> s
+
+
+You walk south.
+
+
+The bar, much rougher than you'd have guessed after the opulence of the foyer to
+the north, is completely empty. There seems to be some sort of message scrawled
+in the sawdust on the floor.
+
+> x message
+
+
+The message, neatly marked in the sawdust, reads...
+
+
+
+Game over. You scored 2 points out of 2.
+
+Would you like to:
+     UNDO the last move,
+     RESTORE a saved position,
+     QUIT the program,
+     or RESTART from the beginning?
+> quit
+Thanks for playing!

@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 # RegTest: a really simple IF regression tester.
 #   Version 1.2
 #   Andrew Plotkin <erkyrath@eblong.com>
