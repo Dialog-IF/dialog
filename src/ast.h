@@ -86,6 +86,7 @@ enum {
 	BI_RANDOM,
 	
 	BI_DIV_WIDTH, // Sort of a computation, in that it has to return a value
+	BI_DIV_HEIGHT,
 
 	BI_FAIL, // Execution flow
 	BI_STOP,

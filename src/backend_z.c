@@ -2191,8 +2191,9 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 					zi->oper[0] = ROUTINE(R_RANDOM);
 					break;
 				case BI_DIV_WIDTH:
+				case BI_DIV_HEIGHT:
 					zi->oper[0] = ROUTINE(R_DIV_WIDTH);
-					o0 = SMALL(0); // Unused
+					o0 = SMALL(ci->subop == BI_DIV_HEIGHT ? 1 : 0); // 0 for width, 1 for height
 					o1 = SMALL(0); // Unused
 					break;
 				default:

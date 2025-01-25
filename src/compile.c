@@ -1173,7 +1173,8 @@ static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an,
 		return 0;
 	}
 	
-	if(an->predicate->builtin == BI_DIV_WIDTH) { // Like above, but without arguments; we assemble the same IR opcode, but pass nil instead of any actual arguments
+	if(an->predicate->builtin == BI_DIV_WIDTH
+	|| an->predicate->builtin == BI_DIV_HEIGHT) { // Like above, but without arguments; we assemble the same IR opcode, but pass nil instead of any actual arguments
 		if(do_trace) {
 			ci = add_instr(I_COMPUTE_V);
 			ci->oper[2] = (value_t) {OPER_ARG, 0};
