@@ -2243,10 +2243,12 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				assert(ci->oper[0].tag == OPER_BOX);
 				zi = append_instr(r, Z_CALL1N);
 				zi->oper[0] = ROUTINE(R_END_STATUS);
-				zi = append_instr(r, Z_CALL1N);
-				zi->oper[0] = ROUTINE(R_END_BOX_STYLE);
-				zi = append_instr(r, Z_CALL1N);
-				zi->oper[0] = ROUTINE(R_RESET_COLORS);
+				if(ci->subop == AREA_TOP) { // Don't reset styles if it was an inline status area
+					zi = append_instr(r, Z_CALL1N);
+					zi->oper[0] = ROUTINE(R_END_BOX_STYLE);
+					zi = append_instr(r, Z_CALL1N);
+					zi->oper[0] = ROUTINE(R_RESET_COLORS);
+				}
 				break;
 			case I_END_BOX:
 				assert(ci->oper[0].tag == OPER_BOX);
