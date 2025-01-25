@@ -146,9 +146,9 @@ _Global variables_ are dynamic predicates with a single parameter. To
 distinguish them from per-object flags, global variables have to be _declared_,
 using special syntax. This is what it looks like:
 
-[source]
+[source,subs="quotes"]
 ----
-(global variable <(signature)>)
+(global variable _(signature)_)
 ----
 
 starting at the leftmost column of a line. For instance:
@@ -379,6 +379,3 @@ will be located in the bowl, and the lettuce in the fridge.
 '''
 
 Back to xref:io.adoc[] or onwards to xref:sugar.adoc[].
-
-TODO:
-- italics in code examples

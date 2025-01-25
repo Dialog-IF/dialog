@@ -150,9 +150,9 @@ The predicate `(unstyle)` reverts to the default style of the current div or spa
 
 The following special syntax:
 
-[source]
+[source,subs="quotes"]
 ----
-	(status bar $Class) <statement>
+	(status bar $Class) _statement_
 ----
 
 executes the inner statement while redirecting its output to a special location at the top of the screen,
@@ -161,9 +161,9 @@ The statement is usually a block.
 
 The syntax:
 
-[source]
+[source,subs="quotes"]
 ----
-	(inline status bar $Class) <statement>
+	(inline status bar $Class) _statement_
 ----
 
 creates an _inline status area_ within the main flow of text.
@@ -480,9 +480,9 @@ Otherwise, it will be represented by the numerical value 7.
 The Å-machine backend supports a form of hyperlinks, for the purpose of simplifying text entry on mobile devices.
 The syntax is:
 
-[source]
+[source,subs="quotes"]
 ----
-	(link $Target) <statement>
+	(link $Target) _statement_
 ----
 
 The following example creates a piece of text, “clickable”.
@@ -525,9 +525,9 @@ Hyperlinks are always disabled on the Z-machine backend.
 
 The Å-machine backend supports embedded graphics, as well as links to external web sites, using a common mechanism. A _resource_ is defined with the following syntax:
 
-[source]
+[source,subs="quotes"]
 ----
-(define resource <id>) <location>
+(define resource _id_) _location_
 ----
 
 The _id_ is any bound Dialog-value, such as an integer, a dictionary word, an object, or even a list.
@@ -541,9 +541,9 @@ and this is the recommended way to work with _feelies_ and embedded graphics.
 
 When a resource has been defined, it's possible to link to it using the following syntax:
 
-[source]
+[source,subs="quotes"]
 ----
-    (link resource $Id) <statement>
+    (link resource $Id) _statement_
 ----
 
 Here is an example:
@@ -584,9 +584,9 @@ In general, interpreters won't be able to embed every conceivable kind of resour
 When defining a resource, it is possible to add an `alt-text` that can be displayed instead of the resource.
 The alt-text appears at the end of the resource definition, separated from the location by a semicolon:
 
-[source]
+[source,subs="quotes"]
 ----
-(define resource <id>) <location>; <alt-text>
+(define resource _id_) _location_; _alt-text_
 ----
 
 If no alt-text is specified, the filename (i.e. location) is used as a default value.
@@ -660,10 +660,11 @@ This is useful for adding temporary printouts to the code. For instance:
 
 looks like this in the debugger:
 
+[subs="quotes"]
 ```
-Program started. X = $
+*Program started. X = $*
 Hello,
-42
+*42*
 world!
 ```
 
@@ -709,12 +710,12 @@ This section is mainly of concern for library programmers, so story authors may 
 
 Dialog has a special construct for matching player input against in-world object names in a very efficient way:
 
-[source]
+[source,subs="quotes"]
 ----
 	(determine object $Obj)
-		<object generator>
+		_object generator_
 	(from words)
-		<word generator>
+		_word generator_
 	(matching all of $Input)
 ----
 
@@ -763,5 +764,3 @@ xref:dynamic.adoc[].
 TODO:
 
 - tracing link
-- <statement> should be _statement_, etc.
-- bold text in the debugger output snippet

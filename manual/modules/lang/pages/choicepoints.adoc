@@ -402,16 +402,16 @@ The program continues, but $ is unbound again.
 
 Incidentally,
 
-[source]
+[source,subs="quotes"]
 ----
-	(exhaust) <i>statement</i>
+	(exhaust) _statement_
 ----
 
 is exactly equivalent to
 
-[source]
+[source,subs="quotes"]
 ----
-	{ <statement> (fail) (or) }
+	{ _statement_ (fail) (or) }
 ----
 
 where `(fail)` is a built-in predicate that always fails.
@@ -628,5 +628,3 @@ or implicitly by successfully returning from a regular (non-multi) query.
 '''
 Back to xref:varsvalues.adoc[], or onward to TBA.
 
-TODO:
-- `{ <statement> (fail) (or) }` code block should actually show statement in italics

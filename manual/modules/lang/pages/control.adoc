@@ -24,17 +24,17 @@ It is certainly possible to code up a simple if-then-else routine using these co
 But this quickly becomes unreadable as the code grows in complexity.
 Dialog provides traditional `if`, `then`, `elseif`, `else`, and `endif` keywords:
 
-[source]
+[source,subs="quotes"]
 ----
-	(if) <condition> (then)
-		<statements>
-	(elseif) <>other condition> (then)
-		<statements>
-	(elseif) <other condition> (then)
-		<statements>
+	(if) _condition_ (then)
+		_statements_
+	(elseif) __other condition_ (then)
+		_statements_
+	(elseif) _other condition_ (then)
+		_statements_
 	...
 	(else)
-		<statements>
+		_statements_
 	(endif)
 ----
 
@@ -325,13 +325,6 @@ the code for that cutscene can invoke `(stop)` to prevent spending time on takin
 
 '''
 
-
-
-
 Back to xref:choicepoints.adoc[] or onwards to
 xref:io.adoc[].
-
-TODO:
-
-- `<condition>` etc. should be in _italics_
 
