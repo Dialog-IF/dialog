@@ -663,7 +663,7 @@ for instance:
 
 '''
 
-Back to xref:moving.adoc[] or onwards to TBD.
+Back to xref:moving.adoc[] or onwards to xref:stdactions.adoc[].
 
 TODO:
 
