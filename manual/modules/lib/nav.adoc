@@ -2,3 +2,4 @@
 ** xref:intro.adoc[Getting started]
 ** xref:scenery.adoc[Objects and state]
 ** xref:traits.adoc[Traits]
+** xref:items.adoc[Items]

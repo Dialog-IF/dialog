@@ -194,7 +194,7 @@ CHERRY`, and see if the description of the table really changes when it's empty.
 Did you notice that it wasn't possible to pick up the fruit in this game? They
 were presumably eaten directly off the table. Objects that can be picked up are
 called _items_, and we will discuss this trait at length in
-ITEMS.
+xref:items.adoc[Chapter 4].
 But first, we will take a step back and see how the
 various traits provided by the standard library fit together.
 
@@ -550,5 +550,4 @@ Back to xref:scenery.adoc[] or onwards to TBA.
 
 TODO:
 
-* ITEMS link
 * MOVING link

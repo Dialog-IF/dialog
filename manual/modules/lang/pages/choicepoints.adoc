@@ -418,6 +418,7 @@ is exactly equivalent to
 
 where `(fail)` is a built-in predicate that always fails.
 
+[#collect-values]
 == Collecting Values
 
 Computing our way through all the solutions of a query is useful, but sometimes we would like to collect the results of those computations into a list, and then perform some work on the list as a whole. This can be done with the following special syntax:
