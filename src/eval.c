@@ -1309,6 +1309,7 @@ static int eval_builtin(struct eval_state *es, int builtin, value_t o1, value_t 
 	return 0;
 }
 
+/* // This was introduced to debug the nonlinear unification issue and should be no longer needed
 struct opinfosrc {
 	uint8_t		op;
 	uint8_t		refs; // what operands are dest refs
@@ -1430,7 +1431,7 @@ char* opcode_name(uint8_t op){
 		if(tmp_opinfosrc[i].op == op) return tmp_opinfosrc[i].name;
 	}
 	return "(unknown)";
-}
+} */
 
 static int eval_run(struct eval_state *es) {
 	prgpoint_t pp;
@@ -1469,7 +1470,6 @@ static int eval_run(struct eval_state *es) {
 		}
 		ci = &pp.pred->routines[pp.routine].instr[pc];
 		pc++;
-		printf("*** %s %s\n", pp.pred->predname->printed_name, opcode_name(ci->op));
 		switch(ci->op) {
 		case I_ALLOCATE:
 			assert(ci->oper[0].tag == OPER_NUM);
@@ -2444,20 +2444,20 @@ static int eval_run(struct eval_state *es) {
 			break;
 		case I_MAKE_PAIR_VV:
 			v = alloc_heap_pair(es);
-			printf("*** Allocated heap pair\n");
+	//		printf("*** Allocated heap pair\n");
 			if(v.tag == VAL_ERROR) {
 				pred_release(pp.pred);
 				return ESTATUS_ERR_HEAP;
 			}
-			printf("*** Oper 1: %d %d\n", ci->oper[1].tag, ci->oper[1].value);
+	//		printf("*** Oper 1: %d %d\n", ci->oper[1].tag, ci->oper[1].value);
 			es->heap[v.value + 0] = value_of(ci->oper[1], es);
-			printf("*** Oper 1: %d\n", ci->oper[1].tag, ci->oper[1].value, es->heap[v.value+0]);
-			printf("*** Oper 2: %d %d\n", ci->oper[2].tag, ci->oper[2].value);
+	//		printf("*** Oper 1: %d\n", ci->oper[1].tag, ci->oper[1].value, es->heap[v.value+0]);
+	//		printf("*** Oper 2: %d %d\n", ci->oper[2].tag, ci->oper[2].value);
 			es->heap[v.value + 1] = value_of(ci->oper[2], es);
-			printf("*** Oper 2: %d\n", es->heap[v.value+1]);
-			printf("*** Oper 0: %d %d\n", ci->oper[0].tag, ci->oper[0].value);
+	//		printf("*** Oper 2: %d\n", es->heap[v.value+1]);
+	//		printf("*** Oper 0: %d %d\n", ci->oper[0].tag, ci->oper[0].value);
 			set_by_ref(ci->oper[0], v, es);
-			printf("*** Set by ref\n");
+	//		printf("*** Set by ref\n");
 			break;
 		case I_MAKE_VAR:
 			v = eval_makevar(es);
@@ -3064,9 +3064,9 @@ static int eval_run(struct eval_state *es) {
 			}
 			break;
 		case I_UNIFY:
-			printf("*** Unify:\n");
-			printf("*** oper[0] %d %d\n", ci->oper[0].tag, ci->oper[0].value);
-			printf("*** oper[1] %d %d\n", ci->oper[1].tag, ci->oper[1].value);
+	//		printf("*** Unify:\n");
+	//		printf("*** oper[0] %d %d\n", ci->oper[0].tag, ci->oper[0].value);
+	//		printf("*** oper[1] %d %d\n", ci->oper[1].tag, ci->oper[1].value);
 			if(!unify(es, value_of(ci->oper[0], es), value_of(ci->oper[1], es), 0)) {
 				do_fail(es, &pp);
 				pc = 0;
