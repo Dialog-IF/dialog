@@ -1,0 +1,351 @@
+* *** Opening scene ***
+x watson
+x me
+north
+zxcvbn
+watson, north
+hughes, wait
+
+* *** Test parser errors ***
+zxcvbn
+x zxcvbn
+sing zxcvbn
+* *** Escape ***
+x ball
+watson, take ball
+inventory
+push ball
+bite ball
+drop ball
+eat treat
+push chair
+w
+x shelf
+climb shelf
+jump on chair
+jump on shelf
+books
+push books
+down
+down
+push books
+east
+west
+north
+tape
+bite tape
+north
+bite tape
+tape to the north
+north
+* *** Find torch ***
+x torch
+vent
+look in vent
+phone
+look in phone
+look under phone
+newspaper
+search newspaper
+look in vent
+get torch
+turn off torch
+bark
+z
+z
+
+
+* *** Dining Room ***
+w
+cabinet
+evidence
+table
+paperwork
+davis
+* *** Access Garden ***
+get sandwich
+show sandwich
+davis
+z
+get biscuit
+eat biscuit
+z
+z
+get biscuit
+e
+z
+w
+z
+z
+get biscuit
+e
+se
+eat biscuit
+* *** In Garden ***
+s
+pull bin north
+push bin northwest
+push bin south
+push bin south
+look through window
+stand
+1
+x bin
+put squat on stand
+look through squat
+put narrow on stand
+look through narrow
+n
+n
+se
+s
+s
+s
+x chair
+x gloves
+alfred
+ne
+se
+sw
+nw
+nw
+sw
+se
+ne
+xyzzy
+take rose
+go to dining room
+show rose to davis
+* *** Access Cellar ***
+e
+s
+d
+album
+lottie
+ne
+s
+door
+water
+go to dining room
+get torch
+turn it on
+go to pantry
+s
+drop torch
+go to kitchen
+push wheel
+put torch in dumbwaiter
+w
+get recorder
+push play
+e
+put recorder in dumbwaiter
+play
+push wheel
+go to pantry
+s
+* *** In Cellar ***
+smell
+xyzzy
+carrots
+get it
+listen
+xyzzy
+north
+go to dining room
+xyzzy
+give carrots to davis
+* *** Access Attic ***
+s
+up
+nw
+cord
+pull it
+n
+jump
+push stairs
+n
+push mattress south
+push mattress east
+pull cord
+jump
+up
+nw
+s
+u
+* *** In Attic ***
+go to kitchen
+push wheel
+off
+push wheel
+push wheel
+go to attic west
+n
+clutter
+nigel
+get torch
+vents
+jump on victrola
+jump on organ
+e
+open windows
+get on organ
+put torch on organ
+n
+get on victrola
+jump on organ
+jump on clock
+throw torch
+southwest
+jump on clock
+get torch
+open windows
+get in vent
+down
+get in vent
+open vent
+chew carpet
+get in vent
+north
+equipment
+out
+chew carpet
+push carpet
+out
+get poisons
+open door
+out
+go to dining room
+give poisons to davis
+* *** Access Upstairs ***
+e
+se
+get mail
+nw
+put mail on stove
+turn on stove
+w
+get alarm
+jump on table
+z
+z
+jump on table
+get alarm
+s
+up
+drop alarm
+down
+n
+e
+turn on stove
+w
+s
+up
+s
+phillips
+* *** In Upstairs ***
+clothes
+search them
+w
+bed
+look under bed
+truncheon
+emily
+get truncheon
+e
+ne
+turn on sink
+turn on bath
+flush toilet
+drink bath
+mirror
+look behind mirror
+put truncheon behind mirror
+push truncheon
+push mirror
+mirror
+get chest
+sw
+n
+throw chest down
+down
+get chest
+up
+nw
+up
+ne
+push wheel
+push wheel
+put chest in shaft
+go to kitchen
+chest
+get pills
+w
+give pills to davis
+* *** Finale ***
+look
+s
+up
+n
+drapes
+shelves
+open them
+desk
+ledgers
+bark
+close shelves
+s
+down
+n
+e
+record
+w
+s
+up
+n
+push wheel
+push wheel
+push wheel
+hughes
+bite hughes
+undo
+kiss hughes
+undo
+vomit
+undo
+get briefcase
+get briefcase
+jump on desk
+bark
+look
+s
+down
+n
+e
+push wheel
+off
+get recorder
+w
+give recorder to davis
+score
+* *** Metapuzzle secrets ***
+undo
+drop recorder
+find mail
+get mail
+find bath
+turn on bath
+get in bath
+go to reception room
+open door
+find calendulas
+dig calendulas
+down
+down
+get on altar
+bite mail
+drop mail
+find davis
+get recorder
+give recorder to davis
+score
