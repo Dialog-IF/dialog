@@ -141,6 +141,7 @@ is irrelevant, and the compiler will in fact choose among different
 representations based on how the predicate is accessed from various parts of the
 program.
 
+[#globvar]
 == Global variables
 
 _Global variables_ are dynamic predicates with a single parameter. To

@@ -100,7 +100,7 @@ That last rule is equivalent to:
 
 What it means is: `$Obj` is a fruit given that `$Obj` is a berry.
 The asterisk (`*`) indicates a
-xref:lang:choicepoints.adoc#multi-query[multi-query].
+{multi-query}.
 If you haven't gone down the
 rabbit hole of multi-queries yet, just memorize that inheritance definitions
 need to have an asterisk in front of the query in the rule body. The asterisk

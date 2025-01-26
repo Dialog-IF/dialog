@@ -3,3 +3,4 @@
 ** xref:scenery.adoc[Objects and state]
 ** xref:traits.adoc[Traits]
 ** xref:items.adoc[Items]
+** xref:moving.adoc[Moving around]

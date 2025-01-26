@@ -399,7 +399,7 @@ The apple in the fruit basket looks yummy!
 
 
 With a
-xref:lang:choicepoints.adoc#multi-query[multi-query], you can
+{multi-query}, you can
 xref:lang:choicepoints.adoc#backtracking[backtrack]
 over every object that has a particular location:
 

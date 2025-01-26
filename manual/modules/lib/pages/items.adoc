@@ -266,7 +266,7 @@ Thus:
 ----
 
 A more advanced technique is to use a
-xref:lang:choicepoints.adoc#multi-query[multi-query] and a
+{multi-query} and a
 xref:lang:choicepoints.adoc#collect-values[collect statement]
 to print a list of all objects
 currently inside the bowl:
@@ -466,7 +466,7 @@ the trenchcoat first.
 
 But for this to work, the library must be able to invoke `($ goes
 underneath $)` in a
-xref:lang:choicepoints.adoc#multi-query[multi-query], with the
+{multi-query}, with the
 second parameter unbound. Therefore, be aware that if the second parameter is a
 trait, it needs to be prefixed by an asterisk:
 
@@ -506,7 +506,7 @@ ACTIONS:
 
 '''
 
-Back to xref:traits.adoc[] or onwards to TBA.
+Back to xref:traits.adoc[] or onwards to xref:moving.adoc[].
 
 TODO:
 

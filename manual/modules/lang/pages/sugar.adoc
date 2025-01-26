@@ -332,6 +332,7 @@ but with some unique, internally-generated variable name instead of “Obj”.
 
 Nested rule-expressions may only appear in rule heads, never inside rule bodies.
 
+[#slash]
 == Alternatives in rule heads
 
 Dialog provides a shorthand syntax for specifying alternatives in rule heads. A
