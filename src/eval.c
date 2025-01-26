@@ -1309,6 +1309,129 @@ static int eval_builtin(struct eval_state *es, int builtin, value_t o1, value_t 
 	return 0;
 }
 
+struct opinfosrc {
+	uint8_t		op;
+	uint8_t		refs; // what operands are dest refs
+	uint8_t		flags;
+	char		*name;
+} tmp_opinfosrc[N_OPCODES] = {
+	{I_ALLOCATE,		0, 0,					"ALLOCATE"},
+	{I_ASSIGN,		1, 0,					"ASSIGN"},
+	{I_BEGIN_AREA,		0, OPF_SUBOP|OPF_CAN_FAIL,		"BEGIN_AREA"},
+	{I_BEGIN_AREA_OVERRIDE,		0, OPF_SUBOP|OPF_CAN_FAIL,		"BEGIN_AREA_OVERRIDE"},
+	{I_BEGIN_BOX,		0, OPF_SUBOP|OPF_CAN_FAIL,		"BEGIN_BOX"},
+	{I_BEGIN_LINK,		0, 0,					"BEGIN_LINK"},
+	{I_BEGIN_LINK_RES,	0, 0,					"BEGIN_LINK_RES"},
+	{I_BEGIN_LOG,		0, 0,					"BEGIN_LOG"},
+	{I_BEGIN_SELF_LINK,	0, 0,					"BEGIN_SELF_LINK"},
+	{I_BREAKPOINT,		0, OPF_ENDS_ROUTINE,			"BREAKPOINT"},
+	{I_BUILTIN,		0, 0,					"BUILTIN"},
+	{I_CHECK_INDEX,		0, 0,					"CHECK_INDEX"},
+	{I_CHECK_WORDMAP,	0, 0,					"CHECK_WORDMAP"},
+	{I_CLRALL_OFLAG,	0, 0,					"CLRALL_OFLAG"},
+	{I_CLRALL_OVAR,		0, 0,					"CLRALL_OVAR"},
+	{I_COLLECT_BEGIN,	0, OPF_SUBOP,				"COLLECT_BEGIN"},
+	{I_COLLECT_CHECK,	0, OPF_CAN_FAIL,			"COLLECT_CHECK"},
+	{I_COLLECT_END_R,	1, OPF_SUBOP|OPF_CAN_FAIL,		"COLLECT_END_R"},
+	{I_COLLECT_END_V,	0, OPF_SUBOP|OPF_CAN_FAIL,		"COLLECT_END_V"},
+	{I_COLLECT_MATCH_ALL,	0, OPF_CAN_FAIL,			"COLLECT_MATCH_ALL"},
+	{I_COLLECT_PUSH,	0, OPF_SUBOP,				"COLLECT_PUSH"},
+	{I_COMPUTE_R,		4, OPF_CAN_FAIL|OPF_SUBOP,		"COMPUTE_R"},
+	{I_COMPUTE_V,		0, OPF_CAN_FAIL|OPF_SUBOP,		"COMPUTE_V"},
+	{I_CUT_CHOICE,		0, 0,					"CUT_CHOICE"},
+	{I_DEALLOCATE,		0, OPF_SUBOP,				"DEALLOCATE"},
+	{I_EMBED_RES,		0, 0,					"EMBED_RES"},
+	{I_END_AREA,		0, OPF_SUBOP,				"END_AREA"},
+	{I_END_BOX,		0, OPF_SUBOP,				"END_BOX"},
+	{I_END_LINK,		0, 0,					"END_LINK"},
+	{I_END_LINK_RES,	0, 0,					"END_LINK_RES"},
+	{I_END_LOG,		0, 0,					"END_LOG"},
+	{I_END_SELF_LINK,	0, 0,					"END_SELF_LINK"},
+	{I_FIRST_CHILD,		2, OPF_CAN_FAIL,			"FIRST_CHILD"},
+	{I_FIRST_OFLAG,		2, OPF_CAN_FAIL,			"FIRST_OFLAG"},
+	{I_FOR_WORDS,		0, OPF_SUBOP,				"FOR_WORDS"},
+	{I_GET_GVAR_R,		2, OPF_CAN_FAIL,			"GET_GVAR_R"},
+	{I_GET_GVAR_V,		0, OPF_CAN_FAIL,			"GET_GVAR_V"},
+	{I_GET_INPUT,		0, OPF_CAN_FAIL|OPF_ENDS_ROUTINE,	"GET_INPUT"},
+	{I_GET_KEY,		0, OPF_CAN_FAIL|OPF_ENDS_ROUTINE,	"GET_KEY"},
+	{I_GET_OVAR_R,		4, OPF_CAN_FAIL,			"GET_OVAR_R"},
+	{I_GET_OVAR_V,		0, OPF_CAN_FAIL,			"GET_OVAR_V"},
+	{I_GET_PAIR_RR,		6, OPF_CAN_FAIL,			"GET_PAIR_RR"},
+	{I_GET_PAIR_RV,		2, OPF_CAN_FAIL,			"GET_PAIR_RV"},
+	{I_GET_PAIR_VR,		4, OPF_CAN_FAIL,			"GET_PAIR_VR"},
+	{I_GET_PAIR_VV,		0, OPF_CAN_FAIL,			"GET_PAIR_VV"},
+	{I_GET_RAW_INPUT,	0, OPF_CAN_FAIL|OPF_ENDS_ROUTINE,	"GET_RAW_INPUT"},
+	{I_IF_BOUND,		0, OPF_BRANCH,				"IF_BOUND"},
+	{I_IF_CAN_EMBED,	0, OPF_BRANCH,				"IF_CAN_EMBED"},
+	{I_IF_GREATER,		0, OPF_BRANCH,				"IF_GREATER"},
+	{I_IF_HAVE_LINK,	0, OPF_BRANCH,				"IF_HAVE_LINK"},
+	{I_IF_HAVE_UNDO,	0, OPF_BRANCH,				"IF_HAVE_UNDO"},
+	{I_IF_HAVE_QUIT,	0, OPF_BRANCH,				"IF_HAVE_QUIT"},
+	{I_IF_HAVE_STATUS,	0, OPF_BRANCH,				"IF_HAVE_STATUS"},
+	{I_IF_MATCH,		0, OPF_BRANCH,				"IF_MATCH"},
+	{I_IF_NIL,		0, OPF_BRANCH,				"IF_NIL"},
+	{I_IF_NUM,		0, OPF_BRANCH,				"IF_NUM"},
+	{I_IF_OBJ,		0, OPF_BRANCH,				"IF_OBJ"},
+	{I_IF_PAIR,		0, OPF_BRANCH,				"IF_PAIR"},
+	{I_IF_UNIFY,		0, OPF_BRANCH,				"IF_UNIFY"},
+	{I_IF_WORD,		0, OPF_BRANCH,				"IF_WORD"},
+	{I_IF_UNKNOWN_WORD,	0, OPF_BRANCH,				"IF_UNKNOWN_WORD"},
+	{I_IF_GFLAG,		0, OPF_BRANCH,				"IF_GFLAG"},
+	{I_IF_OFLAG,		0, OPF_BRANCH,				"IF_OFLAG"},
+	{I_IF_GVAR_EQ,		0, OPF_BRANCH,				"IF_GVAR_EQ"},
+	{I_IF_OVAR_EQ,		0, OPF_BRANCH,				"IF_OVAR_EQ"},
+	{I_INVOKE_MULTI,	0, OPF_ENDS_ROUTINE,			"INVOKE_MULTI"},
+	{I_INVOKE_ONCE,		0, OPF_ENDS_ROUTINE,			"INVOKE_ONCE"},
+	{I_INVOKE_TAIL_MULTI,	0, OPF_ENDS_ROUTINE,			"INVOKE_TAIL_MULTI"},
+	{I_INVOKE_TAIL_ONCE,	0, OPF_SUBOP|OPF_ENDS_ROUTINE,		"INVOKE_TAIL_ONCE"},
+	{I_JOIN_WORDS,		2, OPF_CAN_FAIL,			"JOIN_WORDS"},
+	{I_JUMP,		0, OPF_ENDS_ROUTINE,			"JUMP"},
+	{I_MAKE_PAIR_RR,	7, 0,					"MAKE_PAIR_RR"},
+	{I_MAKE_PAIR_RV,	3, 0,					"MAKE_PAIR_RV"},
+	{I_MAKE_PAIR_VR,	5, 0,					"MAKE_PAIR_VR"},
+	{I_MAKE_PAIR_VV,	1, 0,					"MAKE_PAIR_VV"},
+	{I_MAKE_VAR,		1, 0,					"MAKE_VAR"},
+	{I_NEXT_CHILD_PUSH,	0, 0,					"NEXT_CHILD_PUSH"},
+	{I_NEXT_OBJ_PUSH,	0, 0,					"NEXT_OBJ_PUSH"},
+	{I_NEXT_OFLAG_PUSH,	0, 0,					"NEXT_OFLAG_PUSH"},
+	{I_NOP,			0, 0,					"NOP"},
+	{I_NOP_DEBUG,		0, 0,					"NOP_DEBUG"},
+	{I_POP_CHOICE,		0, 0,					"POP_CHOICE"},
+	{I_POP_STOP,		0, 0,					"POP_STOP"},
+	{I_PREPARE_INDEX,	0, 0,					"PREPARE_INDEX"},
+	{I_PRINT_VAL,		0, 0,					"PRINT_VAL"},
+	{I_PRINT_WORDS,		0, OPF_SUBOP,				"PRINT_WORDS"},
+	{I_PROCEED,		0, OPF_SUBOP|OPF_ENDS_ROUTINE,		"PROCEED"},
+	{I_PUSH_CHOICE,		0, 0,					"PUSH_CHOICE"},
+	{I_PUSH_STOP,		0, 0,					"PUSH_STOP"},
+	{I_QUIT,		0, OPF_ENDS_ROUTINE,			"QUIT"},
+	{I_RESTART,		0, OPF_ENDS_ROUTINE,			"RESTART"},
+	{I_RESTORE,		0, 0,					"RESTORE"},
+	{I_RESTORE_CHOICE,	0, 0,					"RESTORE_CHOICE"},
+	{I_SAVE_CHOICE,		1, OPF_SUBOP,				"SAVE_CHOICE"},
+	{I_SAVE,		0, OPF_CAN_FAIL|OPF_ENDS_ROUTINE,	"SAVE"},
+	{I_SAVE_UNDO,		0, OPF_CAN_FAIL|OPF_ENDS_ROUTINE,	"SAVE_UNDO"},
+	{I_SELECT,		0, OPF_SUBOP,				"SELECT"},
+	{I_SET_CONT,		0, 0,					"SET_CONT"},
+	{I_SET_GFLAG,		0, OPF_SUBOP,				"SET_GFLAG"},
+	{I_SET_GVAR,		0, 0,					"SET_GVAR"},
+	{I_SET_OFLAG,		0, OPF_SUBOP,				"SET_OFLAG"},
+	{I_SET_OVAR,		0, 0,					"SET_OVAR"},
+	{I_SPLIT_LIST,		0, 0,					"SPLIT_LIST"},
+	{I_SPLIT_WORD,		2, OPF_CAN_FAIL,			"SPLIT_WORD"},
+	{I_STOP,		0, OPF_ENDS_ROUTINE,			"STOP"},
+	{I_TRACEPOINT,		0, OPF_SUBOP,				"TRACEPOINT"},
+	{I_TRANSCRIPT,		0, OPF_CAN_FAIL,			"TRANSCRIPT"},
+	{I_UNDO,		0, OPF_CAN_FAIL,			"UNDO"},
+	{I_UNIFY,		0, OPF_CAN_FAIL,			"UNIFY"},
+};
+char* opcode_name(uint8_t op){
+	for(uint8_t i=0; i<N_OPCODES; i++){
+		if(tmp_opinfosrc[i].op == op) return tmp_opinfosrc[i].name;
+	}
+	return "(unknown)";
+}
+
 static int eval_run(struct eval_state *es) {
 	prgpoint_t pp;
 	int i, j, n, res;
@@ -1346,7 +1469,7 @@ static int eval_run(struct eval_state *es) {
 		}
 		ci = &pp.pred->routines[pp.routine].instr[pc];
 		pc++;
-		//printf("%s %d\n", pp.pred->predname->printed_name, ci->op);
+		printf("*** %s %s\n", pp.pred->predname->printed_name, opcode_name(ci->op));
 		switch(ci->op) {
 		case I_ALLOCATE:
 			assert(ci->oper[0].tag == OPER_NUM);
@@ -2321,13 +2444,20 @@ static int eval_run(struct eval_state *es) {
 			break;
 		case I_MAKE_PAIR_VV:
 			v = alloc_heap_pair(es);
+			printf("*** Allocated heap pair\n");
 			if(v.tag == VAL_ERROR) {
 				pred_release(pp.pred);
 				return ESTATUS_ERR_HEAP;
 			}
+			printf("*** Oper 1: %d %d\n", ci->oper[1].tag, ci->oper[1].value);
 			es->heap[v.value + 0] = value_of(ci->oper[1], es);
+			printf("*** Oper 1: %d\n", ci->oper[1].tag, ci->oper[1].value, es->heap[v.value+0]);
+			printf("*** Oper 2: %d %d\n", ci->oper[2].tag, ci->oper[2].value);
 			es->heap[v.value + 1] = value_of(ci->oper[2], es);
+			printf("*** Oper 2: %d\n", es->heap[v.value+1]);
+			printf("*** Oper 0: %d %d\n", ci->oper[0].tag, ci->oper[0].value);
 			set_by_ref(ci->oper[0], v, es);
+			printf("*** Set by ref\n");
 			break;
 		case I_MAKE_VAR:
 			v = eval_makevar(es);
@@ -2934,6 +3064,9 @@ static int eval_run(struct eval_state *es) {
 			}
 			break;
 		case I_UNIFY:
+			printf("*** Unify:\n");
+			printf("*** oper[0] %d %d\n", ci->oper[0].tag, ci->oper[0].value);
+			printf("*** oper[1] %d %d\n", ci->oper[1].tag, ci->oper[1].value);
 			if(!unify(es, value_of(ci->oper[0], es), value_of(ci->oper[1], es), 0)) {
 				do_fail(es, &pp);
 				pc = 0;

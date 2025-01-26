@@ -627,7 +627,8 @@ static void comp_value_into(struct clause *cl, struct astnode *an, value_t dest,
 			ci->oper[0] = dest;
 		}
 	} else if(an->kind == AN_PAIR) {
-		for(i = 0; i < 2; i++) {
+		for(uint8_t j = 2; j > 0; j--) {
+			i = j - 1;
 			if(an->children[i]->kind == AN_VARIABLE) {
 				if(an->children[i]->word->name[0]) {
 					vnum = findvar(cl, an->children[i]->word);
