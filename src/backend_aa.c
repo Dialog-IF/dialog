@@ -1235,6 +1235,7 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				ai->oper[1] = encode_dest(ci->oper[0], prg, 0);
 				break;
 			case I_BEGIN_AREA:
+			case I_BEGIN_AREA_OVERRIDE:
 				assert(ci->oper[0].tag == OPER_BOX);
 				if(ci->subop == AREA_TOP) {
 					ai = add_instr(AA_ENTER_STATUS_0);

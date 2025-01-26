@@ -38,6 +38,7 @@ struct opinfosrc {
 	{I_ALLOCATE,		0, 0,					"ALLOCATE"},
 	{I_ASSIGN,		1, 0,					"ASSIGN"},
 	{I_BEGIN_AREA,		0, OPF_SUBOP|OPF_CAN_FAIL,		"BEGIN_AREA"},
+	{I_BEGIN_AREA_OVERRIDE,		0, OPF_SUBOP|OPF_CAN_FAIL,		"BEGIN_AREA_OVERRIDE"},
 	{I_BEGIN_BOX,		0, OPF_SUBOP|OPF_CAN_FAIL,		"BEGIN_BOX"},
 	{I_BEGIN_LINK,		0, 0,					"BEGIN_LINK"},
 	{I_BEGIN_LINK_RES,	0, 0,					"BEGIN_LINK_RES"},
@@ -2191,6 +2192,7 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 			ci = add_instr(I_POP_STOP);
 			break;
 		case AN_STATUSAREA:
+		case AN_STATUSAREA_OVERRIDE:
 		case AN_OUTPUTBOX:
 			comp_ensure_seen_if_nonlocal(cl, an, seen);
 			memset(known_args, 0, MAXPARAM * sizeof(struct astnode *));
@@ -2216,8 +2218,13 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 				prg->errorflag = 1;
 				box = -1;
 			}
-
-			ci = add_instr((an->kind == AN_STATUSAREA)? I_BEGIN_AREA : I_BEGIN_BOX);
+			
+			if(an->kind == AN_STATUSAREA_OVERRIDE) { // This one gets a separate instruction, since it takes an additional parameter
+				ci = add_instr(I_BEGIN_AREA_OVERRIDE);
+				ci->oper[1] = comp_value(cl, an->children[2], seen, known_args); // The extra argument isn't necessarily a literal, just a value, so compile it however is best
+			} else {
+				ci = add_instr((an->kind == AN_STATUSAREA)? I_BEGIN_AREA : I_BEGIN_BOX);
+			}
 			ci->subop = an->subkind;
 			ci->oper[0] = (value_t) {OPER_BOX, box};
 
@@ -2252,7 +2259,7 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 				ci = add_instr(I_CUT_CHOICE);
 				ci = add_instr(I_POP_STOP);
 			}
-			ci = add_instr((an->kind == AN_STATUSAREA)? I_END_AREA : I_END_BOX);
+			ci = add_instr((an->kind == AN_STATUSAREA || an->kind == AN_STATUSAREA_OVERRIDE)? I_END_AREA : I_END_BOX);
 			ci->subop = an->subkind;
 			ci->oper[0] = (value_t) {OPER_BOX, box};
 			ci = add_instr(I_JUMP);

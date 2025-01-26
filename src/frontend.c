@@ -62,6 +62,7 @@ struct specialspec {
 	{SP_SELECT,		0,				1,	{"select"}},
 	{SP_SPAN,		0,				2,	{"span", 0}},
 	{SP_STATUSBAR,		0,				3,	{"status", "bar", 0}},
+	{SP_STATUSBAR_OVERRIDE,	0,				6,	{"status", "bar", 0, "with", "height", 0}},
 	{SP_INLINE_STATUSBAR,	0,				4,	{"inline", "status", "bar", 0}},
 	{SP_STOPPABLE,		0,				1,	{"stoppable"}},
 	{SP_STOPPING,		0,				1,	{"stopping"}},

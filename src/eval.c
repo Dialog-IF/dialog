@@ -1368,6 +1368,7 @@ static int eval_run(struct eval_state *es) {
 			set_by_ref(ci->oper[0], value_of(ci->oper[1], es), es);
 			break;
 		case I_BEGIN_AREA:
+		case I_BEGIN_AREA_OVERRIDE:
 			assert(ci->oper[0].tag == OPER_BOX);
 			if(!es->forwords) {
 				if(es->divsp == EVAL_MAXDIV) {

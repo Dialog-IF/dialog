@@ -3589,6 +3589,23 @@ struct rtroutine rtroutines[] = {
 		}
 	},
 	{
+		R_BEGIN_STATUS_OVERRIDE,
+		2,
+			// 0 (param): Native height, to pass to R_BEGIN_STATUS if dereferencing fails
+			// 1 (param): Overridden height, to use if possible
+		(struct zinstr []) {
+			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_LOCAL+1)}, REG_LOCAL+1}, // Dereference the value
+			{Z_JL, {VALUE(REG_LOCAL+1), VALUE(REG_4000)}, 0, 1}, // Numbers are in the range $4000-$7FFF, which means we can find them with a signed comparison against $4000
+			{Z_SUB, {VALUE(REG_LOCAL+1), VALUE(REG_4000)}, REG_LOCAL+0}, // If it's a number, subtract $4000 from it to get the actual value, and use that
+			
+			{OP_LABEL(1)},
+			{Z_CALL2N, {ROUTINE(R_BEGIN_STATUS), VALUE(REG_LOCAL+0)}}, // Otherwise, use the native value passed in
+			{Z_RFALSE},
+			
+			{Z_END},
+		}
+	},
+	{
 		R_END_STATUS,
 		0,
 		(struct zinstr []) {
