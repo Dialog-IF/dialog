@@ -1,0 +1,673 @@
+= Chapter 6: Actions
+
+[#actionsintro]
+== Introduction to actions
+
+_Actions_ are data structures that represent the player's intentions. They are
+constructed by a part of the Dialog standard library called the _parser_, in
+response to commands typed by the player. Once an action has been constructed by
+the parser, it is passed on to other parts of the program to be processed.
+Actions have much in common with events in other programming languages.
+
+In Dialog, actions are represented by lists of dictionary words and objects.
+Here is an example of an action:
+
+[source]
+----
+	[give #apple to #eve]
+----
+
+Actions are thus a kind of stylized player input. The parser might construct the
+above action if the player types GIVE APPLE TO EVE,
+GIVE RED FRUIT TO HER, or even OFFER THE LADY
+EVERYTHING, depending on circumstances.
+
+Verbs and prepositions are represented by dictionary words in the action. For
+nearly all of the standard actions, there is at least one form of recognized
+player input that uses the same words in the same order.
+
+There is a subtlety here: Actions are lists of dictionary words and objects, but
+raw player input, as returned by
+`xref:lang:io.adoc#input[(get input $)]`, is also
+represented by a list of dictionary words. Thus, the parser might encounter the
+raw player input `[inventory]`, and convert it to the action
+`[inventory]`, which happens to be the exact same Dialog value.
+But the player input could equally well have been `[i]` or
+`[take inventory]`, and the resulting action would still be
+`[inventory]`.
+
+In
+UNDERSTANDING[Chapter10],
+we will see how the parser produces
+actions in response to player input. For now, we will take the output of that
+process, i.e. the action data structures, as our starting point.
+
+== Intercepting actions
+
+To get started, let's consider one of the standard actions:
+`[open $]`. By default, this action will fail for objects that
+are out of reach, non-openable, locked, or already open. Let's add a new rule to
+`prevent` opening a particular box while its owner is in the same room as
+the player:
+
+[source]
+----
+#box
+(name *)	box
+(openable *)
+
+(prevent [open *])
+	(current room $Room)		%% Get the current room.
+	(#pandora is in room $Room)	%% Check if Pandora is here with us.
+	You don't dare do that while Pandora is watching.
+----
+
+But suppose Pandora isn't here, and the box is within reach, closed, and
+unlocked. Now the open action will go through, and as a result, `(#box is
+open)` is set, and a stock message is printed: “You open the box.”
+
+We can change this stock message in one of two ways. The first and most
+generally applicable technique is to define a `perform` rule, overriding
+the default behaviour of the action:
+
+[source]
+----
+(perform [open #box])
+	Shooting guilty glances in every direction, you carefully approach
+	the box, peek under its lid, and slam it down again. The box was empty.
+----
+
+But this also overrides the default side-effect of setting the `($ is
+open)` flag of the object, so with the above code, the box remains closed after
+the action has been carried out. The second technique allows us to override only
+the printed message, while retaining the side-effects. All predefined actions
+with side-effects (there are eighteen of them, and they are known as the _core
+actions_) call out to their own individual _narration predicates_ that we can
+override:
+
+[source]
+----
+(narrate opening #box)
+	Shooting guilty glances in every direction, you carefully approach
+	the box, and lift its lid. It seems to be empty.
+----
+
+Sometimes it makes more sense to keep the action processing just the way it is,
+and tack on new behaviour at the end:
+
+[source]
+----
+(after [open #box])
+	(par)
+	An inexplicable sense of dread comes over you.
+----
+
+Now, let's consider going between rooms. As we learned in the chapter on
+xref:moving.adoc[moving around], the predicate `(from $ go $ to$)`
+defines obvious exits. This predicate is consulted by the default rules for
+movement-related actions, but we can override those rules in order to implement
+non-obvious exits, to block obvious exits, or to trigger cutscenes. In most
+situations, the action we want to intercept is `[leave $Room
+$Dir]`: the action for leaving a room in a given direction.
+
+[source]
+----
+#shed
+(room *)
+(your *)
+(name *)	shed
+(look *)	You are in your shed. The exit is east.
+
+(from * go #east to #outdoors)
+(from * go #out to #east)
+
+(prevent [leave * #east])
+	But the world is such a wicked place.
+
+#chair
+(name *)	wooden chair
+(on-seat *)
+(* is #in #shed)
+
+(instead of [leave #shed #up])
+	(try [climb *])
+----
+
+In that example, the only obvious exit is to the east, but it doesn't work.
+Going up, on the other hand, is reinterpreted as a different action:
+`[climb #chair]`.
+
+Now that we've seen how to override the default behaviour of some of the
+standard actions, it's time to look under the hood and see the actual machinery
+that makes this work.
+
+[#actionprocess]
+== How actions are processed
+
+Once the parser has understood a command typed by the player, and encoded it as
+a series of actions, each action is tried in turn. Trying an action involves
+several predicates, as illustrated by the following chart:
+
+image:actionprocessing.png[actionprocessing]
+
+Everything starts with `(try $)`, which is a predicate provided by the
+standard library. The parameter is an action, and `try` makes queries to
+`(refuse $)`, `*(before $)`, and `(instead of $)`,
+passing the action along as a parameter. Briefly, the purpose of `refuse`
+is to ensure that every object mentioned in the action is within reach of the
+player character, and the purpose of `before` is to automatically carry
+out certain mundane actions for the player, such as opening doors before going
+through them. Refuse is invoked twice, just to make sure that `before`
+didn't mess things up.
+
+`(instead of$)` is responsible for looking at an action in detail,
+determining whether its particular prerequisites are met, and actually carrying
+it out. The default implementation of `instead of` delegates these
+responsibilities to `(prevent$)`, `(perform$)`, and
+`*(after$)`, again queried with the action as parameter. Finally,
+many of the standard `(perform$)` rules make queries to action-specific
+predicates such as `(descr$)`. But at this point, the parameters are
+usually objects.
+
+Together, `refuse`, `before`, `instead of`,
+`prevent`, `perform`, and `after` are known as the six
+_action-handling predicates_. Stories typically define rules for them in order
+to extend, adjust, or override the default behaviour of the standard library.
+Each action-handling predicate can be intercepted to serve a variety of
+purposes. Before we dive into that, however, it is necessary to introduce two
+important mechanisms: _Stopping the action_, and _ticking_ (advancing time).
+
+[#tickstop]
+
+== Stopping and ticking
+
+=== (stop)
+
+The parser may generate several actions in response to a single line of player
+input. These are tried in turn inside a
+xref:lang:control.adoc#stoppable[stoppable environment], and therefore every action-handling rule has the power to stop
+subsequent actions using the `(stop)` built-in predicate. It is generally
+a good idea to invoke `(stop)` when we have reason to believe that the
+player has been surprised: When actions fail, or when dramatic cutscenes have
+played out.
+
+=== (tick)
+
+After an action has been tried, the standard library will generally advance time
+in the game world, by querying a predicate called `(tick)`. The default
+implementation of `(tick)` makes
+xref:lang:choicepoints.adoc#multi-query[multi-queries]
+to the story-supplied
+predicates `(on every tick)`, `(on every tick in $Room)`,
+`(early on every tick)`, and `(late on every tick)`. These can be
+used to print flavour text, move non-player characters, implement daemons and
+timers of various kinds, or anything else the story author might think of.
+
+Time is not advanced after _commands_, i.e. actions such as
+`[save]` and `[transcript off]` that take place
+outside the game world.
+
+=== (tick) (stop)
+
+When an action-handling predicate decides to `(stop)` everything, this
+also prevents the usual ticking from being carried out. Therefore, a common
+design pattern in action handlers is `(tick) (stop)`, which
+causes time to pass as a result of the present action, but stops any subsequent
+actions.
+
+[#preventperform]
+
+== Instead of: Prevent, perform, after
+
+Now we return to the six action-handling predicates. We will not consider them
+in chronological order; instead we will start with `insteadof`,
+`prevent`, `perform`, and `after` as these are of most
+interest to story authors.
+
+Let us begin by looking at the catch-all rule definition for [.code]#(instead
+of$)#, as implemented in the standard library. There are more specific rule
+definitions preceding it in the library, but this is the base case:
+
+[source]
+----
+(instead of $Action)
+	~{ (prevent $Action) (tick) (stop) }
+	(perform $Action)
+	(exhaust) *(after $Action)
+----
+
+We see that if prevent succeeds, the action fails (after advancing time). Thus,
+a story author can easily prevent a particular action from succeeding:
+
+[source]
+----
+(prevent [eat #apple])
+	You're not hungry.
+----
+
+Since the story file appears before the standard library in source-code order,
+its rules take precedence: There could be other prevent-rules in the library,
+but they will have no influence on eating the apple.
+
+Here's a variant where the rule is conditioned by a global flag:
+
+[source]
+----
+(prevent [eat #apple])
+	~(the player is hungry)
+	You're not hungry.
+----
+
+If no prevent-rule succeeds, control is passed to the `(perform $)`
+predicate. This is where the action is carried out, as per the following
+example:
+
+[source]
+----
+(perform [read #welcomesign])
+	The sign says “WELCOME”.
+
+(perform [read #loiteringplaque])
+	The plaque says “NO LOITERING”.
+----
+
+There are two important differences between `prevent` and
+`perform`: The first is that the sense of `prevent` is negated,
+meaning that the action fails when the predicate succeeds. The second is that
+`(stop)` is invoked automatically when a prevent-rule succeeds. Thus, the
+above example (with a bit of surrounding context) could lead to the following
+exchange:
+
+```
+> READ ALL SIGNS
+Trying to read the large sign: The sign says “WELCOME”.
+
+Trying to read the small brass plaque: The plaque says “NO LOITERING”.
+```
+
+But the standard library contains a generic prevent-rule that causes
+`[read $]` to fail when the player is in a dark location.
+Prevent-rules have precedence over perform-rules (this follows from the
+implementation of `(instead of $)` that we saw earlier), so if the player
+attempts the same command in darkness, the process grinds to a halt already
+after the first failed attempt:
+
+```
+> READ ALL SIGNS
+Trying to read the large sign: It is too dark to read.
+```
+
+Recall that prevent-rules defined by the story take precedence over
+prevent-rules defined by the standard library. Sometimes this is not desirable.
+For instance, consider the following story-supplied rule:
+
+[source]
+----
+(prevent [eat $])
+	~(the player is hungry)
+	You're not hungry.
+----
+
+Now, if the player attempts to eat a kerosene lamp, the game might refuse with a
+message about the player not being hungry. It would be more natural, in this
+case, to complain about the object not being edible, which is handled by a rule
+in the standard library. To get around this problem, we may wish to intercept
+perform instead of prevent:
+
+[source]
+----
+(perform [eat $])
+	~(the player is hungry)
+	You're not hungry.
+	(tick) (stop) %% These are our responsibility now.
+----
+
+Likewise, a story might contain situations where the prevent-perform dichotomy
+breaks down, and it doesn't make sense to check for all the unsuccessful cases
+before moving on to the successful cases. An alternative approach is to combine
+everything into a large
+xref:lang:control.adoc#if[if/elseif-complex] in a
+`perform` rule. As long as the unsuccessful branches end with
+`(tick) (stop)`, that's a perfectly valid and useful approach
+in story code. In library code, having separate prevent and perform stages is
+preferable, since that structure is easier to adapt and extend from the outside.
+
+After `(perform $)` succeeds, the library makes a
+{multi-query} to `(after $)`. This
+allows the story author to schedule events, such as cutscenes or reactions from
+non-player characters, after specific actions. Because of the multi-query, every
+possible branch of the `after` rule is exhausted, which means that
+several such rules can be attached to any given action.
+
+The library never does anything in the `(after $)` stage—it's reserved
+for the story author.
+
+Be aware that some actions call out to other actions, using `(try $)`, as
+part of their default `perform` rule. For instance, `[greet
+$]` will fall back on `[talk to $]` in this way. As a
+consequence, the `after` rules of the inner action (talk to) are carried
+out before the `after` rules of the outer action (greet).
+
+[#narrate]
+== Narration predicates
+
+We have seen how to override the `perform` rule of a standard library
+action, in order to do something else entirely. But what if you wish to retain
+the default behaviour of an action, such as taking an object, and merely add
+some flavour to the message that is printed? As we will see in the chapter on
+STDACTIONS[Standard actions],
+the library defines eighteen _core actions_ that are capable of modifying the game world. Each of these actions has
+a `perform` rule that calls out to a specific _narration predicate_, that
+you can intercept. Thus, for instance, the following saves you the trouble of
+updating the object tree to reflect the new location of the apple:
+
+[source]
+----
+(narrate taking #apple)
+	(#apple is pristine)
+	You pluck the ripe fruit from the tree.
+----
+
+Likewise, some of the standard actions for exploring the game world call out to
+action-specific predicates, partly to save typing on the part of the story
+author, and partly to perform extra work before or afterwards:
+
+[source]
+----
+(perform [examine #box])
+	It's a small, wooden box.
+	%% This works, but the rule head is cumbersome to type. It also
+	%% inhibits the default behaviour of invoking '(appearance $ $ $)' for
+	%% items inside the box.
+
+(descr #box)
+	It's a small, wooden box.
+	%% This gets queried by the default perform-rule for examine.
+----
+
+[#diversion]
+== Diversion
+
+Quite often, the action as reported by the parser could be understood as a
+roundabout way of expressing a different action. Thus, climbing a staircase in a
+particular location might be a natural way for the player to express a desire to
+`[go #up]`. Certainly, it should not be interpreted as a request
+to place the player character on top of the staircase object. A well-implemented
+story will handle these cases transparently, by transforming what the player
+wrote into what the player intended. This is called _diverting_ the action, and
+it is achieved by intercepting the `(instead of $)` rule, and querying
+`(try $)` with the desired action. This circumvents the normal
+prevent-checks, which is good: After all, we don't want the standard library to
+complain about the staircase not being an actor supporter.
+
+[source]
+----
+(instead of [climb #staircase])
+	(current room #bottomOfStairs)
+	(try [go #up])
+
+(instead of [climb #staircase])
+	(current room #topOfStairs)
+	(try [go #down])
+----
+
+There is a subtlety here, related to how time is advanced in the game world: The
+general rule is that code that queries `(try $)` is responsible for also
+calling `(tick)` afterwards. But when we divert to a different action,
+we're already inside an action handler, so we trust that whatever code queried
+us, is eventually going to query `(tick)` as well.
+
+Stories may invoke `(try $)` directly to inject actions into the
+gameplay, e.g. as part of a cutscene. This is typically done at the end of a
+cutscene, followed by`(tick) (stop)`.
+
+[#refusebefore]
+== Refuse and before
+
+Now let's return to the two remaining action-handling predicates:
+`refuse` and `before`. Consider this an advanced topic: Most of
+the time, story authors won't need to deal with these predicates directly.
+
+To understand how they fit into the picture, we'll first take a look at the rule
+definition for `(try $)`, as it is given in the standard library:
+
+[source]
+----
+(try $Action)
+	~{ (refuse $Action) (stop) }
+	(exhaust) *(before $Action)
+	~{ (refuse $Action) (stop) }
+	(instead of $Action)
+(try $)
+	%% Succeed anyway.
+----
+
+If `refuse` succeeds, all subsequent action handling stops. Time is not
+advanced. The default implementation of `refuse` checks that all objects
+mentioned in the action (except directions and relations) are within reach of
+the current player character. If they're not, `refuse` prints a message
+about it and succeeds, just like a `prevent` rule. The reason for having
+two different rules (refuse and prevent), is that it's generally a good idea to
+check for reachability first. The action-specific prevent-rules are then free to
+phrase their failure messages in a way that presupposes reachability (e.g. “the
+door is locked”, which you wouldn't know if you couldn't reach it).
+
+Some actions do not require every object to be within reach. The most common way
+to modify `refuse` is to add a
+xref:lang:control.adoc#negation[negated rule definition].
+So, for instance, examining does not require reachability:
+
+[source]
+----
+~(refuse [examine $]) %% Don't refuse.
+----
+
+Another option is to require reachability for one object, but not the other.
+Here's a snippet from the standard library:
+
+[source]
+----
+(refuse [throw $Obj at $Target])
+	(just)
+	{
+		(when $Obj is not here)
+		(or) (when $Target is not here)
+		(or) (when $Obj is out of reach)
+	}
+----
+
+The above code makes queries to _when-predicates_; these check for common error
+conditions and print appropriate messages. The full set of when-predicates is
+documented in
+MISCFEAT#commoncomplaints[Chapter11].
+
+Also note the xref:lang:choicepoints.adoc#just[`(just)` keyword], which turns
+off the default `refuse`-rule that is defined later in the
+source code.
+
+When a story overrides `refuse`, the parameter is often bound to a
+specific object. So, for instance, a rain cloud in the sky might be out of the
+player character's reach, But `RAIN` would be understood as referring
+to the cloud. In order to allow `DRINK RAIN`, we might want to make
+an exception:
+
+[source]
+----
+~(refuse [drink #cloud])
+
+(instead of [drink #cloud])
+	You catch a raindrop on your tongue.
+----
+
+Note that we also decided to bypass the normal prevent-checks by intercepting
+`instead of` rather than `perform`. Another option would be to
+declare the cloud to be `(potable $)`.
+
+Finally, `before`-rules smoothen gameplay by taking care of
+certain well-known prerequisite actions. Thus, if the player attempts to go
+through a closed door, the game will automatically attempt to open it first. And
+before that, if the door is locked and the player holds the right key, an
+attempt is made to unlock the door. `try` exhausts every branch of the
+`*(before$)`
+{multi-query}, so
+there can be several before-rules for any given action.
+
+By convention, before-rules should use `(first try$)` to launch the
+prerequisite actions:
+
+[source]
+----
+(before [drink #bottle])
+	(#bottle is closed)
+	(first try [open #bottle])
+----
+
+`(first try $)` prints the familiar “(first attempting
+to ..._)” message, before querying `(try $)`, and then
+`(tick)`. Ticking is important here, because e.g. opening a door and
+entering the door should consume two units of time, even when the opening action
+is triggered automatically by the game.
+
+[#groupactions]
+== Group actions
+
+This is an advanced topic. Feel free to skip this section and return to it
+later.
+
+When the player types something like `EAT OYSTER, HAM AND CHEESE`,
+the usual outcome is that three separate actions are tried in sequence, i.e.
+`[eat #oyster]`, `[eat #ham]`, and `[eat #cheese]`.
+
+It is possible to instruct the library to combine some of these actions into
+_group actions_. For instance, we could declare that ham and cheese, in that
+order, should form a group:
+
+[source]
+----
+(action [eat $] may group #ham with #cheese)
+----
+
+The first action, `[eat #oyster]`, is still passed through the
+usual action-handling predicates, but the remaining two are combined into
+`[eat [#ham #cheese]]` which gets handed off to a set of
+_group-action handling predicates_:
+
+(group-refuse $GroupAction)::
+
+By default, the group action is refused if `(refuse $)` succeeds for any
+of the constituent actions, i.e. `(refuse [eat #ham])` or
+`(refuse [eat #cheese])`.
+
+(group-before $GroupAction)::
+
+By default, this predicate invokes `*(before$)` for each constituent
+action.
+
+(group-instead of $GroupAction)::
+
+By default, this predicate invokes `(group-prevent $)`,
+`(group-perform $)`, and `(group-after $)`, in the same way that
+the default rule for `(instead of $)` invokes `(prevent $)`,
+`(perform $)`, and `(after $)`.
+
+(group-prevent $GroupAction)::
+
+By default, the group action is prevented if `(prevent $)` succeeds for
+any of the constituent actions.
+
+(group-perform $GroupAction)::
+
+By default, the group action is performed by querying `(perform $)` for
+each constituent action in turn. But the story author will typically override
+this with some code that performs and reports everything in one go.
+
+(group-after $GroupAction)::
+
+By default, this predicate invokes `*(after $)` for each constituent
+action.
+
+Thus, we might define a rule for eating the ham and cheese in one go:
+
+[source]
+----
+(group-perform [eat [#ham #cheese]])
+	You savour the combination of ham and cheese.
+	(now) (#ham is nowhere)
+	(now) (#cheese is nowhere)
+----
+
+In many ways, the default behaviour of these rules is sensible and
+non-surprising, but there are two important gotchas:
+
+* The default group-action handling rules do not invoke `(instead of $)`
+for any constituent action. If you wish to use `(instead of $)` to
+redirect a particular action, and that action might be part of a group action,
+make sure to also define a corresponding `(group-instead of $)` rule to
+deal with the group action.
+* Each stage (e.g. prevent) is carried out in full, before the next stage is
+allowed to influence the world model. If performing the first constituent action
+would normally cause the second to be prevented, grouping them together might
+create a loophole. Suppose you have a rule to prevent the player from eating
+something when they're full. Normally, `(perform [eat #ham])`
+might make the player full, and `(prevent [eat #cheese])` would
+then notice that the player was full and prevent the cheese from being eaten.
+But `(group-prevent [eat [#ham #cheese]])` would check
+`(prevent [eat #ham])` and `(prevent [eat #cheese])`
+first, before the player is full. Then, `(group-perform[eat [#ham #cheese]])`  would go ahead and eat both objects, even
+though the player only had room for one. To fix this problem, add a rule for
+`(group-prevent [eat [#ham #cheese]])` that aborts the group
+action if the player has room for less than two items.
+
+In the above example, we allowed two specific objects, `\#ham` and
+`#cheese`, in that particular order, to form a group. The parser is
+allowed to rearrange objects to form groups, as long as their internal order is
+preserved. Thus, `EAT HAM, OYSTER AND CHEESE` would result in the
+group action `[eat [#ham #cheese]]` followed by the normal
+action `[eat #oyster]`.
+
+It is also possible to allow entire classes of objects to be grouped together.
+Here we use the `(edible $)` trait:
+
+[source]
+----
+(action [eat $] may group (edible $) with (edible $))
+----
+
+Assuming the oyster, the ham, and the cheese are all marked as edible, this will
+cause the input `EAT CHEESE, HAM, OYSTER` to resolve into the single
+group action `[eat [#cheese #ham #oyster]]`. A corresponding
+group-perform rule could look like this:
+
+[source]
+----
+(group-perform [eat $List])
+	You savour the combination of (the $List).
+	(exhaust) {
+		*($Obj is one of $List)
+		(now) ($Obj is nowhere)
+	}
+----
+
+The predicates `(group-try $)` and `(first group-try $)` behave
+like `(try $)` and `(first try $)`, but for group actions. Thus,
+for instance:
+
+[source]
+----
+(group-instead of [eat [#cheese #ham]])
+	(group-try [eat [#ham #cheese]])
+
+(group-before [eat [#ham #cheese]])
+	(first group-try [put #salt #on [#ham #cheese]])
+----
+
+'''
+
+Back to xref:moving.adoc[] or onwards to TBD.
+
+TODO:
+
+* UNDERSTANDING link
+* STDACTIONS link
+* MISCFEAT link
+

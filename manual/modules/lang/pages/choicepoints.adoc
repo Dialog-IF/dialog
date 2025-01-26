@@ -562,6 +562,7 @@ would produce the output:
 I know of 3 pieces of fruit.
 ```
 
+[#just]
 == Just
 
 We have seen that the rules of a predicate work together as a disjunction.

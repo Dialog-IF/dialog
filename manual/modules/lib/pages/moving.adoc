@@ -145,7 +145,7 @@ _obvious exits_ from a room. What actually happens when a player tries to move
 in a particular direction, depends on how the
 `[leave _..._]` family of actions are handled. We
 will return to that in the chapter on
-ACTIONS [actions];
+xref:actions.adoc[actions];
 for now just
 keep in mind that the act of moving in a compass direction can be intercepted by
 story code, in order to block obvious exits, allow movement in non-obvious
@@ -616,8 +616,6 @@ conditions.
 
 '''
 
-Back to xref:items.adoc[] or onwards to ACTIONS.
+Back to xref:items.adoc[] or onwards to xref:actions.adoc[].
 
-TODO:
-- ACTIONS link
 
