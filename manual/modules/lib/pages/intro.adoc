@@ -88,7 +88,3 @@ around at the two objects (they can be referred to as `ME` and
 (`L`), `INVENTORY` (`I`), `JUMP`,
 and `QUIT` (`Q`).
 
-'''
-
-Onwards to xref:scenery.adoc[].
-

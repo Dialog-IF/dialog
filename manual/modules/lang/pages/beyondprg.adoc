@@ -352,6 +352,3 @@ support the so-called default extra characters in the ZSCII character set, which
 cover the needs of several European languages. The Å-machine backend and the
 debugger have full support.
 
-'''
-
-Back to the xref:builtins.adoc[] or onwards to xref:quickref.adoc[].

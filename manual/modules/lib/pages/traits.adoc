@@ -546,8 +546,6 @@ because of their inheritance relation to the animate trait.
 
 '''
 
-Back to xref:scenery.adoc[] or onwards to TBA.
-
 TODO:
 
 * MOVING link

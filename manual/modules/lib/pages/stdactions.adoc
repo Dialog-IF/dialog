@@ -667,9 +667,6 @@ Prints a line of backend-specific memory statistics.
 
 '''
 
-Back to xref:actions.adoc[] or onwards to TBA.
-
-
 TODO:
 
 * UNDERSTANDING link

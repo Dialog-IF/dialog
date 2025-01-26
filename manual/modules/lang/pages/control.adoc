@@ -218,6 +218,7 @@ To advance predictably through a series of alternatives, and then start over fro
 
 The three remaining variants from Inform 7 are currently not supported by Dialog.
 
+[#closures]
 == Closures
 
 A `closure` is an anonymous bit of code that can be kept as a value, and invoked at a later time.
@@ -326,9 +327,4 @@ For instance, `TAKE ALL` may result in several actions being processed,
 one at a time.
 If taking the booby-trapped statuette triggers some dramatic cutscene,
 the code for that cutscene can invoke `(stop)` to prevent spending time on taking the other items.
-
-'''
-
-Back to xref:choicepoints.adoc[] or onwards to
-xref:io.adoc[].
 

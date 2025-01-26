@@ -614,8 +614,4 @@ The computed path only includes visited rooms, and doesn't pass through closed
 doors. But it is straightforward to modify the library to relax those
 conditions.
 
-'''
-
-Back to xref:items.adoc[] or onwards to xref:actions.adoc[].
-
 

@@ -506,8 +506,6 @@ ACTIONS:
 
 '''
 
-Back to xref:traits.adoc[] or onwards to xref:moving.adoc[].
-
 TODO:
 
 * ACTIONS link

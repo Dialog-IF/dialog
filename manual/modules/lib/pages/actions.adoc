@@ -178,7 +178,6 @@ purposes. Before we dive into that, however, it is necessary to introduce two
 important mechanisms: _Stopping the action_, and _ticking_ (advancing time).
 
 [#tickstop]
-
 == Stopping and ticking
 
 === (stop)
@@ -662,8 +661,6 @@ for instance:
 ----
 
 '''
-
-Back to xref:moving.adoc[] or onwards to xref:stdactions.adoc[].
 
 TODO:
 

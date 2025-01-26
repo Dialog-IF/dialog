@@ -9,6 +9,7 @@ player during gameplay, or even to change who the current player is.
 Dialog supports four kinds of _dynamic predicates_. They are called _global
 flags_, _per-object flags_, _global variables_, and _per-object variables_.
 
+[#globflag]
 == Global flags
 
 A _global flag_ is a predicate with no parameters, and no side effects. It can
@@ -378,6 +379,3 @@ parent #bowl)`, then with `(#apple has parent #fridge)`, and finally with
 `(#lettuce has parent #fridge)`. In the initial object tree, the apple
 will be located in the bowl, and the lettuce in the fridge.
 
-'''
-
-Back to xref:io.adoc[] or onwards to xref:sugar.adoc[].

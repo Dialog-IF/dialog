@@ -432,8 +432,3 @@ You see an apple.
 You see an apple.
 You don't see any more fruit.
 ```
-
-
-'''
-Back to xref:execution.adoc[] or onwards to xref:choicepoints.adoc[].
-

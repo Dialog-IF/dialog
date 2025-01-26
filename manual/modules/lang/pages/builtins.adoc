@@ -332,8 +332,3 @@ adjusted by passing commandline options to the compiler. During debugging and
 testing, you may wish to invoke this predicate just before quitting, as it will
 tell you how close you are to the limits.
 
-'''
-
-Back to xref:sugar.adoc[] or onwards to xref:beyondprg.adoc[].
-
-

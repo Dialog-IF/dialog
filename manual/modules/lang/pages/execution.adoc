@@ -249,9 +249,3 @@ The complete output is:
 It looks yummy! Over and out.
 ```
 
-'''
-
-Onwards to xref:varsvalues.adoc[].
-
-
-

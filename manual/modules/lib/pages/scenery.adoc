@@ -513,7 +513,6 @@ printed, or when `(notice $)` is invoked on it.
 
 '''
 
-Back to xref:intro.adoc[] or onwards to xref:traits.adoc[].
 
 TODO:
 

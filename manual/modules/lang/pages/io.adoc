@@ -759,9 +759,3 @@ each of those two objects in turn.
 But if there are dozens of large hats, `$Obj` may instead be left unbound;
 the compiler is allowed to make a trade-off between speed and memory footprint.
 Either way, after this step, the operation proceeds as in the unoptimized case.
-
-
-'''
-
-Back to xref:control.adoc[] or onwards to
-xref:dynamic.adoc[].

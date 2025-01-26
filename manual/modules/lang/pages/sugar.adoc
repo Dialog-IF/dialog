@@ -438,7 +438,3 @@ representations of these objects will be different:
 
 The printed representation of a generated object is a hash character followed by
 some unique number, since these objects have no source-code names.
-
-'''
-
-Back to xref:dynamic.adoc[] or onwards to xref:builtins.adoc[].

@@ -6,3 +6,4 @@
 ** xref:moving.adoc[Moving around]
 ** xref:actions.adoc[Actions]
 ** xref:stdactions.adoc[The standard actions]
+** xref:timeprogress.adoc[Ticks, scenes, and progress]

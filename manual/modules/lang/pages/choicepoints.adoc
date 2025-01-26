@@ -629,6 +629,3 @@ It is possible to break out of the infinite loop by discarding the choice-point 
 This can be done explicitly using `(just)`,
 or implicitly by successfully returning from a regular (non-multi) query.
 
-'''
-Back to xref:varsvalues.adoc[] or onwards to xref:control.adoc[].
-

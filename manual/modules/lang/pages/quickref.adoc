@@ -576,6 +576,3 @@ Associates one or more style attributes with the given class name.
 
 Defines the location (local filename or URL) and alt-text of a resource.
 
-'''
-
-Back to xref:beyondprg.adoc[]
