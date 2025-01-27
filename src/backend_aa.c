@@ -3878,6 +3878,10 @@ void backend_aa(
 	fputc((crc >> 0) & 0xff, f);
 
 	fclose(f);
+	
+	report(LVL_DEBUG, 0, "Objects used: %d of %d (%d%%)", prg->nworldobj, 0x1ffe, (prg->nworldobj)*100/0x1ffe);
+	report(LVL_DEBUG, 0, "Dictionary words used: %d of %d (%d%%)", prg->ndictword, 0x1dff, (prg->ndictword)*100/0x1dff);
+	report(LVL_DEBUG, 0, "Non-ASCII characters used: %d of %d (%d%%)", ncharmap, 128, ncharmap*100/128);
 
 	arena_free(&aa_arena);
 
