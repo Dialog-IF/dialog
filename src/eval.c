@@ -1346,7 +1346,6 @@ static int eval_run(struct eval_state *es) {
 		}
 		ci = &pp.pred->routines[pp.routine].instr[pc];
 		pc++;
-		//printf("%s %d\n", pp.pred->predname->printed_name, ci->op);
 		switch(ci->op) {
 		case I_ALLOCATE:
 			assert(ci->oper[0].tag == OPER_NUM);
