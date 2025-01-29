@@ -285,6 +285,7 @@
 (actor container $Obj)		*(room $Obj)
 (animate $Obj)			*(female $Obj)
 (animate $Obj)			*(male $Obj)
+(animate $Obj)			*(gender-neutral $Obj)
 (container $Obj)		*(actor container $Obj)
 (item $Obj)			*(wearable $Obj)
 (supporter $Obj)		*(actor supporter $Obj)
@@ -326,6 +327,7 @@
 (door $)		(fail)
 (edible $)		(fail)
 (female $)		(fail)
+(gender-neutral $)	(fail)
 (fine where it is $)	(fail)
 (inherently dark $)	(fail)
 (item $)		(fail)
@@ -2799,7 +2801,7 @@
 	You give (the $Obj) a bit of a push.
 
 (perform [push $Obj])
-	You apply a bit of force to (the $Obj), but (it $Obj) (doesn't $Obj) budge.
+	You apply a bit of force to (the $Obj), but (it $Obj doesn't) budge.
 
 %% PULL <obj>
 
@@ -4084,6 +4086,10 @@
 (es [$Single])			(es $Single)
 (the [$Single] is)		(the $Single is)
 (it [$Single] is)		(it $Single is)
+(it [$Single] has)		(it $Single has)
+(it [$Single] does)		(it $Single does)
+(it [$Single] s)		(it $Single s)
+(it [$Single] es)		(it $Single es)
 (them [$Single])		(them $Single)
 
 (it (nonempty $List))		they
@@ -4209,6 +4215,16 @@
 (its (male $))		his
 (it (male $) is)	he's
 
+(it (gender-neutral $))		they
+(them (gender-neutral $))	them
+(itself (gender-neutral $))	themselves
+(its (gender-neutral $))	their
+(it (gender-neutral $) is)	they're
+(it (gender-neutral $) has)	they have
+(it (gender-neutral $) does)	they do
+(it (gender-neutral $) s)
+(it (gender-neutral $) es)
+
 (a $Obj)		a (maybe link $Obj)
 (the $Obj)		the (name $Obj)
 (it $)			it
@@ -4223,10 +4239,16 @@
 (does $)		does
 (the $O is)		(the $O) (is $O)
 (it $O is)		(it $O) (is $O)
+(it $O has)		(it $O) (has $O)
+(it $O does)    (it $O) (does $O)
+(it $O s)		(s $O)  %% To be used when subject is a pronoun
+(it $O es)		(es $O) %%  (behaves differently for they/them)
 (that $)		that
 (That's $)		That's
 
 (doesn't $Obj)		(does $Obj) (no space) n't
+(it $Obj doesn't)	(it $Obj does) (no space) n't
+
 
 (name $)
 
@@ -4484,7 +4506,7 @@
 	(The $O is) (name $Dir) from here.
 
 (descr $Obj)
-	(It $Obj) seem(s $Obj) to be harmless.
+	(It $Obj) seem(it $Obj s) to be harmless.
 
 (look $Obj)
 	(descr $Obj)
@@ -4669,7 +4691,12 @@
 	(else)
 		(That's $Obj)
 	(endif)
-	fine where (it $Obj) (is $Obj).
+	(if) (gender-neutral $Obj) (then)
+		%% Slightly awkward special case for singular they/them
+		fine where (it $Obj is) currently located.
+	(else)
+		fine where (it $Obj) (is $Obj).
+	(endif)
 
 (when ~(item $O) can't be taken)
 	You can't take (the $O).
