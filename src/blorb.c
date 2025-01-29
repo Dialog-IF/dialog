@@ -244,7 +244,7 @@ uint8_t *loadfile(char *fname, uint32_t *fsize) {
 int is_png(uint8_t *buf, uint32_t p_size, int *p_width, int *p_height) { // On success, loads values into p_width and p_height, and returns 0; on failure, returns 1
 	uint8_t magic[8] = {137, 'P', 'N', 'G', 13, 10, 26, 10};
 	
-	if(memcmp(buf, magic, 8)) { // Not a PNG file
+	if(memcmp(buf, magic, 8) || p_size < 18) { // Not a valid PNG file
 		return 1;
 	}
 	
@@ -274,8 +274,8 @@ int is_jpeg(uint8_t *buf, uint32_t p_size, int *p_width, int *p_height) { // Sam
 	for(;;) {
 		block = (buf[pos] << 8) | buf[pos+1]; // 16-bit block length
 		pos += block; // Skip this block (the first one will never have the image size in it)
-		if(pos >= p_size || buf[pos] != 0xff) {
-			return 2; // Malformed file
+		if(pos+9 >= p_size || buf[pos] != 0xff) {
+			return 2; // File was recognized as JPEG, but is malformed (no start-of-frame block)
 		}
 		if(buf[pos+1] == 0xc0 || buf[pos+1] == 0xc2) { // "Start of frame" block contains the image size: [ffc0] [16-bit block length] [8-bit precision] [16-bit x] [16-bit y]
 			break;
