@@ -389,6 +389,7 @@ output parameters:
 
 Slash-expressions may only appear in rule heads, never inside rule bodies.
 
+[#generate]
 == Automated object generation
 
 Sometimes it is desirable to instantiate several identical objects in a game. It

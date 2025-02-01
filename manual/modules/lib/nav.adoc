@@ -9,3 +9,4 @@
 ** xref:timeprogress.adoc[Ticks, scenes, and progress]
 ** xref:npc.adoc[Non-player characters]
 ** xref:understanding.adoc[Understanding player input]
+** xref:miscfeat.adoc[Miscellaneous features]
