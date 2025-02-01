@@ -36,6 +36,7 @@ to try them out. Copy the source code, put it in a text file, compile it
 together with the standard library, and run the resulting story file using your
 favourite Z-code interpreter. A quick reminder:
 
+[role="output"]
 ```
 dialogc -t z8 story.dg stdlib.dg
 ```

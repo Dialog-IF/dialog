@@ -184,6 +184,7 @@ library to narrate these objects already from the start:
 Remember, handled is the opposite of pristine in this context. Now, when the
 player first examines the bowl, the game responds:
 
+[role=output]
 ```
 It's a small bowl.
 
@@ -208,6 +209,7 @@ the bowl, without mentioning any details about what's inside:
 But this will backfire, in a sense, if the player takes the amethyst and then
 puts it back. Examining the bowl would then result in the following output:
 
+[role=output]
 ```
 It's a small bowl. There appears to be something inside.
 
@@ -408,6 +410,7 @@ This is done by adding rules to the `(wearing $ removes $)` predicate:
 
 This might lead to the following exchange:
 
+[role=output]
 ```
 > wear sunglasses
 (first attempting to remove the glasses)

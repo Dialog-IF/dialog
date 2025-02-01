@@ -711,7 +711,7 @@ image:choiceconv.png[choiceconv]
 
 And this is what it looks like:
 
-[subs="quotes"]
+[role=output,subs="quotes"]
 ```
 *Repair shop*
 You're in a noisy workshop.

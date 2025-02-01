@@ -80,6 +80,7 @@ breaks, and paragraph breaks.
 
 The resulting object description would look like this:
 
+[role=output]
 ```
 > EXAMINE TABLE
 It's a sturdy wooden table.
@@ -186,7 +187,7 @@ separate paragraphs of their own after the room description:
 
 The room description would then turn into:
 
-[subs="quotes"]
+[role=output,subs="quotes"]
 ```
 > LOOK
 *Tutorial room*
@@ -393,6 +394,7 @@ current location of an object:
 
 The output of the above code might be:
 
+[role=output]
 ```
 The apple in the fruit basket looks yummy!
 ```

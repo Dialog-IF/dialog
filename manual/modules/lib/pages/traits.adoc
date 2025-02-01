@@ -213,6 +213,7 @@ given object, followed by its name. So, given the following object definition:
 
 querying `(the #apple)` would result in the following text being printed:
 
+[role=output]
 ```
 the green apple
 ```
@@ -220,6 +221,7 @@ the green apple
 To print the name of an object together with an indeterminate article, use
 `(a $)` instead. Querying `(a #apple)` results in:
 
+[role=output]
 ```
 a green apple
 ```
@@ -363,6 +365,7 @@ When the parameter is a
 xref:lang:varsvalues.adoc#values[list]
 of several objects, such as `[#orange #boots #book]`, that's handled too:
 
+[role=output]
 ```
 You see an orange, a pair of boots, and A Clockwork Orange. The orange, +
 the pair of boots, and A Clockwork Orange are drawing attention to +

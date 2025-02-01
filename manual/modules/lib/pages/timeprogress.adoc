@@ -376,6 +376,7 @@ corresponding node is activated. Otherwise, the input is parsed in the usual
 way. By default, all in-world actions are disabled in choice mode; only commands
 (e.g. `UNDO`, `SAVE`) work. Here is an example session:
 
+[role=output]
 ```
 You extend your wings. A warm, buzzy feeling spreads through your body as you leave the hive.
 
@@ -479,6 +480,7 @@ up in option lists, even if they are declared using `($ offers $)`.
 
 image:choice1a.png[choice1a]
 
+[role=output]
 ```
 You extend your wings. A warm, buzzy feeling spreads through your body as you
 leave the hive.

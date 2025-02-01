@@ -200,6 +200,7 @@ and/or single-digit numbers. Thus:
 
 will print:
 
+[role="output"]
 ```
 [f i s s i o n]
 ```
@@ -215,6 +216,7 @@ Conversely, it is possible to construct a dictionary word from a list of words
 
 will print:
 
+[role="output"]
 ```
 fusion
 ```
@@ -245,6 +247,7 @@ It is possible to split and join numbers as though they were words:
 
 This could result in the following interaction:
 
+[role="output"]
 ```
 > 11522
 [1 1], [2 2].

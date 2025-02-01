@@ -277,6 +277,7 @@ meaning that the action fails when the predicate succeeds. The second is that
 above example (with a bit of surrounding context) could lead to the following
 exchange:
 
+[role="output"]
 ```
 > READ ALL SIGNS
 Trying to read the large sign: The sign says “WELCOME”.
@@ -291,6 +292,7 @@ implementation of `(instead of $)` that we saw earlier), so if the player
 attempts the same command in darkness, the process grinds to a halt already
 after the first failed attempt:
 
+[role="output"]
 ```
 > READ ALL SIGNS
 Trying to read the large sign: It is too dark to read.

@@ -198,6 +198,7 @@ To advance predictably through a series of alternatives, and then stick with the
 
 The output of that program is:
 
+[role="output"]
 ```
 This is printed the first time.
 This is printed the second time.
@@ -251,6 +252,7 @@ Afterwards, the same variable is bound to a dictionary word.
 
 The output is:
 
+[role="output"]
 ```
 Hello, world!
 ```
@@ -269,6 +271,7 @@ The following program:
 
 produces the following output:
 
+[role="output"]
 ```
 Veni! Vidi! Vici!
 ```
@@ -317,6 +320,7 @@ Here is a convoluted example:
 
 The printed output is:
 
+[role="output"]
 ```
 Let's take this shortcut now.
 ```

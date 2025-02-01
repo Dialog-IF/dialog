@@ -70,6 +70,7 @@ Comments in the source code are prefixed with `%%` and last to the end of the li
 
 produces this outupt:
 
+[role="output"]
 ```
 Hello y'all (and "welcome")!
 ```
@@ -92,6 +93,7 @@ It knows that no space should precede a comma, that a space should go before an 
 
 The output of that is:
 
+[role="output"]
 ```
 For instance: This text (which, to all intents and purposes, is silly (indeed)), prints properly.
 ```
@@ -106,6 +108,7 @@ It is possible to override the automatic whitespace decisions on a case-by-case 
 
 The output of that is:
 
+[role="output"]
 ```
 Together , apart.
 ```
@@ -137,6 +140,7 @@ The following program:
 
 produces the following output:
 
+[role="output"]
 ```
 This goes on a line of its own.
 This goes on a line of its own.
@@ -245,6 +249,7 @@ Thus, the program entry point rule will proceed to print “Over and out”.
 
 The complete output is:
 
+[role="output"]
 ```
 It looks yummy! Over and out.
 ```

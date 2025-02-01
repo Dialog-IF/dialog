@@ -8,3 +8,4 @@
 ** xref:stdactions.adoc[The standard actions]
 ** xref:timeprogress.adoc[Ticks, scenes, and progress]
 ** xref:npc.adoc[Non-player characters]
+** xref:understanding.adoc[Understanding player input]

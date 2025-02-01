@@ -115,6 +115,7 @@ directions as secondary, and _redirect_ it onto the other. Example:
 
 which could lead to the following exchange:
 
+[role=output]
 ```
 > EXITS
 Obvious exits are:

@@ -40,7 +40,7 @@ The following example assumes that style classes `@bold` and `@italic` have been
 
 The output, depending on which hints appear in the style class definitions and to what extent they are supported by the interpreter, could be:
 
-[source,subs="quotes"]
+[role=output,subs="quotes"]
 ```
 _Lorem Ipsum_, he, *emphasized*.
 ```
@@ -479,6 +479,7 @@ If 007 appears in the program in such a way that it becomes part of the program-
 then it will show up as a dictionary word in the list returned by `(get input $)`.
 Otherwise, it will be represented by the numerical value 7.
 
+[#hyperlinks]
 == Hyperlinks
 
 The Å-machine backend supports a form of hyperlinks, for the purpose of simplifying text entry on mobile devices.
@@ -665,7 +666,7 @@ This is useful for adding temporary printouts to the code. For instance:
 
 looks like this in the debugger:
 
-[subs="quotes"]
+[role=output,subs="quotes"]
 ```
 *Program started. X = $*
 Hello,
@@ -675,6 +676,7 @@ world!
 
 but like this when the code is compiled:
 
+[role=output]
 ```
 Hello, world!
 ```

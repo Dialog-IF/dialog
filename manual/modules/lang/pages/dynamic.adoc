@@ -120,6 +120,7 @@ backtrack over all objects that have the flag set:
 
 This produces the output:
 
+[role="output"]
 ```
 The open things are: [#reddoor #greendoor]
 ```

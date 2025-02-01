@@ -20,6 +20,7 @@ files in the same directory as the executable file (`dgdebug.exe`).
 
 To check that everything is in place, try the following two commands:
 
+[role="output"]
 ```
 dialogc --version
 dgdebug --version
@@ -65,6 +66,7 @@ The order of source code filenames is important. The story must appear before
 the standard library, and any extensions (such as the standard debugging
 library) should appear in between. For instance:
 
+[role=output]
 ```
 dialogc story.dg stddebug.dg stdlib.dg
 ```
@@ -102,6 +104,7 @@ published on the web with support for hyperlinks and CSS styles.
 
 To compile for the Å-machine, add `-t aa` to the command line:
 
+[role=output]
 ```
 dialogc -t aa example.dg stdlib.dg
 ```
@@ -113,6 +116,7 @@ the Commodore 64, using the tool `aambundle` from
 
 The following command:
 
+[role=output]
 ```
 aambundle -o my_game example.aastory
 ```
@@ -123,6 +127,7 @@ browser to the `play.html` file in this directory to run the game.
 
 To create a Commodore 64 disk image, use the following command instead:
 
+[role=output]
 ```
 aambundle -t c64 -o my_game example.aastory
 ```
@@ -137,6 +142,7 @@ dump additional information that can be useful for debugging.
 
 To see the full list of options supported by `dialogc`, type:
 
+[role=output]
 ```
 dialogc --help
 ```
@@ -158,6 +164,7 @@ image:debugger.png[debugger]
 To debug your game, launch the debugger from the commandline with your source
 code filenames as arguments:
 
+[role=output]
 ```
 dgdebug story.dg stdlib.dg
 ```
@@ -167,6 +174,7 @@ The order of the filenames is significant, just like when compiling.
 The debugger also accepts a couple of commandline options. For a complete list,
 type:
 
+[role=output]
 ```
 dgdebug --help
 ```
