@@ -291,7 +291,7 @@ The output of the program is:
 
 [role=output]
 ```
-This is [spooky action at a distance].
+I like [#apples #pears #oranges].
 ```
 
 === Parameters are passed by unification
@@ -339,7 +339,8 @@ The output of the program is:
 
 [role=output]
 ```
-When your opponent plays rock, you'd better not play #scissors. When your opponent plays rock, you should play #paper.
+When your opponent plays rock, you'd better not play #scissors. When your opponent
+plays rock, you should play #paper.
 ```
 
 == Partial lists and recursion
