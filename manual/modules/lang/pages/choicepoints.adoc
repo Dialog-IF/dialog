@@ -375,7 +375,7 @@ The base case of the recursion is implicit, in that neither of the rules will ma
 [#exhaust]
 == Visiting all solutions
 
-A Dialog statement can be prefixed with the `(exhaust) keyword. This will cause Dialog to consider every nook and cranny of the search tree, without remaining on the first successful branch. The statement—usually a block—executes, backtracking is performed on success as well as on failure, and in the end the entire (exhaust) construct succeeds. Here is an example:
+A Dialog statement can be prefixed with the `(exhaust)` keyword. This will cause Dialog to consider every nook and cranny of the search tree, without remaining on the first successful branch. The statement—usually a block—executes, backtracking is performed on success as well as on failure, and in the end the entire `(exhaust)` construct succeeds. Here is an example:
 
 [source]
 ----
