@@ -10,6 +10,7 @@ asciidoc:
     lang-ver: 0m
     lib-ver: 0.46
     man-ver: 31+
+    copyright: &copy; 2018-2025 Linus Åkesson
     home-page: https://linusakesson.net/dialog/
     aa-home-page: https://linusakesson.net/dialog/aamachine/
     multi-query: xref:lang:choicepoints.adoc#multi-query[multi-query]

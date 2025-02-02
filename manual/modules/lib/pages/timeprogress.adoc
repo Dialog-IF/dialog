@@ -123,7 +123,7 @@ many places in the code as you wish.
 To prevent a cutscene from occurring twice, use a
 xref:lang:dynamic.adoc#globflag[global flag]:
 
-[source]
+[source,subs=quotes]
 ----
 (perform [pull #handle])
 	(if) (have teleported to barn) (then)
@@ -133,7 +133,7 @@ xref:lang:dynamic.adoc#globflag[global flag]:
 	(endif)
 
 (teleport to barn cutscene)
-	<i>...</i>
+	_..._
 	(now) (have teleported to barn)
 	(stop)
 ----

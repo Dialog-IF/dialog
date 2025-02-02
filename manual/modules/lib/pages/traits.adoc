@@ -367,8 +367,8 @@ of several objects, such as `[#orange #boots #book]`, that's handled too:
 
 [role=output]
 ```
-You see an orange, a pair of boots, and A Clockwork Orange. The orange, +
-the pair of boots, and A Clockwork Orange are drawing attention to +
+You see an orange, a pair of boots, and A Clockwork Orange. The orange,
+the pair of boots, and A Clockwork Orange are drawing attention to
 themselves.
 ```
 
