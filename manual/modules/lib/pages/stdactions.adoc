@@ -400,7 +400,7 @@ with a blank for the missing noun. When the player responds
 e.g. `CLERK`, that is understood as the complete action,
 `[give `money to #clerk]`. This mechanism will be described in
 more detail in the chapter on
-UNDERSTANDING#newactions[understanding player input].
+xref:understanding.adoc#newactions[understanding player input].
 
 In some situations, it will be clear from context who is the intended recipient
 of a `[give $]` action. Story authors can add rules like the
@@ -536,10 +536,9 @@ the `(topic $)` trait are always recognized where the grammar expects a
 topic, even if they are out of scope—such objects can be used to represent
 abstract topics that do not correspond to tangible objects in the game world.
 Topics are described in more detail in the upcoming chapter on
-NPC#asktell[non-player characters].
+xref:npc.adoc#asktell[non-player characters].
 
 [#stdnav]
-
 == Navigation
 
 A number of standard actions are related to movement of the player character.
@@ -664,10 +663,3 @@ Moves the named object into the current player character's inventory.
 [meminfo]::
 
 Prints a line of backend-specific memory statistics.
-
-'''
-
-TODO:
-
-* UNDERSTANDING link
-* NPC link

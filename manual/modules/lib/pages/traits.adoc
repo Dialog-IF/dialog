@@ -423,7 +423,7 @@ supporters_ are supporters that the player is allowed to climb on top of.
 
 _Rooms_ are actor containers with no parents in the object tree. They are
 organized into a map using connections; this will be explained in the chapter on
-MOVING [moving around].
+xref:moving.adoc[moving around].
 Some of those connections involve _doors_
 (physical doors or other kinds of gatekeepers). Doors are conceptually located
 in the liminal space between rooms, but for practical reasons they appear as
@@ -547,8 +547,4 @@ _Male_ and _female_ are better described as linguistic traits, as their main
 function is to replace the default pronouns. They are included in the diagram
 because of their inheritance relation to the animate trait.
 
-'''
 
-TODO:
-
-* MOVING link

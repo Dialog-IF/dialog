@@ -28,7 +28,7 @@ dgdebug --version
 
 Each of them should print the current version number of the Dialog software. The
 first two characters (a digit and a letter) identify the language version, which
-is currently *0m*. Following that is a slash, and then the software revision
+is currently *{lang-ver}*. Following that is a slash, and then the software revision
 number.
 
 The archive also contains the latest version of the Dialog standard library,
@@ -39,7 +39,7 @@ want to have access to the exact version of the library you used. Also, you may
 wish to make story-specific modifications to the library.
 
 A copy of this manual is also included in the archive, and a file called
-[.nobreak]#`license.txt`# that details how you may use the software. In
+`license.txt` that details how you may use the software. In
 short, you have the right to use, modify, and redistribute the compiler and
 standard library (with or without source code), in whole or in part, as long as
 attribution is given.
@@ -295,7 +295,7 @@ calls.
 === Some useful debugging techniques
 
 Use queries to inspect the state of the running program, e.g. type
-`*($ has parent `box)# into the game to get a list of every object
+`*($ has parent #box)` into the game to get a list of every object
 that's currently a direct child of the `#box` object.
 
 Insert `(log) ...` statements to print variables and other information
@@ -304,14 +304,12 @@ while debugging.
 The standard library provides `(actions on)` and `(actions off)`,
 for controlling _action tracing_. When enabled, this feature makes the library
 print the names of
-ACTIONS
+xref:lib:actions.adoc[actions]
 as it tries them.
 
 The library also provides `(scope)`, for listing every object that's
 currently
-IN SCOPE
-.
-
+xref:lib:moving.adoc#scope[in scope].
 
 The following predicates are highly useful for manipulating the state of the
 running game:
@@ -373,9 +371,3 @@ system-wide location, type “`sudo make install`”.
 The Windows binaries can be cross-compiled on a Linux system using the
 `Mingw32` toolchain.
 
-'''
-
-Back to xref:intro.adoc[].
-
-TODO:
-- Link to library pages (in debug techniques)

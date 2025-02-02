@@ -562,7 +562,7 @@ isn't held.
 
 Thus, we need a rule to prevent the peeling of a non-held object. The standard
 library provides a number of handy
-MISCFEATURES#commoncomplaints[when-predicates]
+xref:miscfeat.adoc#commoncomplaints[when-predicates]
 that check for common
 conditions, and print appropriate responses when the conditions are met.
 
@@ -1127,5 +1127,4 @@ type of the next token. This feature allows you to craft rules for e.g.
 
 TODO:
 
-- MISCFEATURES links
 - Indentation for `(understand ...)` predicates using closures

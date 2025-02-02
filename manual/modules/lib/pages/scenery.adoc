@@ -201,7 +201,7 @@ Appearances can be very handy for objects that move around during gameplay. This
 includes objects that the player might pick up, and drop in another room. We
 will learn more about such objects—and appearances—when we get to the chapter
 about
-ITEMS.
+xref:items.adoc[items].
 
 How does the game know that `CHAIR` refers to the chair object? By
 default, the standard library assumes that every word that appears in the
@@ -513,9 +513,3 @@ Hidden objects can be revealed either by directly updating the flag,
 the given object. A hidden object is also revealed implicitly when its name is
 printed, or when `(notice $)` is invoked on it.
 
-'''
-
-
-TODO:
-
-* Fix link to ITEMS

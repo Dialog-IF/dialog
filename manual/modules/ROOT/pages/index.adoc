@@ -13,7 +13,7 @@ significant changes.
 * xref:intro.adoc[]
 * xref:software.adoc[]
 
-== Part I: Programming Language
+== Part I: The Programming Language
 
 xref:lang:execution.adoc[]
 
@@ -37,11 +37,35 @@ xref:lang:quickref.adoc[]
 
 == Part II: The Standard Library
 
-_Coming Soon_
+
+xref:lib:intro.adoc[]
+
+xref:lib:scenery.adoc[]
+
+xref:lib:traits.adoc[]
+
+xref:lib:items.adoc[]
+
+xref:lib:moving.adoc[]
+
+xref:lib:actions.adoc[]
+
+xref:lib:stdactions.adoc[]
+
+xref:lib:timeprogress.adoc[]
+
+xref:lib:npc.adoc[]
+
+xref:lib:understanding.adoc[]
+
+xref:lib:miscfeat.adoc[]
+
+xref:lib:libref.adoc[]
 
 '''
 
 TODO:
+
 - top level toc list under each main page link
 - centering the top mast
 - columns for Part I vs. Part II

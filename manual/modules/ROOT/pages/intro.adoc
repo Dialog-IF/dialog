@@ -122,8 +122,6 @@ Linus Åkesson
 
 '''
 
-Onwards to xref:software.adoc[].
-
 TODO:
 - Indentation of lucidity/minimalism/performance
 

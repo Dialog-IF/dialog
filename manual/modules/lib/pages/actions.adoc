@@ -37,7 +37,7 @@ But the player input could equally well have been `[i]` or
 `[inventory]`.
 
 In
-UNDERSTANDING[Chapter10],
+xref:understanding.adoc[Chapter10],
 we will see how the parser produces
 actions in response to player input. For now, we will take the output of that
 process, i.e. the action data structures, as our starting point.
@@ -356,7 +356,7 @@ We have seen how to override the `perform` rule of a standard library
 action, in order to do something else entirely. But what if you wish to retain
 the default behaviour of an action, such as taking an object, and merely add
 some flavour to the message that is printed? As we will see in the chapter on
-STDACTIONS[Standard actions],
+xref:stdactions.adoc[Standard actions],
 the library defines eighteen _core actions_ that are capable of modifying the game world. Each of these actions has
 a `perform` rule that calls out to a specific _narration predicate_, that
 you can intercept. Thus, for instance, the following saves you the trouble of
@@ -480,7 +480,7 @@ Here's a snippet from the standard library:
 The above code makes queries to _when-predicates_; these check for common error
 conditions and print appropriate messages. The full set of when-predicates is
 documented in
-MISCFEAT#commoncomplaints[Chapter11].
+xref:miscfeat.adoc#commoncomplaints[Chapter 11].
 
 Also note the xref:lang:choicepoints.adoc#just[`(just)` keyword], which turns
 off the default `refuse`-rule that is defined later in the
@@ -662,11 +662,4 @@ for instance:
 	(first group-try [put #salt #on [#ham #cheese]])
 ----
 
-'''
-
-TODO:
-
-* UNDERSTANDING link
-* STDACTIONS link
-* MISCFEAT link
 

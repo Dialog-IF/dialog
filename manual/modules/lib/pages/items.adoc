@@ -486,7 +486,7 @@ only ever be worn underneath a single parent. This is inherent in the
 object-tree model, but it rules out situations such as a spandex one-piece worn
 underneath a shirt and a pair of trousers at the same time. The library doesn't
 support such a use case directly, but it can be implemented with the help of
-ACTIONS:
+xref:actions.adoc#actionprocess[before and after rules].
 
 [source]
 ----
@@ -507,8 +507,4 @@ ACTIONS:
 	(now) (* is #under $Outer)
 ----
 
-'''
 
-TODO:
-
-* ACTIONS link
