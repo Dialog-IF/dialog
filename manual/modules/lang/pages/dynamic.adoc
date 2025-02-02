@@ -303,6 +303,7 @@ is defined with ordinary rules:
 (#troll wields #club)
 ----
 
+[#hasparent]
 == Has parent
 
 There is one built-in per-object variable with special properties. This is the

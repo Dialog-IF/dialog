@@ -77,6 +77,7 @@ Unification: ::
 * Lists unify when each element unifies.
 * Unbound variables unify (with values or unbound variables) by binding.
 
+[#special]
 == Special syntax
 
 { ... } ::

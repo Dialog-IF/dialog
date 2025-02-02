@@ -1,5 +1,6 @@
 = Chapter 5: Input and output
 
+[#div]
 == Divs, spans, and style classes
 
 As we saw in the
@@ -526,6 +527,7 @@ When they are not, the would-be-clickable text shows up as normal text.
 
 Hyperlinks are always disabled on the Z-machine backend.
 
+[#resources]
 == Resources
 
 The Å-machine backend supports embedded graphics, as well as links to external web sites, using a common mechanism. A _resource_ is defined with the following syntax:
