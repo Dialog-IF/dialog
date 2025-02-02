@@ -1,6 +1,6 @@
 name: dialog
 title: Dialog
-version: 0m
+version: 0m03
 nav:
   - modules/ROOT/nav.adoc
   - modules/lang/nav.adoc
