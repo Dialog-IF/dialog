@@ -1,7 +1,7 @@
 * Language
 ** xref:execution.adoc[Execution]
 ** xref:varsvalues.adoc[Manipulating data]
-** xref:choicepoints.adoc[Choicepoints]
+** xref:choicepoints.adoc[Choice points]
 ** xref:control.adoc[More control structures]
 ** xref:io.adoc[Input and output]
 ** xref:dynamic.adoc[Dynamic predicates]
