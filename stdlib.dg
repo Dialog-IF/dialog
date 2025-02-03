@@ -4217,7 +4217,7 @@
 
 (it (gender-neutral $))		they
 (them (gender-neutral $))	them
-(itself (gender-neutral $))	themselves
+(itself (gender-neutral $))	themself
 (its (gender-neutral $))	their
 (it (gender-neutral $) is)	they're
 (it (gender-neutral $) has)	they have
