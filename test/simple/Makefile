@@ -41,7 +41,7 @@ stdlib.dg: ../../stdlib.dg
 	../../bin/striate.py $*.in Z $*.z.in A $*.aa.in D $*.d.in
 
 %.z.out: %.z5 %.z.in
-	dfrotz -w 80 -s 1234 -h 999 -m $*.z5 <$*.d.in >$*.z.out
+	../../bin/echoing.py dfrotz -w 80 -s 1234 -h 999 -m $*.z5 <$*.z.in >$*.z.out
 	sed -i 1,2d $*.z.out
 ## Remove the first two lines, they're just metadata
 	echo >> $*.z.out
