@@ -442,6 +442,21 @@ That value is remembered, and backtracking is performed until all possibilities 
 The collected values are placed into a list, in the order in which they were encountered,
 and that list is then unified with the output parameter, `$List`.
 
+Example:
+
+[source]
+----
+(program entry point)
+	(collect $F)
+		*(fruit $F)
+	(into $FruitList)
+	Come and buy! $FruitList!
+
+(fruit #apple)
+(fruit #orange)
+(fruit #banana)
+----
+
 The output is:
 
 [role="output"]
