@@ -4689,14 +4689,14 @@ void backend_z(
 
 	for(i = 0; i < nwordtable; i++) {
 		uint16_t addr = global_labels[wordtable[i].label];
-		if(verbose >= 3) printf("Wordtable #%d, length %d", i, wordtable[i].length);
+		if(verbose >= 4) printf("Wordtable #%d, length %d", i, wordtable[i].length);
 		for(j = 0; j < wordtable[i].length; j++) {
-			if(verbose >= 3 && j % 8 == 0) printf("\n\t");
+			if(verbose >= 4 && j % 8 == 0) printf("\n\t");
 			uint16_t value = wordtable[i].words[j];
 			if(value & 0x8000) value = global_labels[value & 0x7fff];
 			zcore[addr++] = value >> 8;
 			zcore[addr++] = value & 0xff;
-			if(verbose >= 3) {
+			if(verbose >= 4) {
 				if(j % 2 == 0) { // This is the dictionary word
 					if((value & 0x3e00) == 0x3e00) { // Single character
 						if((value & 0xff) < 33) { // Control character
@@ -4729,17 +4729,17 @@ void backend_z(
 				}
 			}
 		}
-		if(verbose >= 3) printf("\n");
+		if(verbose >= 4) printf("\n");
 	}
 	
 	for(i = 0; i < ndatatable; i++) {
 		k = 0; // Used as scratch space for verbose output
 		uint16_t addr = global_labels[datatable[i].label];
-		if(verbose >= 3) printf("Datatable #%d, length %d, address %04x", i, datatable[i].length, global_labels[datatable[i].label]);
+		if(verbose >= 4) printf("Datatable #%d, length %d, address %04x", i, datatable[i].length, global_labels[datatable[i].label]);
 		for(j = 0; j < datatable[i].length; j++) {
-			if(verbose >= 3 && k % 4 == 0 && !(k & 0x80) && j!=0) printf("\n\t");
+			if(verbose >= 4 && k % 4 == 0 && !(k & 0x80) && j!=0) printf("\n\t");
 			zcore[addr++] = datatable[i].data[j];
-			if(verbose >= 3) {
+			if(verbose >= 4) {
 				// One byte if less than 0xe0
 				// Otherwise, 0xe0 | high byte, then low byte
 				if(j == 0) {
@@ -4760,7 +4760,7 @@ void backend_z(
 				}
 			}
 		}
-		if(verbose >= 3) printf("\n");
+		if(verbose >= 4) printf("\n");
 	}
 
 	zcore[addr_dictionary + 0] = NSTOPCHAR;
