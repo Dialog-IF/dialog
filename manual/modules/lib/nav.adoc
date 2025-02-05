@@ -1,0 +1,13 @@
+* Standard Library
+** xref:intro.adoc[Getting started]
+** xref:scenery.adoc[Objects and state]
+** xref:traits.adoc[Traits]
+** xref:items.adoc[Items]
+** xref:moving.adoc[Moving around]
+** xref:actions.adoc[Actions]
+** xref:stdactions.adoc[The standard actions]
+** xref:timeprogress.adoc[Ticks, scenes, and progress]
+** xref:npc.adoc[Non-player characters]
+** xref:understanding.adoc[Understanding player input]
+** xref:miscfeat.adoc[Miscellaneous features]
+** xref:libref.adoc[Predicate Index]
