@@ -4463,7 +4463,7 @@ void backend_z(
 	addr_globals = org;
 	org += nglobal * 2;
 	
-	// TODO: What is this next block of memory used for? It seems like it's for per-object variables, but aren't those handled in the objects' property tables?
+	// Dialog stores per-object variables in its own arrays, instead of using the Z-machine property tables. That's what comes next.
 	
 	used_objects2 = org; // Start of secondary object data(?)
 	
@@ -4844,8 +4844,8 @@ void backend_z(
 	report(LVL_DEBUG, 0, "Objects used: %d of %d (%d%%)", prg->nworldobj, 0x1ffe, (prg->nworldobj)*100/0x1ffe);
 	report(LVL_DEBUG, 0, "Dictionary words used: %d of %d (%d%%)", prg->ndictword, 0x1dff, (prg->ndictword)*100/0x1dff);
 	report(LVL_DEBUG, 0, "Addressable memory used: %05d of %d bytes (%d%%)", used_addressable, 64*1024, used_addressable*100/(64*1024));
-	report(LVL_DEBUG, 0, "        Object data 1:   %5d", used_objects1);
-	report(LVL_DEBUG, 0, "        Object data 2:   %5d", used_objects2);
+	report(LVL_DEBUG, 0, "        Object table:    %5d", used_objects1);
+	report(LVL_DEBUG, 0, "        Object vars:     %5d", used_objects2);
 	report(LVL_DEBUG, 0, "        Wordmaps:        %5d", used_wordmaps);
 	report(LVL_DEBUG, 0, "        Main heap:       %5d", heapsize*2);
 	report(LVL_DEBUG, 0, "        Auxiliary heap:  %5d", auxsize*2);
