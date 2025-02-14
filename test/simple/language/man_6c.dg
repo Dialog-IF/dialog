@@ -1,0 +1,29 @@
+(edible #apple)
+(edible #lettuce)
+
+(#apple has parent #bowl)
+
+(*(edible $) has parent #fridge)
+
+(#bowl has parent #fridge)
+
+(program entry point)
+	(exhaust) {
+		*($Child has parent $Parent)
+		The parent of $Child is $Parent. (line)
+	}
+	(now) (#apple has parent #player)
+	Presto! The apple has moved! (line)
+	(exhaust) {
+		*($Child has parent $Parent)
+		The parent of $Child is $Parent. (line)
+	}
+	(now) (#apple has parent 123)
+	Presto! It moved again!
+	(exhaust) {
+		*($Child has parent $Parent)
+		The parent of $Child is $Parent. (line)
+	}
+
+(error $N entry point)
+	Fatal error code $N!

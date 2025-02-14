@@ -1,0 +1,14 @@
+(program entry point)
+	[abc 007]
+	*(repeat forever)
+	(get input $Words)
+	$Words
+	(if) ($Words = [magic]) (then)
+		Magic!
+	(elseif) ($Words = [abcdefghijklm]) (then)
+		Alphabetic!
+	(elseif) (empty $Words) (then)
+		(stop)
+	(endif)
+
+(removable word endings) ending

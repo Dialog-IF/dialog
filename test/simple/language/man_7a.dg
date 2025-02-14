@@ -1,0 +1,33 @@
+@($Obj is $Rel $Parent)
+	*($Obj has parent $Parent)
+	*($Obj has relation $Rel)
+
+(#apple/#banana is #in #bowl)
+(#bowl is #on #table)
+(#cherry has parent #bowl)
+
+(*(vegetable $) is #on #plate)
+(vegetable #eggplant)
+
+#pumpkin
+(vegetable *)
+
+(program entry point)
+	(exhaust) {
+		*($Obj is $Rel $Parent)
+		The $Obj is $Rel the $Parent.
+	}
+	(line)
+	
+	(now) (#cherry is #under #apple)
+	(exhaust) {
+		*($Obj is $Rel $Parent)
+		The $Obj is $Rel the $Parent.
+	}
+	(line)
+	
+	(now) ~(#apple is $ $)
+	(exhaust) {
+		*($Obj is $Rel $Parent)
+		The $Obj is $Rel the $Parent.
+	}

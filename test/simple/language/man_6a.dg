@@ -1,0 +1,30 @@
+(player eats meat)
+
+(#reddoor is open)
+(#bluedoor is open)
+(#greendoor is open)
+
+(check eating)
+	(player eats meat) Carnivore!
+(check eating)
+	Herbivore!
+
+(program entry point)
+	(check eating)
+	(now) ~(player eats meat)
+	(check eating)
+	(par)
+	
+	(now) ~(#bluedoor is open)
+	(collect $Thing)
+		*($Thing is open)
+	(into $List)
+	The open things are: $List
+	(par)
+	
+	(now) ~($ is open)
+	(now) (#chest is open)
+	(collect $Thing)
+		*($Thing is open)
+	(into $List)
+	The open things are: $List

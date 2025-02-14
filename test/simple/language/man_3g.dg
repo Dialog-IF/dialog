@@ -1,0 +1,10 @@
+(program entry point)
+	(collect words)
+		Hello, world!
+	(into $List)
+	The list is: $List (line)
+	Printing each word:
+	(exhaust) {
+		*($Word is one of $List)
+		$Word
+	}
