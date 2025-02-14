@@ -286,17 +286,20 @@ static int utf8_to_zscii(uint8_t *dest, int ndest, char *src, uint32_t *special)
 	/* Stops on end of input, special unicode char, or full output. */
 	/* The output is always null-terminated. */
 	/* Returns number of utf8 bytes consumed. */
+	
+	/* Experiment: don't stop on special unicode char, make it a warning instead of an error, because the compiler can sometimes be overzealous with these errors and disallow perfectly valid programs if it can't prove certain words are *not* used for parsing */
+	/* Instead, when this happens, we'll replace it with a period, which will render the word unusable for parsing but won't crash anything */
 
 	for(;;) {
 		if(outpos >= ndest - 1) {
 			dest[outpos] = 0;
-			if(special) *special = 0;
+	//		if(special) *special = 0;
 			return inpos;
 		}
 		ch = src[inpos];
 		if(!ch) {
 			dest[outpos] = 0;
-			if(special) *special = 0;
+	//		if(special) *special = 0;
 			return inpos;
 		}
 		inpos++;
@@ -332,7 +335,8 @@ static int utf8_to_zscii(uint8_t *dest, int ndest, char *src, uint32_t *special)
 			if(i >= sizeof(extended_zscii) / 2) {
 				dest[outpos] = 0;
 				if(special) *special = uchar;
-				return inpos;
+				dest[outpos++] = '.'; // Periods inside dictionary words render them unusable, a feature sometimes used in the I6 parser
+			//	return inpos;
 			} else {
 				dest[outpos++] = 155 + i;
 			}
@@ -809,7 +813,7 @@ void prepare_dictionary_z(struct program *prg) {
 	uint32_t uchar;
 	char chbuf[2];
 	struct word *w;
-	char runtime[7] = {8, 13, 32, 16, 17, 18, 19}; // Special characters added for runtime purposes: these are the codes for the keypresses backspace, enter, up, down, left, right
+	char runtime[7] = {8, 13, 32, 16, 17, 18, 19}; // Special characters added for runtime purposes: these are the codes for the keypresses backspace, enter, space, up, down, left, right
 
 	for(i = 0; i < 7; i++) {
 		chbuf[0] = runtime[i];
@@ -837,14 +841,24 @@ void prepare_dictionary_z(struct program *prg) {
 			zbuf[1] = 0;
 		} else {
 			(void) utf8_to_zscii(zbuf, sizeof(zbuf), w->name, &uchar);
-			if(uchar) {
-				report(
-					LVL_ERR,
-					0,
-					"Unsupported character U+%04x in dictionary word '@%s'.",
-					uchar,
-					w->name);
-				exit(1);
+			if(uchar) { // Invalid Unicode character
+				if(!zbuf[1]) { // Single-character word - crash, that's not allowed!
+					report(
+						LVL_ERR,
+						0,
+						"Unsupported character U+%04x in single-character dictionary word '@%s'.",
+						uchar,
+						w->name);
+					exit(1);
+				} else { // Otherwise, it's just a warning
+					report(
+						LVL_WARN,
+						0,
+						"Unsupported character U+%04x in dictionary word '@%s'. This word will never be recognized by the parser.",
+						uchar,
+						w->name);
+					uchar = 0;
+				}
 			}
 		}
 		assert(zbuf[0]);
@@ -3364,30 +3378,30 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				zi->oper[1] = o1;
 				break;
 			case I_PRINT_WORDS:
-				if(ci->subop == 1) {
+				if(ci->subop == 1) { // These words are only ever printed, never collected
 					n = generate_output(prg, r, &cr->instr[i], 0, 1);
-				} else if(ci->subop == 0) {
+				} else if(ci->subop == 0) { // These words are never printed and never collected, so what's the point?
 					// This can only happen for unreachable code.
 					n = 1;
-				} else {
-					if(ci->subop == 3) {
+				} else { // These words may be collected
+					if(ci->subop == 3) { // These words can be printed *or* collected
 						ll = r->next_label++;
 						ll2 = r->next_label++;
-						zi = append_instr(r, Z_JNZ);
+						zi = append_instr(r, Z_JNZ); // If we're collecting rather than printing, skip to label LL
 						zi->oper[0] = VALUE(REG_FORWORDS);
 						zi->branch = ll;
-						n = generate_output(prg, r, &cr->instr[i], 0, 0);
-						zi = append_instr(r, Z_JUMP);
+						n = generate_output(prg, r, &cr->instr[i], 0, 0); // If we're just printing, then generate code as in the ci->subop == 1 case
+						zi = append_instr(r, Z_JUMP); // Then jump to label LL2 (i.e. after all of this is over)
 						zi->oper[0] = REL_LABEL(ll2);
 						zi = append_instr(r, OP_LABEL(ll));
-					} else {
+					} else { // These words can only be collected, never printed
 						assert(ci->subop == 2);
 						n = generate_output(prg, r, &cr->instr[i], 1, 0);
 						ll2 = 0; // prevent gcc warning
 					}
-					for(j = 0; j < n; j++) {
+					for(j = 0; j < n; j++) { // Now we've generated the code for our subroutine, to *print* all the words; we now go through that code, look at all the I_PRINT_WORDS operands generated, and use those to make the code for *collecting* these words
 						if(cr->instr[i + j].op == I_PRINT_WORDS) {
-							for(k = 0; k < 3 && cr->instr[i + j].oper[k].tag == OPER_WORD; k++) {
+							for(k = 0; k < 3 && cr->instr[i + j].oper[k].tag == OPER_WORD; k++) { // Take all the words that are operands of I_PRINT_WORDS opcodes in this subroutine and push them onto the aux heap
 								w = prg->allwords[cr->instr[i + j].oper[k].value];
 								oper[k] = LARGE(dictword_tag(prg, w));
 							}
