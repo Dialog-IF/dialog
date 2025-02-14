@@ -26,5 +26,5 @@
 	(now) (#chest is open)
 	(collect $Thing)
 		*($Thing is open)
-	(into $List)
-	The open things are: $List
+	(into $List2)
+	The open things are: $List2

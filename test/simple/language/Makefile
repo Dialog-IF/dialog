@@ -18,7 +18,10 @@ origin := $(patsubst %.dg,%.orig_gold,$(wildcard *.dg))
 	$(BASEPATH)/bin/echoing.py dfrotz -w 80 -s 1234 -h 999 -mq $*.z5 <$*.z.in >$*.z.out
 ## Then, the debugger version
 	dgdebug -qD -w 80 -s 1234 $*.debug <$*.d.in >$*.d.out
+## Remove one space from the end of each line
 	sed -i 's/ $$//' $*.d.out
+## And the last character, which is an excess newline
+	sed -i '$$d' $*.d.out
 ## And meld them
 	meld $*.d.out $*.z.out $*.gold
 ## Then cleanup
@@ -48,7 +51,7 @@ touch-in-case:
 %.z.in %.aa.in %.d.in:
 ## If we have a .in file, then split it into three
 ## Otherwise, just make empty files, no input is expected
-	if [ -f \*.in ]; then \
+	if [ -f $*.in ]; then \
 		$(BASEPATH)/bin/striate.py $*.in Z $*.z.in A $*.aa.in D $*.d.in ; \
 	else \
 		touch $*.z.in $*.aa.in $*.d.in ; \

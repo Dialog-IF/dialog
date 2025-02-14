@@ -26,7 +26,7 @@
 	}
 	(line)
 	
-	(now) ~(#apple is $ $)
+	(now) ~(#apple has parent $)
 	(exhaust) {
 		*($Obj is $Rel $Parent)
 		The $Obj is $Rel the $Parent.

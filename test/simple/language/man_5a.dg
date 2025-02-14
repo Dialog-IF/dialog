@@ -1,3 +1,6 @@
+(style class @initial-spacer)
+	margin-top: 5em;
+
 (style class @block)
 	margin-top: 2em;
 	margin-bottom: 1em;
@@ -15,6 +18,7 @@
 (style class @empty)
 
 (program entry point)
+	(div @initial-spacer) { }
 	Let us begin.
 	(div @block) {
 		(span @unitalic) { Lorem Ipsum }, he (span @bold) emphasized .

@@ -22,8 +22,8 @@
 	
 	(par)
 	
-	($C = 1)
-	($D = [2 3 4])
+	($C = 5)
+	($D = [6 7 8])
 	Tacking on a new head: [$C | $D]
 	
 	(par)

@@ -5,6 +5,6 @@ opponent plays rock, you should play #paper.
 
 A is 1. B is [2 3 4].
 
-Tacking on a new head: [1 2 3 4]
+Tacking on a new head: [5 6 7 8]
 
 The result is [b a c d e].

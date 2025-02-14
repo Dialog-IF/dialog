@@ -4,7 +4,7 @@
 	Elements:
 	(exhaust) {
 		*($X is one of [a b c])
-		(uppercase $X)
+		(uppercase) $X
 	}
 	(line)
 	

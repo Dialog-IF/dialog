@@ -14,7 +14,7 @@
 	(show statistics for 123)
 	(show statistics for @a)
 	(show statistics for @abc)
-	(join [abc def] into $Abcdef)
+	(join words [abc def] into $Abcdef)
 	(show statistics for $Abcdef)
 	(show statistics for [])
 	(show statistics for [1 2 3])

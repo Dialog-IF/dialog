@@ -1,0 +1,8 @@
+The #troll swings the #axe at you.
+The #troll swings the #axe at you. The #kobold swings the #axe at you.
+The #kobold swings the #axe at you.
+The #skeleton swings the [1 2 3] at you.
+[D] Error: man_6d.debug, line 27: Attempting to set per-object variable ($ wields $)
+for non-object.
+[D] Restarting program from: (error 3 entry point)
+Fatal error code 3!
