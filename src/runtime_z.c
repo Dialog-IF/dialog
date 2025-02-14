@@ -530,7 +530,9 @@ struct rtroutine rtroutines[] = {
 			{Z_PRINTLIT, {}, 0, 0, "["},
 			{Z_STORE, {SMALL(REG_UPPER), SMALL(0)}},
 			{Z_STORE, {SMALL(REG_SPACE), SMALL(1)}},
-			{Z_AND, {VALUE(REG_LOCAL+1), SMALL(1)}, REG_LOCAL+4},
+	//		{Z_AND, {VALUE(REG_LOCAL+1), SMALL(1)}, REG_LOCAL+4},
+			{Z_STORE, {SMALL(REG_LOCAL+4), SMALL(1)}}, // Instead of masking out the $02 flag, we just set the flags to $01, ensuring that dictionary words printed inside a list will always have the + flag set
+			// This ensures that, when printing a list for tracing, punctuation spaces itself appropriately
 
 			{OP_LABEL(19)},
 			{Z_SUB, {VALUE(REG_LOCAL+0), VALUE(REG_4000)}, REG_LOCAL+0},
