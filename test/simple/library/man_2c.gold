@@ -1,0 +1,24 @@
+[Z] Location
+[Z] 
+An Interactive Fiction
+An interactive fiction by Anonymous.
+Release 1. Serial number <SERIAL>.
+<COMPILER>. <LIBRARY>
+
+Location
+You are here.
+
+> x red
+Did you want to examine the red bottle or the red bottle cap?
+
+> x red bottle
+[Z] Location
+[Z] 
+It seems to be harmless.
+
+> x red bottle cap
+[Z] Location
+[Z] 
+It seems to be harmless.
+
+[Z] >

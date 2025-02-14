@@ -1,0 +1,78 @@
+[Z] Below the cliff
+[Z] 
+An Interactive Fiction
+An interactive fiction by Anonymous.
+Release 1. Serial number <SERIAL>.
+<COMPILER>. <LIBRARY>
+
+Below the cliff
+You are here.
+
+> i
+[Z] Below the cliff
+[Z] 
+You have a flashlight.
+
+> exits
+[Z] Below the cliff
+[Z] 
+Obvious exits are:
+North.
+
+> in
+In the dark
+
+You walk north.
+
+In the dark
+You are surrounded by darkness.
+
+> turn on flashlight
+Cave
+
+You switch the flashlight on.
+
+> look
+Cave
+
+Cave
+You are here.
+
+> out
+Below the cliff
+
+You walk south.
+
+Below the cliff
+You are here.
+
+> exits
+Below the cliff
+
+Obvious exits are:
+North to darkness.
+
+> turn off flashlight
+Below the cliff
+
+You switch the flashlight off.
+
+> n
+In the dark
+
+You walk north.
+
+In the dark
+You are surrounded by darkness.
+
+> drop flashlight
+In the dark
+
+The flashlight falls to the ground.
+
+> turn on flashlight
+Cave
+
+You switch the flashlight on.
+
+>

@@ -1,0 +1,24 @@
+(current player #player)
+(#player is #in #belowcliff)
+
+#belowcliff
+(room *)
+(singleton *)
+(name *)		area below the cliff
+(room header *)		Below the cliff
+(from * go #north to #cave)
+(from * go #in to #north)
+
+#cave
+(name *)		cave
+(room *)
+(inherently dark *)
+(from * go #south to #belowcliff)
+(from * go #out to #south)
+
+#flashlight
+(name *)		flashlight
+(item *)
+(switchable *)
+(* provides light)	(* is on)
+(* is #heldby #player)

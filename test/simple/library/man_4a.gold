@@ -1,0 +1,76 @@
+[Z] Tutorial room
+[Z] 
+An Interactive Fiction
+An interactive fiction by Anonymous.
+Release 1. Serial number <SERIAL>.
+<COMPILER>. <LIBRARY>
+
+Tutorial room
+This is a very nondescript room, dominated by a wooden table.
+
+> look
+[Z] Tutorial room
+[Z] 
+Tutorial room
+This is a very nondescript room, dominated by a wooden table.
+
+> x table
+[Z] Tutorial room
+[Z] 
+It's wooden; possibly mahogany. A small bowl is placed exactly in its centre.
+
+> x bowl
+[Z] Tutorial room
+[Z] 
+It's a small bowl. You can see a sapphire and an amethyst in it.
+
+> look in bowl
+[Z] Tutorial room
+[Z] 
+In the small bowl you see a sapphire and an amethyst.
+
+> get amethyst
+[Z] Tutorial room
+[Z] 
+You take the amethyst out of the small bowl.
+
+> look
+[Z] Tutorial room
+[Z] 
+Tutorial room
+This is a very nondescript room, dominated by a wooden table.
+
+> get all
+[Z] Tutorial room
+[Z] 
+The small bowl: You take the small bowl off the wooden table.
+
+The sapphire: You take the sapphire out of the small bowl.
+
+> put stone in bowl
+Did you want to put the sapphire or the amethyst in the small bowl?
+
+> amethyst
+[Z] Tutorial room
+[Z] 
+You put the amethyst in the small bowl.
+
+> put stone on table
+[Z] Tutorial room
+[Z] 
+You put the sapphire on the wooden table.
+
+> drop all
+[Z] Tutorial room
+[Z] 
+The small bowl falls to the ground.
+
+> look
+[Z] Tutorial room
+[Z] 
+Tutorial room
+This is a very nondescript room, dominated by a wooden table.
+
+You see a small bowl here.
+
+[Z] >

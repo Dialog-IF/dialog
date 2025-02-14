@@ -20,7 +20,11 @@ explicit: $(explicit)
 # So if you edit one, make sure to edit the other to keep them in sync!
 # (Also that the following rules rely on this one)
 stdlib.dglib: $(BASEPATH)/stdlib.dg
-	sed 's/(serial number)/DEBUG/g' $(BASEPATH)/stdlib.dg >stdlib.dglib
+	cp $(BASEPATH)/stdlib.dg stdlib.dglib
+	sed -i 's/(serial number)/<SERIAL>/g' stdlib.dglib
+	sed -i 's/(compiler version)/<COMPILER>/g' stdlib.dglib
+	sed -i 's/\s(library version)/\t<LIBRARY>/g' stdlib.dglib
+## The \s is to ensure we don't wreck the *declaration* of (library version), which would crash the compiler
 
 # Create the original gold files based on the gold-standard (i.e. unmodified) dialogc and dgdebug
 %.orig_gold: %.dg %.debug %.z.in %.d.in stdlib.dglib
@@ -90,4 +94,4 @@ origin: $(origin)
 	diff $*.d.out $*.d.gold || meld $*.d.out $*.d.gold
 
 clean:
-	rm -rf *.out *.z.gold *.aa.gold *.d.gold *.z.in *.aa.in *.d.in
+	rm -rf *.out *.z.gold *.aa.gold *.d.gold *.z.in *.aa.in *.d.in stdlib.dglib
