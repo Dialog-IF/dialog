@@ -10,7 +10,7 @@ if len(argv) == 1 or argv[1] in {'--help', '-h'}:
 
 proc = sp.Popen(argv[1:], stdin=sp.PIPE, text=True, bufsize=1)
 for line in stdin:
+	sleep(0.01) # Tiny delay to sync, assuming the game won't take longer than this to run each turn on modern hardware
 	print(line, end='', flush=True)
 	proc.stdin.write(line)
 	proc.stdin.flush()
-	sleep(0.01) # Tiny delay to sync, assuming the game won't take longer than this to run each turn on modern hardware

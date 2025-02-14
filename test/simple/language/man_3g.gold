@@ -1,2 +1,4 @@
-The list is: [hello , world!]
+[Z] The list is: [hello, world!]
+[D] The list is: [hello , world!]
+[#] This is a bug in the Z-machine implementation that we should fix.
 Printing each word: hello, world!

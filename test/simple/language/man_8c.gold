@@ -1,4 +1,6 @@
 A is an element! Elements: A B C
 [a b c d] [c d]
 [the good] [the bad and the ugly]
-[the good, the bad] [the ugly]
+[Z] [the good, the bad] [the ugly]
+[D] [the good , the bad] [the ugly]
+[#] Again, a bug with printing commas inside lists on the Z-machine

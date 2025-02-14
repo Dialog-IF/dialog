@@ -1,0 +1,9 @@
+123: Number Fully Bound
+a: Word Fully Bound
+abc: Word Fully Bound
+abcdef: Word Unknown Fully Bound
+[]: Empty List Fully Bound
+[1 2 3]: Nonempty List Fully Bound
+$: Object
+[1 2 $]: Nonempty List Bound
+#object: Fully Bound Object

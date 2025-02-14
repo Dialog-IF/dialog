@@ -25,23 +25,28 @@ This line will be copied to all files
 infile = argv[1]
 results = {}
 regex = re.compile(r''' ^				# Start of line
-						\[ ([^]]+) \]	# Group: one or more bracketed chars
+						\[ ([A-Z]+) \]	# Group: one or more bracketed uppercase letters
 						\s?				# Optional single whitespace
 						(.*)			# Rest of the line
 						$				# End of line
 					''', re.X)
+comment = re.compile(r' ^ \[ \# \]', re.X) # [#] at the start of a line
 
 for char, fn in zip(argv[2::2], argv[3::2]):
 	if char in results:
 		raise KeyError(f'Char "{c}" appeared multiple times')
+	if not re.fullmatch(r'[A-Z]', char):
+		raise KeyError(f'"{c}" is not a single uppercase ASCII letter')
 	results[char] = Path(fn).open('w') # Will raise exceptions if anything goes wrong
 
 with open(infile, 'r') as inf:
 	for line in inf:
 		line = line[:-1] # Remove final newline
-		if m := regex.fullmatch(line):
+		if comment.match(line):
+			continue
+		elif m := regex.fullmatch(line):
 			chars, rest = m.group(1, 2)
-			print(f'C: {chars} R: {rest}')
+	#		print(f'C: {chars} R: {rest}')
 			for k, v in results.items():
 				if k in chars:
 					v.write(rest + '\n')
