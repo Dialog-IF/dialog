@@ -8,8 +8,12 @@ tests := $(patsubst %.dg,%.test,$(wildcard *.dg))
 rawgold := $(patsubst %.dg,%.gold,$(wildcard *.dg))
 rawinput := $(patsubst %.dg,%.in,$(wildcard *.dg))
 origin := $(patsubst %.dg,%.orig_gold,$(wildcard *.dg))
+explicit := $(patsubst %.dg,%.test_explicit,$(wildcard *.dg))
 
 all: $(tests)
+
+# This version shows meld results afterward if there were differences
+explicit: $(explicit)
 
 # Create the original gold files based on the gold-standard (i.e. unmodified) dialogc and dgdebug
 %.orig_gold: %.dg %.debug %.z.in %.d.in
@@ -71,8 +75,12 @@ origin: $(origin)
 	sed -i 's/ $$//' $*.d.out
 
 %.test: %.z.out %.d.out %.z.gold %.d.gold
-	$(DIFF) $*.z.out $*.z.gold || meld $*.z.out $*.z.gold
-	$(DIFF) $*.d.out $*.d.gold || meld $*.d.out $*.d.gold
+	$(DIFF) $*.z.out $*.z.gold
+	$(DIFF) $*.d.out $*.d.gold
+
+%.test_explicit: %.z.out %.d.out %.z.gold %.d.gold
+	diff $*.z.out $*.z.gold || meld $*.z.out $*.z.gold
+	diff $*.d.out $*.d.gold || meld $*.d.out $*.d.gold
 
 clean:
 	rm -rf *.out *.z.gold *.aa.gold *.d.gold *.z.in *.aa.in *.d.in
