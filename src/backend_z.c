@@ -278,16 +278,17 @@ static uint8_t unicode_to_zscii(uint16_t uchar) {
 	}
 }
 
-static int utf8_to_zscii(uint8_t *dest, int ndest, char *src, uint32_t *special) {
+static int utf8_to_zscii(uint8_t *dest, int ndest, char *src, uint32_t *special, int unicode_halt) {
 	uint8_t ch;
 	uint32_t uchar;
 	int outpos = 0, inpos = 0, i;
+	if(special) *special = 0;
 
 	/* Stops on end of input, special unicode char, or full output. */
 	/* The output is always null-terminated. */
 	/* Returns number of utf8 bytes consumed. */
 	
-	/* Experiment: don't stop on special unicode char, make it a warning instead of an error, because the compiler can sometimes be overzealous with these errors and disallow perfectly valid programs if it can't prove certain words are *not* used for parsing */
+	/* Experiment: parameter lets us not halt on Unicode char, make it a warning instead of an error in certain contexts, because the compiler can sometimes be overzealous with these errors and disallow perfectly valid programs if it can't prove certain words are *not* used for parsing */
 	/* Instead, when this happens, we'll replace it with a period, which will render the word unusable for parsing but won't crash anything */
 
 	for(;;) {
@@ -335,8 +336,8 @@ static int utf8_to_zscii(uint8_t *dest, int ndest, char *src, uint32_t *special)
 			if(i >= sizeof(extended_zscii) / 2) {
 				dest[outpos] = 0;
 				if(special) *special = uchar;
+				if(unicode_halt) return inpos; // Now only halt if our caller asked us to
 				dest[outpos++] = '.'; // Periods inside dictionary words render them unusable, a feature sometimes used in the I6 parser
-			//	return inpos;
 			} else {
 				dest[outpos++] = 155 + i;
 			}
@@ -840,7 +841,7 @@ void prepare_dictionary_z(struct program *prg) {
 			zbuf[0] = w->name[0] - 16 + 129;
 			zbuf[1] = 0;
 		} else {
-			(void) utf8_to_zscii(zbuf, sizeof(zbuf), w->name, &uchar);
+			(void) utf8_to_zscii(zbuf, sizeof(zbuf), w->name, &uchar, 0);
 			if(uchar) { // Invalid Unicode character
 				if(!zbuf[1]) { // Single-character word - crash, that's not allowed!
 					report(
@@ -872,7 +873,7 @@ void prepare_dictionary_z(struct program *prg) {
 	for(i = 0; i < ndict; ) {
 		w = dictionary[i].word;
 		if(dictionary[i].n_essential == 1) {
-			(void) utf8_to_zscii(zbuf, sizeof(zbuf), w->name, &uchar);
+			(void) utf8_to_zscii(zbuf, sizeof(zbuf), w->name, &uchar, 1);
 			assert(!uchar);
 			prg->dictmap[w->dict_id] = 0x3e00 | zbuf[0];
 			memmove(dictionary + i, dictionary + i + 1, (ndict - i - 1) * sizeof(struct dictword));
@@ -903,7 +904,7 @@ void init_backend_wobj(struct program *prg, int id, struct backend_wobj *wobj, i
 		pentets[0] = 5;
 		n = 1;
 	} else {
-		n = utf8_to_zscii(zbuf, sizeof(zbuf), prg->worldobjnames[id]->name, &uchar);
+		n = utf8_to_zscii(zbuf, sizeof(zbuf), prg->worldobjnames[id]->name, &uchar, 1);
 		if(uchar) {
 			report(
 				LVL_ERR,
@@ -1047,7 +1048,7 @@ static uint32_t compile_dictword(struct program *prg, struct routine *r, struct 
 	zdict = tagged & 0x1fff;
 	assert(zdict < ndict);
 
-	n = utf8_to_zscii(zbuf, sizeof(zbuf), w->name, &uchar);
+	n = utf8_to_zscii(zbuf, sizeof(zbuf), w->name, &uchar, 1);
 	assert(!w->name[n]);
 	assert(!uchar);
 	if(strlen((char *) zbuf) == dictionary[zdict].n_essential) {
@@ -1166,7 +1167,7 @@ static void generate_output_from_utf8(struct program *prg, struct routine *r, in
 
 	for(pos = 0; utf8[pos]; pos += n) {
 		uchar = 0;
-		n = utf8_to_zscii(zbuf, sizeof(zbuf), utf8 + pos, &uchar);
+		n = utf8_to_zscii(zbuf, sizeof(zbuf), utf8 + pos, &uchar, 1);
 		if(n && *zbuf) {
 			stringlabel = find_global_string(zbuf)->global_label;
 		} else {
@@ -1333,7 +1334,7 @@ void compile_trace_output(struct predname *predname, uint16_t label) {
 		} else {
 			if(bufpos) {
 				buf[bufpos] = 0;
-				utf8_to_zscii(zbuf, sizeof(zbuf), buf, &uchar);
+				utf8_to_zscii(zbuf, sizeof(zbuf), buf, &uchar, 1);
 				if(uchar) {
 					report(LVL_ERR, 0, "Unsupported character U+%04x in part of predicate name %s", uchar, predname->printed_name);
 					exit(1);
@@ -1355,7 +1356,7 @@ void compile_trace_output(struct predname *predname, uint16_t label) {
 	}
 	if(bufpos) {
 		buf[bufpos] = 0;
-		utf8_to_zscii(zbuf, sizeof(zbuf), buf, &uchar);
+		utf8_to_zscii(zbuf, sizeof(zbuf), buf, &uchar, 1);
 		if(uchar) {
 			report(LVL_ERR, 0, "Unsupported character U+%04x in part of predicate name %s", uchar, predname->printed_name);
 			exit(1);
