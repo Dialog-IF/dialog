@@ -843,15 +843,18 @@ void prepare_dictionary_z(struct program *prg) {
 		} else {
 			(void) utf8_to_zscii(zbuf, sizeof(zbuf), w->name, &uchar, 0);
 			if(uchar) { // Invalid Unicode character
-				if(!zbuf[1]) { // Single-character word - crash, that's not allowed!
+				if(!zbuf[1]) { // Single-character word
+					zbuf[0] = '.'; // Convert to '..'
+					zbuf[1] = '.';
+					zbuf[2] = 0;
 					report(
-						LVL_ERR,
+						LVL_WARN,
 						0,
-						"Unsupported character U+%04x in single-character dictionary word '@%s'.",
+						"Unsupported character U+%04x in single-character dictionary word '@%s'. This character will never be recognized by the parser.",
 						uchar,
 						w->name);
-					exit(1);
-				} else { // Otherwise, it's just a warning
+					uchar = 0;
+				} else { // Multi-character word: replace invalid character with '.'
 					report(
 						LVL_WARN,
 						0,
