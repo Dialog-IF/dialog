@@ -844,6 +844,7 @@ void prepare_dictionary_z(struct program *prg) {
 			(void) utf8_to_zscii(zbuf, sizeof(zbuf), w->name, &uchar, 0);
 			if(uchar) { // Invalid Unicode character
 				if(!zbuf[1]) { // Single-character word
+			//		snprintf(zbuf+1, 6, "%04x", uchar); // Store them as meaningful values in the dictionary for later debugging: .01ff or the like
 					zbuf[0] = '.'; // Convert to '..'
 					zbuf[1] = '.';
 					zbuf[2] = 0;
