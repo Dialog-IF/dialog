@@ -1,0 +1,51 @@
+#bob
+(name *)	Bob
+(proper *)
+(male *)
+(appearance *) Bob is here.
+
+(prevent [tell * to go $])
+	(* is #in #cage)
+	Bob scratches his head with the banana, and makes a sad gesture towards the cage door.
+
+(perform [tell * to go $Dir])
+	(* is in room $Room)
+	(from $Room go $Dir to room $)
+	“Oh oh. Ah ah!”
+	(let * go $Dir)
+
+#cage
+(#bob is #in *)
+(* is #in #alpha)
+(container *)
+(openable *)
+~(opaque *)
+(* is closed)
+(appearance *) A cage is here.
+
+(current player #player)
+(#player is #in #alpha)
+
+#alpha
+(room *)
+(name *) alpha
+(from * go #north to #beta)
+(from * go #east to #gamma)
+(from * go #west to #delta)
+
+#beta
+(room *)
+(name *) beta
+(from * go #south to #alpha)
+(from * go #southeast to #gamma)
+
+#gamma
+(room *)
+(name *) gamma
+(from * go #west to #alpha)
+(from * go #northwest to #beta)
+
+#delta
+(room *)
+(name *) delta
+(from * go #east to #alpha)

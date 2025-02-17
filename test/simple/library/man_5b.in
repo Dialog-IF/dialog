@@ -3,9 +3,11 @@ exits
 in
 turn on flashlight
 look
+exits
 out
 exits
 turn off flashlight
 n
 drop flashlight
+exits
 turn on flashlight
