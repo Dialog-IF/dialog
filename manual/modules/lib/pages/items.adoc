@@ -241,7 +241,7 @@ object in the bowl, not just the amethyst and the sapphire. So we have to take
 care of any foreign objects that might end up there too. In some situations, it
 might be sufficient to drop a vague hint:
 
-[console]
+[source]
 ----
 (descr #bowl)
 	It's a small bowl.
@@ -262,7 +262,7 @@ Thus:
 (descr #bowl)
 	It's a small bowl.
 	(par)
-	(list objects #in *)
+	(list objects #in #bowl)
 
 ~(appearance $ #in #bowl)
 ----
@@ -448,7 +448,7 @@ have to define:
 
 [source]
 ----
-(wearing #socks removes #shoes) |
+(wearing #socks removes #shoes)
 ----
 
 But this combination of constraints—`(wearing $A covers $B)` and

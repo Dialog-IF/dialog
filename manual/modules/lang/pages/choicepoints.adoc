@@ -360,7 +360,7 @@ Checking the oaken door. Checking my left foot. Checking the green apple. Yes, i
 Incidentally, `($ is one of $)` is a built-in predicate for performance reasons only.
 We could have defined it ourselves like this:
 
-[source]
+[source,.should-error]
 ----
 ($Element is one of [$Element | $])
 ($Element is one of [$ | $Tail])
@@ -641,7 +641,7 @@ Code such as `(just) (just)` is redundant; the second `(just)` has no effect.
 The built-in predicate `(repeat forever)` provides an unlimited supply of choice points.
 This can be used to create infinite loops (such as the main game loop or the game-over menu).
 
-[source]
+[source,.should-error]
 ----
 (program entry point)
 	*(repeat forever)

@@ -147,7 +147,7 @@ predicate:
 
 [source]
 ----
-(split $Input by $Keyword into $Left and $Right)
+	(split $Input by $Keyword into $Left and $Right)
 ----
 
 `$Input` must be a list of simple values, i.e. it mustn't contain

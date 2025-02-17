@@ -18,14 +18,14 @@ keyword:
 
 [source]
 ----
-    (now) (player eats meat)
+	(now) (player eats meat)
 ----
 
 To clear it, use `(now)` together with a negation:
 
 [source]
 ----
-    (now) ~(player eats meat)
+	(now) ~(player eats meat)
 ----
 
 We are allowed to define static rules for the global flag, but they won't be
@@ -150,7 +150,7 @@ _Global variables_ are dynamic predicates with a single parameter. To
 distinguish them from per-object flags, global variables have to be _declared_,
 using special syntax. This is what it looks like:
 
-[source,subs="quotes"]
+[source,subs="quotes",.should-error]
 ----
 (global variable _(signature)_)
 ----
@@ -182,7 +182,7 @@ To change the value of a global variable, use the `(now)` keyword:
 
 [source]
 ----
-(now) (current player #alice)
+	(now) (current player #alice)
 ----
 
 Note that the above is a low-level operation. When working with the standard

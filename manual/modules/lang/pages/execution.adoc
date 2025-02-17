@@ -68,7 +68,7 @@ Comments in the source code are prefixed with `%%` and last to the end of the li
 	Hello y'all \( and "welcome" \) !  %% This is a comment.
 ----
 
-produces this outupt:
+produces this output:
 
 [role="output"]
 ```

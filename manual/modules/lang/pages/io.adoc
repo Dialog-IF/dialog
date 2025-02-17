@@ -550,7 +550,7 @@ When a resource has been defined, it's possible to link to it using the followin
 
 [source,subs="quotes"]
 ----
-    (link resource $Id) _statement_
+	(link resource $Id) _statement_
 ----
 
 Here is an example:
