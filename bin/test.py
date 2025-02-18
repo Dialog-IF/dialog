@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import os
 import argparse
+import re
 import subprocess
 import tempfile
 from dataclasses import dataclass
@@ -11,6 +12,9 @@ from typing import List, Set
 DEFAULT_DGDEBUG = ['src/dgdebug', '--quit', '--width=1000']
 LANG_DOCS = Path('manual/modules/lang')
 LIB_DOCS = Path('manual/modules/lib')
+
+ERROR_MESSAGE = re.compile('^Error: ([^,]+), line ([0-9]+): (.+)$')
+WARN_MESSAGE = re.compile('^Warning: (.+)$')
 
 
 @dataclass
@@ -25,6 +29,8 @@ class CodeBlock:
 @dataclass
 class CodeBlockError:
     block: CodeBlock
+    file_name: str
+    line_no: int
     error: str
 
 
@@ -48,7 +54,7 @@ def parse_blocks(file_path):
                     line_no=line_no,
                     is_source=is_source,
                     roles=roles,
-                    contents='\n'.join(lines),
+                    contents='\n'.join(lines).rstrip(),
                 ))
                 open_block = None
                 lines.clear()
@@ -66,11 +72,11 @@ def parse_blocks(file_path):
                     if attr == 'source':
                         is_source = True
                     elif attr.startswith("."):
-                        roles.add(attr.lstrip('.'))
+                        roles.update(attr.lstrip('.').split('.'))
                     else:
                         kv = attr.split('=', 1)
                         if len(kv) > 1 and kv[0] == 'role':
-                            roles.update(kv[1:])
+                            roles.update(kv[1].strip('"').split(' '))
             elif line.startswith('```') or line.startswith('----'):
                 # Block delimiter, and we're not in a block: open a fresh one.
                 open_block = line
@@ -87,8 +93,10 @@ def check_blocks(blocks: List[CodeBlock], command_template: List[str | None]):
     Check that the given blocks execute as expected, using the provided command template for `dgdebug`.
     """
     errors = []
+    previous_output = None
     for block in blocks:
         if block.is_source and not block.contents.startswith('\t') and 'fragment' not in block.roles:
+            previous_output = None
             should_error = 'should-error' in block.roles
             with tempfile.NamedTemporaryFile(mode='w', suffix=f'.{block.file_path.stem}.dg') as source_file:
                 source_file.write(block.contents)
@@ -104,27 +112,66 @@ def check_blocks(blocks: List[CodeBlock], command_template: List[str | None]):
                 try:
                     stdout, _ = process.communicate(timeout=2.0)
                     return_code = process.returncode
+                    error_messages = []
+                    warn_messages = []
+                    output = []
+                    for line in stdout.splitlines():
+                        error_match = ERROR_MESSAGE.fullmatch(line)
+                        if error_match:
+                            error_messages.append((error_match[1], int(error_match[2]) - 2, error_match[3]))
+                        elif WARN_MESSAGE.fullmatch(line):
+                            warn_messages.append(' '.join(line.split()[1:]))
+                        else:
+                            output.append(line)
                     if return_code != 0 and not should_error:
-                        message = f'dgdebug returned error code {return_code}: {stdout}'
-                        for line in stdout.splitlines():
-                            if line.startswith("Error: "):
-                                message = ' '.join(line.split()[1:])
-                                break
+                        file_name, line_no, message = error_messages[0] or (0, f'return code {return_code}')
+                        if file_name == source_file.name:
+                            file_name = str(block.file_path)
+                            line_no += block.line_no
                         errors.append(CodeBlockError(
                             block=block,
+                            file_name=file_name,
+                            line_no=line_no,
                             error=message
                         ))
-                    if return_code == 0 and should_error:
+                    elif return_code == 0 and should_error:
                         errors.append(CodeBlockError(
                             block=block,
+                            file_name=str(block.file_path),
+                            line_no=block.line_no,
                             error='expected error, but dgdebug succeeded'
                         ))
+                    else:
+                        previous_output = '\n'.join(output).strip()
                 except subprocess.TimeoutExpired:
                     if not should_error:
                         errors.append(CodeBlockError(
                             block=block,
+                            file_name=str(block.file_path),
+                            line_no=block.line_no,
                             error=f'dgdebug timed out'
                         ))
+        if 'output' in block.roles:
+            matches_previous = 'matches-previous' in block.roles
+            if previous_output != block.contents and matches_previous:
+                import difflib
+                diff = difflib.ndiff(
+                    block.contents.splitlines(),
+                    previous_output.splitlines(),
+                )
+                errors.append(CodeBlockError(
+                    block=block,
+                    file_name=str(block.file_path),
+                    line_no=block.line_no,
+                    error=f'output does not match:\n {'\n '.join(x.strip() for x in diff)}'
+                ))
+            if previous_output == block.contents and not matches_previous:
+                errors.append(CodeBlockError(
+                    block=block,
+                    file_name=str(block.file_path),
+                    line_no=block.line_no,
+                    error=f'output matches previous: add a .matches-previous annotation to the block if this is expected'
+                ))
     return errors
 
 
@@ -159,7 +206,7 @@ def doc_command(args):
         errors.extend(check_docs(LIB_DOCS, command))
 
     for error in errors:
-        print(f'{error.block.file_path}@{error.block.line_no}: {error.error}')
+        print(f'{error.file_name}, line {error.line_no}: {error.error}')
 
     exit_code = 1 if errors else 0
     return exit_code

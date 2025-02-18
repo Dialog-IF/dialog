@@ -70,7 +70,7 @@ Comments in the source code are prefixed with `%%` and last to the end of the li
 
 produces this output:
 
-[role="output"]
+[.output.matches-previous]
 ```
 Hello y'all (and "welcome")!
 ```
@@ -78,6 +78,8 @@ Hello y'all (and "welcome")!
 Dialog is smart about punctuation and whitespace:
 It interprets the source code text as a stream of words and punctuation characters, and rebuilds the output from that stream, inserting whitespace as appropriate.
 It knows that no space should precede a comma, that a space should go before an opening parenthesis but not after it, and so on.
+However, Dialog will not insert whitespace when punctuation is written in the middle of a longer word,
+like the apostrophe in "can't".
 
 [source]
 ----
@@ -93,9 +95,9 @@ It knows that no space should precede a comma, that a space should go before an 
 
 The output of that is:
 
-[role="output"]
+[.output.matches-previous]
 ```
-For instance: This text (which, to all intents and purposes, is silly (indeed)), prints properly.
+For instance:This text (which,to all intents and purposes,is silly(indeed)), prints properly.
 ```
 
 It is possible to override the automatic whitespace decisions on a case-by-case basis using the built-in predicates `(space)` and `(no space)`:
@@ -108,7 +110,7 @@ It is possible to override the automatic whitespace decisions on a case-by-case 
 
 The output of that is:
 
-[role="output"]
+[.output.matches-previous]
 ```
 Together , apart.
 ```
@@ -140,7 +142,7 @@ The following program:
 
 produces the following output:
 
-[role="output"]
+[.output.matches-previous]
 ```
 This goes on a line of its own.
 This goes on a line of its own.
@@ -249,7 +251,7 @@ Thus, the program entry point rule will proceed to print “Over and out”.
 
 The complete output is:
 
-[role="output"]
+[.output.matches-previous]
 ```
 It looks yummy! Over and out.
 ```

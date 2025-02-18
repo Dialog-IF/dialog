@@ -120,9 +120,9 @@ backtrack over all objects that have the flag set:
 
 This produces the output:
 
-[role="output"]
+[.output.matches-previous]
 ```
-The open things are: [#reddoor #greendoor]
+The open things are: [#greendoor #reddoor]
 ```
 
 Let's pause for a while and consider a matter of design philosophy. I have
