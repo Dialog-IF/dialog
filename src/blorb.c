@@ -240,7 +240,7 @@ uint8_t *loadfile(char *fname, uint32_t *fsize) {
 	*fsize = size;
 	return buf;
 }
-// The following files then handle different formats it could be in
+// The following functions then handle different formats it could be in
 int is_png(uint8_t *buf, uint32_t p_size, int *p_width, int *p_height) { // On success, loads values into p_width and p_height, and returns 0; on failure, returns 1
 	uint8_t magic[8] = {137, 'P', 'N', 'G', 13, 10, 26, 10};
 	
