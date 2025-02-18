@@ -45,6 +45,8 @@ struct debugger {
 
 static int force_width = 0;
 
+extern int use_numbered_levels; // Defined in eval.c
+
 static void set_oflag(struct dyn_state *ds, int onum, int fnum) {
 	struct dyn_obj *o = &ds->obj[onum];
 
@@ -1288,6 +1290,7 @@ void usage(char *prgname) {
 	fprintf(stderr, "--seed      -s    Specify random seed.\n");
 	fprintf(stderr, "--no-links  -L    Don't show hyperlinks in the output.\n");
 	fprintf(stderr, "--dfquirks  -D    Activate the dumbfrotz-compatible quirks mode.\n");
+	fprintf(stderr, "--numbered  -N    Show call depth with numbers during tracing.\n");
 }
 
 int debugger(int argc, char **argv) {
@@ -1302,6 +1305,7 @@ int debugger(int argc, char **argv) {
 		{"seed", 1, 0, 's'},
 		{"no-links", 0, 0, 'L'},
 		{"dfquirks", 0, 0, 'D'},
+		{"numbered", 0, 0, 'N'},
 		{0, 0, 0, 0}
 	};
 
@@ -1324,7 +1328,7 @@ int debugger(int argc, char **argv) {
 	dbg.timestamps = calloc(argc, sizeof(struct timespec));
 
 	do {
-		opt = getopt_long(argc, argv, "?hVvtnqw:s:LD", longopts, 0);
+		opt = getopt_long(argc, argv, "?hVvtnqw:s:LDN", longopts, 0);
 		switch(opt) {
 			case 0:
 			case '?':
@@ -1357,6 +1361,9 @@ int debugger(int argc, char **argv) {
 				break;
 			case 'D':
 				dfrotz_quirks = 1;
+				break;
+			case 'N':
+				use_numbered_levels = 1;
 				break;
 			default:
 				if(opt >= 0) {
