@@ -244,7 +244,7 @@ uint8_t *loadfile(char *fname, uint32_t *fsize) {
 int is_png(uint8_t *buf, uint32_t p_size, int *p_width, int *p_height) { // On success, loads values into p_width and p_height, and returns 0; on failure, returns 1
 	uint8_t magic[8] = {137, 'P', 'N', 'G', 13, 10, 26, 10};
 	
-	if(memcmp(buf, magic, 8) || p_size < 18) { // Not a valid PNG file
+	if(memcmp(buf, magic, 8) || p_size < 0x18) { // Not a valid PNG file
 		return 1;
 	}
 	
@@ -265,7 +265,7 @@ int is_jpeg(uint8_t *buf, uint32_t p_size, int *p_width, int *p_height) { // Sam
 	uint8_t magic1[4] = {0xff, 0xd8, 0xff, 0xe0}; // JPEG doesn't actually have a magic number, but the vast, _vast_ majority of JPEG files start with these four bytes, then two other bytes, then the next four
 	uint8_t magic2[4] = {'J', 'F', 'I', 'F'};
 	
-	if(memcmp(buf, magic1, 4) || memcmp(buf+6, magic2, 4)) { // Not a JPEG file
+	if(p_size < 12 || memcmp(buf, magic1, 4) || memcmp(buf+6, magic2, 4)) { // Not a JPEG file
 		return 1;
 	}
 	
