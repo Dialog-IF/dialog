@@ -278,25 +278,29 @@ static uint8_t unicode_to_zscii(uint16_t uchar) {
 	}
 }
 
-static int utf8_to_zscii(uint8_t *dest, int ndest, char *src, uint32_t *special) {
+static int utf8_to_zscii(uint8_t *dest, int ndest, char *src, uint32_t *special, int unicode_halt) {
 	uint8_t ch;
 	uint32_t uchar;
 	int outpos = 0, inpos = 0, i;
+	if(special) *special = 0;
 
 	/* Stops on end of input, special unicode char, or full output. */
 	/* The output is always null-terminated. */
 	/* Returns number of utf8 bytes consumed. */
+	
+	/* Experiment: parameter lets us not halt on Unicode char, make it a warning instead of an error in certain contexts, because the compiler can sometimes be overzealous with these errors and disallow perfectly valid programs if it can't prove certain words are *not* used for parsing */
+	/* Instead, when this happens, we'll replace it with a period, which will render the word unusable for parsing but won't crash anything */
 
 	for(;;) {
 		if(outpos >= ndest - 1) {
 			dest[outpos] = 0;
-			if(special) *special = 0;
+	//		if(special) *special = 0;
 			return inpos;
 		}
 		ch = src[inpos];
 		if(!ch) {
 			dest[outpos] = 0;
-			if(special) *special = 0;
+	//		if(special) *special = 0;
 			return inpos;
 		}
 		inpos++;
@@ -332,7 +336,8 @@ static int utf8_to_zscii(uint8_t *dest, int ndest, char *src, uint32_t *special)
 			if(i >= sizeof(extended_zscii) / 2) {
 				dest[outpos] = 0;
 				if(special) *special = uchar;
-				return inpos;
+				if(unicode_halt) return inpos; // Now only halt if our caller asked us to
+				dest[outpos++] = '.'; // Periods inside dictionary words render them unusable, a feature sometimes used in the I6 parser
 			} else {
 				dest[outpos++] = 155 + i;
 			}
@@ -809,7 +814,7 @@ void prepare_dictionary_z(struct program *prg) {
 	uint32_t uchar;
 	char chbuf[2];
 	struct word *w;
-	char runtime[7] = {8, 13, 32, 16, 17, 18, 19}; // Special characters added for runtime purposes: these are the codes for the keypresses backspace, enter, up, down, left, right
+	char runtime[7] = {8, 13, 32, 16, 17, 18, 19}; // Special characters added for runtime purposes: these are the codes for the keypresses backspace, enter, space, up, down, left, right
 
 	for(i = 0; i < 7; i++) {
 		chbuf[0] = runtime[i];
@@ -836,15 +841,29 @@ void prepare_dictionary_z(struct program *prg) {
 			zbuf[0] = w->name[0] - 16 + 129;
 			zbuf[1] = 0;
 		} else {
-			(void) utf8_to_zscii(zbuf, sizeof(zbuf), w->name, &uchar);
-			if(uchar) {
-				report(
-					LVL_ERR,
-					0,
-					"Unsupported character U+%04x in dictionary word '@%s'.",
-					uchar,
-					w->name);
-				exit(1);
+			(void) utf8_to_zscii(zbuf, sizeof(zbuf), w->name, &uchar, 0);
+			if(uchar) { // Invalid Unicode character
+				if(!zbuf[1]) { // Single-character word
+			//		snprintf(zbuf+1, 6, "%04x", uchar); // Store them as meaningful values in the dictionary for later debugging: .01ff or the like
+					zbuf[0] = '.'; // Convert to '..'
+					zbuf[1] = '.';
+					zbuf[2] = 0;
+					report(
+						LVL_WARN,
+						0,
+						"Unsupported character U+%04x in single-character dictionary word '@%s'. This character will never be recognized by the parser.",
+						uchar,
+						w->name);
+					uchar = 0;
+				} else { // Multi-character word: replace invalid character with '.'
+					report(
+						LVL_WARN,
+						0,
+						"Unsupported character U+%04x in dictionary word '@%s'. This word will never be recognized by the parser.",
+						uchar,
+						w->name);
+					uchar = 0;
+				}
 			}
 		}
 		assert(zbuf[0]);
@@ -858,7 +877,7 @@ void prepare_dictionary_z(struct program *prg) {
 	for(i = 0; i < ndict; ) {
 		w = dictionary[i].word;
 		if(dictionary[i].n_essential == 1) {
-			(void) utf8_to_zscii(zbuf, sizeof(zbuf), w->name, &uchar);
+			(void) utf8_to_zscii(zbuf, sizeof(zbuf), w->name, &uchar, 1);
 			assert(!uchar);
 			prg->dictmap[w->dict_id] = 0x3e00 | zbuf[0];
 			memmove(dictionary + i, dictionary + i + 1, (ndict - i - 1) * sizeof(struct dictword));
@@ -889,7 +908,7 @@ void init_backend_wobj(struct program *prg, int id, struct backend_wobj *wobj, i
 		pentets[0] = 5;
 		n = 1;
 	} else {
-		n = utf8_to_zscii(zbuf, sizeof(zbuf), prg->worldobjnames[id]->name, &uchar);
+		n = utf8_to_zscii(zbuf, sizeof(zbuf), prg->worldobjnames[id]->name, &uchar, 1);
 		if(uchar) {
 			report(
 				LVL_ERR,
@@ -1033,7 +1052,7 @@ static uint32_t compile_dictword(struct program *prg, struct routine *r, struct 
 	zdict = tagged & 0x1fff;
 	assert(zdict < ndict);
 
-	n = utf8_to_zscii(zbuf, sizeof(zbuf), w->name, &uchar);
+	n = utf8_to_zscii(zbuf, sizeof(zbuf), w->name, &uchar, 1);
 	assert(!w->name[n]);
 	assert(!uchar);
 	if(strlen((char *) zbuf) == dictionary[zdict].n_essential) {
@@ -1152,7 +1171,7 @@ static void generate_output_from_utf8(struct program *prg, struct routine *r, in
 
 	for(pos = 0; utf8[pos]; pos += n) {
 		uchar = 0;
-		n = utf8_to_zscii(zbuf, sizeof(zbuf), utf8 + pos, &uchar);
+		n = utf8_to_zscii(zbuf, sizeof(zbuf), utf8 + pos, &uchar, 1);
 		if(n && *zbuf) {
 			stringlabel = find_global_string(zbuf)->global_label;
 		} else {
@@ -1319,7 +1338,7 @@ void compile_trace_output(struct predname *predname, uint16_t label) {
 		} else {
 			if(bufpos) {
 				buf[bufpos] = 0;
-				utf8_to_zscii(zbuf, sizeof(zbuf), buf, &uchar);
+				utf8_to_zscii(zbuf, sizeof(zbuf), buf, &uchar, 1);
 				if(uchar) {
 					report(LVL_ERR, 0, "Unsupported character U+%04x in part of predicate name %s", uchar, predname->printed_name);
 					exit(1);
@@ -1341,7 +1360,7 @@ void compile_trace_output(struct predname *predname, uint16_t label) {
 	}
 	if(bufpos) {
 		buf[bufpos] = 0;
-		utf8_to_zscii(zbuf, sizeof(zbuf), buf, &uchar);
+		utf8_to_zscii(zbuf, sizeof(zbuf), buf, &uchar, 1);
 		if(uchar) {
 			report(LVL_ERR, 0, "Unsupported character U+%04x in part of predicate name %s", uchar, predname->printed_name);
 			exit(1);
@@ -3364,30 +3383,30 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				zi->oper[1] = o1;
 				break;
 			case I_PRINT_WORDS:
-				if(ci->subop == 1) {
+				if(ci->subop == 1) { // These words are only ever printed, never collected
 					n = generate_output(prg, r, &cr->instr[i], 0, 1);
-				} else if(ci->subop == 0) {
+				} else if(ci->subop == 0) { // These words are never printed and never collected, so what's the point?
 					// This can only happen for unreachable code.
 					n = 1;
-				} else {
-					if(ci->subop == 3) {
+				} else { // These words may be collected
+					if(ci->subop == 3) { // These words can be printed *or* collected
 						ll = r->next_label++;
 						ll2 = r->next_label++;
-						zi = append_instr(r, Z_JNZ);
+						zi = append_instr(r, Z_JNZ); // If we're collecting rather than printing, skip to label LL
 						zi->oper[0] = VALUE(REG_FORWORDS);
 						zi->branch = ll;
-						n = generate_output(prg, r, &cr->instr[i], 0, 0);
-						zi = append_instr(r, Z_JUMP);
+						n = generate_output(prg, r, &cr->instr[i], 0, 0); // If we're just printing, then generate code as in the ci->subop == 1 case
+						zi = append_instr(r, Z_JUMP); // Then jump to label LL2 (i.e. after all of this is over)
 						zi->oper[0] = REL_LABEL(ll2);
 						zi = append_instr(r, OP_LABEL(ll));
-					} else {
+					} else { // These words can only be collected, never printed
 						assert(ci->subop == 2);
 						n = generate_output(prg, r, &cr->instr[i], 1, 0);
 						ll2 = 0; // prevent gcc warning
 					}
-					for(j = 0; j < n; j++) {
+					for(j = 0; j < n; j++) { // Now we've generated the code for our subroutine, to *print* all the words; we now go through that code, look at all the I_PRINT_WORDS operands generated, and use those to make the code for *collecting* these words
 						if(cr->instr[i + j].op == I_PRINT_WORDS) {
-							for(k = 0; k < 3 && cr->instr[i + j].oper[k].tag == OPER_WORD; k++) {
+							for(k = 0; k < 3 && cr->instr[i + j].oper[k].tag == OPER_WORD; k++) { // Take all the words that are operands of I_PRINT_WORDS opcodes in this subroutine and push them onto the aux heap
 								w = prg->allwords[cr->instr[i + j].oper[k].value];
 								oper[k] = LARGE(dictword_tag(prg, w));
 							}
