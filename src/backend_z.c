@@ -4159,6 +4159,8 @@ void backend_z(
 	int nglobal;
 	uint16_t addr_abbrevtable, addr_abbrevstr, addr_objtable, addr_globals, addr_static;
 	uint16_t addr_scratch, addr_heap, addr_heapend, addr_aux, addr_lts, addr_dictionary, addr_seltable;
+	uint16_t used_addressable, used_objects1, used_objects2, used_wordmaps, used_routines, used_strings; // How much of the 64KiB of addressable memory have we used, for what purposes? We don't actually need this value for compilation, but if we save it for the end, we can give better diagnostics. Everything else is used for strings and routines, but we have either four or eight times as much of that, so breaking it down further is unlikely to be helpful.
+	uint8_t used_attributes; // How many of the Z-machine's low-level object attributes have we used?
 	uint32_t org;
 	uint32_t filesize;
 	int i, j, k;
@@ -4319,6 +4321,8 @@ void backend_z(
 			}
 		}
 	}
+	
+	used_attributes = next_flag; // To present at the end
 
 	for(i = 0; i < prg->nobjvar; i++) {
 		predname = prg->objvarpred[i];
@@ -4420,6 +4424,8 @@ void backend_z(
 
 	addr_objtable = org;
 	org += 63 * 2;
+	
+	used_objects1 = org; // Start of object data
 
 	for(i = 0; i < prg->nworldobj; i++) {
 		wobj = &backendwobj[i];
@@ -4441,6 +4447,8 @@ void backend_z(
 		}
 		org++;
 	}
+	
+	used_objects1 = org - used_objects1; // End of object data
 
 	addr_seltable = org;
 	org += prg->nselect;
@@ -4454,7 +4462,11 @@ void backend_z(
 
 	addr_globals = org;
 	org += nglobal * 2;
-
+	
+	// Dialog stores per-object variables in its own arrays, instead of using the Z-machine property tables. That's what comes next.
+	
+	used_objects2 = org; // Start of secondary object data(?)
+	
 	for(i = 0; i < prg->npredicate; i++) {
 		predname = prg->predicates[i];
 		pred = predname->pred;
@@ -4470,6 +4482,8 @@ void backend_z(
 			assert(!bp->propbase_label);
 		}
 	}
+	
+	used_objects2 = org - used_objects2; // End of secondary object data(?)
 
 	addr_abbrevstr = org;
 	org += 2;
@@ -4484,8 +4498,10 @@ void backend_z(
 		// Gargoyle complains if there isn't room for 240 globals in dynamic memory.
 		org = addr_globals + 2*240;
 	}
-
+	
+	// End of RAM, start of addressable ROM
 	addr_static = org;
+	used_wordmaps = org; // Start of wordmaps
 
 	for(i = 0; i < nwordtable; i++) {
 		set_global_label(wordtable[i].label, org);
@@ -4504,8 +4520,11 @@ void backend_z(
 		report(LVL_ERR, 0, "Base memory exhausted. Decrease heap/aux/long-term size using commandline options -H, -A, and/or -L.");
 		exit(1);
 	}
+	
+	used_wordmaps = org - used_wordmaps; // End of wordmaps
+	used_addressable = org; // End of addressable memory
 
-	org = (org + 7) & ~7;
+	org = (org + 7) & ~7; // Round up to the next multiple of 8
 	himem = org;
 	entrypc = org + 1;
 
@@ -4531,6 +4550,8 @@ void backend_z(
 #if 0
 	printf("pass 1 begins\n");
 #endif
+	
+	used_routines = org; // Start of routines
 
 	org = entrypc - 1;
 	for(i = 0; i < next_routine_num; i++) {
@@ -4560,6 +4581,10 @@ void backend_z(
 	set_global_label(
 		G_ERROR_ENTRY,
 		routines[resolve_rnum(((struct backend_pred *) find_builtin(prg, BI_ERROR_ENTRY)->pred->backend)->global_label)]->address);
+	
+	used_routines = org - used_routines; // End of routines
+	
+	used_strings = org; // Beginning of strings
 
 	for(i = 0; i < BUCKETS; i++) {
 		for(gs = stringhash[i]; gs; gs = gs->next) {
@@ -4577,6 +4602,8 @@ void backend_z(
 			org = (org + packfactor - 1) & ~(packfactor - 1);
 		}
 	}
+	
+	used_strings = org - used_strings; // End of strings
 
 	filesize = org;
 	if(filesize >= ((zversion == 5)? (1UL<<18) : (1UL<<19))) {
@@ -4662,14 +4689,14 @@ void backend_z(
 
 	for(i = 0; i < nwordtable; i++) {
 		uint16_t addr = global_labels[wordtable[i].label];
-		if(verbose >= 3) printf("Wordtable #%d, length %d", i, wordtable[i].length);
+		if(verbose >= 4) printf("Wordtable #%d, length %d", i, wordtable[i].length);
 		for(j = 0; j < wordtable[i].length; j++) {
-			if(verbose >= 3 && j % 8 == 0) printf("\n\t");
+			if(verbose >= 4 && j % 8 == 0) printf("\n\t");
 			uint16_t value = wordtable[i].words[j];
 			if(value & 0x8000) value = global_labels[value & 0x7fff];
 			zcore[addr++] = value >> 8;
 			zcore[addr++] = value & 0xff;
-			if(verbose >= 3) {
+			if(verbose >= 4) {
 				if(j % 2 == 0) { // This is the dictionary word
 					if((value & 0x3e00) == 0x3e00) { // Single character
 						if((value & 0xff) < 33) { // Control character
@@ -4702,17 +4729,17 @@ void backend_z(
 				}
 			}
 		}
-		if(verbose >= 3) printf("\n");
+		if(verbose >= 4) printf("\n");
 	}
 	
 	for(i = 0; i < ndatatable; i++) {
 		k = 0; // Used as scratch space for verbose output
 		uint16_t addr = global_labels[datatable[i].label];
-		if(verbose >= 3) printf("Datatable #%d, length %d, address %04x", i, datatable[i].length, global_labels[datatable[i].label]);
+		if(verbose >= 4) printf("Datatable #%d, length %d, address %04x", i, datatable[i].length, global_labels[datatable[i].label]);
 		for(j = 0; j < datatable[i].length; j++) {
-			if(verbose >= 3 && k % 4 == 0 && !(k & 0x80) && j!=0) printf("\n\t");
+			if(verbose >= 4 && k % 4 == 0 && !(k & 0x80) && j!=0) printf("\n\t");
 			zcore[addr++] = datatable[i].data[j];
-			if(verbose >= 3) {
+			if(verbose >= 4) {
 				// One byte if less than 0xe0
 				// Otherwise, 0xe0 | high byte, then low byte
 				if(j == 0) {
@@ -4733,7 +4760,7 @@ void backend_z(
 				}
 			}
 		}
-		if(verbose >= 3) printf("\n");
+		if(verbose >= 4) printf("\n");
 	}
 
 	zcore[addr_dictionary + 0] = NSTOPCHAR;
@@ -4806,13 +4833,26 @@ void backend_z(
 	report(LVL_DEBUG, 0, "Heap: %d words", heapsize);
 	report(LVL_DEBUG, 0, "Auxiliary heap: %d words", auxsize);
 	report(LVL_DEBUG, 0, "Long-term heap: %d words", ltssize);
-	report(LVL_DEBUG, 0, "Global registers used: %d of 240", nglobal);
-	report(LVL_DEBUG, 0, "Properties used: %d of 63", next_free_prop - 1);
+	report(LVL_DEBUG, 0, "Registers used: %d of %d* (%d%%)", nglobal, 240, nglobal*100/240);
+	report(LVL_DEBUG, 0, "Properties used: %d of %d (%d%%)", next_free_prop-1, 63, (next_free_prop-1)*100/63);
+	report(LVL_DEBUG, 0, "Dynamic flags used: %d of %d (%d%%)", used_attributes, NZOBJFLAG, used_attributes*100/NZOBJFLAG);
 	if(next_flag > NZOBJFLAG) {
-		report(LVL_DEBUG, 0, "Flags used: %d native, %d extended", NZOBJFLAG, next_flag - NZOBJFLAG);
+		report(LVL_DEBUG, 0, "Total flags used: %d native, %d extended", NZOBJFLAG, next_flag - NZOBJFLAG);
 	} else {
-		report(LVL_DEBUG, 0, "Flags used: %d native", next_flag);
+		report(LVL_DEBUG, 0, "Total flags used: %d native", next_flag);
 	}
+	report(LVL_DEBUG, 0, "Objects used: %d of %d (%d%%)", prg->nworldobj, 0x1ffe, (prg->nworldobj)*100/0x1ffe);
+	report(LVL_DEBUG, 0, "Dictionary words used: %d of %d (%d%%)", prg->ndictword, 0x1dff, (prg->ndictword)*100/0x1dff);
+	report(LVL_DEBUG, 0, "Addressable memory used: %05d of %d bytes (%d%%)", used_addressable, 64*1024, used_addressable*100/(64*1024));
+	report(LVL_DEBUG, 0, "        Object table:    %5d", used_objects1);
+	report(LVL_DEBUG, 0, "        Object vars:     %5d", used_objects2);
+	report(LVL_DEBUG, 0, "        Wordmaps:        %5d", used_wordmaps);
+	report(LVL_DEBUG, 0, "        Main heap:       %5d", heapsize*2);
+	report(LVL_DEBUG, 0, "        Auxiliary heap:  %5d", auxsize*2);
+	report(LVL_DEBUG, 0, "        Long-term heap:  %5d", ltssize*2);
+	report(LVL_DEBUG, 0, "Total filesize used:    %06d of %d bytes (%d%%)", filesize, (zversion == 5 ? 256*1024 : 512*1024), filesize*100/(zversion==5?256*1024:512*1024));
+	report(LVL_DEBUG, 0, "        Routines:       %6d", used_routines);
+	report(LVL_DEBUG, 0, "         Strings:       %6d", used_strings);
 
 	if(!strcmp(format, "z8") || !strcmp(format, "z5")) {
 		FILE *f = fopen(filename, "wb");
