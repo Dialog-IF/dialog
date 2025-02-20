@@ -1,6 +1,5 @@
 
-(library version)
-	Library version 0.46.
+(library version) Library version 1.0.0-dev.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
