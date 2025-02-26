@@ -10,7 +10,7 @@ Python 3. Users shouldn't need to run Python code to build the core tools, but
 contributors may need them to run tests etc.
 
 The documentation is in Asciidoc. The public-facing docs are currently built
-using Antora, and that build process is not part of this repository, and the
+using Antora, though that build process is not part of this repository, and the
 docs themselves do not use Antora-specific syntax or extensions.
 
 ## Versioning
@@ -22,12 +22,12 @@ There are a few different versions at play here:
   it's a language change when existing code might break, or when we need to
   orchestrate changes across both the compiler and library.)
 - **Compiler** - The compiler version is a combination of the language version
-  and a two-digit suffix, like `1a/00`. This version applies to both `dialogc`
+  and a two-digit suffix, like `1a/01`. This version applies to both `dialogc`
   and `dgdebug`, and increments whenever a new version of these tools is
   released.
-- **Library** - An old-fashioned version string like `1.0.0`. The first two
+- **Library** - An old-fashioned version string like `1.1.0`. The first two
   parts correspond to the two digits of the language version, so the first
-  release of the library for language version `1z` would be `1.25.0`. (This
+  release of the library for language version `1c` would be `1.3.0`. (This
   allows users to determine whether a particular library and compiler are
   compatible... do they share the same language version?)
 - **Documentation** - Any particular version of the documentation documents a
