@@ -3,14 +3,15 @@
 Let us begin.
 
 
-[Z] Lorem Ipsum, he emphasized.
+[#] Lorem Ipsum, he emphasized.
+[#] The above should be printed on Z-machine, but isn't due to a bug in Frotz.
 [D] Lorem Ipsum , he emphasized .
 [=======================================================                      ]
 
 The quote is complete.
 [D] Inline status.
 Status bar results: [1 2].
-[Z] Roman
+[Z]  Roman
 [D] Italic Bold Reverse Fixed pitch Roman
 [#] The lack of style support on Z-machine is a Frotz bug. Change this test when it's fixed!
 Words     five spaces apart.
