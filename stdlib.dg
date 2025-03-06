@@ -5316,6 +5316,10 @@
 	(object $Head)
 (mark multi-object $Other into $Other)
 
+%% Avoid error when using serial comma (TAKE X, Y, AND Z)
+(parse noun list [and | $Rest] as $ObjList $Policy $AllAllowed)
+	(parse noun list $Rest as $ObjList $Policy $AllAllowed)
+
 (parse noun list $Words as $ObjList $Policy $AllAllowed)
 	(split $Words by [, and] into $Left and $Right)
 	*(parse basic noun $Left as $LeftObj $Policy $AllAllowed)
