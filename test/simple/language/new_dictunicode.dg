@@ -1,0 +1,20 @@
+(program entry point)
+	*(repeat forever)
+	(line)
+	(get input $Words)
+	(collect $Obj)
+		(determine object $Obj)
+			*(object $Obj)
+		(from words)
+			*(dict $Obj)
+		(matching all of $Words)
+	(into $List)
+	$List
+	(query {ašdf š aš ď ť})
+	(empty $Words) %% Fail and repeat if not empty
+
+#apple
+(dict *) apple red fruit
+
+#pear
+(dict *) (query {pear})
