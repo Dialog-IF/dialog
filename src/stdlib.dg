@@ -1,0 +1,7 @@
+(the full $Obj)
+    (if (not (in-collect-words-context))
+        (listing...)
+    (endif)
+    (the $Obj)
+    (add location information for $Obj)
+    
