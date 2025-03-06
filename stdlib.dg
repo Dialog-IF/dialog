@@ -410,6 +410,7 @@
 	(endif)
 
 (the (current room $))	this location
+(the limited (current room $))	this location
 
 (name (door $))		door
 
@@ -4104,8 +4105,13 @@
 (it (nonempty $List) is)	they're
 (them (nonempty $List))		them
 
-(the full $Obj)		
+(the full $Obj)
 	(the $Obj)
+	(add location information for $Obj)
+
+%% This is effectively the same as (the full $) for individual objects, but doesn't call (listing...) in any circumstance. Dialog's optimizer struggles when a codepath leads from a (collect words) or (from words) to a closure query, even if that codepath is never executed, so this circumvents that issue.
+(the full limited $Obj)
+	(the limited $Obj)
 	(add location information for $Obj)
 
 (a full $Obj)
@@ -4131,7 +4137,7 @@
 			(else)
 				that's
 			(endif)
-			(name $Rel) (the full $Loc)
+			(name $Rel) (the full limited $Loc)
 		(endif)
 	(endif)
 
@@ -4156,6 +4162,7 @@
 	(endif)
 
 (the $Obj)		(current player $Obj) yourself
+(the limited $Obj)		(current player $Obj) yourself
 (The $Obj)		(current player $Obj) You
 (it $Obj)		(current player $Obj) you
 (them $Obj)		(current player $Obj) you
@@ -4175,9 +4182,11 @@
 
 (a (proper $Obj))	(maybe link $Obj)
 (the (proper $Obj))	(name $Obj)
+(the limited (proper $Obj))	(name $Obj)
 
 (a (your $Obj))		your (maybe link $Obj)
 (the (your $Obj))	your (name $Obj)
+(the limited (your $Obj))	your (name $Obj)
 
 (a (singleton $Obj))	(maybe link $Obj {(the $_)})
 
@@ -4226,6 +4235,7 @@
 
 (a $Obj)		a (maybe link $Obj)
 (the $Obj)		the (name $Obj)
+(the limited $Obj)		the (name $Obj)
 (it $)			it
 (them $)		it
 (itself $)		itself
@@ -5928,7 +5938,7 @@
 			~(relation $Obj)
 			(words $Words sufficiently specify $Obj)
 		(from words)
-			(the full $Obj)
+			(the full limited $Obj)
 		(matching all of $Words)
 		(recover implicit action $Template $Obj into $A)
 	(into $Candidates)
