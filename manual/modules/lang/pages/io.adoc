@@ -230,7 +230,7 @@ inside the status area the segment should be located.
 The width of the segment can be specified in absolute numbers (using the `ch` unit)
 or as a percentage of the width of the surrounding div, which is normally the top status area itself.
 
-Floating divs can be further subdivided, either horizontally using floating divs, or vertically using ordinary divs (or simply with line breaks). Note that every floating div is placed relative to the top left corner of the top status area, regardless of what else has already been printed.
+Floating divs can be further subdivided, either horizontally using floating divs, or vertically using ordinary divs (or simply with line breaks). Note that every floating div is placed relative to the top left corner of its parent, regardless of what else has been printed before it. 
 
 Let's extend our simple status bar with a score display in the upper right corner:
 
