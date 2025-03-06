@@ -65,7 +65,7 @@ the banner, for instance.
 
 When compiling to the `zblorb` file format, it is possible to include cover
 art with your story. This is not part of the Dialog language itself, but is an
-extra service provided by the Dialog compiler. Specify the name of a PNG file
+extra service provided by the Dialog compiler. Specify the name of a JPEG or PNG file
 and, optionally, a short textual description of the image, using the command line
 options `-c` and `-a` respectively. The cover image should be no
 larger than 1200 x 1200 pixels in size, and preferably square.

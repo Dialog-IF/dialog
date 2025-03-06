@@ -84,13 +84,19 @@ as the player may be using an interpreter with a dark or light default backgroun
 The Z-machine backend, and the 8-bit Å-machine interpreter, only support a limited number of style attributes. For divs and spans in the main text area, they are:
 
 font-style::
-Supported values are `italic` and `inherit`.
+Supported values are `normal`, `italic`, and `inherit`.
 
 font-weight::
-Supported values are `bold` and `inherit`.
+Supported values are `normal`, `bold`, and `inherit`.
 
 font-family::
-The value is checked for the presence or absence of the keyword `monospace`.
+The value is checked for the presence or absence of the keyword `monospace`, or for the exact text `inherit`.
+
+font-decoration::
+The value is checked for the presence or absence of the keyword `reverse`, or for the exact text `inherit`. The value `reverse` instructs the interpreter to reverse the foreground and background colors, whatever they might be; this is not standard CSS, but is more widely supported on retro hardware than setting the colors directly.
+
+display::
+Supported values are `none` and `inherit`. Divs and spans marked with `display: none` are not displayed in any way, but their contents _will_ appear in the transcript, if any.
 
 margin-top::
 This attribute only affects divs.
@@ -103,6 +109,16 @@ The value must be an integer followed by the keyword `em`, with no whitespace in
 The size of the resulting margin is the given number of blank lines.
 
 There is currently no support for the combined `margin` and `font` attributes.
+
+The Z-machine also supports two additional properties that the 8-bit Å-machine interpreter does not:
+
+color::
+Supported values are `initial`, `inherit`, `black`, `red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, `white`, or a pound sign `#` followed by six hexadecimal digits. Interpreters are more likely to support the named colors than the hexadecimal ones. The value `initial` specifies the interpreter's original choice of color, before receiving any instructions from the program.
+
+background-color::
+Supported values are the same as for `color`.
+
+Be aware that not all interpreters allow these properties to be combined. A span intended to be both bold and italic—or an italic span inside a bold span, that does not explicitly reset the `font-weight` property—may be displayed as only one or the other, depending on the interpreter's capabilities.
 
 === Nested style contexts and the flow of execution
 
@@ -148,6 +164,8 @@ In addition to spans and divs, it is possible to change the current text style o
 Use the built-in predicates `(bold)`, `(italic)`, `(reverse)`, and `(fixed pitch)`
 to enable each respective style, and `(roman)` to disable all four.
 The predicate `(unstyle)` reverts to the default style of the current div or span, which is roman by default.
+
+These predicates are deprecated, and divs and spans should be used instead whenever possible.
 
 [#status]
 == Status areas
@@ -202,11 +220,10 @@ The Z-machine backend will reserve this many lines at the top of the screen.
 	}
 ----
 
-On the Z-machine, text inside the top status area is always rendered in a fixed-pitch font.
-When entering the status bar environment, Dialog fills the status area with reverse space characters,
-enables reverse video, and positions the cursor in the top left corner.
+On the Z-machine, text inside the top status area is always rendered in a fixed-pitch font. Unless specified otherwise (with `text-decoration: none` in the style class), it will also be displayed in reverse video style.
+When entering the status bar environment, Dialog fills the status area with space characters and positions the cursor in the top left corner.
 
-Spans and inline style changes (bold, italic, reverse, fixed pitch, and roman) are ignored in the top status area.
+Inline style changes (bold, italic, reverse, fixed pitch, and roman) are ignored in the top status area, but spans are not.
 
 The top status area can be split into multiple segments horizontally.
 These segments are described using so called _floating_ divs.
@@ -215,7 +232,7 @@ inside the status area the segment should be located.
 The width of the segment can be specified in absolute numbers (using the `ch` unit)
 or as a percentage of the width of the surrounding div, which is normally the top status area itself.
 
-Floating divs can be further subdivided, either horizontally using floating divs, or vertically using ordinary divs (or simply with line breaks).
+Floating divs can be further subdivided, either horizontally using floating divs, or vertically using ordinary divs (or simply with line breaks). Note that every floating div is placed relative to the top left corner of the top status area, regardless of what else has already been printed.
 
 Let's extend our simple status bar with a score display in the upper right corner:
 
@@ -319,6 +336,20 @@ Note that if more output is sent to the cleared div, this new output may or may 
 
 All of the above predicates succeed (except when they generate a runtime error).
 All of them may be ignored by interpreters.
+
+[#dimensions]
+== Sizing
+
+On some interpreters, it is possible to specify the height of the top status area at runtime, rather than at compile-time.
+
+[source,subs="quotes"]
+----
+	(status bar $Class with height $Height) _statement_
+----
+
+This will attempt to produce a status bar with height `$Height` (in em units). If `$Height` is not bound to a number, or if the interpreter does not support redefining the height of the status bar, this acts identically to `(status bar $Class)`—that is, using the height specified in the style class.
+
+To determine the height and width of an existing div, use `(current div width $Width)` and `(current div height $Height)`. These unify their parameter with the appropriate dimension, in ch or em units. If the interpreter is unable to provide this information for any reason, these predicates will fail.
 
 [#input]
 == Input
