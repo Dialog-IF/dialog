@@ -1,4 +1,4 @@
-[Z] Upper status.
+[Z]
 [Z] 
 Let us begin.
 [D]
@@ -10,7 +10,9 @@ Let us begin.
 The quote is complete.
 [D] Inline status.
 Status bar results: [1 2].
-Italic Bold Reverse Fixed pitch Roman
+[Z] Roman
+[D] Italic Bold Reverse Fixed pitch Roman
+[#] The lack of style support on Z-machine is a Frotz bug. Change this test when it's fixed!
 Words     five spaces apart.
 [Z] Selflink and otherlink.
 [D] <Selflink> and <[other] otherlink>.

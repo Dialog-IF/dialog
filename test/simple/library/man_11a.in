@@ -1,0 +1,6 @@
+open safe
+take it
+undo
+close it
+undo
+x it

@@ -1,9 +1,9 @@
 (current player #player)
-(#player is in #room)
+(#player is #in #room)
 (room #room)
 
 #pandora
-(* is in #room)
+(* is #in #room)
 (name *)	Pandora
 (female *)
 (proper *)
@@ -16,7 +16,7 @@
 	(now) (#pandora is nowhere)
 
 #box
-(* is in #room)
+(* is #in #room)
 (name *)	box
 (openable *)
 (appearance *)	A large box sits off to one side.
