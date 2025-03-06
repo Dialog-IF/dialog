@@ -93,10 +93,10 @@ font-family::
 The value is checked for the presence or absence of the keyword `monospace`, or for the exact text `inherit`.
 
 font-decoration::
-The value is checked for the presence or absence of the keyword `reverse`, or for the exact text `inherit`. The value `reverse` instructs the interpreter to reverse the foreground and background colors, whatever they might be; this is not standard CSS, but is more widely supported on retro hardware than setting the colors directly.
+The value is checked for the presence or absence of the keyword `reverse`, or for the exact text `inherit`. A value containing `reverse` instructs the interpreter to reverse the foreground and background colors, whatever they might be; this is not standard CSS, but is more widely supported on retro hardware than setting the colors directly.
 
 display::
-Supported values are `none` and `inherit`. Divs and spans marked with `display: none` are not displayed in any way, but their contents _will_ appear in the transcript, if any.
+Supported values are `none` and `inherit`. Spans marked with `display: none` are not displayed in any way, but their contents _will_ appear in the xref:builtins.adoc#system[transcript]. If any important information is conveyed in a status area, this can be used to ensure it's also recorded in the transcript.
 
 margin-top::
 This attribute only affects divs.
@@ -113,12 +113,12 @@ There is currently no support for the combined `margin` and `font` attributes.
 The Z-machine also supports two additional properties that the 8-bit Å-machine interpreter does not:
 
 color::
-Supported values are `initial`, `inherit`, `black`, `red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, `white`, or a pound sign `#` followed by six hexadecimal digits. Interpreters are more likely to support the named colors than the hexadecimal ones. The value `initial` specifies the interpreter's original choice of color, before receiving any instructions from the program.
+Supported values are `initial`, `inherit`, `black`, `red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, `white`, or a pound sign `#` followed by six hexadecimal digits. Interpreters are more likely to support the named colors than the hexadecimal ones. The value `initial` specifies the interpreter's original choice of color, before receiving any instructions from the program; there is no way to know if this is a light or dark color, so best practice is to set both `color` and `background-color` to `initial`, or neither of them.
 
 background-color::
 Supported values are the same as for `color`.
 
-Be aware that not all interpreters allow these properties to be combined. A span intended to be both bold and italic—or an italic span inside a bold span, that does not explicitly reset the `font-weight` property—may be displayed as only one or the other, depending on the interpreter's capabilities.
+Be aware that not all interpreters allow these properties to be combined. A span (or combination of spans) intended to be both bold and italic may be displayed as only one or the other—or even as something else, like bright text and underlining—depending on the interpreter's capabilities.
 
 === Nested style contexts and the flow of execution
 
@@ -163,9 +163,7 @@ The built-in predicate `(space $)` prints a given number of space characters in 
 In addition to spans and divs, it is possible to change the current text style on the fly.
 Use the built-in predicates `(bold)`, `(italic)`, `(reverse)`, and `(fixed pitch)`
 to enable each respective style, and `(roman)` to disable all four.
-The predicate `(unstyle)` reverts to the default style of the current div or span, which is roman by default.
-
-These predicates are deprecated, and divs and spans should be used instead whenever possible.
+The predicate `(unstyle)` reverts to the default style of the current div or span, which is roman by default. Note that these predicates are deprecated, and may be removed in a future version of Dialog; divs and spans should be used instead whenever possible.
 
 [#status]
 == Status areas
@@ -285,7 +283,6 @@ Works as it does for ordinary divs, but is ignored for the top-level `(status ba
 margin-bottom::
 Works as it does for ordinary divs, but is ignored for the top-level `(status bar $)` itself.
 
-
 It is possible to invoke `(status bar $)` with different style classes at different times,
 in order to vary the look of the status area during gameplay.
 When reducing the size of the top status area
@@ -340,16 +337,25 @@ All of them may be ignored by interpreters.
 [#dimensions]
 == Sizing
 
-On some interpreters, it is possible to specify the height of the top status area at runtime, rather than at compile-time.
+On some interpreters, like the Å-machine web interpreter, `height: auto` will allow a status area to resize automatically to fit its contents. On others, though, the height must be specified explicitly. A special syntax lets this be done at runtime rather than at compile-time:
 
 [source,subs="quotes"]
 ----
 	(status bar $Class with height $Height) _statement_
 ----
 
-This will attempt to produce a status bar with height `$Height` (in em units). If `$Height` is not bound to a number, or if the interpreter does not support redefining the height of the status bar, this acts identically to `(status bar $Class)`—that is, using the height specified in the style class.
+This will attempt to produce a status bar with the specified height (in em units). If `$Height` is not bound to a number, or if the interpreter does not support redefining the height of the status bar, this acts identically to `(status bar $Class)`—that is, rather than failing, it defaults to the height specified in the style class.
 
-To determine the height and width of an existing div, use `(current div width $Width)` and `(current div height $Height)`. These unify their parameter with the appropriate dimension, in ch or em units. If the interpreter is unable to provide this information for any reason, these predicates will fail.
+Predicates are also provided to determine the height and width of an existing div:
+
+----
+	(current div width $Width)
+	(current div height $Height)
+----
+
+These unify their parameter with the appropriate dimension, in ch or em units. However, note that not all interpreters can provide this information. If this happens, the predicate will simply fail. This is currently the case in all existing Å-machine interpreters, but this may change in time.
+
+On the Z-machine backend, these predicates are most useful within the top status area, where these dimensions are always well-defined. If used anywhere else, they will return the width and height of the entire screen.
 
 [#input]
 == Input
