@@ -139,6 +139,7 @@ _next_ grammar token (if any) is excluded from the set of objects.
 
 One or more objects currently worn by the player.
 
+[#takable]
 [takable]::
 
 One or more items in scope, whose relation to their parent is neither
@@ -904,6 +905,7 @@ The output parameter `$N` is a
 xref:lang:varsvalues.adoc#values[number]
 thus limited to the range 0–16383.
 
+[#topics]
 === Topics
 
 Some actions, e.g. `[ask $ about $]` and
@@ -1108,8 +1110,8 @@ grammar table:
 
 [source]
 ----
-@(grammar transformer [[spell] | $Tail] $SoFar $Verb $Action $Rev)
-	(grammar transformer $Tail [90 | $SoFar] $Verb $Action $Rev)
+(match grammar token 90 against $Words $ into $Obj)
+	*(understand $Words as spell $Obj)
 ----
 
 In the above example, we delegate to a separate custom predicate for handling
@@ -1122,6 +1124,31 @@ right to left). These can be objects, plus-prefixed lists like
 `[{plus} #foo #bar #baz]`, or anything else; it depends on the
 type of the next token. This feature allows you to craft rules for e.g.
 `PUT ALL IN BAG`, where the bag should not be included in “all”.
+
+=== The built-in tokens
+
+The standard library currently provides 14 grammar tokens, and authors wishing to add their own may want to look at how they are implemented. Note the word `"preferably"` in the following descriptions. An `[animate]` token _can_ match an inanimate object, but only if the player specified it unambiguously: `TALK TO WHITE BOOK` will attempt to talk to the book, but `TALK TO WHITE` in the presence of Mrs. White and a white book will select the animate one, and `TALK TO WHITE` in the presence of Mr. and Mrs. White and a white book will only disambiguate between the two humans, not the book. This also affects the handling of `ALL`.
+
+- 10: `[single]` (or ``[single object]``), a single object in scope.
+- 11: `[animate]`, a single object in scope, preferably animate. If no object can be matched here, the error will say `"someone"` instead of `"something"`.
+- 12: `[single held]`, a single object in scope, preferably held.
+- 20: `[object]`, one or more objects in scope, but not `ALL`.
+- 22: `[held]`, one or more objects in scope, preferably held, and excluding the next object in the action pattern (if any).
+- 23: `[takable]`, one or more objects in scope, preferably <<takable>>.
+- 24: `[worn]`, one or more objects in scope, preferably worn by the actor.
+- 25: `[child]`, one or more objects in scope, preferably children of the next object in the action pattern (if any).
+- 26: `[takable child]`, one or more objects in scope, preferably <<takable>> children of the next object in the action pattern (if any).
+- 30: `[any]`, a single object, not necessarily in scope.
+- 31: `[any animate]`, a single object, not necessarily in scope, preferably animate. If no object can be matched here, the error will say `"someone"` instead of `"something"`.
+- 40: `[topic]`, a <<topics,topic>>.
+- 50: `[direction]`, one or more directions.
+- 60: `[number]`, a number, either as digits (`"5"`) or as words (`"five"`).
+
+Token numbers 10 through 89 could be used by the library in the future, but tokens 90 through 99 will always be available for story authors to use as they wish—the library will never touch them.
+
+It should be noted that _none_ of these tokens will accept `ALL` without some sort of constraint on what should be included. This ensures that adding objects to scope won't cause ALL to misbehave in odd ways.
+
+There is also, at present, no `[room]` or `[any room]` token. Since `GO TO` is the only standard action that applies to rooms other than the current one, the parsing of room names is handled in a special `(understand $ as $)` rule, rather than through the `(grammar $ for $)` system.
 
 '''
 
