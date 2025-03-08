@@ -1134,10 +1134,10 @@ The standard library currently provides 14 grammar tokens, and authors wishing t
 - 12: `[single held]`, a single object in scope, preferably held.
 - 20: `[object]`, one or more objects in scope, but not `ALL`.
 - 22: `[held]`, one or more objects in scope, preferably held, and excluding the next object in the action pattern (if any).
-- 23: `[takable]`, one or more objects in scope, preferably <<takable>>.
+- 23: `[takable]`, one or more objects in scope, preferably <<takable,takable>>.
 - 24: `[worn]`, one or more objects in scope, preferably worn by the actor.
 - 25: `[child]`, one or more objects in scope, preferably children of the next object in the action pattern (if any).
-- 26: `[takable child]`, one or more objects in scope, preferably <<takable>> children of the next object in the action pattern (if any).
+- 26: `[takable child]`, one or more objects in scope, preferably <<takable,takable>> children of the next object in the action pattern (if any).
 - 30: `[any]`, a single object, not necessarily in scope.
 - 31: `[any animate]`, a single object, not necessarily in scope, preferably animate. If no object can be matched here, the error will say "`someone`" instead of "`something`".
 - 40: `[topic]`, a <<topics,topic>>.
