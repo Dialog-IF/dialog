@@ -1144,7 +1144,7 @@ The standard library currently provides 14 grammar tokens, and authors wishing t
 - 50: `[direction]`, one or more directions.
 - 60: `[number]`, a number, either as digits (`"5"`) or as words (`"five"`).
 
-Token numbers 10 through 89 could be used by the library in the future, but tokens 90 through 99 will always be available for story authors to use as they wish—the library will never touch them.
+Token numbers 10 through 89 could be used by the library in the future, but tokens 90 through 99 will always be available for story authors to use as they wish—the library will never touch them. There`'s nothing preventing authors from using numbers below 10 or above 100, either, apart from library convention; keeping the numbers between 10 and 99 means that the first digit can indicate the scope of the search, and the second digit the type of object being searched for.
 
 It should be noted that _none_ of these tokens will accept `ALL` without some sort of constraint on what should be included. This ensures that adding objects to scope won't cause ALL to misbehave in odd ways.
 
