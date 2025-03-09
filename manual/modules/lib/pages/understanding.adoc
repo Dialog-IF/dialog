@@ -174,9 +174,8 @@ Here the story author has introduced a new action, `[yodel]`,
 triggered when the player types `YODEL`. But so far, there is no code
 to handle the action. The fallback implementations of the six
 xref:actions.adoc#actionprocess[action-handling predicates] will cause the
-action to succeed without printing anything at all. This is a no-no in parser
-games, so the story author should at least add a
-`perform`-rule:
+action to fail with a perfunctory "`You can't yodel.`" This is generally
+less than ideal, so the story author should at least add a `perform`-rule:
 
 [source]
 ----
