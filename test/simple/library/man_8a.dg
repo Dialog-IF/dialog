@@ -5,6 +5,7 @@
 (#apple is #in #room)
 (edible #apple)
 (item #apple)
+(name #apple) apple
 
 (perform [eat #apple])
 	The apple is yummy. You feel that your mission has come to an end.

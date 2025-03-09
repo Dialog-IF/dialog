@@ -73,4 +73,24 @@ This is a very nondescript room, dominated by a wooden table.
 
 You see a small bowl here.
 
+> get sapphire
+[Z] Tutorial room
+
+You take the sapphire off the wooden table.
+
+> drop it
+[Z] Tutorial room
+
+The sapphire falls to the ground.
+
+> look
+[Z] Tutorial room
+
+Tutorial room
+This is a very nondescript room, dominated by a wooden table.
+
+A gleaming sapphire catches your eye.
+
+You see a small bowl here.
+
 [Z] >

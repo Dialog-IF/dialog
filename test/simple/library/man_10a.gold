@@ -1,0 +1,113 @@
+[Z] Location
+[Z]
+An Interactive Fiction
+An interactive fiction by Anonymous.
+Release 1. Serial number <SERIAL>.
+<COMPILER>. <LIBRARY>
+
+[Z] Location
+You are here.
+
+> yodel
+[Z] Location
+
+Your voice soars over the mountain tops, bringing tears to many eyes. Another
+minute ticks by.
+
+> yodel a folk tune
+[Z] Location
+
+(I'm sorry, I didn't understand what you wanted to do.)
+
+> play
+[Z] Location
+
+Play what?
+
+> violin
+[Z] Location
+
+(first attempting to take the violin)
+You take the violin. Another minute ticks by.
+
+With what?
+
+> look
+[Z] Location
+
+[Z] Location
+You are here.
+
+Another minute ticks by.
+
+> play violin
+[Z] Location
+
+With what?
+
+> bow
+[Z] Location
+
+(first attempting to take the bow)
+You take the bow. Another minute ticks by.
+
+You set the bow to the violin and begin to play. Another minute ticks by.
+
+> play spiccato with bow
+[Z] Location
+
+(I only understood you as far as wanting to play something with the bow.)
+
+> hint
+[Z] Location
+
+Try yodeling a lot.
+
+> play bugs
+[Z] Location
+
+(I only understood you as far as wanting to play something.)
+
+> complain about violin
+[Z] Location
+
+You can't complain about the violin. Another minute ticks by.
+
+> complain about bugs
+[Z] Location
+
+The bugs aren't here.
+
+> complain about childhood
+[Z] Location
+
+You can't complain about your childhood on planet Zyx. Another minute ticks by.
+
+> complain about zyx
+[Z] Location
+
+You can't complain about your childhood on planet Zyx. Another minute ticks by.
+
+> complain
+[Z] Location
+
+(I'm sorry, I didn't understand what you wanted to do.)
+
+> cast xyzzy
+[Z] Location
+
+With great gravitas, you intone the mystic word " xyzzy ". Another minute ticks
+by.
+
+> cast abracadabra
+[Z] Location
+
+With great gravitas, you intone the mystic word " plugh ". Another minute ticks
+by.
+
+> cast violin
+[Z] Location
+
+(I'm sorry, I didn't understand what you wanted to do.)
+
+[Z] >

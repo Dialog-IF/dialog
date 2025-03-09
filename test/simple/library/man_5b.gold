@@ -20,59 +20,71 @@ Obvious exits are:
 North.
 
 > in
-In the dark
-
+[Z] In the dark
+[Z]
 You walk north.
 
 In the dark
 You are surrounded by darkness.
 
 > turn on flashlight
-Cave
-
+[Z] Cave
+[Z]
 You switch the flashlight on.
 
 > look
-Cave
-
+[Z] Cave
+[Z]
 Cave
 You are here.
 
-> out
-Below the cliff
+> exits
+[Z] Cave
+[Z]
+Obvious exits are:
+South to the area below the cliff.
+North.
 
+> out
+[Z] Below the cliff
+[Z]
 You walk south.
 
 Below the cliff
 You are here.
 
 > exits
-Below the cliff
-
+[Z] Below the cliff
+[Z]
 Obvious exits are:
 North to darkness.
 
 > turn off flashlight
-Below the cliff
-
+[Z] Below the cliff
+[Z]
 You switch the flashlight off.
 
 > n
-In the dark
-
+[Z] In the dark
+[Z]
 You walk north.
 
 In the dark
 You are surrounded by darkness.
 
 > drop flashlight
-In the dark
-
+[Z] In the dark
+[Z]
 The flashlight falls to the ground.
 
-> turn on flashlight
-Cave
+> exits
+[Z] In the dark
+[Z]
+You can't be sure of where the exits are in the darkness.
 
+> turn on flashlight
+[Z] Cave
+[Z]
 You switch the flashlight on.
 
->
+[Z]>

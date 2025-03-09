@@ -9,6 +9,7 @@
 #safe
 (name *)	small safe
 (openable *)
+(* is #in #room)
 
 #necklace
 (name *)	pearl necklace

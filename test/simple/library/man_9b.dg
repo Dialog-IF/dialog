@@ -15,6 +15,7 @@
 	(let * go $Dir)
 
 #cage
+(name *)	cage
 (#bob is #in *)
 (* is #in #alpha)
 (container *)

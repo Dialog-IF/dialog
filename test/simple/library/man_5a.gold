@@ -55,11 +55,6 @@ Vinyl, with a marble pattern.
 [Z] 
 Brown and austere.
 
-> s
-[Z] University library
-[Z] 
-There doesn't appear to be an exit in that direction.
-
 > x rug
 [Z] University library
 [Z] 
@@ -84,23 +79,13 @@ Grand foyer
 It's a grand, grand foyer. The library is west from here, and a locked door
 leads south.
 
-> unlock door
-[Z] Grand foyer
-[Z] 
-(with the small key)
-You unlock the small door with the small key.
-
-> exits
-[Z] Grand foyer
-[Z] 
-Obvious exits are:
-West to the university library.
-South through the small door (currently closed).
-
 > s
 [Z] Game Over
 [Z] 
 (first attempting to open the small door to the south)
+(first attempting to unlock the small door to the south with the small key)
+You unlock the small door with the small key.
+
 You open the small door.
 
 You walk south through the small door.

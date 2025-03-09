@@ -1,0 +1,31 @@
+[Z] Shed
+[Z]
+An Interactive Fiction
+An interactive fiction by Anonymous.
+Release 1. Serial number <SERIAL>.
+<COMPILER>. <LIBRARY>
+
+Shed
+You are in your shed. The exit is east.
+
+> exits
+[Z] Shed
+[Z]
+There are no obvious exits here.
+
+> out
+[Z] Shed
+[Z]
+But the world is such a wicked place.
+
+> east
+[Z] Shed
+[Z]
+But the world is such a wicked place.
+
+> up
+[Z] Shed (on the wooden chair)
+[Z]
+You get onto the wooden chair.
+
+[Z]>

@@ -1,0 +1,43 @@
+[Z] Location
+[Z]
+An Interactive Fiction
+An interactive fiction by Anonymous.
+Release 1. Serial number <SERIAL>.
+<COMPILER>. <LIBRARY>
+
+Location
+You are here.
+
+Pandora stands nearby.
+
+A large box sits off to one side.
+
+> open box
+[Z] Location
+[Z]
+You don't dare do that while Pandora is watching.
+
+> wait
+[Z] Location
+[Z]
+A moment slips away. Pandora walks away.
+
+> open box
+[Z] Location
+[Z]
+Shooting guilty glances in every direction, you carefully approach the box, and
+lift its lid. It seems to be empty.
+
+An inexplicable sense of dread comes over you.
+
+> wait
+[Z] Location
+[Z]
+A moment slips away.
+
+> open box
+[Z] Location
+[Z]
+The box is already open.
+
+[Z]>
