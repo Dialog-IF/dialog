@@ -31,9 +31,8 @@ jobs:
       with:
         name: win32
         path: |
-          src/dgdebug
-          src/dialogc
-          - uses: actions/upload-artifact@v4
+          src/dgdebug.exe
+          src/dialogc.exe
 
   build-macos:
     runs-on: macos-latest
