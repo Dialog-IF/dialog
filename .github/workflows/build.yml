@@ -46,7 +46,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: install dependencies
-        run: brew install frotz
+        run: |
+          brew update
+          brew install frotz
       - name: make
         run: make --directory=./src
       - name: make test
