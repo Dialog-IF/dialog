@@ -5705,6 +5705,7 @@
 (parse commandline $Words with choices $ChoiceList)
 	%% Before proceeding, save the current undo state:
 	(if) (save undo 1) (then)
+		(roman)
 		(narrate undoing $Words)
 		(stop)
 	(endif)
