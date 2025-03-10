@@ -34,9 +34,60 @@ mingw32):
 
 Project website:
 
-	https://linusakesson.net/dialog/
+	https://github.com/Dialog-IF/dialog/
 
 Release notes:
+
+	1a/01, Lib 1.1.1:
+	
+		This is the first release handled by the community, and per
+		Linus's wishes, we're bumping the major version for the first
+		time! We're also taking this opportunity to unify the version
+		numbers between the compiler, library, and manual.
+		
+		Backend: color and background-color properties are now supported
+		on Z-machine backend.
+		
+		Backend: styles can be stacked on Z-machine backend, allowing
+		for (for example) bold italics, or monospace reverse-video.
+		Spans are also allowed inside status bars as a result.
+		
+		Backend: fixed a bug that would crash the Z-machine if too many
+		dictionary words were included in a wordmap, pushing the
+		wordmap datatables past address $8000.
+		
+		Backend: lists containing punctuation marks will now print with
+		proper spacing on Z-machine during tracing.
+		
+		Backend: generated Å-machine files now include the names of
+		style classes instead of only the numbers, which interpreters
+		may use to improve their output.
+		
+		Debugger: a new --numbered option shows the depth of the call
+		stack with numbers instead of graphics during tracing. This
+		makes the output significantly easier to understand with a
+		screen reader.
+		
+		Language: fixed a bug when unifying a list containing multiple
+		instances of a new variable, like ($Y = [$X $X]).
+		
+		Language: illegal characters in multi-character dictionary
+		words are now a warning rather than an error. Sometimes the
+		compiler can't prove that a particular predicate is never used
+		for parsing, but the author can guarantee it. Now, should this
+		happen, they can safely ignore the warning.
+		
+		Compiler: the compiler now shows how close a project is to
+		various limits, both backend-specific (like addressable memory
+		on the Z-machine) and universal (the compiler architecture
+		imposes a limit of $1e00 objects on any backend).
+		
+		Compiler: the compiler now accepts JPEG files as well as PNG
+		files for cover art.
+		
+		Library: a new (gender-neutral $) trait will use the pronoun
+		"they", but without forcing plural verb endings as (plural $)
+		does.
 
 	0m/03, Lib 0.46 (Manual revision 31):
 
