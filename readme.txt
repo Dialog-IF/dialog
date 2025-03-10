@@ -71,6 +71,10 @@ Release notes:
 		Language: fixed a bug when unifying a list containing multiple
 		instances of a new variable, like ($Y = [$X $X]).
 		
+		Language: inline style predicates like (bold) are now deprecated.
+		They're still supported for now, but may be removed in a future
+		release.
+		
 		Language: illegal characters in multi-character dictionary
 		words are now a warning rather than an error. Sometimes the
 		compiler can't prove that a particular predicate is never used
@@ -88,6 +92,16 @@ Release notes:
 		Library: a new (gender-neutral $) trait will use the pronoun
 		"they", but without forcing plural verb endings as (plural $)
 		does.
+		
+		Library: serial commas in phrases like GET X, Y, AND Z are now
+		properly understood. Previously, this would be parsed as GET X
+		followed by TELL Y TO AND Z, which would generally produce an
+		error.
+		
+		Library: "meta" text (that is, text like "enabling score
+		notifications" that comes from the program itself, rather than
+		from the game) is now always wrapped in a (div @meta), which
+		the author is free to style as they like.
 
 	0m/03, Lib 0.46 (Manual revision 31):
 
