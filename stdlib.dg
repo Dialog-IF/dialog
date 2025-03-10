@@ -3059,13 +3059,11 @@
 	(div @meta) { Really quit? \(y (no space) / (no space) n\) }
 	(if) (yesno) (then)
 		(div @meta) (display quit message)
-		(line)
 		(quit)
 	(endif)
 	(stop)
 
 (display quit message)
-	(par)
 	Thanks for playing!
 
 %% RESTART
@@ -5038,7 +5036,6 @@
 	}
 
 (game over menu)
-	(line)
 	(div @meta) {
 		Would you like to:
 		(if) (interpreter supports undo) (then)
@@ -5834,7 +5831,7 @@
 			(div @meta) {
 				\( I only understood you as far as wanting to
 				(describe action $BadAction)
-			. \)
+				. \)
 			}
 		(endif)
 	(else)
@@ -6086,7 +6083,7 @@
 	(elseif) ($Words = [no]) (or) ($Words = [n]) (then)
 		(fail)
 	(else)
-		(div @meta) { Please answer yes or no }
+		(div @meta) { Please answer yes or no. }
 		(yesno)
 	(endif)
 
@@ -6495,7 +6492,6 @@
 		(report fatal error $Code)
 		Attempting to recover with UNDO. \)
 	}
-	(line)
 	(if) (undo) (or) (then)
 		(div @meta) { Undo failed! }
 	(endif)
