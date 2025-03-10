@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Set
+from typing import List, Set, Optional
 
 
 DEFAULT_DGDEBUG = ['src/dgdebug', '--quit', '--width=1000']
@@ -88,7 +88,7 @@ def parse_blocks(file_path):
     return blocks
 
 
-def check_blocks(blocks: List[CodeBlock], command_template: List[str | None]):
+def check_blocks(blocks: List[CodeBlock], command_template: List[Optional[str]]):
     """
     Check that the given blocks execute as expected, using the provided command template for `dgdebug`.
     """
@@ -155,15 +155,15 @@ def check_blocks(blocks: List[CodeBlock], command_template: List[str | None]):
             matches_previous = 'matches-previous' in block.roles
             if previous_output != block.contents and matches_previous:
                 import difflib
-                diff = difflib.ndiff(
+                diff = '\n '.join(x.strip() for x in difflib.ndiff(
                     block.contents.splitlines(),
                     previous_output.splitlines(),
-                )
+                ))
                 errors.append(CodeBlockError(
                     block=block,
                     file_name=str(block.file_path),
                     line_no=block.line_no,
-                    error=f'output does not match:\n {'\n '.join(x.strip() for x in diff)}'
+                    error=f'output does not match:\n {diff}'
                 ))
             if previous_output == block.contents and not matches_previous:
                 errors.append(CodeBlockError(
