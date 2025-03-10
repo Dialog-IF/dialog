@@ -1,0 +1,6 @@
+bob, east
+open cage
+bob, east
+east
+bob, south
+tell bob to go north

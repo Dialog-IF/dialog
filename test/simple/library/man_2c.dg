@@ -1,0 +1,14 @@
+#bottle
+(name *)	red bottle
+(dict *)	crimson decanter
+(heads *)	bottle decanter
+(* is #in #room)
+
+#cap
+(name *)	red bottle cap
+(heads *)	cap
+(* is #in #room)
+
+(current player #player)
+(#player is #in #room)
+(room #room)

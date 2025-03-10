@@ -1,0 +1,11 @@
+The parent of #apple is #bowl.
+The parent of #lettuce is #fridge.
+The parent of #bowl is #fridge.
+Presto! The apple has moved!
+The parent of #apple is #player.
+The parent of #lettuce is #fridge.
+The parent of #bowl is #fridge.
+[Z] Fatal error code 3!
+[D] Error: Attempting to set the parent of #apple to a non-object.
+[D] Restarting program from: (error 5 entry point)
+[D] Fatal error code 5!

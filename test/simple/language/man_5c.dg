@@ -1,0 +1,14 @@
+(program entry point)
+	[abc 007] %% Adds these words to the game's dictionary
+	*(repeat forever)
+	(line) > 
+	(get input $Words)
+	$Words
+	(if) ($Words = [magic]) (then)
+		Magic!
+	(elseif) ($Words = [abcdefghijklm]) (then)
+		Alphabetic!
+	(endif)
+	(empty $Words) %% Fail (and repeat) unless empty
+
+(removable word endings) ending

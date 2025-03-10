@@ -1,0 +1,43 @@
+#player
+(current player *)
+(* is #in #room)
+(descr *)		It's you.
+
+#room
+(name *)		tutorial room
+(room *)
+(look *)		This is a very nondescript room, dominated by a
+				wooden table. (notice #table)
+
+#table
+(name *)		table
+(material *)	caramelized sugar
+(colour *)		dark brown
+(supporter *)
+(* is #in #room)
+
+#chair
+(name *)		chair
+(material *)	plastic
+(colour *)		white
+(on-seat *)
+(* is #in #room)
+(appearance *)	You notice a conspicuous chair here.
+
+#apple
+(name *)		apple
+(descr #apple)
+	(if) (#apple is #in #basket) (then)
+		Yummy!
+	(else)
+		The apple seems to be very shy. As soon as you look at it, it
+		jumps of its own accord into the fruit basket.
+		(now) (#apple is #in #basket)
+	(endif)
+(* is #on #table)
+
+#basket
+(name *)		basket
+(* is #on #table)
+
+(descr $Obj)		It's (colour $Obj) and made of (material $Obj).

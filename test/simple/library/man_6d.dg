@@ -1,0 +1,53 @@
+(current player #player)
+(#player is #in #room)
+(room #room)
+
+(*(edible $) is #in #room)
+(*(potable $) is #in #room)
+
+#ham
+(item *)
+(edible *)
+(name *) ham
+
+#cheese
+(item *)
+(edible *)
+(name *) cheese
+
+#oyster
+(item *)
+(edible *)
+(name *) oyster
+
+#juice
+(item *)
+(potable *)
+(name *) juice
+
+#water
+(item *)
+(potable *)
+(name *) water
+
+#soda
+(item *)
+(potable *)
+(name *) soda
+
+(action [eat $] may group #ham with #cheese)
+(action [eat $] may group #cheese with #ham)
+(group-perform [eat [#ham #cheese]])
+	You savour the combination of ham and cheese.
+	(now) (#ham is nowhere)
+	(now) (#cheese is nowhere)
+(group-instead of [eat [#cheese #ham]])
+	(group-try [eat [#ham #cheese]])
+
+(action [drink $] may group (potable $) with (potable $))
+(group-perform [drink $List])
+	You savour the combination of (the $List).
+	(exhaust) {
+		*($Obj is one of $List)
+		(now) ($Obj is nowhere)
+	}

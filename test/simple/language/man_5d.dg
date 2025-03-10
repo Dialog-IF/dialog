@@ -1,0 +1,15 @@
+(try 1) One!
+(try 2) Two!
+(try 3) Three!
+
+(program entry point)
+	(log) { Program started. X = $X }
+	($X = 42)
+	Hello,
+	(log) $X
+	world!
+	
+	(par)
+	(trace on)
+	(try 2)
+	(try 4)

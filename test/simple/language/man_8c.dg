@@ -1,0 +1,23 @@
+(program entry point)
+	(if) (@a is one of [a b c]) (then) A is an element! (endif)
+	(if) (@d is one of [a b c]) (then) D is an element! (endif)
+	Elements:
+	(exhaust) {
+		*($X is one of [a b c])
+		(uppercase) $X
+	}
+	(line)
+	
+	(append [a b] [c d] $ABCD)
+	$ABCD
+	(append [a b] $CD [a b c d])
+	$CD
+	(line)
+	
+	(exhaust) {
+		*(split [the good , the bad and the ugly]
+			by [and ,]
+			into $Left and $Right)
+		$Left $Right (line)
+	}
+

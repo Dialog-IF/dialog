@@ -1,0 +1,22 @@
+(program entry point)
+	For instance
+	:This
+		text
+
+
+	\( which,to all intents              and purposes,is silly\( indeed
+	\) \)
+	, prints properly.
+	
+	(par) To (no space) gether (space) , apart.
+	
+	(note)
+	(note)
+	(par) This goes in a paragraph of its own. (par)
+	This
+	is
+	not broken up.
+	(note)
+
+(note)
+	(line) This goes on a line of its own. (line)

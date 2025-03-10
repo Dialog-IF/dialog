@@ -1,0 +1,38 @@
+(style class @fullbar)
+	height: 2em;
+(style class @halfbar)
+	width: 50\%;
+	float: left;
+(style class @subbar)
+	width: 10ch;
+	float: right;
+(style class @line1)
+	height: 1em;
+	width: 100%;
+	margin-bottom: 1em;
+(style class @line2)
+	height: 1em;
+	width: 100%;
+	margin-top: 1em;
+
+(show width)
+	(current div width $Width)
+	(current div height $Height)
+	$Width (space) × (space) $Height
+(show width)
+	\[Not given\]
+
+(program entry point)
+	(status bar @fullbar) {
+		(div @line1) {
+			First line: (show width)
+		}
+		(line)
+		(div @line2) {
+			(div @halfbar) Half: (show width)
+			Intermediate: (show width)
+			(div @subbar) Sub: (show width)
+		}
+	}
+	Outside: (show width)
+	(inline status bar @line1) { Inline: (show width) }
