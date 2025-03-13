@@ -409,8 +409,7 @@
 		($Obj = $Point)
 	(endif)
 
-(the (current room $))	this location
-(the limited (current room $))	this location
+(the single (current room $))	this location
 
 (name (door $))		door
 
@@ -4110,8 +4109,8 @@
 	(add location information for $Obj)
 
 %% This is effectively the same as (the full $) for individual objects, but doesn't call (listing...) in any circumstance. Dialog's optimizer struggles when a codepath leads from a (collect words) or (from words) to a closure query, even if that codepath is never executed, so this circumvents that issue.
-(the full limited $Obj)
-	(the limited $Obj)
+(the full single $Obj)
+	(the single $Obj)
 	(add location information for $Obj)
 
 (a full $Obj)
@@ -4137,7 +4136,7 @@
 			(else)
 				that's
 			(endif)
-			(name $Rel) (the full limited $Loc)
+			(name $Rel) (the full single $Loc)
 		(endif)
 	(endif)
 
@@ -4161,8 +4160,7 @@
 		You
 	(endif)
 
-(the $Obj)		(current player $Obj) yourself
-(the limited $Obj)		(current player $Obj) yourself
+(the single $Obj)		(current player $Obj) yourself
 (The $Obj)		(current player $Obj) You
 (it $Obj)		(current player $Obj) you
 (them $Obj)		(current player $Obj) you
@@ -4181,12 +4179,10 @@
 (That's $Obj)		(current player $Obj) You're
 
 (a (proper $Obj))	(maybe link $Obj)
-(the (proper $Obj))	(name $Obj)
-(the limited (proper $Obj))	(name $Obj)
+(the single (proper $Obj))	(name $Obj)
 
 (a (your $Obj))		your (maybe link $Obj)
-(the (your $Obj))	your (name $Obj)
-(the limited (your $Obj))	your (name $Obj)
+(the single (your $Obj))	your (name $Obj)
 
 (a (singleton $Obj))	(maybe link $Obj {(the $_)})
 
@@ -4234,8 +4230,7 @@
 (it (gender-neutral $) es)
 
 (a $Obj)		a (maybe link $Obj)
-(the $Obj)		the (name $Obj)
-(the limited $Obj)		the (name $Obj)
+(the single $Obj)		the (name $Obj)
 (it $)			it
 (them $)		it
 (itself $)		itself
@@ -4249,15 +4244,16 @@
 (the $O is)		(the $O) (is $O)
 (it $O is)		(it $O) (is $O)
 (it $O has)		(it $O) (has $O)
-(it $O does)    (it $O) (does $O)
+(it $O does)	(it $O) (does $O)
 (it $O s)		(s $O)  %% To be used when subject is a pronoun
-(it $O es)		(es $O) %%  (behaves differently for they/them)
+(it $O es)		(es $O) %% (behaves differently for they/them)
 (that $)		that
 (That's $)		That's
 
 (doesn't $Obj)		(does $Obj) (no space) n't
 (it $Obj doesn't)	(it $Obj does) (no space) n't
 
+(the (object $Obj))	(the single $Obj) %% We break (the single $) out from (the $) to improve closure optimization
 
 (name $)
 
@@ -5938,7 +5934,7 @@
 			~(relation $Obj)
 			(words $Words sufficiently specify $Obj)
 		(from words)
-			(the full limited $Obj)
+			(the full single $Obj)
 		(matching all of $Words)
 		(recover implicit action $Template $Obj into $A)
 	(into $Candidates)
