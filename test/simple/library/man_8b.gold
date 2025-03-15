@@ -5,11 +5,80 @@ leave the hive.
 
 1. Follow a scent of roses.
 2. Follow a scent of poppies.
-> TODO FILL THIS IN
+> 1
 [Z] Location
-[Z] 
-(I'm sorry, I didn't understand what you wanted to do.)
+[Z]
+Follow a scent of roses.
 
-1. Follow a scent of roses.
+You hover for a while near the pink rosebush.
+
+1. Follow a scent of poppies.
+2. Collect nectar from the rosebush.
+> 2
+[Z] Location
+[Z]
+Collect nectar from the rosebush.
+
+Yum! Rose nectar!
+
+1. Return to the rosebush.
 2. Follow a scent of poppies.
+3. Return back home.
+> 2
+[Z] Location
+[Z]
+Follow a scent of poppies.
+
+You circle a fragrant patch of poppies.
+
+1. Return to the rosebush.
+2. Collect nectar from the poppies.
+> 1
+[Z] Location
+[Z]
+Return to the rosebush.
+
+You hover for a while near the pink rosebush.
+
+1. Return to the patch of poppies.
+2. Collect nectar from the rosebush.
+> 2
+[Z] Location
+[Z]
+Collect nectar from the rosebush.
+
+Yum! Rose nectar!
+
+1. Return to the rosebush.
+2. Return to the patch of poppies.
+3. Return back home.
+> 2
+[Z] Location
+[Z]
+Return to the patch of poppies.
+
+You circle a fragrant patch of poppies.
+
+1. Return to the rosebush.
+2. Collect nectar from the poppies.
+> 2
+[Z] Location
+[Z]
+Collect nectar from the poppies.
+
+Yum! Poppy nectar!
+
+1. Return to the rosebush.
+2. Return to the patch of poppies.
+3. Return back home.
+> 3
+[Z] Location
+[Z]
+Return back home.
+
+After an impeccable landing, you find yourself back at the hive.
+
+Location
+You are here.
+
 >
