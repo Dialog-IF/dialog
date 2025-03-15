@@ -9,5 +9,6 @@ test: test/regtest/cloak.zblorb src/dgdebug
 	make --directory=./test/gosling test
 	make --directory=./test/impossible test
 	make --directory=./test/simple all
+	bin/test.py doc
 
 .PHONY:		test src/%

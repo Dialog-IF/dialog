@@ -1,0 +1,765 @@
+= Chapter 5: Input and output
+
+[#div]
+== Divs, spans, and style classes
+
+As we saw in the
+xref:execution.adoc[introductory chapter], text inside rule bodies gets printed.
+The text is treated as a sequence of words and punctuation.
+Furthermore, the `(par)` built-in predicate produces paragraph breaks,
+and `(line)` produces line breaks.
+
+Output can be further organized into _divs_ (divisions) and spans.
+Divs are rectangular areas of text, usually extending to the full width of the containing window,
+to which style hints can be applied.
+Spans allow style hints to be applied to a stretch of text without breaking it out into a separate rectangle.
+
+The purpose of divs, spans, and style classes is to allow the same story to run on many different platforms,
+with varying support for advanced presentation techniques.
+Furthermore, these mechanisms promote a clean source code structure,
+by isolating the presentation aspects from the text and logic of the story.
+
+The syntax for creating a div is `(div $)` followed by a statement.
+The parameter is a style class, and the statement is usually a block. Example:
+
+[source]
+----
+	(div @quote) {
+		This could be displayed in italics, for instance, if
+		the corresponding style hint is defined for the @quote
+		class.
+	}
+----
+
+Likewise, a span is created by `(span $)` followed by a statement.
+The following example assumes that style classes `@bold` and `@italic` have been defined:
+
+[source]
+----
+	(span @italic) { Lorem Ipsum }, he (span @bold) emphasized .
+----
+
+The output, depending on which hints appear in the style class definitions and to what extent they are supported by the interpreter, could be:
+
+[role=output,subs="quotes"]
+```
+_Lorem Ipsum_, he, *emphasized*.
+```
+
+Style classes are identified by words, but these words don't end up in the game dictionary
+(unless they're also used elsewhere, of course).
+This is particularly relevant if removable word endings are used (see the
+xref:#input[input section]
+below).
+
+What a given class is supposed to look like is determined by compile-time queries to the
+`(style class $)` predicate,
+with the name of the class as parameter.
+Style attributes are specified using a small subset of CSS, the widely known _Cascading Style Sheets_
+syntax of the web.
+All style attributes are regarded as optional hints, so a backend or interpreter can pick and choose among them, or ignore them altogether.
+
+Here is an example style definition:
+
+[source]
+----
+(style class @quote)
+	font-style: italic;
+	margin-top: 2em;
+	margin-bottom: 2em;
+----
+
+The Å-machine backend copies all style definitions verbatim into the story file,
+which makes them available to interpreters at runtime.
+The official javascript Å-machine interpreter in turn hands them over to the web browser.
+Thus, with this particular setup, the full set of CSS properties are supported.
+
+Nevertheless, authors are advised to think of styling as optional icing on the cake,
+and to avoid encoding critical information in the style hints.
+Be considerate of the people who choose to engage with your story using a screen reader,
+or who prefer to play on vintage hardware.
+Never change the text colour without also changing the background colour,
+as the player may be using an interpreter with a dark or light default background.
+
+The Z-machine backend, and the 8-bit Å-machine interpreter, only support a limited number of style attributes. For divs and spans in the main text area, they are:
+
+font-style::
+Supported values are `italic` and `inherit`.
+
+font-weight::
+Supported values are `bold` and `inherit`.
+
+font-family::
+The value is checked for the presence or absence of the keyword `monospace`.
+
+margin-top::
+This attribute only affects divs.
+The value must be an integer followed by the keyword `em`, with no whitespace in between.
+The size of the resulting margin is the given number of blank lines.
+
+margin-bottom::
+This attribute only affects divs.
+The value must be an integer followed by the keyword `em`, with no whitespace in between.
+The size of the resulting margin is the given number of blank lines.
+
+There is currently no support for the combined `margin` and `font` attributes.
+
+=== Nested style contexts and the flow of execution
+
+Divs and spans can be nested, but only in a strict tree-like structure.
+Divs may not appear inside spans. If this is attempted, a runtime error is generated.
+
+There are three ways to leave a div or span during normal program execution:
+
+* The inner statement might succeed.
+In this case, any remaining choice points are discarded, and the `(div $)` or `(span $)`
+expression itself succeeds.
+The choice points must be discarded to prevent the same div or span from being exited more than once.
+* The inner statement might fail.
+In this case, the `(div $)` or `(span $)` expression also fails.
+* The inner statement might invoke `(stop)` to break out of a surrounding stoppable environment.
+
+Regardless of how the inner statement terminates, the div or span is concluded as usual,
+and the style attributes of the surrounding context are restored on the fly.
+In case of a div, for instance, this means that the bottom margin takes effect.
+
+[#case]
+== Case conversion and inline styles
+
+The built-in predicate `(uppercase)` forces the next character to be printed in uppercase.
+The standard library uses this to define the following convenient predicates:
+
+[source]
+----
+(A full $Obj)	(uppercase) (a full $Obj)
+(A $Obj)	    (uppercase) (a $Obj)
+(It $Obj)	    (uppercase) (it $Obj)
+(Its $Obj)	    (uppercase) (its $Obj)
+(Name $Obj)	    (uppercase) (name $Obj)
+(That $Obj)	    (uppercase) (that $Obj)
+(The full $Obj)	(uppercase) (the full $Obj)
+(The $Obj is)	(uppercase) (the $Obj is)
+(The $Obj)	    (uppercase) (the $Obj)
+----
+
+The built-in predicate `(space $)` prints a given number of space characters in succession.
+
+In addition to spans and divs, it is possible to change the current text style on the fly.
+Use the built-in predicates `(bold)`, `(italic)`, `(reverse)`, and `(fixed pitch)`
+to enable each respective style, and `(roman)` to disable all four.
+The predicate `(unstyle)` reverts to the default style of the current div or span, which is roman by default.
+
+[#status]
+== Status areas
+
+The following special syntax:
+
+[source,subs="quotes"]
+----
+	(status bar $Class) _statement_
+----
+
+executes the inner statement while redirecting its output to a special location at the top of the screen,
+called the _top status area_.
+The statement is usually a block.
+
+The syntax:
+
+[source,subs="quotes"]
+----
+	(inline status bar $Class) _statement_
+----
+
+creates an _inline status area_ within the main flow of text.
+
+The Å-machine backend treats status area styling like it does div styling in general:
+All style properties are passed to the interpreter, which is then free to interpret them according to
+the CSS standard or ignore them.
+The official javascript interpreter simply hands them over to the web browser.
+The same advice applies as for general divs: Don't assume that the reader will use an interpreter
+that obeys all style hints.
+
+It is not possible to save the game state (to a file or undo buffer) from within a status area,
+or to enter a nested `(status bar $)` or `(inline status bar $)` from within a status area.
+Such operations will result in a runtime error.
+
+Output sent to a status area does not appear in the game transcript.
+
+[#status-top]
+=== Top status area
+
+The top status area should be styled with a `height` attribute, specified in `em` units.
+The Z-machine backend will reserve this many lines at the top of the screen.
+
+[source]
+----
+(style class @status)
+	height: 1em;
+
+(program entry point)
+	(status bar @status) {
+		Look at my status bar!
+	}
+----
+
+On the Z-machine, text inside the top status area is always rendered in a fixed-pitch font.
+When entering the status bar environment, Dialog fills the status area with reverse space characters,
+enables reverse video, and positions the cursor in the top left corner.
+
+Spans and inline style changes (bold, italic, reverse, fixed pitch, and roman) are ignored in the top status area.
+
+The top status area can be split into multiple segments horizontally.
+These segments are described using so called _floating_ divs.
+These have a `float` attribute that is set to either `left` or `right` to determine where
+inside the status area the segment should be located.
+The width of the segment can be specified in absolute numbers (using the `ch` unit)
+or as a percentage of the width of the surrounding div, which is normally the top status area itself.
+
+Floating divs can be further subdivided, either horizontally using floating divs, or vertically using ordinary divs (or simply with line breaks).
+
+Let's extend our simple status bar with a score display in the upper right corner:
+
+[source]
+----
+(current score 0)
+
+(style class @status)
+	height: 1em;
+
+(style class @score)
+	width: 20ch;
+	float: right;
+
+(program entry point)
+	(status bar @status) {
+		(div @score) {
+			(current score $S)
+			Score: $S
+		}
+		Look at my status bar!
+	}
+----
+
+In CSS, `em` represents the height of a capital M, while `ch` represents the width of the digit zero.
+On the Z-machine, they both refer to the width or height of a character, depending on context,
+and are interchangeable.
+But it is good practice to specify widths in `ch` and heights in `em`.
+
+The Z-machine backend, and the 8-bit Å-machine interpreter, obey the following style attributes in
+the top status area:
+
+height::
+For the top-level `(status bar $)` div only: The desired height, expressed as an integer followed by the word `em`.
+
+width::
+For divs nested inside the top status area:
+The desired width, as an integer followed by a unit.
+Supported units are `ch` and `%`.
+One `ch` represents the width of a character in the fixed-pitch font.
+
+float::
+For divs nested inside the top status area:
+The desired location within the surrounding div.
+Must be either `left` or `right`.
+
+margin-top::
+Works as it does for ordinary divs, but is ignored for the top-level `(status bar $)` itself.
+
+margin-bottom::
+Works as it does for ordinary divs, but is ignored for the top-level `(status bar $)` itself.
+
+
+It is possible to invoke `(status bar $)` with different style classes at different times,
+in order to vary the look of the status area during gameplay.
+When reducing the size of the top status area
+(e.g. drawing a status bar of height `1em` after having drawn one of height `2em`),
+be aware that some interpreters hide the extraneous lines, while
+others regard them as being part of the main window.
+
+Interpreters that do not support the top status area still execute the code inside the statement, but discard the output.
+Use `(interpreter supports status bar)` to check for support at runtime.
+
+[#status-inline]
+=== The inline status area
+
+The web interpreter for the Å-machine backend also supports an _inline status area_,
+which behaves like an ordinary div at first.
+However, every time a new inline status area is created,
+the previous one (if any) vanishes from the screen.
+
+Interpreters that do not support the inline status area still execute the code inside the statement,
+but discard the output.
+Use `(interpreter supports inline status bar)`
+to check for support at runtime.
+
+[#progress]
+== Visualizing progress
+
+The built-in predicate `(progress bar $ of $)` draws a progress bar scaled to fit the width of the current div.
+It is rendered with character graphics on the Z-machine backend.
+
+[#clear]
+== Clearing the screen
+
+To clear the main text area, excluding the top status area, use `(clear)`.
+To clear the entire screen and disable the top status area, use `(clear all)`.
+These predicates may not be queried from within a span, link, or status area.
+Such queries will result in a runtime error.
+
+Be aware that on some interpreters, clearing interferes with the player's ability to scroll back
+and review earlier parts of the play session.
+
+The Å-machine web interpreter supports clearing everything that the player has had a chance to read. This means all output up to and including the last line of input.
+The operation is triggered with `(clear old)`.
+
+Another built-in predicate is `(clear div)`.
+This clears, hides, or folds away the current div.
+It is currently only supported by the Å-machine web interpreter.
+Note that if more output is sent to the cleared div, this new output may or may not be visible to the player.
+
+All of the above predicates succeed (except when they generate a runtime error).
+All of them may be ignored by interpreters.
+
+[#input]
+== Input
+
+User input is represented by dictionary words.
+
+The Dialog compiler collects all dictionary words mentioned explicitly in the source code
+(with the `@`-prefix or as bare words inside lists), as well as every literal word that can come out of a
+`(collect words)` or `(determine object $)` expression.
+In addition, the system makes sure to provide a single-letter dictionary word for every character supported
+by the underlying platform.
+Together, these words make up what's called the _game-wide dictionary_.
+
+It may be helpful to know that there's a difference between dictionary words at the Dialog level,
+and the native, low-level words of the Z-machine.
+Dialog dictionary words are an abstraction over several different kinds of internal representation.
+That being said, it is the specific constraints of the low-level Z-machine dictionary that determine
+where the split occurs between the essential and optional parts of a given dictionary word.
+
+There are two built-in predicates for obtaining input from the player.
+One waits for a single keypress, while the other reads a full line of input.
+
+=== Get key
+
+[source]
+----
+	(get key $Char)
+----
+
+This predicate waits for the player to type a character.
+
+Some interpreters indicate that the game is waiting for input by displaying a flashing cursor.
+Others don't, so story authors may wish to prompt the reader explicitly.
+
+The parameter, `$Char`, is unified with a dictionary word representing the character that was typed,
+e.g. `@e` if the `E` key was pressed.
+Note that dictionary words are case-insensitive, so for letters of the alphabet there is no way to
+tell whether the player was holding shift or not.
+Digits are represented by numbers.
+
+A few non-printable keys are recognized, and reported using special dictionary words:
+
+[frame=none,grid=none]
+|===
+| Key | Special dictionary word
+
+| Return
+| @\n
+
+| Space
+| @\s
+
+| Backspace
+| @\b
+
+| Up
+| @\u
+
+| Down
+| @\d
+
+| Left
+| @\f
+
+| Right
+| @\r
+
+|===
+
+These special dictionary words aren't supposed to be printed.
+In the debugger, they will come out as their source-code representation, which is useful during
+xref:#debugging[tracing].
+Other interpreters may print them differently, or not at all.
+
+A simple keypress dispatcher can look like this:
+
+[source]
+----
+(program entry point)
+	(get key $Key)
+	(handle keypress $Key)
+
+(handle keypress @a)
+	'A' was pressed.
+
+(handle keypress @b)
+	'B' was pressed.
+
+(handle keypress @\n)
+	RETURN was pressed.
+----
+
+=== Get input
+
+[source]
+----
+	(get input $WordList)
+----
+
+This query blocks execution until the player types a line of input, followed by return.
+Different interpreters provide different levels of line-editing facilities,
+ranging from simple backspace handling all the way up to input history and spell checking.
+
+The parameter, `$WordList`, is unified with a list where each element represents a word typed by the player.
+The punctuation characters full stop, comma, double quote, semicolon, asterisk, and parentheses
+are treated as individual words;
+the remaining text is separated into words by whitespace.
+If a word is recognized as one that appears in the program-wide dictionary,
+then the element will be that dictionary word.
+Else, if the word is a decimal number in the range 0–16383, the element will be that number.
+
+If the word was neither recognized, nor found to be a decimal number,
+then Dialog will attempt to remove certain word endings,
+and check whether the remaining part of the word exists in the dictionary.
+This procedure is necessary for games written in e.g. German,
+whereas English games generally do not require it.
+
+To specify removable endings, add one or more rule definitions to the predicate `(removable word endings)`.
+Each rule body should consist of one or more word endings:
+
+[source]
+----
+(removable word endings)
+	%% German adjective endings
+	en es em e
+
+(removable word endings)
+	%% German noun endings
+	e en s es
+----
+
+The part that remains after removing the ending is referred to as the _stem_ of the word.
+If the stem consists of at least two letters,
+and exists in the program-wide dictionary,
+then the resulting dictionary word will have the stem as its essential part,
+and the ending as its optional part.
+During comparison (unification with another bound value),
+only the essential part is considered.
+During printing, both the essential part and the optional part are printed.
+
+During
+tracing,
+dictionary words are displayed with a plus sign (`+`) separating the essential and optional parts.
+Thus, if the German word “klein” is part of the game-wide dictionary, and the player enters `KLEINES`,  that word appears as `@klein+es` in the trace logs, and unifies successfully with `@klein`.
+
+If a word of input isn't recognized at all, even after considering the removable word endings,
+then it's an _unrecognized_ dictionary word.
+It can still be stored in a variable, retrieved, and printed back, and it will unify successfully with other instances of the same unrecognized word.
+When tracing is enabled, unrecognized dictionary words are displayed with a plus sign at the end.
+
+For instance, the input `TAKE 02 UNKNOWNWORD,X BALL may`, depending on the contents of the dictionary, be represented by the list: `[take 2 unknownword , x ball]`.
+As part of a trace, it might be displayed as `[take 2 unknownword+ , x ball]`.
+
+Special gotcha:
+Recall that zero-prefixed numbers in the source code,
+as well as numbers that are out of range,
+are treated as words.
+If 007 appears in the program in such a way that it becomes part of the program-wide dictionary,
+then it will show up as a dictionary word in the list returned by `(get input $)`.
+Otherwise, it will be represented by the numerical value 7.
+
+[#hyperlinks]
+== Hyperlinks
+
+The Å-machine backend supports a form of hyperlinks, for the purpose of simplifying text entry on mobile devices.
+The syntax is:
+
+[source,subs="quotes"]
+----
+	(link $Target) _statement_
+----
+
+The following example creates a piece of text, “clickable”.
+Clicking on the text has the same effect as typing the words `THE LINKED TEXT` and pressing return.
+
+[source]
+----
+	Here is some (link [the linked text]) { clickable } text.
+----
+
+Note that the words are appended to the end of the current contents of the input buffer,
+so that the player might type a verb,
+and then complete the sentence by clicking on e.g. a noun from a room description.
+
+The link target must be a flat list of words and/or integers,
+like the ones obtained from `(get input $)`.
+It can be computed at runtime.
+
+When the target is identical to the clickable text, a short form is available:
+
+[source]
+----
+	Why don't you (link) {open the drawer}?
+----
+
+A query to `(clear links)` transforms earlier hyperlinks into regular, non-clickable text.
+This is useful after a substantial scope change, such as when the player has moved to a different room.
+Links in the status areas are not affected.
+
+
+Å-machine interpreters are not required to support hyperlinks at all,
+and some may provide an option to turn them off for players who find them distracting.
+The built-in predicate `(interpreter supports links)` can be used to check whether hyperlinks
+are supported and enabled.
+When they are not, the would-be-clickable text shows up as normal text.
+
+Hyperlinks are always disabled on the Z-machine backend.
+
+[#resources]
+== Resources
+
+The Å-machine backend supports embedded graphics, as well as links to external web sites, using a common mechanism. A _resource_ is defined with the following syntax:
+
+[source,subs="quotes"]
+----
+(define resource _id_) _location_
+----
+
+The _id_ is any bound Dialog-value, such as an integer, a dictionary word, an object, or even a list.
+
+The _location_ is either a URL with one of the schemes `http`, `https`, or `mailto`,
+or a local filename.
+Local files are copied into the `.aastory` file,
+and this is the recommended way to work with _feelies_ and embedded graphics.
+
+=== Links to resources
+
+When a resource has been defined, it's possible to link to it using the following syntax:
+
+[source,subs="quotes"]
+----
+	(link resource $Id) _statement_
+----
+
+Here is an example:
+
+[source]
+----
+(define resource @manual)
+	feelies/manual.pdf
+
+(define resource @web)
+	https://example.com/
+
+(understand command [about])
+(perform [about])
+
+	Please make sure to check out the (link resource @manual) {printed
+	manual} that was bundled with the game.
+
+	(par)
+
+	For more works by the same author, head over to
+	(link resource @web) {example.com}.
+----
+
+Not every interpreter or backend supports links.
+Use `(interpreter supports links)` to check for this feature at runtime.
+Alternatively, make sure that all of your sentences with links also make sense as plain text.
+
+It is up to the interpreter to decide what happens when the player clicks on a link to a resource.
+The Å-machine web interpreter opens the file or web site in a new browser tab.
+
+=== Embedded resources
+
+It is also possible to _embed_ a resource, such as a picture, into the story text.
+This is done with the built-in predicate `(embed resource $)`.
+
+In general, interpreters won't be able to embed every conceivable kind of resource.
+When defining a resource, it is possible to add an `alt-text` that can be displayed instead of the resource.
+The alt-text appears at the end of the resource definition, separated from the location by a semicolon:
+
+[source,subs="quotes"]
+----
+(define resource _id_) _location_; _alt-text_
+----
+
+If no alt-text is specified, the filename (i.e. location) is used as a default value.
+Only the actual filename is used as alt-text, not the full path.
+
+The built-in predicate `(interpreter can embed $)` checks whether the current interpreter is capable of
+displaying a given resource.
+If not, `(embed resource $)` will display the alt-text instead.
+
+Example:
+
+[source]
+----
+(define resource #lighthouse)
+	media/lighthouse.png; A small model of a lighthouse.
+
+(style class @center)
+	margin-top: 1em;
+	margin-bottom: 1em;
+	text-align: center;
+
+#lighthouse
+(name *)	lighthouse
+(dict *)	small tiny model silver
+(descr *)
+	It's a tiny model of a lighthouse, made of silver.
+	(if) (interpreter can embed *) (then)
+		(div @center) (embed resource *)
+	(endif)
+	The lighthouse glistens in the moonlight.
+----
+
+In the above example, the `(div $)` splits the text into two paragraphs if the interpreter is able to
+embed png files.
+Otherwise, there will be no paragraph break, and no alt-text.
+
+With an eye towards future extensibility, this language feature has been designed to be open-ended.
+Resources could conceivably be any kind of multimedia, including sound and animation.
+Interpreters are supposed to restrict this vast space of possibilities to a manageable set
+of supported file formats.
+The current version of the Å-machine web interpreter, for instance,
+only embeds graphics in `png` or `jpeg` format.
+Other backends (Z-machine, debugger) just print the alt-text.
+
+=== About local filenames
+
+Local path names are interpreted relative to the _resource directory_,
+which defaults to the current working directory.
+A different resource directory can be specified with the `-r` option to `dialogc`.
+
+All resources bundled into an `.aastory` file must have unique filenames, regardless of their path.
+Thus, you can't define one resource with the filename “hero/face.png” and another with the filename “heroine/face.png”.
+This restriction might be relaxed in future versions.
+
+[#debugging]
+== Debugging
+
+If the program is currently running inside the interactive debugger,
+`(log)` _statement_ will execute the inner statement—usually a block—in a stoppable environment.
+Output from the statement will appear between line breaks, in a distinct style.
+This is useful for adding temporary printouts to the code. For instance:
+
+[source]
+----
+(program entry point)
+	(log) { Program started. X = $X }
+	($X = 42)
+	Hello,
+	(log) $X
+	world!
+----
+
+looks like this in the debugger:
+
+[role=output,subs="quotes"]
+```
+*Program started. X = $*
+Hello,
+*42*
+world!
+```
+
+but like this when the code is compiled:
+
+[role=output]
+```
+Hello, world!
+```
+
+The following built-in predicates are also useful for debugging:
+
+(breakpoint)::
+If the program is currently running inside the interactive debugger,
+suspend execution and print the current source code filename and line number.
+When execution resumes, this query succeeds.
++
+Outside of the debugger, the query simply succeeds.
+
+(trace on)::
+Enables tracing.
+Following this, debugging information will be printed when queries are made, and when rule bodies are entered.
+The interactive debugger will also report when solutions are found, and when dynamic predicates are updated.
+
+(trace off)::
+Disables tracing.
+
+If the program source code contains a query to `(trace on)` anywhere, the compiler backend will insert extra
+instructions all over the generated code, to deal with tracing.
+This is known as instrumenting the code, and it makes the program slower and larger.
+Thus, you'll only want to use these predicates temporarily, during debugging.
+The compiler prints a warning when it adds the extra instructions.
+
+Please be aware that the Dialog compiler and debugger do optimize your program,
+and you will be tracing the optimized code, so certain queries and rules will be missing from the
+debug printouts.
+You will generally want to do all your tracing in the debugger,
+which mercifully turns off some of the more confusing optimizations.
+That being said, tracing the optimized Z- or Å-code can be useful when trying to speed up a program.
+
+== Determining objects from words
+
+This section is mainly of concern for library programmers, so story authors may safely skip it.
+
+Dialog has a special construct for matching player input against in-world object names in a very efficient way:
+
+[source,subs="quotes"]
+----
+	(determine object $Obj)
+		_object generator_
+	(from words)
+		_word generator_
+	(matching all of $Input)
+----
+
+This statement will backtrack over every object `$Obj` for which:
+
+- _object generator_ succeeds, and
+- _word generator_, when exhausted, emits at least every word in the `$Input` list.
+
+The variable `$Obj` should appear both in the object generator and in the word generator,
+and the object generator should contain a multi-query to backtrack over a set of objects.
+A canonical example is:
+
+[source]
+----
+	(determine object $Obj)
+		*($Obj is in scope)
+	(from words)
+		*(dict $Obj)
+	(matching all of $Input)
+----
+
+A non-optimizing compiler could deal with this construct as follows:
+First, compile normal code for the object generator.
+Then, exhaust every branch of the word generator,
+collecting all its output into a temporary list of words.
+Finally, check that every word of $Input appears in the temporary list.
+
+However, the Dialog compiler and debugger both perform the following optimization:
+At compile-time, they analyze the word generator statically, and construct a reverse lookup table,
+mapping words of input to objects.
+At runtime, this table is consulted first, based on `$Input`,
+to determine what objects the player might be referring to.
+So, for instance, if the input is `LARGE HAT`, and there are only two game objects for which
+`(dict $Obj)` can produce both of those words, then `$Obj` will now be bound to
+each of those two objects in turn.
+But if there are dozens of large hats, `$Obj` may instead be left unbound;
+the compiler is allowed to make a trade-off between speed and memory footprint.
+Either way, after this step, the operation proceeds as in the unoptimized case.

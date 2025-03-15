@@ -1,0 +1,413 @@
+= Appendix: Predicate index
+
+The following is an alphabetical list of publically documented library
+predicates, library macros, and built-in predicates, with links to the relevant
+sections of the manual.
+
+Note that
+xref:lang:quickref.adoc#special[special syntax]
+isn't included here.
+
+xref:understanding.adoc#liblinks[`($)`] +
+xref:understanding.adoc#liblinks[`($ $)`] +
+xref:lang:builtins.adoc#arithmetic[`($ < $)`] +
+xref:lang:varsvalues.adoc#unification[`($ = $)`] +
+xref:lang:builtins.adoc#arithmetic[`($ > $)`] +
+xref:traits.adoc#linguistictraits[`(a $)`] +
+xref:traits.adoc#linguistictraits[`(A $)`] +
+xref:actions.adoc#groupactions[`(action $ may group $ with $)`] +
+xref:miscfeat.adoc#libdebug[`(actions off)`] +
+xref:miscfeat.adoc#libdebug[`(actions on)`] +
+xref:timeprogress.adoc#choicemode[`(activate node $)`] +
+xref:timeprogress.adoc#choicemode[`(activate parser)`] +
+xref:traits.adoc#categorytraits[`(actor container $)`] +
+xref:traits.adoc#categorytraits[`(actor supporter $)`] +
+xref:timeprogress.adoc#theintro[`(additional banner text)`] +
+xref:moving.adoc#scope[`(add $ to scope)`] +
+xref:actions.adoc#preventperform[`(after $)`] +
+xref:timeprogress.adoc#choicemode[`(after disp $)`] +
+xref:traits.adoc#fullnames[`(a full $)`] +
+xref:lang:io.adoc#case[`(A full $)`] +
+xref:timeprogress.adoc#choicemode[`(allowed action $)`] +
+xref:timeprogress.adoc#gameover[`(amusing)`] +
+xref:timeprogress.adoc#gameover[`(amusing enabled)`] +
+xref:traits.adoc#linguistictraits[`(an $)`] +
+xref:traits.adoc#categorytraits[`(animate $)`] +
+xref:miscfeat.adoc#questions[`(any key)`] +
+xref:scenery.adoc#descriptions[`(appearance $)`] +
+xref:items.adoc#appearance[`(appearance $ $ $)`] +
+xref:lang:builtins.adoc#listbuiltins[`(append $ $ $)`] +
+xref:understanding.adoc#newactions[`(asking for direction in $)`] +
+xref:understanding.adoc#newactions[`(asking for object in $)`] +
+xref:moving.adoc#floating[`($ attracts $)`] +
+xref:timeprogress.adoc#theintro[`(banner)`] +
+xref:actions.adoc#refusebefore[`(before $)`] +
+xref:timeprogress.adoc#choicemode[`(before disp $)`] +
+xref:moving.adoc#doors[`($ blocks light)`] +
+xref:moving.adoc#doors[`($ blocks passage)`] +
+xref:lang:io.adoc#case[`(bold)`] +
+xref:lang:builtins.adoc#typechecks[`(bound $)`] +
+xref:lang:io.adoc#debugging[`(breakpoint)`] +
+xref:timeprogress.adoc#choicemode[`(choose $)`] +
+xref:traits.adoc#fullnames[`(clarify location of $)`] +
+xref:lang:io.adoc#clear[`(clear)`] +
+xref:lang:io.adoc#clear[`(clear all)`] +
+xref:miscfeat.adoc#pronouns[`(clear all pronouns)`] +
+xref:lang:io.adoc#clear[`(clear div)`] +
+xref:lang:io.adoc#hyperlinks[`(clear links)`] +
+xref:lang:io.adoc#clear[`(clear old)`] +
+xref:understanding.adoc#newactions[`(command $)`] +
+xref:lang:beyondprg.adoc#metadata[`(compiler version)`] +
+xref:traits.adoc#categorytraits[`(consultable $)`] +
+xref:traits.adoc#categorytraits[`(container $)`] +
+xref:miscfeat.adoc#listutil[`($ contains one of $)`] +
+xref:miscfeat.adoc#listutil[`($ contains sublist $)`] +
+xref:timeprogress.adoc#choicemode[`(current node $)`] +
+xref:moving.adoc#moveplayer[`(current player $)`] +
+xref:moving.adoc#moveplayer[`(current room $)`] +
+xref:timeprogress.adoc#score[`(current score $)`] +
+xref:timeprogress.adoc#statusbar[`(darkness headline)`] +
+xref:understanding.adoc#liblinks[`(default action $ $)`] +
+xref:understanding.adoc#liblinks[`(default actions enabled)`] +
+xref:lang:io.adoc#resources[`(define resource $)`] +
+xref:timeprogress.adoc#score[`(decrease score by $)`] +
+xref:scenery.adoc#descriptions[`(descr $)`] +
+xref:understanding.adoc#newactions[`(describe action $)`] +
+xref:npc.adoc#asktell[`(describe topic $)`] +
+xref:scenery.adoc#descriptions[`(dict $)`] +
+xref:traits.adoc#categorytraits[`(direction $)`] +
+xref:timeprogress.adoc#choicemode[`(disp $)`] +
+xref:timeprogress.adoc#choicemode[`(display $)`] +
+xref:lang:builtins.adoc#system[`(display memory statistics)`] +
+xref:lang:builtins.adoc#arithmetic[`($ divided by $ into $)`] +
+xref:traits.adoc#linguistictraits[`(does $)`] +
+xref:traits.adoc#linguistictraits[`(doesn't $)`] +
+xref:traits.adoc#categorytraits[`(door $)`] +
+xref:actions.adoc#tickstop[`(early on every tick)`] +
+xref:traits.adoc#categorytraits[`(edible $)`] +
+xref:lang:io.adoc#resources[`(embed resource $)`] +
+xref:lang:builtins.adoc#typechecks[`(empty $)`] +
+xref:miscfeat.adoc#treeutil[`(ensure $ is held)`] +
+xref:moving.adoc#moveplayer[`(enter $)`] +
+xref:lang:beyondprg.adoc#runtimeerror[`(error $ entry point)`] +
+xref:traits.adoc#linguistictraits[`(es $)`] +
+xref:traits.adoc#categorytraits[`(excluded from all $)`] +
+xref:lang:choicepoints.adoc#exhaust[`(fail)`] +
+xref:stdactions.adoc#stdreveal[`(feel $)`] +
+xref:traits.adoc#categorytraits[`(female $)`] +
+xref:traits.adoc#categorytraits[`(fine where it is $)`] +
+xref:actions.adoc#groupactions[`(first group-try $)`] +
+xref:moving.adoc#pathfinding[`(first step from $ to $ is $)`] +
+xref:actions.adoc#refusebefore[`(first try $)`] +
+xref:lang:io.adoc#case[`(fixed pitch)`] +
+xref:timeprogress.adoc#choicemode[`($ flows to $)`] +
+xref:miscfeat.adoc#dirutil[`(from-adverb $)`] +
+xref:moving.adoc#doors[`@(from $ go $ through $ to $)`] +
+xref:moving.adoc#rooms[`(from $ go $ to $)`] +
+xref:npc.adoc#npcmove[`(from $ go $ to room $)`] +
+xref:moving.adoc#doors[`(from $ through $ to $)`] +
+xref:lang:builtins.adoc#typechecks[`(fully bound $)`] +
+xref:miscfeat.adoc#fungibility[`(fungibility enabled)`] +
+xref:miscfeat.adoc#fungibility[`(fungible $ $)`] +
+xref:timeprogress.adoc#gameover[`(game over $)`] +
+xref:timeprogress.adoc#gameover[`(game over option)`] +
+xref:timeprogress.adoc#gameover[`(game over status bar)`] +
+xref:lang:io.adoc#input[`(get input $)`] +
+xref:lang:io.adoc#input[`(get key $)`] +
+xref:miscfeat.adoc#questions[`(get number from $ to $ $)`] +
+xref:items.adoc#clothing[`($ goes underneath $)`] +
+xref:understanding.adoc#customtokens[`(grammar entry $ $ $)`] +
+xref:understanding.adoc#grammar[`@(grammar $ for $)`] +
+xref:understanding.adoc#grammar[`@(grammar $ for itself)`] +
+xref:understanding.adoc#grammar[`@(grammar $ for $ reversed)`] +
+xref:understanding.adoc#customtokens[`@(grammar transformer $ $ $ $ $)`] +
+xref:actions.adoc#groupactions[`(group-after $)`] +
+xref:actions.adoc#groupactions[`(group-before $)`] +
+xref:actions.adoc#groupactions[`(group-instead of $)`] +
+xref:actions.adoc#groupactions[`(group-perform $)`] +
+xref:actions.adoc#groupactions[`(group-prevent $)`] +
+xref:actions.adoc#groupactions[`(group-refuse $)`] +
+xref:actions.adoc#groupactions[`(group-try $)`] +
+xref:traits.adoc#linguistictraits[`(has $)`] +
+xref:miscfeat.adoc#treeutil[`($ has ancestor $)`] +
+xref:lang:dynamic.adoc#hasparent[`($ has parent $)`] +
+xref:scenery.adoc#objlocations[`($ has relation $)`] +
+xref:scenery.adoc#descriptions[`(heads $)`] +
+xref:timeprogress.adoc#score[`(increase score by $)`] +
+xref:moving.adoc#light[`(inherently dark $)`] +
+xref:timeprogress.adoc#choicemode[`(initial label $)`] +
+xref:traits.adoc#categorytraits[`(in-seat $)`] +
+xref:actions.adoc#preventperform[`(instead of $)`] +
+xref:traits.adoc#categorytraits[`(intangible $)`] +
+xref:lang:io.adoc#resources[`(interpreter can embed $)`] +
+xref:lang:io.adoc#status[`(interpreter supports inline status bar)`] +
+xref:lang:io.adoc#hyperlinks[`(interpreter supports links)`] +
+xref:lang:builtins.adoc#system[`(interpreter supports quit)`] +
+xref:lang:io.adoc#status[`(interpreter supports status bar)`] +
+xref:lang:builtins.adoc#system[`(interpreter supports undo)`] +
+xref:timeprogress.adoc#theintro[`(intro)`] +
+xref:traits.adoc#linguistictraits[`(is $)`] +
+xref:scenery.adoc#objlocations[`@($ is $ $)`] +
+xref:scenery.adoc#dynamic[`($ is broken)`] +
+xref:scenery.adoc#dynamic[`($ is closed)`] +
+xref:timeprogress.adoc#choicemode[`($ is exposed)`] +
+xref:items.adoc#pristine[`($ is handled)`] +
+xref:scenery.adoc#hidden[`($ is hidden)`] +
+xref:scenery.adoc#dynamic[`@($ is in order)`] +
+xref:miscfeat.adoc#treeutil[`($ is in room $)`] +
+xref:moving.adoc#scope[`($ is in scope)`] +
+xref:scenery.adoc#dynamic[`($ is locked)`] +
+xref:miscfeat.adoc#treeutil[`($ is nested $ $)`] +
+xref:miscfeat.adoc#treeutil[`@($ is nowhere)`] +
+xref:traits.adoc#linguistictraits[`(isn't $)`] +
+xref:scenery.adoc#dynamic[`@($ is on)`] +
+xref:scenery.adoc#dynamic[`($ is off)`] +
+xref:lang:builtins.adoc#listbuiltins[`($ is one of $)`] +
+xref:scenery.adoc#dynamic[`@($ is open)`] +
+xref:miscfeat.adoc#treeutil[`($ is part of $)`] +
+xref:items.adoc#pristine[`@($ is pristine)`] +
+xref:scenery.adoc#hidden[`@($ is revealed)`] +
+xref:timeprogress.adoc#choicemode[`@($ is unexposed)`] +
+xref:scenery.adoc#dynamic[`@($ is unlocked)`] +
+xref:scenery.adoc#dynamic[`@($ is unvisited)`] +
+xref:scenery.adoc#dynamic[`($ is visited)`] +
+xref:items.adoc#clothing[`($ is worn by $)`] +
+xref:traits.adoc#linguistictraits[`(it $)`] +
+xref:traits.adoc#linguistictraits[`(It $)`] +
+xref:lang:io.adoc#case[`(italic)`] +
+xref:traits.adoc#categorytraits[`(item $)`] +
+xref:traits.adoc#linguistictraits[`(it $ is)`] +
+xref:traits.adoc#linguistictraits[`(its $)`] +
+xref:traits.adoc#linguistictraits[`(Its $)`] +
+xref:traits.adoc#linguistictraits[`(itself $)`] +
+xref:lang:builtins.adoc#sploin[`(join words $ into $)`] +
+xref:timeprogress.adoc#choicemode[`(label $)`] +
+xref:miscfeat.adoc#listutil[`(last $ $)`] +
+xref:actions.adoc#tickstop[`(late on every tick)`] +
+xref:miscfeat.adoc#listutil[`(length of $ into $)`] +
+xref:npc.adoc#npcaction[`(let $ climb $)`] +
+xref:npc.adoc#npcaction[`(let $ close $)`] +
+xref:npc.adoc#npcaction[`(let $ drop $)`] +
+xref:npc.adoc#npcaction[`(let $ enter $)`] +
+xref:npc.adoc#npcmove[`(let $ go $)`] +
+xref:npc.adoc#npcaction[`(let $ leave $)`] +
+xref:npc.adoc#npcaction[`(let $ open $)`] +
+xref:npc.adoc#npcaction[`(let $ put $ $ $)`] +
+xref:npc.adoc#npcaction[`(let $ remove $)`] +
+xref:npc.adoc#npcaction[`(let $ take $)`] +
+xref:npc.adoc#npcaction[`(let $ wear $)`] +
+xref:understanding.adoc#liblinks[`(library links enabled)`] +
+xref:lang:beyondprg.adoc#metadata[`(library version)`] +
+xref:lang:execution.adoc#printing[`(line)`] +
+xref:lang:builtins.adoc#typechecks[`(list $)`] +
+xref:items.adoc#appearance[`(list objects $ $)`] +
+xref:traits.adoc#categorytraits[`(lockable $)`] +
+xref:scenery.adoc#descriptions[`(look $)`] +
+xref:traits.adoc#categorytraits[`(male $)`] +
+xref:understanding.adoc#customtokens[`(match grammar token $ against $ $ into $)`] +
+xref:timeprogress.adoc#score[`(maximum score $)`] +
+xref:lang:builtins.adoc#arithmetic[`($ minus $ into $)`] +
+xref:lang:builtins.adoc#arithmetic[`($ modulo $ into $)`] +
+xref:moving.adoc#moveplayer[`(move player to $ $)`] +
+xref:scenery.adoc#objects[`(name $)`] +
+xref:stdactions.adoc#stdcore[`(narrate climbing $)`] +
+xref:npc.adoc#npcaction[`(narrate $ climbing $)`] +
+xref:stdactions.adoc#stdcore[`(narrate closing $)`] +
+xref:npc.adoc#npcaction[`(narrate $ closing $)`] +
+xref:stdactions.adoc#stdcore[`(narrate dropping $)`] +
+xref:npc.adoc#npcaction[`(narrate $ dropping $)`] +
+xref:stdactions.adoc#stdcore[`(narrate eating $)`] +
+xref:stdactions.adoc#stdcore[`(narrate entering $)`] +
+xref:npc.adoc#npcaction[`(narrate $ entering $)`] +
+xref:npc.adoc#npcmove[`(narrate $ entering $ from $)`] +
+xref:stdactions.adoc#stdcore[`(narrate failing to leave $ $)`] +
+xref:stdactions.adoc#stdreveal[`(narrate failing to look $)`] +
+xref:stdactions.adoc#stdcore[`(narrate leaving $)`] +
+xref:stdactions.adoc#stdcore[`(narrate leaving $ $)`] +
+xref:npc.adoc#npcaction[`(narrate $ leaving $)`] +
+xref:npc.adoc#npcmove[`(narrate $ leaving $ $ to $)`] +
+xref:stdactions.adoc#stdcore[`(narrate leaving $ $ by $)`] +
+xref:stdactions.adoc#stdcore[`(narrate leaving $ $ with $)`] +
+xref:stdactions.adoc#stdcore[`(narrate locking $ with $)`] +
+xref:stdactions.adoc#stdcore[`(narrate opening $)`] +
+xref:npc.adoc#npcaction[`(narrate $ opening $)`] +
+xref:stdactions.adoc#stdcore[`(narrate putting $ $ $)`] +
+xref:npc.adoc#npcaction[`(narrate $ putting $ $ $)`] +
+xref:stdactions.adoc#stdcore[`(narrate removing $)`] +
+xref:npc.adoc#npcaction[`(narrate $ removing $)`] +
+xref:stdactions.adoc#stdcore[`(narrate switching off $)`] +
+xref:stdactions.adoc#stdcore[`(narrate switching on $)`] +
+xref:stdactions.adoc#stdcore[`(narrate taking $)`] +
+xref:npc.adoc#npcaction[`(narrate $ taking $)`] +
+xref:stdactions.adoc#stdcore[`(narrate unlocking $ with $)`] +
+xref:stdactions.adoc#stdcore[`(narrate wearing $)`] +
+xref:npc.adoc#npcaction[`(narrate $ wearing $)`] +
+xref:lang:builtins.adoc#typechecks[`(nonempty $)`] +
+xref:lang:execution.adoc#printing[`(no space)`] +
+xref:traits.adoc#categorytraits[`(not here $)`] +
+xref:miscfeat.adoc#pronouns[`(notice $)`] +
+xref:miscfeat.adoc#listutil[`(nth $ $ $)`] +
+xref:lang:builtins.adoc#typechecks[`(number $)`] +
+xref:lang:builtins.adoc#typechecks[`(object $)`] +
+xref:timeprogress.adoc#choicemode[`($ offers $)`] +
+xref:actions.adoc#tickstop[`(on every tick)`] +
+xref:actions.adoc#tickstop[`(on every tick in $)`] +
+xref:traits.adoc#categorytraits[`(on-seat $)`] +
+xref:traits.adoc#categorytraits[`(opaque $)`] +
+xref:traits.adoc#categorytraits[`(openable $)`] +
+xref:scenery.adoc#dynamic[`(open or closed $)`] +
+xref:miscfeat.adoc#dirutil[`(opposite of $ is $)`] +
+xref:traits.adoc#categorytraits[`(out of reach $)`] +
+xref:traits.adoc#linguistictraits[`(pair $)`] +
+xref:lang:execution.adoc#printing[`(par)`] +
+xref:timeprogress.adoc#gameover[`(parse game over $)`] +
+xref:actions.adoc#preventperform[`(perform $)`] +
+xref:moving.adoc#light[`(player can see)`] +
+xref:moving.adoc#scope[`(player can see $)`] +
+xref:traits.adoc#linguistictraits[`(plural $)`] +            
+xref:items.adoc#plursynonyms[`(plural dict $)`] +
+xref:miscfeat.adoc#fungibility[`(plural name $)`] +
+xref:lang:builtins.adoc#arithmetic[`($ plus $ into $)`] +
+xref:traits.adoc#categorytraits[`(potable $)`] +
+xref:miscfeat.adoc#dirutil[`(present-adverb $)`] +
+xref:traits.adoc#categorytraits[`(present-name $)`] +
+xref:actions.adoc#preventperform[`(prevent $)`] +
+xref:stdactions.adoc#stdcore[`(prevent entering $)`] +
+xref:miscfeat.adoc#listutil[`(print words $)`] +
+xref:miscfeat.adoc#listutil[`(Print Words $)`] +
+xref:lang:execution.adoc#predicates[`(program entry point)`] +
+xref:lang:io.adoc#progress[`(progress bar $ of $)`] +
+xref:traits.adoc#linguistictraits[`(proper $)`] +
+xref:npc.adoc#asktell[`(proper topic $)`] +
+xref:moving.adoc#light[`($ provides light)`] +
+xref:traits.adoc#categorytraits[`(pushable $)`] +
+xref:lang:control.adoc#closures[`(query $ $)`] +
+xref:lang:control.adoc#closures[`(query $)`] +
+xref:lang:builtins.adoc#system[`(quit)`] +
+xref:lang:builtins.adoc#arithmetic[`(random from $ to $ into $)`] +
+xref:miscfeat.adoc#listutil[`(randomly select $ from $)`] +
+xref:miscfeat.adoc#listutil[`($ recursively contains $)`] +
+xref:miscfeat.adoc#treeutil[`(recursively leave non-vehicles)`] +
+xref:timeprogress.adoc#statusbar[`(redraw status bar)`] +
+xref:actions.adoc#refusebefore[`(refuse $)`] +
+xref:traits.adoc#categorytraits[`(relation $)`] +
+xref:lang:io.adoc#input[`(removable word endings)`] +
+xref:miscfeat.adoc#listutil[`(remove duplicates $ $)`] +
+xref:miscfeat.adoc#listutil[`(remove from $ matching $ into $)`] +
+xref:lang:choicepoints.adoc#repeat[`(repeat forever)`] +
+xref:lang:builtins.adoc#system[`(restart)`] +
+xref:lang:builtins.adoc#system[`(restore)`] +
+xref:scenery.adoc#hidden[`(reveal $)`] +
+xref:lang:io.adoc#case[`(reverse)`] +
+xref:miscfeat.adoc#listutil[`(reverse $ $)`] +
+xref:traits.adoc#categorytraits[`(reverse-name $)`] +
+xref:understanding.adoc#howparser[`(rewrite $ into $)`] +
+xref:lang:io.adoc#case[`(roman)`] +
+xref:traits.adoc#categorytraits[`(room $)`] +
+xref:moving.adoc#rooms[`(room header $)`] +
+xref:traits.adoc#linguistictraits[`(s $)`] +
+xref:lang:builtins.adoc#system[`(save $)`] +
+xref:lang:builtins.adoc#system[`(save undo $)`] +
+xref:miscfeat.adoc#libdebug[`(scope)`] +
+xref:timeprogress.adoc#score[`(scoring enabled)`] +
+xref:traits.adoc#categorytraits[`(seat $)`] +
+xref:moving.adoc#moveplayer[`(select player $)`] +
+xref:lang:beyondprg.adoc#metadata[`(serial number)`] +
+xref:traits.adoc#categorytraits[`(sharp $)`] +
+xref:moving.adoc#pathfinding[`(shortest path from $ to $ is $)`] +
+xref:traits.adoc#linguistictraits[`(singleton $)`] +
+xref:lang:execution.adoc#printing[`(space)`] +
+xref:lang:io.adoc#case[`(space $)`] +
+xref:miscfeat.adoc#dirutil[`(spell out $)`] +
+xref:miscfeat.adoc#listutil[`(split $ anywhere into $ and $)`] +
+xref:lang:builtins.adoc#listbuiltins[`(split $ by $ into $ and $)`] +
+xref:lang:builtins.adoc#sploin[`(split word $ into $)`] +
+xref:timeprogress.adoc#statusbar[`(status headline)`] +
+xref:timeprogress.adoc#choicemode[`(sticky $)`] +
+xref:lang:control.adoc#stoppable[`(stop)`] +
+xref:lang:beyondprg.adoc#metadata[`(story author)`] +
+xref:lang:beyondprg.adoc#metadata[`(story blurb)`] +
+xref:lang:beyondprg.adoc#metadata[`(story ifid)`] +
+xref:lang:beyondprg.adoc#metadata[`(story noun)`] +
+xref:lang:beyondprg.adoc#metadata[`(story release $)`] +
+xref:lang:beyondprg.adoc#metadata[`(story title)`] +
+xref:lang:io.adoc#div[`(style class $)`] +
+xref:traits.adoc#categorytraits[`(supporter $)`] +
+xref:traits.adoc#categorytraits[`(switchable $)`] +
+xref:miscfeat.adoc#listutil[`(take $ from $ into $)`] +
+xref:timeprogress.adoc#choicemode[`(terminating $)`] +
+xref:traits.adoc#linguistictraits[`(that $)`] +
+xref:traits.adoc#linguistictraits[`(That $)`] +
+xref:traits.adoc#linguistictraits[`(That's $)`] +
+xref:traits.adoc#linguistictraits[`(the $)`] +
+xref:traits.adoc#linguistictraits[`(The $)`] +
+xref:traits.adoc#fullnames[`(the full $)`] +
+xref:lang:io.adoc#case[`(The full $)`] +
+xref:traits.adoc#linguistictraits[`(the $ is)`] +
+xref:traits.adoc#linguistictraits[`(The $ is)`] +
+xref:traits.adoc#linguistictraits[`(them $)`] +
+xref:actions.adoc#tickstop[`(tick)`] +
+xref:lang:builtins.adoc#arithmetic[`($ times $ into $)`] +
+xref:npc.adoc#asktell[`(topic $)`] +
+xref:npc.adoc#asktell[`(topic keyword $)`] +
+xref:npc.adoc#asktell[`(topic keyword $ implies $)`] +
+xref:traits.adoc#categorytraits[`(towards-name $)`] +
+xref:lang:io.adoc#debugging[`(trace off)`] +
+xref:lang:io.adoc#debugging[`(trace on)`] +
+xref:lang:builtins.adoc#system[`(transcript off)`] +
+xref:lang:builtins.adoc#system[`(transcript on)`] +
+xref:actions.adoc#actionprocess[`(try $)`] +
+xref:traits.adoc#linguistictraits[`(uncountable $)`] +
+xref:understanding.adoc#newactions[`(understand $)`] +
+xref:understanding.adoc#howparser[`(understand $ as $)`] +
+xref:understanding.adoc#howparser[`(understand $ as any object $)`] +
+xref:understanding.adoc#howparser[`(understand $ as any object $ preferably $)`] +
+xref:understanding.adoc#howparser[`(understand $ as any object $ preferably animate)`] +
+xref:understanding.adoc#howparser[`(understand $ as direction $)`] +
+xref:understanding.adoc#howparser[`(understand $ as non-all object $)`] +
+xref:understanding.adoc#howparser[`(understand $ as number $)`] +
+xref:understanding.adoc#howparser[`(understand $ as object $ preferably $)`] +
+xref:understanding.adoc#howparser[`(understand $ as object $ preferably child of $)`] +
+xref:understanding.adoc#howparser[`(understand $ as object $ preferably held)`] +
+xref:understanding.adoc#howparser[`(understand $ as object $ preferably held excluding $)`] +
+xref:understanding.adoc#howparser[`(understand $ as object $ preferably takable)`] +
+xref:understanding.adoc#howparser[`(understand $ as object $ preferably worn)`] +
+xref:understanding.adoc#howparser[`(understand $ as single object $)`] +
+xref:understanding.adoc#howparser[`(understand $ as single object $ preferably $)`] +
+xref:understanding.adoc#howparser[`(understand $ as single object $ preferably animate)`] +
+xref:understanding.adoc#howparser[`(understand $ as single object $ preferably container)`] +
+xref:understanding.adoc#howparser[`(understand $ as single object $ preferably held)`] +
+xref:understanding.adoc#howparser[`(understand $ as single object $ preferably supporter)`] +
+xref:understanding.adoc#howparser[`(understand $ as topic $)`] +
+xref:understanding.adoc#newactions[`@(understand command $)`] +
+xref:lang:builtins.adoc#system[`(undo)`] +
+xref:lang:builtins.adoc#typechecks[`(unknown word $)`] +
+xref:understanding.adoc#unlikely[`(unlikely $)`] +
+xref:moving.adoc#doors[`($ unlocks $)`] +
+xref:lang:io.adoc#case[`(unstyle)`] +
+xref:moving.adoc#moveplayer[`(update environment around player)`] +
+xref:lang:io.adoc#case[`(uppercase)`] +
+xref:traits.adoc#categorytraits[`(vehicle $)`] +
+xref:understanding.adoc#unlikely[`(very unlikely $)`] +
+xref:traits.adoc#categorytraits[`(wearable $)`] +
+xref:items.adoc#clothing[`(wearing $ covers $)`] +
+xref:items.adoc#clothing[`(wearing $ removes $)`] +
+xref:miscfeat.adoc#commoncomplaints[`(when $ blocks passage)`] +
+xref:miscfeat.adoc#commoncomplaints[`(when $ can't be taken)`] +
+xref:miscfeat.adoc#commoncomplaints[`(when $ is $ $)`] +
+xref:miscfeat.adoc#commoncomplaints[`(when $ is already $ $)`] +
+xref:miscfeat.adoc#commoncomplaints[`(when $ is already held)`] +
+xref:miscfeat.adoc#commoncomplaints[`(when $ is closed)`] +
+xref:miscfeat.adoc#commoncomplaints[`(when $ is fine where it is)`] +
+xref:miscfeat.adoc#commoncomplaints[`(when $ is held by someone)`] +
+xref:miscfeat.adoc#commoncomplaints[`(when $ is not here)`] +
+xref:miscfeat.adoc#commoncomplaints[`(when $ isn't directly held)`] +
+xref:miscfeat.adoc#commoncomplaints[`(when $ is out of reach)`] +
+xref:miscfeat.adoc#commoncomplaints[`(when $ is out of sight)`] +
+xref:miscfeat.adoc#commoncomplaints[`(when $ is part of something)`] +
+xref:miscfeat.adoc#commoncomplaints[`(when $ is worn by someone)`] +
+xref:miscfeat.adoc#commoncomplaints[`(when $ won't accept $)`] +
+xref:miscfeat.adoc#commoncomplaints[`(when $ won't accept actor $)`] +
+xref:lang:builtins.adoc#typechecks[`(word $)`] +
+xref:miscfeat.adoc#questions[`(yesno)`] +
+xref:traits.adoc#linguistictraits[`(your $)`] +
