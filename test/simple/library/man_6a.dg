@@ -1,0 +1,35 @@
+(current player #player)
+(#player is #in #room)
+(room #room)
+
+#pandora
+(* is #in #room)
+(name *)	Pandora
+(female *)
+(proper *)
+(appearance *)	Pandora stands nearby.
+
+(after [wait])
+	(current room $Room)
+	(#pandora is in room $Room)
+	Pandora walks away.
+	(now) (#pandora is nowhere)
+
+#box
+(* is #in #room)
+(name *)	box
+(openable *)
+(appearance *)	A large box sits off to one side.
+
+(prevent [open *])
+	(current room $Room)		%% Get the current room.
+	(#pandora is in room $Room)	%% Check if Pandora is here with us.
+	You don't dare do that while Pandora is watching.
+
+(narrate opening #box)
+	Shooting guilty glances in every direction, you carefully approach
+	the box, and lift its lid. It seems to be empty.
+
+(after [open #box])
+	(par)
+	An inexplicable sense of dread comes over you.

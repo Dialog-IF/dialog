@@ -1,0 +1,36 @@
+[Z] Location
+[Z]
+An Interactive Fiction
+An interactive fiction by Anonymous.
+Release 1. Serial number <SERIAL>.
+<COMPILER>. <LIBRARY>
+
+Location
+You are here.
+
+> i
+[Z] Location
+[Z]
+You have a welcome sign and a loitering plaque.
+
+> read all signs
+[Z] Location
+[Z]
+The welcome sign: The sign says “WELCOME”.
+
+The loitering plaque: The plaque says “NO LOITERING”.
+
+> n
+[Z] In the dark
+[Z]
+You walk north.
+
+In the dark
+You are surrounded by darkness.
+
+> read all signs
+[Z] In the dark
+[Z]
+The welcome sign: It is too dark to read.
+
+>

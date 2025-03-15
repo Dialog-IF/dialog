@@ -1,0 +1,13 @@
+(program entry point)
+	(observe objects [#banana #orange #apple #apple])
+
+(observe objects [])
+	You don't see any more fruit.
+
+(observe objects [$Head | $Tail])
+	You see (a $Head). (line)
+	(observe objects $Tail)
+
+(a #banana)	a banana
+(a #apple)	an apple
+(a $)		an unknown fruit

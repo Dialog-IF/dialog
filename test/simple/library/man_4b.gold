@@ -1,0 +1,84 @@
+[Z] Location
+[Z]
+An Interactive Fiction
+An interactive fiction by Anonymous.
+Release 1. Serial number <SERIAL>.
+<COMPILER>. <LIBRARY>
+
+Location
+You are here.
+
+> wear shoes
+[Z] Location
+[Z] 
+(first attempting to take the shoes)
+You take the shoes.
+
+You put on the shoes.
+
+> wear socks
+[Z] Location
+[Z] 
+(first attempting to remove the shoes)
+You take off the shoes.
+
+(first attempting to take the socks)
+You take the socks.
+
+You put on the socks.
+
+> wear shoes
+[Z] Location
+[Z] 
+You put on the shoes.
+
+> x socks
+[Z] Location
+[Z] 
+They seem to be harmless.
+
+> remove socks
+[Z] Location
+[Z] 
+(first attempting to remove the shoes)
+You take off the shoes.
+
+You take off the socks.
+
+> wear socks
+[Z] Location
+[Z] 
+You put on the socks.
+
+> wear shirt
+[Z] Location
+[Z] 
+(first attempting to take the shirt)
+You take the shirt.
+
+You put on the shirt.
+
+> wear coat
+[Z] Location
+[Z] 
+(first attempting to take the trenchcoat)
+You take the trenchcoat.
+
+You put on the trenchcoat.
+
+> x shirt
+[Z] Location
+[Z] 
+It seems to be harmless.
+
+> remove coat
+[Z] Location
+[Z] 
+You take off the trenchcoat.
+
+> remove shirt
+[Z] Location
+[Z] 
+You take off the shirt.
+
+>

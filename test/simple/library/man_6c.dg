@@ -1,0 +1,24 @@
+(current player #player)
+(#player is #in #room)
+(room #room)
+
+(from #room go #north to #cave)
+(room #cave)
+(inherently dark #cave)
+(from #cave go #south to #room)
+
+#welcomesign
+(name *) welcome sign
+(plural dict *) signs
+(* is #heldby #player)
+
+#loiteringplaque
+(name *) loitering plaque
+(plural dict *) signs
+(* is #heldby #player)
+
+(perform [read #welcomesign])
+	The sign says “WELCOME”.
+
+(perform [read #loiteringplaque])
+	The plaque says “NO LOITERING”.

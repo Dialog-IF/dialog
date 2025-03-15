@@ -1,0 +1,29 @@
+(current player #player)
+(#player is #in #room)
+(room #room)
+
+#socks
+(name *) socks
+(pair *)
+
+#shoes
+(name *) shoes
+(pair *)
+
+#shirt
+(name *) shirt
+
+#trenchcoat
+(name *) trenchcoat
+(dict *) trench coat
+
+(wearable #socks)
+(wearable #shoes)
+(#socks goes underneath #shoes)
+
+(wearable #shirt)
+(wearable #trenchcoat)
+(#shirt goes underneath #trenchcoat)
+(opaque #trenchcoat)
+
+(*(wearable $) is #in #room)

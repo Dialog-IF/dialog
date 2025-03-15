@@ -1,0 +1,28 @@
+#apple
+(fruit *)
+(available *)
+
+#pear
+(fruit *)
+
+#pencil
+(available *)
+
+#bowl
+(available *)
+(dict *) fruit bowl
+
+(available @word)
+(dict @word) fruit
+
+(dict (fruit $)) fruit
+
+(program entry point)
+	(exhaust) {
+		(determine object $Obj)
+			*(available $Obj)
+		(from words)
+			*(dict $Obj)
+		(matching all of [fruit])
+		$Obj
+	}

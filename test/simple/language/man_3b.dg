@@ -1,0 +1,12 @@
+(program entry point)
+	*(fruit $Obj)	%% This is a multi-query. Also, $Obj is unbound here.
+	$Obj is a fruit.
+	(colour $Obj)
+	We found a fruit that is also a colour!
+
+(colour #blue)
+(colour #orange)
+
+(fruit #apple)
+(fruit #orange)
+(fruit #banana)

@@ -1,0 +1,138 @@
+#player
+(current player *)
+(* is #in #repairshop)
+
+#repairshop
+(name *)	repair shop
+(room *)
+(look *)	You're in a noisy workshop.
+
+#mechanic
+(name *)	(if) (#mech-name is exposed) (then)
+			Lisa
+		(else)
+			busy-looking mechanic
+		(endif)
+(proper *)	(#mech-name is exposed)
+(female *)
+(* is #in #repairshop)
+(appearance * $ $)
+		(A *) is here, looking busy.
+
+(on every tick)
+	(if) (player can see *) (then)
+		(The *)
+		(select)
+			rifles through a box of parts.
+		(or)
+			removes a couple of screws.
+		(or)
+			checks the oil pressure of a clunker.
+		(at random)
+	(endif)
+
+(perform [talk to *])
+	“Um, excuse me?”
+	(par)
+	“Can I help you?”
+	(The #mechanic) wipes her hands on a dirty cloth and turns to face you.
+	(activate node *)
+
+(after disp (terminating $))
+	(par)
+	(try [look])
+	(tick)
+
+#mech-nice
+(#mechanic offers *)
+(label *)	“This looks like a nice establishment. Very authentic-looking.”
+(disp *)	“Happy to hear it.”
+
+#mech-wrong
+(#mechanic offers *)
+(sticky *)
+(initial label *)	“There's something wrong with my car.”
+(label *)		“About my car again...”
+(disp *)		“Yee-es?”
+(* flows to #mech-car)
+
+#mech-car-nowork
+(#mech-car offers *)
+(label *)		“It doesn't start anymore, is the thing.”
+(disp *)		“I see. Have you checked the battery?”
+
+#mech-battery
+(#mech-car offers *)
+			(#mech-car-nowork is exposed)
+(label *)		“How do I check the battery?”
+(disp *)		“Under the hood. Voltmeter on the plus and minus terminals.”
+
+#mech-voltmeter
+(#mech-car offers *)
+			(#mech-battery is exposed)
+(label *)		“Uh, what's a voltmeter?”
+(disp *)		“Or a multimeter. I could have a look at it, I guess. I have some time
+			next Thursday.”
+
+#mech-gas
+(#mech-car offers *)
+			(#mech-car-nowork is exposed)
+			(* is unexposed) %% Only offer this node once, even if it's not a dead end.
+(label *)		“The battery is brand new. Could it be something else, do you think?”
+(disp *)		“And you're sure that there's gas in the tank?”
+
+#mech-gasyes
+(#mech-gas offers *)
+(label *)		“Gas? Oh, gas! Yes, the man who sold me the car specifically said
+			there was gas in the tank.”
+(disp *)		“I was afraid of that. This'll be expensive. I have a free timeslot next
+			Thursday.”
+(* flows to #mech-car)
+
+#mech-gasno
+(#mech-gas offers *)
+(label *)		“I should certainly think not! That sounds positively dangerous.”
+(disp *)		“I see. Well, I could have a look at it next Thursday.”
+(* flows to #mech-car)
+
+#mech-deal
+(#mech-car offers *)
+			(#mech-voltmeter is exposed) (or) (#mech-gas is exposed)
+(label *)		“Next Thursday is fine.”
+(disp *)		“All right then. You can leave the car out front.”
+			(The #mechanic) returns to her work.
+			(par)
+			“Right. Goodbye for now, then!”
+			(par)
+			(The #mechanic) nods, and you walk out into the rain.
+			(game over { You have no car. })
+
+#mech-nevermind
+(#mech-car offers *)
+(sticky *)
+(label *)	“Never mind.”
+(* flows to #mechanic)
+
+#mech-name
+(#mechanic offers *)
+(label *)	“What's your name?”
+(disp *)	“I'm Lisa. Pleasure to meet you.”
+
+#mech-bye
+(#mechanic offers *)
+(label *)	“It was nice talking to you!”
+(disp *)	“Any time!” (The #mechanic) returns to her work.
+(terminating *)
+
+#car
+(name *)	my car
+(topic *)
+(perform [ask #mechanic about *])
+	(choose #mech-wrong)
+
+#voltmeter
+(name *)	voltmeter
+(topic *)
+(perform [ask #mechanic about *])
+	(choose #mech-voltmeter)
+	%% This node is a dead end, so we will remain in parser mode.

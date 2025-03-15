@@ -1,0 +1,42 @@
+(style class @inherit)
+	color: inherit;
+	background-color: inherit;
+	font-style: italic;
+	font-weight: normal;
+
+(style class @initial)
+	color: initial;
+	background-color: initial;
+	font-weight: bold;
+	font-decoration: reverse;
+
+(style class @red)
+	color: red;
+	background-color: \#0000ff;
+	font-style: upright;
+	font-weight: bold;
+
+(style class @green)
+	color: green;
+	background-color: \#115511;
+	height: 1em;
+	font-decoration: reverse;
+
+(test)
+	Outside
+	(span @red) {
+		Red
+		(span @inherit) {
+			Inherit
+			(span @initial) {
+				Initial
+			}
+			Inherit
+		}
+		Red
+	}
+	Outside
+
+(program entry point)
+	(status bar @green) (test)
+	(test)

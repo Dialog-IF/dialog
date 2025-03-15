@@ -1,0 +1,9 @@
+(program entry point)
+	(accumulate 1)
+		*(fruit $)
+	(into $Num)
+	I know of $Num pieces of fruit.
+
+(fruit #apple)
+(fruit #orange)
+(fruit #banana)

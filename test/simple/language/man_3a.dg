@@ -1,0 +1,20 @@
+(program entry point)
+	{
+		($X = #door)
+	(or)
+		($X = #foot)
+	(or)
+		($X = #apple)
+	(or)
+		($X = #pencil)
+	}
+	Checking (the $X).
+	(fruit $X) %% If the query fails, the most recent choice point is restored.
+	Yes, it's a fruit!
+
+(fruit #apple)
+
+(the #apple)	the green apple
+(the #door)	the oaken door
+(the #foot)	my left foot
+(the #pencil)	the pencil

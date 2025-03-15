@@ -1,0 +1,15 @@
+#box
+(openable *)
+(* is closed)
+(descr *)
+	The box is (open or closed *).
+
+(intro)
+	Pandora looks at her box. (descr #box)
+
+	(now) ~(#box is closed)
+
+	She looks away for five seconds, and then looks at it again,
+	just to check. (descr #box)
+
+	(game over { That's just life. })

@@ -1,0 +1,103 @@
+[Z] Grand foyer
+[Z] 
+An Interactive Fiction
+An interactive fiction by Anonymous.
+Release 1. Serial number <SERIAL>.
+<COMPILER>. <LIBRARY>
+
+Grand foyer
+It's a grand, grand foyer. The library is west from here, and a locked door
+leads south.
+
+> exits
+[Z] Grand foyer
+[Z] 
+Obvious exits are:
+West.
+South through the small door (currently closed).
+
+> look down
+[Z] Grand foyer
+[Z] 
+Down from here is the floor.
+
+> x floor
+[Z] Grand foyer
+[Z] 
+Vinyl, with a marble pattern.
+
+> x wallpaper
+[Z] Grand foyer
+[Z] 
+Brown and austere.
+
+> w
+[Z] University library
+[Z] 
+You walk west.
+
+University library
+What a strange library. There's just a rug in here. The exit is east.
+
+> exits
+[Z] University library
+[Z] 
+Obvious exits are:
+East to the grand foyer.
+
+> x floor
+[Z] University library
+[Z] 
+Vinyl, with a marble pattern.
+
+> x wallpaper
+[Z] University library
+[Z] 
+Brown and austere.
+
+> x rug
+[Z] University library
+[Z] 
+It seems to be harmless.
+
+> search rug
+[Z] University library
+[Z] 
+You find a small key under the rug.
+
+> get key
+[Z] University library
+[Z] 
+You take the small key out from under the rug.
+
+> out
+[Z] Grand foyer
+[Z] 
+You walk east.
+
+Grand foyer
+It's a grand, grand foyer. The library is west from here, and a locked door
+leads south.
+
+> s
+[Z] Game Over
+[Z] 
+(first attempting to open the small door to the south)
+(first attempting to unlock the small door to the south with the small key)
+You unlock the small door with the small key.
+
+You open the small door.
+
+You walk south through the small door.
+
+Professor Stroopwafel's study
+You solved the mystery of the locked door!
+
+     *** You win! ***
+
+Would you like to:
+     UNDO the last move,
+     RESTORE a saved position,
+     QUIT the program,
+     or RESTART from the beginning?
+>

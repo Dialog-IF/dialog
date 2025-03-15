@@ -1,0 +1,53 @@
+[Z] Location
+[Z]
+An Interactive Fiction
+An interactive fiction by Anonymous.
+Release 1. Serial number <SERIAL>.
+<COMPILER>. <LIBRARY>
+
+Location
+You are here.
+
+> eat apple
+[Z] Game Over
+[Z]
+(first attempting to take the apple)
+You take the apple.
+
+The apple is yummy. You feel that your mission has come to an end.
+
+     *** You are no longer hungry. ***
+
+Would you like to:
+     UNDO the last move,
+     RESTORE a saved position,
+     read a NOTE by the author,
+     see a list of AMUSING things to do,
+     QUIT the program,
+     or RESTART from the beginning?
+> amusing
+Have you tried...
+
+          ...eating the transmogrifier?
+          ...xyzzy?
+Would you like to:
+     UNDO the last move,
+     RESTORE a saved position,
+     read a NOTE by the author,
+     see a list of AMUSING things to do,
+     QUIT the program,
+     or RESTART from the beginning?
+> note
+Thanks for playing!
+-- The Author
+
+Would you like to:
+     UNDO the last move,
+     RESTORE a saved position,
+     read a NOTE by the author,
+     see a list of AMUSING things to do,
+     QUIT the program,
+     or RESTART from the beginning?
+> quit
+Thanks for playing!
+

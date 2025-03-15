@@ -1,0 +1,41 @@
+Random: One.
+Purely at random: One.
+Stopping: One.
+Cycling: One.
+Then at random: One.
+Then purely at random: One.
+
+Random: Two.
+Purely at random: One.
+Stopping: Two.
+Cycling: Two.
+Then at random: Two.
+Then purely at random: Two.
+
+Random: One.
+Purely at random: Three.
+Stopping: Three.
+Cycling: Three.
+Then at random: Three.
+Then purely at random: Three.
+
+Random: Two.
+Purely at random: Three.
+Stopping: Three.
+Cycling: One.
+Then at random: Two.
+Then purely at random: Two.
+
+Random: Three.
+Purely at random: One.
+Stopping: Three.
+Cycling: Two.
+Then at random: Three.
+Then purely at random: One.
+
+Random: One.
+Purely at random: Two.
+Stopping: Three.
+Cycling: Three.
+Then at random: One.
+Then purely at random: One.

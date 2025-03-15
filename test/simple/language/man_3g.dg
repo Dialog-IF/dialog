@@ -1,0 +1,10 @@
+(program entry point)
+	(collect words)
+		Hello, world!
+	(into $List)
+	The list is: $List (line) %% Note: the last official release of the compiler will produce [hello, world!] on Z-machine. This does not match the manual.
+	Printing each word:
+	(exhaust) {
+		*($Word is one of $List)
+		$Word
+	}

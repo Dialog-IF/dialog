@@ -1,0 +1,74 @@
+(current player #player)
+(#player is #in #room)
+(room #room)
+
+(item #violin)
+(#violin is #in #room)
+(name #violin) violin
+(item #bow)
+(#bow is #in #room)
+(name #bow) bow
+
+(on every tick)
+	Another minute ticks by.
+
+(grammar [yodel] for itself)
+(perform [yodel])
+	Your voice soars over the mountain tops, bringing tears to many eyes.
+
+(understand command [hint])
+(perform [hint])
+	Try yodeling a lot.
+
+(grammar [play [single] with/using [held]] for [play $ with $])
+(grammar [play [single]] for [play $])
+(perform [play $Obj])
+	With what?
+	(asking for object in [play $Obj with []])
+(grammar [play] for itself)
+(perform [play])
+	Play what?
+	(asking for object in [play []])
+
+(perform [play $Instrument with $Tool])
+	You set (the $Tool) to (the $Instrument) and begin to play.
+
+(prevent [play $Obj | $])
+	(when $Obj isn't directly held)
+(prevent [play $ with $Obj])
+	(when $Obj isn't directly held)
+(before [play $Obj | $])
+	%% This will invoke (first try [take $Obj]) if necessary:
+	(ensure $Obj is held)
+(before [play $ with $Obj])
+	(ensure $Obj is held)
+
+(understand [complain about | $Words] as [complain about $Topic])
+	*(understand $Words as topic $Topic)
+(describe action [complain about $Topic])
+	complain about (describe topic $Topic)
+
+(topic keyword @childhood)
+(topic keyword @zyx implies @childhood)
+(describe topic @childhood)
+	your childhood on planet Zyx
+
+(topic #bugs)
+(name #bugs) bugs
+(plural #bugs)
+
+(grammar [cast [spell]] for [cast $])
+~(refuse [cast $])
+
+(understand [xyzzy] as spell #xyzzy)
+(understand [plugh/abracadabra] as spell #plugh)
+(name #xyzzy) xyzzy
+(name #plugh) plugh
+
+@(grammar transformer [[spell] | $Tail] $SoFar $Verb $Action $Rev)
+	(grammar transformer $Tail [90 | $SoFar] $Verb $Action $Rev)
+(match grammar token 90 against $Words $ into $Obj)
+	*(understand $Words as spell $Obj)
+
+(perform [cast $Spell])
+	With great gravitas, you intone the mystic word "(name $Spell)".

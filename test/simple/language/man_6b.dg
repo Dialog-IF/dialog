@@ -1,0 +1,16 @@
+(global variable (last input $))
+
+(ask for command $Result)
+	> (get input $Words)
+	(if) ($Words = [again]) (or) ($Words = [g]) (then)
+		(last input $Result)
+	(else)
+		($Result = $Words)
+		(now) (last input $Result)
+	(endif)
+
+(program entry point)
+	*(repeat forever)
+	(ask for command $Result)
+	$Result (line)
+	(empty $Result) %% Repeat unless it's empty

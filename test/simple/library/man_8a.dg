@@ -1,0 +1,30 @@
+(current player #player)
+(#player is #in #room)
+(room #room)
+
+(#apple is #in #room)
+(edible #apple)
+(item #apple)
+(name #apple) apple
+
+(perform [eat #apple])
+	The apple is yummy. You feel that your mission has come to an end.
+	(game over { You are no longer hungry. })
+
+(amusing enabled)
+(amusing)
+	(par)
+	Have you tried...
+	(par)
+	(space 10) ...eating the transmogrifier? (line)
+	(space 10) ...xyzzy? (line)
+
+(game over option)
+	read a NOTE by the author,
+(parse game over [note])
+	(par)
+	Thanks for playing!
+	(line)
+	-- (space) The Author
+	(par)
+
