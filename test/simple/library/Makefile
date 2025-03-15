@@ -1,5 +1,5 @@
 # Call `make DIFF=meld`, for example, to get a fancy diff
-DIFF = diff
+DIFF = diff --ignore-trailing-space
 
 BASEPATH = ../../..
 
@@ -40,7 +40,7 @@ stdlib.dglib: $(BASEPATH)/stdlib.dg
 ## Remove one space from the end of each line
 	sed -i 's/ $$//' $*.d.out
 ## And the last character, which is an excess newline
-	sed -i '$$d' $*.d.out
+##	sed -i '$$d' $*.d.out
 ## And meld them
 	meld $*.d.out $*.z.out $*.gold
 ## Then cleanup
@@ -75,6 +75,7 @@ origin: $(origin)
 	$(BASEPATH)/bin/echoing.py dfrotz -w 80 -s 1234 -h 999 -mq $*.z5 <$*.z.in >$*.z.out
 ## Remove trailing spaces from lines for easier diffing
 	sed -i 's/ $$//' $*.z.out
+	echo >>$*.z.out
 
 %.aa.out: %.aastory %.aa.in
 	echo TODO IMPLEMENT THIS
@@ -84,6 +85,7 @@ origin: $(origin)
 	$(BASEPATH)/src/dgdebug -qD -w 80 -s 1234 $*.debug <$*.d.in >$*.d.out
 ## Remove trailing spaces from lines for easier diffing
 	sed -i 's/ $$//' $*.d.out
+	echo >>$*.d.out
 
 %.test: %.z.out %.d.out %.z.gold %.d.gold
 	$(DIFF) $*.z.out $*.z.gold

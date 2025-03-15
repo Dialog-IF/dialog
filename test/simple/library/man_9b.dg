@@ -6,6 +6,7 @@
 
 (prevent [tell * to go $])
 	(* is #in #cage)
+	(#cage is closed)
 	Bob scratches his head with the banana, and makes a sad gesture towards the cage door.
 
 (perform [tell * to go $Dir])

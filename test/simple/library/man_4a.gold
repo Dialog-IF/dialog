@@ -75,17 +75,17 @@ You see a small bowl here.
 
 > get sapphire
 [Z] Tutorial room
-
+[Z]
 You take the sapphire off the wooden table.
 
 > drop it
 [Z] Tutorial room
-
+[Z]
 The sapphire falls to the ground.
 
 > look
 [Z] Tutorial room
-
+[Z]
 Tutorial room
 This is a very nondescript room, dominated by a wooden table.
 
@@ -93,4 +93,4 @@ A gleaming sapphire catches your eye.
 
 You see a small bowl here.
 
-[Z] >
+>

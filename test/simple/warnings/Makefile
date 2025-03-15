@@ -31,7 +31,7 @@ stdlib.dglib: $(BASEPATH)/stdlib.dg
 ## Call the original dialogc and dgdebug from $PATH here, not our modified ones from $(BASEPATH)
 	touch -a $*.gold
 ## Take the errors from the Z-machine version
-	dialogc $*.dg stdlib.dglib -t z5 -o $*.z5 &>$*.out || true
+	dialogc $*.dg stdlib.dglib -t z5 -o $*.z5 >$*.out 2>&1 || :
 ## And meld them
 	meld $*.out $*.gold
 ## Then cleanup
@@ -40,7 +40,7 @@ stdlib.dglib: $(BASEPATH)/stdlib.dg
 origin: $(origin)
 
 %.out: $(BASEPATH)/src/dialogc %.dg stdlib.dglib
-	$(BASEPATH)/src/dialogc $*.dg stdlib.dglib -t z5 -o $*.z5 &>$*.out || true
+	$(BASEPATH)/src/dialogc $*.dg stdlib.dglib -t z5 -o $*.z5 >$*.out 2>&1 || :
 
 %.test: %.out %.gold
 	$(DIFF) $*.out $*.gold

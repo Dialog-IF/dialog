@@ -1,0 +1,49 @@
+[Z] Alpha
+[Z]
+An Interactive Fiction
+An interactive fiction by Anonymous.
+Release 1. Serial number <SERIAL>.
+<COMPILER>. <LIBRARY>
+
+Alpha
+You are here.
+
+A cage is here.
+
+> bob, east
+[Z] Alpha
+[Z]
+Bob scratches his head with the banana, and makes a sad gesture towards the cage
+door.
+
+> open cage
+[Z] Alpha
+[Z]
+You open the cage, revealing Bob.
+
+> bob, east
+[Z] Alpha
+[Z]
+“Oh oh. Ah ah!” Bob disappears east.
+
+> east
+[Z] Gamma
+[Z]
+You walk east.
+
+Gamma
+You are here.
+
+Bob is here.
+
+> bob, south
+[Z] Gamma
+[Z]
+Bob refuses.
+
+> tell bob to go north
+[Z] Gamma
+[Z]
+Bob refuses.
+
+>
