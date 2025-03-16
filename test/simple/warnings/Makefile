@@ -21,9 +21,9 @@ explicit: $(explicit)
 # (Also that the following rules rely on this one)
 stdlib.dglib: $(BASEPATH)/stdlib.dg
 	cp $(BASEPATH)/stdlib.dg stdlib.dglib
-	sed -i 's/(serial number)/<SERIAL>/g' stdlib.dglib
-	sed -i 's/(compiler version)/<COMPILER>/g' stdlib.dglib
-	sed -i 's/\s(library version)/\t<LIBRARY>/g' stdlib.dglib
+	perl -i -pe 's/(serial number)/<SERIAL>/g' stdlib.dglib
+	perl -i -pe 's/(compiler version)/<COMPILER>/g' stdlib.dglib
+	perl -i -pe 's/\s(library version)/\t<LIBRARY>/g' stdlib.dglib
 ## The \s is to ensure we don't wreck the *declaration* of (library version), which would crash the compiler
 
 # Create the original gold files based on the gold-standard (i.e. unmodified) dialogc and dgdebug

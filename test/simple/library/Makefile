@@ -21,9 +21,9 @@ explicit: $(explicit)
 # (Also that the following rules rely on this one)
 stdlib.dglib: $(BASEPATH)/stdlib.dg
 	cp $(BASEPATH)/stdlib.dg stdlib.dglib
-	sed -i 's/(serial number)/<SERIAL>/g' stdlib.dglib
-	sed -i 's/(compiler version)/<COMPILER>/g' stdlib.dglib
-	sed -i 's/\s(library version)/\t<LIBRARY>/g' stdlib.dglib
+	perl -i -pe 's/(serial number)/<SERIAL>/g' stdlib.dglib
+	perl -i -pe 's/(compiler version)/<COMPILER>/g' stdlib.dglib
+	perl -i -pe 's/\s(library version)/\t<LIBRARY>/g' stdlib.dglib
 ## The \s is to ensure we don't wreck the *declaration* of (library version), which would crash the compiler
 
 # Create the original gold files based on the gold-standard (i.e. unmodified) dialogc and dgdebug
@@ -34,11 +34,11 @@ stdlib.dglib: $(BASEPATH)/stdlib.dg
 	dialogc $*.dg stdlib.dglib -t z5 -o $*.z5
 	$(BASEPATH)/bin/echoing.py dfrotz -w 80 -s 1234 -h 999 -mq $*.z5 <$*.z.in >$*.z.out
 ## For consistency, strip final spaces - those are mostly inserted by the debugger, but can happen in some cases, and this makes the output align
-	sed -i 's/ $$//' $*.z.out
+	perl -i -pe 's/ $$//' $*.z.out
 ## Then, the debugger version
 	dgdebug -qD -w 80 -s 1234 $*.debug <$*.d.in >$*.d.out
 ## Remove one space from the end of each line
-	sed -i 's/ $$//' $*.d.out
+	perl -i -pe 's/ $$//' $*.d.out
 ## And the last character, which is an excess newline
 ##	sed -i '$$d' $*.d.out
 ## And meld them
@@ -74,7 +74,7 @@ origin: $(origin)
 %.z.out: %.z5 %.z.in
 	$(BASEPATH)/bin/echoing.py dfrotz -w 80 -s 1234 -h 999 -mq $*.z5 <$*.z.in >$*.z.out
 ## Remove trailing spaces from lines for easier diffing
-	sed -i 's/ $$//' $*.z.out
+	perl -i -pe 's/ $$//' $*.z.out
 	echo >>$*.z.out
 
 %.aa.out: %.aastory %.aa.in
@@ -84,7 +84,7 @@ origin: $(origin)
 %.d.out: $(BASEPATH)/src/dgdebug %.debug %.d.in
 	$(BASEPATH)/src/dgdebug -qD -w 80 -s 1234 $*.debug <$*.d.in >$*.d.out
 ## Remove trailing spaces from lines for easier diffing
-	sed -i 's/ $$//' $*.d.out
+	perl -i -pe 's/ $$//' $*.d.out
 	echo >>$*.d.out
 
 %.test: %.z.out %.d.out %.z.gold %.d.gold

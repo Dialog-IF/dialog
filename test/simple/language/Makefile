@@ -23,13 +23,13 @@ explicit: $(explicit)
 	dialogc $*.dg dummylib.dglib -t z5 -o $*.z5
 	$(BASEPATH)/bin/echoing.py dfrotz -w 80 -s 1234 -h 999 -mq $*.z5 <$*.z.in >$*.z.out
 ## For consistency, strip final spaces - those are mostly inserted by the debugger, but can happen in some cases, and this makes the output align
-	sed -i 's/ $$//' $*.z.out
+	perl -i -pe 's/ $$//' $*.z.out
 ## Then, the debugger version
 	dgdebug -qD -w 80 -s 1234 $*.debug <$*.d.in >$*.d.out
 ## Remove one space from the end of each line
-	sed -i 's/ $$//' $*.d.out
+	perl -i -pe 's/ $$//' $*.d.out
 ## And the last character, which is an excess newline
-	sed -i '$$d' $*.d.out
+	perl -i -pe '$$d' $*.d.out
 ## And meld them
 	meld $*.d.out $*.z.out $*.gold
 ## Then cleanup
@@ -63,7 +63,7 @@ origin: $(origin)
 %.z.out: %.z5 %.z.in
 	$(BASEPATH)/bin/echoing.py dfrotz -w 80 -s 1234 -h 999 -mq $*.z5 <$*.z.in >$*.z.out
 ## Remove trailing spaces from lines for easier diffing
-	sed -i 's/ $$//' $*.z.out
+	perl -i -pe 's/ $$//' $*.z.out
 
 %.aa.out: %.aastory %.aa.in
 	echo TODO IMPLEMENT THIS
@@ -72,7 +72,7 @@ origin: $(origin)
 %.d.out: $(BASEPATH)/src/dgdebug %.debug %.d.in
 	$(BASEPATH)/src/dgdebug -qD -w 80 -s 1234 $*.debug <$*.d.in >$*.d.out
 ## Remove trailing spaces from lines for easier diffing
-	sed -i 's/ $$//' $*.d.out
+	perl -i -pe 's/ $$//' $*.d.out
 
 %.test: %.z.out %.d.out %.z.gold %.d.gold
 	$(DIFF) $*.z.out $*.z.gold
