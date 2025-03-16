@@ -83,4 +83,4 @@ origin: $(origin)
 	diff $*.d.out $*.d.gold || meld $*.d.out $*.d.gold
 
 clean:
-	rm -rf *.out *.z.gold *.aa.gold *.d.gold *.z.in *.aa.in *.d.in
+	rm -rf *.out *.z.gold *.aa.gold *.d.gold *.z.in *.aa.in *.d.in *.z5
