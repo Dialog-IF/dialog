@@ -4988,7 +4988,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Game over
 
-(actual game over) %% The (game over) predicate first backtracks to free memory, then calls this
+(game over) %% The (game over $) predicate first backtracks to free memory, then calls this
 	(par)
 	(game over status bar)
 	(if) (scoring enabled) (then)
@@ -5005,15 +5005,12 @@
 
 (interface (game over $<Closure))
 
-(game over)
-	(now) (game has ended)
-	(stop)
-
 (game over $Message)
 	(par)
 	(space 5)
 	(span @bold) { \*\*\* (query $Message) \*\*\* }
-	(game over)
+	(now) (game has ended)
+	(stop)
 
 (game over status bar)
 	(status bar @status) {
