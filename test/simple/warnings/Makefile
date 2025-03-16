@@ -49,4 +49,4 @@ origin: $(origin)
 	diff $*.out $*.gold || meld $*.out $*.gold
 
 clean:
-	rm -rf *.out stdlib.dglib
+	rm -rf *.out stdlib.dglib *.z5
