@@ -16,6 +16,8 @@
 
 static volatile int interrupted = 0;
 
+int use_numbered_levels = 0; 
+
 void eval_interrupt() {
 	interrupted = 1;
 }
@@ -829,8 +831,13 @@ void trace(struct eval_state *es, int kind, struct predname *predname, value_t *
 		assert(es->env >= 0);
 		if(kind != TR_REPORT) {
 			level = es->envstack[es->env].level;
-			for(i = 0; i < level; i++) {
-				o_print_word("| ");
+			if(use_numbered_levels) {
+				snprintf(buf, sizeof(buf), "|%2d ", level);
+				o_print_word(buf);
+			} else {
+				for(i = 0; i < level; i++) {
+					o_print_word("| ");
+				}
 			}
 		}
 		o_print_word(tracename[kind]);
