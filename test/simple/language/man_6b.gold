@@ -1,12 +1,17 @@
 > lick the door
-[lick the door]
+[Z] [lick+ the+ door+]
+[D] [lick the door]
 > examine the door
-[examine the door]
+[Z] [examine+ the+ door+]
+[D] [examine the door]
 > again
-[examine the door]
+[Z] [examine+ the+ door+]
+[D] [examine the door]
 > again
-[examine the door]
+[Z] [examine+ the+ door+]
+[D] [examine the door]
 > eat the door
-[eat the door]
+[Z] [eat+ the+ door+]
+[D] [eat the door]
 >
 []
