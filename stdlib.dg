@@ -4776,7 +4776,7 @@
 			(parse commandline $Words with choices [])
 		}
 	(elseif) (game has ended) (then)
-		(actual game over)
+		(game over)
 	(else)
 		(par)
 		(stoppable) {
