@@ -4775,6 +4775,8 @@
 		(stoppable) {
 			(parse commandline $Words with choices [])
 		}
+	(elseif) (game has ended) (then)
+		(game over)
 	(else)
 		(par)
 		(stoppable) {
@@ -4980,13 +4982,13 @@
 
 (story release 1)
 
-(story noun)	
+(story noun)
 	An interactive fiction
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Game over
 
-(game over)
+(game over) %% The (game over $) predicate first backtracks to free memory, then calls this
 	(par)
 	(game over status bar)
 	(if) (scoring enabled) (then)
@@ -5007,7 +5009,8 @@
 	(par)
 	(space 5)
 	(span @bold) { \*\*\* (query $Message) \*\*\* }
-	(game over)
+	(now) (game has ended)
+	(stop)
 
 (game over status bar)
 	(status bar @status) {
