@@ -8,3 +8,5 @@ library: ../../src/dialogc ../../src/dgdebug
 
 warnings: ../../src/dialogc
 	make --directory=./warnings all
+
+.PHONY:		all library warnings
