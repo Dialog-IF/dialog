@@ -1,0 +1,17 @@
+(current player #me)
+
+#room
+(room *)
+(#me is #in *)
+(look *)
+	There's a small safe here. (notice #safe)
+
+#safe
+(name *)	small safe
+(openable *)
+(* is #in #room)
+
+#necklace
+(name *)	pearl necklace
+(item *)
+(* is #in #safe)

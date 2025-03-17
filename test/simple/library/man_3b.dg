@@ -1,0 +1,39 @@
+#orange
+(an *)
+(name *)		orange
+
+#book
+(proper *)
+(name *)		A Clockwork Orange
+
+#bookshelves
+(your *)
+(plural *)
+(name *)		bookshelves
+
+#boots
+(pair *)
+(name *)		boots
+
+#water
+(uncountable *)
+(name *)		water
+
+#sun
+(singleton *)
+(name *)		sun
+
+#player
+(current player *)
+(name *)		player character
+
+(intro)
+	(exhaust) {
+		{
+			*(object $Obj) ~(direction $Obj) ~(relation $Obj)
+		(or)
+			($Obj = [#orange #boots #book])
+		}
+		You see (a $Obj). (The $Obj is) drawing attention to (itself $Obj). (line)
+	}
+	(stop)

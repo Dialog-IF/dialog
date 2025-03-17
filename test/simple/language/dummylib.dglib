@@ -1,0 +1,2 @@
+%% Silences compiler warnings when running without the library
+(library version)

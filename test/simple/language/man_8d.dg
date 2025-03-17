@@ -1,0 +1,16 @@
+(program entry point)
+	(split word @fission into $List)
+	$List
+	(line)
+	(join words [f u s i o n] into $Word)
+	$Word
+	(line)
+	
+	(split word 11522 into $Chars)
+	(split $Chars by 5 into $LeftChars and $RightChars)
+	$LeftChars, $RightChars. (line)
+	(join words $LeftChars into $Left)
+	(join words $RightChars into $Right)
+	($Left plus $Right into $Sum)
+	The sum is $Sum.
+

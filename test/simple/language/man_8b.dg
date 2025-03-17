@@ -1,0 +1,36 @@
+(program entry point)
+	Zero:
+	($1 = 0)
+	$1 (line)
+	
+	Add five:
+	($1 plus 5 into $2)
+	$2 (line)
+	
+	Subtract one:
+	($2 minus 1 into $3)
+	$3 (line)
+	
+	Multiply by three:
+	($3 times 2 into $4)
+	$4 (line)
+	
+	Divide by two:
+	($4 divided by 4 into $5)
+	$5 (line)
+	
+	Modulo five:
+	($5 modulo 3 into $6)
+	$6 (line)
+	
+	Random from that to three:
+	(random from $6 to 3 into $7)
+	$7 (line)
+	
+	Is it less than four?
+	{ ($7 < 4) Yes! (or) No! }
+	(line)
+	
+	Is it greater than three?
+	{ ($7 > 3) Yes! (or) No! }
+	(line)

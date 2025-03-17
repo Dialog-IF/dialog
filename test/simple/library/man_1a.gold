@@ -1,0 +1,45 @@
+[Z] Location
+[Z] 
+An Interactive Fiction
+An interactive fiction by Anonymous.
+Release 1. Serial number <SERIAL>.
+<COMPILER>. <LIBRARY>
+
+Location
+You are here.
+
+> look
+[Z] Location
+[Z] 
+Location
+You are here.
+
+> inventory
+[Z] Location
+[Z] 
+You have no possessions.
+
+> i
+[Z] Location
+[Z] 
+You have no possessions.
+
+> x me
+[Z] Location
+[Z] 
+Well, there you are.
+
+> x here
+[Z] Location
+[Z] 
+You are here.
+
+> jump
+[Z] Location
+[Z] 
+You enjoy a bit of jumping on the spot.
+
+> q
+Really quit? (y/n) > y
+Thanks for playing!
+

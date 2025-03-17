@@ -1,0 +1,74 @@
+%% Every indoors-room is a room.
+%% Phrased differently, an object is a room given that it's an indoors-room:
+(room *(indoors-room $))
+
+#wallpaper
+(name *)		wallpaper
+(descr *)		Brown and austere.
+
+((indoors-room $) attracts *)
+
+#floor
+(name *)		floor
+(singleton *)
+(descr *)		Vinyl, with a marble pattern.
+
+(from (indoors-room $) go #down to *)
+
+#library
+(indoors-room *)
+(singleton *)
+(name *)		university library
+(look *)		What a strange library. There's just a rug in here.
+			(notice #rug)
+			The exit is east.
+(from * go #east to #foyer)
+(from * go #out to #east)
+
+#rug
+(name *)		rug
+(* is #in #library)
+
+#key
+(item *)
+(name *)		small key
+(descr *)		It's a small key, of the kind that unlocks doors.
+(* is #under #rug)
+(* unlocks #door)
+
+#foyer
+(indoors-room *)
+(singleton *)
+(name *)		grand foyer
+(look *)		It's a grand, grand foyer.
+			The library is west from here, and a
+			(if) (#door is locked) (then) locked (endif)
+			door leads south.
+(from * go #west to #library)
+(from * go #south through #door to #study)
+(from * go #in to #south)
+
+#study
+(indoors-room *)
+(name *)		Professor Stroopwafel's study
+(look *)		You solved the mystery of the locked door!
+			(game over { You win! })
+(proper *)
+(from * go #north through #door to #foyer)
+(from * go #out to #north)
+
+#door
+(door *)
+(lockable *)
+(name *)		small door
+(descr *)		It's a perfectly ordinary, but small, door.
+			It is currently
+			(if) (* is locked) (then)
+				locked.
+			(else)
+				unlocked.
+			(endif)
+
+#player
+(current player *)
+(* is #in #foyer)

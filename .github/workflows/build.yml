@@ -48,7 +48,7 @@ jobs:
       - name: install dependencies
         run: |
           brew update
-          brew install frotz
+          brew install frotz diffutils
       - name: make
         run: make --directory=./src
       - name: make test

@@ -1,0 +1,71 @@
+(style class @italic)
+	font-style: italic;
+(style class @unitalic)
+	font-style: normal;
+(style class @bold)
+	font-weight: bold;
+(style class @unbold)
+	font-weight: normal;
+(style class @reverse)
+	font-decoration: reverse;
+(style class @unreverse)
+	font-decoration: none;
+(style class @mono)
+	font-family: monospace;
+(style class @unmono)
+	font-family: Garamond;
+(style class @invisible)
+	display: none;
+
+(style class @status)
+	height: 2em;
+
+(test)
+	Normal
+	(span @italic) {
+		Italic
+		(span @bold) {
+			Bold
+			(span @unitalic) {
+				Unitalic
+				(span @unbold) {
+					Unbold
+					(span @invisible) {
+						Invisible
+						(span @italic) {
+							Italic
+						}
+						Invisible
+					}
+					Unbold
+				}
+				Unitalic
+			}
+			Bold
+		}
+		Italic
+	}
+	Normal
+	(line)
+	Normal
+	(span @reverse) {
+		Reverse
+		(span @mono) {
+			Mono
+			(span @unreverse) {
+				Unreverse
+				(span @unmono) {
+					Unmono
+				}
+				Unreverse
+			}
+			Mono
+		}
+		Reverse
+	}
+	Normal
+
+(program entry point)
+	(test)
+	(status bar @status) (test)
+	(par) (transcript on) (test) (transcript off)
