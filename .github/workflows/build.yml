@@ -28,6 +28,8 @@ jobs:
       run: make --directory=./src dgdebug.exe dialogc.exe
     - name: make test
       run: make test
+    - name: build site with antora
+      run: npx antora@3.1.10 ./manual/local-playbook.yml
     - uses: actions/upload-artifact@v4
       with:
         name: linux-x86_64
@@ -40,6 +42,11 @@ jobs:
         path: |
           src/dgdebug.exe
           src/dialogc.exe
+    - uses: actions/upload-artifact@v4
+      with:
+        name: manual
+        path: |
+          manual/build/site/**/*
 
   build-macos:
     runs-on: macos-latest
@@ -92,7 +99,7 @@ jobs:
           # Include all the other relevant files from the release
           mv prebuilt/win32/* "$BUNDLE/prebuilt/win32/"
           cp --recursive src "$BUNDLE/"
-          cp --recursive manual/modules "$BUNDLE"/docs
+          cp --recursive artifacts/manual "$BUNDLE"/docs
           cp *.dg "$BUNDLE"/
           cp *.txt "$BUNDLE"/
           # Group them together in a single zip
