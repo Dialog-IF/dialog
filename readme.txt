@@ -102,6 +102,10 @@ Release notes:
 		notifications" that comes from the program itself, rather than
 		from the game) is now always wrapped in a (div @meta), which
 		the author is free to style as they like.
+		
+		Library: the program will backtrack to free heap memory before
+		the final question, so that complicated parsing or status bars
+		will no longer cause an overflow.
 
 	0m/03, Lib 0.46 (Manual revision 31):
 
