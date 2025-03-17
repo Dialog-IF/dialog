@@ -4379,7 +4379,6 @@ Would you like to:
      <QUIT> the program,
      or <RESTART> from the beginning?
 > quit
-
 Thanks for playing!
 Program terminated.
 You can still enter debugging commands such as @help or @quit, as well as
