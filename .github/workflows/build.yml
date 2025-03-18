@@ -41,6 +41,27 @@ jobs:
           src/dgdebug.exe
           src/dialogc.exe
 
+  build-manual:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: dialog
+      - uses: actions/checkout@v4
+        with:
+          repository: Dialog-IF/manual
+          path: manual
+      - name: build site with antora
+        run: |
+          cd manual
+          npm i @antora/lunr-extension
+          npx antora@3.1.10 ./local-antora-playbook.yml
+      - uses: actions/upload-artifact@v4
+        with:
+          name: manual
+          path: |
+            manual/build/site/**/*
+
   build-macos:
     runs-on: macos-latest
     steps:
@@ -92,7 +113,7 @@ jobs:
           # Include all the other relevant files from the release
           mv prebuilt/win32/* "$BUNDLE/prebuilt/win32/"
           cp --recursive src "$BUNDLE/"
-          cp --recursive manual/modules "$BUNDLE"/docs
+          cp --recursive artifacts/manual "$BUNDLE"/docs
           cp *.dg "$BUNDLE"/
           cp *.txt "$BUNDLE"/
           # Group them together in a single zip
