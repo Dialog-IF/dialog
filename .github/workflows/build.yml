@@ -28,8 +28,6 @@ jobs:
       run: make --directory=./src dgdebug.exe dialogc.exe
     - name: make test
       run: make test
-    - name: build site with antora
-      run: npx antora@3.1.10 ./manual/local-playbook.yml
     - uses: actions/upload-artifact@v4
       with:
         name: linux-x86_64
@@ -42,11 +40,27 @@ jobs:
         path: |
           src/dgdebug.exe
           src/dialogc.exe
-    - uses: actions/upload-artifact@v4
-      with:
-        name: manual
-        path: |
-          manual/build/site/**/*
+
+  build-manual:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: dialog
+      - uses: actions/checkout@v4
+        with:
+          repository: Dialog-IF/manual
+          path: manual
+      - name: build site with antora
+        run: |
+          cd manual
+          npm i @antora/lunr-extension
+          npx antora@3.1.10 ./local-antora-playbook.yml
+      - uses: actions/upload-artifact@v4
+        with:
+          name: manual
+          path: |
+            manual/build/site/**/*
 
   build-macos:
     runs-on: macos-latest
