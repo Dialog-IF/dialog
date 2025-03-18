@@ -708,7 +708,7 @@ static struct astnode *parse_if(struct lexer *lexer, struct arena *arena) {
 }
 
 static struct astnode *parse_expr(int parsemode, struct lexer *lexer, struct arena *arena) {
-	struct astnode *an, *sub, **dest, *body;
+	struct astnode *an, *sub, *sub2, **dest, *body;
 	int i, id, have_arg, did_create;
 	struct clause *cl;
 	struct predname *predname;
@@ -1007,12 +1007,28 @@ static struct astnode *parse_expr(int parsemode, struct lexer *lexer, struct are
 				lexer->errorflag = 1;
 				return 0;
 			}
-		} else if(an->predicate->special == SP_STATUSBAR || an->predicate->special == SP_INLINE_STATUSBAR) {
+		} else if( an->predicate->special == SP_STATUSBAR
+				|| an->predicate->special == SP_INLINE_STATUSBAR
+				|| an->predicate->special == SP_STATUSBAR_OVERRIDE) {
 			predname = an->predicate;
 			sub = an->children[0];
-			an = mkast(AN_STATUSAREA, 2, arena, line);
-			an->subkind = (predname->special == SP_STATUSBAR)? AREA_TOP : AREA_INLINE;
-			an->children[0] = sub;
+			
+			if(predname->special == SP_STATUSBAR) {
+				an = mkast(AN_STATUSAREA, 2, arena, line);
+				an->subkind = AREA_TOP;
+				an->children[0] = sub;
+			} else if(predname->special == SP_INLINE_STATUSBAR) {
+				an = mkast(AN_STATUSAREA, 2, arena, line);
+				an->subkind = AREA_INLINE;
+				an->children[0] = sub;
+			} else if(predname->special == SP_STATUSBAR_OVERRIDE) { // Add an extra child for the extra parameter
+				sub2 = an->children[1]; // Record the second child before we overwrite `an`
+				an = mkast(AN_STATUSAREA_OVERRIDE, 3, arena, line);
+				an->subkind = AREA_TOP;
+				an->children[0] = sub;
+				an->children[2] = sub2; // We actually put this in the *third* child slot, so that the process of compiling the AST into IR code can be made simpler: now for all types of status bar, the second child is the body of the rule
+			}
+			
 			status = next_token(lexer, PMODE_BODY);
 			if(lexer->errorflag) return 0;
 			if(status != 1) {
