@@ -1,5 +1,5 @@
 # Call `make DIFF=meld`, for example, to get a fancy diff
-DIFF = diff
+DIFF = diff --ignore-trailing-space
 
 BASEPATH = ../../..
 
