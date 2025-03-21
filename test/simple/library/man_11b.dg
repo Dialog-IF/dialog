@@ -47,7 +47,7 @@
 		($A is closed) ($B is closed)
 	}
 
-(the full single (box $Obj))
+(the full (box $Obj))
 	($Obj is $Rel $Loc)
 	the (open or closed $Obj) box (name $Rel) (the full $Loc)
 
