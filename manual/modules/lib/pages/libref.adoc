@@ -342,6 +342,7 @@ xref:traits.adoc#linguistictraits[`(That's $)`] +
 xref:traits.adoc#linguistictraits[`(the $)`] +
 xref:traits.adoc#linguistictraits[`(The $)`] +
 xref:traits.adoc#fullnames[`(the full $)`] +
+xref:miscfeat.adoc#thefullsingle[`(the full single $)`] +
 xref:lang:io.adoc#case[`(The full $)`] +
 xref:traits.adoc#linguistictraits[`(the $ is)`] +
 xref:traits.adoc#linguistictraits[`(The $ is)`] +
