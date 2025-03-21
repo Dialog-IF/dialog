@@ -48,6 +48,8 @@
 	}
 
 (the full (box $Obj))
+	(the full single $Obj)
+(the full single (box $Obj))
 	($Obj is $Rel $Loc)
 	the (open or closed $Obj) box (name $Rel) (the full $Loc)
 
