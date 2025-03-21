@@ -4120,8 +4120,13 @@
 (it (nonempty $List) is)	they're
 (them (nonempty $List))		them
 
-%% This has been modified to not call (listing...) in any circumstance. Dialog's optimizer struggles when a codepath leads from a (collect words) or (from words) to a closure query, even if that codepath is never executed, so this circumvents that issue.
+(the full (object $Obj))
+	(the full single $Obj)
 (the full $Obj)
+	(the $Obj)
+	(add location information for $Obj)
+%% This is effectively the same as (the full $) for individual objects, but doesn't call (listing...) in any circumstance. Dialog's optimizer struggles when a codepath leads from a (collect words) or (from words) to a closure query, even if that codepath is never executed, so this circumvents that issue.
+(the full single $Obj)
 	(the single $Obj)
 	(add location information for $Obj)
 
@@ -4148,7 +4153,7 @@
 			(else)
 				that's
 			(endif)
-			(name $Rel) (the full $Loc)
+			(name $Rel) (the full single $Loc)
 		(endif)
 	(endif)
 
@@ -5964,7 +5969,7 @@
 			~(relation $Obj)
 			(words $Words sufficiently specify $Obj)
 		(from words)
-			(the full $Obj)
+			(the full single $Obj)
 		(matching all of $Words)
 		(recover implicit action $Template $Obj into $A)
 	(into $Candidates)
