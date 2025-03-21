@@ -1,0 +1,16 @@
+(program entry point)
+	*(repeat forever)
+	(get key $Key)
+	(handle keypress $Key)
+	(fail)
+
+(handle keypress @\n)
+	Goodbye! (stop)
+
+(handle keypress $Key)
+	(if) ($Key = @\s) (then)
+		SPACE
+	(else)
+		(uppercase) $Key
+	(endif)
+	(space)

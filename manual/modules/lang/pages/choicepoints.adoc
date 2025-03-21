@@ -33,6 +33,15 @@ Here is an example:
 (player eats meat)
 ----
 
+The output from the program is:
+
+[.output.matches-previous]
+```
+Apple: Yummy!
+Steak: Yummy!
+Door: You see nothing unexpected about it.
+```
+
 Note that this part of the code:
 
 [source]
@@ -51,15 +60,6 @@ is exactly equivalent to:
 
 (tasty $Obj)	($Obj = #steak) (player eats meat)
 ----
-
-The output from the program is:
-
-[role="output"]
-```
-Apple: Yummy!
-Steak: Yummy!
-Door: You see nothing unexpected about it.
-```
 
 There can be more than two subexpressions in a disjunction;
 just separate them all with `(or)` keywords,
@@ -172,7 +172,7 @@ This can be used to narrate what's going on while the program is searching for a
 
 The output is:
 
-[role="output"]
+[.output.matches-previous]
 ```
 Checking the oaken door. Checking my left foot. Checking the green apple. Yes, it's a fruit!
 ```
@@ -221,7 +221,7 @@ Here is an example:
 
 The output of the program is:
 
-[role="output"]
+[.output.matches-previous]
 ```
 #apple is a fruit. #orange is a fruit. We found a fruit that is also a colour!
 ```
@@ -267,7 +267,7 @@ This provides a very powerful mechanism for searching through a database of rela
 
 Output:
 
-[role="output"]
+[.output.matches-previous]
 ```
 The answer is #abraham.
 ```
@@ -352,7 +352,7 @@ Here is a more elegant re-implementation of an earlier example:
 
 The output is:
 
-[role="output"]
+[.output.matches-previous]
 ```
 Checking the oaken door. Checking my left foot. Checking the green apple. Yes, it's a fruit!
 ```
@@ -360,7 +360,7 @@ Checking the oaken door. Checking my left foot. Checking the green apple. Yes, i
 Incidentally, `($ is one of $)` is a built-in predicate for performance reasons only.
 We could have defined it ourselves like this:
 
-[source]
+[source,.should-error]
 ----
 ($Element is one of [$Element | $])
 ($Element is one of [$ | $Tail])
@@ -400,7 +400,7 @@ A Dialog statement can be prefixed with the `(exhaust)` keyword. This will cause
 
 The output is:
 
-[role="output"]
+[.output.matches-previous]
 ```
 Checking the oaken door.
 Checking my left foot.
@@ -459,7 +459,7 @@ Example:
 
 The output is:
 
-[role="output"]
+[.output.matches-previous]
 ```
 Come and buy! [#apple #orange #banana]!
 ```
@@ -515,10 +515,10 @@ Example:
 
 The output is:
 
-[role="output"]
+[.output.matches-previous]
 ```
 The green apple can be referred to using the words [yummy green apple].
-The mysterious door can be referred to using the words [oaken oak mysteriou door].
+The mysterious door can be referred to using the words [oaken oak mysterious door].
 ```
 
 Printed values (numbers, lists, objects) also end up in the collection, as themselves.
@@ -543,7 +543,7 @@ and `(` inhibits whitespace on its right:
 
 produces the output:
 
-[role="output"]
+[.output.matches-previous]
 ```
 The list is: [hello , world!]
 Printing each word: hello, world!
@@ -583,7 +583,7 @@ Thus:
 
 would produce the output:
 
-[role="output"]
+[.output.matches-previous]
 ```
 I know of 3 pieces of fruit.
 ```
@@ -641,7 +641,7 @@ Code such as `(just) (just)` is redundant; the second `(just)` has no effect.
 The built-in predicate `(repeat forever)` provides an unlimited supply of choice points.
 This can be used to create infinite loops (such as the main game loop or the game-over menu).
 
-[source]
+[source,.should-error]
 ----
 (program entry point)
 	*(repeat forever)

@@ -1,0 +1,11 @@
+(style class @statusbar)
+	height: 2em;
+
+(program entry point)
+	*(repeat forever)
+	> (get input [$Number])
+	(if) ($Number = 99) (then) (quit) (endif)
+	(status bar @statusbar with height $Number) {
+		$Number
+	}
+	(fail)

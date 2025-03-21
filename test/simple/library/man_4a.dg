@@ -1,0 +1,55 @@
+(current player #player)
+
+#room
+(name *)		tutorial room
+(room *)
+(#player is #in *)
+(look *)		This is a very nondescript room, dominated by a
+			wooden table. (notice #table)
+
+#table
+(name *)		wooden table
+(dict *)		mahogany	%% Add a synonym.
+(supporter *)
+(* is #in #room)
+(descr *)		It's wooden; possibly mahogany.
+			(if) (#bowl is pristine) (then)
+				A small bowl is placed exactly in its centre.
+			(endif)
+
+#sapphire
+(name *)		sapphire
+(stone *)		%% This is a custom, story-specific trait.
+(appearance *)
+	(* is handled)
+	A gleaming sapphire catches your eye.
+
+#amethyst
+(an *)			%% The indefinite article should be 'an'.
+(name *)		amethyst
+(stone *)
+
+#bowl
+(name *)		small bowl
+(item *)
+(container *)
+(* is #on #table)
+
+~(appearance $ #in #bowl) %% Objects in the bowl have no appearance.
+(descr #bowl)
+	It's a small bowl.
+	(collect $Obj)
+		*($Obj is #in #bowl)
+	(into $List)
+	You can see (a $List) in it.
+
+%% Some generic properties of stones:
+
+(item (stone $))
+(*(stone $) is #in #bowl)
+(descr (stone $Obj))
+	(The $Obj) looks very pretty.
+(dict (stone $))
+	precious stone gem
+(plural dict (stone $))
+	stones

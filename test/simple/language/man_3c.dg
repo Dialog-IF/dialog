@@ -1,0 +1,25 @@
+(#lisa is a child of #marge)
+(#lisa is a child of #homer)
+(#bart is a child of #marge)
+(#bart is a child of #homer)
+(#homer is a child of #mona)
+(#homer is a child of #abraham)
+(#herb is a child of #mona)
+(#herb is a child of #abraham)
+
+(male #bart)
+(male #homer)
+(male #herb)
+(male #abraham)
+
+($X is the father of $Y)
+	*($Y is a child of $X)
+	(male $X)
+
+($X is a grandfather of $Y)
+	*($Y is a child of $Parent)
+	*($X is the father of $Parent)
+
+(program entry point)
+	($X is a grandfather of #lisa)
+	The answer is $X.

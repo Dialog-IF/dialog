@@ -1,8 +1,7 @@
 = The Dialog Manual
 :page-role: -toc
 
-This is Revision {man-ver} of the Dialog Manual.
-It describes *version {lang-ver}* of the Dialog language,
+This revision of the Dialog Manual describes *version {lang-ver}* of the Dialog language,
 and *version {lib-ver}* of its standard library.
 Dialog is currently in its _beta_ stage,
 which means that the language may still undergo

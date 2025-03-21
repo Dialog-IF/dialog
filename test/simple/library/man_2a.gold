@@ -1,0 +1,72 @@
+[Z] Tutorial room
+[Z]
+An Interactive Fiction
+An interactive fiction by Anonymous.
+Release 1. Serial number <SERIAL>.
+<COMPILER>. <LIBRARY>
+
+Tutorial room
+This is a very nondescript room, dominated by a wooden table.
+
+You notice a conspicuous chair here.
+
+> look
+[Z] Tutorial room
+[Z] 
+Tutorial room
+This is a very nondescript room, dominated by a wooden table.
+
+You notice a conspicuous chair here.
+
+> x it
+[Z] Tutorial room
+[Z] 
+It's white and made of plastic.
+
+> sit
+[Z] Tutorial room
+[Z] 
+On what?
+
+> chair
+[Z] Tutorial room (on the chair)
+[Z] 
+You get onto the chair.
+
+> x chair
+[Z] Tutorial room (on the chair)
+[Z] 
+It's white and made of plastic.
+
+> sit on wooden
+[Z] Tutorial room (on the chair)
+[Z] 
+(I only understood you as far as wanting to get onto something.)
+
+> stand
+[Z] Tutorial room
+[Z] 
+You get off the chair.
+
+> x apple
+[Z] Tutorial room
+[Z] 
+The apple seems to be very shy. As soon as you look at it, it jumps of its own
+accord into the fruit basket.
+
+> x apple
+[Z] Tutorial room
+[Z] 
+Yummy!
+
+> x basket
+[Z] Tutorial room
+[Z] 
+It's It seems to be harmless.
+
+> x me
+[Z] Tutorial room
+[Z] 
+It's you.
+
+>

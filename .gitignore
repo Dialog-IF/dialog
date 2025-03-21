@@ -10,3 +10,4 @@ dialogc.exe
 *.log
 *.out
 /*.dg
+/manual/build

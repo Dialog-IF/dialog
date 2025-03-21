@@ -1,0 +1,20 @@
+[abc 007]
+> a b c abc abcd 7 007 8 008
+[Z] [a b c abc abcd+ 7 007 8 8]
+[D] [a b c abc abcd 7 007 8 8]
+> magic
+[magic] Magic!
+> magicsomething
+[Z] [magicsomething+]
+[D] [magicsomething]
+> magicending
+[Z] [magic+ending] Magic!
+[D] [magicending] Magic!
+> abcdefghijklm
+[Z] [abcdefghi+jklm] Alphabetic!
+[D] [abcdefghijklm] Alphabetic!
+> abcdefghijklsomething
+[Z] [abcdefghi+jklsomething] Alphabetic!
+[D] [abcdefghijklsomething]
+>
+[]

@@ -1,0 +1,17 @@
+(program entry point)
+	(exhaust) {
+		*($X is one of [#door #foot #apple #pencil])
+		(line)
+		Checking (the $X).
+		(fruit $X)
+		Yes, it's a fruit!
+	}
+	(line)
+	The program continues, but $X is unbound again.
+
+(fruit #apple)
+
+(the #apple)	the green apple
+(the #door)	the oaken door
+(the #foot)	my left foot
+(the #pencil)	the pencil

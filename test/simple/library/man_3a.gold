@@ -1,0 +1,31 @@
+[Z] Tutorial room
+[Z] 
+Welcome to the fruit game! Here you will meet (and possibly eat):
+The green apple.
+The blueberry.
+The dark red cherry.
+
+> x table
+[Z] Tutorial room
+[Z] 
+It's a sturdy wooden table. There seems to be something on it.
+
+> search table
+[Z] Tutorial room
+[Z] 
+On the wooden table you find a green apple, a blueberry, and a dark red cherry.
+
+> eat berry
+Did you want to eat the blueberry or the dark red cherry?
+
+> blueberry
+[Z] Tutorial room
+[Z] 
+You eat the blueberry.
+
+> take cherry
+[Z] Tutorial room
+[Z] 
+You can't take the dark red cherry.
+
+>

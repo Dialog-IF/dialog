@@ -53,6 +53,11 @@
 (style class @italic)
 	font-style: italic;
 
+%% For messages that come from the program, rather than from the game world
+(style class @meta)
+	font-face: sans-serif;
+	font-style: italic;
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Interface declarations for predicates typically defined in story code
 
@@ -3047,31 +3052,34 @@
 
 (command [quit])
 (understand [quit/q] as [quit])
+(prevent [quit])
+	~(interpreter supports quit)
+	(div @meta) { In this interpreter, close the window to quit the game. }
 (perform [quit])
-	Really quit? \(y (no space) / (no space) n\)
+	(div @meta) { Really quit? \(y (no space) / (no space) n\) }
 	(if) (yesno) (then)
-		(display quit message)
-		(line)
+		(div @meta) (display quit message)
 		(quit)
 	(endif)
 	(stop)
 
 (display quit message)
-	(par)
 	Thanks for playing!
 
 %% RESTART
 
 (understand command [restart])
 (perform [restart])
-	Restart the game from the beginning? \(
-	(if) (library links enabled) (then) (link) y (else) y (endif)
-	(no space) / (no space)
-	(if) (library links enabled) (then) (link) n (else) n (endif)
-	\)
+	(div @meta) {
+		Restart the game from the beginning? \(
+		(if) (library links enabled) (then) (link) y (else) y (endif)
+		(no space) / (no space)
+		(if) (library links enabled) (then) (link) n (else) n (endif)
+		\)
+	}
 	(if) (yesno) (then)
 		(restart)
-		Failed to restart.
+		(div @meta) { Failed to restart. }
 	(endif)
 	(stop)
 
@@ -3082,13 +3090,13 @@
 	(if) (save $ComingBack) (then)
 		(if) ($ComingBack = 1) (then)
 			(roman)
-			Game state restored successfully.
+			(div @meta) { Game state restored successfully. }
 			(div @roomheader) (location headline)
 		(else)
-			Game state saved successfully.
+			(div @meta) { Game state saved successfully. }
 		(endif)
 	(else)
-		Failed to save the game state.
+		(div @meta) { Failed to save the game state. }
 	(endif)
 	(stop)
 
@@ -3097,7 +3105,7 @@
 (understand command [restore])
 (perform [restore])
 	(restore)
-	Failed to restore the game state.
+	(div @meta) { Failed to restore the game state. }
 	(stop)
 
 %% UNDO
@@ -3105,16 +3113,16 @@
 (command [undo])
 (perform [undo])
 	(if) ~(interpreter supports undo) (then)
-		This interpreter doesn't support undo.
+		(div @meta) { This interpreter doesn’t support undo. }
 	(elseif) (undo) (then)
-		Failed to undo last turn.
+		(div @meta) { Failed to undo last turn. }
 	(else)
-		There are no more turns to undo!
+		(div @meta) { There are no more turns to undo! }
 	(endif)
 	(stop)
 
 (narrate undoing $Words)
-	Undoing the last turn \( (print words $Words) \).
+	(div @meta) { Undoing the last turn \( (print words $Words) \). }
 	(line)
 	(location headline)
 
@@ -3125,19 +3133,23 @@
 (understand [transcript/script] as [transcript on])
 
 (perform [transcript on])
-	(if) (transcript on) (then)
-		Transcript enabled.
-	(else)
-		Failed to enable transcript.
-		(stop)
-	(endif)
+	(div @meta) {
+		(if) (transcript on) (then)
+			Transcript enabled.
+		(elseif) (interpreter supports inline status bar) (then)
+			%% Do nothing, web interpreter
+		(else)
+			Failed to enable transcript.
+			(stop)
+		(endif)
+	}
 
 (command [transcript off])
 (understand [transcript/script off] as [transcript off])
 
 (perform [transcript off])
 	(transcript off)
-	Transcript disabled.
+	(div @meta) { Transcript disabled. }
 
 %% SCORE
 
@@ -3147,12 +3159,14 @@
 (perform [score])
 	(scoring enabled)
 	(current score $Score)
-	You currently have $Score
-	(if) ($Score = 1) (then) point (else) points (endif)
-	(if) (maximum score $Max) (then)
-		out of a maximum of $Max
-	(endif)
-	.
+	(div @meta) {
+		You currently have $Score
+		(if) ($Score = 1) (then) point (else) points (endif)
+		(if) (maximum score $Max) (then)
+			out of a maximum of $Max
+		(endif)
+		.
+	}
 
 %% NOTIFY
 
@@ -3162,7 +3176,7 @@
 (perform [notify on])
 	(scoring enabled)
 	(now) (score notifications are on)
-	Enabling score notifications.
+	(div @meta) { Enabling score notifications. }
 
 (understand command [notify off])
 	(scoring enabled)
@@ -3170,29 +3184,31 @@
 (perform [notify off])
 	(scoring enabled)
 	(now) ~(score notifications are on)
-	Score notifications have been turned off.
+	(div @meta) { Score notifications have been turned off. }
 
 %% PRONOUNS
 
 (understand command [pronouns])
 (perform [pronouns])
-	"Me" refers to yourself. (line)
-	(collect $Obj)
-		(player's it refers to $Obj)
-	(or)
-		(narrator's it refers to $Obj)
-	(into $ItList)
-	(if) (nonempty $ItList) (then) "It" refers to (or-listing $ItList). (line) (endif)
-	(if) (her refers to $Her) (then) "Her" refers to (the $Her). (line) (endif)
-	(if) (him refers to $Him) (then) "Him" refers to (the $Him). (line) (endif)
-	(if) (them refers to $Them) (then) "Them" refers to (the $Them). (line) (endif)
+	(div @meta) {
+		"Me" refers to yourself. (line)
+		(collect $Obj)
+			(player's it refers to $Obj)
+		(or)
+			(narrator's it refers to $Obj)
+		(into $ItList)
+		(if) (nonempty $ItList) (then) "It" refers to (or-listing $ItList). (line) (endif)
+		(if) (her refers to $Her) (then) "Her" refers to (the $Her). (line) (endif)
+		(if) (him refers to $Him) (then) "Him" refers to (the $Him). (line) (endif)
+		(if) (them refers to $Them) (then) "Them" refers to (the $Them). (line) (endif)
+	}
 
 %% VERBOSE / BRIEF / SUPERBRIEF
 
 (understand command [verbose])
 (understand [brief/superbrief] as [verbose])
 (perform [verbose])
-	The verbosity level of this story is not adjustable.
+	(div @meta) { The verbosity level of this story is not adjustable. }
 	(stop)
 
 %% VERSION
@@ -4417,16 +4433,12 @@
 (notice $Obj)
 	(if) (object $Obj) (then)
 		(reveal $Obj)
-		(if) (plural $Obj) (or) (pair $Obj) (then)
+		(if) (plural $Obj) (or) (pair $Obj) (or) (gender-neutral $Obj) (then)
 			(now) (them refers to [$Obj])
 		(elseif) (female $Obj) (then)
 			(now) (her refers to $Obj)
-			(now) (them refers to $Obj)
 		(elseif) (male $Obj) (then)
 			(now) (him refers to $Obj)
-			(now) (them refers to $Obj)
-		(elseif) (gender-neutral $Obj) (then)
-			(now) (them refers to $Obj)
 		(else)
 			(now) (narrator's it refers to $Obj)
 			(now) (narrator's it is protected)
@@ -4444,7 +4456,7 @@
 
 (notice player's $Obj)
 	(if) ~(current player $Obj) (then)
-		(if) (plural $Obj) (or) (pair $Obj) (then)
+		(if) (plural $Obj) (or) (pair $Obj) (or) (gender-neutral $Obj) (then)
 			(now) (them refers to [$Obj])
 		(elseif) (list $Obj) (then)
 			(if) ($Obj = [$Single]) (then)
@@ -4781,6 +4793,8 @@
 		(stoppable) {
 			(parse commandline $Words with choices [])
 		}
+	(elseif) (game has ended) (then)
+		(game over)
 	(else)
 		(par)
 		(stoppable) {
@@ -4854,16 +4868,20 @@
 	(current score $Score)
 	(if) ($Score < $Reported) (then)
 		($Reported minus $Score into $Diff)
-		\( Your score has gone down by (spell out $Diff)
-		point (if) ~(1 = $Diff) (then) (no space) s (endif)
-		. \)
+		(div @meta) {
+			\( Your score has gone down by (spell out $Diff)
+			point (if) ~(1 = $Diff) (then) (no space) s (endif)
+			. \)
+		}
 		(par)
 		(now) (reported score is $Score)
 	(elseif) ($Score > $Reported) (then)
 		($Score minus $Reported into $Diff)
-		\( Your score has gone up by (spell out $Diff)
-		point (if) ~(1 = $Diff) (then) (no space) s (endif)
-		. \)
+		(div @meta) {
+			\( Your score has gone up by (spell out $Diff)
+			point (if) ~(1 = $Diff) (then) (no space) s (endif)
+			. \)
+		}
 		(par)
 		(now) (reported score is $Score)
 	(endif)
@@ -4986,13 +5004,13 @@
 
 (story release 1)
 
-(story noun)	
+(story noun)
 	An interactive fiction
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Game over
 
-(game over)
+(game over) %% The (game over $) predicate first backtracks to free memory, then calls this
 	(par)
 	(game over status bar)
 	(if) (scoring enabled) (then)
@@ -5013,7 +5031,8 @@
 	(par)
 	(space 5)
 	(span @bold) { \*\*\* (query $Message) \*\*\* }
-	(game over)
+	(now) (game has ended)
+	(stop)
 
 (game over status bar)
 	(status bar @status) {
@@ -5022,44 +5041,45 @@
 	}
 
 (game over menu)
-	(line)
-	Would you like to:
-	(if) (interpreter supports undo) (then)
+	(div @meta) {
+		Would you like to:
+		(if) (interpreter supports undo) (then)
+			(line) (space 5)
+			(if) (library links enabled) (then)
+				(link) UNDO
+			(else)
+				UNDO
+			(endif)
+			the last move,
+		(endif)
 		(line) (space 5)
 		(if) (library links enabled) (then)
-			(link) UNDO
+			(link) RESTORE a saved position,
 		(else)
-			UNDO
+			RESTORE a saved position,
 		(endif)
-		the last move,
-	(endif)
-	(line) (space 5)
-	(if) (library links enabled) (then)
-		(link) RESTORE a saved position,
-	(else)
-		RESTORE a saved position,
-	(endif)
-	(line) (space 5)
-	(exhaust) {
-		*(game over option)
 		(line) (space 5)
+		(exhaust) {
+			*(game over option)
+			(line) (space 5)
+		}
+		(if) (interpreter supports quit) (then)
+			(if) (library links enabled) (then)
+				(link) QUIT
+			(else)
+				QUIT
+			(endif)
+			the program,
+			(line) (space 5)
+		(endif)
+		or
+		(if) (library links enabled) (then)
+			(link) RESTART
+		(else)
+			RESTART
+		(endif)
+		from the beginning?
 	}
-	(if) (interpreter supports quit) (then)
-		(if) (library links enabled) (then)
-			(link) QUIT
-		(else)
-			QUIT
-		(endif)
-		the program,
-		(line) (space 5)
-	(endif)
-	or
-	(if) (library links enabled) (then)
-		(link) RESTART
-	(else)
-		RESTART
-	(endif)
-	from the beginning?
 	(line)
 	(prompt and input $Words)
 	(stoppable) (parse game over $Words)
@@ -5084,7 +5104,7 @@
 
 (parse game over [undo])
 	(if) (undo) (or) (then)
-		Failed to undo last turn.
+		(div @meta) { Failed to undo last turn. }
 	(endif)
 
 (parse game over [amusing])
@@ -5097,7 +5117,7 @@
 	(quit)
 
 (parse game over $)
-	Please type one of the given words.
+	(div @meta) { Please type one of the given words. }
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Parser: Global variables
@@ -5322,6 +5342,10 @@
 (mark multi-object [$Head | $Tail] into [+ $Head | $Tail])
 	(object $Head)
 (mark multi-object $Other into $Other)
+
+%% Avoid error when using serial comma (TAKE X, Y, AND Z)
+(parse noun list [and | $Rest] as $ObjList $Policy $AllAllowed)
+	(parse noun list $Rest as $ObjList $Policy $AllAllowed)
 
 (parse noun list $Words as $ObjList $Policy $AllAllowed)
 	(split $Words by [, and] into $Left and $Right)
@@ -5679,7 +5703,7 @@
 (interface (parse commandline $<Words with choices $<ChoiceList))
 
 (parse commandline [] with choices $)
-	Come again?
+	(div @meta) { Come again? }
 
 (parse commandline [undo] with choices $)
 	(try [undo])
@@ -5687,6 +5711,7 @@
 (parse commandline $Words with choices $ChoiceList)
 	%% Before proceeding, save the current undo state:
 	(if) (save undo 1) (then)
+		(roman)
 		(narrate undoing $Words)
 		(stop)
 	(endif)
@@ -5739,7 +5764,7 @@
 			(now) (last command was $GoodCmd)
 			(rewrite $GoodCmd into $ActualWords)
 		(else)
-			\( Sorry, I don't know what to fix. \)
+			(div @meta) { \( Sorry, I don’t know what to fix. \) }
 			(stop)
 		(endif)
 	(else)
@@ -5803,18 +5828,23 @@
 	(now) (allowing parse errors)
 	(if) *(understand $Words as $BadAction) (then)
 		(if) ([all] is one of $BadAction) (then)
-			\( The word "all" is not allowed in that context.
-			Please be more specific. \)
+			(div @meta) {
+				\( The word "all" is not allowed in that context. Please be more specific. \)
+			}
 		(elseif) ([,] is one of $BadAction) (then)
-			\( You're not allowed to use multiple objects in that
-			context. Please do it step by step. \)
+			(div @meta) {
+				\( You're not allowed to use multiple objects in that
+				context. Please do it step by step. \)
+			}
 		(else)
-			\( I only understood you as far as wanting to
-			(describe action $BadAction)
-			. \)
+			(div @meta) {
+				\( I only understood you as far as wanting to
+				(describe action $BadAction)
+				. \)
+			}
 		(endif)
 	(else)
-		\( I'm sorry, I didn't understand what you wanted to do. \)
+		(div @meta) { \( I'm sorry, I didn't understand what you wanted to do. \) }
 	(endif)
 	(stop)
 
@@ -5886,7 +5916,9 @@
 			$Template
 			$ObjList)
 	(then)
-		Did you want to (describe action $ComplexAction)?
+		(div @meta) {
+			Did you want to (describe action $ComplexAction)?
+		}
 		(par)
 		(prompt and input $Words)
 		{
@@ -5900,11 +5932,13 @@
 			(stop)
 		}
 	(else)
-		Did you want to: (line)
-		(enumerate actions $AskList 1 $)
-		(if) ~{ (library links enabled) (interpreter supports links) } (then)
-			\( Type the corresponding number \)
-		(endif)
+		(div @meta) {
+			Did you want to: (line)
+			(enumerate actions $AskList 1 $)
+			(if) ~{ (library links enabled) (interpreter supports links) } (then)
+				\( Type the corresponding number \)
+			(endif)
+		}
 		(par)
 		(prompt and input $Words)
 		{
@@ -6058,7 +6092,7 @@
 	(elseif) ($Words = [no]) (or) ($Words = [n]) (then)
 		(fail)
 	(else)
-		Please answer yes or no
+		(div @meta) { Please answer yes or no. }
 		(yesno)
 	(endif)
 
@@ -6461,11 +6495,14 @@
 %% Fatal runtime errors
 
 (error $Code entry point)
-	(roman) \( Technical trouble:
-	(report fatal error $Code)
-	Attempting to recover with UNDO. \) (line)
+	(roman)
+	(div @meta) {
+		\( Technical trouble:
+		(report fatal error $Code)
+		Attempting to recover with UNDO. \)
+	}
 	(if) (undo) (or) (then)
-		Undo failed!
+		(div @meta) { Undo failed! }
 	(endif)
 
 (report fatal error 1)	Heap space exhausted.

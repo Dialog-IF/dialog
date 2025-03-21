@@ -1,0 +1,22 @@
+(current player #player)
+(#player is #in #shed)
+
+#shed
+(room *)
+(your *)
+(name *)	shed
+(look *)	You are in your shed. The exit is east.
+
+(from * go #east to #outdoors)
+(from * go #out to #east)
+
+(prevent [leave * #east])
+	But the world is such a wicked place.
+
+#chair
+(name *)	wooden chair
+(on-seat *)
+(* is #in #shed)
+
+(instead of [leave #shed #up])
+	(try [climb *])
