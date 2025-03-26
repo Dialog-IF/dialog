@@ -63,6 +63,7 @@
 
 (interface (name $<Obj))
 (interface (descr $<Obj))
+(interface (initial appearance $<Obj))
 (interface (appearance $<Obj))
 (interface (appearance $<Obj $<Rel $<Loc))
 (interface (feel $<Obj))
@@ -4534,6 +4535,9 @@
 
 (appearance $Obj $ $)
 	(appearance $Obj)
+
+(appearance ($Obj is pristine))
+	(initial appearance $Obj)
 
 (appearance (item $Obj))
 	($Obj is handled)

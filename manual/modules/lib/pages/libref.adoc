@@ -135,6 +135,7 @@ xref:scenery.adoc#objlocations[`($ has relation $)`] +
 xref:scenery.adoc#descriptions[`(heads $)`] +
 xref:timeprogress.adoc#score[`(increase score by $)`] +
 xref:moving.adoc#light[`(inherently dark $)`] +
+xref:items.adoc#appearance[`(initial appearance $)`] +
 xref:timeprogress.adoc#choicemode[`(initial label $)`] +
 xref:traits.adoc#categorytraits[`(in-seat $)`] +
 xref:actions.adoc#preventperform[`(instead of $)`] +
