@@ -1842,6 +1842,7 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 						zi = append_instr(r, Z_CALLVN);
 						zi->oper[0] = ROUTINE(R_BEGIN_STATUS_OVERRIDE);
 						zi->oper[2] = o1;
+			//			zi->oper[2] = SMALL(0);
 					} else {
 						zi = append_instr(r, Z_CALL2N);
 						zi->oper[0] = ROUTINE(R_BEGIN_STATUS);

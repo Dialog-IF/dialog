@@ -587,6 +587,7 @@ int trace_invocations_body(struct astnode **anptr, int flags, uint8_t *bound, st
 			(void) trace_invocations_body(&an->children[0], flags, bound_sub, cl, 1, prg);
 			break;
 		case AN_STATUSAREA:
+		case AN_STATUSAREA_OVERRIDE:
 		case AN_OUTPUTBOX:
 			memcpy(bound_sub, bound, cl->nvar);
 			(void) trace_invocations_body(&an->children[1], flags, bound_sub, cl, 0, prg);

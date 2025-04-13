@@ -2204,6 +2204,7 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 			}
 			endlab = make_routine_id();
 			vnum = findvar(cl, an->word);
+			
 			if(an->children[0]->kind == AN_DICTWORD) {
 				box = find_boxclass(prg, an->children[0]->word);
 			} else {
@@ -2211,7 +2212,7 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 					LVL_ERR,
 					an->line,
 					"The parameter of %s must be a dictionary word.",
-					(an->kind == AN_STATUSAREA)?
+					(an->kind == AN_STATUSAREA || an->kind == AN_STATUSAREA_OVERRIDE)?
 						(an->subkind == AREA_TOP)? "(status bar $)" : "(inline status bar $)"
 					:
 						(an->subkind == BOX_SPAN)? "(span $)" : "(div $)");
@@ -2220,10 +2221,12 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 			}
 			
 			if(an->kind == AN_STATUSAREA_OVERRIDE) { // This one gets a separate instruction, since it takes an additional parameter
+				v1 = comp_value(cl, an->children[2], seen, known_args); // The extra argument isn't necessarily a literal, just a value, so compile it however is best
 				ci = add_instr(I_BEGIN_AREA_OVERRIDE);
-				ci->oper[1] = comp_value(cl, an->children[2], seen, known_args); // The extra argument isn't necessarily a literal, just a value, so compile it however is best
+				ci->oper[1] = v1;
 			} else {
-				ci = add_instr((an->kind == AN_STATUSAREA)? I_BEGIN_AREA : I_BEGIN_BOX);
+				ci = add_instr((an->kind == AN_STATUSAREA)?
+					I_BEGIN_AREA : I_BEGIN_BOX);
 			}
 			ci->subop = an->subkind;
 			ci->oper[0] = (value_t) {OPER_BOX, box};
@@ -2273,7 +2276,7 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 				ci = add_instr(I_CUT_CHOICE);
 				ci = add_instr(I_POP_STOP);
 			}
-			ci = add_instr((an->kind == AN_STATUSAREA)? I_END_AREA : I_END_BOX);
+			ci = add_instr((an->kind == AN_STATUSAREA || an->kind == AN_STATUSAREA_OVERRIDE)? I_END_AREA : I_END_BOX);
 			ci->subop = an->subkind;
 			ci->oper[0] = (value_t) {OPER_BOX, box};
 			ci = add_instr(I_JUMP);
@@ -2285,7 +2288,7 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 				ci = add_instr(I_POP_CHOICE);
 				ci->oper[0] = (value_t) {OPER_NUM, 0};
 				ci = add_instr(I_POP_STOP);
-				ci = add_instr((an->kind == AN_STATUSAREA)? I_END_AREA : I_END_BOX);
+				ci = add_instr((an->kind == AN_STATUSAREA || an->kind == AN_STATUSAREA_OVERRIDE)? I_END_AREA : I_END_BOX);
 				ci->subop = an->subkind;
 				ci->oper[0] = (value_t) {OPER_BOX, box};
 				ci = add_instr(I_STOP);
