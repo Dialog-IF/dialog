@@ -1,0 +1,72 @@
+[Z] Tutorial room
+[Z] 
+An Interactive Fiction
+An interactive fiction by Anonymous.
+Release 1. Serial number <SERIAL>.
+<COMPILER>. <LIBRARY>
+
+Tutorial room
+This is a very nondescript room, dominated by a wooden table.
+
+> take two marbles
+[Z] Tutorial room
+[Z]
+(I only understood you as far as wanting to take something.)
+
+> open boxes
+[Z] Tutorial room
+[Z]
+The closed box on the wooden table: You open the box, revealing two marbles.
+
+The closed box on the wooden table: You open the box, revealing three marbles.
+
+The closed box on the wooden table: You open the box.
+
+> take two marbles
+[Z] Tutorial room
+[Z]
+The marble that's in the open box on the wooden table: You take the marble out
+of the box.
+
+The marble that's in the open box on the wooden table: You take the marble out
+of the box.
+
+> look
+[Z] Tutorial room
+[Z]
+Tutorial room
+This is a very nondescript room, dominated by a wooden table.
+
+> inventory
+[Z] Tutorial room
+[Z]
+You have two marbles.
+
+> drop them
+[Z] Tutorial room
+[Z]
+The marble that's held by yourself: The marble falls to the ground.
+
+The marble that's held by yourself: The marble falls to the ground.
+
+> eat the marble
+Did you want to:
+1. eat a marble, or
+2. eat a marble that's in the open box on the wooden table?
+(Type the corresponding number)
+
+> eat a marble
+[Z] Tutorial room
+[Z]
+(first attempting to take the marble)
+You take the marble.
+
+You eat the marble.
+
+> put marble on table
+Did you want to:
+1. put the marble on the wooden table, or
+2. put a marble that's in the open box on the wooden table on the wooden table?
+(Type the corresponding number)
+
+>

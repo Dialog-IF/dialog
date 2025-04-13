@@ -1,0 +1,15 @@
+[Z] Hello, world!
+[D] Program started. X = $
+[D] Hello,
+[D] 42
+[D] world!
+
+[Z] QUERY (try 2) at man_5d.dg:14
+[Z] ENTER (try 2) at man_5d.dg:2
+[D] | FOUND (trace on) man_5d.debug:13
+[D] | QUERY (try 2) man_5d.debug:14
+[D] | | ENTER (try 2) man_5d.debug:2
+Two!
+[Z] QUERY (try 4) at man_5d.dg:15
+[D] | FOUND (try 2) man_5d.debug:14
+[D] | QUERY (try 4) man_5d.debug:15
