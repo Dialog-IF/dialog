@@ -454,6 +454,7 @@ enum { // Runtime routines
 	R_DIVIDED,
 	R_MODULO,
 	R_RANDOM,
+	R_DIV_WIDTH,
 	R_GREATER_THAN,
 
 	R_FAIL_PRED,
@@ -494,6 +495,7 @@ enum { // Runtime routines
 
 	R_GET_FULLWIDTH,
 	R_BEGIN_STATUS,
+	R_BEGIN_STATUS_OVERRIDE,
 	R_BEGIN_NOSTATUS,
 	R_END_STATUS,
 	R_BEGIN_BOX,

@@ -62,6 +62,7 @@ struct specialspec {
 	{SP_SELECT,		0,				1,	{"select"}},
 	{SP_SPAN,		0,				2,	{"span", 0}},
 	{SP_STATUSBAR,		0,				3,	{"status", "bar", 0}},
+	{SP_STATUSBAR_OVERRIDE,	0,				6,	{"status", "bar", 0, "with", "height", 0}},
 	{SP_INLINE_STATUSBAR,	0,				4,	{"inline", "status", "bar", 0}},
 	{SP_STOPPABLE,		0,				1,	{"stoppable"}},
 	{SP_STOPPING,		0,				1,	{"stopping"}},
@@ -85,6 +86,8 @@ struct builtinspec {
 	{BI_DIVIDED,		0, 0,				6,	{0, "divided", "by", 0, "into", 0}},
 	{BI_MODULO,		0, 0,				5,	{0, "modulo", 0, "into", 0}},
 	{BI_RANDOM,		0, 0,				7,	{"random", "from", 0, "to", 0, "into", 0}},
+	{BI_DIV_WIDTH,		0, 0,				4, {"current", "div", "width", 0}},
+	{BI_DIV_HEIGHT,		0, 0,				4, {"current", "div", "height", 0}},
 	{BI_FAIL,		0, PREDF_FAIL,			1,	{"fail"}},
 	{BI_STOP,		0, PREDF_SUCCEEDS|PREDF_STOP|PREDF_MIGHT_STOP,	1,	{"stop"}},
 	{BI_REPEAT,		0, PREDF_SUCCEEDS,		2,	{"repeat", "forever"}},
@@ -584,6 +587,7 @@ int trace_invocations_body(struct astnode **anptr, int flags, uint8_t *bound, st
 			(void) trace_invocations_body(&an->children[0], flags, bound_sub, cl, 1, prg);
 			break;
 		case AN_STATUSAREA:
+		case AN_STATUSAREA_OVERRIDE:
 		case AN_OUTPUTBOX:
 			memcpy(bound_sub, bound, cl->nvar);
 			(void) trace_invocations_body(&an->children[1], flags, bound_sub, cl, 0, prg);
