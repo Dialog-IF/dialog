@@ -1,0 +1,674 @@
+= Chapter 11: Miscellaneous features
+
+[#pronouns]
+== Pronouns
+
+Dialog allows the player to refer to recently mentioned objects using the words
+`IT`, `HIM`, `HER`, and `THEM`. For
+this to work, when the story author calls attention to an object as part of the
+prose, they must tell the library about it. This is done by querying the
+`(notice $)` predicate. It is generally only done for highly conspicuous
+objects mentioned at the end of room or object descriptions, like so:
+
+[source]
+----
+(female #alice)
+
+(look #library)
+	Exits lead east and north. The room is lined with bookshelves.
+	(par)
+	Alice is seated by a table.
+	(notice #alice)		%% Set up “her” to refer to Alice.
+	(notice #table)		%% Set up “it” to refer to the table.
+----
+
+Objects marked `(plural $)` are associated with the pronoun
+`THEM`, but it is also possible to notice an entire list of objects:
+
+[source]
+----
+(male #bob)
+(female #emma)
+
+(look #office)
+	Bob and Emma are here today.
+	(notice #bob)		%% Set up “him” to refer to Bob.
+	(notice #emma)		%% Set up “her” to refer to Emma.
+	(notice [#bob #emma])	%% Set up “them” to refer to the pair of them.
+----
+
+This allows e.g. the following exchange:
+
+[role="output",subs="quotes"]
+```
+> LOOK
+*In the office*
+Bob and Emma are here today.
+
+> TALK TO THEM
+Trying to talk to Bob: There is no reply.
+
+Trying to talk to Emma: There is no reply.
+```
+
+In addition to objects noticed by explicit queries to `(notice $)`, the
+library will notice the first object mentioned by the player as part of an
+action, except when that object is a direction or a relation. Thus, when
+`TAKE ENVELOPE` is followed by `OPEN IT`, the word
+`IT` is generally understood as referring to the envelope.
+
+To clear the current set of associations, query `(clear all pronouns)`.
+
+=== Two its
+
+Dialog treats the pronoun `IT` in a special way: The _player's “it”_
+(i.e. the first object mentioned in the most recent action) is tracked
+separately from the _narrator's “it”_ (specified using `notice`). The
+narrator's “it” plays second fiddle to the player's “it”: Whenever a
+player's “it” is defined, the narrator's “it” is short-lived and only remains
+valid for the next non-command action. But this is sufficient to capture many
+ambiguous situations and prevent misunderstandings:
+
+[role="output"]
+```
+> EXAMINE BOX
+A wooden marble is in the box.
+
+> TAKE IT
+Did you want to take the wooden marble or the box?
+```
+
+The dual-it feature is particularly effective, and invisible, when one of the
+actions is deemed more likely than the other. Consider the following playable
+example:
+
+[source]
+----
+(current player #me)
+
+#room
+(room *)
+(#me is #in *)
+(look *)
+	There's a small safe here. (notice #safe)
+
+#safe
+(name *)	small safe
+(openable *)
+
+#necklace
+(name *)	pearl necklace
+(item *)
+(* is #in #safe)
+----
+
+Now the following exchange is possible:
+
+[role="output"]
+```
+> OPEN SAFE
+You open the safe, revealing a pearl necklace.
+
+> TAKE IT
+You take the pearl necklace.
+```
+
+But so is this one:
+
+[role="output"]
+```
+> OPEN SAFE
+You open the safe, revealing a pearl necklace.
+
+> CLOSE IT
+You close the safe.
+```
+
+[#listutil]
+== List manipulation
+
+In addition to a handful of
+xref:lang:builtins.adoc#listbuiltins[built-in predicates],
+the Dialog standard library provides the following predicates for
+working with lists:
+
+($List contains one of $Keys)::
+
+Succeeds if `$List` contains any element from the list `$Keys`.
+
+($List recursively contains $Element)::
+
+Succeeds if `$Element` is nested anywhere inside `$List`.
+
+($List contains sublist $Sublist)::
+
+Succeeds if it is possible to obtain the value `$Sublist` by starting
+with `$List` and removing zero or more elements from its beginning and
+end.
+
+(length of $List into $N)::
+
+Counts the number of elements in `$List`.
+
+(nth $List $N $Element)::
+
+Retrieves element number `$N` from the list. The elements are numbered
+starting with 1.
+
+(last $List $Element)::
+
+Retrieves the last element of a list.
+
+(take $N from $List into $Prefix)::
+
+Takes the first `$N` elements from a list.
+
+(randomly select $Element from $List)::
+
+Retrieves one list element at random, or fails if the list is empty.
+
+(reverse $Input $Output)::
+
+Reverses the order of the elements in a list.
+
+(remove duplicates $Input $Output)::
+
+Removes duplicate elements from a list.
+
+(remove from $List matching $Keys into $Output)::
+
+Removes any elements found in the list `$Keys`
+from `$List`.
+
+(split $List anywhere into $Left and $Right)::
+
+Similar to the built-in `(split $ by $ into $ and $)`, but without
+keywords; splits the list anywhere. Useful for parsing e.g.
+`GIVE ATTILA THE HUN A COOKIE`.
+
+=== Lists of words
+
+(print words $List)::
+
+This is a handy predicate for printing back player input. It iterates through
+the given list, and prints each element in turn.
+
+(Print Words $List)::
+
+This predicate iterates through the given list, and prints each element in turn,
+with the initial character converted to uppercase. It is useful for printing
+back names supplied by the player.
+
+[#treeutil]
+== Object tree manipulation
+
+The Dialog standard library organizes objects into tree-like structures using a
+combination of the built-in `($ has parent $)` dynamic predicate, and a
+regular predicate called `($ has relation $)`. The following two access
+predicates are useful:
+
+($Obj is $Rel $Parent)::
+
+Succeeds when `$Obj` is a direct child of `$Parent`, and has the
+given relation to it. At least one of `$Obj` or `$Parent` should
+be bound. Can be used in `(now)`-statements when all
+parameters are bound.
+
+($Obj is nowhere)::
+
+Succeeds when `$Obj` has no parent. Can be used in
+`(now)`-statements when `$Obj` is bound.
+
+To check whether an object is nested under a given ancestor in the object tree,
+or to backtrack over every ancestor of an object, or to backtrack over every
+descendant of an object, use:
+
+($Obj has ancestor $Ancestor)
+
+At least one of the parameters must be bound.
+
+The following predicate is similar to `($ has ancestor $)`, but also
+unifies the topmost relation (to the `$Ancestor`) with the middle
+parameter:
+
+($Obj is nested $Rel $Ancestor)::
+
+At least one of `$Obj` and `$Ancestor` must be bound.
+
+Every object that is in play should ultimately be nested inside a room object.
+To find it, query the following predicate:
+
+($Obj is in room $Room)::
+
+`$Obj` is the input and must be bound; `$Room` is the output. The
+predicate fails if there is no surrounding room. If `$Obj` is itself a
+room, `$Room` is simply unified with it.
+
+To check whether an object is part of another via any number of intermediary
+parts, or to backtrack over such relations, use the following predicate:
+
+($Obj is part of $Ancestor)::
+
+At least one of `$Obj` and `$Ancestor` must be bound.
+
+Items of clothing may be located underneath other garments. To check whether an
+object is directly `#wornby` a person or nested under an object that is,
+use:
+
+($Obj is worn by $Person)::
+
+The first parameter must be bound.
+
+When writing `before`-rules for actions, the following
+predicates may come in handy:
+
+(ensure $Obj is held)::
+
+Attempt to take `$Obj` if it is an item, but not currently held. Attempt
+to remove `$Obj` if it is worn, or nested under something worn.
+
+(recursively leave non-vehicles)::
+
+While the player character is the direct child of an object that is neither a
+room nor a vehicle, make an attempt to leave that object.
+
+[#dirutil]
+== Directions and numbers
+
+To print an adverb phrase corresponding to a direction, use
+`(present-adverb $)` or `(from-adverb $)`. Use [.code]#(opposite
+of $ is $)# to find its opposite.
+
+[options="header",grid="none",frame="none"]
+|===
+|Direction |Present-adverb |From-adverb |Opposite
+|`#up` |above |above |`#down`
+|`#down` |below |below |`#up`
+|`#in` |inside |inside |`#out`
+|`#out` |outside |the outside |`#in`
+|`#north` etc. |to the north |the north |`#south`
+|===
+
+To print a numeric value with words, use:
+
+[source]
+----
+(spell out $N)
+----
+
+[#libdebug]
+== Predicates for debugging
+
+The standard library offers a couple of predicates that are meant to be used
+from the interactive debugger.
+
+(scope)::
+
+Show the current scope, which typically includes all objects within reach and
+sight of the player, including the objects representing the current and
+neighbouring rooms.
+
+(actions on)::
+
+Enable tracing of actions as they are attempted.
+
+(actions off)::
+
+Disable tracing of actions.
+
+[#commoncomplaints]
+== Common checks and complaints
+
+The following predicates are quite useful when writing
+`prevent`-rules: They check a condition, and succeed with a
+message if the condition was met. Their names are mostly self-explanatory.
+
+(when $Obj is out of sight)::
+
+(when $Obj is already held)::
+
+(when $Obj isn't directly held)::
+
+(when $Obj is not here)::
+
+(when $Obj is out of reach)::
+
+(when $Obj is part of something)::
+
+(when $Obj is closed)::
+
+(when $Obj blocks passage)::
+
+(when $Obj is already $Rel $Parent)::
+
+(when $Obj is fine where it is)::
+
+(when $Obj is held by someone)::
+
+(when $Obj is worn by someone)::
+
+(when $Obj can't be taken)::
+
+Succeeds for non-items.
+
+(when $Obj won't accept $Rel)::
+
+The given object does not accept new children with the given relation.
+
+(when $Obj won't accept actor $Rel)::
+
+The given object does not accept the player character as a child with the given
+relation.
+
+(when $Obj is $Rel $Parent)::
+
+“You will have to get off the chair first.”
+
+Note that it is possible to override these common complaint messages on a
+per-object basis, without editing the standard library code. Just remember that
+the when-rule needs to check the appropriate condition before printing the
+response:
+
+[source]
+----
+(when #knight blocks passage)
+	(#knight is alive)
+	"None shall pass!" booms the Black Knight.
+----
+
+[#questions]
+
+== Asking simple questions
+
+The standard library provides the following three utility predicates for
+obtaining simple user input:
+
+(yesno)::
+
+This predicate prints a prompt character, “`>`“, and waits for player input.
+If the input is `Y` or
+`YES`, the predicate succeeds. If the input is `N` or
+`NO`, the predicate fails. Otherwise, it prints the message
+“Please answer yes or no" and tries again.
+
+(get number from $First to $Last $Output)::
+
+This predicate prints a prompt, “(`$First` -`$Last`)”, asking the player for a number in that range. The number can
+be entered using decimal digits, or spelled out in text. The predicate fails on
+non-numeric input, and on input that's outside the specified range.
+
+(any key)::
+
+This predicate waits for a keypress.
+
+[#fungibility]
+
+== Identical objects
+
+The Dialog standard library allows you to model game worlds with multiple
+identical objects. Authors are generally discouraged from doing this, because
+the existence of identical objects—and the frequent need to disambiguate between
+them—makes it difficult to maintain a good story-telling voice. Identical
+objects have a tendency to reduce even the most engaging narrative to an
+old-school, manipulate-the-medium-sized-dry-goods affair.
+
+What's more, the technique described here is relatively difficult to pull off
+correctly. It is not recommended for novice Dialog programmers.
+
+Still interested? Great, let's begin!
+
+First of all, identical objects should be marked as _fungible_. This will affect
+how they are printed in object lists, and how player input is disambiguated. For
+performance reasons, the fungibility feature is disabled by default; it is
+enabled with the following rule definition:
+
+[source]
+----
+(fungibility enabled)
+----
+
+To create many identical objects, you would normally invent a common trait for
+them, and then define rules in terms of the trait:
+
+[source]
+----
+(marble #marble1)
+(marble #marble2)
+(marble #marble3)
+(marble #marble4)
+(marble #marble5)
+
+(name (marble $))
+	marble
+(plural name (marble $))
+	marbles
+(plural dict (marble $))
+	marbles
+(*(marble $) is #in #bowl)
+----
+
+To save typing, Dialog provides a mechanism for
+xref:lang:sugar.adoc#generate[generating such object definitions automatically].
+The
+following is mostly equivalent:
+
+[source]
+----
+(generate 5 (marble $))
+
+(name (marble $))
+	marble
+(plural name (marble $))
+	marbles
+(plural dict (marble $))
+	marbles
+(*(marble $) is #in #bowl)
+----
+
+The only difference is that the internal names (hashtags) of the objects are now
+numbers instead of source-code names. This can potentially make debugging
+harder.
+
+Now that we have created a bunch of identical objects, we must tell the library
+that these objects are fungible, i.e. completely interchangeable. Fungibility is
+expressed as a pairwise relation:
+
+[source]
+----
+(fungible (marble $) (marble $)) %% Any two marbles are fungible.
+----
+
+Now, in response to `LOOK IN BOWL`, the library might print:
+
+[role="output"]
+```
+There are five marbles in the bowl.
+```
+
+A common printed name, `(plural name $)`, must be defined for each copy
+of the object for this to work. In addition, the plural noun—and only the
+noun—must be declared using the `(plural dict $)` predicate. Thus, if the
+plural name is “glass marbles”, then the plural dict should only be “marbles”.
+
+Although the objects start out identical, that will change as soon as the player
+starts moving them around. The library considers two objects _truly fungible_ if
+they are fungible (by the aforementioned predicate) and have the same location.
+Thus, the four marbles in the bowl are different from the one in your pocket,
+and attempting to e.g. `EAT MARBLE` will trigger a disambiguating
+question: Did you want to eat a marble that's in the bowl, or the marble that's
+held by yourself?
+
+To ensure that such disambiguating questions work properly, we have to instruct
+the library to mention the location of each fungible object when printing
+actions:
+
+[source]
+----
+(clarify location of (marble $))
+----
+
+Otherwise, it would just ask: Did you want to eat a marble, or the marble?
+
+Of course, location is not the only property that makes fungible objects
+distinguishable; any dynamic predicate could have that effect. The standard
+library takes care of the location, but it is up to the story author to check
+any other properties that might differ, and to modify the full name of the
+object as appropriate. Thus:
+
+[source]
+----
+(generate 3 (box $))
+(name (box $))
+	box
+(plural name (box $))
+	boxes
+(plural dict (box $))
+	boxes
+(item *(box $))
+(openable *(box $))
+
+(fungible (box $A) (box $B))
+	{
+		($A is open) ($B is open)
+	(or)
+		($A is closed) ($B is closed)
+	}
+
+(the full (box $Obj))
+	($Obj is $Rel $Loc)
+	the (open or closed $Obj) box (name $Rel) (the full $Loc)
+
+(a full (box $Obj))
+	($Obj is $Rel $Loc)
+	(if) ($Obj is open) (then)
+		an open
+	(else)
+		a closed
+	(endif)
+	box (name $Rel) (the full $Loc)
+
+%% No need for '(clarify location of (box $))', since we override
+%% '(the full $)' and '(a full $)' directly.
+----
+
+
+Finally, recall that handled items are narrated by the standard library using a
+predicate called `(appearance $ $ $)`. This mechanism is extended to also
+include groups of more than one fungible object. Such groups are narrated by the
+standard library whether the objects are marked as handled or not. The first
+parameter of `appearance` will be bound to a list. It is strongly
+recommended that all fungible objects are marked as handled from the start:
+
+[source]
+----
+(*(marble $) is handled)
+(*(box $) is handled)
+----
+
+Here is a complete example of fungible marbles inside fungible boxes:
+
+[source]
+----
+(fungibility enabled)
+
+(box #box1)
+(box #box2)
+(box #box3)
+
+(marble #marble1)
+(marble #marble2)
+(marble #marble3)
+(marble #marble4)
+(marble #marble5)
+
+(name (box $))
+	box
+(plural name (box $))
+	boxes
+(plural dict (box $))
+	boxes
+(item *(box $))
+(openable *(box $))
+(*(box $) is handled)
+(*(box $) is #on #table)
+
+(name (marble $))
+	marble
+(plural name (marble $))
+	marbles
+(plural dict (marble $))
+	marbles
+(item *(marble $))
+(edible *(marble $))
+(clarify location of (marble $))
+(*(marble $) is handled)
+
+(#marble1 is #in #box1)
+(#marble2 is #in #box1)
+(#marble3 is #in #box2)
+(#marble4 is #in #box2)
+(#marble5 is #in #box2)
+
+(fungible (marble $) (marble $))
+
+(fungible (box $A) (box $B))
+	{
+		($A is open) ($B is open)
+	(or)
+		($A is closed) ($B is closed)
+	}
+
+(the full (box $Obj))
+	($Obj is $Rel $Loc)
+	the (open or closed $Obj) box (name $Rel) (the full $Loc)
+
+(a full (box $Obj))
+	($Obj is $Rel $Loc)
+	(if) ($Obj is open) (then)
+		an open
+	(else)
+		a closed
+	(endif)
+	box (name $Rel) (the full $Loc)
+
+(current player #player)
+
+#room
+(name *)		tutorial room
+(room *)
+(#player is #in *)
+(look *)		This is a very nondescript room, dominated by a
+			wooden table. (notice #table)
+
+#table
+(name *)		wooden table
+(supporter *)
+(* is #in #room)
+(descr *)		It's wooden.
+----
+
+Try to `TAKE TWO MARBLES`, `DROP THEM`, `EAT
+THE MARBLE`, `EAT A MARBLE`, `GET BOXES`, etc. Also
+recompile without `(fungibility enabled)` to see what happens.
+
+Note that this is an inherently confusing situation. There will be
+disambiguating questions along the lines of:
+
+[role="output"]
+```
+Did you want to:
+1. put the marble that's in the open box on the wooden table on the wooden table,
+2. put a marble that's in the open box on the wooden table on the wooden table, or
+3. put a marble on the wooden table?
+```
+
+Here, cases 1 and 2 refer to different open boxes.
+
+As was pointed out at the beginning of this section, fungible objects tend make
+interactive stories less immersive, and more fiddly. On the other hand, a
+judicial use of fungibility could enhance certain scenes by making the
+interaction feel more natural, and that may sometimes be worth the extra work.
+It's your call.
+
+Fungible objects are good candidates for
+xref:actions.adoc#groupactions[group actions].

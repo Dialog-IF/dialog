@@ -1,0 +1,33 @@
+(#rock beats #scissors)
+(#scissors beats #paper)
+(#paper beats #rock)
+
+(program entry point)
+	($Q = [#apples #pears $])
+	($Q = [$ #pears #oranges])
+	I like $Q.
+	
+	(par)
+	
+	(#rock beats $X)	%% Parameters are: Input, output.
+	When your opponent plays rock, you'd better not play $X.
+	($Y beats #rock)	%% Parameters are: Output, input.
+	When your opponent plays rock, you should play $Y.
+	
+	(par)
+	
+	([1 2 3 4] = [$A | $B])
+	A is $A.
+	B is $B.
+	
+	(par)
+	
+	($C = 5)
+	($D = [6 7 8])
+	Tacking on a new head: [$C | $D]
+	
+	(par)
+	
+	([$First $Second | $Rest] = [a b c d e])
+	([$Second $First | $Rest] = $Result)
+	The result is $Result.

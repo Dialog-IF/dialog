@@ -1,0 +1,5 @@
+(program entry point)
+	You see an orange. (descr #orange) Now what do you do?
+
+(descr #apple)	The apple looks yummy.
+(descr #door)	The oaken door is oaken.

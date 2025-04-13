@@ -1,0 +1,48 @@
+#rover
+(name *)	rover
+(singleton *)
+(* is #in #alpha)
+
+(global variable (rover avoids direction $))
+
+(on every tick)
+	(par)
+	(* is in room $Room)
+	(collect $Dir)
+		*(from $Room go $Dir to room $)
+		~(rover avoids direction $Dir)
+	(into $Exits)
+	%% Clear the variable so we don't get stuck in dead-end rooms:
+	(now) ~(rover avoids direction $)
+	(randomly select $Dir from $Exits) %% This can fail.
+	(let * go $Dir)
+	(opposite of $Dir is $OppDir)
+	(now) (rover avoids direction $OppDir)
+
+
+(current player #player)
+(#player is #in #alpha)
+
+#alpha
+(room *)
+(name *) alpha
+(from * go #north to #beta)
+(from * go #east to #gamma)
+(from * go #west to #delta)
+
+#beta
+(room *)
+(name *) beta
+(from * go #south to #alpha)
+(from * go #southeast to #gamma)
+
+#gamma
+(room *)
+(name *) gamma
+(from * go #west to #alpha)
+(from * go #northwest to #beta)
+
+#delta
+(room *)
+(name *) delta
+(from * go #east to #alpha)

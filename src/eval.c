@@ -16,6 +16,8 @@
 
 static volatile int interrupted = 0;
 
+int use_numbered_levels = 0; 
+
 void eval_interrupt() {
 	interrupted = 1;
 }
@@ -829,8 +831,13 @@ void trace(struct eval_state *es, int kind, struct predname *predname, value_t *
 		assert(es->env >= 0);
 		if(kind != TR_REPORT) {
 			level = es->envstack[es->env].level;
-			for(i = 0; i < level; i++) {
-				o_print_word("| ");
+			if(use_numbered_levels) {
+				snprintf(buf, sizeof(buf), "|%2d ", level);
+				o_print_word(buf);
+			} else {
+				for(i = 0; i < level; i++) {
+					o_print_word("| ");
+				}
 			}
 		}
 		o_print_word(tracename[kind]);
@@ -1348,7 +1355,6 @@ static int eval_run(struct eval_state *es) {
 		}
 		ci = &pp.pred->routines[pp.routine].instr[pc];
 		pc++;
-		//printf("%s %d\n", pp.pred->predname->printed_name, ci->op);
 		switch(ci->op) {
 		case I_ALLOCATE:
 			assert(ci->oper[0].tag == OPER_NUM);

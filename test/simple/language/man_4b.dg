@@ -1,0 +1,15 @@
+(program entry point)
+	($Closure = { Hello, $X! })
+	($X = @world)
+	(query $Closure)
+	
+	(par)
+	(exhaust) {
+		*(query { Veni (or) Vidi (or) Vici })
+		!
+	}
+	
+	(par)
+	($Greeter = { Hello, $_! })
+	(query $Greeter @world)
+	(query $Greeter @indeed)

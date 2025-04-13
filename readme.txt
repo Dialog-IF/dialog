@@ -1,5 +1,5 @@
-This archive contains version 0m/03 of the Dialog compiler and interactive
-debugger, bundled with documentation and version 0.46 of the Dialog Standard
+This repository contains the Dialog compiler and interactive
+debugger, bundled with documentation and the Dialog Standard
 Library.
 
 Directory structure:

@@ -1,0 +1,52 @@
+(intro)		(activate node #start)
+
+#start
+(disp *)	You extend your wings. A warm, buzzy feeling spreads through your body
+		as you leave the hive.
+(* offers #rosebush)
+(* offers #poppies)
+
+#rosebush
+(initial label *)	Follow a scent of roses.
+(label *)		Return to the rosebush.
+(disp *)		You hover for a while near the pink rosebush.
+(* offers #poppies)
+
+#poppies
+(initial label *)	Follow a scent of poppies.
+(label *)		Return to the patch of poppies.
+(disp *)		You circle a fragrant patch of poppies.
+(* offers #rosebush)
+
+#rosebush-collect
+(#rosebush offers *)
+(sticky *)
+(label *)		Collect nectar from the rosebush.
+(disp *)		Yum! Rose nectar!
+(* flows to #collect-done)
+
+#poppies-collect
+(#poppies offers *)
+(sticky *)
+(label *)		Collect nectar from the poppies.
+(disp *)		Yum! Poppy nectar!
+(* flows to #collect-done)
+
+#collect-done
+(* offers #rosebush/#poppies/#land)
+
+#land
+(label *)	Return back home.
+(disp *)	After an impeccable landing, you find yourself back at the hive.
+(terminating *)
+
+(current player #player)
+(#player is #in #room)
+(room #room)
+
+(after disp (terminating $))
+	(par)
+	(try [look])
+	(tick)
+
+(allowed action [inventory])

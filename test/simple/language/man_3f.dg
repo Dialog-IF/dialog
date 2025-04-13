@@ -1,0 +1,21 @@
+(name #apple)	green apple
+(dict #apple)	yummy		%% Extra synonyms can be listed here.
+
+(name #door)	mysterious door
+(dict #door)	oaken oak
+
+(name #player)	player
+(dict #player)	(just) me
+
+%% By default, include any words mentioned in the name rule:
+(dict $Obj)	(name $Obj)
+
+(program entry point)
+	(exhaust) {
+		*($Obj is one of [#apple #door #player])
+		(collect words)
+			*(dict $Obj)
+		(into $List)
+		The (name $Obj) can be referred to using the words $List.
+		(line)
+	}

@@ -1,0 +1,53 @@
+#player
+(current player *)
+(* is #in #room)
+
+#room
+(name *)		tutorial room
+(room *)
+(look *)		This is a very nondescript room, dominated by a
+			wooden table. (notice #table)
+
+#table
+(name *)		wooden table
+(descr *)		It's a sturdy wooden table.
+			(if) ($ is #on *) (then)
+				There seems to be something on it.
+			(endif)
+(supporter *)
+(* is #in #room)
+
+#blueberry
+(name *)		blueberry
+(berry *)
+
+#cherry
+(name *)		dark red cherry
+(berry *)
+
+#apple
+(name *)		green apple
+(fruit *)
+
+%% All berries are fruit, and all fruit are edible.
+(fruit *(berry $))
+(edible *(fruit $))
+
+%% The following are not trait inheritance definitions (descr, dict, and the
+%% initial location are not traits), so no asterisk is required.
+
+(descr (fruit $))	Yummy!
+
+(dict (fruit $))	fruit
+(dict (berry $))	berry
+
+(*(fruit $) is #on #table)
+
+(intro)
+	Welcome to the fruit game! Here you will meet \(and possibly eat\):
+	(line)
+	(exhaust) {
+		*(fruit $Obj)
+		(The $Obj).
+		(line)
+	}

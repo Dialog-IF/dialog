@@ -628,7 +628,7 @@ static void comp_value_into(struct clause *cl, struct astnode *an, value_t dest,
 			ci->oper[0] = dest;
 		}
 	} else if(an->kind == AN_PAIR) {
-		for(i = 0; i < 2; i++) {
+		for(i = 1; i >= 0; i--) { // Visit in the opposite order to ensure that, if the same variable appears twice in the pair, the *second* one (i.e. the one that'll be compiled first) is the one that allocates the new reference
 			if(an->children[i]->kind == AN_VARIABLE) {
 				if(an->children[i]->word->name[0]) {
 					vnum = findvar(cl, an->children[i]->word);
