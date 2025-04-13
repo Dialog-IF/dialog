@@ -1,0 +1,19 @@
+(current player #me)
+(#me is #in #room)
+(room #room)
+
+#deck
+(name *) deck of cards
+(dict *) card
+(* is #in #room)
+(ambiguously plural *)
+
+#box
+(name *) box
+(* is #in #room)
+
+#candy
+(name *) candy
+(plural *)
+(* is #in #room)
+(ambiguously plural *)
