@@ -1,5 +1,5 @@
 CC		= gcc
-CFLAGS		+= -O3 -Wall -DVERSION=\"1a/01-dev\"
+CFLAGS		+= -O3 -Wall -Wno-unused-result -Wno-format-truncation -DVERSION=\"1a/01-dev\"
 WININCLUDE	= winglk
 WINLIB		= ../prebuilt/win32
 
