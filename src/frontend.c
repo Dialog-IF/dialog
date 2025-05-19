@@ -1986,7 +1986,7 @@ int frontend_visit_clauses(struct program *prg, struct arena *temp_arena, struct
 				return 0;
 			}
 		} else if(cl->predicate->builtin == BI_RESOURCEDEF) {
-			char *body, *url, *stem, *alt, *ptr;
+			char *body, *url, *stem, *alt, *opt, *ptr;
 			int id, len;
 
 			if(!decode_output(&body, cl->body, 0, 0, &cl->predicate->pred->arena, "Resource definition body")) {
@@ -1994,12 +1994,23 @@ int frontend_visit_clauses(struct program *prg, struct arena *temp_arena, struct
 			}
 			id = prg->nresource++;
 			prg->resources = realloc(prg->resources, prg->nresource * sizeof(struct extresource));
-			alt = strchr(body, ';');
+			alt = strchr(body, ';'); // First, look for alt text, set off by a semicolon
 			if(alt) {
-				*alt++ = 0;
-				while(*alt == ' ' || *alt == 9) alt++;
+				*alt++ = 0; // If found, replace the semicolon with a null (marking the end of the body string), and step past it
+				while(*alt == ' ' || *alt == 9) alt++; // Then consume any whitespace
 			}
+			opt = strchr(body, ','); // Next, look for options, set off by a comma
+			if(opt) {
+				*opt++ = 0; // Second verse, same as the first
+				while(*opt == ' ' || *opt == 9) opt++;
+				// But we also need to consume any whitespace at the *end* of the option string, which isn't a problem with the alt text
+				while((len = strlen(opt)) && (opt[len - 1] == ' ' || opt[len - 1] == 9)) {
+					opt[len - 1] = 0;
+				}
+			}
+			// Now, consume whitespace at the start of the body
 			while(*body == ' ' || *body == 9) body++;
+			// And at the end
 			while((len = strlen(body)) && (body[len - 1] == ' ' || body[len - 1] == 9)) {
 				body[len - 1] = 0;
 			}
@@ -2027,9 +2038,12 @@ int frontend_visit_clauses(struct program *prg, struct arena *temp_arena, struct
 			if(!alt) {
 				alt = stem;
 			}
+			if(!opt) {
+				opt = "";
+			}
 			prg->resources[id].url = url;
 			prg->resources[id].stem = stem;
-			prg->resources[id].options = "";
+			prg->resources[id].options = opt;
 			prg->resources[id].alt = alt;
 			prg->resources[id].line = cl->line;
 			sub = arena_calloc(&cl->predicate->pred->arena, sizeof(*sub));
@@ -2137,6 +2151,9 @@ int frontend_visit_clauses(struct program *prg, struct arena *temp_arena, struct
 				printf(", local file \"%s\", stem \"%s\"",
 					prg->resources[i].path,
 					prg->resources[i].stem);
+			}
+			if(prg->resources[i].options[0]) { // Non-null option string
+				printf(", options \"%s\"", prg->resources[i].options);
 			}
 			printf(", alt \"%s\"\n", prg->resources[i].alt);
 		}
