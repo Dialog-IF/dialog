@@ -1,0 +1,10 @@
+(style class @statusbar)
+	height: 2em;
+
+(do something) xyzzy
+
+(program entry point)
+	(status bar @statusbar with height 5) {
+		(do something)
+		(do something)
+	}

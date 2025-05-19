@@ -1190,6 +1190,8 @@ static int eval_compute(struct eval_state *es, int op, int a, int b, int *res) {
 			return 1;
 		}
 		break;
+	case BI_DIV_WIDTH: // Not implemented in the debugger, just fail
+		break;
 	default:
 		printf("unimplemented computation %d\n", op);
 		assert(0); exit(1);
@@ -1372,6 +1374,7 @@ static int eval_run(struct eval_state *es) {
 			set_by_ref(ci->oper[0], value_of(ci->oper[1], es), es);
 			break;
 		case I_BEGIN_AREA:
+		case I_BEGIN_AREA_OVERRIDE:
 			assert(ci->oper[0].tag == OPER_BOX);
 			if(!es->forwords) {
 				if(es->divsp == EVAL_MAXDIV) {
