@@ -4635,6 +4635,9 @@ void backend_z(
 	zcore[0x1b] = (filesize / packfactor) & 0xff;
 	//zcore[0x2e] = addr_termchar >> 8;
 	//zcore[0x2f] = addr_termchar & 0xff;
+	if(VERSION[5] == '-' && VERSION[6] == 'd') { // -dev version (check hyphen first because VERSION[6] may not exist)
+		zcore[0x38] = '*'; // Indicate with a star in this unused byte
+	}
 	zcore[0x39] = 'D';
 	zcore[0x3a] = 'i';
 	zcore[0x3b] = 'a';

@@ -8,6 +8,7 @@ gosling.z8: ../../src/dialogc gosling_complete_nostyles.dg
 
 zmachine.out: gosling.z8 gosling.in
 	dfrotz -m -s 1234 gosling.z8 <gosling.in >zmachine.out
+	echo "" >> zmachine.out
 
 zmachine: zmachine.out
 	$(DIFF) zmachine.out zmachine.gold
