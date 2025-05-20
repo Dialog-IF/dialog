@@ -544,6 +544,15 @@ or a local filename.
 Local files are copied into the `.aastory` file,
 and this is the recommended way to work with _feelies_ and embedded graphics.
 
+The _location_ may be followed by one or more _options_, demarcated by commas. For example:
+
+[source]
+----
+(define resource @bg) music/bg.ogg, channel 1, loop
+----
+
+Which options are recognized, and what effects they might have, depends on the backend and interpreter used. At present, no interpreters make use of them. However, unrecognized options will never be an error: interpreters are free to use as many or as few as they like.
+
 === Links to resources
 
 When a resource has been defined, it's possible to link to it using the following syntax:
@@ -597,7 +606,7 @@ The alt-text appears at the end of the resource definition, separated from the l
 ----
 
 If no alt-text is specified, the filename (i.e. location) is used as a default value.
-Only the actual filename is used as alt-text, not the full path.
+Only the actual filename (that is, `manual.pdf` rather than `feelies/manual.pdf`) is used as alt-text, not the full path. Options, if provided, must come first; any commas after a semicolon will be taken as a literal part of the alt-text.
 
 The built-in predicate `(interpreter can embed $)` checks whether the current interpreter is capable of
 displaying a given resource.
