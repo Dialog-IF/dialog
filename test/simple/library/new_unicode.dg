@@ -1,0 +1,12 @@
+(current player #player)
+(#player is #in #room)
+(room #room)
+(look #room) A room built to hold ăppłes and ĂPPŁES.
+
+#apple
+(* is #in #room)
+(name *) ăppłe
+(an *)
+(item *)
+(* is handled)
+
