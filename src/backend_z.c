@@ -337,12 +337,12 @@ static int utf8_to_zscii(uint8_t *dest, int ndest, char *src, uint32_t *special,
 			if(i >= n_extended) { // Not found in the extended ZSCII
 				if(for_dictionary) { // Add a new character to the encoding
 					if(n_extended+1 >= EXTENDED_ZSCII_MAX) { // But we can't!
-						report(LVL_ERR, 0, "Tried to add Unicode character U+%04x to the encoding, but all codepoints have already been allocated! Use the TODO command line option to create more space.", uchar);
+						report(LVL_ERR, 0, "Tried to add Unicode character U+%04x to the encoding, but all codepoints have already been allocated! Use the --no-zscii command line option to save space.", uchar);
 						exit(1);
 					}
 					extended_zscii[i] = uchar;
 				//	if(verbose >= 3) { // TODO
-						report(LVL_DEBUG, 0, "Adding Unicode character U+%04x at codepoint %d", uchar, n_extended);
+						report(LVL_DEBUG, 0, "Adding Unicode character U+%04x at codepoint %d", uchar, EXTENDED_ZSCII_BASE+i);
 				//	}
 					dest[outpos++] = EXTENDED_ZSCII_BASE + i;
 					n_extended++;
@@ -4900,6 +4900,7 @@ void backend_z(
 	}
 	report(LVL_DEBUG, 0, "Objects used: %d of %d (%d%%)", prg->nworldobj, 0x1ffe, (prg->nworldobj)*100/0x1ffe);
 	report(LVL_DEBUG, 0, "Dictionary words used: %d of %d (%d%%)", prg->ndictword, 0x1dff, (prg->ndictword)*100/0x1dff);
+	report(LVL_DEBUG, 0, "Extended ZSCII characters used: %d of %d (%d%%)", n_extended * (addr_unicode?1:0), EXTENDED_ZSCII_MAX, n_extended*(addr_unicode?1:0)*100/EXTENDED_ZSCII_MAX);
 	report(LVL_DEBUG, 0, "Addressable memory used: %05d of %d bytes (%d%%)", used_addressable, 64*1024, used_addressable*100/(64*1024));
 	report(LVL_DEBUG, 0, "        Object table:    %5d", used_objects1);
 	report(LVL_DEBUG, 0, "        Object vars:     %5d", used_objects2);
