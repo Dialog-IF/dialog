@@ -64,6 +64,10 @@ void usage(char *prgname) {
 	fprintf(stderr, "--long-term -L    Set long-term heap size (default 500 words).\n");
 	fprintf(stderr, "--strip     -s    Strip internal object names.\n");
 	fprintf(stderr, "\n");
+	fprintf(stderr, "Only for z5, z8, or zblorb format:\n");
+	fprintf(stderr, "\n");
+	fprintf(stderr, "--no-zscii  -Z    Don't use the standard extended ZSCII table.\n");
+	fprintf(stderr, "\n");
 	fprintf(stderr, "Only for zblorb format:\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "--cover     -c    Cover image filename (PNG, max 1200x1200).\n");
@@ -85,6 +89,7 @@ int main(int argc, char **argv) {
 		{"aux", 1, 0, 'A'},
 		{"long-term", 1, 0, 'L'},
 		{"strip", 0, 0, 's'},
+		{"no-zscii", 0, 0, 'Z'},
 		{0, 0, 0, 0}
 	};
 
@@ -99,6 +104,7 @@ int main(int argc, char **argv) {
 	int opt, i;
 	struct program *prg;
 	int aamachine = 0;
+	int preserve_zscii = 1;
 	struct predname *predname;
 	struct predicate *pred;
 	char compiletime_buf[8], reldate_buf[16];
@@ -108,7 +114,7 @@ int main(int argc, char **argv) {
 	comp_init();
 
 	do {
-		opt = getopt_long(argc, argv, "?hVvo:t:r:c:a:H:A:L:s", longopts, 0);
+		opt = getopt_long(argc, argv, "?hVvo:t:r:c:a:H:A:L:sZ", longopts, 0);
 		switch(opt) {
 			case 0:
 			case '?':
@@ -159,6 +165,9 @@ int main(int argc, char **argv) {
 				break;
 			case 's':
 				strip = 1;
+				break;
+			case 'Z':
+				preserve_zscii = 0;
 				break;
 			default:
 				if(opt >= 0) {
@@ -219,8 +228,10 @@ int main(int argc, char **argv) {
 		prg,
 		argc - optind,
 		argv + optind,
-		aamachine? prepare_dictionary_aa : prepare_dictionary_z))
-	{
+		aamachine? prepare_dictionary_aa : (
+			preserve_zscii ? prepare_dictionary_z_preserve : prepare_dictionary_z_replace
+		)
+	)) {
 		exit(1);
 	}
 
