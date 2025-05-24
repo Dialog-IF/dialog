@@ -25,6 +25,6 @@ debugger: debugger.out
 test: debugger zmachine
 
 clean:
-	rm -f *.z8 *.out
+	rm -f *.z8 *.out stdlib.dg
 
 .PHONY:		test clean debugger zmachine

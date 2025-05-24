@@ -1,0 +1,3 @@
+Warning: Unsupported character U+013a in dictionary word '@¡ħěłĺø'. This word will never be recognized by the parser.
+Warning: Unsupported character U+0111 in dictionary word '@ŵőřľđ!'. This word will never be recognized by the parser.
+# This test needs to be fixed now that Dialog can cope with Unicode characters in dictionary words. We'll have to find some other way to handle this...
