@@ -89,7 +89,7 @@ uint16_t default_extended_zscii[69] = { // The default mapping, assumed by inter
 	0x0fe, 0x0f0, 0x0de, 0x0d0, 0x0a3, 0x153, 0x152, 0x0a1, 0x0bf
 };
 
-uint16_t extended_zscii[97]; // Unicode values for ZSCII 155..251 (fits in 16 bits because it's restricted to the BMP)
+uint16_t extended_zscii[97]; // Unicode values for ZSCII 155..251 (each one fits in 16 bits because it's restricted to the BMP)
 uint8_t n_extended = 0; // How many of the above are filled in
 #define EXTENDED_ZSCII_BASE 155
 #define EXTENDED_ZSCII_MAX 97
@@ -274,9 +274,17 @@ static uint8_t unicode_to_zscii(uint16_t uchar) {
 		for(i = 0; i < n_extended; i++) {
 			if(extended_zscii[i] == uchar) break;
 		}
-		if(i >= n_extended) {
-			report(LVL_ERR, 0, "Unsupported Unicode character U+%04x in removable endings.", uchar); // TODO
-			exit(1);
+		if(i >= n_extended) { // Not in the encoding yet, so we add it
+			if(n_extended+1 >= EXTENDED_ZSCII_MAX) { // But we can't!
+				report(LVL_ERR, 0, "Tried to add Unicode character U+%04x to the encoding, but all codepoints have already been allocated! Use the --no-zscii command line option to save space.", uchar);
+				exit(1);
+			}
+			extended_zscii[i] = uchar;
+			if(verbose >= 3) {
+				report(LVL_DEBUG, 0, "Adding Unicode character U+%04x at codepoint %d", uchar, EXTENDED_ZSCII_BASE+i);
+			}
+			n_extended++;
+			return EXTENDED_ZSCII_BASE + i;
 		} else {
 			return EXTENDED_ZSCII_BASE + i;
 		}
@@ -341,12 +349,12 @@ static int utf8_to_zscii(uint8_t *dest, int ndest, char *src, uint32_t *special,
 						exit(1);
 					}
 					extended_zscii[i] = uchar;
-				//	if(verbose >= 3) { // TODO
+					if(verbose >= 3) {
 						report(LVL_DEBUG, 0, "Adding Unicode character U+%04x at codepoint %d", uchar, EXTENDED_ZSCII_BASE+i);
-				//	}
+					}
 					dest[outpos++] = EXTENDED_ZSCII_BASE + i;
 					n_extended++;
-				} else { // This is in a string context, so we don't add anything to the encoding - just return, and use @print_unicode to handle it
+				} else { // This is in a string context instead of a dictionary context, so we don't add anything to the encoding - just return, and use @print_unicode to handle it
 					dest[outpos] = 0;
 					if(special) *special = uchar;
 					return inpos;
@@ -841,10 +849,10 @@ void prepare_dictionary_z(struct program *prg, int preserve_zscii) {
 		exit(1);
 	}
 	
-	if(preserve_zscii) { // Use the existing table as much as possible
+	if(preserve_zscii) { // Use the existing table as much as possible, putting our new characters at the end of it
 		memcpy(extended_zscii, default_extended_zscii, sizeof(default_extended_zscii));
 		n_extended = sizeof(default_extended_zscii) / sizeof(default_extended_zscii[0]);
-	} else {
+	} else { // Discard the existing table, giving us the maximum space possible
 		n_extended = 0;
 	}
 
@@ -918,6 +926,7 @@ void prepare_dictionary_z(struct program *prg, int preserve_zscii) {
 	}
 }
 
+// Because the callback has a specific form it's supposed to take, it's easier to just write two wrappers in that form than to find another way of passing in a flag
 void prepare_dictionary_z_preserve(struct program *prg){
 	prepare_dictionary_z(prg, 1);
 }
