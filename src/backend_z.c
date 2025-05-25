@@ -262,6 +262,23 @@ uint16_t resolve_rnum(uint16_t num) {
 	return r->actual_routine;
 }
 
+uint8_t add_extended_zscii(uint16_t uchar) {
+	uint8_t i = n_extended, j;
+	if(n_extended+1 >= EXTENDED_ZSCII_MAX) { // But we can't!
+		report(LVL_ERR, 0, "Tried to add Unicode character U+%04x to the encoding, but all codepoints have already been allocated! Use the --no-zscii command line option to save space.", uchar);
+		exit(1);
+	}
+	extended_zscii[i] = uchar;
+	if(verbose >= 3) {
+		report(LVL_DEBUG, 0, "Adding Unicode character U+%04x at ZSCII codepoint %d", uchar, EXTENDED_ZSCII_BASE+i);
+	}
+	n_extended++;
+	
+	
+	
+	return EXTENDED_ZSCII_BASE + i;
+}
+
 static uint8_t unicode_to_zscii(uint16_t uchar) {
 	int i;
 
@@ -275,16 +292,7 @@ static uint8_t unicode_to_zscii(uint16_t uchar) {
 			if(extended_zscii[i] == uchar) break;
 		}
 		if(i >= n_extended) { // Not in the encoding yet, so we add it
-			if(n_extended+1 >= EXTENDED_ZSCII_MAX) { // But we can't!
-				report(LVL_ERR, 0, "Tried to add Unicode character U+%04x to the encoding, but all codepoints have already been allocated! Use the --no-zscii command line option to save space.", uchar);
-				exit(1);
-			}
-			extended_zscii[i] = uchar;
-			if(verbose >= 3) {
-				report(LVL_DEBUG, 0, "Adding Unicode character U+%04x at codepoint %d", uchar, EXTENDED_ZSCII_BASE+i);
-			}
-			n_extended++;
-			return EXTENDED_ZSCII_BASE + i;
+			return add_extended_zscii(uchar);
 		} else {
 			return EXTENDED_ZSCII_BASE + i;
 		}
@@ -338,22 +346,16 @@ static int utf8_to_zscii(uint8_t *dest, int ndest, char *src, uint32_t *special,
 				uchar += 129 - 16;
 			}
 			dest[outpos++] = uchar;
+		} else if(uchar > 0xFFFF) {
+			report(LVL_ERR, 0, "Character U+%06x is outside the Basic Multilingual Plane, which the Z-machine does not support.", uchar);
+			exit(1);
 		} else {
 			for(i = 0; i < n_extended; i++) {
 				if(extended_zscii[i] == uchar) break;
 			}
 			if(i >= n_extended) { // Not found in the extended ZSCII
 				if(for_dictionary) { // Add a new character to the encoding
-					if(n_extended+1 >= EXTENDED_ZSCII_MAX) { // But we can't!
-						report(LVL_ERR, 0, "Tried to add Unicode character U+%04x to the encoding, but all codepoints have already been allocated! Use the --no-zscii command line option to save space.", uchar);
-						exit(1);
-					}
-					extended_zscii[i] = uchar;
-					if(verbose >= 3) {
-						report(LVL_DEBUG, 0, "Adding Unicode character U+%04x at codepoint %d", uchar, EXTENDED_ZSCII_BASE+i);
-					}
-					dest[outpos++] = EXTENDED_ZSCII_BASE + i;
-					n_extended++;
+					dest[outpos++] = add_extended_zscii(uchar);
 				} else { // This is in a string context instead of a dictionary context, so we don't add anything to the encoding - just return, and use @print_unicode to handle it
 					dest[outpos] = 0;
 					if(special) *special = uchar;
@@ -378,11 +380,11 @@ static int encode_chars(uint8_t *dest, int ndest, uint16_t *for_dict, uint8_t *s
 
 	while((zscii = *src++)) {
 		if(n >= ndest) return n;
-		if(zscii == ' ') {
+		if(zscii == ' ') { // Space: 0 in every alphabet
 			dest[n++] = 0;
-		} else if(zscii >= 'a' && zscii <= 'z') {
+		} else if(zscii >= 'a' && zscii <= 'z') { // Lowercase letter: alphabet 0
 			dest[n++] = 6 + zscii - 'a';
-		} else if(zscii >= 'A' && zscii <= 'Z') {
+		} else if(zscii >= 'A' && zscii <= 'Z') { // Uppercase letter: use alphabet 0 (lowercase) if this is for a dictionary word, otherwise shift to alphabet 1 (uppercase)
 			if(for_dict) {
 				dest[n++] = 6 + zscii - 'A';
 			} else {
@@ -390,11 +392,12 @@ static int encode_chars(uint8_t *dest, int ndest, uint16_t *for_dict, uint8_t *s
 				if(n >= ndest) return n;
 				dest[n++] = 6 + zscii - 'A';
 			}
-		} else if(zscii < 128 && (str = strchr(a2, (char) zscii))) {
+		} else if(zscii < 128 && (str = strchr(a2, (char) zscii))) { // Non-letter character found in alphabet 2 (numbers and punctuation)
 			dest[n++] = 5;
 			if(n >= ndest) return n;
 			dest[n++] = 7 + (str - a2);
-		} else {
+		} else { // Not in any alphabet: use alphabet 2 character 6 (escape), then the next two pentets are the ZSCII codepoint
+			// This is where we should do case conversion for non-ASCII letters TODO
 			dest[n++] = 5;
 			if(n >= ndest) return n;
 			dest[n++] = 6;
@@ -865,7 +868,7 @@ void prepare_dictionary_z(struct program *prg, int preserve_zscii) {
 		w = prg->dictwordnames[i];
 		dictionary[i].word = w;
 		assert(w->name[0]);
-		if(w->name[0] >= 16 && w->name[0] <= 19 && !w->name[1]) { // Control character
+		if(w->name[0] >= 16 && w->name[0] <= 19 && !w->name[1]) { // Control character (for the arrow keys) - Dialog keeps these below 32, but ZSCII keeps them above 128
 			zbuf[0] = w->name[0] - 16 + 129;
 			zbuf[1] = 0;
 		} else {
@@ -4559,7 +4562,12 @@ void backend_z(
 	used_wordmaps = org - used_wordmaps; // End of wordmaps
 	used_unicode = org;
 	
-	if(n_extended && memcmp(extended_zscii, default_extended_zscii, n_extended*sizeof(extended_zscii[0]))) { // A Unicode table is required - the extended ZSCII table is not empty, and not default
+	if(
+		n_extended != 0 && (
+			n_extended != sizeof(extended_zscii) ||
+			memcmp(extended_zscii, default_extended_zscii, n_extended*sizeof(extended_zscii[0]))
+		)
+	) { // A Unicode table is required - the extended ZSCII table is not empty, and not default
 		addr_extheader = org;
 		org += 8; // We only need eight bytes in the header extension table
 		addr_unicode = org;
