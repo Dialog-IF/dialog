@@ -41,7 +41,7 @@ ast.o:			ast.c ast.h arena.h report.h common.h Makefile
 backend.o:		backend.c backend_z.h backend_aa.h common.h arena.h ast.h frontend.h compile.h report.h unicode.h Makefile
 			${CC} -c ${CFLAGS} -o $@ $<
 
-backend_z.o:		backend_z.c ast.h frontend.h zcode.h blorb.h report.h common.h compile.h eval.h unicode.h Makefile
+backend_z.o:		backend_z.c ast.h frontend.h zcode.h blorb.h report.h common.h compile.h eval.h Makefile
 			${CC} -c ${CFLAGS} -o $@ $<
 
 backend_aa.o:		backend_aa.c backend_aa.h ast.h common.h arena.h report.h unicode.h compile.h eval.h aavm.h crc32.h Makefile

@@ -17,7 +17,6 @@
 #include "zcode.h"
 #include "blorb.h"
 #include "backend_z.h"
-#include "unicode.h"
 
 #define TWEAK_BINSEARCH 16
 
@@ -90,21 +89,8 @@ uint16_t default_extended_zscii[69] = { // The default mapping, assumed by inter
 	0x0fe, 0x0f0, 0x0de, 0x0d0, 0x0a3, 0x153, 0x152, 0x0a1, 0x0bf
 };
 
-uint8_t default_extended_lowercase[69] = { // And the casing for those
-	155, 156, 157, 155, 156, 157, 161, 162, 163, // ä ö ü Ä Ö Ü ß « »
-	164, 165, 166, 164, 165, // ë ï ÿ Ë Ï
-	169, 170, 171, 172, 173, 174, 169, 170, 171, 172, 173, 174, // á é í ó ú ý Á É Í Ó Ú Ý
-	181, 182, 183, 184, 185, 181, 182, 183, 184, 185, // à è ì ò ù À È Ì Ò Ù
-	191, 192, 193, 194, 195, 191, 192, 193, 194, 195, // â ê î ô û Â Ê Î Ô Û
-	201, 201, 203, 203, // å Å ø Ø
-	205, 206, 207, 205, 206, 207, // ã ñ õ Ã Ñ Õ
-	211, 211, 213, 213, 215, 216, 215, 216, // æ Æ ç Ç þ ð Þ Ð
-	219, 220, 220, 222, 223 // £ œ Œ ¡ ¿
-};
-
 uint16_t extended_zscii[97]; // Unicode values for ZSCII 155..251 (each one fits in 16 bits because it's restricted to the BMP)
 uint8_t n_extended = 0; // How many of the above are filled in
-uint8_t extended_lowercase[97]; // Which ZSCII value is the lowercase equivalent of each of these
 #define EXTENDED_ZSCII_BASE 155
 #define EXTENDED_ZSCII_MAX 97
 
@@ -278,27 +264,17 @@ uint16_t resolve_rnum(uint16_t num) {
 
 uint8_t add_extended_zscii(uint16_t uchar) {
 	uint8_t i = n_extended, j;
-	uint16_t lower;
-	
 	if(n_extended+1 >= EXTENDED_ZSCII_MAX) { // But we can't!
 		report(LVL_ERR, 0, "Tried to add Unicode character U+%04x to the encoding, but all codepoints have already been allocated! Use the --no-zscii command line option to save space.", uchar);
 		exit(1);
 	}
 	extended_zscii[i] = uchar;
-	report(LVL_DEBUG, 0, "Adding Unicode character U+%04x at ZSCII codepoint %d", uchar, EXTENDED_ZSCII_BASE+i);
+	if(verbose >= 3) {
+		report(LVL_DEBUG, 0, "Adding Unicode character U+%04x at ZSCII codepoint %d", uchar, EXTENDED_ZSCII_BASE+i);
+	}
 	n_extended++;
 	
-	// Now ensure its lowercase equivalent exists
-	lower = unicode_to_lower(uchar);
-	for(j = 0; j < n_extended; j++) {
-		if(extended_zscii[j] == lower) break;
-	}
-	if(j >= n_extended) {
-		report(LVL_DEBUG, 0, "Adding lowercase equivalent U+%04x", lower);
-		extended_lowercase[i] = add_extended_zscii(lower);
-	} else {
-		extended_lowercase[i] = EXTENDED_ZSCII_BASE + j;
-	}
+	
 	
 	return EXTENDED_ZSCII_BASE + i;
 }
@@ -878,7 +854,6 @@ void prepare_dictionary_z(struct program *prg, int preserve_zscii) {
 	
 	if(preserve_zscii) { // Use the existing table as much as possible, putting our new characters at the end of it
 		memcpy(extended_zscii, default_extended_zscii, sizeof(default_extended_zscii));
-		memcpy(extended_lowercase, default_extended_lowercase, sizeof(default_extended_lowercase));
 		n_extended = sizeof(default_extended_zscii) / sizeof(default_extended_zscii[0]);
 	} else { // Discard the existing table, giving us the maximum space possible
 		n_extended = 0;
