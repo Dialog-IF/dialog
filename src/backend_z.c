@@ -274,8 +274,6 @@ uint8_t add_extended_zscii(uint16_t uchar) {
 	}
 	n_extended++;
 	
-	
-	
 	return EXTENDED_ZSCII_BASE + i;
 }
 
