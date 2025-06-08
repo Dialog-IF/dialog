@@ -78,7 +78,7 @@ struct wordtable {
 	uint16_t		*words;
 };
 
-uint16_t extended_zscii[69] = {
+uint16_t default_extended_zscii[69] = { // The default mapping, assumed by interpreters that don't support a Unicode translation table (like Ozmoo)
 	// These unicode chars map to zscii characters 155..223 in order.
 	0x0e4, 0x0f6, 0x0fc, 0x0c4, 0x0d6, 0x0dc, 0x0df, 0x0bb, 0x0ab, 0x0eb,
 	0x0ef, 0x0ff, 0x0cb, 0x0cf, 0x0e1, 0x0e9, 0x0ed, 0x0f3, 0x0fa, 0x0fd,
@@ -88,6 +88,11 @@ uint16_t extended_zscii[69] = {
 	0x0e3, 0x0f1, 0x0f5, 0x0c3, 0x0d1, 0x0d5, 0x0e6, 0x0c6, 0x0e7, 0x0c7,
 	0x0fe, 0x0f0, 0x0de, 0x0d0, 0x0a3, 0x153, 0x152, 0x0a1, 0x0bf
 };
+
+uint16_t extended_zscii[97]; // Unicode values for ZSCII 155..251 (each one fits in 16 bits because it's restricted to the BMP)
+uint8_t n_extended = 0; // How many of the above are filled in
+#define EXTENDED_ZSCII_BASE 155
+#define EXTENDED_ZSCII_MAX 97
 
 #define ENVF_ENV		0x010
 #define ENVF_CUT_SAVED		0x020
@@ -257,6 +262,21 @@ uint16_t resolve_rnum(uint16_t num) {
 	return r->actual_routine;
 }
 
+uint8_t add_extended_zscii(uint16_t uchar) {
+	uint8_t i = n_extended, j;
+	if(n_extended+1 >= EXTENDED_ZSCII_MAX) { // But we can't!
+		report(LVL_ERR, 0, "Tried to add Unicode character U+%04x to the encoding, but all codepoints have already been allocated! Use the --no-zscii command line option to save space.", uchar);
+		exit(1);
+	}
+	extended_zscii[i] = uchar;
+	if(verbose >= 3) {
+		report(LVL_DEBUG, 0, "Adding Unicode character U+%04x at ZSCII codepoint %d", uchar, EXTENDED_ZSCII_BASE+i);
+	}
+	n_extended++;
+	
+	return EXTENDED_ZSCII_BASE + i;
+}
+
 static uint8_t unicode_to_zscii(uint16_t uchar) {
 	int i;
 
@@ -266,19 +286,18 @@ static uint8_t unicode_to_zscii(uint16_t uchar) {
 		}
 		return uchar;
 	} else {
-		for(i = 0; i < sizeof(extended_zscii) / 2; i++) {
+		for(i = 0; i < n_extended; i++) {
 			if(extended_zscii[i] == uchar) break;
 		}
-		if(i >= sizeof(extended_zscii) / 2) {
-			report(LVL_ERR, 0, "Unsupported unicode character U+%04x in dictionary word context.", uchar);
-			exit(1);
+		if(i >= n_extended) { // Not in the encoding yet, so we add it
+			return add_extended_zscii(uchar);
 		} else {
-			return 155 + i;
+			return EXTENDED_ZSCII_BASE + i;
 		}
 	}
 }
 
-static int utf8_to_zscii(uint8_t *dest, int ndest, char *src, uint32_t *special, int unicode_halt) {
+static int utf8_to_zscii(uint8_t *dest, int ndest, char *src, uint32_t *special, int for_dictionary) {
 	uint8_t ch;
 	uint32_t uchar;
 	int outpos = 0, inpos = 0, i;
@@ -287,20 +306,16 @@ static int utf8_to_zscii(uint8_t *dest, int ndest, char *src, uint32_t *special,
 	/* Stops on end of input, special unicode char, or full output. */
 	/* The output is always null-terminated. */
 	/* Returns number of utf8 bytes consumed. */
-	
-	/* Experiment: parameter lets us not halt on Unicode char, make it a warning instead of an error in certain contexts, because the compiler can sometimes be overzealous with these errors and disallow perfectly valid programs if it can't prove certain words are *not* used for parsing */
-	/* Instead, when this happens, we'll replace it with a period, which will render the word unusable for parsing but won't crash anything */
+	/* If for_dictionary is true, Unicode characters encountered are added to the ZSCII encoding. If false, they cause a halt instead. */
 
 	for(;;) {
 		if(outpos >= ndest - 1) {
 			dest[outpos] = 0;
-	//		if(special) *special = 0;
 			return inpos;
 		}
 		ch = src[inpos];
 		if(!ch) {
 			dest[outpos] = 0;
-	//		if(special) *special = 0;
 			return inpos;
 		}
 		inpos++;
@@ -329,17 +344,23 @@ static int utf8_to_zscii(uint8_t *dest, int ndest, char *src, uint32_t *special,
 				uchar += 129 - 16;
 			}
 			dest[outpos++] = uchar;
+		} else if(uchar > 0xFFFF) {
+			report(LVL_ERR, 0, "Character U+%06x is outside the Basic Multilingual Plane, which the Z-machine does not support.", uchar);
+			exit(1);
 		} else {
-			for(i = 0; i < sizeof(extended_zscii) / 2; i++) {
+			for(i = 0; i < n_extended; i++) {
 				if(extended_zscii[i] == uchar) break;
 			}
-			if(i >= sizeof(extended_zscii) / 2) {
-				dest[outpos] = 0;
-				if(special) *special = uchar;
-				if(unicode_halt) return inpos; // Now only halt if our caller asked us to
-				dest[outpos++] = '.'; // Periods inside dictionary words render them unusable, a feature sometimes used in the I6 parser
-			} else {
-				dest[outpos++] = 155 + i;
+			if(i >= n_extended) { // Not found in the extended ZSCII
+				if(for_dictionary) { // Add a new character to the encoding
+					dest[outpos++] = add_extended_zscii(uchar);
+				} else { // This is in a string context instead of a dictionary context, so we don't add anything to the encoding - just return, and use @print_unicode to handle it
+					dest[outpos] = 0;
+					if(special) *special = uchar;
+					return inpos;
+				}
+			} else { // Already exists in the encoding
+				dest[outpos++] = EXTENDED_ZSCII_BASE + i;
 			}
 			// In the future, we should convert extended characters to lowercase
 			// for dictionary words. For now, story authors are expected to include
@@ -357,11 +378,11 @@ static int encode_chars(uint8_t *dest, int ndest, uint16_t *for_dict, uint8_t *s
 
 	while((zscii = *src++)) {
 		if(n >= ndest) return n;
-		if(zscii == ' ') {
+		if(zscii == ' ') { // Space: 0 in every alphabet
 			dest[n++] = 0;
-		} else if(zscii >= 'a' && zscii <= 'z') {
+		} else if(zscii >= 'a' && zscii <= 'z') { // Lowercase letter: alphabet 0
 			dest[n++] = 6 + zscii - 'a';
-		} else if(zscii >= 'A' && zscii <= 'Z') {
+		} else if(zscii >= 'A' && zscii <= 'Z') { // Uppercase letter: use alphabet 0 (lowercase) if this is for a dictionary word, otherwise shift to alphabet 1 (uppercase)
 			if(for_dict) {
 				dest[n++] = 6 + zscii - 'A';
 			} else {
@@ -369,11 +390,12 @@ static int encode_chars(uint8_t *dest, int ndest, uint16_t *for_dict, uint8_t *s
 				if(n >= ndest) return n;
 				dest[n++] = 6 + zscii - 'A';
 			}
-		} else if(zscii < 128 && (str = strchr(a2, (char) zscii))) {
+		} else if(zscii < 128 && (str = strchr(a2, (char) zscii))) { // Non-letter character found in alphabet 2 (numbers and punctuation)
 			dest[n++] = 5;
 			if(n >= ndest) return n;
 			dest[n++] = 7 + (str - a2);
-		} else {
+		} else { // Not in any alphabet: use alphabet 2 character 6 (escape), then the next two pentets are the ZSCII codepoint
+			// This is where we should do case conversion for non-ASCII letters TODO
 			dest[n++] = 5;
 			if(n >= ndest) return n;
 			dest[n++] = 6;
@@ -807,7 +829,7 @@ int cmp_dictword(const void *a, const void *b) {
 	return 0;
 }
 
-void prepare_dictionary_z(struct program *prg) {
+void prepare_dictionary_z(struct program *prg, int preserve_zscii) {
 	int i, n;
 	uint8_t pentets[9];
 	uint8_t zbuf[MAXSTRING];
@@ -827,6 +849,13 @@ void prepare_dictionary_z(struct program *prg) {
 		report(LVL_ERR, 0, "Too many dictionary words.");
 		exit(1);
 	}
+	
+	if(preserve_zscii) { // Use the existing table as much as possible, putting our new characters at the end of it
+		memcpy(extended_zscii, default_extended_zscii, sizeof(default_extended_zscii));
+		n_extended = sizeof(default_extended_zscii) / sizeof(default_extended_zscii[0]);
+	} else { // Discard the existing table, giving us the maximum space possible
+		n_extended = 0;
+	}
 
 	prg->dictmap = arena_calloc(&prg->arena, prg->ndictword * sizeof(uint16_t));
 
@@ -837,12 +866,12 @@ void prepare_dictionary_z(struct program *prg) {
 		w = prg->dictwordnames[i];
 		dictionary[i].word = w;
 		assert(w->name[0]);
-		if(w->name[0] >= 16 && w->name[0] <= 19 && !w->name[1]) {
+		if(w->name[0] >= 16 && w->name[0] <= 19 && !w->name[1]) { // Control character (for the arrow keys) - Dialog keeps these below 32, but ZSCII keeps them above 128
 			zbuf[0] = w->name[0] - 16 + 129;
 			zbuf[1] = 0;
 		} else {
-			(void) utf8_to_zscii(zbuf, sizeof(zbuf), w->name, &uchar, 0);
-			if(uchar) { // Invalid Unicode character
+			(void) utf8_to_zscii(zbuf, sizeof(zbuf), w->name, &uchar, 1);
+			if(uchar) { // Invalid Unicode character - this should never happen any more
 				if(!zbuf[1]) { // Single-character word
 			//		snprintf(zbuf+1, 6, "%04x", uchar); // Store them as meaningful values in the dictionary for later debugging: .01ff or the like
 					zbuf[0] = '.'; // Convert to '..'
@@ -877,7 +906,7 @@ void prepare_dictionary_z(struct program *prg) {
 	for(i = 0; i < ndict; ) {
 		w = dictionary[i].word;
 		if(dictionary[i].n_essential == 1) {
-			(void) utf8_to_zscii(zbuf, sizeof(zbuf), w->name, &uchar, 1);
+			(void) utf8_to_zscii(zbuf, sizeof(zbuf), w->name, &uchar, 0); // Don't set the "add Unicode to ZSCII" flag this time, since the encoding should already have been updated to support it
 			assert(!uchar);
 			prg->dictmap[w->dict_id] = 0x3e00 | zbuf[0];
 			memmove(dictionary + i, dictionary + i + 1, (ndict - i - 1) * sizeof(struct dictword));
@@ -898,6 +927,14 @@ void prepare_dictionary_z(struct program *prg) {
 	}
 }
 
+// Because the callback has a specific form it's supposed to take, it's easier to just write two wrappers in that form than to find another way of passing in a flag
+void prepare_dictionary_z_preserve(struct program *prg){
+	prepare_dictionary_z(prg, 1);
+}
+void prepare_dictionary_z_replace(struct program *prg){
+	prepare_dictionary_z(prg, 0);
+}
+
 void init_backend_wobj(struct program *prg, int id, struct backend_wobj *wobj, int strip) {
 	uint8_t pentets[256];
 	int n;
@@ -908,7 +945,7 @@ void init_backend_wobj(struct program *prg, int id, struct backend_wobj *wobj, i
 		pentets[0] = 5;
 		n = 1;
 	} else {
-		n = utf8_to_zscii(zbuf, sizeof(zbuf), prg->worldobjnames[id]->name, &uchar, 1);
+		n = utf8_to_zscii(zbuf, sizeof(zbuf), prg->worldobjnames[id]->name, &uchar, 0); // TODO - should this add characters to the encoding?
 		if(uchar) {
 			report(
 				LVL_ERR,
@@ -1052,7 +1089,7 @@ static uint32_t compile_dictword(struct program *prg, struct routine *r, struct 
 	zdict = tagged & 0x1fff;
 	assert(zdict < ndict);
 
-	n = utf8_to_zscii(zbuf, sizeof(zbuf), w->name, &uchar, 1);
+	n = utf8_to_zscii(zbuf, sizeof(zbuf), w->name, &uchar, 0); // All Unicode characters needed should already have been added to the ZSCII encoding in prepare_dictionary_z
 	assert(!w->name[n]);
 	assert(!uchar);
 	if(strlen((char *) zbuf) == dictionary[zdict].n_essential) {
@@ -1171,7 +1208,7 @@ static void generate_output_from_utf8(struct program *prg, struct routine *r, in
 
 	for(pos = 0; utf8[pos]; pos += n) {
 		uchar = 0;
-		n = utf8_to_zscii(zbuf, sizeof(zbuf), utf8 + pos, &uchar, 1);
+		n = utf8_to_zscii(zbuf, sizeof(zbuf), utf8 + pos, &uchar, 0);
 		if(n && *zbuf) {
 			stringlabel = find_global_string(zbuf)->global_label;
 		} else {
@@ -1338,7 +1375,7 @@ void compile_trace_output(struct predname *predname, uint16_t label) {
 		} else {
 			if(bufpos) {
 				buf[bufpos] = 0;
-				utf8_to_zscii(zbuf, sizeof(zbuf), buf, &uchar, 1);
+				utf8_to_zscii(zbuf, sizeof(zbuf), buf, &uchar, 0);
 				if(uchar) {
 					report(LVL_ERR, 0, "Unsupported character U+%04x in part of predicate name %s", uchar, predname->printed_name);
 					exit(1);
@@ -1360,7 +1397,7 @@ void compile_trace_output(struct predname *predname, uint16_t label) {
 	}
 	if(bufpos) {
 		buf[bufpos] = 0;
-		utf8_to_zscii(zbuf, sizeof(zbuf), buf, &uchar, 1);
+		utf8_to_zscii(zbuf, sizeof(zbuf), buf, &uchar, 0);
 		if(uchar) {
 			report(LVL_ERR, 0, "Unsupported character U+%04x in part of predicate name %s", uchar, predname->printed_name);
 			exit(1);
@@ -4158,8 +4195,8 @@ void backend_z(
 {
 	int nglobal;
 	uint16_t addr_abbrevtable, addr_abbrevstr, addr_objtable, addr_globals, addr_static;
-	uint16_t addr_scratch, addr_heap, addr_heapend, addr_aux, addr_lts, addr_dictionary, addr_seltable;
-	uint16_t used_addressable, used_objects1, used_objects2, used_wordmaps, used_routines, used_strings; // How much of the 64KiB of addressable memory have we used, for what purposes? We don't actually need this value for compilation, but if we save it for the end, we can give better diagnostics. Everything else is used for strings and routines, but we have either four or eight times as much of that, so breaking it down further is unlikely to be helpful.
+	uint16_t addr_scratch, addr_heap, addr_heapend, addr_aux, addr_lts, addr_extheader, addr_unicode, addr_dictionary, addr_seltable;
+	uint16_t used_addressable, used_objects1, used_objects2, used_wordmaps, used_unicode, used_routines, used_strings; // How much of the 64KiB of addressable memory have we used, for what purposes? We don't actually need this value for compilation, but if we save it for the end, we can give better diagnostics. Everything else is used for strings and routines, but we have either four or eight times as much of that, so breaking it down further is unlikely to be helpful.
 	uint8_t used_attributes; // How many of the Z-machine's low-level object attributes have we used?
 	uint32_t org;
 	uint32_t filesize;
@@ -4464,8 +4501,7 @@ void backend_z(
 	org += nglobal * 2;
 	
 	// Dialog stores per-object variables in its own arrays, instead of using the Z-machine property tables. That's what comes next.
-	
-	used_objects2 = org; // Start of secondary object data(?)
+	used_objects2 = org; // Start of object property data
 	
 	for(i = 0; i < prg->npredicate; i++) {
 		predname = prg->predicates[i];
@@ -4483,7 +4519,7 @@ void backend_z(
 		}
 	}
 	
-	used_objects2 = org - used_objects2; // End of secondary object data(?)
+	used_objects2 = org - used_objects2; // End of object property data
 
 	addr_abbrevstr = org;
 	org += 2;
@@ -4522,6 +4558,24 @@ void backend_z(
 	}
 	
 	used_wordmaps = org - used_wordmaps; // End of wordmaps
+	used_unicode = org;
+	
+	if(
+		n_extended != 0 && (
+			n_extended != sizeof(extended_zscii) ||
+			memcmp(extended_zscii, default_extended_zscii, n_extended*sizeof(extended_zscii[0]))
+		)
+	) { // A Unicode table is required - the extended ZSCII table is not empty, and not default
+		addr_extheader = org;
+		org += 8; // We only need eight bytes in the header extension table
+		addr_unicode = org;
+		org += 1 + 2*n_extended;
+	} else {
+		addr_extheader = 0;
+		addr_unicode = 0;
+	}
+	
+	used_unicode = org - used_unicode;
 	used_addressable = org; // End of addressable memory
 
 	org = (org + 7) & ~7; // Round up to the next multiple of 8
@@ -4635,6 +4689,8 @@ void backend_z(
 	zcore[0x1b] = (filesize / packfactor) & 0xff;
 	//zcore[0x2e] = addr_termchar >> 8;
 	//zcore[0x2f] = addr_termchar & 0xff;
+	zcore[0x36] = addr_extheader >> 8; // If no header extension is needed, this will be zero
+	zcore[0x37] = addr_extheader & 0xff;
 	if(VERSION[5] == '-' && VERSION[6] == 'd') { // -dev version (check hyphen first because VERSION[6] may not exist)
 		zcore[0x38] = '*'; // Indicate with a star in this unused byte
 	}
@@ -4646,6 +4702,22 @@ void backend_z(
 	assert('/' == VERSION[2]);
 	zcore[0x3e] = VERSION[3];
 	zcore[0x3f] = VERSION[4];
+	
+	if(addr_extheader) { // Header extension table needed
+		zcore[addr_extheader] = 0;
+		zcore[addr_extheader+1] = 3; // 3 words in table
+		// The next two words are unused
+		zcore[addr_extheader+6] = addr_unicode >> 8;
+		zcore[addr_extheader+7] = addr_unicode & 0xff;
+	}
+	
+	if(addr_unicode) { // Unicode translation table needed
+		zcore[addr_unicode] = n_extended; // Byte 0: number of words to follow
+		for(i = 0; i < n_extended; i++) {
+			zcore[addr_unicode + 1 + 2*i]     = extended_zscii[i] >> 8;
+			zcore[addr_unicode + 1 + 2*i + 1] = extended_zscii[i] & 0xff;
+		}
+	}
 
 	init_abbrev(addr_abbrevstr, addr_abbrevtable);
 
@@ -4846,10 +4918,12 @@ void backend_z(
 	}
 	report(LVL_DEBUG, 0, "Objects used: %d of %d (%d%%)", prg->nworldobj, 0x1ffe, (prg->nworldobj)*100/0x1ffe);
 	report(LVL_DEBUG, 0, "Dictionary words used: %d of %d (%d%%)", prg->ndictword, 0x1dff, (prg->ndictword)*100/0x1dff);
+	report(LVL_DEBUG, 0, "Extended ZSCII characters used: %d of %d (%d%%)", n_extended * (addr_unicode?1:0), EXTENDED_ZSCII_MAX, n_extended*(addr_unicode?1:0)*100/EXTENDED_ZSCII_MAX);
 	report(LVL_DEBUG, 0, "Addressable memory used: %05d of %d bytes (%d%%)", used_addressable, 64*1024, used_addressable*100/(64*1024));
 	report(LVL_DEBUG, 0, "        Object table:    %5d", used_objects1);
 	report(LVL_DEBUG, 0, "        Object vars:     %5d", used_objects2);
 	report(LVL_DEBUG, 0, "        Wordmaps:        %5d", used_wordmaps);
+	report(LVL_DEBUG, 0, "        Unicode data:    %5d", used_unicode);
 	report(LVL_DEBUG, 0, "        Main heap:       %5d", heapsize*2);
 	report(LVL_DEBUG, 0, "        Auxiliary heap:  %5d", auxsize*2);
 	report(LVL_DEBUG, 0, "        Long-term heap:  %5d", ltssize*2);
