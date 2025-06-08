@@ -63,6 +63,7 @@
 
 (interface (name $<Obj))
 (interface (descr $<Obj))
+(interface (initial appearance $<Obj))
 (interface (appearance $<Obj))
 (interface (appearance $<Obj $<Rel $<Loc))
 (interface (feel $<Obj))
@@ -327,6 +328,7 @@
 
 %% These are typically static traits:
 
+(ambiguously plural $)	(fail)
 (an $)			(fail)
 (door $)		(fail)
 (edible $)		(fail)
@@ -4434,19 +4436,39 @@
 (notice $Obj)
 	(if) (object $Obj) (then)
 		(reveal $Obj)
-		(if) (plural $Obj) (or) (pair $Obj) (or) (gender-neutral $Obj) (then)
+		
+		%% Should we set plural pronouns?
+		(if)
+			(ambiguously plural $Obj) (or)
+			(plural $Obj) (or)
+			(pair $Obj) (or)
+			(gender-neutral $Obj)
+		(then)
 			(now) (them refers to [$Obj])
-		(elseif) (female $Obj) (then)
-			(now) (her refers to $Obj)
-		(elseif) (male $Obj) (then)
-			(now) (him refers to $Obj)
-		(else)
-			(now) (narrator's it refers to $Obj)
-			(now) (narrator's it is protected)
-			(if) (player's it refers to $Obj) (then)
-				(now) ~(player's it refers to $)
+		(endif)
+		
+		%% Should we set singular pronouns?
+		(if)
+			(ambiguously plural $Obj) (or)
+			~{
+				(plural $Obj) (or)
+				(pair $Obj) (or)
+				(gender-neutral $Obj)
+			}
+		(then)
+			(if) (female $Obj) (then)
+				(now) (her refers to $Obj)
+			(elseif) (male $Obj) (then)
+				(now) (him refers to $Obj)
+			(else)
+				(now) (narrator's it refers to $Obj)
+				(now) (narrator's it is protected)
+				(if) (player's it refers to $Obj) (then)
+					(now) ~(player's it refers to $)
+				(endif)
 			(endif)
 		(endif)
+		
 	(elseif) (list $Obj) (then)
 		(if) ($Obj = [$Single]) (then)
 			(notice $Single)
@@ -4457,23 +4479,46 @@
 
 (notice player's $Obj)
 	(if) ~(current player $Obj) (then)
-		(if) (plural $Obj) (or) (pair $Obj) (or) (gender-neutral $Obj) (then)
-			(now) (them refers to [$Obj])
-		(elseif) (list $Obj) (then)
+		
+		(if) (list $Obj) (then)
 			(if) ($Obj = [$Single]) (then)
 				(notice player's $Single)
 			(else)
 				(now) (them refers to $Obj)
 			(endif)
-		(elseif) (female $Obj) (then)
-			(now) (her refers to $Obj)
-		(elseif) (male $Obj) (then)
-			(now) (him refers to $Obj)
 		(else)
-			(now) (player's it refers to $Obj)
-			(if) (narrator's it refers to $Obj) (then)
-				(now) ~(narrator's it refers to $)
+			
+			%% Should we set plural pronouns?
+			(if)
+				(ambiguously plural $Obj) (or)
+				(plural $Obj) (or)
+				(pair $Obj) (or)
+				(gender-neutral $Obj)
+			(then)
+				(now) (them refers to [$Obj])
 			(endif)
+			
+			%% Should we set singular pronouns?
+			(if)
+				(ambiguously plural $Obj) (or)
+				~{
+					(plural $Obj) (or)
+					(pair $Obj) (or)
+					(gender-neutral $Obj)
+				}
+			(then)
+				(if) (female $Obj) (then)
+					(now) (her refers to $Obj)
+				(elseif) (male $Obj) (then)
+					(now) (him refers to $Obj)
+				(else)
+					(now) (player's it refers to $Obj)
+					(if) (narrator's it refers to $Obj) (then)
+						(now) ~(narrator's it refers to $)
+					(endif)
+				(endif)
+			(endif)
+		
 		(endif)
 	(endif)
 
@@ -4541,6 +4586,9 @@
 
 (appearance $Obj $ $)
 	(appearance $Obj)
+
+(appearance ($Obj is pristine))
+	(initial appearance $Obj)
 
 (appearance (item $Obj))
 	($Obj is handled)

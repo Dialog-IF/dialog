@@ -209,7 +209,7 @@ static void put32(uint32_t x, FILE *f) {
 uint8_t *loadfile(char *fname, uint32_t *fsize) {
 	FILE *f;
 	struct stat st;
-	uint32_t size;
+	uint32_t size, read;
 	uint8_t *buf;
 	
 	f = fopen(fname, "rb");
@@ -229,8 +229,13 @@ uint8_t *loadfile(char *fname, uint32_t *fsize) {
 	
 	size = (uint32_t) st.st_size;
 	buf = malloc(size);
-	fread(buf, size, 1, f);
+	read = fread(buf, size, 1, f);
 	fclose(f);
+	
+	if(read != 1) {
+		report(LVL_ERR, 0, "Failed to read data from image file %s", fname);
+		exit(1);
+	}
 	
 	if(size < 10) {
 		report(LVL_ERR, 0, "Image file %s is too small and likely corrupt: %d bytes", fname, size);
@@ -300,7 +305,7 @@ void emit_blorb(
 	FILE *f;
 	int nres;
 	uint32_t imgsize;
-	int imgwidth, imgheight;
+	int imgwidth = 0, imgheight = 0;
 	uint8_t *imgdata = 0;
 	int imgformat = IMAGE_NONE;
 	int status;

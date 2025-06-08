@@ -2626,7 +2626,7 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 					if(prg->predicates[ci->oper[2].value]->builtin != BI_GETINPUT
 					&& prg->predicates[ci->oper[2].value]->builtin != BI_GETKEY) {
 						char buf[128];
-						snprintf(buf, sizeof(buf), prg->predicates[ci->oper[2].value]->printed_name + 1);
+						snprintf(buf, sizeof(buf), "%s", prg->predicates[ci->oper[2].value]->printed_name + 1);
 						assert(strlen(buf));
 						buf[strlen(buf) - 1] = 0;
 						ai = add_instr(AA_TRACEPOINT);
