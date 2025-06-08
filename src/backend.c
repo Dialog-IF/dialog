@@ -189,6 +189,10 @@ int main(int argc, char **argv) {
 	if(!strcmp(format, "aa")) {
 		aamachine = 1;
 	}
+	
+	if(aamachine && !preserve_zscii) {
+		report(LVL_WARN, 0, "The --no-default-uni option has no effect on the aa output format");
+	}
 
 	if(!outname) {
 		if(optind < argc) {
