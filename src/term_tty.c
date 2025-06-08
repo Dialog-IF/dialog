@@ -156,7 +156,7 @@ static int render(uint8_t *bytes, uint16_t ch) {
 static void charout(uint16_t ch) {
 	uint8_t bytes[3];
 
-	write(1, bytes, render(bytes, ch));
+	(void) write(1, bytes, render(bytes, ch));
 }
 
 static void stepcursor(int n) {
@@ -164,10 +164,10 @@ static void stepcursor(int n) {
 
 	if(n > 0) {
 		snprintf(buf, sizeof(buf), "\033[%dC", n);
-		write(1, buf, strlen(buf));
+		(void) write(1, buf, strlen(buf));
 	} else if(n < 0) {
 		snprintf(buf, sizeof(buf), "\033[%dD", -n);
-		write(1, buf, strlen(buf));
+		(void) write(1, buf, strlen(buf));
 	}
 }
 
@@ -361,7 +361,7 @@ int term_getkey(const char *prompt) {
 			suspend();
 			charout('\r');
 			charout('\n');
-			write(1, prompt, strlen(prompt));
+			(void) write(1, prompt, strlen(prompt));
 		} else {
 			suspend();
 		}
@@ -409,7 +409,7 @@ int term_getline(const char *prompt, uint8_t *buffer, int bufsize, int is_filena
 	buf = malloc(bufsize * sizeof(uint16_t));
 
 	if(is_filename) {
-		write(1, prompt, strlen(prompt));
+		(void) write(1, prompt, strlen(prompt));
 
 		for(i = 0; i < (bufsize - 1) && last_filename[i]; i++) {
 			charout(last_filename[i]);
@@ -455,7 +455,7 @@ int term_getline(const char *prompt, uint8_t *buffer, int bufsize, int is_filena
 			charout('\033');
 			charout('c');
 			charout('\r');
-			write(1, prompt, strlen(prompt));
+			(void) write(1, prompt, strlen(prompt));
 			for(i = 0; i < len; i++) {
 				charout(buf[i]);
 			}
@@ -476,7 +476,7 @@ int term_getline(const char *prompt, uint8_t *buffer, int bufsize, int is_filena
 			suspend();
 			charout('\r');
 			charout('\n');
-			write(1, prompt, strlen(prompt));
+			(void) write(1, prompt, strlen(prompt));
 			for(i = 0; i < len; i++) {
 				charout(buf[i]);
 			}
