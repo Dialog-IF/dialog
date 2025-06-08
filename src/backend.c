@@ -51,27 +51,27 @@ void usage(char *prgname) {
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Options:\n");
 	fprintf(stderr, "\n");
-	fprintf(stderr, "--version   -V    Display the program version.\n");
-	fprintf(stderr, "--help      -h    Display this information.\n");
-	fprintf(stderr, "--verbose   -v    Increase verbosity (may be used multiple times).\n");
+	fprintf(stderr, "--version         -V    Display the program version.\n");
+	fprintf(stderr, "--help            -h    Display this information.\n");
+	fprintf(stderr, "--verbose         -v    Increase verbosity (may be used multiple times).\n");
 	fprintf(stderr, "\n");
-	fprintf(stderr, "--output    -o    Set output filename.\n");
-	fprintf(stderr, "--format    -t    Set output format (zblorb, z8, z5, aa).\n");
-	fprintf(stderr, "--resources -r    Set resource directory (default '.').\n");
+	fprintf(stderr, "--output          -o    Set output filename.\n");
+	fprintf(stderr, "--format          -t    Set output format (zblorb, z8, z5, aa).\n");
+	fprintf(stderr, "--resources       -r    Set resource directory (default '.').\n");
 	fprintf(stderr, "\n");
-	fprintf(stderr, "--heap      -H    Set main heap size (default 1000 words).\n");
-	fprintf(stderr, "--aux       -A    Set aux heap size (default 500 words).\n");
-	fprintf(stderr, "--long-term -L    Set long-term heap size (default 500 words).\n");
-	fprintf(stderr, "--strip     -s    Strip internal object names.\n");
+	fprintf(stderr, "--heap            -H    Set main heap size (default 1000 words).\n");
+	fprintf(stderr, "--aux             -A    Set aux heap size (default 500 words).\n");
+	fprintf(stderr, "--long-term       -L    Set long-term heap size (default 500 words).\n");
+	fprintf(stderr, "--strip           -s    Strip internal object names.\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Only for z5, z8, or zblorb format:\n");
 	fprintf(stderr, "\n");
-	fprintf(stderr, "--no-zscii  -Z    Don't use the standard extended ZSCII table.\n");
+	fprintf(stderr, "--no-default-uni  -U    Don't preserve the default Unicode translation table.\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Only for zblorb format:\n");
 	fprintf(stderr, "\n");
-	fprintf(stderr, "--cover     -c    Cover image filename (PNG, max 1200x1200).\n");
-	fprintf(stderr, "--cover-alt -a    Textual description of cover image.\n");
+	fprintf(stderr, "--cover           -c    Cover image filename (PNG or JPEG, max 1200x1200).\n");
+	fprintf(stderr, "--cover-alt       -a    Textual description of cover image.\n");
 	exit(1);
 }
 
@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
 		{"aux", 1, 0, 'A'},
 		{"long-term", 1, 0, 'L'},
 		{"strip", 0, 0, 's'},
-		{"no-zscii", 0, 0, 'Z'},
+		{"no-default-uni", 0, 0, 'U'},
 		{0, 0, 0, 0}
 	};
 
@@ -166,7 +166,7 @@ int main(int argc, char **argv) {
 			case 's':
 				strip = 1;
 				break;
-			case 'Z':
+			case 'U':
 				preserve_zscii = 0;
 				break;
 			default:
