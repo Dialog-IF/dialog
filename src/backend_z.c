@@ -263,7 +263,7 @@ uint16_t resolve_rnum(uint16_t num) {
 }
 
 uint8_t add_extended_zscii(uint16_t uchar) {
-	uint8_t i = n_extended, j;
+	uint8_t i = n_extended;
 	if(n_extended+1 >= EXTENDED_ZSCII_MAX) { // But we can't!
 		report(LVL_ERR, 0, "Tried to add Unicode character U+%04x to the encoding, but all codepoints have already been allocated! Use the --no-zscii command line option to save space.", uchar);
 		exit(1);
@@ -4213,6 +4213,7 @@ void backend_z(
 	struct zinstr *zi;
 	int zversion, packfactor;
 	struct backend_pred *bp;
+	int need_colors = 0;
 
 	if(!strcmp(format, "z5")) {
 		zversion = 5;
@@ -4220,6 +4221,17 @@ void backend_z(
 	} else {
 		zversion = 8;
 		packfactor = 8;
+	}
+	
+	for(i = 0; i < prg->nboxclass; i++) {
+		if(
+			(prg->boxclasses[i].color != COLOR_INHERIT && prg->boxclasses[i].color != COLOR_INITIAL)
+		||
+			(prg->boxclasses[i].bgcolor != COLOR_INHERIT && prg->boxclasses[i].bgcolor != COLOR_INITIAL)
+		) {
+			need_colors = 1;
+			break;
+		}
 	}
 
 	assert(!next_routine_num);
@@ -4681,7 +4693,7 @@ void backend_z(
 	zcore[0x0d] = addr_globals & 0xff;
 	zcore[0x0e] = addr_static >> 8;
 	zcore[0x0f] = addr_static & 0xff;
-	zcore[0x11] = 0x10;	// flags2: need undo
+	zcore[0x11] = 0x10 | (need_colors ? 0x40 : 0);	// flags2: need undo, maybe need color
 	for(i = 0; i < 6; i++) zcore[0x12 + i] = prg->meta_serial[i];
 	zcore[0x18] = addr_abbrevtable >> 8;
 	zcore[0x19] = addr_abbrevtable & 0xff;
