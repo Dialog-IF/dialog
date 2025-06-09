@@ -62,6 +62,8 @@ xref:traits.adoc#categorytraits[`(consultable $)`] +
 xref:traits.adoc#categorytraits[`(container $)`] +
 xref:miscfeat.adoc#listutil[`($ contains one of $)`] +
 xref:miscfeat.adoc#listutil[`($ contains sublist $)`] +
+xref:lang:io.adoc#dimensions[`(current div height $)`] +
+xref:lang:io.adoc#dimensions[`(current div width $)`] +
 xref:timeprogress.adoc#choicemode[`(current node $)`] +
 xref:moving.adoc#moveplayer[`(current player $)`] +
 xref:moving.adoc#moveplayer[`(current room $)`] +

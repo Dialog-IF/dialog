@@ -169,6 +169,10 @@ into a rectangular area according to the given style class.
 Like `(div $)`, but the output is rendered into the top status area,
 which is created if necessary.
 
+(status bar $Class with height $Height) _statement_::
+
+Like `(status bar $)`, but if its second parameter is bound to a number, attempts to set the top status area's height to that value.
+
 (inline status bar $Class) _statement_::
 
 Like `(div $)`, but the output is rendered into an inline status area.
