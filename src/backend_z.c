@@ -1878,6 +1878,7 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				}
 				break;
 			case I_BEGIN_AREA:
+			case I_BEGIN_AREA_OVERRIDE:
 				assert(ci->oper[0].tag == OPER_BOX);
 				if(ci->subop == AREA_TOP) {
 					zi = append_instr(r, Z_CALLVN);
@@ -1892,11 +1893,19 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 					zi->oper[1] = SMALL(prg->boxclasses[ci->oper[0].value].style | ((prg->boxclasses[ci->oper[0].value].unstyle & STYLE_REVERSE) ? 0 : STYLE_REVERSE)); // OR STYLE_REVERSE into this value unless STYLE_REVERSE is found in the unstyle value
 					zi->oper[2] = SMALL(prg->boxclasses[ci->oper[0].value].unstyle);
 					
-					zi = append_instr(r, Z_CALLVN);
-					zi->oper[0] = ROUTINE(R_BEGIN_STATUS);
+					if(ci->op == I_BEGIN_AREA_OVERRIDE) { // Override version
+						o1 = generate_value(r, ci->oper[1], prg, t1); // So pass the override parameter in as well
+						zi = append_instr(r, Z_CALLVN);
+						zi->oper[0] = ROUTINE(R_BEGIN_STATUS_OVERRIDE);
+						zi->oper[2] = o1;
+			//			zi->oper[2] = SMALL(0);
+					} else {
+						zi = append_instr(r, Z_CALL2N);
+						zi->oper[0] = ROUTINE(R_BEGIN_STATUS);
+					}
 					zi->oper[1] = SMALL_OR_LARGE(
 						prg->boxclasses[ci->oper[0].value].height |
-						((prg->boxclasses[ci->oper[0].value].flags & BOXF_RELHEIGHT)? 0x8000 : 0));
+						((prg->boxclasses[ci->oper[0].value].flags & BOXF_RELHEIGHT)? 0x8000 : 0)); // Even in the override version, though, we pass the "native" height as well; if dereferencing fails, or it's not a number, we use this value instead of failing
 				} else {
 					zi = append_instr(r, Z_CALL1N);
 					zi->oper[0] = ROUTINE(R_BEGIN_NOSTATUS);
@@ -2245,6 +2254,12 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 					break;
 				case BI_RANDOM:
 					zi->oper[0] = ROUTINE(R_RANDOM);
+					break;
+				case BI_DIV_WIDTH:
+				case BI_DIV_HEIGHT:
+					zi->oper[0] = ROUTINE(R_DIV_WIDTH);
+					o0 = SMALL(ci->subop == BI_DIV_HEIGHT ? 1 : 0); // 0 for width, 1 for height
+					o1 = SMALL(0); // Unused
 					break;
 				default:
 					assert(0); exit(1);

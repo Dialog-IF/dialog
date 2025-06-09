@@ -340,6 +340,14 @@ void pp_expr(struct astnode *an) {
 		printf(") ");
 		pp_expr(an->children[1]);
 		break;
+	case AN_STATUSAREA_OVERRIDE:
+		printf((an->subkind == AREA_TOP)? "(status bar " : "(inline status bar ");
+		pp_expr(an->children[0]);
+		printf(" with height ");
+		pp_expr(an->children[2]);
+		printf(") ");
+		pp_expr(an->children[1]);
+		break;
 	case AN_OUTPUTBOX:
 		printf((an->subkind == BOX_DIV)? "(div " : "(span ");
 		pp_expr(an->children[0]);
@@ -579,6 +587,7 @@ static void find_clause_vars(struct program *prg, struct clause *cl, struct astn
 		|| an->kind == AN_NEG_BLOCK
 		|| an->kind == AN_FIRSTRESULT
 		|| an->kind == AN_STATUSAREA
+		|| an->kind == AN_STATUSAREA_OVERRIDE
 		|| an->kind == AN_OUTPUTBOX
 		|| an->kind == AN_LINK_SELF
 		|| an->kind == AN_LINK

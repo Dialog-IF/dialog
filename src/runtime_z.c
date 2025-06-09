@@ -2286,6 +2286,35 @@ struct rtroutine rtroutines[] = {
 		}
 	},
 	{
+		R_DIV_WIDTH,
+		2,
+			// 0 (param): 0 for width, 1 for height
+			// 1 (param): temporary
+			// Returns the requested dimension of the current div as a tagged integer
+			// Having two params gives this routine the same signature as the other calculation routines, which makes compilation simpler; including an extra byte in a call to a seldom-used routine is an acceptable cost for this
+		(struct zinstr []) {
+			{Z_JNZ, {VALUE(REG_STATUSBAR)}, 0, 1}, // If we're in a status area, we've already calculated these values, we can just return them
+			{Z_JNZ, {VALUE(REG_LOCAL+0)}, 0, 2}, // If we're *not* in a status area, and height is requested, then get the full screen height from the header
+			{Z_CALL1S, {ROUTINE(R_GET_FULLWIDTH)}, REG_XFULLSIZE}, // If we're *not* in a status area, and width is requested, then refresh the value of REG_XFULLSIZE to ensure it's accurate
+			
+			{OP_LABEL(1)}, // Width in either window, or height in the statusbar
+			{Z_JNZ, {VALUE(REG_LOCAL+0)}, 0, 3}, // If it's the latter, branch
+			{Z_OR, {VALUE(REG_XFULLSIZE), VALUE(REG_4000)}, REG_PUSH}, // This register holds the full width of the current div; OR it with $4000 to mark it as a number
+			{Z_RET_POPPED},
+			
+			{OP_LABEL(2)}, // Height, in main window
+			{Z_LOADB, {SMALL(0), SMALL(0x20)}, REG_LOCAL+1}, // Get screen height into a local variable
+			{Z_OR, {VALUE(REG_LOCAL+1), VALUE(REG_4000)}, REG_PUSH}, // And OR it again
+			{Z_RET_POPPED},
+			
+			{OP_LABEL(3)}, // Height, in status bar
+			{Z_OR, {VALUE(REG_CURRSPLIT), VALUE(REG_4000)}, REG_PUSH}, // Third verse, same as the first, just with REG_CURRSPLIT this time (total status bar height)
+			{Z_RET_POPPED},
+			
+			{Z_END},
+		}
+	},
+	{
 		R_GREATER_THAN,
 		2,
 			// 0 (param): first tagged reference
@@ -3558,6 +3587,23 @@ struct rtroutine rtroutines[] = {
 			{Z_SET_CURSOR, {VALUE(REG_YPOS), VALUE(REG_XOFFSET)}},
 			{Z_STORE, {SMALL(REG_SPACE), SMALL(5)}},
 			{Z_RFALSE},
+			{Z_END},
+		}
+	},
+	{
+		R_BEGIN_STATUS_OVERRIDE,
+		2,
+			// 0 (param): Native height, to pass to R_BEGIN_STATUS if dereferencing fails
+			// 1 (param): Overridden height, to use if possible
+		(struct zinstr []) {
+			{Z_CALL2S, {ROUTINE(R_DEREF), VALUE(REG_LOCAL+1)}, REG_LOCAL+1}, // Dereference the value
+			{Z_JL, {VALUE(REG_LOCAL+1), VALUE(REG_4000)}, 0, 1}, // Numbers are in the range $4000-$7FFF, which means we can find them with a signed comparison against $4000
+			{Z_SUB, {VALUE(REG_LOCAL+1), VALUE(REG_4000)}, REG_LOCAL+0}, // If it's a number, subtract $4000 from it to get the actual value, and use that
+			
+			{OP_LABEL(1)},
+			{Z_CALL2N, {ROUTINE(R_BEGIN_STATUS), VALUE(REG_LOCAL+0)}}, // Otherwise, use the native value passed in
+			{Z_RFALSE},
+			
 			{Z_END},
 		}
 	},
