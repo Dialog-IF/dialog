@@ -93,6 +93,7 @@ uint16_t extended_zscii[97]; // Unicode values for ZSCII 155..251 (each one fits
 uint8_t n_extended = 0; // How many of the above are filled in
 #define EXTENDED_ZSCII_BASE 155
 #define EXTENDED_ZSCII_MAX 97
+#define N_DEFAULT_EXTENDED (sizeof(default_extended_zscii)/sizeof(default_extended_zscii[0]))
 
 #define ENVF_ENV		0x010
 #define ENVF_CUT_SAVED		0x020
@@ -263,7 +264,7 @@ uint16_t resolve_rnum(uint16_t num) {
 }
 
 uint8_t add_extended_zscii(uint16_t uchar) {
-	uint8_t i = n_extended, j;
+	uint8_t i = n_extended;
 	if(n_extended+1 >= EXTENDED_ZSCII_MAX) { // But we can't!
 		report(LVL_ERR, 0, "Tried to add Unicode character U+%04x to the encoding, but all codepoints have already been allocated! Use the --no-zscii command line option to save space.", uchar);
 		exit(1);
@@ -4529,6 +4530,25 @@ void backend_z(
 
 	addr_scratch = org;	// 12 bytes of scratch area for decoding dictionary words etc.
 	org += 12;
+	
+	used_unicode = org;
+	
+	if(
+		n_extended != 0 && (
+			n_extended != N_DEFAULT_EXTENDED ||
+			memcmp(extended_zscii, default_extended_zscii, n_extended*sizeof(extended_zscii[0]))
+		)
+	) { // A Unicode table is required - the extended ZSCII table is not empty, and not default
+		addr_extheader = org;
+		org += 8; // We only need eight bytes in the header extension table
+		addr_unicode = org;
+		org += 1 + 2*n_extended;
+	} else {
+		addr_extheader = 0;
+		addr_unicode = 0;
+	}
+	
+	used_unicode = org - used_unicode;
 
 	if(org < addr_globals + 2*240) {
 		// Gargoyle complains if there isn't room for 240 globals in dynamic memory.
@@ -4558,24 +4578,6 @@ void backend_z(
 	}
 	
 	used_wordmaps = org - used_wordmaps; // End of wordmaps
-	used_unicode = org;
-	
-	if(
-		n_extended != 0 && (
-			n_extended != sizeof(extended_zscii) ||
-			memcmp(extended_zscii, default_extended_zscii, n_extended*sizeof(extended_zscii[0]))
-		)
-	) { // A Unicode table is required - the extended ZSCII table is not empty, and not default
-		addr_extheader = org;
-		org += 8; // We only need eight bytes in the header extension table
-		addr_unicode = org;
-		org += 1 + 2*n_extended;
-	} else {
-		addr_extheader = 0;
-		addr_unicode = 0;
-	}
-	
-	used_unicode = org - used_unicode;
 	used_addressable = org; // End of addressable memory
 
 	org = (org + 7) & ~7; // Round up to the next multiple of 8

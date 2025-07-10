@@ -114,7 +114,7 @@ int main(int argc, char **argv) {
 	comp_init();
 
 	do {
-		opt = getopt_long(argc, argv, "?hVvo:t:r:c:a:H:A:L:sZ", longopts, 0);
+		opt = getopt_long(argc, argv, "?hVvo:t:r:c:a:H:A:L:sU", longopts, 0);
 		switch(opt) {
 			case 0:
 			case '?':
