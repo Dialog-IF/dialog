@@ -4197,7 +4197,7 @@ void backend_z(
 	int nglobal;
 	uint16_t addr_abbrevtable, addr_abbrevstr, addr_objtable, addr_globals, addr_static;
 	uint16_t addr_scratch, addr_heap, addr_heapend, addr_aux, addr_lts, addr_extheader, addr_unicode, addr_dictionary, addr_seltable;
-	uint16_t used_addressable, used_objects1, used_objects2, used_wordmaps, used_unicode, used_routines, used_strings; // How much of the 64KiB of addressable memory have we used, for what purposes? We don't actually need this value for compilation, but if we save it for the end, we can give better diagnostics. Everything else is used for strings and routines, but we have either four or eight times as much of that, so breaking it down further is unlikely to be helpful.
+	uint16_t used_addressable, used_objects1, used_objects2, used_wordmaps, used_unicode, used_routines, used_strings, used_dictionary; // How much of the 64KiB of addressable memory have we used, for what purposes? We don't actually need this value for compilation, but if we save it for the end, we can give better diagnostics. Everything else is used for strings and routines, but we have either four or eight times as much of that, so breaking it down further is unlikely to be helpful.
 	uint8_t used_attributes; // How many of the Z-machine's low-level object attributes have we used?
 	uint32_t org;
 	uint32_t filesize;
@@ -4531,8 +4531,6 @@ void backend_z(
 	addr_scratch = org;	// 12 bytes of scratch area for decoding dictionary words etc.
 	org += 12;
 	
-	used_unicode = org;
-	
 	if(
 		n_extended != 0 && (
 			n_extended != N_DEFAULT_EXTENDED ||
@@ -4541,14 +4539,10 @@ void backend_z(
 	) { // A Unicode table is required - the extended ZSCII table is not empty, and not default
 		addr_extheader = org;
 		org += 8; // We only need eight bytes in the header extension table
-		addr_unicode = org;
-		org += 1 + 2*n_extended;
 	} else {
 		addr_extheader = 0;
 		addr_unicode = 0;
 	}
-	
-	used_unicode = org - used_unicode;
 
 	if(org < addr_globals + 2*240) {
 		// Gargoyle complains if there isn't room for 240 globals in dynamic memory.
@@ -4568,16 +4562,31 @@ void backend_z(
 		set_global_label(datatable[i].label, org);
 		org += datatable[i].length;
 	}
+	
+	used_wordmaps = org - used_wordmaps; // End of wordmaps
+	used_unicode = org;
+	
+	// We need to put the header extension in RAM, but the Unicode data itself can go in ROM
+	if(addr_extheader) {
+		addr_unicode = org;
+		org += 1 + 2*n_extended;
+	} else {
+		addr_unicode = 0;
+	}
+	
+	used_unicode = org - used_unicode; // End of Unicode data
+	used_dictionary = org;
 
 	addr_dictionary = org;
 	org += 4 + NSTOPCHAR + ndict * 6;
+	
+	used_dictionary = org - used_dictionary; // End of dictionary data
 
 	if(org > 0xfff8) {
 		report(LVL_ERR, 0, "Base memory exhausted. Decrease heap/aux/long-term size using commandline options -H, -A, and/or -L.");
 		exit(1);
 	}
 	
-	used_wordmaps = org - used_wordmaps; // End of wordmaps
 	used_addressable = org; // End of addressable memory
 
 	org = (org + 7) & ~7; // Round up to the next multiple of 8
@@ -4926,6 +4935,7 @@ void backend_z(
 	report(LVL_DEBUG, 0, "        Object vars:     %5d", used_objects2);
 	report(LVL_DEBUG, 0, "        Wordmaps:        %5d", used_wordmaps);
 	report(LVL_DEBUG, 0, "        Unicode data:    %5d", used_unicode);
+	report(LVL_DEBUG, 0, "        Dictionary:      %5d", used_dictionary);
 	report(LVL_DEBUG, 0, "        Main heap:       %5d", heapsize*2);
 	report(LVL_DEBUG, 0, "        Auxiliary heap:  %5d", auxsize*2);
 	report(LVL_DEBUG, 0, "        Long-term heap:  %5d", ltssize*2);
