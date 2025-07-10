@@ -1,0 +1,9 @@
+(current player #me)
+(#me is #in #room)
+(room #room)
+
+#poster
+(name *) poster
+(* is #in #room)
+(initial appearance *) A poster is tacked to the wall.
+(item *)

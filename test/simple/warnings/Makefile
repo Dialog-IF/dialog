@@ -1,5 +1,5 @@
 # Call `make DIFF=meld`, for example, to get a fancy diff
-DIFF = diff
+DIFF = diff --ignore-trailing-space --ignore-blank-lines
 
 BASEPATH = ../../..
 
@@ -46,7 +46,7 @@ origin: $(origin)
 	$(DIFF) $*.out $*.gold
 
 %.test_explicit: %.out %.gold
-	diff $*.out $*.gold || meld $*.out $*.gold
+	$(DIFF) $*.out $*.gold || meld $*.out $*.gold
 
 clean:
 	rm -rf *.out stdlib.dglib *.z5

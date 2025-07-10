@@ -4355,7 +4355,8 @@ struct rtroutine rtroutines[] = {
 	},
 	{
 		R_COMPILERVERSION,
-		0,
+		1,
+			// 0: temp
 		(struct zinstr []) {
 			{Z_JG, {VALUE(REG_STATUSBAR), SMALL(1)}, 0, RFALSE},
 			{Z_CALL1N, {ROUTINE(R_SYNC_SPACE)}},
@@ -4363,6 +4364,11 @@ struct rtroutine rtroutines[] = {
 			{Z_CALLVN, {ROUTINE(R_PRINT_N_ZSCII), SMALL(2), SMALL(0x3c)}},
 			{Z_PRINTLIT, {}, 0, 0, "/"},
 			{Z_CALLVN, {ROUTINE(R_PRINT_N_ZSCII), SMALL(2), SMALL(0x3e)}},
+			// Check if -dev version, indicated by a star before the version string
+			{Z_LOADB, {SMALL(0), SMALL(0x38)}, REG_LOCAL+0},
+			{Z_JNE, {VALUE(REG_LOCAL+0), SMALL('*')}, 0, 1},
+			{Z_PRINTLIT, {}, 0, 0, "-dev"},
+			{OP_LABEL(1)},
 			{Z_STORE, {SMALL(REG_SPACE), SMALL(0)}},
 			{Z_RFALSE},
 			{Z_END},

@@ -1,0 +1,47 @@
+[Z] Location
+[Z]
+An Interactive Fiction
+An interactive fiction by Anonymous.
+Release 1. Serial number <SERIAL>.
+<COMPILER>. <LIBRARY>
+
+Location
+You are here.
+
+> x cards
+[Z] Location
+[Z]
+It seems to be harmless.
+
+> pronouns
+[Z] Location
+[Z]
+"Me" refers to yourself.
+"It" refers to the deck of cards.
+"Them" refers to the deck of cards.
+
+> x box
+[Z] Location
+[Z]
+It seems to be harmless.
+
+> pronouns
+[Z] Location
+[Z]
+"Me" refers to yourself.
+"It" refers to the box.
+"Them" refers to the deck of cards.
+
+> x candy
+[Z] Location
+[Z] 
+They seem to be harmless.
+
+> pronouns
+[Z] Location
+[Z] 
+"Me" refers to yourself.
+"It" refers to the candy.
+"Them" refers to the candy.
+
+>
