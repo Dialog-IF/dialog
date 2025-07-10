@@ -544,7 +544,7 @@ or a local filename.
 Local files are copied into the `.aastory` file,
 and this is the recommended way to work with _feelies_ and embedded graphics.
 
-The _location_ may be followed by one or more _options_, demarcated by commas. For example:
+The _location_ may be followed by one or more _options_, separated from the filename by a comma. For example:
 
 [source]
 ----
