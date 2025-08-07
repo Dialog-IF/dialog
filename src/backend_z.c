@@ -263,9 +263,9 @@ uint16_t resolve_rnum(uint16_t num) {
 }
 
 uint8_t add_extended_zscii(uint16_t uchar) {
-	uint8_t i = n_extended, j;
+	uint8_t i = n_extended;
 	if(n_extended+1 >= EXTENDED_ZSCII_MAX) { // But we can't!
-		report(LVL_ERR, 0, "Tried to add Unicode character U+%04x to the encoding, but all codepoints have already been allocated! Use the --no-zscii command line option to save space.", uchar);
+		report(LVL_ERR, 0, "Tried to add Unicode character U+%04x to the encoding, but all codepoints have already been allocated! Use the --no-default-unicode command line option to save space.", uchar);
 		exit(1);
 	}
 	extended_zscii[i] = uchar;
@@ -2317,6 +2317,14 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				break;
 			case I_END_BOX:
 				assert(ci->oper[0].tag == OPER_BOX);
+				
+				// Reset the colors - since we're doing the color-setting in a separate routine, we might as well do the resetting in a separate routine too, even though this could also be called within the various R_END_* routines
+				zi = append_instr(r, Z_CALL1N);
+				zi->oper[0] = ROUTINE(R_END_BOX_STYLE);
+				zi = append_instr(r, Z_CALL1N);
+				zi->oper[0] = ROUTINE(R_RESET_COLORS);
+				// We do this before calling R_END_BOX so that the modified colors don't apply to the bottom margin of divs, which happens on Frotz but not on Gargoyle
+				
 				if(ci->subop == BOX_SPAN) {
 					zi = append_instr(r, Z_CALL1N);
 					zi->oper[0] = ROUTINE(R_END_SPAN);
@@ -2329,11 +2337,6 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 					zi->oper[0] = ROUTINE(R_END_BOX);
 					zi->oper[1] = SMALL_OR_LARGE(prg->boxclasses[ci->oper[0].value].marginbottom);
 				}
-				// Reset the colors - since we're doing the color-setting in a separate routine, we might as well do the resetting in a separate routine too, even though this could also be called within the various R_END_* routines
-				zi = append_instr(r, Z_CALL1N);
-				zi->oper[0] = ROUTINE(R_END_BOX_STYLE);
-				zi = append_instr(r, Z_CALL1N);
-				zi->oper[0] = ROUTINE(R_RESET_COLORS);
 				break;
 			case I_END_LINK:
 			case I_END_LINK_RES:

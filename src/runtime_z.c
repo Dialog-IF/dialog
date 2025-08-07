@@ -690,6 +690,7 @@ struct rtroutine rtroutines[] = {
 			
 			{OP_LABEL(1)}, // This box is invisible
 			{Z_STORE, {SMALL(REG_STYLE), SMALL(STYLE_INVISIBLE)}}, // So just store that bit, the rest doesn't matter
+			{Z_CALL1N, {ROUTINE(R_SYNC_SPACE)}}, // Experiment: sync the space register first
 			{Z_OUTPUT_STREAM, {VALUE(REG_FFFF)}}, // Z_OUTPUT_STREAM -1 turns off printing to the main screen, while allowing printing to any other streams (like the transcript)
 			{Z_RFALSE},
 			
@@ -708,6 +709,7 @@ struct rtroutine rtroutines[] = {
 			{Z_JNE, {VALUE(REG_LOCAL+0), SMALL(STYLE_INVISIBLE)}, 0, RFALSE},
 			{Z_JE, {VALUE(REG_STYLE), SMALL(STYLE_INVISIBLE)}, 0, RFALSE},
 			// If so, turn output stream 1 back on
+			{Z_CALL1N, {ROUTINE(R_SYNC_SPACE)}},
 			{Z_OUTPUT_STREAM, {SMALL(1)}},
 			{Z_RFALSE},
 			{Z_END},
