@@ -3398,7 +3398,9 @@ static void chunk_urls(FILE *f, struct program *prg) {
 		size = 2 + prg->nresource * 2;
 		for(i = 0; i < prg->nresource; i++) {
 			offset[i] = size;
-			size += 3 + strlen(prg->resources[i].url) + 2;
+			size += 3 + // Alt text pointer
+					strlen(prg->resources[i].url) + 1 + // URL string w/ terminator
+					strlen(prg->resources[i].options) + 1; // Option string w/ terminator
 		}
 		pad = chunkheader(f, "URLS", size);
 		putword(prg->nresource, f);
@@ -3415,6 +3417,9 @@ static void chunk_urls(FILE *f, struct program *prg) {
 				fputc(prg->resources[i].url[j], f);
 			}
 			fputc(0, f);
+			for(j = 0; prg->resources[i].options[j]; j++) {
+				fputc(prg->resources[i].options[j], f);
+			}
 			fputc(0, f);
 		}
 		if(pad) fputc(0, f);
