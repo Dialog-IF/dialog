@@ -3536,6 +3536,8 @@ struct rtroutine rtroutines[] = {
 
 			{OP_LABEL(1)},
 			{Z_JNZ, {VALUE(REG_NSPAN)}, 0, 9}, // If already in a span, crash
+			
+			{Z_ERASE_WINDOW, {SMALL(1)}}, // Clear the status bar, so remnants of any previous one don't linger
 
 			{Z_CALL1N, {ROUTINE(R_LINE)}}, // Print a newline (why?)
 			{Z_INC, {SMALL(REG_STATUSBAR)}}, // Mark that we're now in a status bar
