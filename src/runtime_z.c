@@ -72,12 +72,13 @@ struct rtroutine rtroutines[] = {
 			// 1: temp
 		(struct zinstr []) {
 			{Z_JG, {VALUE(REG_STATUSBAR), SMALL(1)}, 0, RFALSE},
-
+			
+			// Check Standard major version at $32 in the header - if it's less than 1, the Z_CHECK_UNICODE opcode won't exist
 			{Z_LOADB, {SMALL(0), SMALL(0x32)}, REG_LOCAL+1},
 			{Z_JL, {VALUE(REG_LOCAL+1), SMALL(1)}, 0, 1},
 
 			{Z_CHECK_UNICODE, {VALUE(REG_LOCAL+0)}, REG_LOCAL+1},
-			{Z_TESTN, {VALUE(REG_LOCAL+1), SMALL(1)}, 0, 1},
+			{Z_TESTN, {VALUE(REG_LOCAL+1), SMALL(1)}, 0, 1}, // Bit 0: can print
 
 			{Z_PRINT_UNICODE, {VALUE(REG_LOCAL+0)}},
 			{Z_RFALSE},
@@ -3493,16 +3494,27 @@ struct rtroutine rtroutines[] = {
 	},
 	{
 		R_GET_FULLWIDTH,
-		1,
-			// 0: temp
-			// returns width of display
+		3,
+			// 0: temp (raw screen width reported by interpreter)
+			// 1: temp (screen width in units, then calculated screen width)
+			// 2: temp (units per character)
+			// returns width of display in characters
 		(struct zinstr []) {
-			{Z_LOADB, {SMALL(0), SMALL(0x21)}, REG_LOCAL+0},	// screen width
-			{Z_JL, {VALUE(REG_LOCAL+0), SMALL(40)}, 0, 1},
+			{Z_LOADB, {SMALL(0), SMALL(0x21)}, REG_LOCAL+0},	// interpreter-reported screen width in chars
+			{Z_LOADW, {SMALL(0), SMALL(0x22)}, REG_LOCAL+1},	// screen width in "units"
+			{Z_LOADB, {SMALL(0), SMALL(0x26)}, REG_LOCAL+2},	// units per character
+			{Z_JZ, {VALUE(REG_LOCAL+2)}, 0, 1}, // Don't divide by zero if the terp didn't provide this information
+			{Z_DIV, {VALUE(REG_LOCAL+1), VALUE(REG_LOCAL+2)}, REG_LOCAL+1}, // calculated screen width
+			
+			// Now, if the reported width < 255, and the calculated width > 255, then we're running into the Windows Frotz bug; we need to return the calculated value instead
+			{Z_JGE, {VALUE(REG_LOCAL+0), SMALL(255)}, 0, 1},
+			{Z_JL, {VALUE(REG_LOCAL+1), SMALL(255)}, 0, 1},
+			
+			// We can't trust the interpreter's value; use our calculation instead
+			{Z_RET, {VALUE(REG_LOCAL+1)}},
+			
+			{OP_LABEL(1)}, // We can trust the interpreter's value; return it
 			{Z_RET, {VALUE(REG_LOCAL+0)}},
-
-			{OP_LABEL(1)},
-			{Z_RET, {SMALL(40)}},	// workaround for winfrotz bug
 			{Z_END},
 		}
 	},
