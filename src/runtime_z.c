@@ -3498,6 +3498,10 @@ struct rtroutine rtroutines[] = {
 			// 2: temp (units per character)
 			// returns width of display in characters
 		(struct zinstr []) {
+			// This is complicated because of a bug in old versions of Windows Frotz: the screen width is stored in a single byte in the header, but early versions of Frotz reduced the value mod 256 instead of capping out at 255
+			// So we also check the screen width in "units", which is stored as a word instead of a byte, and divide that by the size of a "unit" to get a different approximation to the screen size
+			// If the two approximations are on opposite sides of 255, we use the calculated one; otherwise, we use the interpreter-reported one
+			
 			{Z_LOADB, {SMALL(0), SMALL(0x21)}, REG_LOCAL+0},	// interpreter-reported screen width in chars
 			{Z_LOADW, {SMALL(0), SMALL(0x22)}, REG_LOCAL+1},	// screen width in "units"
 			{Z_LOADB, {SMALL(0), SMALL(0x26)}, REG_LOCAL+2},	// units per character
