@@ -17,6 +17,7 @@
 #include "zcode.h"
 #include "blorb.h"
 #include "backend_z.h"
+#include "unicode.h"
 
 #define TWEAK_BINSEARCH 16
 
@@ -264,13 +265,18 @@ uint16_t resolve_rnum(uint16_t num) {
 
 uint8_t add_extended_zscii(uint16_t uchar) {
 	uint8_t i = n_extended;
+	uint8_t utf8[5]; // To hold the UTF-16 character converted to UTF-8: up to four bytes plus terminator
+	// Since Z-machine only supports the BMP, really we only need *three* bytes plus terminator, but it's good to think about the future
+	
 	if(n_extended+1 >= EXTENDED_ZSCII_MAX) { // But we can't!
-		report(LVL_ERR, 0, "Tried to add Unicode character U+%04x to the encoding, but all codepoints have already been allocated! Use the --no-default-unicode command line option to save space.", uchar);
+		unicode_to_utf8_n(utf8, 5, &uchar, 1); // Convert to UTF-8 sequence
+		report(LVL_ERR, 0, "Tried to add Unicode character U+%04x (%s) to the encoding, but all codepoints have already been allocated! Use the --no-default-unicode command line option to save space.", uchar, utf8);
 		exit(1);
 	}
 	extended_zscii[i] = uchar;
-	if(verbose >= 3) {
-		report(LVL_DEBUG, 0, "Adding Unicode character U+%04x at ZSCII codepoint %d", uchar, EXTENDED_ZSCII_BASE+i);
+	if(verbose >= 2) {
+		unicode_to_utf8_n(utf8, 5, &uchar, 1); // Convert to UTF-8 sequence
+		report(LVL_DEBUG, 0, "Adding Unicode character U+%04x (%s) at ZSCII codepoint %d", uchar, utf8, EXTENDED_ZSCII_BASE+i);
 	}
 	n_extended++;
 	
