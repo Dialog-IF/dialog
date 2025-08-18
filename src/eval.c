@@ -16,7 +16,7 @@
 
 static volatile int interrupted = 0;
 
-int use_numbered_levels = 0; 
+int use_numbered_levels = 0;
 
 void eval_interrupt() {
 	interrupted = 1;
@@ -1190,7 +1190,11 @@ static int eval_compute(struct eval_state *es, int op, int a, int b, int *res) {
 			return 1;
 		}
 		break;
-	case BI_DIV_WIDTH: // Not implemented in the debugger, just fail
+	case BI_DIV_WIDTH:
+		*res = o_get_width();
+		return 1;
+		break;
+	case BI_DIV_HEIGHT: // Not exposed by output.c; it could be in the future, but for now, just fail
 		break;
 	default:
 		printf("unimplemented computation %d\n", op);

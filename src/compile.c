@@ -1199,8 +1199,8 @@ static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an,
 			}
 		}
 		ci->subop = an->predicate->builtin;
-		ci->oper[0] = (value_t) {VAL_NIL, 0}; // Not used, but it's nice not to add a whole new I_COMPUTE_*_WITHOUT_ARGS instruction; I_COMPUTE_* takes two inputs and unifies its third parameter with the output, so we just pass zero for those first two, and they'll be ignored by the backend
-		ci->oper[1] = (value_t) {VAL_NIL, 0};
+		ci->oper[0] = (value_t) {VAL_NUM, 0}; // Not used, but it's nice not to add a whole new I_COMPUTE_*_WITHOUT_ARGS instruction; I_COMPUTE_* takes two inputs and unifies its third parameter with the output, so we just pass zero for those first two, and they'll be ignored by the backend
+		ci->oper[1] = (value_t) {VAL_NUM, 0};
 		post_rule_trace(prg, cl, an, seen);
 		return 0;
 	}
