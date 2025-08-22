@@ -4220,7 +4220,8 @@ void backend_z(
 	int nglobal;
 	uint16_t addr_abbrevtable, addr_abbrevstr, addr_objtable, addr_globals, addr_static;
 	uint16_t addr_scratch, addr_heap, addr_heapend, addr_aux, addr_lts, addr_extheader, addr_unicode, addr_dictionary, addr_seltable;
-	uint16_t used_addressable, used_objects1, used_objects2, used_wordmaps, used_unicode, used_routines, used_strings; // How much of the 64KiB of addressable memory have we used, for what purposes? We don't actually need this value for compilation, but if we save it for the end, we can give better diagnostics. Everything else is used for strings and routines, but we have either four or eight times as much of that, so breaking it down further is unlikely to be helpful.
+	uint16_t used_addressable, used_objects1, used_objects2, used_wordmaps, used_unicode; // How much of the 64KiB of addressable memory have we used, for what purposes? We don't actually need this value for compilation, but if we save it for the end, we can give better diagnostics.
+	uint32_t used_routines, used_strings; // These ones need more than 16 bits to represent
 	uint8_t used_attributes; // How many of the Z-machine's low-level object attributes have we used?
 	uint32_t org;
 	uint32_t filesize;
@@ -4573,6 +4574,7 @@ void backend_z(
 	
 	// End of RAM, start of addressable ROM
 	addr_static = org;
+//	report(LVL_DEBUG, 0, "RAM done:       $%06x", org);
 	used_wordmaps = org; // Start of wordmaps
 
 	for(i = 0; i < nwordtable; i++) {
@@ -4613,6 +4615,7 @@ void backend_z(
 	
 	used_unicode = org - used_unicode;
 	used_addressable = org; // End of addressable memory
+//	report(LVL_DEBUG, 0, "Low memory done:$%06x", org);
 
 	org = (org + 7) & ~7; // Round up to the next multiple of 8
 	himem = org;
@@ -4673,6 +4676,7 @@ void backend_z(
 		routines[resolve_rnum(((struct backend_pred *) find_builtin(prg, BI_ERROR_ENTRY)->pred->backend)->global_label)]->address);
 	
 	used_routines = org - used_routines; // End of routines
+//	report(LVL_DEBUG, 0, "Routines done:  $%06x", org);
 	
 	used_strings = org; // Beginning of strings
 
@@ -4693,6 +4697,7 @@ void backend_z(
 		}
 	}
 	
+//	report(LVL_DEBUG, 0, "Strings done:   $%06x", org);
 	used_strings = org - used_strings; // End of strings
 
 	filesize = org;
