@@ -3518,7 +3518,7 @@ struct rtroutine rtroutines[] = {
 			
 			// Now, if the reported width < 255, and the calculated width > 255, then we're running into the Windows Frotz bug; we need to return the calculated value instead
 			{Z_JGE, {VALUE(REG_LOCAL+0), SMALL(255)}, 0, 1},
-			{Z_JL, {VALUE(REG_LOCAL+1), SMALL(255)}, 0, 1},
+			{Z_JLE, {VALUE(REG_LOCAL+1), SMALL(255)}, 0, 1},
 			
 			// We can't trust the interpreter's value; use our calculation instead
 			{Z_RET, {VALUE(REG_LOCAL+1)}},
