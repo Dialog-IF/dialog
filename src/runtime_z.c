@@ -3511,7 +3511,7 @@ struct rtroutine rtroutines[] = {
 			// If the two approximations are on opposite sides of 255, we use the calculated one; otherwise, we use the interpreter-reported one
 			
 			{Z_LOADB, {SMALL(0), SMALL(0x21)}, REG_LOCAL+0},	// interpreter-reported screen width in chars
-			{Z_LOADW, {SMALL(0), SMALL(0x22)}, REG_LOCAL+1},	// screen width in "units"
+			{Z_LOADW, {SMALL(0x22), SMALL(0)}, REG_LOCAL+1},	// screen width in "units"
 			{Z_LOADB, {SMALL(0), SMALL(0x26)}, REG_LOCAL+2},	// units per character
 			{Z_JZ, {VALUE(REG_LOCAL+2)}, 0, 1}, // Don't divide by zero if the terp didn't provide this information
 			{Z_DIV, {VALUE(REG_LOCAL+1), VALUE(REG_LOCAL+2)}, REG_LOCAL+1}, // calculated screen width
