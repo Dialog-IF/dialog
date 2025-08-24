@@ -4579,7 +4579,26 @@ void backend_z(
 
 	addr_scratch = org;	// 12 bytes of scratch area for decoding dictionary words etc.
 	org += 12;
-
+	
+	used_unicode = org; // Header extension and Unicode table
+	
+	if(
+		n_extended != 0 && (
+			n_extended != (sizeof(extended_zscii)/sizeof(extended_zscii[0])) ||
+			memcmp(extended_zscii, default_extended_zscii, n_extended*sizeof(extended_zscii[0]))
+		)
+	) { // A Unicode table is required - the extended ZSCII table is not empty, and not default
+		addr_extheader = org;
+		org += 8; // We only need eight bytes in the header extension table
+		addr_unicode = org;
+		org += 1 + 2*n_extended;
+	} else {
+		addr_extheader = 0;
+		addr_unicode = 0;
+	}
+	
+	used_unicode = org - used_unicode;
+	
 	if(org < addr_globals + 2*240) {
 		// Gargoyle complains if there isn't room for 240 globals in dynamic memory.
 		org = addr_globals + 2*240;
@@ -4609,24 +4628,6 @@ void backend_z(
 	}
 	
 	used_wordmaps = org - used_wordmaps; // End of wordmaps
-	used_unicode = org;
-	
-	if(
-		n_extended != 0 && (
-			n_extended != sizeof(extended_zscii) ||
-			memcmp(extended_zscii, default_extended_zscii, n_extended*sizeof(extended_zscii[0]))
-		)
-	) { // A Unicode table is required - the extended ZSCII table is not empty, and not default
-		addr_extheader = org;
-		org += 8; // We only need eight bytes in the header extension table
-		addr_unicode = org;
-		org += 1 + 2*n_extended;
-	} else {
-		addr_extheader = 0;
-		addr_unicode = 0;
-	}
-	
-	used_unicode = org - used_unicode;
 	used_addressable = org; // End of addressable memory
 //	report(LVL_DEBUG, 0, "Low memory done:$%06x", org);
 
