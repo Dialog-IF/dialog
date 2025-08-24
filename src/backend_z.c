@@ -4620,6 +4620,7 @@ void backend_z(
 		org += datatable[i].length;
 	}
 	
+	used_wordmaps = org - used_wordmaps; // End of wordmaps
 	used_dictionary = org;
 	
 	addr_dictionary = org;
@@ -4632,7 +4633,6 @@ void backend_z(
 		exit(1);
 	}
 	
-	used_wordmaps = org - used_wordmaps; // End of wordmaps
 	used_addressable = org; // End of addressable memory
 //	report(LVL_DEBUG, 0, "Low memory done:$%06x", org);
 
