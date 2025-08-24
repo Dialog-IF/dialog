@@ -94,6 +94,7 @@ uint16_t extended_zscii[97]; // Unicode values for ZSCII 155..251 (each one fits
 uint8_t n_extended = 0; // How many of the above are filled in
 #define EXTENDED_ZSCII_BASE 155
 #define EXTENDED_ZSCII_MAX 97
+#define N_DEFAULT_EXTENDED (sizeof(default_extended_zscii)/sizeof(default_extended_zscii[0]))
 
 #define ENVF_ENV		0x010
 #define ENVF_CUT_SAVED		0x020
@@ -270,7 +271,7 @@ uint8_t add_extended_zscii(uint16_t uchar) {
 	
 	if(n_extended+1 >= EXTENDED_ZSCII_MAX) { // But we can't!
 		unicode_to_utf8_n(utf8, 5, &uchar, 1); // Convert to UTF-8 sequence
-		report(LVL_ERR, 0, "Tried to add Unicode character U+%04x (%s) to the encoding, but all codepoints have already been allocated! Use the --no-default-unicode command line option to save space.", uchar, utf8);
+		report(LVL_ERR, 0, "Tried to add Unicode character U+%04x (%s) to the encoding, but all codepoints have already been allocated! Use the --no-default-uni command line option to save space.", uchar, utf8);
 		exit(1);
 	}
 	extended_zscii[i] = uchar;
@@ -4233,8 +4234,8 @@ void backend_z(
 	int nglobal;
 	uint16_t addr_abbrevtable, addr_abbrevstr, addr_objtable, addr_globals, addr_static;
 	uint16_t addr_scratch, addr_heap, addr_heapend, addr_aux, addr_lts, addr_extheader, addr_unicode, addr_dictionary, addr_seltable;
-	uint16_t used_addressable, used_objects1, used_objects2, used_wordmaps, used_unicode; // How much of the 64KiB of addressable memory have we used, for what purposes? We don't actually need this value for compilation, but if we save it for the end, we can give better diagnostics.
-	uint32_t used_routines, used_strings; // These ones need more than 16 bits to represent
+	uint16_t used_addressable, used_objects1, used_objects2, used_wordmaps, used_unicode, used_dictionary; // How much of the 64KiB of addressable memory have we used, for what purposes? We don't actually need this value for compilation, but if we save it for the end, we can give better diagnostics.
+	uint32_t used_routines, used_strings; // These ones need more than 16 bits to represent, since they're in high memory, not addressable memory
 	uint8_t used_attributes; // How many of the Z-machine's low-level object attributes have we used?
 	uint32_t org;
 	uint32_t filesize;
@@ -4584,7 +4585,7 @@ void backend_z(
 	
 	if(
 		n_extended != 0 && (
-			n_extended != (sizeof(extended_zscii)/sizeof(extended_zscii[0])) ||
+			n_extended != N_DEFAULT_EXTENDED ||
 			memcmp(extended_zscii, default_extended_zscii, n_extended*sizeof(extended_zscii[0]))
 		)
 	) { // A Unicode table is required - the extended ZSCII table is not empty, and not default
@@ -4618,9 +4619,13 @@ void backend_z(
 		set_global_label(datatable[i].label, org);
 		org += datatable[i].length;
 	}
-
+	
+	used_dictionary = org;
+	
 	addr_dictionary = org;
 	org += 4 + NSTOPCHAR + ndict * 6;
+	
+	used_dictionary = org - used_dictionary; // We could just use addr_dictionary for this, but I think the consistency is worth more than the extra variable
 
 	if(org > 0xfff8) {
 		report(LVL_ERR, 0, "Base memory exhausted. Decrease heap/aux/long-term size using commandline options -H, -A, and/or -L.");
@@ -4977,8 +4982,9 @@ void backend_z(
 	report(LVL_DEBUG, 0, "Addressable memory used: %05d of %d bytes (%d%%)", used_addressable, 64*1024, used_addressable*100/(64*1024));
 	report(LVL_DEBUG, 0, "        Object table:    %5d", used_objects1);
 	report(LVL_DEBUG, 0, "        Object vars:     %5d", used_objects2);
-	report(LVL_DEBUG, 0, "        Wordmaps:        %5d", used_wordmaps);
 	report(LVL_DEBUG, 0, "        Unicode data:    %5d", used_unicode);
+	report(LVL_DEBUG, 0, "        Wordmaps:        %5d", used_wordmaps);
+	report(LVL_DEBUG, 0, "        Dictionary:      %5d", used_dictionary);
 	report(LVL_DEBUG, 0, "        Main heap:       %5d", heapsize*2);
 	report(LVL_DEBUG, 0, "        Auxiliary heap:  %5d", auxsize*2);
 	report(LVL_DEBUG, 0, "        Long-term heap:  %5d", ltssize*2);

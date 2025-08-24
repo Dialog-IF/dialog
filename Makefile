@@ -1,3 +1,5 @@
+all: src/dialogc src/dgdebug test
+
 src/%:
 	make --directory=./src $%
 
@@ -11,4 +13,4 @@ test: test/regtest/cloak.zblorb src/dgdebug
 	make --directory=./test/simple all
 	bin/test.py doc
 
-.PHONY:		test src/%
+.PHONY:		test src/% all
