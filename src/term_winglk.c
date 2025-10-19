@@ -1,6 +1,8 @@
 #include <assert.h>
 #include <stdint.h>
 #include <windows.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include "glk.h"
 #include "WinGlk.h"
 
@@ -26,34 +28,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 }
 
 int winglk_startup_code(const char* cmdline) {
-	int i, j;
-	char *argbuf;
+	int i;
 	
-	argbuf = malloc(strlen(cmdline) + 1);
-	strcpy(argbuf, cmdline);
-
-	for(i = 0; argbuf[i]; ) {
-		while(argbuf[i] == ' ') i++;
-		if(argbuf[i]) {
-			argc++;
-			while(argbuf[i] && argbuf[i] != ' ') i++;
-		}
-	}
-
-	argv = malloc((argc + 1) * sizeof(char *));
-	argv[0] = "dgdebug";
-	j = 1;
-	for(i = 0; argbuf[i]; ) {
-		if(argbuf[i] == ' ') i++;
-		if(argbuf[i]) {
-			argv[j++] = &argbuf[i];
-			while(argbuf[i] && argbuf[i] != ' ') i++;
-			if(argbuf[i]) argbuf[i++] = 0;
-		}
-	}
-	if(j != argc) return 0;
-	argv[argc] = 0;
-#if 0
+	argc = __argc;
+	argv = __argv;
+	
+#if 1
 	printf("cmdline \"%s\"\n", cmdline);
 	for(i = 0; i < argc; i++) {
 		printf(" %d: \"%s\"\n", i, argv[i]);
