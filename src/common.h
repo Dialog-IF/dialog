@@ -23,4 +23,5 @@ extern int verbose;
 #define STYLE_FIXED	8
 #define STYLE_DEBUG	16
 #define STYLE_INPUT	32
+// 64 unused atm
 #define STYLE_INVISIBLE 128 // display:none
