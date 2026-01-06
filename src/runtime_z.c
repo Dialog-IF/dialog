@@ -631,7 +631,7 @@ struct rtroutine rtroutines[] = {
 	},
 	{
 		R_RESET_STYLE,
-		1,
+		2,
 			// 0: temporary variable
 			// 1: temporary variable
 		(struct zinstr []) {
