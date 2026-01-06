@@ -41,6 +41,7 @@ enum {
 	AN_SELECT,
 	AN_STOPPABLE,
 	AN_STATUSAREA,
+	AN_STATUSAREA_OVERRIDE,
 	AN_OUTPUTBOX,
 	AN_LINK_SELF,
 	AN_LINK,
@@ -71,24 +72,28 @@ enum {
 
 enum {
 	AREA_TOP,
-	AREA_INLINE
+	AREA_INLINE,
 };
 
 enum {
-	BI_LESSTHAN = 1,
+	BI_LESSTHAN = 1, // Comparisons
 	BI_GREATERTHAN,
-	BI_PLUS,
+	
+	BI_PLUS, // Computations
 	BI_MINUS,
 	BI_TIMES,
 	BI_DIVIDED,
 	BI_MODULO,
 	BI_RANDOM,
+	
+	BI_DIV_WIDTH, // Sort of a computation, in that it has to return a value
+	BI_DIV_HEIGHT,
 
-	BI_FAIL,
+	BI_FAIL, // Execution flow
 	BI_STOP,
 	BI_REPEAT,
 
-	BI_NUMBER,
+	BI_NUMBER, // Tests
 	BI_LIST,
 	BI_EMPTY,
 	BI_NONEMPTY,
@@ -97,7 +102,7 @@ enum {
 	BI_BOUND,
 	BI_FULLY_BOUND,
 
-	BI_QUIT,
+	BI_QUIT, // VM control
 	BI_RESTART,
 	BI_BREAKPOINT,
 	BI_SAVE,
@@ -109,7 +114,7 @@ enum {
 	BI_TRACE_ON,
 	BI_TRACE_OFF,
 
-	BI_NOSPACE,
+	BI_NOSPACE, // Output control
 	BI_SPACE,
 	BI_SPACE_N,
 	BI_LINE,
@@ -128,13 +133,13 @@ enum {
 	BI_CLEAR_OLD,
 	BI_PROGRESS_BAR,
 
-	BI_OBJECT,
+	BI_OBJECT, // This one doesn't count as just a test because it can be called with an unbound parameter
 	BI_GETINPUT,
 	BI_GETRAWINPUT,
 	BI_GETKEY,
 	BI_HASPARENT,
 
-	BI_UNIFY,
+	BI_UNIFY, // Variable manipulations
 	BI_IS_ONE_OF,
 	BI_SPLIT,
 	BI_APPEND,
@@ -146,7 +151,7 @@ enum {
 	BI_COMPILERVERSION,
 	BI_MEMSTATS,
 
-	BI_HAVE_UNDO,
+	BI_HAVE_UNDO, // Interpreter capabilities
 	BI_HAVE_LINK,
 	BI_HAVE_QUIT,
 	BI_HAVE_STATUS,
@@ -161,7 +166,7 @@ enum {
 	BI_QUERY_ARG,
 	BI_INVOKE_CLOSURE,
 
-	BI_STORY_IFID,
+	BI_STORY_IFID, // Metadata
 	BI_STORY_TITLE,
 	BI_STORY_AUTHOR,
 	BI_STORY_NOUN,

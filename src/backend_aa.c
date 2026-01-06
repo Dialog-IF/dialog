@@ -1235,6 +1235,7 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				ai->oper[1] = encode_dest(ci->oper[0], prg, 0);
 				break;
 			case I_BEGIN_AREA:
+			case I_BEGIN_AREA_OVERRIDE:
 				assert(ci->oper[0].tag == OPER_BOX);
 				if(ci->subop == AREA_TOP) {
 					ai = add_instr(AA_ENTER_STATUS_0);
@@ -1571,6 +1572,10 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				break;
 			case I_COMPUTE_V:
 			case I_COMPUTE_R:
+				if(ci->subop == BI_DIV_WIDTH || ci->subop == BI_DIV_HEIGHT){ // This isn't supported by the Å-machine currently, so just fail without doing any further processing
+					ai = add_instr(AA_FAIL);
+					break;
+				}
 				if(ci->op == I_COMPUTE_V
 				&& ci->oper[2].tag != OPER_VAR
 				&& ci->oper[2].tag != OPER_ARG

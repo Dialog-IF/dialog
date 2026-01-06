@@ -1,0 +1,21 @@
+%% This isn't very useful for automated testing, because dfrotz doesn't obey the status bar height directives
+%% But 
+
+(style class @statusbar)
+	height: 2em;
+
+(show number 0)
+(show number $N)
+	$N
+	(line)
+	($N minus 1 into $Nm1)
+	(show number $Nm1)
+
+(program entry point)
+	*(repeat forever)
+	> (get input [$Number])
+	(if) ($Number = 99) (then) (par) (quit) (endif)
+	(status bar @statusbar with height $Number) {
+		(show number $Number)
+	}
+	(fail)

@@ -38,6 +38,7 @@ struct opinfosrc {
 	{I_ALLOCATE,		0, 0,					"ALLOCATE"},
 	{I_ASSIGN,		1, 0,					"ASSIGN"},
 	{I_BEGIN_AREA,		0, OPF_SUBOP|OPF_CAN_FAIL,		"BEGIN_AREA"},
+	{I_BEGIN_AREA_OVERRIDE,		0, OPF_SUBOP|OPF_CAN_FAIL,		"BEGIN_AREA_OVERRIDE"},
 	{I_BEGIN_BOX,		0, OPF_SUBOP|OPF_CAN_FAIL,		"BEGIN_BOX"},
 	{I_BEGIN_LINK,		0, 0,					"BEGIN_LINK"},
 	{I_BEGIN_LINK_RES,	0, 0,					"BEGIN_LINK_RES"},
@@ -1172,6 +1173,37 @@ static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an,
 		post_rule_trace(prg, cl, an, seen);
 		return 0;
 	}
+	
+	if(an->predicate->builtin == BI_DIV_WIDTH
+	|| an->predicate->builtin == BI_DIV_HEIGHT) { // Like above, but without arguments; we assemble the same IR opcode, but pass nil instead of any actual arguments
+		if(do_trace) {
+			ci = add_instr(I_COMPUTE_V);
+			ci->oper[2] = (value_t) {OPER_ARG, 0};
+		} else {
+			if(an->children[0]->kind == AN_VARIABLE) { // Variable
+				if(!an->children[0]->word->name[0]) { // Anonymous variable
+					ci = add_instr(I_COMPUTE_R);
+					ci->oper[2] = (value_t) {OPER_TEMP, ntemp++};
+				} else if(seen[(vnum = findvar(cl, an->children[0]->word))]) { // Existing variable
+					ci = add_instr(I_COMPUTE_V);
+					ci->oper[2] = (value_t) {OPER_VAR, vnum};
+				} else { // New variable
+					ci = add_instr(I_COMPUTE_R);
+					ci->oper[2] = (value_t) {OPER_VAR, vnum};
+					seen[vnum] = 1;
+				}
+			} else { // Literal value
+				v3 = comp_value(cl, an->children[0], seen, known_args);
+				ci = add_instr(I_COMPUTE_V);
+				ci->oper[2] = v3;
+			}
+		}
+		ci->subop = an->predicate->builtin;
+		ci->oper[0] = (value_t) {VAL_NUM, 0}; // Not used, but it's nice not to add a whole new I_COMPUTE_*_WITHOUT_ARGS instruction; I_COMPUTE_* takes two inputs and unifies its third parameter with the output, so we just pass zero for those first two, and they'll be ignored by the backend
+		ci->oper[1] = (value_t) {VAL_NUM, 0};
+		post_rule_trace(prg, cl, an, seen);
+		return 0;
+	}
 
 	if(an->predicate->builtin == BI_IS_ONE_OF
 	&& (prg->optflags & OPTF_BOUND_PARAMS)
@@ -2160,6 +2192,7 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 			ci = add_instr(I_POP_STOP);
 			break;
 		case AN_STATUSAREA:
+		case AN_STATUSAREA_OVERRIDE:
 		case AN_OUTPUTBOX:
 			comp_ensure_seen_if_nonlocal(cl, an, seen);
 			memset(known_args, 0, MAXPARAM * sizeof(struct astnode *));
@@ -2171,6 +2204,7 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 			}
 			endlab = make_routine_id();
 			vnum = findvar(cl, an->word);
+			
 			if(an->children[0]->kind == AN_DICTWORD) {
 				box = find_boxclass(prg, an->children[0]->word);
 			} else {
@@ -2178,15 +2212,22 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 					LVL_ERR,
 					an->line,
 					"The parameter of %s must be a dictionary word.",
-					(an->kind == AN_STATUSAREA)?
+					(an->kind == AN_STATUSAREA || an->kind == AN_STATUSAREA_OVERRIDE)?
 						(an->subkind == AREA_TOP)? "(status bar $)" : "(inline status bar $)"
 					:
 						(an->subkind == BOX_SPAN)? "(span $)" : "(div $)");
 				prg->errorflag = 1;
 				box = -1;
 			}
-
-			ci = add_instr((an->kind == AN_STATUSAREA)? I_BEGIN_AREA : I_BEGIN_BOX);
+			
+			if(an->kind == AN_STATUSAREA_OVERRIDE) { // This one gets a separate instruction, since it takes an additional parameter
+				v1 = comp_value(cl, an->children[2], seen, known_args); // The extra argument isn't necessarily a literal, just a value, so compile it however is best
+				ci = add_instr(I_BEGIN_AREA_OVERRIDE);
+				ci->oper[1] = v1;
+			} else {
+				ci = add_instr((an->kind == AN_STATUSAREA)?
+					I_BEGIN_AREA : I_BEGIN_BOX);
+			}
 			ci->subop = an->subkind;
 			ci->oper[0] = (value_t) {OPER_BOX, box};
 
@@ -2221,7 +2262,7 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 				ci = add_instr(I_CUT_CHOICE);
 				ci = add_instr(I_POP_STOP);
 			}
-			ci = add_instr((an->kind == AN_STATUSAREA)? I_END_AREA : I_END_BOX);
+			ci = add_instr((an->kind == AN_STATUSAREA || an->kind == AN_STATUSAREA_OVERRIDE)? I_END_AREA : I_END_BOX);
 			ci->subop = an->subkind;
 			ci->oper[0] = (value_t) {OPER_BOX, box};
 			ci = add_instr(I_JUMP);
@@ -2235,7 +2276,7 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 				ci = add_instr(I_CUT_CHOICE);
 				ci = add_instr(I_POP_STOP);
 			}
-			ci = add_instr((an->kind == AN_STATUSAREA)? I_END_AREA : I_END_BOX);
+			ci = add_instr((an->kind == AN_STATUSAREA || an->kind == AN_STATUSAREA_OVERRIDE)? I_END_AREA : I_END_BOX);
 			ci->subop = an->subkind;
 			ci->oper[0] = (value_t) {OPER_BOX, box};
 			ci = add_instr(I_JUMP);
@@ -2247,7 +2288,7 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 				ci = add_instr(I_POP_CHOICE);
 				ci->oper[0] = (value_t) {OPER_NUM, 0};
 				ci = add_instr(I_POP_STOP);
-				ci = add_instr((an->kind == AN_STATUSAREA)? I_END_AREA : I_END_BOX);
+				ci = add_instr((an->kind == AN_STATUSAREA || an->kind == AN_STATUSAREA_OVERRIDE)? I_END_AREA : I_END_BOX);
 				ci->subop = an->subkind;
 				ci->oper[0] = (value_t) {OPER_BOX, box};
 				ci = add_instr(I_STOP);
