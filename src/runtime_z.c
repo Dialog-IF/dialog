@@ -633,11 +633,19 @@ struct rtroutine rtroutines[] = {
 		R_RESET_STYLE,
 		1,
 			// 0: temporary variable
+			// 1: temporary variable
 		(struct zinstr []) {
 			{Z_CALL2N, {ROUTINE(R_SET_STYLE), VALUE(REG_STYLE)}},
 			// Now for the new stuff: use REG_FGCOLOR and REG_BGCOLOR to reset the colors
 			
+			// We also need to make sure the Standard revision is 1.1 or higher
+			// Otherwise, the Z_TRUECOLOR opcode won't exist! And might crash
+			{Z_LOADW, {SMALL(32), SMALL(0)}, REG_LOCAL+1},
+			// Upper byte = major version, lower byte = minor version
+			// So this needs to be at least 0x0101
+			
 			{Z_JL, {VALUE(REG_FGCOLOR), SMALL(0)}, 0, 1}, // Is the foreground color negative? If so, we should do a "standard" setting instead of a "true" setting
+			{Z_JL, {VALUE(REG_LOCAL+1), LARGE(0x0101)}, 0, 2}, // And if this interpreter doesn't support the Z_TRUECOLOR opcode, we should skip this entirely
 			{Z_TRUECOLOR, {VALUE(REG_FGCOLOR), LARGE(0xFFFE)}}, // Pass -2 as the background color to not change it (0 means black with this opcode)
 			{Z_JUMP, {REL_LABEL(2)}}, // And move on to the background color
 			
@@ -649,6 +657,7 @@ struct rtroutine rtroutines[] = {
 			
 			{OP_LABEL(2)}, // Now for the background
 			{Z_JL, {VALUE(REG_BGCOLOR), SMALL(0)}, 0, 3}, // Second verse, same as the first
+			{Z_JL, {VALUE(REG_LOCAL+1), LARGE(0x0101)}, 0, RFALSE}, // Etc
 			{Z_TRUECOLOR, {LARGE(0xFFFE), VALUE(REG_BGCOLOR)}},
 			{Z_RFALSE}, // No need to do any more work after this, we can just return false
 			
