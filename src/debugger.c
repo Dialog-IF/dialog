@@ -1290,7 +1290,11 @@ void usage(char *prgname) {
 	fprintf(stderr, "--no-links  -L    Don't show hyperlinks in the output.\n");
 	fprintf(stderr, "--dfquirks  -D    Activate the dumbfrotz-compatible quirks mode.\n");
 	fprintf(stderr, "--numbered  -N    Show call depth with numbers during tracing.\n");
+	fprintf(stderr, "--warn-not-topic        Always warn about objects not used as topics.\n");
+	fprintf(stderr, "--no-warn-not-topic     Never warn about objects not used as topics.\n");
 }
+
+extern int topic_warning_level; // Defined in frontend.c
 
 int debugger(int argc, char **argv) {
 	struct option longopts[] = {
@@ -1305,6 +1309,8 @@ int debugger(int argc, char **argv) {
 		{"no-links", 0, 0, 'L'},
 		{"dfquirks", 0, 0, 'D'},
 		{"numbered", 0, 0, 'N'},
+		{"warn-not-topic", 0, &topic_warning_level, 1},
+		{"no-warn-not-topic", 0, &topic_warning_level, 2},
 		{0, 0, 0, 0}
 	};
 
@@ -1330,6 +1336,7 @@ int debugger(int argc, char **argv) {
 		opt = getopt_long(argc, argv, "?hVvtnqw:s:LDN", longopts, 0);
 		switch(opt) {
 			case 0:
+				break; // Changed DMS to allow long-only options
 			case '?':
 			case 'h':
 				usage(prgname);

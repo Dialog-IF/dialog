@@ -72,8 +72,12 @@ void usage(char *prgname) {
 	fprintf(stderr, "\n");
 	fprintf(stderr, "--cover           -c    Cover image filename (PNG or JPEG, max 1200x1200).\n");
 	fprintf(stderr, "--cover-alt       -a    Textual description of cover image.\n");
+	fprintf(stderr, "--warn-not-topic        Always warn about objects not used as topics.\n");
+	fprintf(stderr, "--no-warn-not-topic     Never warn about objects not used as topics.\n");
 	exit(1);
 }
+
+extern int topic_warning_level; // Defined in frontend.c
 
 int main(int argc, char **argv) {
 	struct option longopts[] = {
@@ -90,6 +94,8 @@ int main(int argc, char **argv) {
 		{"long-term", 1, 0, 'L'},
 		{"strip", 0, 0, 's'},
 		{"no-default-uni", 0, 0, 'U'},
+		{"warn-not-topic", 0, &topic_warning_level, 1},
+		{"no-warn-not-topic", 0, &topic_warning_level, 2},
 		{0, 0, 0, 0}
 	};
 
@@ -117,6 +123,7 @@ int main(int argc, char **argv) {
 		opt = getopt_long(argc, argv, "?hVvo:t:r:c:a:H:A:L:sU", longopts, 0);
 		switch(opt) {
 			case 0:
+				break; // Added DMS so long-only options are possible
 			case '?':
 			case 'h':
 				usage(prgname);

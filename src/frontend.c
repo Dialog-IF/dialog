@@ -2408,10 +2408,13 @@ char *decode_metadata_str(int builtin, struct word *param, struct program *prg, 
 	return 0;
 }
 
+int topic_warning_level = 0; // Set in backend.c: 0 = default, 1 = always, 2 = never
+
 int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t dictmap_callback) {
 	struct clause **clause_dest, *first_clause, *cl;
 	struct predname *predname;
 	struct predicate *pred;
+	struct word *w;
 	struct astnode *an, **anptr;
 	int fnum, i, j, k, m;
 	int flag;
@@ -2467,6 +2470,19 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 		report(LVL_WARN, 0, "No library (such as stdlib.dg) was specified on the commandline.");
 	} else if(lexer.lib_file != nfile - 1) {
 		report(LVL_WARN, 0, "The library (in this case %s) should normally appear last on the commandline.", sourcefile[lexer.lib_file]);
+	}
+	
+	// Warn about objects never used as topics, depending on topic_warning_level
+	if(topic_warning_level == 0 && lexer.lib_file) { // Default: warn only if library file found
+		topic_warning_level = 1;
+	}
+	if(topic_warning_level == 1) {
+		for(i = 0; i < prg->nworldobj; i++) {
+			w = prg->worldobjnames[i];
+			if(! (w->flags & WORDF_TOPIC) ) {
+				report(LVL_WARN, 0, "Object #%s was used, but never declared as topic.", w->name);
+			}
+		}
 	}
 
 	if(verbose >= 4) {
