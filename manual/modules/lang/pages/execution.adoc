@@ -195,8 +195,7 @@ Dialog objects are _thin_, in the sense that each hashtag is a mere identifier, 
 This is in contrast with object-oriented programming languages, where code and data are organized inside objects and classes.
 In Dialog, the world is modelled using predicates that specify relations between objects, but the objects themselves are just names.
 
-Object names may contain alphanumeric characters (including a limited range of international glyphs), plus (`+`), minus (`-`), and underscore (`_`) characters.
-They are case sensitive.
+Object names are case sensitive, and may contain alphanumeric characters, plus (`+`), minus (`-`), less than (`<`), greater than (`>`), and underscore (`_`). At present, they can also contain any non-ASCII characters—that is, all Unicode characters with codepoints above U+007F—and any characters escaped by a backslash (`\\`). This may change in the future, though, so please use this for reasonable names like `#façade`, `#äußern`, or `#ラーメン`, rather than `#\\␣` (a single escaped space) or `#a⍽b⍽c` (multiple words separated by non-breaking spaces). The latter may become invalid in a future version of Dialog.
 
 [#success-failure]
 == Success and failure

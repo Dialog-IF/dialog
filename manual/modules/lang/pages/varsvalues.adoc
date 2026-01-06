@@ -7,8 +7,7 @@ Recall that a dollar sign on its own is a wildcard.
 However, a dollar sign that is immediately followed by a word, with no whitespace in between, is a local variable.
 When incoming parameters have names, it becomes possible to pass them on to subqueries.
 
-Variable names, like object names, may contain alphanumeric characters (including a limited range of international glyphs), plus (`+`), minus (`-`), and underscore (`_`) characters.
-They are case sensitive.
+Variable names, like object names, may contain alphanumeric characters, plus (`+`), minus (`-`), less than (`<`), greater than (`>`), and underscore (`_`) characters, as well as any non-ASCII characters. They are case sensitive.
 
 [source]
 ----
@@ -107,7 +106,7 @@ A number is a non-negative integer in the range 0–16383 inclusive.
 The printed representation of a number is always in decimal form, with no unnecessary leading zeros.
 Numbers that appear in the source code must also adhere to this format:
 For instance, `007` in the source code is regarded as a word of text.
- This makes a difference inside rule heads and queries, where `007` would be considered part of the predicate name, and not a parameter.
+This makes a difference inside rule heads and queries, where `007` would be considered part of the predicate name, and not a parameter.
 
 === Dictionary word
 
@@ -131,8 +130,7 @@ However, during
 xref:io.adoc#debugging[tracing],
 dictionary words are displayed with a plus sign (`+`) separating the essential part from the optional part.
 
-Dictionary words may contain any characters supported by the underlying platform, e.g.
-the _ZSCII character set_ in the case of the Z-machine.
+Dictionary words may contain any characters supported by the underlying platform, e.g. the _ZSCII character set_ in the case of the Z-machine. On both the Z-machine and Å-machine backends, the Dialog compiler will attempt to extend this set with any additional characters found in dictionary words, allowing words like `@你好` and `@đầu`. But this ability has limits: the Z-machine can support only 96 non-ASCII characters, while the Å-machine can support only 128. This restriction may be loosened in the future.
 
 A handful of characters are used to separate words when parsing input. These cannot appear together with other characters in a dictionary word—they have to stand on their own, as a single-character word.
 They are: `. , ; * " ( )`
@@ -145,7 +143,6 @@ Characters that have special significance in Dialog source code, such as parenth
 ----
 
 Dictionary words are case insensitive as a general rule, although the Z-machine compiler backend has limited support for case conversion of international characters.
-
 
 === List
 

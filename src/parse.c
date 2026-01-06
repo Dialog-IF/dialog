@@ -62,6 +62,7 @@ static int lexer_getc(struct lexer *lexer) {
 		int ch = fgetc(lexer->file);
 		if(ch == 9
 		|| ch == 10
+		|| ch == 12 // Form feed: requested by users to break pages in emacs
 		|| ch == 13
 		|| (ch >= 0x20 && ch < 0x7f)
 		|| ch >= 0x80
@@ -103,7 +104,7 @@ static int next_token(struct lexer *lexer, int parsemode) {
 		} else if(ch == '\n') {
 			column = 0;
 			line++;
-		} else if(ch == ' ' || ch == '\t' || ch == '\r') {
+		} else if(ch == ' ' || ch == '\t' || ch == '\r' || ch == '\f') {
 		} else if(ch == '$' || ch == '#' || ch == '@') {
 			if(ch == '$') {
 				lexer->kind = TOK_VARIABLE;
