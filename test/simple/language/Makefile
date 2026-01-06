@@ -20,7 +20,7 @@ explicit: $(explicit)
 ## Call the original dialogc and dgdebug from $PATH here, not our modified ones from $(BASEPATH)
 	touch -a $*.gold
 ## First, make the Z-machine version
-	dialogc $*.dg dummylib.dglib -t z5 -o $*.z5
+	dialogc $*.dg dummylib.dglib --no-warn-not-topic -t z5 -o $*.z5
 	$(BASEPATH)/bin/echoing.py dfrotz -w 80 -s 1234 -h 999 -mq $*.z5 <$*.z.in >$*.z.out
 ## For consistency, strip final spaces - those are mostly inserted by the debugger, but can happen in some cases, and this makes the output align
 	perl -i -pe 's/ $$//' $*.z.out
@@ -38,10 +38,10 @@ explicit: $(explicit)
 origin: $(origin)
 
 %.z5: $(BASEPATH)/src/dialogc %.dg
-	$(BASEPATH)/src/dialogc $*.dg dummylib.dglib -t z5 -o $*.z5
+	$(BASEPATH)/src/dialogc $*.dg dummylib.dglib --no-warn-not-topic -t z5 -o $*.z5
 
 %.aastory: $(BASEPATH)/src/dialogc %.dg
-	$(BASEPATH)/src/dialogc $*.dg dummylib.dglib -t aa -o $*.aastory
+	$(BASEPATH)/src/dialogc $*.dg dummylib.dglib --no-warn-not-topic -t aa -o $*.aastory
 
 %.debug: %.dg
 	cat $*.dg dummylib.dglib > $*.debug
@@ -70,7 +70,7 @@ origin: $(origin)
 	touch $*.aa.out
 
 %.d.out: $(BASEPATH)/src/dgdebug %.debug %.d.in
-	$(BASEPATH)/src/dgdebug -qD -w 80 -s 1234 $*.debug <$*.d.in >$*.d.out
+	$(BASEPATH)/src/dgdebug -qD -w 80 -s 1234 $*.debug --no-warn-not-topic <$*.d.in >$*.d.out
 ## Remove trailing spaces from lines for easier diffing
 	perl -i -pe 's/ $$//' $*.d.out
 

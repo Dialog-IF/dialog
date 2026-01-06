@@ -509,15 +509,11 @@ actions:
 
 Otherwise, it would just ask: Did you want to eat a marble, or the marble?
 
-[#thefullsingle]
-
 Of course, location is not the only property that makes fungible objects
 distinguishable; any dynamic predicate could have that effect. The standard
 library takes care of the location, but it is up to the story author to check
 any other properties that might differ, and to modify the full name of the
-object as appropriate. When this happens, you should not override
-`(the full $)` directly, but the variant `(the full single $)` that is used
-during disambiguation (for reasons of optimization). Thus:
+object as appropriate. Thus:
 
 [source]
 ----
@@ -538,7 +534,7 @@ during disambiguation (for reasons of optimization). Thus:
 		($A is closed) ($B is closed)
 	}
 
-(the full single (box $Obj))
+(the full (box $Obj))
 	($Obj is $Rel $Loc)
 	the (open or closed $Obj) box (name $Rel) (the full $Loc)
 
@@ -552,7 +548,7 @@ during disambiguation (for reasons of optimization). Thus:
 	box (name $Rel) (the full $Loc)
 
 %% No need for '(clarify location of (box $))', since we override
-%% '(the full single $)' and '(a full $)' directly.
+%% '(the full $)' and '(a full $)' directly.
 ----
 
 
