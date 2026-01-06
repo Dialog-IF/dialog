@@ -1235,6 +1235,7 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				ai->oper[1] = encode_dest(ci->oper[0], prg, 0);
 				break;
 			case I_BEGIN_AREA:
+			case I_BEGIN_AREA_OVERRIDE:
 				assert(ci->oper[0].tag == OPER_BOX);
 				if(ci->subop == AREA_TOP) {
 					ai = add_instr(AA_ENTER_STATUS_0);
@@ -1571,6 +1572,10 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				break;
 			case I_COMPUTE_V:
 			case I_COMPUTE_R:
+				if(ci->subop == BI_DIV_WIDTH || ci->subop == BI_DIV_HEIGHT){ // This isn't supported by the Å-machine currently, so just fail without doing any further processing
+					ai = add_instr(AA_FAIL);
+					break;
+				}
 				if(ci->op == I_COMPUTE_V
 				&& ci->oper[2].tag != OPER_VAR
 				&& ci->oper[2].tag != OPER_ARG
@@ -2626,7 +2631,7 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 					if(prg->predicates[ci->oper[2].value]->builtin != BI_GETINPUT
 					&& prg->predicates[ci->oper[2].value]->builtin != BI_GETKEY) {
 						char buf[128];
-						snprintf(buf, sizeof(buf), prg->predicates[ci->oper[2].value]->printed_name + 1);
+						snprintf(buf, sizeof(buf), "%s", prg->predicates[ci->oper[2].value]->printed_name + 1);
 						assert(strlen(buf));
 						buf[strlen(buf) - 1] = 0;
 						ai = add_instr(AA_TRACEPOINT);
@@ -3393,7 +3398,9 @@ static void chunk_urls(FILE *f, struct program *prg) {
 		size = 2 + prg->nresource * 2;
 		for(i = 0; i < prg->nresource; i++) {
 			offset[i] = size;
-			size += 3 + strlen(prg->resources[i].url) + 2;
+			size += 3 + // Alt text pointer
+					strlen(prg->resources[i].url) + 1 + // URL string w/ terminator
+					strlen(prg->resources[i].options) + 1; // Option string w/ terminator
 		}
 		pad = chunkheader(f, "URLS", size);
 		putword(prg->nresource, f);
@@ -3410,6 +3417,9 @@ static void chunk_urls(FILE *f, struct program *prg) {
 				fputc(prg->resources[i].url[j], f);
 			}
 			fputc(0, f);
+			for(j = 0; prg->resources[i].options[j]; j++) {
+				fputc(prg->resources[i].options[j], f);
+			}
 			fputc(0, f);
 		}
 		if(pad) fputc(0, f);
@@ -3743,6 +3753,7 @@ static void chunk_look(FILE *f, struct program *prg, uint32_t *crc) {
 	int i, j, pad;
 	uint32_t org;
 	struct boxclassline *bcl;
+	const char *extraline = "style-name: ";
 	uint16_t offset[prg->nboxclass];
 
 	org = 2 + prg->nboxclass * 2;
@@ -3751,6 +3762,12 @@ static void chunk_look(FILE *f, struct program *prg, uint32_t *crc) {
 		for(bcl = prg->boxclasses[i].css_lines; bcl; bcl = bcl->next) {
 			org += strlen(bcl->data) + 1;
 		}
+		
+		// Add space for the extra line
+		org += strlen(extraline);
+		org += strlen(prg->boxclasses[i].class->name);
+		org++;
+		
 		org++;
 	}
 
@@ -3771,7 +3788,17 @@ static void chunk_look(FILE *f, struct program *prg, uint32_t *crc) {
 			}
 			putbyte_crc(0, f, crc);
 		}
+		// After all the lines from the source, add one extra, recording the style class name
+		// Interpreters can then use this for their own purposes, if they like
+		for(j = 0; extraline[j]; j++) {
+			putbyte_crc(extraline[j], f, crc);
+		}
+		for(j = 0; prg->boxclasses[i].class->name[j]; j++) {
+			putbyte_crc(prg->boxclasses[i].class->name[j], f, crc);
+		}
 		putbyte_crc(0, f, crc);
+		
+		putbyte_crc(0, f, crc); // Terminator for the whole thing
 	}
 
 	if(pad) fputc(0, f);

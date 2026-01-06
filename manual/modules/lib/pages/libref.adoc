@@ -137,6 +137,7 @@ xref:scenery.adoc#objlocations[`($ has relation $)`] +
 xref:scenery.adoc#descriptions[`(heads $)`] +
 xref:timeprogress.adoc#score[`(increase score by $)`] +
 xref:moving.adoc#light[`(inherently dark $)`] +
+xref:items.adoc#appearance[`(initial appearance $)`] +
 xref:timeprogress.adoc#choicemode[`(initial label $)`] +
 xref:traits.adoc#categorytraits[`(in-seat $)`] +
 xref:actions.adoc#preventperform[`(instead of $)`] +
@@ -344,6 +345,7 @@ xref:traits.adoc#linguistictraits[`(That's $)`] +
 xref:traits.adoc#linguistictraits[`(the $)`] +
 xref:traits.adoc#linguistictraits[`(The $)`] +
 xref:traits.adoc#fullnames[`(the full $)`] +
+xref:miscfeat.adoc#thefullsingle[`(the full single $)`] +
 xref:lang:io.adoc#case[`(The full $)`] +
 xref:traits.adoc#linguistictraits[`(the $ is)`] +
 xref:traits.adoc#linguistictraits[`(The $ is)`] +

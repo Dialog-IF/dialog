@@ -1,0 +1,76 @@
+(fungibility enabled)
+
+(box #box1)
+(box #box2)
+(box #box3)
+
+(marble #marble1)
+(marble #marble2)
+(marble #marble3)
+(marble #marble4)
+(marble #marble5)
+
+(name (box $))
+	box
+(plural name (box $))
+	boxes
+(plural dict (box $))
+	boxes
+(item *(box $))
+(openable *(box $))
+(*(box $) is handled)
+(*(box $) is #on #table)
+
+(name (marble $))
+	marble
+(plural name (marble $))
+	marbles
+(plural dict (marble $))
+	marbles
+(item *(marble $))
+(edible *(marble $))
+(clarify location of (marble $))
+(*(marble $) is handled)
+
+(#marble1 is #in #box1)
+(#marble2 is #in #box1)
+(#marble3 is #in #box2)
+(#marble4 is #in #box2)
+(#marble5 is #in #box2)
+
+(fungible (marble $) (marble $))
+
+(fungible (box $A) (box $B))
+	{
+		($A is open) ($B is open)
+	(or)
+		($A is closed) ($B is closed)
+	}
+
+(the full single (box $Obj))
+	($Obj is $Rel $Loc)
+	the (open or closed $Obj) box (name $Rel) (the full $Loc)
+
+(a full (box $Obj))
+	($Obj is $Rel $Loc)
+	(if) ($Obj is open) (then)
+		an open
+	(else)
+		a closed
+	(endif)
+	box (name $Rel) (the full $Loc)
+
+(current player #player)
+
+#room
+(name *)		tutorial room
+(room *)
+(#player is #in *)
+(look *)		This is a very nondescript room, dominated by a
+			wooden table. (notice #table)
+
+#table
+(name *)		wooden table
+(supporter *)
+(* is #in #room)
+(descr *)		It's wooden.

@@ -1,0 +1,41 @@
+(style class @initial-spacer)
+	margin-top: 5em;
+
+(style class @block)
+	margin-top: 2em;
+	margin-bottom: 1em;
+	font-style: italic;
+
+(style class @unitalic)
+	font-style: upright;
+
+(style class @bold)
+	font-weight: bold;
+
+(style class @status)
+	height: 2em;
+
+(style class @empty)
+
+(program entry point)
+	(div @initial-spacer) { }
+	Let us begin.
+	(div @block) {
+		(span @unitalic) { Lorem Ipsum }, he (span @bold) emphasized .
+		(progress bar 5 of 7)
+	}
+	The quote is complete.
+	(status bar @status) { Upper status. ($X = 1) }
+	(inline status bar @status) { Inline status. ($Y = 2) }
+	Status bar results: [$X $Y]. %% Test that the status bar blocks still executed, even if they're not shown
+	(div @empty) {
+		(italic) { (uppercase) italic }
+		(bold) { (uppercase) bold }
+		(reverse) { (uppercase) reverse }
+		(fixed pitch) { (uppercase) fixed pitch }
+		(roman) { (uppercase) roman }
+	}
+	Words (space 5) five spaces apart.
+	(div @empty) {
+		(link) Selflink and (link [other]) otherlink .
+	}

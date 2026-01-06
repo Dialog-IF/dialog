@@ -43,8 +43,7 @@ struct debugger {
 	int			nalloc_pend;
 };
 
-static int force_width = 0;
-
+static int force_width;
 extern int use_numbered_levels; // Defined in eval.c
 
 static void set_oflag(struct dyn_state *ds, int onum, int fnum) {

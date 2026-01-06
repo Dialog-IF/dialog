@@ -411,8 +411,6 @@ the links between nodes:
 
 [source]
 ----
-...
-
 #land
 (label *)	Return back home.
 (disp *)	After an impeccable landing, you find yourself back at the hive.

@@ -115,6 +115,7 @@ enum {
 	I_POP_STOP,		// --
 
 	I_BEGIN_AREA,		// F- word id, subop = status area
+	I_BEGIN_AREA_OVERRIDE,		// F- word id, height, subop = status area (this is the same as the above but it lets you override the height defined in the CSS)
 	I_END_AREA,		// -- word id, subop = status area
 	I_BEGIN_BOX,		// F- word id, subop = box kind
 	I_END_BOX,		// -- word id, subop = box kind

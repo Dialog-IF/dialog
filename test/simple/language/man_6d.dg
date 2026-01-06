@@ -1,0 +1,31 @@
+(narrate fight with $Enemy) %% Assume $Enemy is bound
+	($Enemy wields $Weapon)
+	The $Enemy swings the $Weapon at you.
+
+(narrate fights)
+	(exhaust) {
+		*(enemy $Enemy)
+		(narrate fight with $Enemy)
+	}
+
+(enemy #troll)
+(enemy #kobold)
+(enemy #skeleton)
+
+(#troll wields #axe)
+
+(program entry point)
+	(narrate fights)
+	(now) (#kobold wields #axe) (line)
+	(narrate fights)
+	(now) ~(#troll wields $) (line)
+	(narrate fights)
+	(now) ~($ wields $) (line)
+	(narrate fights)
+	(now) (#skeleton wields [1 2 3]) (line)
+	(narrate fights)
+	(now) ([1 2 3] wields #axe) (line)
+	(narrate fights)
+
+(error $N entry point)
+	Fatal error code $N!

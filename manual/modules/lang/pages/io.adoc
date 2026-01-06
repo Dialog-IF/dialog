@@ -9,7 +9,7 @@ The text is treated as a sequence of words and punctuation.
 Furthermore, the `(par)` built-in predicate produces paragraph breaks,
 and `(line)` produces line breaks.
 
-Output can be further organized into _divs_ (divisions) and spans.
+Output can be further organized into _divs_ (divisions) and _spans_.
 Divs are rectangular areas of text, usually extending to the full width of the containing window,
 to which style hints can be applied.
 Spans allow style hints to be applied to a stretch of text without breaking it out into a separate rectangle.
@@ -230,7 +230,7 @@ inside the status area the segment should be located.
 The width of the segment can be specified in absolute numbers (using the `ch` unit)
 or as a percentage of the width of the surrounding div, which is normally the top status area itself.
 
-Floating divs can be further subdivided, either horizontally using floating divs, or vertically using ordinary divs (or simply with line breaks). Note that every floating div is placed relative to the top left corner of its parent, regardless of what else has been printed before it. 
+Floating divs can be further subdivided, either horizontally using floating divs, or vertically using ordinary divs (or simply with line breaks). Each floating div is positioned relative to the top left corner of its parent, without regard to any other floating divs; style hints are necessary to keep them from overlapping.
 
 Let's extend our simple status bar with a score display in the upper right corner:
 
@@ -290,18 +290,18 @@ When reducing the size of the top status area
 be aware that some interpreters hide the extraneous lines, while
 others regard them as being part of the main window.
 
-Interpreters that do not support the top status area still execute the code inside the statement, but discard the output.
+Interpreters that do not support the top status area, such as the interactive debugger, still execute the code inside the statement, but discard the output.
 Use `(interpreter supports status bar)` to check for support at runtime.
 
 [#status-inline]
 === The inline status area
 
-The web interpreter for the Å-machine backend also supports an _inline status area_,
+The interactive debugger and the web interpreter for the Å-machine backend also support an _inline status area_,
 which behaves like an ordinary div at first.
 However, every time a new inline status area is created,
 the previous one (if any) vanishes from the screen.
 
-Interpreters that do not support the inline status area still execute the code inside the statement,
+Interpreters that do not support the inline status area, such as the Z-machine backend, still execute the code inside the statement,
 but discard the output.
 Use `(interpreter supports inline status bar)`
 to check for support at runtime.
@@ -321,7 +321,7 @@ These predicates may not be queried from within a span, link, or status area.
 Such queries will result in a runtime error.
 
 Be aware that on some interpreters, clearing interferes with the player's ability to scroll back
-and review earlier parts of the play session.
+and review earlier parts of the play session. Other interpreters might not support clearing at all.
 
 The Å-machine web interpreter supports clearing everything that the player has had a chance to read. This means all output up to and including the last line of input.
 The operation is triggered with `(clear old)`.
@@ -337,14 +337,16 @@ All of them may be ignored by interpreters.
 [#dimensions]
 == Sizing
 
-On some interpreters, like the Å-machine web interpreter, `height: auto` will allow a status area to resize automatically to fit its contents. On others, though, the height must be specified explicitly. A special syntax lets this be done at runtime rather than at compile-time:
+For the most part, Dialog tries to present its output as a document: a series of words divided by spaces and breaks, partitioned off into divs and spans. The exact appearance of this document is then left to the interpreter to realize in whichever way is best for a given platform. Finer details, like the position of each character on the screen, are deliberately left unspecified—there might not even be a "screen" at all, if the game is being played through a screen reader or a messaging platform.
+
+In some cases, though, the limitations of the Z-machine pose a problem for this model. On the Å-machine, for example, a status bar with `height: auto` will expand freely to fit its content. But on the Z-machine, the height of a status bar must always be specified before printing into it. In these cases, Dialog allows the author more fine-grained control; on more flexible backends, like the Å-machine, this additional detail is simply ignored.
 
 [source,subs="quotes"]
 ----
 	(status bar $Class with height $Height) _statement_
 ----
 
-This will attempt to produce a status bar with the specified height (in em units). If `$Height` is not bound to a number, or if the interpreter does not support redefining the height of the status bar, this acts identically to `(status bar $Class)`—that is, rather than failing, it defaults to the height specified in the style class.
+This will attempt to produce a status bar with the specified height (in em units). If `$Height` is not bound to a number, or if the interpreter does not support redefining the height of the status bar, this acts identically to `(status bar $Class)`—that is, it defaults to the height specified in the style class.
 
 Predicates are also provided to determine the height and width of an existing div:
 
@@ -353,9 +355,9 @@ Predicates are also provided to determine the height and width of an existing di
 	(current div height $Height)
 ----
 
-These unify their parameter with the appropriate dimension, in ch or em units. However, note that not all interpreters can provide this information. If this happens, the predicate will simply fail. This is currently the case in all existing Å-machine interpreters, but this may change in time.
+These unify their parameter with the appropriate dimension, in ch or em units. However, note that not all interpreters can provide this information—on a screen reader or messaging platform, for example, there might not be any screen to measure! If this happens, the predicate will simply fail. This is currently the case in all existing Å-machine interpreters.
 
-On the Z-machine backend, these predicates are most useful within the top status area, where these dimensions are always well-defined. If used anywhere else, they will return the width and height of the entire screen.
+On the Z-machine backend, these predicates are most useful within the top status area, which always has fixed dimensions and a monospace font. If used anywhere else, they will attempt to provide the width and height of the entire screen.
 
 [#input]
 == Input
@@ -506,7 +508,7 @@ then it's an _unrecognized_ dictionary word.
 It can still be stored in a variable, retrieved, and printed back, and it will unify successfully with other instances of the same unrecognized word.
 When tracing is enabled, unrecognized dictionary words are displayed with a plus sign at the end.
 
-For instance, the input `TAKE 02 UNKNOWNWORD,X BALL may`, depending on the contents of the dictionary, be represented by the list: `[take 2 unknownword , x ball]`.
+For instance, the input `TAKE 02 UNKNOWNWORD,X BALL` may, depending on the contents of the dictionary, be represented by the list: `[take 2 unknownword , x ball]`.
 As part of a trace, it might be displayed as `[take 2 unknownword+ , x ball]`.
 
 Special gotcha:
@@ -581,13 +583,22 @@ or a local filename.
 Local files are copied into the `.aastory` file,
 and this is the recommended way to work with _feelies_ and embedded graphics.
 
+The _location_ may be followed by one or more _options_, separated from the filename by a comma. For example:
+
+[source]
+----
+(define resource @bg) music/bg.ogg, channel 1, loop
+----
+
+Which options are recognized, and what effects they might have, depends on the backend and interpreter used. At present, no interpreters make use of them. However, unrecognized options will never be an error: interpreters are free to use as many or as few as they like.
+
 === Links to resources
 
 When a resource has been defined, it's possible to link to it using the following syntax:
 
 [source,subs="quotes"]
 ----
-    (link resource $Id) _statement_
+	(link resource $Id) _statement_
 ----
 
 Here is an example:
@@ -634,7 +645,7 @@ The alt-text appears at the end of the resource definition, separated from the l
 ----
 
 If no alt-text is specified, the filename (i.e. location) is used as a default value.
-Only the actual filename is used as alt-text, not the full path.
+Only the actual filename (that is, `manual.pdf` rather than `feelies/manual.pdf`) is used as alt-text, not the full path. Options, if provided, must come first; any commas after a semicolon will be taken as a literal part of the alt-text.
 
 The built-in predicate `(interpreter can embed $)` checks whether the current interpreter is capable of
 displaying a given resource.

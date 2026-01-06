@@ -241,7 +241,7 @@ object in the bowl, not just the amethyst and the sapphire. So we have to take
 care of any foreign objects that might end up there too. In some situations, it
 might be sufficient to drop a vague hint:
 
-[console]
+[source]
 ----
 (descr #bowl)
 	It's a small bowl.
@@ -262,7 +262,7 @@ Thus:
 (descr #bowl)
 	It's a small bowl.
 	(par)
-	(list objects #in *)
+	(list objects #in #bowl)
 
 ~(appearance $ #in #bowl)
 ----
@@ -318,6 +318,8 @@ library queries `(appearance $ $ $)`, but there is only a single rule
 definition for that predicate in the library: It queries
 `(appearance $)`, which in turn contains the default code for calling
 attention to handled objects.
+
+When an object is pristine, `(appearance $)` also delegates to `(initial appearance $)`. No rules for this predicate are defined by the library—the recommended practice in Dialog is to call attention to pristine objects in the description of their rooms, rather than separating them out. But authors who prefer to give every object its own paragraph may do so by supplying rules for this.
 
 There's one more subtlety to be aware of: Whenever an appearance-rule succeeds,
 the object in question gets _noticed_ by the library. This binds the appropriate
@@ -448,7 +450,7 @@ have to define:
 
 [source]
 ----
-(wearing #socks removes #shoes) |
+(wearing #socks removes #shoes)
 ----
 
 But this combination of constraints—`(wearing $A covers $B)` and

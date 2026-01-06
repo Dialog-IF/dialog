@@ -62,6 +62,7 @@ struct specialspec {
 	{SP_SELECT,		0,				1,	{"select"}},
 	{SP_SPAN,		0,				2,	{"span", 0}},
 	{SP_STATUSBAR,		0,				3,	{"status", "bar", 0}},
+	{SP_STATUSBAR_OVERRIDE,	0,				6,	{"status", "bar", 0, "with", "height", 0}},
 	{SP_INLINE_STATUSBAR,	0,				4,	{"inline", "status", "bar", 0}},
 	{SP_STOPPABLE,		0,				1,	{"stoppable"}},
 	{SP_STOPPING,		0,				1,	{"stopping"}},
@@ -85,6 +86,8 @@ struct builtinspec {
 	{BI_DIVIDED,		0, 0,				6,	{0, "divided", "by", 0, "into", 0}},
 	{BI_MODULO,		0, 0,				5,	{0, "modulo", 0, "into", 0}},
 	{BI_RANDOM,		0, 0,				7,	{"random", "from", 0, "to", 0, "into", 0}},
+	{BI_DIV_WIDTH,		0, 0,				4, {"current", "div", "width", 0}},
+	{BI_DIV_HEIGHT,		0, 0,				4, {"current", "div", "height", 0}},
 	{BI_FAIL,		0, PREDF_FAIL,			1,	{"fail"}},
 	{BI_STOP,		0, PREDF_SUCCEEDS|PREDF_STOP|PREDF_MIGHT_STOP,	1,	{"stop"}},
 	{BI_REPEAT,		0, PREDF_SUCCEEDS,		2,	{"repeat", "forever"}},
@@ -584,6 +587,7 @@ int trace_invocations_body(struct astnode **anptr, int flags, uint8_t *bound, st
 			(void) trace_invocations_body(&an->children[0], flags, bound_sub, cl, 1, prg);
 			break;
 		case AN_STATUSAREA:
+		case AN_STATUSAREA_OVERRIDE:
 		case AN_OUTPUTBOX:
 			memcpy(bound_sub, bound, cl->nvar);
 			(void) trace_invocations_body(&an->children[1], flags, bound_sub, cl, 0, prg);
@@ -1986,7 +1990,7 @@ int frontend_visit_clauses(struct program *prg, struct arena *temp_arena, struct
 				return 0;
 			}
 		} else if(cl->predicate->builtin == BI_RESOURCEDEF) {
-			char *body, *url, *stem, *alt, *ptr;
+			char *body, *url, *stem, *alt, *opt, *ptr;
 			int id, len;
 
 			if(!decode_output(&body, cl->body, 0, 0, &cl->predicate->pred->arena, "Resource definition body")) {
@@ -1994,12 +1998,23 @@ int frontend_visit_clauses(struct program *prg, struct arena *temp_arena, struct
 			}
 			id = prg->nresource++;
 			prg->resources = realloc(prg->resources, prg->nresource * sizeof(struct extresource));
-			alt = strchr(body, ';');
+			alt = strchr(body, ';'); // First, look for alt text, set off by a semicolon
 			if(alt) {
-				*alt++ = 0;
-				while(*alt == ' ' || *alt == 9) alt++;
+				*alt++ = 0; // If found, replace the semicolon with a null (marking the end of the body string), and step past it
+				while(*alt == ' ' || *alt == 9) alt++; // Then consume any whitespace
 			}
+			opt = strchr(body, ','); // Next, look for options, set off by a comma
+			if(opt) {
+				*opt++ = 0; // Second verse, same as the first
+				while(*opt == ' ' || *opt == 9) opt++;
+				// But we also need to consume any whitespace at the *end* of the option string, which isn't a problem with the alt text
+				while((len = strlen(opt)) && (opt[len - 1] == ' ' || opt[len - 1] == 9)) {
+					opt[len - 1] = 0;
+				}
+			}
+			// Now, consume whitespace at the start of the body
 			while(*body == ' ' || *body == 9) body++;
+			// And at the end
 			while((len = strlen(body)) && (body[len - 1] == ' ' || body[len - 1] == 9)) {
 				body[len - 1] = 0;
 			}
@@ -2027,9 +2042,12 @@ int frontend_visit_clauses(struct program *prg, struct arena *temp_arena, struct
 			if(!alt) {
 				alt = stem;
 			}
+			if(!opt) {
+				opt = "";
+			}
 			prg->resources[id].url = url;
 			prg->resources[id].stem = stem;
-			prg->resources[id].options = "";
+			prg->resources[id].options = opt;
 			prg->resources[id].alt = alt;
 			prg->resources[id].line = cl->line;
 			sub = arena_calloc(&cl->predicate->pred->arena, sizeof(*sub));
@@ -2137,6 +2155,9 @@ int frontend_visit_clauses(struct program *prg, struct arena *temp_arena, struct
 				printf(", local file \"%s\", stem \"%s\"",
 					prg->resources[i].path,
 					prg->resources[i].stem);
+			}
+			if(prg->resources[i].options[0]) { // Non-null option string
+				printf(", options \"%s\"", prg->resources[i].options);
 			}
 			printf(", alt \"%s\"\n", prg->resources[i].alt);
 		}

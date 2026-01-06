@@ -16,7 +16,7 @@
 
 static volatile int interrupted = 0;
 
-int use_numbered_levels = 0; 
+int use_numbered_levels = 0;
 
 void eval_interrupt() {
 	interrupted = 1;
@@ -492,7 +492,7 @@ static int eval_pop_undo(struct eval_state *es) {
 
 	while(es->divsp--) o_end_box();
 	es->divsp = u->divsp;
-	memcpy(es->divstack, es->divstack, u->divsp * sizeof(uint16_t));
+	memcpy(es->divstack, u->divstack, u->divsp * sizeof(uint16_t));
 	for(i = 0; i < es->divsp; i++) {
 		o_begin_box("box");
 	}
@@ -1190,6 +1190,12 @@ static int eval_compute(struct eval_state *es, int op, int a, int b, int *res) {
 			return 1;
 		}
 		break;
+	case BI_DIV_WIDTH:
+		*res = o_get_width();
+		return 1;
+		break;
+	case BI_DIV_HEIGHT: // Not exposed by output.c; it could be in the future, but for now, just fail
+		break;
 	default:
 		printf("unimplemented computation %d\n", op);
 		assert(0); exit(1);
@@ -1372,6 +1378,7 @@ static int eval_run(struct eval_state *es) {
 			set_by_ref(ci->oper[0], value_of(ci->oper[1], es), es);
 			break;
 		case I_BEGIN_AREA:
+		case I_BEGIN_AREA_OVERRIDE:
 			assert(ci->oper[0].tag == OPER_BOX);
 			if(!es->forwords) {
 				if(es->divsp == EVAL_MAXDIV) {

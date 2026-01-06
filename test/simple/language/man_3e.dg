@@ -1,0 +1,9 @@
+(program entry point)
+	(collect $F)
+		*(fruit $F)
+	(into $FruitList)
+	Come and buy! $FruitList!
+
+(fruit #apple)
+(fruit #orange)
+(fruit #banana)

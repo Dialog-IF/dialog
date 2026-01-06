@@ -1,0 +1,14 @@
+(test)
+	([$X $X] = $Y)
+	Value of Y: $Y.
+	($X = 24)
+	Value of Y: $Y.
+	(test again)
+
+(test again)
+	($X = 24)
+	Value of Y: $Y.
+
+(program entry point)
+	(trace on)
+	(test)

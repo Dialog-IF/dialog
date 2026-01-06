@@ -229,7 +229,7 @@ The second principle is: Make tail calls. The last statement of a rule body is
 said to be in tail position. Making a query in tail position is cheaper than
 making it elsewhere. Thus, the following implementation:
 
-[source]
+[source,.fragment]
 ----
 (say it with $Obj)	My hovercraft is full of (name $Obj).
 (stash $Obj)		(say it with $Obj) (now) ($Obj is #in #hovercraft)
@@ -239,7 +239,7 @@ link:[[Copy to clipboard]]
 
 is not as efficient as this one:
 
-[source]
+[source,.fragment]
 ----
 (say it with $Obj)	My hovercraft is full of (name $Obj).
 (stash $Obj)		(now) ($Obj is #in #hovercraft) (say it with $Obj)

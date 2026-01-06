@@ -51,23 +51,27 @@ void usage(char *prgname) {
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Options:\n");
 	fprintf(stderr, "\n");
-	fprintf(stderr, "--version   -V    Display the program version.\n");
-	fprintf(stderr, "--help      -h    Display this information.\n");
-	fprintf(stderr, "--verbose   -v    Increase verbosity (may be used multiple times).\n");
+	fprintf(stderr, "--version         -V    Display the program version.\n");
+	fprintf(stderr, "--help            -h    Display this information.\n");
+	fprintf(stderr, "--verbose         -v    Increase verbosity (may be used multiple times).\n");
 	fprintf(stderr, "\n");
-	fprintf(stderr, "--output    -o    Set output filename.\n");
-	fprintf(stderr, "--format    -t    Set output format (zblorb, z8, z5, aa).\n");
-	fprintf(stderr, "--resources -r    Set resource directory (default '.').\n");
+	fprintf(stderr, "--output          -o    Set output filename.\n");
+	fprintf(stderr, "--format          -t    Set output format (zblorb, z8, z5, aa).\n");
+	fprintf(stderr, "--resources       -r    Set resource directory (default '.').\n");
 	fprintf(stderr, "\n");
-	fprintf(stderr, "--heap      -H    Set main heap size (default 1000 words).\n");
-	fprintf(stderr, "--aux       -A    Set aux heap size (default 500 words).\n");
-	fprintf(stderr, "--long-term -L    Set long-term heap size (default 500 words).\n");
-	fprintf(stderr, "--strip     -s    Strip internal object names.\n");
+	fprintf(stderr, "--heap            -H    Set main heap size (default 1000 words).\n");
+	fprintf(stderr, "--aux             -A    Set aux heap size (default 500 words).\n");
+	fprintf(stderr, "--long-term       -L    Set long-term heap size (default 500 words).\n");
+	fprintf(stderr, "--strip           -s    Strip internal object names.\n");
+	fprintf(stderr, "\n");
+	fprintf(stderr, "Only for z5, z8, or zblorb format:\n");
+	fprintf(stderr, "\n");
+	fprintf(stderr, "--no-default-uni  -U    Don't preserve the default Unicode translation table.\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Only for zblorb format:\n");
 	fprintf(stderr, "\n");
-	fprintf(stderr, "--cover     -c    Cover image filename (PNG, max 1200x1200).\n");
-	fprintf(stderr, "--cover-alt -a    Textual description of cover image.\n");
+	fprintf(stderr, "--cover           -c    Cover image filename (PNG or JPEG, max 1200x1200).\n");
+	fprintf(stderr, "--cover-alt       -a    Textual description of cover image.\n");
 	exit(1);
 }
 
@@ -85,6 +89,7 @@ int main(int argc, char **argv) {
 		{"aux", 1, 0, 'A'},
 		{"long-term", 1, 0, 'L'},
 		{"strip", 0, 0, 's'},
+		{"no-default-uni", 0, 0, 'U'},
 		{0, 0, 0, 0}
 	};
 
@@ -99,6 +104,7 @@ int main(int argc, char **argv) {
 	int opt, i;
 	struct program *prg;
 	int aamachine = 0;
+	int preserve_zscii = 1;
 	struct predname *predname;
 	struct predicate *pred;
 	char compiletime_buf[8], reldate_buf[16];
@@ -108,7 +114,7 @@ int main(int argc, char **argv) {
 	comp_init();
 
 	do {
-		opt = getopt_long(argc, argv, "?hVvo:t:r:c:a:H:A:L:s", longopts, 0);
+		opt = getopt_long(argc, argv, "?hVvo:t:r:c:a:H:A:L:sU", longopts, 0);
 		switch(opt) {
 			case 0:
 			case '?':
@@ -160,6 +166,9 @@ int main(int argc, char **argv) {
 			case 's':
 				strip = 1;
 				break;
+			case 'U':
+				preserve_zscii = 0;
+				break;
 			default:
 				if(opt >= 0) {
 					report(LVL_ERR, 0, "Unimplemented option '%c'", opt);
@@ -179,6 +188,10 @@ int main(int argc, char **argv) {
 
 	if(!strcmp(format, "aa")) {
 		aamachine = 1;
+	}
+	
+	if(aamachine && !preserve_zscii) {
+		report(LVL_WARN, 0, "The --no-default-uni option has no effect on the aa output format");
 	}
 
 	if(!outname) {
@@ -219,8 +232,10 @@ int main(int argc, char **argv) {
 		prg,
 		argc - optind,
 		argv + optind,
-		aamachine? prepare_dictionary_aa : prepare_dictionary_z))
-	{
+		aamachine? prepare_dictionary_aa : (
+			preserve_zscii ? prepare_dictionary_z_preserve : prepare_dictionary_z_replace
+		)
+	)) {
 		exit(1);
 	}
 

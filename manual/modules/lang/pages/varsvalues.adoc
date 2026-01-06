@@ -28,7 +28,7 @@ They are case sensitive.
 
 Since there is no explicit rule definition for `(The #orange)`, the program will print:
 
-[role=output]
+[.output.matches-previous]
 ```
 The green apple looks yummy.
 That looks yummy.
@@ -49,7 +49,7 @@ In the case of objects, this will print the actual hashtag as it appears in the 
 
 This will print:
 
-[role=output]
+[.output.matches-previous]
 ```
 No description for #apple!
 ```
@@ -85,7 +85,7 @@ Here is a very simplistic approach to world modelling:
 
 The output is:
 
-[role=output]
+[.output.matches-previous]
 ```
 Apple: Yummy!
 Door: The oaken door is oaken.
@@ -174,7 +174,7 @@ Printing a list is possible, and highly useful during debugging. The program:
 
 will print out:
 
-[role=output]
+[.output.matches-previous]
 ```
 Have a look at [#this inscrutable list]!
 ```
@@ -200,7 +200,7 @@ The printed representation of an unbound variable is always $, regardless of its
 
 The output is:
 
-[role=output]
+[.output.matches-previous]
 ```
 This list contains an unbound variable: [one $ three]
 ```
@@ -240,7 +240,7 @@ An unbound variable successfully unifies with any value, but this also has the e
 
 will print:
 
-[role=output]
+[.output.matches-previous]
 ```
 I like #apples and #oranges.
 ```
@@ -261,7 +261,7 @@ But once the variable is bound, it sticks to that value:
 
 will print:
 
-[role=output]
+[.output.matches-previous]
 ```
 I like #apples
 ```
@@ -289,7 +289,7 @@ the second anonymous variable is bound to `#apples`,
 and `$X` is bound to `[#apples #pears #oranges]`.
 The output of the program is:
 
-[role=output]
+[.output.matches-previous]
 ```
 I like [#apples #pears #oranges].
 ```
@@ -311,6 +311,7 @@ This has a very interesting and useful consequence, which is that parameters can
 (program entry point)
 	(#rock beats $X)	%% Parameters are: Input, output.
 	When your opponent plays rock, you'd better not play $X.
+	(line)
 	($Y beats #rock)	%% Parameters are: Output, input.
 	When your opponent plays rock, you should play $Y.
 ----
@@ -337,10 +338,10 @@ The rule body is empty, so it succeeds too, and control returns to the top-level
 
 The output of the program is:
 
-[role=output]
+[.output.matches-previous]
 ```
-When your opponent plays rock, you'd better not play #scissors. When your opponent
-plays rock, you should play #paper.
+When your opponent plays rock, you'd better not play #scissors.
+When your opponent plays rock, you should play #paper.
 ```
 
 == Partial lists and recursion
@@ -374,7 +375,7 @@ Here is an example of extracting the head and tail of a list:
 
 Here is the output:
 
-[role=output]
+[.output.matches-previous]
 ```
 A is 1. B is [2 3 4].
 ```
@@ -391,7 +392,7 @@ Unification works both ways, so the same syntax can be used to construct a list 
 
 The output is:
 
-[role=output]
+[.output.matches-previous]
 ```
 Tacking on a new head: [1 2 3 4]
 ```
@@ -411,7 +412,7 @@ So:
 
 produces the following output:
 
-[role=output]
+[.output.matches-previous]
 ```
 The result is [b a c d e].
 ```
@@ -439,7 +440,7 @@ Here is an example that considers each element of a list in turn using recursive
 
 The output is:
 
-[role=output]
+[.output.matches-previous]
 ```
 You see a banana.
 You see an unknown fruit.

@@ -147,7 +147,7 @@ predicate:
 
 [source]
 ----
-(split $Input by $Keyword into $Left and $Right)
+	(split $Input by $Keyword into $Left and $Right)
 ----
 
 `$Input` must be a list of simple values, i.e. it mustn't contain
@@ -195,13 +195,14 @@ and/or single-digit numbers. Thus:
 
 [source]
 ----
+(program entry point)
 	(split word @fission into $List)
 	$List
 ----
 
 will print:
 
-[role="output"]
+[.output.matches-previous]
 ```
 [f i s s i o n]
 ```
@@ -211,13 +212,14 @@ Conversely, it is possible to construct a dictionary word from a list of words
 
 [source]
 ----
+(program entry point)
 	(join words [f u s i o n] into $Word)
 	$Word
 ----
 
 will print:
 
-[role="output"]
+[.output.matches-previous]
 ```
 fusion
 ```
@@ -236,7 +238,7 @@ It is possible to split and join numbers as though they were words:
 
 [source]
 ----
-	> (get input [$W])
+	(get input [$W])
 	(split word $W into $Chars)
 	(split $Chars by 5 into $LeftChars and $RightChars)
 	$LeftChars, $RightChars. (line)

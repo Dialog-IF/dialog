@@ -1,0 +1,4584 @@
+ Year: 2001 Place: Front Lawn
+
+The Impossible Stairs
+An interactive fiction by Mathbrush.
+Written in Dialog. Authorized sequel to The Impossible Bottle by Linus Åkesson.
+Release 3. Serial number DEBUG.
+Dialog compiler version 1a/01-dev. Library version 1.0.0-dev.
+
+What a mess! The hurricane did a real number on the old family home, and to
+think it would happen the week that your dad is moving out!
+
+You notice some movement from an upstairs window. A woman that looks somewhat
+familiar leans out and throws out a paper airplane that floats down and lands by
+you.
+
+"There you go, CJ! See you at dinner!" she shouts, then slams the window shut.
+
+"Huh. Who the heck was that?" you say to yourself.
+
+[Tutorial: You can LOOK to check out your surroundings. You can type TUTORIAL
+OFF to turn off this brief tutorial at any time.]
+
+> *** From David Welbourn's walkthrough
+> look
+ Year: 2001 Place: Front Lawn
+
+Front Lawn
+You are standing in front of your family home, which you recently purchased from
+your father. The front door is to the east.
+
+The paper airplane is lying on the ground next to you.
+
+[Tutorial: You can TAKE AIRPLANE to pick up the paper airplane.]
+
+> take airplane
+ Year: 2001 Place: Front Lawn
+
+You scoop up the airplane and un-fold it. It's a... chores list?
+
+[Tutorial: You can now type I or INVENTORY to check your inventory.]
+
+> i
+ Year: 2001 Place: Front Lawn
+
+You have a chores list.
+
+[Tutorial: You can EXAMINE LIST or X LIST or READ LIST to see what it says.]
+
+> x list
+ Year: 2001 Place: Front Lawn
+
+The list says "BEFORE THE GUESTS ARRIVE:" in all caps at the top. At the bottom
+it says,
+
+-Give the good serving dish to Uncle Joe
+
+-Put the plates on the table
+
+-Find Mom's baklava recipe and make it
+
+-Help Ada finish up in the garage (could take a while)
+
+-Remind Uncle Rob about dinner
+
+Huh. Strange.
+
+[Tutorial: You can now go EAST or E to enter the house. This is the end of the
+tutorial. For more help, you can type HELP or HINT at any time. Thanks!]
+
+> x me
+ Year: 2001 Place: Front Lawn
+
+You're still feeling a bit frazzled from the hurricane and helping your dad pack
+for his big move, but otherwise you're doing fine.
+
+> x house
+ Year: 2001 Place: Front Lawn
+
+You moved into this place pretty soon after your mother passed away, although
+she helped design it. It's not very big, but it has a lot of great memories in
+it.
+
+It's too bad that the hurricane damaged it quite a bit. You can't see it from
+here, but it's even worse in the kitchen.
+
+> e
+ Year: 2001 Place: Family Room
+
+(first attempting to open the front door to the east)
+You open the front door.
+
+You walk into the house (your house, now) and close the door behind you.
+
+Family Room
+This cramped family room is dominated by a massive entertainment center and has
+burgundy carpeting. Unlike the rest of the house, it hasn't been hit hard by the
+hurricane.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+> x center
+ Year: 2001 Place: Family Room
+
+This massive entertainment center is designed to hold your TV and all of its
+attachments. You haven't moved in your TV yet. You'll do that after dad moves
+out.
+
+> x carpeting
+ Year: 2001 Place: Family Room
+
+You bought this carpet to be unique, but it turns out all the homeowners in the
+neighborhood had the same idea.
+
+> x calendar
+ Year: 2001 Place: Family Room
+
+This calendar is a little warped from the water, but it still works. It's a
+calendar with pictures of wolves. You got it at Borders. It's August 20th, 2001.
+
+> n
+ Year: 2001 Place: Family Room
+
+You start to head out before you remember: The garage was crushed by the tree in
+your backyard when the hurricane blew it over a few days ago. There's no way out
+there right now.
+
+Your cousin Ada was so sad about losing her projects, she hasn't been back
+since.
+
+> s
+ Year: 2001 Place: Office
+
+You walk south.
+
+Office
+This is your art studio. Or, at least, it will be. Right now, it's mostly empty,
+except for a single easel in the middle and a pedestal. Your family's memory
+board is here, the only thing you kept from your dad's old office. The shelves
+and most of the books had to be thrown out.
+
+The family room is back to the north.
+
+On the pedestal, you can see a dish towel, artfully arranged.
+
+Your dad is puttering around, making sure that your new studio is ready for you
+to move into.
+
+"Oh hey, CJ," he says, looking up for a second.
+
+> x easel
+ Year: 2001 Place: Office
+
+It cost a little more than you budgeted for, but you hope it will suffice for
+the next few years, at least.
+
+> x pedestal
+ Year: 2001 Place: Office
+
+This hefty pedestal is where you intend to put your current inspiration. Your
+choice may shape your future career, so you've been a bit nervous about it.
+
+> x towel
+ Year: 2001 Place: Office
+
+A colorful dish towel which struck your fancy at the store. It is artfully
+arranged on the pedestal, serving as your current object of inspiration.
+
+> x board
+ Year: 2001 Place: Office
+
+The memory board has portraits of all your loved ones who have passed on. Right
+now, that includes your grandfather, grandmother and mom.
+
+> x grandfather
+ Year: 2001 Place: Office
+
+Grandpa died before you were born. It shows him standing outside a coal mine,
+pick in hand. That was his first job, after he immigrated.
+
+> x grandmother
+ Year: 2001 Place: Office
+
+This is your grandmother's graduation picture from nursing school. She's wearing
+a crisp white uniform and cap, and standing by two nuns. She passed away shortly
+after her 84th birthday.
+
+> x mom
+ Year: 2001 Place: Office
+
+You only have vague memories of your mother, including the day this was taken.
+The photo shows her at a picnic, feeding you a tiny slice of baklava.
+
+The corner of a recipe card is sticking out from behind the portrait.
+
+> take card
+ Year: 2001 Place: Office
+
+You snatch up the card. It's your mom's old baklava recipe!
+
+> read it
+ Year: 2001 Place: Office
+
+This is your mom's recipe for baklava.
+
+The card looks pretty old, and has food stains. At the bottom, it says, 'Dad's
+recipe'. Huh, you never thought about it, but she must have got it from Grandpa.
+
+It says you need cinnamon, phyllo dough, butter, nuts, and honey. Hopefully,
+Uncle Joe isn't hogging all the butter again.
+
+[To make the baklava, you can type MAKE RECIPE in the kitchen once you have all
+the ingredients.]
+
+> x dad
+ Year: 2001 Place: Office
+
+Dad has mellowed out a lot since you were younger. He has a full head of white
+hair that he finally gave up on dyeing. He changed out of his "nice suit"
+earlier so he could wear his old suit, just in case things got messy.
+
+> talk to dad
+ Year: 2001 Place: Office
+
+Your dad looks up. "Hey, CJ!" he says, smiling. "What's up?"
+
+1. "Hey, I saw a strange woman standing in the upstairs window. Any idea who it
+was?"
+2. "Have you seen the serving dish?"
+3. "Do you know where the plates are?"
+4. "Oh, just wanted to say hi."
+> 1
+ Year: 2001 Place: Office
+
+"Hey, I saw a strange woman standing in the upstairs window. Any idea who it
+was?"
+
+Your dad looks startled. "Huh. Strange woman. What did she look like?"
+
+"I don't know, but she looked familiar. She threw a paper airplane at me," you
+say.
+
+"Did she seem dangerous?" asks Dad.
+
+"No, it's just weird having strangers in the house," you answer.
+
+"Well, it wouldn't be the weirdest thing that's happened here. Let me know if
+you see her again, okay?" says dad.
+
+1. "Have you seen the serving dish?"
+2. "Do you know where the plates are?"
+3. "Oh, just wanted to say hi."
+> 1
+ Year: 2001 Place: Office
+
+"Have you seen the serving dish?"
+
+"I think it's downstairs somewhere."
+
+1. "Have you seen the serving dish?"
+2. "Do you know where the plates are?"
+3. "Oh, just wanted to say hi."
+> 2
+ Year: 2001 Place: Office
+
+"Do you know where the plates are?"
+
+"Oh, those. Last I saw them, they were in the treehouse."
+
+1. "Have you seen the serving dish?"
+2. "Do you know where the plates are?"
+3. "Oh, just wanted to say hi."
+> 3
+ Year: 2001 Place: Office
+
+"Oh, just wanted to say hi."
+
+"Hi to you, too, kid. Sorry I've been so busy lately!" he says. It hasn't just
+been lately, of course, but that's just Dad.
+
+> n
+ Year: 2001 Place: Family Room
+
+You walk north.
+
+Family Room
+This cramped family room is dominated by a massive entertainment center and has
+burgundy carpeting. Unlike the rest of the house, it hasn't been hit hard by the
+hurricane.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+> e
+ Year: 2001 Place: Kitchen
+
+You walk east.
+
+Kitchen
+The kitchen is filled with wonderful smells. A long granite counter runs down
+one side. A small oven is next to it. The backyard is to the east, the pantry is
+to the south, and the family room is to the west.
+
+Plastic tarps are covering parts of the walls and ceilings. Light rain begins to
+drum on them.
+
+Uncle Joe is slicing and dicing potatoes like an expert chef. Which, of course,
+he is.
+
+"Hey, there you are," he says, as you walk in the room. "Hope you're hungry for
+later!"
+
+In the dining half of the kitchen, the big table has been assembled together for
+dinner. Right now the table has nothing on it.
+
+> x Joe
+ Year: 2001 Place: Kitchen
+
+Uncle Joe is only ten years older than you. He's a grizzled, mostly-bald man.
+He's tall and bulky, but leaner than he was a few years ago.
+
+He looks happy to see you. He's also sweating profusely in the kitchen heat.
+
+> undo
+ Year: 2001 Place: Kitchen
+
+Undoing the last turn (x joe).
+Kitchen
+
+> x Joe
+ Year: 2001 Place: Kitchen
+
+Uncle Joe is only ten years older than you. He's a grizzled, mostly-bald man.
+He's tall and bulky, but leaner than he was a few years ago.
+
+He looks happy to see you. He's also sweating profusely in the kitchen heat.
+
+> talk to Joe
+ Year: 2001 Place: Kitchen
+
+"Hey, Uncle Joe, do you have a second?"
+
+"Sure, CJ, what's up?"
+
+1. "Did you see a strange woman upstairs today?"
+2. "How's work been recently?"
+3. "Did you see what happened to the garage?"
+4. "Do you know where Uncle Rob went?"
+5. "Do you have any butter, Uncle Joe?"
+6. "Can I help you with the potatoes?"
+7. "Never mind, Uncle Joe."
+> 1
+ Year: 2001 Place: Kitchen
+
+"Did you see a strange woman upstairs today?"
+
+Uncle Joe wipes his prodigious brow. "CJ, I haven't left this kitchen at all.
+Did she look hungry? Because I think I made way too many potatoes."
+
+"No, she didn't look hungry, but she did seem familiar. She left me a chores
+list for a party," you answer.
+
+"Oh, well that's great, actually. I thought I was the only one getting ready.
+Maybe she's a guest who came early?"
+
+1. "How's work been recently?"
+2. "Did you see what happened to the garage?"
+3. "Do you know where Uncle Rob went?"
+4. "Do you have any butter, Uncle Joe?"
+5. "Can I help you with the potatoes?"
+6. "Never mind, Uncle Joe."
+> 1
+ Year: 2001 Place: Kitchen
+
+"How's work been recently?"
+
+"We opened three new franchises this month," says Uncle Joe. "We're even
+expanding into Canada!"
+
+1. "How's work been recently?"
+2. "Did you see what happened to the garage?"
+3. "Do you know where Uncle Rob went?"
+4. "Do you have any butter, Uncle Joe?"
+5. "Can I help you with the potatoes?"
+6. "Never mind, Uncle Joe."
+> 2
+ Year: 2001 Place: Kitchen
+
+"Did you see what happened to the garage?"
+
+He stops chopping for a minute.
+
+"Yeah, what a mess. Can't believe the old maple fell on it. Should never have
+planted it that close to the house."
+
+1. "How's work been recently?"
+2. "Do you know where Uncle Rob went?"
+3. "Do you have any butter, Uncle Joe?"
+4. "Can I help you with the potatoes?"
+5. "Never mind, Uncle Joe."
+> 2
+ Year: 2001 Place: Kitchen
+
+"Do you know where Uncle Rob went?"
+
+"I'm just glad he's not here snacking. That guy's an eating machine! But, you
+know, he's like you," he says, pointing at you. "He kind of 'wanders', if you
+get my drift. But I think you'll find him."
+
+1. "How's work been recently?"
+2. "Do you have any butter, Uncle Joe?"
+3. "Can I help you with the potatoes?"
+4. "Never mind, Uncle Joe."
+> 2
+ Year: 2001 Place: Kitchen
+
+"Do you have any butter, Uncle Joe?"
+
+"No, I stopped using that years ago. It's margarine for me, now."
+
+1. "How's work been recently?"
+2. "Do you have any butter, Uncle Joe?"
+3. "Can I help you with the potatoes?"
+4. "Never mind, Uncle Joe."
+> 3
+ Year: 2001 Place: Kitchen
+
+"Can I help you with the potatoes?"
+
+"Sounds great!" says Joe. He hands you a pile of potatoes and you scrub them. He
+shows you some interesting cooking techniques while you're working. He can talk
+about potatoes for hours, if you let him. He starts: "Potatoes are the fruit of
+the earth. You can roast them, boil them, fry them, mash them."
+
+He goes on: "There's baked potatoes, mashed potatoes. Fried potatoes: pan fried,
+deep fried, stir-fried. There's potato tacos, twice-baked potatoes, tater-tots,
+potatoes au gratin, chips, potato soup, potato stew, potato salad, shrimp and
+potatoes, hashbrowns, steak fries. That's about it."
+
+By now, you've washed a ton of potatoes. Uncle Joe says, "Thanks, CJ. That
+helps!"
+
+> x tarps
+ Year: 2001 Place: Kitchen
+
+You put these up on the ceiling to temporarily handle the damage from the
+hurricane.
+
+> x counter
+ Year: 2001 Place: Kitchen
+
+This long granite counter is destined to outlast you, the house, and everyone in
+it. It was installed a little crooked when it was first put in, leaving a gap.
+
+> x gap
+ Year: 2001 Place: Kitchen
+
+Stuff keeps falling in here for some reason. It's a narrow gap. Right now,
+there's a serving dish stuck in there.
+
+> x dish
+ Year: 2001 Place: Kitchen
+
+This is the family's antique serving platter. Grandpa got it from the old
+country.
+
+It looks pretty dirty right now.
+
+> take dish
+ Year: 2001 Place: Kitchen
+
+The gap is too small for an adult's arm to fit.
+
+> x oven
+ Year: 2001 Place: Kitchen
+
+This is your dad's old stove, still. Your new one won't come in until later in
+the week.
+
+> e
+ Year: 2001 Place: Outdoors
+
+You walk east.
+
+Outdoors
+A small row of houses is lined up behind yours. Most of them are clearly still
+recovering from the storm.
+
+From out here you can see the damage to your own house.
+
+The rain is drizzling.
+
+The kitchen is back to the west.
+
+The old maple tree has fallen on the garage, and the brand new treehouse is
+smashed on top of it.
+
+> x tree
+ Year: 2001 Place: Outdoors
+
+Your family's majestic maple tree has fallen onto the garage, crushing it
+completely.
+
+> x treehouse
+ Year: 2001 Place: Outdoors
+
+The hurricane knocked over the new treehouse. Now it's shattered, and so is
+everything in it!
+
+> x houses
+ Year: 2001 Place: Outdoors
+
+Most of your neighbours grew up and moved away, with newer families taking their
+place.
+
+> w
+ Year: 2001 Place: Kitchen
+
+You walk west.
+
+Kitchen
+The kitchen is filled with wonderful smells. A long granite counter runs down
+one side. A small oven is next to it. The backyard is to the east, the pantry is
+to the south, and the family room is to the west.
+
+Plastic tarps are covering parts of the walls and ceilings. Light rain drums on
+them.
+
+Uncle Joe is slicing and dicing potatoes like an expert chef. Which, of course,
+he is.
+
+In the dining half of the kitchen, the big table has been assembled together for
+dinner. Right now the table has nothing on it.
+
+> s
+ Year: 2001 Place: Pantry
+
+You walk south.
+
+Pantry
+This is your family's pantry, just a glorified closet with shelves.
+
+The shelves have some crushed walnuts and a can of yellow wax beans on them.
+
+> x shelves
+ Year: 2001 Place: Pantry
+
+Plain white shelves, completely utilitarian. And very sturdy.
+
+> x walnuts
+ Year: 2001 Place: Pantry
+
+Looks like this bag of crushed walnuts was the only thing left in the pantry,
+what with all the supply chain problems. You've already eaten through most of
+your supplies.
+
+> x beans
+ Year: 2001 Place: Pantry
+
+Nobody in the house likes yellow wax beans. But this can is so old now it's part
+of your heritage, like the rest of the house.
+
+> take walnuts
+ Year: 2001 Place: Pantry
+
+You take the crushed walnuts off the shelves.
+
+> n
+ Year: 2001 Place: Kitchen
+
+You walk north.
+
+Kitchen
+The kitchen is filled with wonderful smells. A long granite counter runs down
+one side. A small oven is next to it. The backyard is to the east, the pantry is
+to the south, and the family room is to the west.
+
+Plastic tarps are covering parts of the walls and ceilings. Light rain drums on
+them.
+
+Uncle Joe is slicing and dicing potatoes like an expert chef. Which, of course,
+he is.
+
+In the dining half of the kitchen, the big table has been assembled together for
+dinner. Right now the table has nothing on it.
+
+> w
+ Year: 2001 Place: Family Room
+
+You walk west.
+
+Family Room
+This cramped family room is dominated by a massive entertainment center and has
+burgundy carpeting. Unlike the rest of the house, it hasn't been hit hard by the
+hurricane.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+> d
+ Year: 1981 Place: Family Room
+
+The burden of years seems to lift from your shoulders the further down you get.
+This part of the house looks newer, too.
+
+Family Room
+This family room is certainly much more inviting than your college dorm room.
+The brown rug and wood paneling make you feel like you're in a cabin.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+Music is coming from a boombox.
+
+Grandma is watching TV from her old, busted recliner. It looks like Dallas is
+playing again. She's holding her usual bottle of Sprite.
+
+She gives you a little wave as you walk come down the stairs.
+
+> x calendar
+ Year: 1981 Place: Family Room
+
+This is a linen calendar towel with decorative flowers all around it. It's May
+17th, 1981, and it's Grandma's birthday!
+
+> x rug
+ Year: 1981 Place: Family Room
+
+Sensible, practical, and easy to vacuum.
+
+> x paneling
+ Year: 1981 Place: Family Room
+
+Your dad just recently bought this. It was fun helping him put it up.
+
+> x boombox
+ Year: 1981 Place: Family Room
+
+This is the JVC RC-M90, the cutting edge of sound technology. Uncle Joe got it
+for Grandma for her birthday. It's blasting out "Bette Davis Eyes" at maximum
+loudness. The boombox is closed.
+
+> open it
+ Year: 1981 Place: Family Room
+
+You open the boombox, revealing a battery.
+
+> x battery
+ Year: 1981 Place: Family Room
+
+A single Z-cell battery. This thing is honestly huge! Ada made it herself, years
+ago.
+
+> x grandma
+ Year: 1981 Place: Family Room
+
+Grandma looks pretty tired. Then again, she has been for weeks. She's
+comfortable on the couch in her house dress and slippers. She notices you
+looking and waves at you cheerfully.
+
+> talk to grandma
+ Year: 1981 Place: Family Room
+
+"What is it, dear?" asks your grandmother.
+
+1. "Hey Grandma, some woman threw this list at me."
+2. "Happy Birthday!"
+3. "Grandma, do you know where the plates are?"
+4. "I can't find Uncle Rob anywhere."
+5. "Grandma, have you seen the good serving dish?"
+6. "That's all I wanted to say, Grandma."
+> 1
+ Year: 1981 Place: Family Room
+> 1
+"Hey Grandma, some woman threw this list at me."
+
+"Oh, that sounds pretty unusual. I've had a clipboard thrown at my face, if that
+makes you feel any better," she answers, still watching TV.
+
+"No, that doesn't...actually, yeah, that does kind of make me feel better," you
+answer.
+
+"Did she seem nice?" says Grandma.
+
+"She seemed familiar, somehow. She was leaning out the upstairs window," you
+say.
+
+"Ah, I see the problem. Don't worry dear, that kind of thing will sort itself
+out," says Grandma.
+
+1. "Happy Birthday!"
+2. "Grandma, do you know where the plates are?"
+3. "I can't find Uncle Rob anywhere."
+4. "Grandma, have you seen the good serving dish?"
+5. "That's all I wanted to say, Grandma."
+
+> 1
+ Year: 1981 Place: Family Room
+
+"Happy Birthday!"
+
+"Oh thank you, Katrina," says Grandma.
+
+You try not to react at her calling you your mom's name. Grandma notices your
+unease and thinks for a moment.
+
+"I mean CJ, of course. It's not every day you turn eighty-four years old! I
+appreciate you taking care of the party!" she says, putting a kind hand on yours
+for a moment.
+
+1. "Grandma, do you know where the plates are?"
+2. "I can't find Uncle Rob anywhere."
+3. "Grandma, have you seen the good serving dish?"
+4. "That's all I wanted to say, Grandma."
+> 1
+ Year: 1981 Place: Family Room
+
+"Grandma, do you know where the plates are?"
+
+You said plates? I'm not sure what plates you're talking about, dear, but I
+think your father would know."
+
+1. "Grandma, do you know where the plates are?"
+2. "I can't find Uncle Rob anywhere."
+3. "Grandma, have you seen the good serving dish?"
+4. "That's all I wanted to say, Grandma."
+> 2
+ Year: 1981 Place: Family Room
+
+"I can't find Uncle Rob anywhere."
+
+"Oh, I'm not sure. He walks around like it was his purpose in life. Have you
+checked with Ada? The two of them think alike."
+
+1. "Grandma, do you know where the plates are?"
+2. "I can't find Uncle Rob anywhere."
+3. "Grandma, have you seen the good serving dish?"
+4. "That's all I wanted to say, Grandma."
+> 3
+ Year: 1981 Place: Family Room
+
+"Grandma, have you seen the good serving dish?"
+
+"I lost that darned thing years ago. I was finishing washing up and putting away
+some of the plates when I heard the loudest clatter of my life. All the pots and
+pans had fallen over and rolled all over the room. I found them all eventually,
+but not the dish," says Grandma.
+
+1. "Grandma, do you know where the plates are?"
+2. "I can't find Uncle Rob anywhere."
+3. "Grandma, have you seen the good serving dish?"
+4. "That's all I wanted to say, Grandma."
+> 4
+ Year: 1981 Place: Family Room
+
+"That's all I wanted to say, Grandma."
+
+She nods at you politely before going back to watching the TV.
+
+> x tv
+ Year: 1981 Place: Family Room
+
+Dallas is playing on the television. It's a rerun, so you already know who shot
+JR. Grandma may have forgotten. The doctors like keeping things simple for her,
+these days.
+
+> x recliner
+ Year: 1981 Place: Family Room
+
+Grandma's recliner is well past its glory years, but she refuses to replace it.
+
+> x sprite
+ Year: 1981 Place: Family Room
+
+Grandma's been into Sprite ever since she first saw it advertised, years ago.
+
+> n
+ Year: 1981 Place: Garage
+
+You walk north.
+
+Garage
+The garage has been converted into a workshop for Ada. A whiteboard is in the
+corner.
+
+The family room is to the south.
+
+Your cousin Ada is working diligently on her latest theorem in applied
+homological algebra. She seems withdrawn and focused.
+
+She notices you walk in.
+
+"Hi, CJ," she says absent-mindedly, and keeps walking around.
+
+> x whiteboard
+ Year: 1981 Place: Garage
+
+The whiteboard is covered in equations.
+
+> x equations
+ Year: 1981 Place: Garage
+
+Looks like she's studying finite subdivision rules. This is a series calculating
+the growth rate of a Gromov hyperbolic group.
+
+> x Ada
+ Year: 1981 Place: Garage
+
+Ada is a tall, young woman, about your age. Her wavy hair is dyed bright red,
+and she's wearing a black sweater that hangs loosely on her.
+
+She's your closest cousin, and a genius.
+
+> x sweater
+ Year: 1981 Place: Garage
+
+Ada has always preferred black sweaters.
+
+> talk to Ada
+ Year: 1981 Place: Garage
+
+Ada says, "Sorry, CJ, I'm busy. The life of a mathematician never slows down!
+Well, maybe never. But at least not until I've proven that there are no zeros
+off the critical line using annealing methods in numerical partial differential
+equations. But enough about me. What's up?"
+
+1. "Ada, did you see a strange woman upstairs?"
+2. "Make sure you're ready for dinner soon!"
+3. "So why do you like math so much anyway?"
+4. "Hey, do you know where Uncle Rob is?"
+5. "Ada, I seem to be traveling through time. Do you know anything about that?"
+6. "Hey, I know this is weird, but do you remember much about my mom?"
+7. "Nevermind, Ada!"
+> 1
+ Year: 1981 Place: Garage
+
+"Ada, did you see a strange woman upstairs?"
+
+"Besides you and me? Not really. Actually, have you ever even been upstairs?
+What with your... problem?"
+
+"It's not a problem, Ada!" you exclaim.
+
+"Oh, okay. That's actually a nice attitude. Anyway, no I haven't seen anyone. If
+you find her, let me know and I'll go say hi," she says.
+
+1. "Make sure you're ready for dinner soon!"
+2. "So why do you like math so much anyway?"
+3. "Hey, do you know where Uncle Rob is?"
+4. "Ada, I seem to be traveling through time. Do you know anything about that?"
+5. "Hey, I know this is weird, but do you remember much about my mom?"
+6. "Nevermind, Ada!"
+> 1
+ Year: 1981 Place: Garage
+
+"Make sure you're ready for dinner soon!"
+
+"Not now, CJ," says Ada. "Sorry if it sounds rude, but I feel like I'm on a real
+mission, like I can do something great here! As soon as I can figure out a
+couple problems."
+
+1. "So why do you like math so much anyway?"
+2. "Hey, do you know where Uncle Rob is?"
+3. "Ada, I seem to be traveling through time. Do you know anything about that?"
+4. "Hey, I know this is weird, but do you remember much about my mom?"
+5. "Nevermind, Ada!"
+> 1
+ Year: 1981 Place: Garage
+
+"So why do you like math so much anyway?"
+
+"Well, CJ, who wouldn't like math? In all the other sciences, you can doubt what
+your senses tell you. For all we know, nothing is real and we're just in a
+simulation or something. But math is a way of organizing human thought in
+consistent patterns, and it can be a source of truth even if you question
+everything else," she says.
+
+"Wow, I guess that makes sense," you say.
+
+"Also I tried biology but it was kind of boring," she says.
+
+1. "Hey, do you know where Uncle Rob is?"
+2. "Ada, I seem to be traveling through time. Do you know anything about that?"
+3. "Hey, I know this is weird, but do you remember much about my mom?"
+4. "Nevermind, Ada!"
+> 1
+ Year: 1981 Place: Garage
+
+"Hey, do you know where Uncle Rob is?"
+
+"Man, why do people keep asking me that?" says Ada. "Rob is kind of...you
+know..." she makes a weird gesture with her finger, like an infinity sign, and
+leans forward to whisper, "non-spatio-temporally anchored. You know. Like you.
+And our other cousin."
+
+She gives you a knowing nod and goes back to work.
+
+1. "Hey, do you know where Uncle Rob is?"
+2. "Ada, I seem to be traveling through time. Do you know anything about that?"
+3. "Hey, I know this is weird, but do you remember much about my mom?"
+4. "Nevermind, Ada!"
+> 2
+ Year: 1981 Place: Garage
+
+"Ada, I seem to be traveling through time. Do you know anything about that?"
+
+"Haha! Oh, CJ, you're such a kidder!" she says. "You know that you're one of the
+few members of the family with spatio-temporal disjunction. I've explained it to
+you many times before! And I specifically recall how disappointed you were when
+your beautiful and wondrous ability could be reduced to a simple and mundane 4-
+dimensional explanation! Oh, how the joy of mystery breaks down in the face of
+pure reason," she says, shaking her head.
+
+"Oh, yeah," you say. "I completely forgot about my spatio-temporal disjunction.
+Thanks for reminding me!"
+
+1. "Hey, do you know where Uncle Rob is?"
+2. "Hey, I know this is weird, but do you remember much about my mom?"
+3. "Nevermind, Ada!"
+> 2
+ Year: 1981 Place: Garage
+
+"Hey, I know this is weird, but do you remember much about my mom?"
+
+"I only met her when I was very little. It might be better to ask your dad or
+Joe or someone," she says a little uncomfortably.
+
+"That's why I wanted to talk to you; they knew her more and I feel like they
+would just get sad if I asked. What do you remember about her?" you say.
+
+"Oh, gosh. Well, I remember that she used to tell me stories when I was bored,
+like from Greek mythology. Cyclops and stuff. That was pretty cool. And she
+liked the color blue, and I swear I saw her take a pan out of the oven with her
+bare hands once. Although that doesn't really make sense given the laws of
+thermodynamics. Does that help?" she asks.
+
+"Yeah, that's great. Thanks Ada!" you say.
+
+1. "Hey, do you know where Uncle Rob is?"
+2. "Nevermind, Ada!"
+> 2
+ Year: 1981 Place: Garage
+
+"Nevermind, Ada!"
+
+"OK, CJ, see you later!" she says.
+
+> s
+ Year: 1981 Place: Family Room
+
+You walk south.
+
+Family Room
+This family room is certainly much more inviting than your college dorm room.
+The brown rug and wood paneling make you feel like you're in a cabin.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+Music is coming from a boombox.
+
+Grandma is watching TV from her old, busted recliner. It looks like Dallas is
+playing again. She's holding her usual bottle of Sprite.
+
+> s
+ Year: 1981 Place: Office
+
+You walk south.
+
+Office
+This is your father's office. It's covered in shelves filled with old classics
+and weathered issues of National Geographic, with a memory board on one wall.
+His old wooden desk is here, with his new computer.
+
+The family room is back to the north.
+
+Your dad is staring thoughtfully into space.
+
+> x desk
+ Year: 1981 Place: Office
+
+Your father's desk is old and well-worn. It's been here so long it's probably
+fused with the house. You shudder to imagine someone trying to move this thing
+someday.
+
+Oh, what's this? There's a subscription form for ordering puzzles. It looks
+fairly old.
+
+> x form
+ Year: 1981 Place: Office
+
+This looks fairly faded. It's a form for ordering a year's worth of crossword
+puzzle books. It's dated 1961.
+
+> x computer
+ Year: 1981 Place: Office
+
+Your dad's computer is turned on, running Visicalc. You'll have to wait until
+later to play Zork II.
+
+> x dad
+ Year: 1981 Place: Office
+
+Dad looks a little softer and more gentle than when you were a kid in this
+house, but he still looks tough. He has grey in his mustache, but always dyes
+his hair. He's still wearing his suit, like you remember.
+
+> x national
+ Year: 1981 Place: Office
+
+These have really piled up over the years. Your dad move some of the old books
+into storage to make room for these.
+
+> take form
+ Year: 1981 Place: Office
+
+You take the subscription form.
+
+> n
+ Year: 1981 Place: Family Room
+
+You walk north.
+
+Family Room
+This family room is certainly much more inviting than your college dorm room.
+The brown rug and wood paneling make you feel like you're in a cabin.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+Music is coming from a boombox.
+
+Grandma is watching TV from her old, busted recliner. It looks like Dallas is
+playing again. She's holding her usual bottle of Sprite.
+
+> e
+ Year: 1981 Place: Kitchen
+
+You walk east.
+
+Kitchen
+The kitchen is filled with wonderful smells. A long granite counter runs down
+one side. A small oven is next to it. The backyard is to the east, the pantry is
+to the south, and the family room is to the west.
+
+A whole-roasted chicken is sitting out on the counter to cool.
+
+Uncle Joe is slicing potatoes expertly. He's gotten pretty good at this since he
+started his restaurant.
+
+In the dining half of the kitchen, the big table has been assembled together for
+dinner. Right now the table has nothing on it.
+
+> x chicken
+ Year: 1981 Place: Kitchen
+
+A tender and juicy roasted chicken. Uncle Joe sure is getting better at cooking.
+One drumstick is sticking out.
+
+> x drumstick. take it.
+ Year: 1981 Place: Kitchen
+
+This tender hunk of meat is the entire leg of a chicken.
+
+You take the drumstick.
+
+> talk to joe
+ Year: 1981 Place: Kitchen
+
+"Hey, Uncle Joe, do you have a second?"
+
+"Sure, CJ, what's up?"
+
+1. "How's work been recently?"
+2. "Do you have any butter, Uncle Joe?"
+3. "Can I help you with the potatoes?"
+4. "Never mind, Uncle Joe."
+> 2
+ Year: 1981 Place: Kitchen
+
+"Do you have any butter, Uncle Joe?"
+
+"No, I stopped using that years ago. It's margarine for me, now."
+
+1. "How's work been recently?"
+2. "Do you have any butter, Uncle Joe?"
+3. "Can I help you with the potatoes?"
+4. "Never mind, Uncle Joe."
+> 3
+ Year: 1981 Place: Kitchen
+
+"Can I help you with the potatoes?"
+
+"I think I'm good for now, but feel free to hang out!" he answers cheerfully.
+You spend a bit chatting with him about dinner and the party.
+
+> s
+ Year: 1981 Place: Pantry
+
+You walk south.
+
+Pantry
+This is your family's pantry, just a glorified closet with shelves.
+
+The shelves have a box of Count Chocula cereal, a box of oatmeal, and a can of
+yellow wax beans on them.
+
+> x cereal
+ Year: 1981 Place: Pantry
+
+This must be left over from Halloween.
+
+> x oatmeal
+ Year: 1981 Place: Pantry
+
+Oh, sweet, it's your favorite: maple and brown sugar.
+
+> x
+ Year: 1981 Place: Pantry
+
+(I only understood you as far as wanting to examine something.)
+
+> beans
+ Year: 1981 Place: Pantry
+
+Nobody in the house likes yellow wax beans, but, on the other hand, no one wants
+to throw this out. Who knows how old this is now.
+
+> n
+ Year: 1981 Place: Kitchen
+
+You walk north.
+
+Kitchen
+The kitchen is filled with wonderful smells. A long granite counter runs down
+one side. A small oven is next to it. The backyard is to the east, the pantry is
+to the south, and the family room is to the west.
+
+A whole-roasted chicken is sitting out on the counter to cool.
+
+Uncle Joe is slicing potatoes expertly. He's gotten pretty good at this since he
+started his restaurant.
+
+In the dining half of the kitchen, the big table has been assembled together for
+dinner. Right now the table has nothing on it.
+
+> e
+ Year: 1981 Place: Outdoors
+
+You walk east.
+
+Outdoors
+Rolling grass stretches all the way to your neighbor's distant fence.
+
+The kitchen is back to the west.
+
+Your maple tree is beautiful in the summer light.
+
+> x maple
+ Year: 1981 Place: Outdoors
+
+A beautiful maple tree that has been growing for a few years. It's pretty large,
+but it will grow even bigger over time.
+
+> w
+ Year: 1981 Place: Kitchen
+
+You walk west.
+
+Kitchen
+The kitchen is filled with wonderful smells. A long granite counter runs down
+one side. A small oven is next to it. The backyard is to the east, the pantry is
+to the south, and the family room is to the west.
+
+A whole-roasted chicken is sitting out on the counter to cool.
+
+Uncle Joe is slicing potatoes expertly. He's gotten pretty good at this since he
+started his restaurant.
+
+In the dining half of the kitchen, the big table has been assembled together for
+dinner. Right now the table has nothing on it.
+
+> w
+ Year: 1981 Place: Family Room
+
+You walk west.
+
+Family Room
+This family room is certainly much more inviting than your college dorm room.
+The brown rug and wood paneling make you feel like you're in a cabin.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+Music is coming from a boombox.
+
+Grandma is watching TV from her old, busted recliner. It looks like Dallas is
+playing again. She's holding her usual bottle of Sprite.
+
+> d
+ Year: 1961 Place: Family Room
+
+The stairs seem to get bigger the further down you get. Or have you gotten
+smaller?
+
+Family Room
+This family room is huge and brand-new. The walls are covered in green and
+orange floral wallpaper and the floor is soft, yellow shag carpeting.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+Grandma is watching TV from her brand new recliner. It's on ABC right now,
+playing an ad for Sprite, the new drink.
+
+> x calendar
+ Year: 1961 Place: Family Room
+
+The calendar is paper; they were handing them out at the drugstore. It's March
+5th, 1961.
+
+> x wallpaper
+ Year: 1961 Place: Family Room
+
+Your mom bought this just a couple of weeks ago. It was fun helping her put it
+up, and is one of your last memories of her.
+
+> x carpeting
+ Year: 1961 Place: Family Room
+
+Now this is the wave of the future! Soft and luxurious.
+
+> x grandma
+ Year: 1961 Place: Family Room
+
+Grandma has tight curls of grey hair that bounce when she moves her head. She's
+wearing a green house dress and slippers. She gives you a little wink and goes
+back to watching TV.
+
+> x recliner
+ Year: 1961 Place: Family Room
+
+This shiny and new recliner has been Grandma's favorite ever since her surgery.
+
+> x tv
+ Year: 1961 Place: Family Room
+
+The TV is currently on ABC. An ad for a new softdrink is playing: Sprite! It
+seems very refreshing, and Grandma looks interested.
+
+Of course, she always lets you change the channel if you want. Too bad there are
+only 3 channels on the dial.
+
+> talk to grandma
+ Year: 1961 Place: Family Room
+
+"What is it, dear?" asks your grandmother.
+
+1. "What do you think of the new house?"
+2. "Hey Grandma, what are you watching?"
+3. "Grandma, do you know where the plates are?"
+4. "I can't find Uncle Rob anywhere."
+5. "Grandma, have you seen the good serving dish?"
+6. "That's all I wanted to say, Grandma."
+> 1
+ Year: 1961 Place: Family Room
+
+"What do you think of the new house?"
+
+"Oh, I adore it. The central air conditioning is just lovely!"
+
+1. "Hey Grandma, what are you watching?"
+2. "Grandma, do you know where the plates are?"
+3. "I can't find Uncle Rob anywhere."
+4. "Grandma, have you seen the good serving dish?"
+5. "That's all I wanted to say, Grandma."
+> 1
+ Year: 1961 Place: Family Room
+
+"Hey Grandma, what are you watching?"
+
+"Coca-Cola made a new drink, it seems. It's called Sprite; isn't that the name
+of a fairy? It looks very interesting, though. I might have to try it," she
+says.
+
+1. "Can I watch with you for a bit?"
+2. "Can I change the channel, Grandma?"
+3. "That's interesting, Grandma."
+> 1
+ Year: 1961 Place: Family Room
+
+"Can I watch with you for a bit?"
+
+"I'd love that, CJ," she says. You squeeze in next to her and she puts her arm
+around you.
+
+The kitchen on the show is a lot bigger than your own. And the lady is making
+some very strange food. You'd never thought of cinnamon gelatin before. After
+you watch for a bit, you get up again.
+
+> change channel
+ Year: 1961 Place: Family Room
+
+You turn the tv to the next channel, CBS. It's Perry Mason! You like this show,
+but grandma is usually watching Bonanza. Good thing it changed time slots.
+Grandma takes your channel-changing in stride, and settles in to watch the new
+show.
+
+Your Grandma's future has slightly changed.
+
+> u
+ Year: 1981 Place: Family Room
+
+You climb up the stairs. They seem to get smaller as you get higher. Or have you
+gotten taller?
+
+Family Room
+This family room is certainly much more inviting than your college dorm room.
+The brown rug and wood paneling make you feel like you're in a cabin.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+Music is coming from a boombox.
+
+Grandma's autographed poster of Raymond Burr is hanging on the wall.
+
+Grandma is watching TV from her old, busted recliner. It looks like Dallas is
+playing again.
+
+> x poster
+ Year: 1981 Place: Family Room
+
+Grandma is a big Perry Mason fan now, so she paid for this autographed poster of
+Raymond Burr a few years back.
+
+> d
+ Year: 1961 Place: Family Room
+
+The stairs seem to get bigger the further down you get. Or have you gotten
+smaller?
+
+Family Room
+This family room is huge and brand-new. The walls are covered in green and
+orange floral wallpaper and the floor is soft, yellow shag carpeting.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+Grandma is watching TV from her brand new recliner. It's on CBS right now,
+playing Perry Mason..
+
+> change channel
+ Year: 1961 Place: Family Room
+
+You turn the tv to the next channel, NBC. It's a cooking show that seems to be
+focusing on all the ways you can use cinnamon. Grandma takes your channel-
+changing in stride, and settles in to watch the new show.
+
+Your Grandma's future has slightly changed.
+
+> u. e. s
+You climb up the stairs. They seem to get smaller as you get higher. Or have you
+gotten taller?
+
+Family Room
+This family room is certainly much more inviting than your college dorm room.
+The brown rug and wood paneling make you feel like you're in a cabin.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+Music is coming from a boombox.
+
+Grandma is watching TV from her old, busted recliner. It looks like Dallas is
+playing again.
+
+You walk east.
+
+Kitchen
+The kitchen is filled with wonderful smells. A long granite counter runs down
+one side. A small oven is next to it. The backyard is to the east, the pantry is
+
+ Year: 1981 Place: Pantry
+
+to the south, and the family room is to the west.
+
+A whole-roasted chicken is sitting out on the counter to cool.
+
+Uncle Joe is slicing potatoes expertly. He's gotten pretty good at this since he
+started his restaurant.
+
+In the dining half of the kitchen, the big table has been assembled together for
+dinner. Right now the table has nothing on it.
+
+You walk south.
+
+Pantry
+This is your family's pantry, just a glorified closet with shelves.
+
+The shelves have a can of ground cinnamon, a box of Count Chocula cereal, a box
+of oatmeal, and a can of yellow wax beans on them.
+
+> x cinnamon
+ Year: 1981 Place: Pantry
+
+This is a can of French's ground cinnamon.
+
+> take it
+ Year: 1981 Place: Pantry
+
+You grab the cinnamon. It seems to resist you a bit. Once you take it, you feel
+your timeline partially stabilize.
+
+> n
+ Year: 1981 Place: Kitchen
+
+You walk north.
+
+Kitchen
+The kitchen is filled with wonderful smells. A long granite counter runs down
+one side. A small oven is next to it. The backyard is to the east, the pantry is
+to the south, and the family room is to the west.
+
+A whole-roasted chicken is sitting out on the counter to cool.
+
+Uncle Joe is slicing potatoes expertly. He's gotten pretty good at this since he
+started his restaurant.
+
+In the dining half of the kitchen, the big table has been assembled together for
+dinner. Right now the table has nothing on it.
+
+> w
+ Year: 1981 Place: Family Room
+
+You walk west.
+
+Family Room
+This family room is certainly much more inviting than your college dorm room.
+The brown rug and wood paneling make you feel like you're in a cabin.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+Music is coming from a boombox.
+
+Grandma is watching TV from her old, busted recliner. It looks like Dallas is
+playing again.
+
+> d
+ Year: 1961 Place: Family Room
+
+The stairs seem to get bigger the further down you get. Or have you gotten
+smaller?
+
+Family Room
+This family room is huge and brand-new. The walls are covered in green and
+orange floral wallpaper and the floor is soft, yellow shag carpeting.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+Grandma is watching TV from her brand new recliner. It's on NBC right now,
+playing a cooking show about cinnamon.
+
+> e
+ Year: 1961 Place: Kitchen
+
+You walk east.
+
+Kitchen
+The kitchen is filled with wonderful smells. A long granite counter runs down
+one side. A small oven is next to it. The backyard is to the east, the pantry is
+to the south, and the family room is to the west.
+
+Uncle Joe is slicing potatoes. He's going pretty slow, and not doing that great
+of a job.
+
+In the dining half of the kitchen, the big table has been assembled together for
+dinner. Right now the table has nothing on it.
+
+> x gap
+ Year: 1961 Place: Kitchen
+
+Stuff keeps falling in here for some reason. It's a narrow gap. Right now,
+there's a serving dish stuck in there.
+
+> take dish
+ Year: 1961 Place: Kitchen
+
+You take the serving dish out of the gap.
+
+> give dish to Joe
+ Year: 1961 Place: Kitchen
+
+"What happened to this?" he asks incredulously. "Actually, I'd rather not know.
+Is there any way you could clean it up a little for me? I'm not putting food on
+it but it could bear a good wiping."
+
+> talk to Joe
+ Year: 1961 Place: Kitchen
+
+"Hey, Uncle Joe, do you have a second?"
+
+"Sure, CJ, what's up?"
+
+1. "How's work been recently?"
+2. "Do you have any butter, Uncle Joe?"
+3. "Can I help you with the potatoes?"
+4. "Never mind, Uncle Joe."
+> 2
+ Year: 1961 Place: Kitchen
+
+"Do you have any butter, Uncle Joe?"
+
+"Yeah, I think I have a stick laying around here somewhere," he says, then grabs
+and tosses you a stick of stick of butter. "There you go!" He stops talking and
+turns back to cooking.
+
+> x butter
+ Year: 1961 Place: Kitchen
+
+This stuff sure makes food taste good.
+
+> talk to Joe
+ Year: 1961 Place: Kitchen
+
+"Hey, Uncle Joe, do you have a second?"
+
+"Sure, CJ, what's up?"
+
+1. "How's work been recently?"
+2. "Can I help you with the potatoes?"
+3. "Never mind, Uncle Joe."
+> 1
+ Year: 1961 Place: Kitchen
+
+"How's work been recently?"
+
+"Gee, I've just been helping out Mr. Holladay in the back, but he's teaching me
+a lot about the grill," says Uncle Joe.
+
+1. "How's work been recently?"
+2. "Can I help you with the potatoes?"
+3. "Never mind, Uncle Joe."
+> 3
+ Year: 1961 Place: Kitchen
+
+"Never mind, Uncle Joe."
+
+"No problem, kid. See you around!"
+
+> s
+ Year: 1961 Place: Pantry
+
+You walk south.
+
+Pantry
+This is your family's pantry, just a glorified closet with shelves.
+
+The shelves have a honey bear, some Cheerios, a jar of peanut butter, some cans
+of peach preserves, and a can of yellow wax beans on them.
+
+> x honey
+ Year: 1961 Place: Pantry
+
+One of those new plastic honey bottles shaped like a bear.
+
+> take it
+ Year: 1961 Place: Pantry
+
+You take the honey bear off the shelves.
+
+> x cheerios, peanut butter, peach and beans
+ Year: 1961 Place: Pantry
+
+The Cheerios: A yellow box of cereal with Rocky and Bullwinkle on it.
+
+The jar of peanut butter: A short glass jar of Skippy brand peanut butter.
+
+The cans of peach preserves: A lot of cans of peach preserves. Grandma sure
+likes to be prepared.
+
+The can of yellow wax beans: Nobody in the house likes yellow wax beans. But you
+saw this in the store and put it in the cart. No one will ever know.
+
+> n and e
+North: You walk north.
+
+Kitchen
+The kitchen is filled with wonderful smells. A long granite counter runs down
+one side. A small oven is next to it. The backyard is to the east, the pantry is
+to the south, and the family room is to the west.
+
+Uncle Joe is slicing potatoes. He's going pretty slow, and not doing that great
+of a job.
+
+In the dining half of the kitchen, the big table has been assembled together for
+dinner. Right now the table has nothing on it.
+
+East: You walk east.
+
+Outdoors
+Rolling grass stretches out as far as you can see.
+
+The kitchen is back to the west.
+
+A sapling is buried out here.
+
+ Year: 1961 Place: Outdoors
+
+> x sapling
+ Year: 1961 Place: Outdoors
+
+This is a small sapling, its roots forming a sphere, more or less.
+
+> take sapling
+ Year: 1961 Place: Outdoors
+
+You aren't strong enough to pull out the sapling yourself. Someone bigger could
+do it, if you could persuade them.
+
+> w
+ Year: 1961 Place: Kitchen
+
+You walk west.
+
+Kitchen
+The kitchen is filled with wonderful smells. A long granite counter runs down
+one side. A small oven is next to it. The backyard is to the east, the pantry is
+to the south, and the family room is to the west.
+
+Uncle Joe is slicing potatoes. He's going pretty slow, and not doing that great
+of a job.
+
+In the dining half of the kitchen, the big table has been assembled together for
+dinner. Right now the table has nothing on it.
+
+> talk to Joe
+ Year: 1961 Place: Kitchen
+
+"Hey, Uncle Joe, do you have a second?"
+
+"Sure, CJ, what's up?"
+
+1. "Hey Uncle Joe, could you help me move that sapling out back?"
+2. "How's work been recently?"
+3. "Can I help you with the potatoes?"
+4. "Never mind, Uncle Joe."
+> 1
+ Year: 1961 Place: Kitchen
+
+"Hey Uncle Joe, could you help me move that sapling out back?"
+
+He stops chopping for a minute.
+
+"I don't know CJ, I just planted it back there."
+
+1. "I just think it's ugly, that's all."
+2. "I think it's dangerous for the tree to be so close to the house."
+> 2
+ Year: 1961 Place: Kitchen
+
+"I think it's dangerous for the tree to be so close to the house."
+
+"Hey, thanks for the heads up. Let's go grab it!"
+
+Uncle Joe walks out to the back.
+
+> e
+ Year: 1961 Place: Outdoors
+
+You walk east.
+
+Outdoors
+Rolling grass stretches out as far as you can see.
+
+The kitchen is back to the west.
+
+Uncle Joe is eyeing the tree critically.
+
+A sapling is buried out here.
+
+> pull sapling
+ Year: 1961 Place: Outdoors
+
+Together, the two of you yank out the tree, tugging it until it pops out. Uncle
+Joe shakes off some of the dirt, fixes the roots, and says, "Smart thinking,
+kiddo. This could have done some real damage!" He tousles your hair and walks
+back inside.
+
+Outdoors
+Rolling grass stretches out as far as you can see.
+
+The kitchen is back to the west.
+
+You are now carrying a sapling. Something important has changed in the house's
+future.
+
+> w.w.s.
+You walk west.
+
+Kitchen
+The kitchen is filled with wonderful smells. A long granite counter runs down
+one side. A small oven is next to it. The backyard is to the east, the pantry is
+to the south, and the family room is to the west.
+
+Uncle Joe is slicing potatoes. He's going pretty slow, and not doing that great
+of a job.
+
+In the dining half of the kitchen, the big table has been assembled together for
+dinner. Right now the table has nothing on it.
+
+You walk west.
+
+Family Room
+This family room is huge and brand-new. The walls are covered in green and
+orange floral wallpaper and the floor is soft, yellow shag carpeting.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+
+ Year: 1961 Place: Office
+
+the west.
+
+Grandma is watching TV from her brand new recliner. It's on NBC right now,
+playing a cooking show about cinnamon.
+
+You walk south.
+
+Office
+This is your father's office. It's lined in shelves filled with old classics and
+many back issues of National Geographic, with a memory board on one wall. His
+tall oak desk takes up the most space.
+
+The family room is back to the north.
+
+Your dad curses faintly to himself, then shakes his head at the paper he is
+reading.
+
+> give form to dad
+ Year: 1961 Place: Office
+
+"Huh," he says, "that actually looks kind of cool. You know, I think I'll sign
+up," he says. "But only if you help me with them."
+
+"Definitely," you say.
+
+He grabs the form from you and tucks it away.
+
+Something has changed in your father's future.
+
+> talk to dad
+ Year: 1961 Place: Office
+
+Your dad looks up. "Hey, CJ!" he says, smiling. "What's up?"
+
+1. "I've been thinking about our family recently. It's pretty cool."
+2. "Do you know where the plates are?"
+3. "Oh, just wanted to say hi."
+> 1
+ Year: 1961 Place: Office
+
+"I've been thinking about our family recently. It's pretty cool."
+
+Your dad pauses for a bit. "Yeah, you come from a great group. We're lucky to
+have everybody in the house together." He looks over at the memory board. "Well,
+most people. Your mom was really tough, you know. That's why we were all so
+shocked when she got breast cancer. But before she went, she was the strongest
+one in the house. Had a temper, too. She never hit you or me, but oh, would she
+shout when she was mad."
+
+He looks at the memory board, and adds, "Your grandfather was pretty much the
+same, like two peas in a pod. I heard they had some legendary arguments. But I
+only barely knew him, and by then he had mellowed out a ton. He had cancer, too,
+but it was lung cancer. You should probably get that checked out some day for
+all that stuff," he says. "But you can worry about that when you're older."
+
+The two of you chat for a little bit longer about the rest of your family before
+he gets back to work.
+
+1. "Do you know where the plates are?"
+2. "Oh, just wanted to say hi."
+> 2
+ Year: 1961 Place: Office
+
+"Oh, just wanted to say hi."
+
+"Hi to you, too, kid. Sorry I've been so busy lately!" he says. It hasn't just
+been lately, of course, but that's just Dad.
+
+> n
+ Year: 1961 Place: Family Room
+
+You walk north.
+
+Family Room
+This family room is huge and brand-new. The walls are covered in green and
+orange floral wallpaper and the floor is soft, yellow shag carpeting.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+Grandma is watching TV from her brand new recliner. It's on NBC right now,
+playing a cooking show about cinnamon.
+
+> u
+ Year: 1981 Place: Family Room
+
+You climb up the stairs. They seem to get smaller as you get higher. Or have you
+gotten taller?
+
+Family Room
+This family room is certainly much more inviting than your college dorm room.
+The brown rug and wood paneling make you feel like you're in a cabin.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+Music is coming from a boombox.
+
+Grandma is watching TV from her old, busted recliner. It looks like Dallas is
+playing again.
+
+> s
+ Year: 1981 Place: Office
+
+You walk south.
+
+Office
+This is your father's office. It's covered in shelves filled with old classics
+and weathered issues of National Geographic, with a memory board on one wall.
+His old wooden desk is here, with his new computer.
+
+The family room is back to the north.
+
+A crossword puzzle book is lying here.
+
+Your dad is sitting at his desk, looking through papers.
+
+> x puzzle book
+ Year: 1981 Place: Office
+
+This is one of your dad's favorite crossword puzzle books. It looks like he's
+solved every puzzle.
+
+> take it
+ Year: 1981 Place: Office
+
+You take the crossword puzzle book.
+
+Your dad looks up, and says, "Hey, sorry kid, I already finished that one!"
+
+"It's okay, dad," you say. "I think I can find a use for it."
+
+> n
+ Year: 1981 Place: Family Room
+
+You walk north.
+
+Family Room
+This family room is certainly much more inviting than your college dorm room.
+The brown rug and wood paneling make you feel like you're in a cabin.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+Music is coming from a boombox.
+
+Grandma is watching TV from her old, busted recliner. It looks like Dallas is
+playing again.
+
+> d
+ Year: 1961 Place: Family Room
+
+The stairs seem to get bigger the further down you get. Or have you gotten
+smaller?
+
+Family Room
+This family room is huge and brand-new. The walls are covered in green and
+orange floral wallpaper and the floor is soft, yellow shag carpeting.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+Grandma is watching TV from her brand new recliner. It's on NBC right now,
+playing a cooking show about cinnamon.
+
+> n
+ Year: 1961 Place: Garage
+
+You walk north.
+
+Garage
+The garage has been converted into a workshop for Ada. A whiteboard is in the
+corner.
+
+The family room is to the south.
+
+Your cousin Ada is skipping around the garage, chatting to herself and
+occasionally drawing on the whiteboard.
+
+> talk to Ada
+ Year: 1961 Place: Garage
+
+Ada says, "I'm trying to figure out what I want to do next. Some kind of big
+project. I'll let you know if I come up with anything! Anyway, what's up?"
+
+1. "Hey, do you know where Uncle Rob is?"
+2. "Nevermind, Ada!"
+> 2
+ Year: 1961 Place: Garage
+
+"Nevermind, Ada!"
+
+"OK, CJ, see you later!" she says.
+
+> s
+ Year: 1961 Place: Family Room
+
+You walk south.
+
+Family Room
+This family room is huge and brand-new. The walls are covered in green and
+orange floral wallpaper and the floor is soft, yellow shag carpeting.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+Grandma is watching TV from her brand new recliner. It's on NBC right now,
+playing a cooking show about cinnamon.
+
+> d
+ Year: 1961 Place: Family Room
+
+You look the stairs down with trepidation. What would happen? You imagine
+yourself shrinking, becoming younger and younger, scrunching into yourself until
+you become two little cells. Scary!
+
+You will not go any lower.
+
+> u
+ Year: 1981 Place: Family Room
+
+You climb up the stairs. They seem to get smaller as you get higher. Or have you
+gotten taller?
+
+Family Room
+This family room is certainly much more inviting than your college dorm room.
+The brown rug and wood paneling make you feel like you're in a cabin.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+Music is coming from a boombox.
+
+Grandma is watching TV from her old, busted recliner. It looks like Dallas is
+playing again.
+
+> u
+ Year: 2001 Place: Family Room
+
+You climb up the stairs. For some reason you feel more tired the higher you get.
+This part of the house looks different, too.
+
+Family Room
+This cramped family room is dominated by a massive entertainment center and has
+burgundy carpeting. Unlike the rest of the house, it hasn't been hit hard by the
+hurricane.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+> e
+ Year: 2001 Place: Kitchen
+
+You walk east.
+
+Kitchen
+The kitchen is filled with wonderful smells. A long granite counter runs down
+one side. A small oven is next to it. The backyard is to the east, the pantry is
+to the south, and the family room is to the west.
+
+Plastic tarps are covering parts of the walls and ceilings. Light rain drums on
+them.
+
+Uncle Joe is slicing and dicing potatoes like an expert chef. Which, of course,
+he is.
+
+In the dining half of the kitchen, the big table has been assembled together for
+dinner. Right now the table has nothing on it.
+
+> e
+ Year: 2001 Place: Outdoors
+
+You walk east.
+
+Outdoors
+A small row of houses is lined up behind yours. Most of them are clearly still
+recovering from the storm.
+
+From out here you can see the damage to your own house. The lawn has a pretty
+big hole in it, a couple feet across and fairly deep, but otherwise the damage
+is minimal.
+
+The rain is drizzling.
+
+The kitchen is back to the west.
+
+> put sapling in hole
+ Year: 2001 Place: Outdoors
+
+It fits in quite nicely. You pat the dirt around it and it seems settled in.
+
+You can feel your future change.
+
+> w
+ Year: 2001 Place: Kitchen
+
+You walk west.
+
+Kitchen
+The kitchen is filled with wonderful smells. A long granite counter runs down
+one side. A small oven is next to it. The backyard is to the east, the pantry is
+to the south, and the family room is to the west.
+
+Plastic tarps are covering parts of the walls and ceilings. Light rain drums on
+them.
+
+Uncle Joe is slicing and dicing potatoes like an expert chef. Which, of course,
+he is.
+
+In the dining half of the kitchen, the big table has been assembled together for
+dinner. Right now the table has nothing on it.
+
+> w
+ Year: 2001 Place: Family Room
+
+You walk west.
+
+Family Room
+This cramped family room is dominated by a massive entertainment center and has
+burgundy carpeting. Unlike the rest of the house, it hasn't been hit hard by the
+hurricane.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+> u
+ Year: 2021 Place: Family Room
+
+You climb up the stairs. For some reason you feel more tired the higher you get.
+This part of the house looks different, too.
+
+Family Room
+This family room is decorated with a bright orange rug and walls checkered red
+and white. It's minimally decorated, since you don't use it for watching TV. You
+usually just use your devices to watch things now.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+A beautiful Christmas tree full of lights sits in the corner.
+
+> x calendar
+ Year: 2021 Place: Family Room
+
+This is a digital calendar. It's currently displaying the date December 23,
+2021.
+
+> x tree
+ Year: 2021 Place: Family Room
+
+You bought your own tree a few years ago. It's smaller than your family's old
+ones, since it's just you and Joe and Ada now, but it's still beautiful. It's
+glowing in a rainbow of colors.
+
+> x rug
+ Year: 2021 Place: Family Room
+
+Apparently this is 'boho-style'.
+
+> s
+ Year: 2021 Place: Office
+
+You walk south.
+
+Office
+This is your art studio, a spacious room with a single easel in the middle. The
+family memory board takes up a lot of space on one side. You usually use the
+rest of the space to store art.
+
+The family room is back to the north.
+
+A few paintings of a dish towel line the side of the room.
+
+> x board
+ Year: 2021 Place: Office
+
+The memory board has portraits of all your loved ones who have passed on. Right
+now, that includes your grandparents and your parents.
+
+> x dad
+ Year: 2021 Place: Office
+
+In this photo, your father is sitting in his room late at night, reading law. He
+looks just as you remember him.
+
+> x paintings
+ Year: 2021 Place: Office
+
+These are the paintings you haven't sold recently. Most of the paintings are of
+a dish towel since that was the inspiration for your first paintings twenty
+years ago.
+
+> n
+ Year: 2021 Place: Family Room
+
+You walk north.
+
+Family Room
+This family room is decorated with a bright orange rug and walls checkered red
+and white. It's minimally decorated, since you don't use it for watching TV. You
+usually just use your devices to watch things now.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+A beautiful Christmas tree full of lights sits in the corner.
+
+> e
+ Year: 2021 Place: Kitchen
+
+You walk east.
+
+Kitchen
+The kitchen is filled with wonderful smells. A long granite counter runs down
+one side. A small oven is next to it. The backyard is to the east, the pantry is
+to the south, and the family room is to the west.
+
+Uncle Joe is slowly and reflectively slicing potatoes. He has excellent
+technique, but less energy than he once did.
+
+In the dining half of the kitchen, the big table has been assembled together for
+dinner. Right now the table has nothing on it.
+
+> s
+ Year: 2021 Place: Pantry
+
+You walk south.
+
+Pantry
+This is your family's pantry, just a glorified closet with shelves.
+
+The shelves have some phyllo dough, a jar of granola, and a can of yellow wax
+beans on them.
+
+> x dough
+ Year: 2021 Place: Pantry
+
+You set it out to warm earlier. Now it's perfect!
+
+> take it
+ Year: 2021 Place: Pantry
+
+You take the phyllo dough off the shelves.
+
+> x granola
+ Year: 2021 Place: Pantry
+
+You've switched over to organic granola, recently.
+
+> x beans
+ Year: 2021 Place: Pantry
+
+Nobody in the house likes yellow wax beans. But the can has lasted longer than
+almost everything else in the house. It'd be a shame to move it now.
+
+> n
+ Year: 2021 Place: Kitchen
+
+You walk north.
+
+Kitchen
+The kitchen is filled with wonderful smells. A long granite counter runs down
+one side. A small oven is next to it. The backyard is to the east, the pantry is
+to the south, and the family room is to the west.
+
+Uncle Joe is slowly and reflectively slicing potatoes. He has excellent
+technique, but less energy than he once did.
+
+In the dining half of the kitchen, the big table has been assembled together for
+dinner. Right now the table has nothing on it.
+
+> make recipe
+ Year: 2021 Place: Kitchen
+
+You preheat the oven, unroll the dough, melt the butter, and begin layering. It
+takes a while and leaves you worn out, but it's in the oven. It should be done
+after dinner, when you can let it cool while everybody talks.
+
+> e
+ Year: 2021 Place: Outdoors
+
+You walk east.
+
+Outdoors
+This plot of land is one of the biggest remaining backyards in the area. A
+pleasant stone fence sections it off.
+
+The kitchen is back to the west.
+
+A tall maple tree provides shade.
+
+> x fence
+ Year: 2021 Place: Outdoors
+
+This ended up costing more than you budgeted for, but it feels comforting. Kind
+of an earthy, settled feeling.
+
+> x tree
+ Year: 2021 Place: Outdoors
+
+This is a tall and lovely maple tree, twenty years old.
+
+> w
+ Year: 2021 Place: Kitchen
+
+You walk west.
+
+Kitchen
+The kitchen is filled with wonderful smells. A long granite counter runs down
+one side. A small oven is next to it. The backyard is to the east, the pantry is
+to the south, and the family room is to the west.
+
+Uncle Joe is slowly and reflectively slicing potatoes. He has excellent
+technique, but less energy than he once did.
+
+In the dining half of the kitchen, the big table has been assembled together for
+dinner. Right now the table has nothing on it.
+
+> w
+ Year: 2021 Place: Family Room
+
+You walk west.
+
+Family Room
+This family room is decorated with a bright orange rug and walls checkered red
+and white. It's minimally decorated, since you don't use it for watching TV. You
+usually just use your devices to watch things now.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+A beautiful Christmas tree full of lights sits in the corner.
+
+> u
+ Year: 2041 Place: Family Room
+
+You climb up the stairs. For some reason you feel more tired the higher you get.
+This part of the house looks different, too.
+
+Family Room
+The family room has a bare hardwood floor and white, dusty walls.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+> x calendar
+ Year: 2041 Place: Family Room
+
+This is less of a calendar and more of a note to yourself. It says: "MOVE OUT:
+April 4th, 2041".
+
+> s
+ Year: 2041 Place: Office
+
+You walk south.
+
+Office
+This is your former studio, but now the room is empty. It echoes in here. Your
+family's memory board is on the ground. You're not packing it, because it'll go
+in the car with you.
+
+The family room is back to the north.
+
+> x board
+ Year: 2041 Place: Office
+
+The memory board has portraits of all your loved ones who have passed on. Right
+now, that includes your grandparents, your parents and Uncle Joe.
+
+> x Joe
+ Year: 2041 Place: Office
+
+This picture of your Uncle Joe was taken at the opening of his first franchise,
+back when he had more hair. He's standing tall, arms crossed, grinning at the
+camera.
+
+> n
+ Year: 2041 Place: Family Room
+
+You walk north.
+
+Family Room
+The family room has a bare hardwood floor and white, dusty walls.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+> e
+ Year: 2041 Place: Kitchen
+
+You walk east.
+
+Kitchen
+The kitchen is quiet. A long granite counter runs down one side. A small oven is
+next to it. The backyard is to the east, the pantry is to the south, and the
+family room is to the west.
+
+In the dining half of the kitchen, the big table has been assembled together for
+dinner. Right now the table has nothing on it.
+
+> s
+ Year: 2041 Place: Pantry
+
+You walk south.
+
+Pantry
+This is your family's pantry, just a glorified closet with shelves.
+
+The shelves have a can of yellow wax beans on them.
+
+> x beans
+ Year: 2041 Place: Pantry
+
+This can has born witness to over eighty years of history. It may well outlast
+mankind. Certainly you'll never eat it.
+
+> n
+ Year: 2041 Place: Kitchen
+
+You walk north.
+
+Kitchen
+The kitchen is quiet. A long granite counter runs down one side. A small oven is
+next to it. The backyard is to the east, the pantry is to the south, and the
+family room is to the west.
+
+In the dining half of the kitchen, the big table has been assembled together for
+dinner. Right now the table has nothing on it.
+
+> e
+ Year: 2041 Place: Outdoors
+
+You walk east.
+
+Outdoors
+The stone fence around this plot is covered with moss, but the grass is recently
+trimmed.
+
+The kitchen is back to the west.
+
+An old maple tree provides shade here. The treehouse you built for the neighbor
+kids sits in it, with a ladder leading up.
+
+> x tree
+ Year: 2041 Place: Outdoors
+
+This is a towering, lovely maple tree, forty years old.
+
+> x ladder
+ Year: 2041 Place: Outdoors
+
+This ladder leads up into the treehouse. It's new, like the rest of the
+treehouse, and has wide steps to help you get up more easily.
+
+> x treehouse
+ Year: 2041 Place: Outdoors
+
+You wanted to leave a memento for the neighbors, when you realized that you had
+no one left to leave the house to. They've enjoyed it for the last few years.
+
+A ladder leads up into it.
+
+> u
+ Year: 2041 Place: Treehouse
+
+It's hard going, but you carefully make your way up the ladder.
+
+Treehouse
+This is a small and homey little treehouse. It's not furnished; the kids will
+take care of that, eventually. The back yard is down below.
+
+A pile of plates lies here.
+
+> x plates
+ Year: 2041 Place: Treehouse
+
+There are just enough plates for everyone to eat dinner together.
+
+> take plates
+ Year: 2041 Place: Treehouse
+
+You take the plates.
+
+> d
+ Year: 2041 Place: Outdoors
+
+You carefully negotiate your way down the ladder.
+
+Outdoors
+The stone fence around this plot is covered with moss, but the grass is recently
+trimmed.
+
+The kitchen is back to the west.
+
+An old maple tree provides shade here. The treehouse you built for the neighbor
+kids sits in it, with a ladder leading up.
+
+> w
+ Year: 2041 Place: Kitchen
+
+You walk west.
+
+Kitchen
+The kitchen is quiet. A long granite counter runs down one side. A small oven is
+next to it. The backyard is to the east, the pantry is to the south, and the
+family room is to the west.
+
+In the dining half of the kitchen, the big table has been assembled together for
+dinner. Right now the table has nothing on it.
+
+> put plates on table
+ Year: 2041 Place: Kitchen
+
+You put the plates on the table. Your whole timeline feels a bit more settled
+now.
+
+> w
+ Year: 2041 Place: Family Room
+
+You walk west.
+
+Family Room
+The family room has a bare hardwood floor and white, dusty walls.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+> n
+ Year: 2041 Place: Garage
+
+You walk north.
+
+Garage
+The garage has been converted into a workshop for Ada. A whiteboard is in the
+corner.
+
+The family room is to the south.
+
+Your elderly cousin Ada is pacing around the room somewhat wistfully. She still
+hasn't packed.
+
+> talk to Ada
+ Year: 2041 Place: Garage
+
+Ada says, "You know, CJ, I regret never living my passion...making robots! It's
+too late for me to really get into it now, but it inspired me to write about
+them! Here, take this. I only wish my younger self could have seen it."
+
+She hands you a small book.
+
+> x small book
+ Year: 2041 Place: Garage
+
+It says "Robot Empire", by Ada S. It's a children's book
+
+> read it
+ Year: 2041 Place: Garage
+
+It's about a space society of sentient robot ships that battle across an entire
+galaxy, trying to find a mysterious, black-hole orbiting planet said to contain
+the strongest metal in the universe. The main character is constantly upgrading
+itself throughout the story.
+
+> s
+ Year: 2041 Place: Family Room
+
+You walk south.
+
+Family Room
+The family room has a bare hardwood floor and white, dusty walls.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+> u
+ Year: 2041 Place: Family Room
+
+You start going up, but it seems different up there, dark and uncertain. You'll
+take that path one day, but not today.
+
+You will not go any higher.
+
+> d
+ Year: 2021 Place: Family Room
+
+The burden of years seems to lift from your shoulders the further down you get.
+This part of the house looks newer, too.
+
+Family Room
+This family room is decorated with a bright orange rug and walls checkered red
+and white. It's minimally decorated, since you don't use it for watching TV. You
+usually just use your devices to watch things now.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+A beautiful Christmas tree full of lights sits in the corner.
+
+> d
+ Year: 2001 Place: Family Room
+
+The burden of years seems to lift from your shoulders the further down you get.
+This part of the house looks newer, too.
+
+Family Room
+This cramped family room is dominated by a massive entertainment center and has
+burgundy carpeting. Unlike the rest of the house, it hasn't been hit hard by the
+hurricane.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+> d
+ Year: 1981 Place: Family Room
+
+The burden of years seems to lift from your shoulders the further down you get.
+This part of the house looks newer, too.
+
+Family Room
+This family room is certainly much more inviting than your college dorm room.
+The brown rug and wood paneling make you feel like you're in a cabin.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+Music is coming from a boombox.
+
+Grandma is watching TV from her old, busted recliner. It looks like Dallas is
+playing again.
+
+> d
+ Year: 1961 Place: Family Room
+
+The stairs seem to get bigger the further down you get. Or have you gotten
+smaller?
+
+Family Room
+This family room is huge and brand-new. The walls are covered in green and
+orange floral wallpaper and the floor is soft, yellow shag carpeting.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+Grandma is watching TV from her brand new recliner. It's on NBC right now,
+playing a cooking show about cinnamon.
+
+> n
+ Year: 1961 Place: Garage
+
+You walk north.
+
+Garage
+The garage has been converted into a workshop for Ada. A whiteboard is in the
+corner.
+
+The family room is to the south.
+
+Your cousin Ada is skipping around the garage, chatting to herself and
+occasionally drawing on the whiteboard.
+
+> talk to Ada
+ Year: 1961 Place: Garage
+
+Ada says, "I'm trying to figure out what I want to do next. Some kind of big
+project. I'll let you know if I come up with anything! Anyway, what's up?"
+
+1. "Hey, do you want to check out this book on robots?"
+2. "Hey, do you know where Uncle Rob is?"
+3. "Nevermind, Ada!"
+> 1
+ Year: 1961 Place: Garage
+
+"Hey, do you want to check out this book on robots?"
+
+You give young Ada the book.
+
+"Whoa! This story is awesome! I wonder if someone could make a robot in real
+life...you know what, I'm going to try it!"
+
+She immediately starts tinkering around, assembling parts. This looks like it
+might take a while.
+
+Ada's future has changed.
+
+> s
+ Year: 1961 Place: Family Room
+
+You walk south.
+
+Family Room
+This family room is huge and brand-new. The walls are covered in green and
+orange floral wallpaper and the floor is soft, yellow shag carpeting.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+Grandma is watching TV from her brand new recliner. It's on NBC right now,
+playing a cooking show about cinnamon.
+
+> u
+ Year: 1981 Place: Family Room
+
+You climb up the stairs. They seem to get smaller as you get higher. Or have you
+gotten taller?
+
+Family Room
+This family room is certainly much more inviting than your college dorm room.
+The brown rug and wood paneling make you feel like you're in a cabin.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+Music is coming from a boombox.
+
+Grandma is watching TV from her old, busted recliner. It looks like Dallas is
+playing again.
+
+> n
+ Year: 1981 Place: Garage
+
+You walk north.
+
+Garage
+The garage has been converted into a workshop for Ada. A whiteboard is in the
+corner.
+
+The family room is to the south.
+
+The robot prototype Ada's always working on is in the corner.
+
+Your cousin Ada is sketching schematics on the whiteboard.
+
+> x robot prototype
+ Year: 1981 Place: Garage
+
+The original toaster design remains, but there are multiple attachments now.
+
+> talk to Ada
+ Year: 1981 Place: Garage
+
+Ada says, "Sorry, CJ, I'm working on an idea for a robot! I've been kind of
+busy. What do you need?"
+
+1. "So why do you like robots so much anyway?"
+2. "Hey, do you know where Uncle Rob is?"
+3. "Nevermind, Ada!"
+> 1
+ Year: 1981 Place: Garage
+
+"So why do you like robots so much anyway?"
+
+"Robots are cool. You have to know math to make them, and they're kind of like
+biological organisms but if you don't understand how part of the body works you
+can just put whatever you want there instead. Like something that shoots sparks,
+or makes a quacking sound," she says. "Also it helps ease my mind, because if
+we're in a simulation, and I make a simulated human, it's like a double
+simulation and I'm continuing on the chain of existence," she says, and cackles
+madly.
+
+"Oh. I guess that's pretty cool," you say.
+
+"You're darn right it is!" says Ada.
+
+1. "Hey, do you know where Uncle Rob is?"
+2. "Nevermind, Ada!"
+> 2
+ Year: 1981 Place: Garage
+
+"Nevermind, Ada!"
+
+"OK, CJ, see you later!" she says.
+
+> s
+ Year: 1981 Place: Family Room
+
+You walk south.
+
+Family Room
+This family room is certainly much more inviting than your college dorm room.
+The brown rug and wood paneling make you feel like you're in a cabin.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+Music is coming from a boombox.
+
+Grandma is watching TV from her old, busted recliner. It looks like Dallas is
+playing again.
+
+> u
+ Year: 2001 Place: Family Room
+
+You climb up the stairs. For some reason you feel more tired the higher you get.
+This part of the house looks different, too.
+
+Family Room
+This cramped family room is dominated by a massive entertainment center and has
+burgundy carpeting. Unlike the rest of the house, it hasn't been hit hard by the
+hurricane.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+> n
+ Year: 2001 Place: Garage
+
+You walk north.
+
+Garage
+The garage has been converted into a workshop for Ada. A whiteboard is in the
+corner.
+
+The family room is to the south.
+
+The robot prototype Ada's always working on is in the corner.
+
+Your cousin Ada is pacing around the room, tinkering with spare parts.
+
+> x robot prototype
+ Year: 2001 Place: Garage
+
+The original casing has been stripped off and replaced with shiny steel. It has
+a screen, too.
+
+> x screen
+ Year: 2001 Place: Garage
+
+The screen is inert, for now.
+
+> s
+ Year: 2001 Place: Family Room
+
+You walk south.
+
+Family Room
+This cramped family room is dominated by a massive entertainment center and has
+burgundy carpeting. Unlike the rest of the house, it hasn't been hit hard by the
+hurricane.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+> u
+ Year: 2021 Place: Family Room
+
+You climb up the stairs. For some reason you feel more tired the higher you get.
+This part of the house looks different, too.
+
+Family Room
+This family room is decorated with a bright orange rug and walls checkered red
+and white. It's minimally decorated, since you don't use it for watching TV. You
+usually just use your devices to watch things now.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+A beautiful Christmas tree full of lights sits in the corner.
+
+> n
+ Year: 2021 Place: Garage
+
+You walk north.
+
+Garage
+The garage has been converted into a workshop for Ada. A whiteboard is in the
+corner.
+
+The family room is to the south.
+
+The robot prototype Ada's always working on is in the corner.
+
+Your cousin Ada is frantically looking through the boxes. "Where is it?" she
+mutters.
+
+> x robot prototype
+ Year: 2021 Place: Garage
+
+The robot shaped like a toaster has been pried open. Wires reach out of it in
+many directions. It is silent.
+
+> x wires
+ Year: 2021 Place: Garage
+
+The robot shaped like a toaster has been pried open. Wires reach out of it in
+many directions. It is silent.
+
+> talk to Ada
+ Year: 2021 Place: Garage
+
+"Sorry, CJ, I've got a major problem right now. What's up?"
+
+1. "Hey, what's wrong? You look upset."
+2. "Hey, do you know where Uncle Rob is?"
+3. "Nevermind, Ada!"
+> 1
+ Year: 2021 Place: Garage
+
+"Hey, what's wrong? You look upset."
+
+Ada says, "Have you seen a battery anywhere? I made a really big battery years
+ago, large enough to power some hefty electronics. I was saving it to power my
+final creation. But I can't find it anywhere! I know I used it for something,
+but I have no idea where it's gone, or when. It's so frustrating!"
+
+"I'll see if I can find anything like that," you say.
+
+She gives you a wan smile. "Thanks!"
+
+1. "Hey, what's wrong? You look upset."
+2. "Hey, do you know where Uncle Rob is?"
+3. "Nevermind, Ada!"
+> 3
+ Year: 2021 Place: Garage
+
+"Nevermind, Ada!"
+
+"OK, CJ, see you later!" she says.
+
+> s
+ Year: 2021 Place: Family Room
+
+You walk south.
+
+Family Room
+This family room is decorated with a bright orange rug and walls checkered red
+and white. It's minimally decorated, since you don't use it for watching TV. You
+usually just use your devices to watch things now.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+A beautiful Christmas tree full of lights sits in the corner.
+
+> d
+ Year: 2001 Place: Family Room
+
+The burden of years seems to lift from your shoulders the further down you get.
+This part of the house looks newer, too.
+
+Family Room
+This cramped family room is dominated by a massive entertainment center and has
+burgundy carpeting. Unlike the rest of the house, it hasn't been hit hard by the
+hurricane.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+> d
+ Year: 1981 Place: Family Room
+
+The burden of years seems to lift from your shoulders the further down you get.
+This part of the house looks newer, too.
+
+Family Room
+This family room is certainly much more inviting than your college dorm room.
+The brown rug and wood paneling make you feel like you're in a cabin.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+Music is coming from a boombox.
+
+Grandma is watching TV from her old, busted recliner. It looks like Dallas is
+playing again.
+
+> take battery
+ Year: 1981 Place: Family Room
+
+You take the battery out of the boombox.
+
+The boombox is now silent.
+
+Grandma looks a bit put out. "I was listening to Kim Carnes!" she says. "Oh
+well. At least now I can hear Dallas better."
+
+> u
+ Year: 2001 Place: Family Room
+
+You climb up the stairs. For some reason you feel more tired the higher you get.
+This part of the house looks different, too.
+
+Family Room
+This cramped family room is dominated by a massive entertainment center and has
+burgundy carpeting. Unlike the rest of the house, it hasn't been hit hard by the
+hurricane.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+> u
+ Year: 2021 Place: Family Room
+
+You climb up the stairs. For some reason you feel more tired the higher you get.
+This part of the house looks different, too.
+
+Family Room
+This family room is decorated with a bright orange rug and walls checkered red
+and white. It's minimally decorated, since you don't use it for watching TV. You
+usually just use your devices to watch things now.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+A beautiful Christmas tree full of lights sits in the corner.
+
+> n
+ Year: 2021 Place: Garage
+
+You walk north.
+
+Garage
+The garage has been converted into a workshop for Ada. A whiteboard is in the
+corner.
+
+The family room is to the south.
+
+The robot prototype Ada's always working on is in the corner.
+
+Your cousin Ada is frantically looking through the boxes. "Where is it?" she
+mutters.
+
+> give battery to Ada
+ Year: 2021 Place: Garage
+
+You hand over the Z-cell battery to Ada.
+
+"You found it!" says Ada, pumping her fist with excitement. "Perfect! You're
+gonna love what I come up with after this. Check in with me later...a lot
+later!"
+
+Ada's future has changed.
+
+> s
+ Year: 2021 Place: Family Room
+
+You walk south.
+
+Family Room
+This family room is decorated with a bright orange rug and walls checkered red
+and white. It's minimally decorated, since you don't use it for watching TV. You
+usually just use your devices to watch things now.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+A beautiful Christmas tree full of lights sits in the corner.
+
+> u
+ Year: 2041 Place: Family Room
+
+You climb up the stairs. For some reason you feel more tired the higher you get.
+This part of the house looks different, too.
+
+Family Room
+The family room has a bare hardwood floor and white, dusty walls.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+> n
+ Year: 2041 Place: Garage
+
+You walk north.
+
+Garage
+The garage has been converted into a workshop for Ada. A whiteboard is in the
+corner.
+
+The family room is to the south.
+
+The robot prototype Ada's always working on is in the corner.
+
+Your cousin Ada is finishing up her last bits of work. She still hasn't packed.
+
+> x robot
+ Year: 2041 Place: Garage
+
+The prototype looks finished! Ada must so be so excited!
+
+> talk to Ada
+ Year: 2041 Place: Garage
+
+Ada looks at you and beams. She says, "It's finally finished! My greatest work!
+It's Toaster Bot! Even though it...doesn't really toast anything. But it is
+vaguely toaster-shaped."
+
+She hands you the little toaster robot, then smiles.
+
+"It's not much, but it's the best I could do with the time I have..." she says.
+
+Toaster Bot beeps mysteriously.
+
+> x bot
+ Year: 2041 Place: Garage
+
+This is a cute little robot shaped like a toaster, although all toaster
+functionality was stripped out of it years ago. It doesn't have a lot of
+capabilities, apparently, but it's an honest-to-goodness robot with a screen and
+attachments, and that's pretty impressive.
+
+Ada probably could have improved it, given enough time.
+
+Toaster Bot shakes violently for a second before stopping.
+
+> x screen
+ Year: 2041 Place: Garage
+
+The screen mostly flashes, making different kinds of eyes, like UwU or OwO.
+
+Toaster Bot beeps mysteriously.
+
+> talk to Ada
+ Year: 2041 Place: Garage
+
+She beams at you, and says, "Hey, what's up?"
+
+1. "What should I do with this robot?"
+2. "Hey, do you know where Uncle Rob is?"
+3. "Nevermind, Ada!"
+> 1
+ Year: 2041 Place: Garage
+
+"What should I do with this robot?"
+
+"I dunno, I just remember how you inspired me with that robot story, years ago.
+I always wanted to inspire someone else in the same way," says Ada.
+
+1. "Hey, do you know where Uncle Rob is?"
+2. "Nevermind, Ada!"
+> 2
+ Year: 2041 Place: Garage
+
+"Nevermind, Ada!"
+
+"OK, CJ, see you later!" she says.
+
+> s
+ Year: 2041 Place: Family Room
+
+You walk south.
+
+Family Room
+The family room has a bare hardwood floor and white, dusty walls.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+Toaster Bot shakes violently for a second before stopping.
+
+> d
+ Year: 2021 Place: Family Room
+
+The burden of years seems to lift from your shoulders the further down you get.
+This part of the house looks newer, too.
+
+Toaster Bot beeps mysteriously.
+
+Family Room
+This family room is decorated with a bright orange rug and walls checkered red
+and white. It's minimally decorated, since you don't use it for watching TV. You
+usually just use your devices to watch things now.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+A beautiful Christmas tree full of lights sits in the corner.
+
+Toaster Bot shoots off a tiny shower of sparks.
+
+> d
+ Year: 2001 Place: Family Room
+
+The burden of years seems to lift from your shoulders the further down you get.
+This part of the house looks newer, too.
+
+Toaster Bot beeps mysteriously.
+
+Family Room
+This cramped family room is dominated by a massive entertainment center and has
+burgundy carpeting. Unlike the rest of the house, it hasn't been hit hard by the
+hurricane.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+Toaster Bot gurgles and coos in your arms.
+
+> d
+ Year: 1981 Place: Family Room
+
+The burden of years seems to lift from your shoulders the further down you get.
+This part of the house looks newer, too.
+
+Toaster Bot shakes violently for a second before stopping.
+
+Family Room
+This family room is certainly much more inviting than your college dorm room.
+The brown rug and wood paneling make you feel like you're in a cabin.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+The boombox is silent now.
+
+Grandma is watching TV from her old, busted recliner. It looks like Dallas is
+playing again.
+
+Toaster Bot gurgles and coos in your arms.
+
+> d
+ Year: 1961 Place: Family Room
+
+The stairs seem to get bigger the further down you get. Or have you gotten
+smaller?
+
+Toaster Bot shakes violently for a second before stopping.
+
+Family Room
+This family room is huge and brand-new. The walls are covered in green and
+orange floral wallpaper and the floor is soft, yellow shag carpeting.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+Grandma is watching TV from her brand new recliner. It's on NBC right now,
+playing a cooking show about cinnamon.
+
+Toaster Bot shoots off a tiny shower of sparks.
+
+> n
+ Year: 1961 Place: Garage
+
+You walk north.
+
+Garage
+The garage has been converted into a workshop for Ada. A whiteboard is in the
+corner.
+
+The family room is to the south.
+
+The robot prototype Ada's always working on is in the corner.
+
+Your cousin Ada is skipping around the garage, chatting to herself and
+occasionally drawing on the whiteboard.
+
+Toaster Bot beeps mysteriously.
+
+> talk to Ada
+ Year: 1961 Place: Garage
+
+Ada says, "I love robots! I'm going to make one. It's kind of hard for me to
+know what to do, though, but I do have a cool idea!"
+
+She messes around with the prototype for a bit, then realizes you're still
+there. "Oh, did you need anything?"
+
+1. "Hey, check out this cool Toaster Robot!"
+2. "Hey, do you know where Uncle Rob is?"
+3. "Nevermind, Ada!"
+> 1
+ Year: 1961 Place: Garage
+
+"Hey, check out this cool Toaster Robot!"
+
+You give young Ada the robot.
+
+"Holy Cow! What is this? I...hey, I think I know how this works! But it doesn't
+really...do much. Hmmm I think I have some ideas!"
+
+She gets to work, grabbing parts and working on a new prototype.
+
+Ada's future has changed.
+
+> s
+ Year: 1961 Place: Family Room
+
+You walk south.
+
+Family Room
+This family room is huge and brand-new. The walls are covered in green and
+orange floral wallpaper and the floor is soft, yellow shag carpeting.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+Grandma is watching TV from her brand new recliner. It's on NBC right now,
+playing a cooking show about cinnamon.
+
+> u
+ Year: 1981 Place: Family Room
+
+You climb up the stairs. They seem to get smaller as you get higher. Or have you
+gotten taller?
+
+Family Room
+This family room is certainly much more inviting than your college dorm room.
+The brown rug and wood paneling make you feel like you're in a cabin.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+The boombox is silent now.
+
+Grandma is watching TV from her old, busted recliner. It looks like Dallas is
+playing again.
+
+> n
+ Year: 1981 Place: Garage
+
+You walk north.
+
+Garage
+The garage has been converted into a workshop for Ada. A whiteboard is in the
+corner.
+
+The family room is to the south.
+
+The walking robot prototype Ada's always working on in the corner.
+
+Your cousin Ada is staring at the whiteboard, frustrated.
+
+> x walking robot
+ Year: 1981 Place: Garage
+
+The old toaster shape has been replaced with a small humanoid torso. It looks
+like there should be legs at the bottom, but they're missing.
+
+> talk to Ada
+ Year: 1981 Place: Garage
+
+"Oh. Hey CJ. What's up?" she says.
+
+1. "Hey, what's wrong? You seem frustrated."
+2. "Hey, do you know where Uncle Rob is?"
+3. "Nevermind, Ada!"
+> 1
+ Year: 1981 Place: Garage
+
+"Hey, what's wrong? You seem frustrated."
+
+"I wish I had inspiration for the joints," she says. "What I really need is a
+way to study a leg in detail." She sighs. "You got any legs?"
+
+"Uh, I have two, I guess," you say, looking down at yours. "Same as you."
+
+"Well, unless I can borrow them permanently, it's not going to help. If you see
+any other legs, let me know!" she says.
+
+1. "Hey, could you use this drumstick?"
+2. "Hey, what's wrong? You seem frustrated."
+3. "Hey, do you know where Uncle Rob is?"
+4. "Nevermind, Ada!"
+> 1
+ Year: 1981 Place: Garage
+
+"Hey, could you use this drumstick?"
+
+"Oh!" exclaims Ada. "Yes, I could learn a lot about legs from this!"
+
+But then she looks concerned. "But this is only one leg, and it will go bad
+soon. I wish I could have more info on legs, especially in a way that won't
+decay with time. Like a photo or something."
+
+1. "Hey, could you use this drumstick?"
+2. "Hey, what's wrong? You seem frustrated."
+3. "Hey, do you know where Uncle Rob is?"
+4. "Nevermind, Ada!"
+> 4
+ Year: 1981 Place: Garage
+
+"Nevermind, Ada!"
+
+"OK, CJ, see you later!" she says.
+
+> s
+ Year: 1981 Place: Family Room
+
+You walk south.
+
+Family Room
+This family room is certainly much more inviting than your college dorm room.
+The brown rug and wood paneling make you feel like you're in a cabin.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+The boombox is silent now.
+
+Grandma is watching TV from her old, busted recliner. It looks like Dallas is
+playing again.
+
+> u
+ Year: 2001 Place: Family Room
+
+You climb up the stairs. For some reason you feel more tired the higher you get.
+This part of the house looks different, too.
+
+Family Room
+This cramped family room is dominated by a massive entertainment center and has
+burgundy carpeting. Unlike the rest of the house, it hasn't been hit hard by the
+hurricane.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+> s
+ Year: 2001 Place: Office
+
+You walk south.
+
+Office
+This is your art studio. Or, at least, it will be. Right now, it's mostly empty,
+except for a single easel in the middle and a pedestal. Your family's memory
+board is here, the only thing you kept from your dad's old office. The shelves
+and most of the books had to be thrown out.
+
+The family room is back to the north.
+
+On the pedestal, you can see a dish towel, artfully arranged.
+
+Your dad is hustling back and forth, finishing the last few tasks before you can
+move in completely.
+
+He looks up and smiles as you walk in before going back to his work.
+
+> take towel
+ Year: 2001 Place: Office
+
+You take the dish towel off the pedestal.
+
+You feel your future career slightly change.
+
+> wipe dish
+ Year: 2001 Place: Office
+
+You wipe off most of the dirt with the towel. It looks much better now!
+
+> x dish
+ Year: 2001 Place: Office
+
+This is the family's antique serving platter. Grandpa got it from the old
+country.
+
+It's bright and clean.
+
+> put drumstick on pedestal
+ Year: 2001 Place: Office
+
+You put the drumstick on the pedestal.
+
+You feel your future career slightly change.
+
+> n
+ Year: 2001 Place: Family Room
+
+You walk north.
+
+Family Room
+This cramped family room is dominated by a massive entertainment center and has
+burgundy carpeting. Unlike the rest of the house, it hasn't been hit hard by the
+hurricane.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+> u
+ Year: 2021 Place: Family Room
+
+You climb up the stairs. For some reason you feel more tired the higher you get.
+This part of the house looks different, too.
+
+Family Room
+This family room is decorated with a bright orange rug and walls checkered red
+and white. It's minimally decorated, since you don't use it for watching TV. You
+usually just use your devices to watch things now.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+A beautiful Christmas tree full of lights sits in the corner.
+
+> s
+ Year: 2021 Place: Office
+
+You walk south.
+
+Office
+This is your art studio, a spacious room with a single easel in the middle. The
+family memory board takes up a lot of space on one side. You usually use the
+rest of the space to store art.
+
+The family room is back to the north.
+
+A few paintings of a drumstick line the side of the room.
+
+> x paintings
+ Year: 2021 Place: Office
+
+These are the paintings you haven't sold recently. Most of the paintings are of
+a drumstick since that was the inspiration for your first paintings twenty years
+ago.
+
+> take paintings
+ Year: 2021 Place: Office
+
+You take the paintings of a drumstick.
+
+> n
+ Year: 2021 Place: Family Room
+
+You walk north.
+
+Family Room
+This family room is decorated with a bright orange rug and walls checkered red
+and white. It's minimally decorated, since you don't use it for watching TV. You
+usually just use your devices to watch things now.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+A beautiful Christmas tree full of lights sits in the corner.
+
+> d
+ Year: 2001 Place: Family Room
+
+The burden of years seems to lift from your shoulders the further down you get.
+This part of the house looks newer, too.
+
+Family Room
+This cramped family room is dominated by a massive entertainment center and has
+burgundy carpeting. Unlike the rest of the house, it hasn't been hit hard by the
+hurricane.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+> d
+ Year: 1981 Place: Family Room
+
+The burden of years seems to lift from your shoulders the further down you get.
+This part of the house looks newer, too.
+
+Family Room
+This family room is certainly much more inviting than your college dorm room.
+The brown rug and wood paneling make you feel like you're in a cabin.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+The boombox is silent now.
+
+Grandma is watching TV from her old, busted recliner. It looks like Dallas is
+playing again.
+
+> n
+ Year: 1981 Place: Garage
+
+You walk north.
+
+Garage
+The garage has been converted into a workshop for Ada. A whiteboard is in the
+corner.
+
+The family room is to the south.
+
+The walking robot prototype Ada's always working on in the corner.
+
+Your cousin Ada is staring at the whiteboard, frustrated.
+
+> talk to Ada
+ Year: 1981 Place: Garage
+
+"Oh. Hey CJ. What's up?" she says.
+
+1. "Hey, are these paintings helpful at all?"
+2. "Hey, what's wrong? You seem frustrated."
+3. "Hey, do you know where Uncle Rob is?"
+4. "Nevermind, Ada!"
+> 1
+ Year: 1981 Place: Garage
+
+"Hey, are these paintings helpful at all?"
+
+You hand over the paintings to Ada.
+
+"This is perfect!" says Ada. "I love it! Let me go throw these in the car to get
+them framed later," she says, running into the house. You hear the front door
+open and then close a couple seconds later.
+
+She rushes back in. "Done! And thanks again! Now I can really get to work."
+
+Ada's future has changed.
+
+> s
+ Year: 1981 Place: Family Room
+
+You walk south.
+
+Family Room
+This family room is certainly much more inviting than your college dorm room.
+The brown rug and wood paneling make you feel like you're in a cabin.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+The boombox is silent now.
+
+Grandma is watching TV from her old, busted recliner. It looks like Dallas is
+playing again.
+
+> u
+ Year: 2001 Place: Family Room
+
+You climb up the stairs. For some reason you feel more tired the higher you get.
+This part of the house looks different, too.
+
+Family Room
+This cramped family room is dominated by a massive entertainment center and has
+burgundy carpeting. Unlike the rest of the house, it hasn't been hit hard by the
+hurricane.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+> u
+ Year: 2021 Place: Family Room
+
+You climb up the stairs. For some reason you feel more tired the higher you get.
+This part of the house looks different, too.
+
+Family Room
+This family room is decorated with a bright orange rug and walls checkered red
+and white. It's minimally decorated, since you don't use it for watching TV. You
+usually just use your devices to watch things now.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+A beautiful Christmas tree full of lights sits in the corner.
+
+> u
+ Year: 2041 Place: Family Room
+
+You climb up the stairs. For some reason you feel more tired the higher you get.
+This part of the house looks different, too.
+
+Family Room
+The family room has a bare hardwood floor and white, dusty walls.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+> n
+ Year: 2041 Place: Garage
+
+You walk north.
+
+Garage
+The garage has been converted into a workshop for Ada. A whiteboard is in the
+corner.
+
+The family room is to the south.
+
+The walking robot prototype Ada's always working on in the corner.
+
+Your cousin Ada is finishing up her last bits of work. She still hasn't packed.
+
+> x robot
+ Year: 2041 Place: Garage
+
+The prototype looks finished! Ada must so be so excited!
+
+> talk to Ada
+ Year: 2041 Place: Garage
+
+Ada looks at you and beams. She says, "It's finally finished! My greatest work!
+It's Walkbot!"
+
+She places the walking robot on the ground and nudges it towards you. It
+troddles forward and cuddles your leg before walking to your side. Ada smiles,
+then sighs.
+
+"There's so much more I could have done, given the time," she says.
+
+Walkbot trips a bit but catches itself as you walk.
+
+> talk to Ada
+ Year: 2041 Place: Garage
+
+"Hey, thanks for your help earlier. What do you need?" asks Ada.
+
+1. "What should I do with this robot?"
+2. "Hey, do you know where Uncle Rob is?"
+3. "Nevermind, Ada!"
+> 1
+ Year: 2041 Place: Garage
+
+"What should I do with this robot?"
+
+"Hey, I think people deserve to see this bad boy. Show it around!" says Ada
+proudly.
+
+1. "Hey, do you know where Uncle Rob is?"
+2. "Nevermind, Ada!"
+> 2
+ Year: 2041 Place: Garage
+
+"Nevermind, Ada!"
+
+"OK, CJ, see you later!" she says.
+
+> s
+ Year: 2041 Place: Family Room
+
+You walk south.
+
+Family Room
+The family room has a bare hardwood floor and white, dusty walls.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+Walkbot follows close behind you as you walk.
+
+> d
+ Year: 2021 Place: Family Room
+
+The burden of years seems to lift from your shoulders the further down you get.
+This part of the house looks newer, too.
+
+Family Room
+This family room is decorated with a bright orange rug and walls checkered red
+and white. It's minimally decorated, since you don't use it for watching TV. You
+usually just use your devices to watch things now.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+A beautiful Christmas tree full of lights sits in the corner.
+
+Walkbot walks around in a little circle.
+
+> e
+ Year: 2021 Place: Kitchen
+
+You walk east.
+
+Kitchen
+The kitchen is filled with wonderful smells. A long granite counter runs down
+one side. A small oven is next to it. The backyard is to the east, the pantry is
+to the south, and the family room is to the west.
+
+Uncle Joe is slowly and reflectively slicing potatoes. He has excellent
+technique, but less energy than he once did.
+
+In the dining half of the kitchen, the big table has been assembled together for
+dinner. Right now the table has some plates on it.
+
+Walkbot runs headlong into a wall, then recalibrates and follows you.
+
+> show walkbot to Joe
+ Year: 2021 Place: Kitchen
+
+"Whoa!" says Joe. "What's this?"
+
+"Ada made a walking robot," you answer.
+
+"Neat! I don't suppose it knows how to chop potatoes, does it?" he asks,
+teasingly.
+
+"I don't think so, Uncle Joe," you answer.
+
+> w
+ Year: 2021 Place: Family Room
+
+You walk west.
+
+Family Room
+This family room is decorated with a bright orange rug and walls checkered red
+and white. It's minimally decorated, since you don't use it for watching TV. You
+usually just use your devices to watch things now.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+A beautiful Christmas tree full of lights sits in the corner.
+
+Walkbot follows close behind you as you walk.
+
+> d
+ Year: 2001 Place: Family Room
+
+The burden of years seems to lift from your shoulders the further down you get.
+This part of the house looks newer, too.
+
+Family Room
+This cramped family room is dominated by a massive entertainment center and has
+burgundy carpeting. Unlike the rest of the house, it hasn't been hit hard by the
+hurricane.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+Walkbot walks around in a little circle.
+
+> s
+ Year: 2001 Place: Office
+
+You walk south.
+
+Office
+This is your art studio. Or, at least, it will be. Right now, it's mostly empty,
+except for a single easel in the middle and a pedestal. Your family's memory
+board is here, the only thing you kept from your dad's old office. The shelves
+and most of the books had to be thrown out.
+
+The family room is back to the north.
+
+On the pedestal, you can see a drumstick, artfully arranged.
+
+Your dad is puttering around, making sure that your new studio is ready for you
+to move into.
+
+Walkbot trips a bit but catches itself as you walk.
+
+> show walkbot to dad
+ Year: 2001 Place: Office
+
+"Is that something Ada made?" asks Dad.
+
+"Yeah, how'd you know?" you ask.
+
+"She's always talking about robotics these days. I'm proud of her," says Dad.
+
+> n
+ Year: 2001 Place: Family Room
+
+You walk north.
+
+Family Room
+This cramped family room is dominated by a massive entertainment center and has
+burgundy carpeting. Unlike the rest of the house, it hasn't been hit hard by the
+hurricane.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+Walkbot follows close behind you as you walk.
+
+> d
+ Year: 1981 Place: Family Room
+
+The burden of years seems to lift from your shoulders the further down you get.
+This part of the house looks newer, too.
+
+Family Room
+This family room is certainly much more inviting than your college dorm room.
+The brown rug and wood paneling make you feel like you're in a cabin.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+The boombox is silent now.
+
+Grandma is watching TV from her old, busted recliner. It looks like Dallas is
+playing again.
+
+Walkbot walks around in a little circle.
+
+> show walkbot to grandma
+ Year: 1981 Place: Family Room
+
+"What a funny little thing!" says Grandma. "Did you buy that?"
+
+"No, Ada made it," you say.
+
+"Well that's marvelous," she says. "I'll have to tell her how proud I am."
+
+> d
+ Year: 1961 Place: Family Room
+
+The stairs seem to get bigger the further down you get. Or have you gotten
+smaller?
+
+Family Room
+This family room is huge and brand-new. The walls are covered in green and
+orange floral wallpaper and the floor is soft, yellow shag carpeting.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+Grandma is watching TV from her brand new recliner. It's on NBC right now,
+playing a cooking show about cinnamon.
+
+Walkbot walks around in a little circle.
+
+> n
+You walk north.
+
+Garage
+The garage has been converted into a workshop for Ada. A whiteboard is in the
+corner.
+
+The family room is to the south.
+
+The walking robot prototype Ada's always working on in the corner.
+
+Your cousin Ada is skipping around the garage, chatting to herself and
+occasionally drawing on the whiteboard.
+
+Walkbot trips a bit but catches itself as you walk. Ada sees the walking robot
+following you and gasps.
+
+"Oh my goodness! What an adorable robot! Hello, my name is Ada. What's yours?"
+
+When the robot doesn't respond, she strokes her chin and says, "Huh. Doesn't
+talk. I wonder if I can fix that. Give me some space, I'm gonna get to work!"
+
+ Year: 1961 Place: Garage
+
+She immediately starts tinkering with the robot, pulling some parts out and
+replacing them with others.
+
+Ada's future has changed.
+
+> s
+ Year: 1961 Place: Family Room
+
+You walk south.
+
+Family Room
+This family room is huge and brand-new. The walls are covered in green and
+orange floral wallpaper and the floor is soft, yellow shag carpeting.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+Grandma is watching TV from her brand new recliner. It's on NBC right now,
+playing a cooking show about cinnamon.
+
+> u
+ Year: 1981 Place: Family Room
+
+You climb up the stairs. They seem to get smaller as you get higher. Or have you
+gotten taller?
+
+Family Room
+This family room is certainly much more inviting than your college dorm room.
+The brown rug and wood paneling make you feel like you're in a cabin.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+The boombox is silent now.
+
+Grandma is watching TV from her old, busted recliner. It looks like Dallas is
+playing again.
+
+> u
+ Year: 2001 Place: Family Room
+
+You climb up the stairs. For some reason you feel more tired the higher you get.
+This part of the house looks different, too.
+
+Family Room
+This cramped family room is dominated by a massive entertainment center and has
+burgundy carpeting. Unlike the rest of the house, it hasn't been hit hard by the
+hurricane.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+> n
+ Year: 2001 Place: Garage
+
+You walk north.
+
+Garage
+The garage has been converted into a workshop for Ada. A whiteboard is in the
+corner.
+
+The family room is to the south.
+
+The android prototype Ada's always working on is here.
+
+Ada is taking a break, looking kind of upset.
+
+> x android
+ Year: 2001 Place: Garage
+
+The prototype's outward appearance looks complete, but it's turned off and has
+wires going into its head.
+
+> talk to Ada
+ Year: 2001 Place: Garage
+
+"Hey, CJ, what's up?" says Ada.
+
+1. "Hey, what's wrong?"
+2. "Hey, do you know where Uncle Rob is?"
+3. "Nevermind, Ada!"
+> 1
+ Year: 2001 Place: Garage
+
+"Hey, what's wrong?"
+
+Ada says, "I'm kind of stuck. I need a source of concentrated knowledge to train
+my robot with. And it can't be digital, I've had enough of that. I'm looking for
+something imperfect, like someone's journals or a finished book of puzzles."
+
+"Hmmm," you say, "sounds like something my dad would have."
+
+"Really? Well, let me know if you find it!" says Ada.
+
+1. "Hey, my dad finished this crossword puzzle book. Could you use it?"
+2. "Hey, what's wrong?"
+3. "Hey, do you know where Uncle Rob is?"
+4. "Nevermind, Ada!"
+> 1
+ Year: 2001 Place: Garage
+
+"Hey, my dad finished this crossword puzzle book. Could you use it?"
+
+You hand over the puzzle book to Ada.
+
+"Wow," says Ada. "This is perfect! And I like that your dad worked on this. The
+data will influence the robot's personality, so he might end up similar to your
+dad. Kind of like brothers!"
+
+Ada's future has changed.
+
+> s
+ Year: 2001 Place: Family Room
+
+You walk south.
+
+Family Room
+This cramped family room is dominated by a massive entertainment center and has
+burgundy carpeting. Unlike the rest of the house, it hasn't been hit hard by the
+hurricane.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+> u
+ Year: 2021 Place: Family Room
+
+You climb up the stairs. For some reason you feel more tired the higher you get.
+This part of the house looks different, too.
+
+Family Room
+This family room is decorated with a bright orange rug and walls checkered red
+and white. It's minimally decorated, since you don't use it for watching TV. You
+usually just use your devices to watch things now.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+A beautiful Christmas tree full of lights sits in the corner.
+
+> u
+ Year: 2041 Place: Family Room
+
+You climb up the stairs. For some reason you feel more tired the higher you get.
+This part of the house looks different, too.
+
+Family Room
+The family room has a bare hardwood floor and white, dusty walls.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+> n
+ Year: 2041 Place: Garage
+
+You walk north.
+
+Garage
+The garage has been converted into a workshop for Ada. A whiteboard is in the
+corner.
+
+The family room is to the south.
+
+The android prototype Ada's always working on is here.
+
+Your cousin Ada is finishing up her last bits of work. She still hasn't packed.
+
+> x android
+ Year: 2041 Place: Garage
+
+The prototype looks finished! Ada must so be so excited!
+
+> talk to Ada
+ Year: 2041 Place: Garage
+
+Ada looks at you and beams. She says, "It's finally finished! My greatest work!
+It's Uncle Rob!"
+
+She presses a button, and Rob lights up.
+
+"Hello, CJ. It's a pleasure to see you. Do you have any food? I am quite
+hungry," says Rob.
+
+Ada smacks her forehead. "Of course! I forgot about dinner. Here, take Rob and
+let me know when everyone else gets here! I'm going to go wash up," she says,
+and walks into the house.
+
+> x Rob
+ Year: 2041 Place: Garage
+
+This is a big, walking, talking robot. It's engraved with the words "Uncle Rob!"
+on it. He has a thick copper mustache.
+
+> x mustache
+ Year: 2041 Place: Garage
+
+This metallic mustache looks quite a bit like your dad's mustache.
+
+> talk to Rob
+ Year: 2041 Place: Garage
+
+Uncle Rob looks at you attentively. "What do you need, CJ?" he asks.
+
+1. "What's it like being sentient?"
+2. "How do you eat food?"
+3. "Do you know any good songs?"
+4. "Nevermind."
+> 1
+ Year: 2041 Place: Garage
+
+"What's it like being sentient?"
+
+"Thanks, CJ! Great question! I've been wondering the same thing. In fact, I'm
+trying to determine my organizing principles in life. I can't decide if Rule 1
+should be 'I must not injure humans' or 'Live, laugh, love.'"
+
+1. "How do you eat food?"
+2. "Do you know any good songs?"
+3. "Nevermind."
+> 1
+ Year: 2041 Place: Garage
+
+"How do you eat food?"
+
+"You know, I honestly don't know. Probably some kind of slow-burn, inefficient
+mass-to-energy converter that requires a massive amount of infrastructure to
+deal with both constant consumption of input and constant excretion of output.
+You know, like you!"
+
+1. "Do you know any good songs?"
+2. "Nevermind."
+> 1
+"Do you know any good songs?"
+
+"Of course! This one's my favorite, from a personal hero of mine: They ruled the
+solar system
+Near ten thousand years before
+In their single starcrossed scout ships
+Mining ast'roids, spinning lore.
+
+Then one true courageous miner
+Spied a spaceship from the stars
+Boarded he that alien liner
+Out beyond the orb of Mars.
+
+Yes, that ship was filled with danger
+Mighty monsters barred his way
+Yet he solved the alien myst'ries
+Mining quite a lode that day.
+
+O, they ruled the solar system
+Near ten thousand years before
+'Til one brave advent'rous spirit
+
+ Year: 2041 Place: Garage
+
+Brought that mighty ship to shore."
+
+1. "Nevermind."
+> 1
+ Year: 2041 Place: Garage
+
+"Nevermind."
+
+"Never...mind? I always use my mind," he says, brow furrowing.
+
+> s
+ Year: 2041 Place: Family Room
+
+You walk south.
+
+Family Room
+The family room has a bare hardwood floor and white, dusty walls.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+Uncle Rob follows you.
+
+> d
+ Year: 2021 Place: Family Room
+
+The burden of years seems to lift from your shoulders the further down you get.
+This part of the house looks newer, too.
+
+Family Room
+This family room is decorated with a bright orange rug and walls checkered red
+and white. It's minimally decorated, since you don't use it for watching TV. You
+usually just use your devices to watch things now.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+A beautiful Christmas tree full of lights sits in the corner.
+
+Uncle Rob hums a little ditty to himself.
+
+> d
+ Year: 2001 Place: Family Room
+
+The burden of years seems to lift from your shoulders the further down you get.
+This part of the house looks newer, too.
+
+Family Room
+This cramped family room is dominated by a massive entertainment center and has
+burgundy carpeting. Unlike the rest of the house, it hasn't been hit hard by the
+hurricane.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+Uncle Rob is making notes to himself about human culture.
+
+> d
+ Year: 1981 Place: Family Room
+
+The burden of years seems to lift from your shoulders the further down you get.
+This part of the house looks newer, too.
+
+Family Room
+This family room is certainly much more inviting than your college dorm room.
+The brown rug and wood paneling make you feel like you're in a cabin.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+The boombox is silent now.
+
+Grandma is watching TV from her old, busted recliner. It looks like Dallas is
+playing again.
+
+Uncle Rob is glancing around the room amiably.
+
+> e
+ Year: 1981 Place: Kitchen
+
+You walk east.
+
+Kitchen
+The kitchen is filled with wonderful smells. A long granite counter runs down
+one side. A small oven is next to it. The backyard is to the east, the pantry is
+to the south, and the family room is to the west.
+
+A whole-roasted chicken is sitting out on the counter to cool.
+
+Uncle Joe is slicing potatoes expertly. He's gotten pretty good at this since he
+started his restaurant.
+
+In the dining half of the kitchen, the big table has been assembled together for
+dinner. Right now the table has some plates on it.
+
+Uncle Rob follows you.
+
+> give dish to Joe
+ Year: 1981 Place: Kitchen
+
+You hand the serving platter to Uncle Joe.
+
+"This looks perfect," he says. "Thanks so much for getting this ready!"
+
+You hear someone knocking at the front door.
+
+> w
+ Year: 1981 Place: Family Room
+
+You walk west.
+
+Family Room
+This family room is certainly much more inviting than your college dorm room.
+The brown rug and wood paneling make you feel like you're in a cabin.
+
+There is a calendar on the wall. The office is to the south, the garage is
+north, the kitchen is east, and the stairs go up and down. The front door is to
+the west.
+
+The boombox is silent now.
+
+Grandma is watching TV from her old, busted recliner. It looks like Dallas is
+playing again.
+
+You hear someone knocking at the front door.
+
+Uncle Rob follows you.
+
+> open door
+ Year: 1981 Place: Family Room
+
+Look who it is! It's your young cousin Emma!
+
+"We finally made it! I brought a gift for Grandma, and a toy for later," she
+says. She holds up a wrapped present and a dollhouse. She looks at everyone else
+in the room behind you: "Hey grandma! Hey Uncle Rob!" she says.
+
+"Hi, Emma!" says Grandma from her chair. "Come on in! We're just heading in to
+dinner."
+
+Emma walks past you while Uncle Rob helps Grandma up and into the kitchen.
+
+Your dad pokes his head out of the office. "Everyone's here already? Great! I
+can smell the baklava." He walks into the kitchen, and you hear Ada in there,
+too.
+
+> e
+ Year: 1981 Place: Kitchen
+
+You walk east. Everyone's in the kitchen, seated at the table: Grandma, Dad,
+Emma, Uncle Rob, Uncle Joe, and Ada. They're cheerfully talking and saying hi to
+each other. Uncle Rob in particular seems excited to say hi to everyone.
+
+You take your place at the table while Uncle Joe slices everything up.
+
+Ada stands and says, "Here's to Grandma!"
+
+"To grandma!" you all shout, and sit down to eat.
+
+In the dining half of the kitchen, the big table has been assembled together for
+dinner. Right now the table has a wrapped present, some gravy, some mashed
+potatoes, some french fries, some au gratin potatoes, some baklava, some roast
+chicken, and some plates on it.
+
+Everyone looks happy to talk, with Grandma and Emma looking especially
+interested in chatting to you. Ada, Dad, Uncle Joe, and Uncle Rob are cheerfully
+eating and talking to each other.
+
+> talk to grandma
+ Year: 1981 Place: Kitchen
+
+"Hey, grandma," you say.
+
+"Yes, dear?" she answers.
+
+1. "Are you going to open your present from Emma, Grandma?"
+2. "Nevermind, Grandma."
+> 1
+ Year: 1981 Place: Kitchen
+
+"Are you going to open your present from Emma, Grandma?"
+
+"Oh, as long as it doesn't bother anyone," says Grandma.
+
+"Yeah, go for it!" says Uncle Joe. "It's your party, have some fun!"
+
+Grandma unwraps the present, revealing a very strangely-shaped bottle. It
+intersects itself in a bizarre fashion. It's labelled 'Klein'.
+
+"I love it!" says Grandma. Emma grins.
+
+> x bottle
+ Year: 1981 Place: Kitchen
+
+This is a bottle that intersects itself in bizarre ways.
+
+> x emma
+ Year: 1981 Place: Kitchen
+
+Emma is your cousin that lives in the next town over, so you only see her on
+holidays and parties. She's around six years old, and is, honestly, a model
+child.
+
+> talk to emma
+ Year: 1981 Place: Kitchen
+
+"What's up?" asks Emma.
+
+1. "You wouldn't believe the crazy day I had!"
+2. "Where's the rest of your family, Emma?"
+3. "Just wanted to say thanks for coming!"
+> 1
+"You wouldn't believe the crazy day I had!"
+
+"Yeah? What happened?" asks Emma.
+
+"Some random woman I don't know threw me a note card from upstairs. She looked
+familiar, but I couldn't place her," you say.
+
+"Really? What did the note card say?" asks Emma.
+
+You show her the card.
+
+"That gives me an idea," says Emma. She pulls out a card of her own and takes
+notes.
+
+Ada looks over, and says, "Hey, are you guys resolving a spatio-temporal
+paradox?"
+
+"I guess?" says Emma. She runs out of the room. You hear feet on the stairs and
+floorboards creaking above you. You hear a window opening, and a woman shouting,
+"There you go, CJ! See you at dinner!" Then there are footsteps coming down the
+stairs.
+
+ Year: 1981 Place: Kitchen
+
+Emma comes back in, looking decidedly out of sorts. "You've got to get those
+stairs fixed. Whew!"
+
+> take mashed
+ Year: 1981 Place: Kitchen
+
+You scoop up a big lump of potatoes and add gravy to it.
+
+> take fries
+ Year: 1981 Place: Kitchen
+
+You snag a couple of fries. They're still pretty hot!
+
+> take au gratin
+ Year: 1981 Place: Kitchen
+
+You scoop up a healthy ladle of potatoes and lay it on your plate. The cheese is
+truly delightful.
+
+> take baklava
+ Year: 1981 Place: Kitchen
+
+Your baklava came out perfect. You pick up a slice that's dripping with honey
+and eat it.
+
+> take chicken
+ Year: 1981 Place: Kitchen
+
+You grab yourself a couple slices of chicken to eat. It's delicious!
+
+> talk to dad
+ Year: 1981 Place: Kitchen
+
+"Hey, Dad," you say.
+
+"Yeah, sweetie?"
+
+1. "Are you enjoying the party, Dad?"
+2. "Just wanted to say hi."
+> 1
+ Year: 1981 Place: Kitchen
+
+"Are you enjoying the party, Dad?"
+
+He smiles. "Yeah, I really am. When was the last time we were together like
+this? It reminds me of the parties we used to have before your grandfather
+passed away. Although the food is a lot better, thanks to Joe. Your baklava is
+pretty great, too!"
+
+1. "Just wanted to say hi."
+> 1
+ Year: 1981 Place: Kitchen
+
+"Just wanted to say hi."
+
+"Hi to you, too," he says with a smile.
+
+> talk to Rob
+ Year: 1981 Place: Kitchen
+
+"Hi, Uncle Rob!" you say.
+
+"Greetings, young CJ," he says.
+
+1. "So, have you met everyone yet?"
+2. "Just wanted to say that I hope you're enjoying your first party!"
+> 1
+ Year: 1981 Place: Kitchen
+
+"So, have you met everyone yet?"
+
+Uncle Rob scratches his copper mustache. "Well, my existence seems to be feeding
+into some kind of ontological loop where I simultaneously have both always
+existed and never existed. So yes, and no, and maybe. But I'm glad to be here!"
+he says as he downs another few bites of au gratin potatoes.
+
+1. "Just wanted to say that I hope you're enjoying your first party!"
+> 1
+ Year: 1981 Place: Kitchen
+
+"Just wanted to say that I hope you're enjoying your first party!"
+
+"It's been amazing" says Uncle Rob. "And I've been using my puzzle-solving
+skills to the max, like: what's the optimal order to try new food in? It's
+excellent!"
+
+> talk to Ada
+ Year: 1981 Place: Kitchen
+
+"Hey, Ada," you say.
+
+Ada looks up from consuming a large variety of potatoes. "What's up?" she asks.
+
+1. "By the way, Ada, congratulations on solving the problem of sentient AI."
+2. "Just glad that you're here, that's all."
+> 1
+ Year: 1981 Place: Kitchen
+
+"By the way, Ada, congratulations on solving the problem of sentient AI."
+
+"Hey, people need hobbies," says Ada. "Besides, I definitely had some help. I
+think. The timeline is pretty confusing, to be honest."
+
+1. "Just glad that you're here, that's all."
+> 1
+ Year: 1981 Place: Kitchen
+
+"Just glad that you're here, that's all."
+
+"Well I'm definitely glad to be here, too," she says with a smile.
+
+> talk to Emma
+ Year: 1981 Place: Kitchen
+
+"What's up?" asks Emma.
+
+1. "Where's the rest of your family, Emma?"
+2. "You look a little bored, Emma. Want to go do something fun?"
+3. "Just wanted to say thanks for coming!"
+> 1
+ Year: 1981 Place: Kitchen
+
+"Where's the rest of your family, Emma?"
+
+She smiles and pats the dollhouse. "Don't worry, CJ, they're in good hands!"
+
+1. "You look a little bored, Emma. Want to go do something fun?"
+2. "Just wanted to say thanks for coming!"
+> 1
+Game Over
+
+"You look a little bored, Emma. Want to go do something fun?"
+
+She nods. "Yeah, I finished dinner a while ago. Wanna play with this?" She pulls
+out her dollhouse.
+
+"Well," you say, "I'm a little old for that." She looks crestfallen, so you grab
+the dollhouse and add, "But don't worry. Let me just run this downstairs."
+
+     *** You have won! ***
+
+Would you like to:
+     UNDO the last move,
+     RESTORE a saved position,
+     see a list of AMUSING things to do,
+     QUIT the program,
+     or RESTART from the beginning?
+> amusing
+Have you tried...
+
+...xyzzy?
+
+...ripping the list?
+
+...pushing the easel repeatedly?
+
+...turning off the robots?
+
+...singing in different time periods?
+
+Would you like to:
+     UNDO the last move,
+     RESTORE a saved position,
+     see a list of AMUSING things to do,
+     QUIT the program,
+     or RESTART from the beginning?
+> quit
+Thanks for playing!

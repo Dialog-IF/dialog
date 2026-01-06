@@ -1,0 +1,69 @@
+(report at random)
+	(select)
+		One.
+	(or)
+		Two.
+	(or)
+		Three.
+	(at random)
+
+(report purely at random)
+	(select)
+		One.
+	(or)
+		Two.
+	(or)
+		Three.
+	(purely at random)
+
+(report stopping)
+	(select)
+		One.
+	(or)
+		Two.
+	(or)
+		Three.
+	(stopping)
+
+(report cycling)
+	(select)
+		One.
+	(or)
+		Two.
+	(or)
+		Three.
+	(cycling)
+
+(report then at random)
+	(select)
+		One.
+	(or)
+		Two.
+	(or)
+		Three.
+	(then at random)
+
+(report then purely at random)
+	(select)
+		One.
+	(or)
+		Two.
+	(or)
+		Three.
+	(then purely at random)
+
+(report)
+	Random: (report at random) (line)
+	Purely at random: (report purely at random) (line)
+	Stopping: (report stopping) (line)
+	Cycling: (report cycling) (line)
+	Then at random: (report then at random) (line)
+	Then purely at random: (report then purely at random) (par)
+
+(program entry point)
+	(report)
+	(report)
+	(report)
+	(report)
+	(report)
+	(report)

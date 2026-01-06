@@ -1,0 +1,5 @@
+(program entry point)
+	Hello (my own rule)!
+
+(my own rule)
+	, world

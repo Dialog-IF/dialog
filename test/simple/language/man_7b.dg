@@ -1,0 +1,12 @@
+(generate 3 (green grape $))
+(generate 5 (blue grape $))
+(generate 2 (pizza $))
+
+(fruit *(green grape $))
+(fruit *(blue grape $))
+
+(program entry point)
+	(exhaust) {
+		*(fruit $F)
+		$F is a fruit. (line)
+	}
