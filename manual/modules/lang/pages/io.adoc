@@ -84,13 +84,19 @@ as the player may be using an interpreter with a dark or light default backgroun
 The Z-machine backend, and the 8-bit Å-machine interpreter, only support a limited number of style attributes. For divs and spans in the main text area, they are:
 
 font-style::
-Supported values are `italic` and `inherit`.
+Supported values are `normal`, `italic`, and `inherit`.
 
 font-weight::
-Supported values are `bold` and `inherit`.
+Supported values are `normal`, `bold`, and `inherit`.
 
 font-family::
-The value is checked for the presence or absence of the keyword `monospace`.
+The value is checked for the presence or absence of the keyword `monospace`, or for the exact text `inherit`.
+
+font-decoration::
+The value is checked for the presence or absence of the keyword `reverse`, or for the exact text `inherit`. A value containing `reverse` instructs the interpreter to reverse the foreground and background colors, whatever they might be; this is not standard CSS, but is more widely supported on retro hardware than setting the colors directly.
+
+display::
+Supported values are `none` and `inherit`. Spans marked with `display: none` are not displayed in any way, but their contents _will_ appear in the xref:builtins.adoc#system[transcript]. If any important information is conveyed in a status area, this can be used to ensure it's also recorded in the transcript.
 
 margin-top::
 This attribute only affects divs.
@@ -103,6 +109,16 @@ The value must be an integer followed by the keyword `em`, with no whitespace in
 The size of the resulting margin is the given number of blank lines.
 
 There is currently no support for the combined `margin` and `font` attributes.
+
+The Z-machine also supports two additional properties that the 8-bit Å-machine interpreter does not:
+
+color::
+Supported values are `initial`, `inherit`, `black`, `red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, `white`, or a pound sign `#` followed by six hexadecimal digits. Interpreters are more likely to support the named colors than the hexadecimal ones. The value `initial` specifies the interpreter's original choice of color, before receiving any instructions from the program; there is no way to know if this is a light or dark color, so best practice is to set both `color` and `background-color` to `initial`, or neither of them.
+
+background-color::
+Supported values are the same as for `color`.
+
+Be aware that not all interpreters allow these properties to be combined. A span (or combination of spans) intended to be both bold and italic may be displayed as only one or the other—or even as something else, like bright text and underlining—depending on the interpreter's capabilities.
 
 === Nested style contexts and the flow of execution
 
@@ -147,7 +163,7 @@ The built-in predicate `(space $)` prints a given number of space characters in 
 In addition to spans and divs, it is possible to change the current text style on the fly.
 Use the built-in predicates `(bold)`, `(italic)`, `(reverse)`, and `(fixed pitch)`
 to enable each respective style, and `(roman)` to disable all four.
-The predicate `(unstyle)` reverts to the default style of the current div or span, which is roman by default.
+The predicate `(unstyle)` reverts to the default style of the current div or span, which is roman by default. Note that these predicates are deprecated, and may be removed in a future version of Dialog; divs and spans should be used instead whenever possible.
 
 [#status]
 == Status areas
@@ -202,11 +218,10 @@ The Z-machine backend will reserve this many lines at the top of the screen.
 	}
 ----
 
-On the Z-machine, text inside the top status area is always rendered in a fixed-pitch font.
-When entering the status bar environment, Dialog fills the status area with reverse space characters,
-enables reverse video, and positions the cursor in the top left corner.
+On the Z-machine, text inside the top status area is always rendered in a fixed-pitch font. Unless specified otherwise (with `text-decoration: none` in the style class), it will also be displayed in reverse video style.
+When entering the status bar environment, Dialog fills the status area with space characters and positions the cursor in the top left corner.
 
-Spans and inline style changes (bold, italic, reverse, fixed pitch, and roman) are ignored in the top status area.
+Inline style changes (bold, italic, reverse, fixed pitch, and roman) are ignored in the top status area, but spans are not.
 
 The top status area can be split into multiple segments horizontally.
 These segments are described using so called _floating_ divs.
@@ -267,7 +282,6 @@ Works as it does for ordinary divs, but is ignored for the top-level `(status ba
 
 margin-bottom::
 Works as it does for ordinary divs, but is ignored for the top-level `(status bar $)` itself.
-
 
 It is possible to invoke `(status bar $)` with different style classes at different times,
 in order to vary the look of the status area during gameplay.

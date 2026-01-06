@@ -34,9 +34,92 @@ mingw32):
 
 Project website:
 
-	https://linusakesson.net/dialog/
+	https://github.com/Dialog-IF/dialog/
 
 Release notes:
+
+	1a/01, Lib 1.1.1:
+	
+		This is the first release handled by the community, and per
+		Linus's wishes, we're bumping the major version for the first
+		time! We're also taking this opportunity to unify the version
+		numbers between the compiler, library, and manual.
+		
+		Backend: color and background-color properties are now supported
+		on Z-machine backend.
+		
+		Backend: display:none is now tentatively supported on Z-machine
+		backend, though spacing it properly can be difficult.
+		
+		Backend: styles can be stacked on Z-machine backend, allowing
+		for (for example) bold italics, or monospace reverse-video.
+		Spans are also allowed inside status bars as a result.
+		
+		Backend: fixed a bug that would crash the Z-machine if too many
+		dictionary words were included in a wordmap, pushing the
+		wordmap datatables past address $8000.
+		
+		Backend: lists containing punctuation marks will now print with
+		proper spacing on Z-machine during tracing.
+		
+		Backend: Unicode characters are now allowed in dictionary words
+		on Z-machine backend.
+		
+		Backend: generated Å-machine files now include the names of
+		style classes instead of only the numbers, which interpreters
+		may use to improve their output.
+		
+		Backend: resources can no include option strings on Å-machine
+		backend; the meaning of these is left to the interpreter.
+		
+		Backend: the Z-machine backend can more effectively calculate
+		the screen dimensions, even in certain buggy interpreters.
+		
+		Debugger: a new --numbered option shows the depth of the call
+		stack with numbers instead of graphics during tracing. This
+		makes the output significantly easier to understand with a
+		screen reader.
+		
+		Language: fixed a bug when unifying a list containing multiple
+		instances of a new variable, like ($Y = [$X $X]).
+		
+		Language: inline style predicates like (bold) are now deprecated.
+		They're still supported for now, but may be removed in a future
+		release.
+		
+		Language: new (current div width), (current div height), and
+		(status bar $ with height $) predicates allow better control of
+		status bar layout on Z-machine.
+		
+		Compiler: the compiler now shows how close a project is to
+		various limits, both backend-specific (like addressable memory
+		on the Z-machine) and universal (the compiler architecture
+		imposes a limit of $1e00 objects on any backend).
+		
+		Compiler: the compiler now accepts JPEG files as well as PNG
+		files for cover art.
+		
+		Compiler: in projects that include a library, objects used in
+		rules but never declared as topics (the * syntax) will produce
+		a warning. This can be disabled on the command line.
+		
+		Library: a new (gender-neutral $) trait will use the pronoun
+		"they", but without forcing plural verb endings as (plural $)
+		does.
+		
+		Library: serial commas in phrases like GET X, Y, AND Z are now
+		properly understood. Previously, this would be parsed as GET X
+		followed by TELL Y TO AND Z, which would generally produce an
+		error.
+		
+		Library: "meta" text (that is, text like "enabling score
+		notifications" that comes from the program itself, rather than
+		from the game) is now always wrapped in a (div @meta), which
+		the author is free to style as they like.
+		
+		Library: the program will backtrack to free heap memory before
+		the final question, so that complicated parsing or status bars
+		will no longer cause an overflow.
 
 	0m/03, Lib 0.46 (Manual revision 31):
 
