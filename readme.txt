@@ -48,6 +48,9 @@ Release notes:
 		Backend: color and background-color properties are now supported
 		on Z-machine backend.
 		
+		Backend: display:none is now tentatively supported on Z-machine
+		backend, though spacing it properly can be difficult.
+		
 		Backend: styles can be stacked on Z-machine backend, allowing
 		for (for example) bold italics, or monospace reverse-video.
 		Spans are also allowed inside status bars as a result.
@@ -59,9 +62,18 @@ Release notes:
 		Backend: lists containing punctuation marks will now print with
 		proper spacing on Z-machine during tracing.
 		
+		Backend: Unicode characters are now allowed in dictionary words
+		on Z-machine backend.
+		
 		Backend: generated Å-machine files now include the names of
 		style classes instead of only the numbers, which interpreters
 		may use to improve their output.
+		
+		Backend: resources can no include option strings on Å-machine
+		backend; the meaning of these is left to the interpreter.
+		
+		Backend: the Z-machine backend can more effectively calculate
+		the screen dimensions, even in certain buggy interpreters.
 		
 		Debugger: a new --numbered option shows the depth of the call
 		stack with numbers instead of graphics during tracing. This
@@ -75,11 +87,9 @@ Release notes:
 		They're still supported for now, but may be removed in a future
 		release.
 		
-		Language: illegal characters in multi-character dictionary
-		words are now a warning rather than an error. Sometimes the
-		compiler can't prove that a particular predicate is never used
-		for parsing, but the author can guarantee it. Now, should this
-		happen, they can safely ignore the warning.
+		Language: new (current div width), (current div height), and
+		(status bar $ with height $) predicates allow better control of
+		status bar layout on Z-machine.
 		
 		Compiler: the compiler now shows how close a project is to
 		various limits, both backend-specific (like addressable memory
@@ -88,6 +98,10 @@ Release notes:
 		
 		Compiler: the compiler now accepts JPEG files as well as PNG
 		files for cover art.
+		
+		Compiler: in projects that include a library, objects used in
+		rules but never declared as topics (the * syntax) will produce
+		a warning. This can be disabled on the command line.
 		
 		Library: a new (gender-neutral $) trait will use the pronoun
 		"they", but without forcing plural verb endings as (plural $)
