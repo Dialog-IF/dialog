@@ -420,7 +420,7 @@ A few non-printable keys are recognized, and reported using special dictionary w
 | @\d
 
 | Left
-| @\f
+| @\l
 
 | Right
 | @\r
