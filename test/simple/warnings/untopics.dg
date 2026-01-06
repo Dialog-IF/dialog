@@ -1,0 +1,9 @@
+%% This is defined as a topic, so it should not produce a warning
+#apple
+(current player #apple)
+
+%% This is *not* defined as a topic, so it *should* produce a warning
+(#apple is #in #banana)
+(room #banana)
+
+%% Additionally, there should not be any warnings from the library

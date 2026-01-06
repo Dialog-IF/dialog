@@ -140,6 +140,15 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Relations
 
+%% Avoid compiler warnings with --warn-not-topic
+#in
+#on
+#partof
+#heldby
+#wornby
+#under
+#behind
+
 (relation #in)		%% Note: #in is also a direction
 (relation #on)
 (relation #partof)

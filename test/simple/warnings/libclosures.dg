@@ -4,3 +4,7 @@
 (look #room) (query {¡Ħěłĺø ŵőřľđ!})
 
 %% If this test fails, it means a closure is queried inside a (collect words) or (from words) somewhere in stdlib.dg. Avoiding that is ideal, since it helps optimization quite a lot. But if it happens, it's only an optimization issue, not a fatal one.
+
+%% Unused topics are not what we care about
+#player
+#room
