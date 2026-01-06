@@ -17,6 +17,7 @@
 #include "zcode.h"
 #include "blorb.h"
 #include "backend_z.h"
+#include "unicode.h"
 
 #define TWEAK_BINSEARCH 16
 
@@ -265,13 +266,18 @@ uint16_t resolve_rnum(uint16_t num) {
 
 uint8_t add_extended_zscii(uint16_t uchar) {
 	uint8_t i = n_extended;
+	uint8_t utf8[5]; // To hold the UTF-16 character converted to UTF-8: up to four bytes plus terminator
+	// Since Z-machine only supports the BMP, really we only need *three* bytes plus terminator, but it's good to think about the future
+	
 	if(n_extended+1 >= EXTENDED_ZSCII_MAX) { // But we can't!
-		report(LVL_ERR, 0, "Tried to add Unicode character U+%04x to the encoding, but all codepoints have already been allocated! Use the --no-zscii command line option to save space.", uchar);
+		unicode_to_utf8_n(utf8, 5, &uchar, 1); // Convert to UTF-8 sequence
+		report(LVL_ERR, 0, "Tried to add Unicode character U+%04x (%s) to the encoding, but all codepoints have already been allocated! Use the --no-default-uni command line option to save space.", uchar, utf8);
 		exit(1);
 	}
 	extended_zscii[i] = uchar;
-	if(verbose >= 3) {
-		report(LVL_DEBUG, 0, "Adding Unicode character U+%04x at ZSCII codepoint %d", uchar, EXTENDED_ZSCII_BASE+i);
+	if(verbose >= 2) {
+		unicode_to_utf8_n(utf8, 5, &uchar, 1); // Convert to UTF-8 sequence
+		report(LVL_DEBUG, 0, "Adding Unicode character U+%04x (%s) at ZSCII codepoint %d", uchar, utf8, EXTENDED_ZSCII_BASE+i);
 	}
 	n_extended++;
 	
@@ -2318,23 +2324,39 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				break;
 			case I_END_BOX:
 				assert(ci->oper[0].tag == OPER_BOX);
+				
 				if(ci->subop == BOX_SPAN) {
+					// Reset the colors - since we're doing the color-setting in a separate routine, we might as well do the resetting in a separate routine too, even though this could also be called within the various R_END_* routines
+					zi = append_instr(r, Z_CALL1N);
+					zi->oper[0] = ROUTINE(R_END_BOX_STYLE);
+					zi = append_instr(r, Z_CALL1N);
+					zi->oper[0] = ROUTINE(R_RESET_COLORS);
+					
 					zi = append_instr(r, Z_CALL1N);
 					zi->oper[0] = ROUTINE(R_END_SPAN);
 				} else if(prg->boxclasses[ci->oper[0].value].flags & (BOXF_FLOATLEFT | BOXF_FLOATRIGHT)) {
 					zi = append_instr(r, Z_CALL2N);
 					zi->oper[0] = ROUTINE(R_END_BOX_FLOAT);
 					zi->oper[1] = SMALL_OR_LARGE(prg->boxclasses[ci->oper[0].value].marginbottom);
+					
+					// Reset the colors
+					zi = append_instr(r, Z_CALL1N);
+					zi->oper[0] = ROUTINE(R_END_BOX_STYLE);
+					zi = append_instr(r, Z_CALL1N);
+					zi->oper[0] = ROUTINE(R_RESET_COLORS);
+					// We do this *after* for floating boxes to keep the stack coherent, since R_END_BOX_FLOAT uses the stack
 				} else {
+					// Reset the colors
+					zi = append_instr(r, Z_CALL1N);
+					zi->oper[0] = ROUTINE(R_END_BOX_STYLE);
+					zi = append_instr(r, Z_CALL1N);
+					zi->oper[0] = ROUTINE(R_RESET_COLORS);
+					// We do this *before* calling R_END_BOX so that the modified colors don't apply to the bottom margin of divs, which happens on Frotz but not on Gargoyle
+					
 					zi = append_instr(r, Z_CALL2N);
 					zi->oper[0] = ROUTINE(R_END_BOX);
 					zi->oper[1] = SMALL_OR_LARGE(prg->boxclasses[ci->oper[0].value].marginbottom);
 				}
-				// Reset the colors - since we're doing the color-setting in a separate routine, we might as well do the resetting in a separate routine too, even though this could also be called within the various R_END_* routines
-				zi = append_instr(r, Z_CALL1N);
-				zi->oper[0] = ROUTINE(R_END_BOX_STYLE);
-				zi = append_instr(r, Z_CALL1N);
-				zi->oper[0] = ROUTINE(R_RESET_COLORS);
 				break;
 			case I_END_LINK:
 			case I_END_LINK_RES:
@@ -4212,7 +4234,8 @@ void backend_z(
 	int nglobal;
 	uint16_t addr_abbrevtable, addr_abbrevstr, addr_objtable, addr_globals, addr_static;
 	uint16_t addr_scratch, addr_heap, addr_heapend, addr_aux, addr_lts, addr_extheader, addr_unicode, addr_dictionary, addr_seltable;
-	uint16_t used_addressable, used_objects1, used_objects2, used_wordmaps, used_unicode, used_routines, used_strings, used_dictionary; // How much of the 64KiB of addressable memory have we used, for what purposes? We don't actually need this value for compilation, but if we save it for the end, we can give better diagnostics. Everything else is used for strings and routines, but we have either four or eight times as much of that, so breaking it down further is unlikely to be helpful.
+	uint16_t used_addressable, used_objects1, used_objects2, used_wordmaps, used_unicode, used_dictionary; // How much of the 64KiB of addressable memory have we used, for what purposes? We don't actually need this value for compilation, but if we save it for the end, we can give better diagnostics.
+	uint32_t used_routines, used_strings; // These ones need more than 16 bits to represent, since they're in high memory, not addressable memory
 	uint8_t used_attributes; // How many of the Z-machine's low-level object attributes have we used?
 	uint32_t org;
 	uint32_t filesize;
@@ -4558,6 +4581,8 @@ void backend_z(
 	addr_scratch = org;	// 12 bytes of scratch area for decoding dictionary words etc.
 	org += 12;
 	
+	used_unicode = org; // Header extension and Unicode table
+	
 	if(
 		n_extended != 0 && (
 			n_extended != N_DEFAULT_EXTENDED ||
@@ -4566,11 +4591,15 @@ void backend_z(
 	) { // A Unicode table is required - the extended ZSCII table is not empty, and not default
 		addr_extheader = org;
 		org += 8; // We only need eight bytes in the header extension table
+		addr_unicode = org;
+		org += 1 + 2*n_extended;
 	} else {
 		addr_extheader = 0;
 		addr_unicode = 0;
 	}
-
+	
+	used_unicode = org - used_unicode;
+	
 	if(org < addr_globals + 2*240) {
 		// Gargoyle complains if there isn't room for 240 globals in dynamic memory.
 		org = addr_globals + 2*240;
@@ -4578,6 +4607,7 @@ void backend_z(
 	
 	// End of RAM, start of addressable ROM
 	addr_static = org;
+//	report(LVL_DEBUG, 0, "RAM done:       $%06x", org);
 	used_wordmaps = org; // Start of wordmaps
 
 	for(i = 0; i < nwordtable; i++) {
@@ -4591,23 +4621,12 @@ void backend_z(
 	}
 	
 	used_wordmaps = org - used_wordmaps; // End of wordmaps
-	used_unicode = org;
-	
-	// We need to put the header extension in RAM, but the Unicode data itself can go in ROM
-	if(addr_extheader) {
-		addr_unicode = org;
-		org += 1 + 2*n_extended;
-	} else {
-		addr_unicode = 0;
-	}
-	
-	used_unicode = org - used_unicode; // End of Unicode data
 	used_dictionary = org;
-
+	
 	addr_dictionary = org;
 	org += 4 + NSTOPCHAR + ndict * 6;
 	
-	used_dictionary = org - used_dictionary; // End of dictionary data
+	used_dictionary = org - used_dictionary; // We could just use addr_dictionary for this, but I think the consistency is worth more than the extra variable
 
 	if(org > 0xfff8) {
 		report(LVL_ERR, 0, "Base memory exhausted. Decrease heap/aux/long-term size using commandline options -H, -A, and/or -L.");
@@ -4615,6 +4634,7 @@ void backend_z(
 	}
 	
 	used_addressable = org; // End of addressable memory
+//	report(LVL_DEBUG, 0, "Low memory done:$%06x", org);
 
 	org = (org + 7) & ~7; // Round up to the next multiple of 8
 	himem = org;
@@ -4675,6 +4695,7 @@ void backend_z(
 		routines[resolve_rnum(((struct backend_pred *) find_builtin(prg, BI_ERROR_ENTRY)->pred->backend)->global_label)]->address);
 	
 	used_routines = org - used_routines; // End of routines
+//	report(LVL_DEBUG, 0, "Routines done:  $%06x", org);
 	
 	used_strings = org; // Beginning of strings
 
@@ -4695,6 +4716,7 @@ void backend_z(
 		}
 	}
 	
+//	report(LVL_DEBUG, 0, "Strings done:   $%06x", org);
 	used_strings = org - used_strings; // End of strings
 
 	filesize = org;
@@ -4960,8 +4982,8 @@ void backend_z(
 	report(LVL_DEBUG, 0, "Addressable memory used: %05d of %d bytes (%d%%)", used_addressable, 64*1024, used_addressable*100/(64*1024));
 	report(LVL_DEBUG, 0, "        Object table:    %5d", used_objects1);
 	report(LVL_DEBUG, 0, "        Object vars:     %5d", used_objects2);
-	report(LVL_DEBUG, 0, "        Wordmaps:        %5d", used_wordmaps);
 	report(LVL_DEBUG, 0, "        Unicode data:    %5d", used_unicode);
+	report(LVL_DEBUG, 0, "        Wordmaps:        %5d", used_wordmaps);
 	report(LVL_DEBUG, 0, "        Dictionary:      %5d", used_dictionary);
 	report(LVL_DEBUG, 0, "        Main heap:       %5d", heapsize*2);
 	report(LVL_DEBUG, 0, "        Auxiliary heap:  %5d", auxsize*2);

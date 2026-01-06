@@ -31,12 +31,12 @@ stdlib.dglib: $(BASEPATH)/stdlib.dg
 ## Call the original dialogc and dgdebug from $PATH here, not our modified ones from $(BASEPATH)
 	touch -a $*.gold
 ## First, make the Z-machine version
-	dialogc $*.dg stdlib.dglib -t z5 -o $*.z5
+	dialogc $*.dg stdlib.dglib -t z5 -o $*.z5 --no-warn-not-topic
 	$(BASEPATH)/bin/echoing.py dfrotz -w 80 -s 1234 -h 999 -mq $*.z5 <$*.z.in >$*.z.out
 ## For consistency, strip final spaces - those are mostly inserted by the debugger, but can happen in some cases, and this makes the output align
 	perl -i -pe 's/ $$//' $*.z.out
 ## Then, the debugger version
-	dgdebug -qD -w 80 -s 1234 $*.debug <$*.d.in >$*.d.out
+	dgdebug -qD -w 80 -s 1234 $*.debug --no-warn-not-topic <$*.d.in >$*.d.out
 ## Remove one space from the end of each line
 	perl -i -pe 's/ $$//' $*.d.out
 ## And the last character, which is an excess newline
@@ -49,10 +49,10 @@ stdlib.dglib: $(BASEPATH)/stdlib.dg
 origin: $(origin)
 
 %.z5: $(BASEPATH)/src/dialogc %.dg stdlib.dglib
-	$(BASEPATH)/src/dialogc $*.dg stdlib.dglib -t z5 -o $*.z5
+	$(BASEPATH)/src/dialogc $*.dg stdlib.dglib -t z5 -o $*.z5 --no-warn-not-topic
 
 %.aastory: $(BASEPATH)/src/dialogc %.dg stdlib.dglib
-	$(BASEPATH)/src/dialogc $*.dg stdlib.dglib -t aa -o $*.aastory
+	$(BASEPATH)/src/dialogc $*.dg stdlib.dglib -t aa -o $*.aastory --no-warn-not-topic
 
 %.debug: %.dg stdlib.dglib
 	cat $*.dg stdlib.dglib > $*.debug
@@ -82,7 +82,7 @@ origin: $(origin)
 	touch $*.aa.out
 
 %.d.out: $(BASEPATH)/src/dgdebug %.debug %.d.in
-	$(BASEPATH)/src/dgdebug -qD -w 80 -s 1234 $*.debug <$*.d.in >$*.d.out
+	$(BASEPATH)/src/dgdebug -qD -w 80 -s 1234 $*.debug --no-warn-not-topic <$*.d.in >$*.d.out
 ## Remove trailing spaces from lines for easier diffing
 	perl -i -pe 's/ $$//' $*.d.out
 	echo >>$*.d.out

@@ -1525,6 +1525,7 @@ int parse_file(struct lexer *lexer, int filenum, struct clause ***clause_dest_pt
 	while(status) {
 		if(lexer->kind == TOK_TAG) {
 			starword = lexer->word;
+			lexer->word->flags |= WORDF_TOPIC; // Was used as topic
 			status = next_token(lexer, PMODE_RULE);
 			if(lexer->errorflag) return 0;
 			if(status == 1) {

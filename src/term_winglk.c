@@ -1,6 +1,8 @@
 #include <assert.h>
 #include <stdint.h>
 #include <windows.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include "glk.h"
 #include "WinGlk.h"
 
@@ -26,39 +28,22 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 }
 
 int winglk_startup_code(const char* cmdline) {
-	int i, j;
-	char *argbuf;
+	int i;
 	
-	argbuf = malloc(strlen(cmdline) + 1);
-	strcpy(argbuf, cmdline);
-
-	for(i = 0; argbuf[i]; ) {
-		while(argbuf[i] == ' ') i++;
-		if(argbuf[i]) {
-			argc++;
-			while(argbuf[i] && argbuf[i] != ' ') i++;
-		}
-	}
-
-	argv = malloc((argc + 1) * sizeof(char *));
-	argv[0] = "dgdebug";
-	j = 1;
-	for(i = 0; argbuf[i]; ) {
-		if(argbuf[i] == ' ') i++;
-		if(argbuf[i]) {
-			argv[j++] = &argbuf[i];
-			while(argbuf[i] && argbuf[i] != ' ') i++;
-			if(argbuf[i]) argbuf[i++] = 0;
-		}
-	}
-	if(j != argc) return 0;
-	argv[argc] = 0;
+	// There used to be an elaborate block of code here that took the LPSTRING command line provided by Windows and parsed it out into argc and argv
+	// But the parsing was quite basic (just splitting on every run of spaces) and didn't take into account things like quoting and escaping
+	// Since the Windows versions are only expected to be built with MinGW, we instead use MinGW's built-in way of accessing argc and argv directly
+	// But this isn't standard; if you get compilation errors on these lines, try defining __argc and __argv as extern up above; if that doesn't work, look up how to access command-line parameters on your compiler. Most C compilers offer a way now.
+	argc = __argc;
+	argv = __argv;
+	
 #if 0
 	printf("cmdline \"%s\"\n", cmdline);
 	for(i = 0; i < argc; i++) {
 		printf(" %d: \"%s\"\n", i, argv[i]);
 	}
 #endif
+
 	winglk_app_set_name("Dialog Interactive Debugger");
 	winglk_set_about_text("Dialog Interactive Debugger " VERSION " by Linus Akesson");
 	winglk_set_menu_name("&Debug");
