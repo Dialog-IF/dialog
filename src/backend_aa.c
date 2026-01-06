@@ -3748,6 +3748,7 @@ static void chunk_look(FILE *f, struct program *prg, uint32_t *crc) {
 	int i, j, pad;
 	uint32_t org;
 	struct boxclassline *bcl;
+	const char *extraline = "style-name: ";
 	uint16_t offset[prg->nboxclass];
 
 	org = 2 + prg->nboxclass * 2;
@@ -3756,6 +3757,12 @@ static void chunk_look(FILE *f, struct program *prg, uint32_t *crc) {
 		for(bcl = prg->boxclasses[i].css_lines; bcl; bcl = bcl->next) {
 			org += strlen(bcl->data) + 1;
 		}
+		
+		// Add space for the extra line
+		org += strlen(extraline);
+		org += strlen(prg->boxclasses[i].class->name);
+		org++;
+		
 		org++;
 	}
 
@@ -3776,7 +3783,17 @@ static void chunk_look(FILE *f, struct program *prg, uint32_t *crc) {
 			}
 			putbyte_crc(0, f, crc);
 		}
+		// After all the lines from the source, add one extra, recording the style class name
+		// Interpreters can then use this for their own purposes, if they like
+		for(j = 0; extraline[j]; j++) {
+			putbyte_crc(extraline[j], f, crc);
+		}
+		for(j = 0; prg->boxclasses[i].class->name[j]; j++) {
+			putbyte_crc(prg->boxclasses[i].class->name[j], f, crc);
+		}
 		putbyte_crc(0, f, crc);
+		
+		putbyte_crc(0, f, crc); // Terminator for the whole thing
 	}
 
 	if(pad) fputc(0, f);
