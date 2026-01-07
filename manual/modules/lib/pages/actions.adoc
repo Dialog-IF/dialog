@@ -460,7 +460,7 @@ requirement. It's perfectly reasonable to `[examine #sky]` without needing to
 touch it. In previous editions of Dialog, this was handled by modifying `refuse`
 directly.
 
-Since version 1a01, though, the library provides more specific predicates for
+Since version 1.1.1, though, the library provides more specific predicates for
 this purpose. This is the default implementation of `(refuse $)`:
 
 [source]
