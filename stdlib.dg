@@ -4362,8 +4362,12 @@
 		($Rest = $Tail)
 	(endif)
 	(if) (empty $Rest) (then)
-		(if) ($NPrinted > 1) (then) , (endif)
-		(if) ($NPrinted > 0) (then) $Conjunction (endif)
+		(if) ($Conjunction = @,) (then) %% Passing @, as the conjunction means use commas for everything
+			(if) ($NPrinted > 0) (then) , (endif)
+		(else)
+			(if) ($NPrinted > 1) (then) , (endif)
+			(if) ($NPrinted > 0) (then) $Conjunction (endif)
+		(endif)
 	(else)
 		(if) ($NPrinted > 0) (then) , (endif)
 	(endif)
@@ -4401,6 +4405,7 @@
 
 (dict (your $))
 	my mine
+	your %% In case players are excessively literal (or copy-pasting)
 
 (dict (pair $))
 	pair
@@ -4825,7 +4830,10 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Program entry, main loop, status bar, score
 
+(interface (startup))
+
 (program entry point)
+	(exhaust) *(startup) %% Put hooks here for anything that needs to be handled before play begins
 	(div @initial-spacer) {}
 	(update environment around player)
 	(stoppable) (intro)
@@ -5210,6 +5218,10 @@
 (understand $Words as direction $Output)
 	(parse direction list $Words $ObjList)
 	(mark multi-object $ObjList into $Output)
+
+%% Deal with serial commas
+(parse direction list [and | $Rest] $Out)
+	*(parse direction list $Rest $Out)
 
 (parse direction list $Words [$Head | $Tail])
 	*(split $Words by [, and] into $Left and $Right)
@@ -6145,6 +6157,9 @@
 %% Asking a yes/no question:
 
 (yesno)
+	(if) (library links enabled) (then)
+		(link) yes (space) / (space) (link) no
+	(endif)
 	(space) (prompt and input $Words)
 	(if) ($Words = [yes]) (or) ($Words = [y]) (then)
 	(elseif) ($Words = [no]) (or) ($Words = [n]) (then)
@@ -6555,12 +6570,13 @@
 (error $Code entry point)
 	(roman)
 	(div @meta) {
-		\( Technical trouble:
+		\( Technical trouble \( code $Code \):
 		(report fatal error $Code)
+		(display memory statistics)
 		Attempting to recover with UNDO. \)
 	}
 	(if) (undo) (or) (then)
-		(div @meta) { Undo failed! }
+		(div @meta) { Undo failed! This problem is unrecoverable. }
 	(endif)
 
 (report fatal error 1)	Heap space exhausted.
