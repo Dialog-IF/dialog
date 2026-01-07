@@ -444,49 +444,78 @@ definition for `(try $)`, as it is given in the standard library:
 ----
 
 If `refuse` succeeds, all subsequent action handling stops. Time is not
-advanced. The default implementation of `refuse` checks that all objects
-mentioned in the action (except directions and relations) are within reach of
-the current player character. If they're not, `refuse` prints a message
-about it and succeeds, just like a `prevent` rule. The reason for having
-two different rules (refuse and prevent), is that it's generally a good idea to
-check for reachability first. The action-specific prevent-rules are then free to
-phrase their failure messages in a way that presupposes reachability (e.g. “the
-door is locked”, which you wouldn't know if you couldn't reach it).
+advanced. The default implementation of `refuse` checks whether the objects
+mentioned in the command are present and within reach of the player.
+If they're not, `refuse` prints a message about it and succeeds, just like
+a `prevent` rule. The reason for having two different rules (refuse and
+prevent), is that it's generally a good idea to check for reachability first.
+The action-specific prevent-rules are then free to phrase their failure
+messages in a way that presupposes reachability (e.g. “the door is locked”,
+which you wouldn't know if you couldn't reach it).
 
-Some actions do not require every object to be within reach. The most common way
-to modify `refuse` is to add a
+By default, `refuse` assumes that every object involved in the action, except
+for directions and relations, must be present; and every object that must be
+present, must also be within reach. But for some actions, this is too strict a
+requirement. It's perfectly reasonable to `[examine #sky]` without needing to
+touch it. In previous editions of Dialog, this was handled by modifying `refuse`
+directly.
+
+Since version 1a01, though, the library provides more specific predicates for
+this purpose. This is the default implementation of `(refuse $)`:
+
+[source]
+----
+(refuse $Action)
+	*(action $Action requires $Obj to be present)
+	(when $Obj is not here)
+
+(refuse $Action)
+	*(action $Action requires $Obj to be touched)
+	(when $Obj is out of reach)
+----
+
+If a particular action does not require touch, the author can add a
 xref:lang:control.adoc#negation[negated rule definition].
-So, for instance, examining does not require reachability:
+For the case of examining:
 
 [source]
 ----
-~(refuse [examine $]) %% Don't refuse.
+~(action [examine $] requires $ to be touched)
 ----
 
-Another option is to require reachability for one object, but not the other.
-Here's a snippet from the standard library:
+Similarly, some actions don't require their objects to be present:
 
 [source]
 ----
-(refuse [throw $Obj at $Target])
-	(just)
-	{
-		(when $Obj is not here)
-		(or) (when $Target is not here)
-		(or) (when $Obj is out of reach)
-	}
+~(action [find $] requires $ to be present)
 ----
 
-The above code makes queries to _when-predicates_; these check for common error
+Another option is to require reachability for one object, but not the other:
+
+[source]
+----
+(action [throw $Obj at $] requires $Obj to be touched) (just)
+----
+
+Note the xref:lang:choicepoints.adoc#just[`(just)` keyword], which turns
+off the default rule that is defined later in the source code.
+
+And conversely, new `refuse` rules can add extra checks to a particular action:
+
+[source]
+----
+(refuse [look $ $Obj]) (when $Obj is out of sight)
+
+(refuse [leave (room $Room)])
+	~(current room $Room)
+	But you aren't in (the $Room).
+----
+
+The above code queries a _when-predicate_; these check for common error
 conditions and print appropriate messages. The full set of when-predicates is
-documented in
-xref:miscfeat.adoc#commoncomplaints[Chapter 11].
+documented in xref:miscfeat.adoc#commoncomplaints[Chapter 11].
 
-Also note the xref:lang:choicepoints.adoc#just[`(just)` keyword], which turns
-off the default `refuse`-rule that is defined later in the
-source code.
-
-When a story overrides `refuse`, the parameter is often bound to a
+When a story overrides a `refuse` requirement, the parameter is often bound to a
 specific object. So, for instance, a rain cloud in the sky might be out of the
 player character's reach, But `RAIN` would be understood as referring
 to the cloud. In order to allow `DRINK RAIN`, we might want to make
@@ -494,7 +523,7 @@ an exception:
 
 [source]
 ----
-~(refuse [drink #cloud])
+~(action [drink #cloud] requires #cloud to be touched)
 
 (instead of [drink #cloud])
 	You catch a raindrop on your tongue.
@@ -509,9 +538,8 @@ certain well-known prerequisite actions. Thus, if the player attempts to go
 through a closed door, the game will automatically attempt to open it first. And
 before that, if the door is locked and the player holds the right key, an
 attempt is made to unlock the door. `try` exhausts every branch of the
-`*(before $)`
-{multi-query}, so
-there can be several before-rules for any given action.
+`*(before $)` {multi-query}, so there can be several before-rules for any
+given action.
 
 By convention, before-rules should use `(first try $)` to launch the
 prerequisite actions:
@@ -524,10 +552,12 @@ prerequisite actions:
 ----
 
 `(first try $)` prints the familiar “(first attempting
-to ..._)” message, before querying `(try $)`, and then
+to _..._)” message, before querying `(try $)`, and then
 `(tick)`. Ticking is important here, because e.g. opening a door and
 entering the door should consume two units of time, even when the opening action
-is triggered automatically by the game.
+is triggered automatically by the game. And if any of these actions should fail
+(if the door can't be unlocked, say), xref:tickstop[`(stop)`] will automatically
+cut short the entire sequence.
 
 [#groupactions]
 == Group actions

@@ -106,6 +106,9 @@
 (interface (perform $<Action))
 (interface (after $<Action))
 
+(interface (action $<Action requires $>Obj to be present))
+(interface (action $<Action requires $>Obj to be touched))
+
 (interface (group-before $<GroupAction))
 (interface (group-refuse $<GroupAction))
 (interface (group-instead of $<GroupAction))
@@ -803,12 +806,9 @@
 
 %% Reachability not required, but visibility:
 
-(refuse [look $ $Obj])
-	(just)
-	{
-		(when $Obj is not here)
-		(or) (when $Obj is out of sight)
-	}
+~(action [look $ $] requires $ to be touched)
+(refuse [look $ $Obj]) (when $Obj is out of sight)
+%% This is the only action in the standard library that refuses based on visibility, so it's implemented as a specific rule here instead of a more general (action $ requires $ to be seen). If more actions require it in the future, though, that could easily change.
 
 (before [look #in (opaque $Obj)])
 	($Obj is closed)
@@ -886,7 +886,7 @@
 (unlikely [find $Obj])
 	($Obj is nowhere)
 
-~(refuse [find $])
+~(action [find $] requires $ to be present)
 
 (prevent [find (not here $Obj)])
 	You don't know where to find (the $Obj).
@@ -927,7 +927,7 @@
 (understand [who am i] as [examine $Player])
 	(current player $Player)
 
-~(refuse [examine $]) %% No need for reachability.
+~(action [examine $] requires $ to be touched)
 
 (instead of [examine (room $Obj)])
 	(current room $Here)
@@ -1078,9 +1078,7 @@
 (grammar [listen to [single]] for [listen to $])
 
 %% Don't require reachability:
-
-(refuse [listen to $Obj])
-	(just) (when $Obj is not here)
+~(action [listen to $] requires $ to be touched)
 
 (perform [listen to $Obj])
 	(if) (current player $Obj) (then)
@@ -1201,14 +1199,7 @@
 	(endif)
 
 %% The target doesn't have to be reachable:
-
-(refuse [throw $Obj at $Target])
-	(just)
-	{
-		(when $Obj is not here)
-		(or) (when $Target is not here)
-		(or) (when $Obj is out of reach)
-	}
+(action [throw $Obj at $] requires $Obj to be touched) (just)
 
 (before [throw $Obj at $])
 	(current player $Actor)
@@ -1683,13 +1674,7 @@
 
 (unlikely [show $])
 
-(refuse [show $Obj to $Person])
-	(just)
-	{
-		(when $Obj is not here)
-		(or) (when $Person is not here)
-		(or) (when $Obj is out of reach)
-	}
+(action [show $Obj to $] requires $Obj to be touched) (just)
 
 (perform [show $Obj])
 	To whom?
@@ -2120,11 +2105,8 @@
 (unlikely [consult $Obj about $])
 	~(consultable $Obj)
 
-(refuse [consult $Obj about $])
-	(just) {
-		(when $Obj is not here)
-		(or) (when $Obj is out of reach)
-	}
+(action [consult $Obj about $] requires $Obj to be present) (just)
+(action [consult $Obj about $] requires $Obj to be touched) (just)
 
 (prevent [consult $Obj about $])
 	~(consultable $Obj)
@@ -2156,16 +2138,13 @@
 (unlikely [ask/tell $Obj about $])
 	~(animate $Obj)
 
-%% Don't require reachability:
+%% Don't require reachability (or the presence of the topic):
 
-(refuse [ask $Obj | $])
-	(just) (when $Obj is not here)
+(action [ask $Obj | $] requires $Obj to be present) (just)
+~(action [ask $ | $] requires $ to be touched)
 
-(refuse [tell $Obj about $])
-	(just) (when $Obj is not here)
-
-(refuse [tell $Obj])
-	(just) (when $Obj is not here)
+(action [tell $Obj | $] requires $Obj to be present) (just)
+~(action [tell $ | $] requires $ to be touched)
 
 (perform [ask/tell $Person about $Topic])
 	(try [talk to $Person about $Topic])
@@ -2194,8 +2173,8 @@
 
 %% Don't require reachability:
 
-(refuse [talk to $Obj | $])
-	(just) (when $Obj is not here)
+(action [talk to $Obj | $] requires $Obj to be present) (just)
+~(action [talk to $ | $] requires $ to be touched)
 
 (perform [talk to $Obj about $])
 	(try [talk to $Obj])
@@ -2221,8 +2200,7 @@
 (unlikely [shout to $Obj])
 	~(animate $Obj)
 
-(refuse [shout to $Obj])
-	(just) (when $Obj is not here)
+~(action [shout to $] requires $ to be touched)
 
 (perform [shout to $Obj])
 	(try [talk to $Obj])
@@ -2258,8 +2236,7 @@
 (unlikely [call $Obj])
 	~(animate $Obj)
 
-(refuse [call $Obj])
-	(just) (when $Obj is not here)
+~(action [call $] requires $ to be touched)
 
 (perform [call $Obj])
 	(try [shout to $Obj])
@@ -2276,8 +2253,7 @@
 (unlikely [greet $Obj])
 	~(animate $Obj)
 
-(refuse [greet $Obj])
-	(just) (when $Obj is not here)
+~(action [greet $] requires $ to be touched)
 
 (perform [greet $Obj])
 	(try [talk to $Obj])
@@ -2322,8 +2298,8 @@
 (unlikely [tell $Obj to | $])
 	~(animate $Obj)
 
-(refuse [tell $NPC to | $])
-	(just) (when $NPC is not here)
+(action [tell $NPC to | $] requires $NPC to be present) (just)
+~(action [tell $ to | $] requires $ to be touched)
 
 (instead of [tell $NPC to greet])
 	(try [greet $NPC])
@@ -2344,8 +2320,7 @@
 (grammar [smell/sniff/inhale [object]] for [smell $])
 (grammar [smell/sniff/inhale] for [smell])
 
-(refuse [smell $Obj])
-	(just) (when $Obj is not here)
+~(action [smell $] requires $ to be touched)
 
 (perform [smell $Obj])
 	(The $Obj) smell(s $Obj) as expected.
@@ -2448,7 +2423,8 @@
 (describe action [enter $Obj])
 	get into (the full $Obj)
 
-~(refuse [enter (room $)])
+%% Rooms are generally not present
+~(action [enter (room $)] requires $ to be present)
 
 (before [enter (actor container $Obj)])
 	($Obj is closed)
@@ -2675,7 +2651,8 @@
 
 ~(very unlikely [go to $])
 
-~(refuse [go to $])
+%% Rooms generally aren't present
+~(action [go to $] requires $ to be present)
 
 (perform [go to $Room])
 	(current room $Here)
@@ -3523,15 +3500,24 @@
 	(tick)
 	(par)
 
+%% In library 1.1.1, (refuse $) was overhauled to call out to two more specific predicates that authors can more easily override for their own actions. Plus, these predicates can now be checked in (prevent $) rules as well!
+
 (refuse $Action)
+	*(action $Action requires $Obj to be present)
+	(when $Obj is not here)
+
+(refuse $Action)
+	*(action $Action requires $Obj to be touched)
+	(when $Obj is out of reach)
+
+(action $Action requires $Obj to be present) %% Assume all physical objects need presence
 	*($Obj is one of $Action)
 	(object $Obj)
 	~(direction $Obj)
 	~(relation $Obj)
-	{
-		(when $Obj is not here)
-		(or) (when $Obj is out of reach)
-	}
+
+(action $Action requires $Obj to be touched)
+	*(action $Action requires $Obj to be present) %% Assume all presence-required objects need touch too
 
 (before $)	(fail)
 
