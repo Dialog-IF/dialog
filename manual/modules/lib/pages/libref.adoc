@@ -325,6 +325,7 @@ xref:miscfeat.adoc#dirutil[`(spell out $)`] +
 xref:miscfeat.adoc#listutil[`(split $ anywhere into $ and $)`] +
 xref:lang:builtins.adoc#listbuiltins[`(split $ by $ into $ and $)`] +
 xref:lang:builtins.adoc#sploin[`(split word $ into $)`] +
+xref:timeprogress.adoc#theintro[`(startup)`] +
 xref:timeprogress.adoc#statusbar[`(status headline)`] +
 xref:timeprogress.adoc#choicemode[`(sticky $)`] +
 xref:lang:control.adoc#stoppable[`(stop)`] +

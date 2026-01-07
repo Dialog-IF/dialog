@@ -120,6 +120,10 @@ Release notes:
 		Library: the program will backtrack to free heap memory before
 		the final question, so that complicated parsing or status bars
 		will no longer cause an overflow.
+		
+		Library: a new (startup) predicate is exhausted before printing
+		the (intro). Library extensions can use this for computations
+		that need to run at the start of play.
 
 	0m/03, Lib 0.46 (Manual revision 31):
 
