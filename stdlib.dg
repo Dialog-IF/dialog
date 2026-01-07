@@ -47,6 +47,11 @@
 	margin-top: .3em;
 	font-family: Geneva, sans-serif;
 
+(style class @gameover)
+	font-weight: bold;
+	margin-top: 1em;
+	margin-bottom: 1em;
+
 (style class @bold)
 	font-weight: bold;
 
@@ -5094,9 +5099,11 @@
 (interface (game over $<Closure))
 
 (game over $Message)
-	(par)
-	(space 5)
-	(span @bold) { \*\*\* (query $Message) \*\*\* }
+	(div @gameover) {
+		(space 5)
+		\*\*\* (query $Message) \*\*\*
+		(space 5)
+	}
 	(now) (game has ended)
 	(stop)
 

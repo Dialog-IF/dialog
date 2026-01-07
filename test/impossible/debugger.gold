@@ -4,7 +4,7 @@ The Impossible Stairs
 An interactive fiction by Mathbrush.
 Written in Dialog. Authorized sequel to The Impossible Bottle by Linus Åkesson.
 Release 3. Serial number DEBUG.
-Dialog Interactive Debugger (dgdebug) version 1a/01-dev. Library version 1.0.0-
+Dialog Interactive Debugger (dgdebug) version 1a/01-dev. Library version 1.1.1-
 dev.
 
 What a mess! The hurricane did a real number on the old <family home>, and to
@@ -4351,7 +4351,7 @@ pulls out her dollhouse.
 "Well," you say, "I'm a little old for that." She looks crestfallen, so you
 grab the dollhouse and add, "But don't worry. Let me just run this downstairs."
 
-     *** You have won! ***
+     *** You have won! ***     
 
 Would you like to:
      <UNDO> the last move,
