@@ -124,6 +124,9 @@ Release notes:
 		Library: a new (startup) predicate is exhausted before printing
 		the (intro). Library extensions can use this for computations
 		that need to run at the start of play.
+		
+		Library: a default (appearance $) rule for pristine objects
+		delegates to (initial appearance $), if defined.
 
 	0m/03, Lib 0.46 (Manual revision 31):
 
