@@ -83,6 +83,8 @@ Sometimes you want the tokens mapped to wildcards in right-to-left order. Use
 (grammar [lend [single] [object]] for [lend $ to $] reversed)
 ----
 
+[#basictokens]
+
 The basic set of grammar tokens are:
 
 [object]::
@@ -146,6 +148,14 @@ One or more items in scope, whose relation to their parent is neither
 `#heldby`, `#wornby`, or `#partof`. Furthermore, they
 shouldn't be nested below an object that's held or worn by a non-player
 character, or nested below the current player (regardless of relation).
+
+[child]::
+
+One or more children of the object matched by the _next_ grammar token (if any).
+
+[takable child]::
+
+A combination of the previous two tokens: one or more children of the object matched by the _next_ grammar token (if any), which are not `#heldby`, `#wornby`, or `#partof`.
 
 Finally, a list of words that isn't recognized as a special token will match any
 of the words in the list. This results in slightly faster and more compact code
@@ -668,7 +678,7 @@ action is printed, this part will appear as “#something”.
 
 The input contained one or more words that couldn't be parsed, and an animate
 object was expected. When the complex action is printed, this part will appear
-as “someone#.
+as “someone” instead of “something”.
 
 [,]::
 
@@ -721,7 +731,7 @@ definition would also work):
 
 [source]
 ----
-	[give [+ [a #apple] #peeler] to [1]]
+(understand [take a break] as [wait])
 ----
 
 Note that the multi-query to `(understand $ as $)` may backtrack over
@@ -1053,7 +1063,7 @@ Let's create a `[spell]` token, to be used like this:
 Recall (from xref:#howparser[How the parser works]) that the
 library defines a generic `(understand $ as $)` rule that queries a table
 of grammar definitions. This table is called `(grammar entry $ $ $)`, and
-it is constructed at compile-time from instantiations of the
+it is constructed at compile-time from the
 `(grammar $ for $)` access predicate.
 
 A definition like the following:
@@ -1063,7 +1073,7 @@ A definition like the following:
 (grammar [give [held] to [animate]] for [give $ to $])
 ----
 
-is transformed into the following table entry:
+is transformed by the access predicate into the following table entry:
 
 [source]
 ----
@@ -1094,9 +1104,7 @@ It operates by removing one element from the incoming list (first parameter),
 tacking on a new element to the outgoing list (second parameter), and leaving
 three more parameters intact.
 
-Numbers in the range 90-99 are reserved for story authors. To create our new
-`[spell]` token, we add a similar rule to map the token to an
-unused number in this range:
+Numbers 10-89 <<tokennumbers,may be used by the library>>, though currently only a handful actually are. But numbers in the range 90-99 are reserved for story authors: the library will never use them. To create our new `[spell]` token, we add a similar rule to map the token to an unused number in this range:
 
 [source]
 ----
@@ -1121,14 +1129,14 @@ The third parameter of `(match grammar token $ against $ $ into $)` is
 rarely used. It contains matches from later grammar tokens (they are parsed from
 right to left). These can be objects, plus-prefixed lists like
 `[{plus} #foo #bar #baz]`, or anything else; it depends on the
-type of the next token. This feature allows you to craft rules for e.g.
-`PUT ALL IN BAG`, where the bag should not be included in “all”.
+type of the next token. This is how tokens like `[held]` and `[child]` are implemented.
 
+[#tokennumbers]
 === The built-in tokens
 
-The standard library currently provides 14 grammar tokens, and authors wishing to add their own may want to look at how they are implemented. Note the word "`preferably`" in the following descriptions. An `[animate]` token _can_ match an inanimate object, but only if the player specified it unambiguously: `TALK TO WHITE BOOK` will attempt to talk to the book, but `TALK TO WHITE` in the presence of Mrs. White and a white book will select the animate one, and `TALK TO WHITE` in the presence of Mr. and Mrs. White and a white book will only disambiguate between the two humans, not the book. This also affects the handling of `ALL`.
+The standard library currently provides 14 grammar tokens, <<#basictokens,as listed above>>, and their numbers are provided here for reference. Again, note the word "`preferably`" in the following descriptions. An `[animate]` token _can_ match an inanimate object, but only if the player specified it unambiguously: `TALK TO WHITE BOOK` will attempt to talk to the book, but `TALK TO WHITE` in the presence of Mrs. White and a white book will select the animate one, and `TALK TO WHITE` in the presence of Mr. and Mrs. White and a white book will only disambiguate between the two humans, not the book. This also affects the handling of `ALL`.
 
-- 10: `[single]` (or ``[single object]``), a single object in scope.
+- 10: `[single]` (or `[single object]`), a single object in scope.
 - 11: `[animate]`, a single object in scope, preferably animate. If no object can be matched here, the error will say "`someone`" instead of "`something`".
 - 12: `[single held]`, a single object in scope, preferably held.
 - 20: `[object]`, one or more objects in scope, but not `ALL`.
@@ -1143,11 +1151,11 @@ The standard library currently provides 14 grammar tokens, and authors wishing t
 - 50: `[direction]`, one or more directions.
 - 60: `[number]`, a number, either as digits ("`5`") or as words ("`five`").
 
-Token numbers 10 through 89 could be used by the library in the future, but tokens 90 through 99 will always be available for story authors to use as they wish—the library will never touch them. Strictly speaking, there's nothing preventing authors from going below 10 or above 100 either, or using some other representation of their tokens. But sticking to numbers between 10 and 99 means that the first digit can indicate the scope of the search, and the second digit the type of object being searched for; with 89 numbers available and only 14 tokens defined, we're not likely to run out any time soon.
+Token numbers 10 through 89 could be used by the library in the future, but tokens 90 through 99 will always be available <<customtokens,for story authors to use as they wish>>—the library will never touch them. Strictly speaking, there's nothing preventing authors from going below 10 or above 100 either, or using some other representation of their tokens, as long as it's not a dictionary word. But sticking to numbers between 10 and 99 means that the first digit can indicate the scope of the search, and the second digit the type of object being searched for; with 90 numbers available and only 14 tokens defined, we're not likely to run out any time soon.
 
-It should be noted that _none_ of these tokens will accept `ALL` without some sort of constraint on what should be included. This ensures that adding objects to scope won't cause ALL to misbehave in odd ways.
+It should be noted that _none_ of these tokens will accept `ALL` without some sort of constraint on what should be included. This ensures that adding objects to scope won't cause `ALL` to misbehave in odd ways.
 
-There is also, at present, no `[room]` or `[any room]` token. Since `GO TO` is the only standard action that applies to rooms other than the current one, the parsing of room names is handled in a special `(understand $ as $)` rule, rather than through the `(grammar $ for $)` system.
+There is also, at present, no `[room]` or `[any room]` token. Since `GO TO` is the only standard action that applies to rooms other than the current one, the parsing of room names is handled in a special `(understand $ as $)` rule, rather than through the `(grammar $ for $)` system. But if more actions on rooms are added in the future, token numbers 17 and 37 (say) might be assigned.
 
 '''
 
