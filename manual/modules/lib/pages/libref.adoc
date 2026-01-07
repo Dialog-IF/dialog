@@ -16,6 +16,8 @@ xref:lang:builtins.adoc#arithmetic[`($ > $)`] +
 xref:traits.adoc#linguistictraits[`(a $)`] +
 xref:traits.adoc#linguistictraits[`(A $)`] +
 xref:actions.adoc#groupactions[`(action $ may group $ with $)`] +
+xref:actions.adoc#refusebefore[`(action $ requires $ to be present)`] +
+xref:actions.adoc#refusebefore[`(action $ requires $ to be touched)`] +
 xref:miscfeat.adoc#libdebug[`(actions off)`] +
 xref:miscfeat.adoc#libdebug[`(actions on)`] +
 xref:timeprogress.adoc#choicemode[`(activate node $)`] +
