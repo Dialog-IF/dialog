@@ -1,5 +1,5 @@
 
-(library version) Library version 1.0.0-dev.
+(library version) Library version 1.1.1-dev.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -6570,10 +6570,10 @@
 (error $Code entry point)
 	(roman)
 	(div @meta) {
-		\( Technical trouble \( code $Code \):
+		Technical trouble \( code $Code \):
 		(report fatal error $Code)
 		(display memory statistics)
-		Attempting to recover with UNDO. \)
+		Attempting to recover with UNDO.
 	}
 	(if) (undo) (or) (then)
 		(div @meta) { Undo failed! This problem is unrecoverable. }
