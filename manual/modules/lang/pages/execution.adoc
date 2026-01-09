@@ -189,6 +189,7 @@ This is crucial: If the general rule were to appear before e.g. the `#door` rule
 Signatures (predicate names) rarely appear explicitly in the source code.
 They are implied by rule heads and queries, where parameter values are typically used instead of dollar signs.
 
+[#thinobjects]
 === Objects are thin
 
 Dialog objects are _thin_, in the sense that each hashtag is a mere identifier, without any inherent behaviour or properties.

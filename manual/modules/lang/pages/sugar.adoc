@@ -241,6 +241,15 @@ this is allowed:
 It is possible to change the topic at any time, and even to return to an earlier
 topic in a different part of the source code.
 
+Topics can also provide a limited sort of error-checking. Because
+xref:execution.adoc#thinobjects[Dialog objects are thin],
+it is very easy to create them by accident: if you mistype `#apple` as `#aple`
+even a single time, Dialog will happily create an `#aple` alongside your
+`#apple`, leading to hard-to-find bugs. As a safeguard, the compiler can
+optionally produce a warning for any object that never appears as a topic.
+By default, these warnings are enabled for any program that includes the
+library; but they can always be enabled or disabled on the command line.
+
 [#nested]
 == Nested queries in rule heads
 
@@ -248,8 +257,7 @@ As we have seen in many of the examples, predicates are often used to categorize
 objects. For instance, if `(fruit $)` is defined for some of the objects
 in the game, then it's straightforward to query that predicate in order to check
 whether a particular object is a fruit or not. In addition, a multi-query such
-as `*(fruit $F)` can be used to backtrack over every fruit in the
-game.
+as `*(fruit $F)` can be used to backtrack over every fruit in the game.
 
 We have also seen several examples of rules that employ such a category check as
 a guard condition:
