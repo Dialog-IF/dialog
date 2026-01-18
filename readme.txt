@@ -38,7 +38,7 @@ Project website:
 
 Release notes:
 
-	1a/01, Lib 1.1.1:
+	1a/01, Lib 1.1.0:
 	
 		This is the first release handled by the community, and per
 		Linus's wishes, we're bumping the major version for the first

@@ -3505,7 +3505,7 @@
 	(tick)
 	(par)
 
-%% In library 1.1.1, (refuse $) was overhauled to call out to two more specific predicates that authors can more easily override for their own actions. Plus, these predicates can now be checked in (prevent $) rules as well!
+%% In library 1.1.0, (refuse $) was overhauled to call out to two more specific predicates that authors can more easily override for their own actions. Plus, these predicates can now be checked in (prevent $) rules as well!
 
 (refuse $Action)
 	*(action $Action requires $Obj to be present)
