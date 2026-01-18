@@ -63,7 +63,7 @@ to Prolog, which is a portmanteau of _programmation en logique_ (programming in
 logic). That's why the name of the language appears to follow a North American
 spelling convention, even though the rest of this manual does not.
 
-The official homepage of Dialog is: {home-page}
+Dialog was originally developed by Linus Åkesson and published at {old-home-page}. Since 2025, it has been maintained by the community at {home-page}.
 
 == Structure of the manual
 
@@ -81,7 +81,7 @@ Readers who are itching to get started should begin with *Part II*, play with
 the various examples, and optionally follow the hyperlinks back to *Part I* in
 order to dig deeper into the underlying mechanisms.
 
-== Acknowledgements
+== Linus's Acknowledgements
 
 Dialog has been my on-and-off spare time project for many years now, and I'm
 very happy to have reached a point where it can be released to the public.

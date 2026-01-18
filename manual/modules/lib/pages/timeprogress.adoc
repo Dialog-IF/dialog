@@ -141,15 +141,25 @@ xref:lang:dynamic.adoc#globflag[global flag]:
 [#theintro]
 == The intro
 
-When a story begins, the standard library queries the `(intro)`
-predicate, which story authors are encouraged to override.
+When a story begins, the standard library first
+xref:lang:choicepoints.adoc#exhaust[exhausts]
+the predicate `(startup)`, then queries `(intro)`, which story authors are
+encouraged to override.
+
+`(startup)`, by default, does nothing; it's the place to handle any computations
+or calculations that need doing before the story begins. For example, you might
+randomize the combination of a lock, or calculate room coordinates for a map.
+Most stories won't need to do anything here; it's mostly intended for library
+extensions.
 
 The default implementation of `(intro)` just prints the _story banner_ by
-querying `(banner)`. The banner includes version information for the
-compiler and the standard library. By convention, stories should print the
-banner at some point during play. With Dialog, there is no formal requirement to
-print the banner at all, but it is helpful to the community and to your future
-self, and it looks professional.
+querying `(banner)`, then prints the initial room description with `(try [look])`.
+The banner includes the
+xref:lang:beyondprg.adoc#metadata[title, author, and serial number of your story],
+plus the version information for the compiler and the standard library. By
+convention, stories should print the banner at some point during play. With
+Dialog, there is no formal requirement to print the banner at all, but it is
+helpful to the community and to your future self, and it looks professional.
 
 [source]
 ----
@@ -162,10 +172,10 @@ self, and it looks professional.
 	(try [look])
 ----
 
-
-The `(banner)` predicate calls out to `(additional banner text)`,
+The `(banner)` predicate also calls out to `(additional banner text)`,
 which is empty by default but can be overridden to include e.g. a subtitle,
-co-credit, or dedication.
+co-credit, or dedication. A similar empty predicate, `(extension version)`,
+can be overridden by library extensions to include their own credits.
 
 [#score]
 == Keeping score

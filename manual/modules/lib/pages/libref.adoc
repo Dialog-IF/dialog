@@ -96,6 +96,7 @@ xref:moving.adoc#moveplayer[`(enter $)`] +
 xref:lang:beyondprg.adoc#runtimeerror[`(error $ entry point)`] +
 xref:traits.adoc#linguistictraits[`(es $)`] +
 xref:traits.adoc#categorytraits[`(excluded from all $)`] +
+xref:timeprogress.adoc#theintro[`(extension version)`] +
 xref:lang:choicepoints.adoc#exhaust[`(fail)`] +
 xref:stdactions.adoc#stdreveal[`(feel $)`] +
 xref:traits.adoc#categorytraits[`(female $)`] +
@@ -327,6 +328,7 @@ xref:miscfeat.adoc#dirutil[`(spell out $)`] +
 xref:miscfeat.adoc#listutil[`(split $ anywhere into $ and $)`] +
 xref:lang:builtins.adoc#listbuiltins[`(split $ by $ into $ and $)`] +
 xref:lang:builtins.adoc#sploin[`(split word $ into $)`] +
+xref:timeprogress.adoc#theintro[`(startup)`] +
 xref:timeprogress.adoc#statusbar[`(status headline)`] +
 xref:timeprogress.adoc#choicemode[`(sticky $)`] +
 xref:lang:control.adoc#stoppable[`(stop)`] +

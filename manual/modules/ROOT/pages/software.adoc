@@ -1,6 +1,10 @@
 = Software
 
-An archive containing the latest version of Dialog can be found here:
+Versions of Dialog from before 2025 can be found here:
+
+{old-home-page}
+
+Versions from 2025 onward can be found here:
 
 {home-page}
 
@@ -111,8 +115,8 @@ dialogc -t aa example.dg stdlib.dg
 
 This will produce a file called `example.aastory`. The `.aastory` file
 may in turn be bundled with a javascript interpreter, or with an interpreter for
-the Commodore 64, using the tool `aambundle` from
-{aa-home-page}[the Å-machine release archive].
+the Commodore 64, using the tool `aambundle` from the Å-machine release archive
+at {aa-home-page} (formerly {aa-old-home-page}).
 
 The following command:
 
@@ -132,13 +136,13 @@ To create a Commodore 64 disk image, use the following command instead:
 aambundle -t c64 -o my_game example.aastory
 ```
 
-
 === Other compiler flags
 
 The `-v` flag makes the compiler more verbose. Give it once,
 and the compiler will print the wordcount for your story, as well as some
 technical stats. Give it twice `-vv` and the compiler will
-dump additional information that can be useful for debugging.
+dump additional information that can be useful for debugging. Give it
+a third time `-vvv` to see the full code in intermediate representation.
 
 To see the full list of options supported by `dialogc`, type:
 
