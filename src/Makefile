@@ -1,5 +1,7 @@
+DIALOG_VERSION=1a/02-dev
+
 CC		= gcc
-CFLAGS		+= -O3 -Wall -Wno-unused-result -Wno-format-truncation -DVERSION=\"1a/01\"
+CFLAGS		+= -O3 -Wall -Wno-unused-result -Wno-format-truncation -DVERSION=\"${DIALOG_VERSION}\"
 WININCLUDE	= winglk
 WINLIB		= ../prebuilt/win32
 
