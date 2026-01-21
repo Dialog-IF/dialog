@@ -11783,7 +11783,7 @@
 	Release $RelNum.
 	Serial number (serial number).
 	(line)
-	(compiler version).
+	VERSION.
 	(library version)
 	(exhaust) { *(extension version) }
 	(par)

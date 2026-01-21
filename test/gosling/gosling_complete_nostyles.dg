@@ -11816,7 +11816,7 @@
 	Release $RelNum.
 	Serial number ZMACHINE.
 	(line)
-	(compiler version).
+	VERSION.
 	(library version)
 	(exhaust) { *(extension version) }
 	(par)
