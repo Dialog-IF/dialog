@@ -5,7 +5,10 @@ all: zmachine debugger
 
 # Ensure we don't have to worry about (serial number) changing by date
 stdlib.dg: ../../stdlib.dg
-	perl -pe 's/\(serial number\)/DEBUG/g' ../../stdlib.dg >stdlib.dg
+	cp ../../stdlib.dg stdlib.dg
+	perl -i -pe 's/\(serial number\)/<SERIAL>/g' stdlib.dg
+	perl -i -pe 's/\(compiler version\)/<COMPILER>/g' stdlib.dg
+	perl -i -pe 's/\s\(library version\)/\t<LIBRARY>/g' stdlib.dg
 
 impossible.z8: ../../src/dialogc ImpossibleStairs.dg stdlib.dg
 	../../src/dialogc -t z8 --no-warn-not-topic ImpossibleStairs.dg stdlib.dg -o impossible.z8
