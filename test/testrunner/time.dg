@@ -1,0 +1,165 @@
+%% time.dg
+%% Basic handling of time. Day of week not supported for now.
+%% Provided here as an example of how to use testrunner.dg
+
+(extension version)	Time and date 1a/01, by Susan Davis (line)
+
+(global variable (current time $)) %% time of day, in minutes from midnight
+
+(global variable (current date [$ $ $])) %% [day, month, year]
+
+(interface (current time into $>Timestamp))
+
+(interface (set time $<Timestamp))
+
+(interface (clock time))
+
+(interface (military time))
+
+(interface (short date))
+
+(interface (full date))
+
+(interface (nato time))
+
+(interface (elapse $<Num minutes))
+
+(interface (elapse $<Num hours))
+
+(interface (elapse $<Num days))
+
+%% negate to get D-M-Y dates
+(using north american dates)
+
+%% override for a different time zone
+(timezone letter)	Z
+
+%%----------------------------------------------------------------------
+
+($Hours hours $Minutes minutes)
+	(current time $Time)
+	($Time divided by 60 into $Hours)
+	($Time modulo 60 into $Minutes)
+
+(leading zero $Num)
+	(if) ($Num < 10) (then)
+		0 (no space)
+	(endif)
+	$Num
+
+(clock time)
+	($H hours $Minutes minutes)
+	($H modulo 12 into $Hr)
+	(if) ($Hr = 0) (then)
+		($Hours = 12)
+	(else)
+		($Hr = $Hours)
+	(endif)
+	$Hours : (no space)
+	(leading zero $Minutes)
+	(if) ($H > 11) (then)
+		PM
+	(else)
+		AM
+	(endif)
+
+(military time)
+	($H hours $M minutes)
+	(leading zero $H) : (leading zero $M)
+
+(short date)
+	(current date [$D $M $Y])
+	(if) (using north american dates) (then)
+		$M \/ $D \/ $Y
+	(else)
+		$D - $M - $Y
+	(endif)
+
+(month for 1)	January
+(month for 2)	February
+(month for 3)	March
+(month for 4)	April
+(month for 5)	May
+(month for 6)	June
+(month for 7)	July
+(month for 8)	August
+(month for 9)	September
+(month for 10)	October
+(month for 11)	November
+(month for 12)	December
+
+(full date)
+	(current date [$D $M $Y])
+	(if) (using north american dates) (then)
+		(month for $M) $D, $Y
+	(else)
+		$D (month for $M), $Y
+	(endif)
+
+(mon for 1)	Jan
+(mon for 2)	Feb
+(mon for 3)	Mar
+(mon for 4)	Apr
+(mon for 5)	May
+(mon for 6)	Jun
+(mon for 7)	Jul
+(mon for 8)	Aug
+(mon for 9)	Sep
+(mon for 10)	Oct
+(mon for 11)	Nov
+(mon for 12)	Dec
+
+(nato time)
+	($H hours $M minutes)
+	(current date [$D $Month $Y])
+	(leading zero $D) (no space)
+	(leading zero $H) (no space)
+	(leading zero $M) (no space)
+	(timezone letter)
+	(mon for $Month)
+	($Y modulo 100 into $YY)
+	(leading zero $YY)
+
+(set time $Timestamp)
+	([$Time | $Date] = $Timestamp)
+	(now) (current time $Time)
+	(now) (current date $Date)
+
+(elapse $H hours)
+	($H times 60 into $Minutes)
+	(elapse $Minutes minutes)
+
+(elapse $D days)
+	(if) ($D > 11) (then)
+		($D minus 11 into $Additional)
+		(elapse $Additional days)
+		($Days = 11)
+	(else)
+		($Days = $D)
+	(endif)
+	($Days times 1440 into $Minutes)
+	(elapse $Minutes minutes)
+
+%% hook for handling elapsing past the end of a month, and having to care
+%% about calendars and leap years; by default, we don't bother with this,
+%% to save game size
+(normalize date)
+
+(elapse $Num minutes)
+	(current time $Time)
+	(current date [$D $M $Y])
+	($Num divided by 1440 into $Days)
+	($Num modulo 1440 into $Minutes)
+	($D plus $Days into $Date)
+	($Time plus $Minutes into $Ticks)
+	(if) ($Ticks > 1439) (then)
+		($Ticks minus 1440 into $NewTime)
+		($Date plus 1 into $NewDate)
+	(else)
+		($NewTime = $Ticks)
+		($NewDate = $Date)
+	(endif)
+	(set time [$NewTime $NewDate $M $Y])
+	(normalize date)
+
+(late on every tick)	(elapse 1 minutes)
