@@ -14,6 +14,7 @@ test: test/regtest/cloak.zblorb src/dgdebug
 	make --directory=./test/gosling test clean
 	make --directory=./test/impossible test clean
 	make --directory=./test/simple all
+	make --directory=./test/unit test
 	bin/test.py doc
 
 .PHONY:		test src/dialogc src/dgdebug all

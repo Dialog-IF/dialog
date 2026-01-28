@@ -1,0 +1,228 @@
+%% dgdebug -q time-tests.dg time.dg ../../unit.dg ../../stdlib.dg
+
+%% Here's a worked example of some unit tests for a Dialog extension.
+%% By convention, the top line of the test file specifies the command
+%% line to run it, including any dependencies.
+
+(list of tests [
+	#hours-minutes
+	#hours-minutes-assert
+	#hours-minutes-zero
+	#hours-minutes-after-midnight
+	#leading-zero-zero
+	#leading-zero-one
+	#leading-zero-nine
+	#leading-zero-ten
+	#clock-time
+	#clock-time-midnight
+	#clock-time-noon
+	#clock-time-morning
+	#clock-time-afternoon
+	#military-time
+	#military-time-midnight
+	#military-time-noon
+	#military-time-morning
+	#military-time-afternoon
+	#nato-time
+	#nato-time-union
+	#short-date
+	#short-date-eu
+	#full-date
+	#full-date-eu
+	#set-time
+	#elapse-8-minutes
+	#elapse-9-minutes
+	#elapse-60-minutes
+	#elapse-360-minutes
+	#elapse-past-midnight
+	#elapse-multiple-days
+	#elapse-4-hours
+	#elapse-23-hours
+	#elapse-25-hours
+	#elapse-3-days
+	#elapse-11-days
+	#elapse-12-days
+	])
+
+(current time 891)
+
+(current date [12 1 1969])
+
+(clean up $)	(set time [891 12 1 1969])
+		  		(now) (using north american dates)
+
+%%----------------------------------------------------------------------
+
+%% It's more succinct to just use the values you're asserting on directly,
+%% and let binding fail if the test fails, but if you want to be more
+%% explicit, or want to check the output to find out what's going on, you
+%% can follow a pattern like this.
+%% You can use (log) or not as you prefer; since we're just running this
+%% in dgdebug and throwing away the output, regular printing is fine.
+(test #hours-minutes-assert)
+	($Hours hours $Minutes minutes)
+	$Hours $Minutes
+	(assert $Hours = 14)
+	(assert $Minutes = 51)
+
+%% Here's a more succinct formulation of the above.
+(test #hours-minutes)
+	(14 hours 51 minutes)
+
+(test #hours-minutes-zero)
+	(now) (current time 0)
+	(0 hours 0 minutes)
+	~(14 hours 51 minutes)
+
+(test #hours-minutes-after-midnight)
+	(now) (current time 1441)
+	(24 hours 1 minutes)
+
+(test #leading-zero-zero)
+	(collect words) (leading zero 0) (into $Words)
+	($Words = [0 0])
+
+(test #leading-zero-one)
+	(collect words) (leading zero 1) (into $Words)
+	($Words = [0 1])
+
+(test #leading-zero-nine)
+	(collect words) (leading zero 9) (into $Words)
+	($Words = [0 9])
+
+(test #leading-zero-ten)
+	(collect words) (leading zero 10) (into $Words)
+	($Words = [10])
+
+(test #clock-time)
+	(collect words) (clock time) (into $Words)
+	($Words = [2 : 51 pm])
+
+(test #clock-time-midnight)
+	(now) (current time 0)
+	(collect words) (clock time) (into $Words)
+	($Words = [12 : 0 0 am])
+
+(test #clock-time-noon)
+	(now) (current time 720)
+	(collect words) (clock time) (into $Words)
+	($Words = [12 : 0 0 pm])
+
+(test #clock-time-morning)
+	(now) (current time 390)
+	(collect words) (clock time) (into $Words)
+	($Words = [6 : 30 am])
+
+(test #clock-time-afternoon)
+	(now) (current time 980)
+	(collect words) (clock time) (into $Words)
+	($Words = [4 : 20 pm])
+
+(test #military-time)
+	(collect words) (military time) (into $Words)
+	($Words = [14 : 51])
+
+(test #military-time-midnight)
+	(now) (current time 0)
+	(collect words) (military time) (into $Words)
+	($Words = [0 0 : 0 0])
+
+(test #military-time-noon)
+	(now) (current time 720)
+	(collect words) (military time) (into $Words)
+	($Words = [12 : 0 0])
+
+(test #military-time-morning)
+	(now) (current time 390)
+	(collect words) (military time) (into $Words)
+	($Words = [0 6 : 30])
+
+(test #military-time-afternoon)
+	(now) (current time 980)
+	(collect words) (military time) (into $Words)
+	($Words = [16 : 20])
+
+(test #nato-time)
+	(collect words) (nato time) (into $Words)
+	($Words = [12 14 51 Z jan 69])
+
+(test #nato-time-union)
+	(set time [750 5 3 2273])
+	(collect words) (nato time) (into $Words)
+	($Words = [0 5 12 30 Z mar 73])
+
+(test #short-date)
+	(collect words) (short date) (into $Words)
+	($Words = [1 \/ 12 \/ 1969])
+
+(test #short-date-eu)
+	(now) ~(using north american dates)
+	(collect words) (short date) (into $Words)
+	($Words = [12 - 1 - 1969])
+
+(test #full-date)
+	(collect words) (full date) (into $Words)
+	($Words = [January 12 , 1969])
+
+(test #full-date-eu)
+	(now) ~(using north american dates)
+	(collect words) (full date) (into $Words)
+	($Words = [12 January , 1969])
+
+(test #set-time)
+	(set time [430 13 1 1969])
+	(7 hours 10 minutes)
+	(current date [13 1 1969])
+
+(test #elapse-8-minutes)
+	(elapse 8 minutes)
+	(14 hours 59 minutes)
+
+(test #elapse-9-minutes)
+	(elapse 9 minutes)
+	(15 hours 0 minutes)
+
+(test #elapse-60-minutes)
+	(elapse 60 minutes)
+	(15 hours 51 minutes)
+
+(test #elapse-360-minutes)
+	(elapse 360 minutes)
+	(20 hours 51 minutes)
+
+(test #elapse-past-midnight)
+	(elapse 1339 minutes)
+	(13 hours 10 minutes)
+	(current date [13 1 1969])
+
+(test #elapse-multiple-days)
+	(elapse 4320 minutes)
+	(14 hours 51 minutes)
+	(current date [15 1 1969])
+
+(test #elapse-4-hours)
+	(elapse 4 hours)
+	(18 hours 51 minutes)
+
+(test #elapse-23-hours)
+	(elapse 23 hours)
+	(13 hours 51 minutes)
+	(current date [13 1 1969])
+
+(test #elapse-25-hours)
+	(elapse 25 hours)
+	(15 hours 51 minutes)
+	(current date [13 1 1969])
+
+(test #elapse-3-days)
+	(elapse 3 days)
+	(14 hours 51 minutes)
+	(current date [15 1 1969])
+
+(test #elapse-11-days)
+	(elapse 11 days)
+	(current date [23 1 1969])
+
+(test #elapse-12-days)
+	(elapse 12 days)
+	(current date [24 1 1969])

@@ -1,0 +1,83 @@
+%% unit.dg
+(extension version)	Unit test runner 1a/02 by Susan Davis (line)
+
+%% See example(s) in test/unit in Dialog source distribution.
+%% Licensed under the same license as the rest of Dialog.
+
+%% (test #foo) expr will pass if expr is true and fail if expr is false.
+%% Include #foo in the global variable (list of tests [test1 test2 ...])
+
+(interface (test $<Testname))
+
+(interface (set up $<Testname)) %% special setup for the test
+
+(interface (clean up $<Testname)) %% restore to original state afterward
+
+(interface (assert $<Var = $<Val))
+
+(keep running on failure) %% negate to stop at first failed test
+
+%% We can't just (exhaust *(test $)), because that actually runs each test
+%% without setup, cleanup, or failure checks, so we work around that with
+%% a global variable, populated with all the tests. You can quarantine tests
+%% by commenting out their entry in the global variable declaration.
+
+(global variable (list of tests $))
+
+%%----------------------------- IMPLEMENTATION -----------------------------
+
+%% We almost don't need this, since that final line already does what we
+%% want, but adding binding checks can be useful.
+
+(assert $Thing1 = $Thing2) %% true if both are bound and ($Thing1 = $Thing2)
+	(fully bound $Thing1)
+	(bound $Thing2)
+	($Thing1 = $Thing2)
+
+(all tests pass)
+
+(program entry point)
+	(list of tests $Tests)
+	(length of $Tests into $Number)
+	(bold) Attempting $Number tests (roman) (line)
+	(stoppable) (exhaust) {
+		*($Test is one of $Tests)
+		Testing $Test:
+		(run-test $Test)
+	}
+	(if) (all tests pass) (then)
+		(bold) $Number tests passed successfully. (roman) (par)
+		(quit 0)
+	(else)
+		(bold) FAILED TEST. (roman) (par)
+		(quit 1)
+	(endif)
+
+(error $Code entry point)
+	(bold) FAILED TEST -- FATAL ERROR $Code. (roman) (par)
+	(now) ~(all tests pass)
+	(quit 1)                 %% or -1 if we ever get signed integers
+
+(run-test $Test)
+	(if)
+		(stoppable) (set up $Test)   %% don't fail if absent
+		(test $Test)
+		(stoppable) (clean up $Test) %% don't fail if absent
+	(then)
+		Passed! (line)
+	(else)
+		(bold) Failed. (roman) (space) :-\( (line)
+		(now) ~(all tests pass)
+		(if) ~(keep running on failure) (then) (stop) (endif)
+	(endif)
+
+%% patch for ($ contains sublist $) issues; delete when fixed
+($List contains sublist [$Head | $Tail])
+	*(split $List by [$Head] into $ and $Rest)
+	(append $Tail $ $Rest)
+
+%% Delete this interface and predicate if lft adds a builtin for it in
+%% dgdebug, to specify the exit status from the debugger for CI/CD pipelines
+%% and/or shell scripts.
+(interface (quit $<ExitStatus))
+(quit $)   (quit)

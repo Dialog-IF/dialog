@@ -11,3 +11,5 @@ dialogc.exe
 *.out
 /*.dg
 /manual/build
+*~
+#*#
