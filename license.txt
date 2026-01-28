@@ -1,4 +1,7 @@
-Copyright 2018-2021 Linus Åkesson
+The original Dialog system is copyright 2018-2021 Linus Åkesson
+
+Further developments, modifications, and extensions are copyright 2024-2026
+the contributors to the Dialog Project
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -21,6 +24,10 @@ modification, are permitted provided that the following conditions are met:
 	THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 	(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 	OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+The test cases in the development repository (not included in the official
+releases) are released under the same license unless otherwise specified.
+See the LICENSE.txt files in the individual test directories for details.
 
 The Windows version of the Dialog Interactive Debugger (dgdebug) uses Windows
 Glk by David Kinder. A header file, and two precompiled libraries are
