@@ -26,6 +26,9 @@
 
 %%----------------------------- IMPLEMENTATION -----------------------------
 
+%% We almost don't need this, since that final line already does what we
+%% want, but adding binding checks can be useful.
+
 (assert $Thing1 = $Thing2) %% true if both are bound and ($Thing1 = $Thing2)
 	(fully bound $Thing1)
 	(bound $Thing2)
