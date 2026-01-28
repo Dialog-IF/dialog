@@ -1,5 +1,8 @@
-%% testrunner.dg
+%% unit.dg
 (extension version)	Unit test runner 1a/01 by Susan Davis (line)
+
+%% See example(s) in test/unit in Dialog source distribution.
+%% Licensed under the same license as the rest of Dialog.
 
 %% (test #foo) expr will pass if expr is true and fail if expr is false.
 %% Include #foo in the global variable (list of tests [test1 test2 ...])
