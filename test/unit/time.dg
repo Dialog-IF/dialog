@@ -1,6 +1,6 @@
 %% time.dg
 %% Basic handling of time. Day of week not supported for now.
-%% Provided here as an example of how to use testrunner.dg
+%% Provided here as an example of how to use unit.dg
 
 (extension version)	Time and date 1a/01, by Susan Davis (line)
 

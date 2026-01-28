@@ -1,4 +1,4 @@
-%% dgdebug -q time-tests.dg time.dg testrunner.dg ../../stdlib.dg
+%% dgdebug -q time-tests.dg time.dg ../../unit.dg ../../stdlib.dg
 
 %% Here's a worked example of some unit tests for a Dialog extension.
 %% By convention, the top line of the test file specifies the command
