@@ -51,8 +51,7 @@
 (clean up $)	(set time [891 12 1 1969])
 		  		(now) (using north american dates)
 
-(test #hours-minutes)
-	(14 hours 51 minutes)
+%%----------------------------------------------------------------------
 
 %% It's more succinct to just use the values you're asserting on directly,
 %% and let binding fail if the test fails, but if you want to be more
@@ -66,9 +65,14 @@
 	(assert $Hours = 14)
 	(assert $Minutes = 51)
 
+%% Here's a more succinct formulation of the above.
+(test #hours-minutes)
+	(14 hours 51 minutes)
+
 (test #hours-minutes-zero)
 	(now) (current time 0)
 	(0 hours 0 minutes)
+	~(14 hours 51 minutes)
 
 (test #hours-minutes-after-midnight)
 	(now) (current time 1441)
