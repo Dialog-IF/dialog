@@ -1,6 +1,6 @@
 all: test 
 
-DEBUG=../../dgdebug -q 
+DEBUG=../../src/dgdebug -q 
 STDLIB=../../unit.dg ../../stdlib.dg | tee log.txt \
 	| grep "tests passed successfully"
 
