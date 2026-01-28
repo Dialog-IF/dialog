@@ -45,7 +45,8 @@ static void get_timestamp(char *dest, char *longdest) {
 
 void usage(char *prgname) {
 	fprintf(stderr, "Dialog compiler " VERSION ".\n");
-	fprintf(stderr, "Copyright 2018-2021 Linus Akesson.\n");
+	fprintf(stderr, "Original compiler copyright 2018-2021 Linus Akesson.\n");
+	fprintf(stderr, "Further development copyright 2024-2026 Dialog Project contributors.\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Usage: %s [options] [source code filename ...]\n", prgname);
 	fprintf(stderr, "\n");
@@ -63,6 +64,8 @@ void usage(char *prgname) {
 	fprintf(stderr, "--aux             -A    Set aux heap size (default 500 words).\n");
 	fprintf(stderr, "--long-term       -L    Set long-term heap size (default 500 words).\n");
 	fprintf(stderr, "--strip           -s    Strip internal object names.\n");
+	fprintf(stderr, "--warn-not-topic        Always warn about objects not used as topics.\n");
+	fprintf(stderr, "--no-warn-not-topic     Never warn about objects not used as topics.\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Only for z5, z8, or zblorb format:\n");
 	fprintf(stderr, "\n");
@@ -72,8 +75,6 @@ void usage(char *prgname) {
 	fprintf(stderr, "\n");
 	fprintf(stderr, "--cover           -c    Cover image filename (PNG or JPEG, max 1200x1200).\n");
 	fprintf(stderr, "--cover-alt       -a    Textual description of cover image.\n");
-	fprintf(stderr, "--warn-not-topic        Always warn about objects not used as topics.\n");
-	fprintf(stderr, "--no-warn-not-topic     Never warn about objects not used as topics.\n");
 	exit(1);
 }
 

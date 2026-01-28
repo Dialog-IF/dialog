@@ -1271,27 +1271,28 @@ static int restart(struct debugger *dbg) {
 
 void usage(char *prgname) {
 	fprintf(stderr, DEBUGGERNAME ".\n");
-	fprintf(stderr, "Copyright 2018-2021 Linus Akesson.\n");
+	fprintf(stderr, "Original debugger copyright 2018-2021 Linus Akesson.\n");
+	fprintf(stderr, "Further development copyright 2024-2026 Dialog Project contributors.\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Usage: %s [options] [source code filename ...]\n", prgname);
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Options:\n");
 	fprintf(stderr, "\n");
-	fprintf(stderr, "--version   -V    Display the program version.\n");
-	fprintf(stderr, "--help      -h    Display this information.\n");
-	fprintf(stderr, "--verbose   -v    Increase verbosity (may be used multiple times).\n");
+	fprintf(stderr, "--version   -V      Display the program version.\n");
+	fprintf(stderr, "--help      -h      Display this information.\n");
+	fprintf(stderr, "--verbose   -v      Increase verbosity (may be used multiple times).\n");
+	fprintf(stderr, "--warn-not-topic    Always warn about objects not used as topics.\n");
+	fprintf(stderr, "--no-warn-not-topic Never warn about objects not used as topics.\n");
 	fprintf(stderr, "\n");
-	fprintf(stderr, "--trace     -t    Enable tracing from the beginning.\n");
-	fprintf(stderr, "--no-entry  -n    Don't query '(program entry point)'.\n");
-	fprintf(stderr, "--quit      -q    Quit the debugger when the program terminates.\n");
+	fprintf(stderr, "--trace     -t      Enable tracing from the beginning.\n");
+	fprintf(stderr, "--no-entry  -n      Don't query '(program entry point)'.\n");
+	fprintf(stderr, "--quit      -q      Quit the debugger when the program terminates.\n");
 	fprintf(stderr, "\n");
-	fprintf(stderr, "--width     -w    Specify output width, in characters.\n");
-	fprintf(stderr, "--seed      -s    Specify random seed.\n");
-	fprintf(stderr, "--no-links  -L    Don't show hyperlinks in the output.\n");
-	fprintf(stderr, "--dfquirks  -D    Activate the dumbfrotz-compatible quirks mode.\n");
-	fprintf(stderr, "--numbered  -N    Show call depth with numbers during tracing.\n");
-	fprintf(stderr, "--warn-not-topic        Always warn about objects not used as topics.\n");
-	fprintf(stderr, "--no-warn-not-topic     Never warn about objects not used as topics.\n");
+	fprintf(stderr, "--width     -w      Specify output width, in characters.\n");
+	fprintf(stderr, "--seed      -s      Specify random seed.\n");
+	fprintf(stderr, "--no-links  -L      Don't show hyperlinks in the output.\n");
+	fprintf(stderr, "--dfquirks  -D      Activate the dumbfrotz-compatible quirks mode.\n");
+	fprintf(stderr, "--numbered  -N      Show call depth with numbers during tracing.\n");
 }
 
 extern int topic_warning_level; // Defined in frontend.c
