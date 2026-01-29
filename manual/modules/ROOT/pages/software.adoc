@@ -280,7 +280,8 @@ per-object variable).
 @dynamic::
 
 Shows the current state of all dynamic predicates (global flags, global variables,
-per-object flags, and per-object variables). 
+per-object flags, and per-object variables). For global flags, it also shows
+whether they’ve been changed via `(now)`.
 
 You can get a full list of debugging commands by typing `@help` at the
 prompt. These commands can be abbreviated as long as the abbreviation is unique;
