@@ -3,6 +3,7 @@ dgdebug
 dialogc
 dgdebug.exe
 dialogc.exe
+log.txt
 *.z5
 *.z8
 *.zblorb
@@ -11,3 +12,5 @@ dialogc.exe
 *.out
 /*.dg
 /manual/build
+*~
+#*#
