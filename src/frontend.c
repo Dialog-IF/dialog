@@ -2473,7 +2473,7 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 	}
 	
 	// Warn about objects never used as topics, depending on topic_warning_level
-	if(topic_warning_level == 0 && lexer.lib_file) { // Default: warn only if library file found
+	if(topic_warning_level == 0 && lexer.lib_file >= 0) { // Default: warn only if library file found
 		topic_warning_level = 1;
 	}
 	if(topic_warning_level == 1) {
