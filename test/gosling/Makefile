@@ -4,7 +4,7 @@ DIFF = diff
 all: zmachine debugger
 
 gosling.z8: ../../src/dialogc gosling_complete_nostyles.dg
-	../../src/dialogc -t z8 gosling_complete_nostyles.dg -o gosling.z8
+	../../src/dialogc -t z8 gosling_complete_nostyles.dg -o gosling.z8 --no-warn-not-topic
 
 zmachine.out: gosling.z8 gosling.in
 	dfrotz -m -s 1234 gosling.z8 <gosling.in >zmachine.out
@@ -14,7 +14,7 @@ zmachine: zmachine.out
 	$(DIFF) zmachine.out zmachine.gold
 
 debugger.out: ../../src/dgdebug gosling_complete_unicode.dg gosling.in
-	../../src/dgdebug -s 1234 gosling_complete_unicode.dg <gosling.in >debugger.out
+	../../src/dgdebug -s 1234 gosling_complete_unicode.dg --no-warn-not-topic <gosling.in >debugger.out
 
 debugger: debugger.out
 	$(DIFF) debugger.out debugger.gold

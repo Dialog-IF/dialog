@@ -285,6 +285,7 @@ struct astnode *expand_macros(struct astnode *an, struct program *prg, struct cl
 				if(exp->children[0]->kind == AN_RULE) {
 					exp = exp->children[0];
 					exp->kind = AN_NEG_RULE;
+					exp->subkind = RULE_SIMPLE; // No negative multi-queries!
 				}
 			}
 		}
