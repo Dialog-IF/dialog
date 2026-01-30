@@ -208,9 +208,9 @@ global variable has that particular value), or with an unbound variable (to
 obtain the current value). Either query will fail if the global variable is
 unset.
 
-The value that is stored in a global variable must be bound. Attempts to set a
-global variable to an unbound variable, or a list with an unbound variable
-inside, will result in a fatal runtime error.
+The value that is stored in a global variable must be fully bound. Attempts
+to set a global variable to an unbound variable, or a list with an unbound
+variable inside, will result in a fatal runtime error.
 
 In the following example, a complex global variable is used to implement an
 `AGAIN` command:
