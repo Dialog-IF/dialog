@@ -1,0 +1,17 @@
+(very long word)
+	a (nbsp) b (nbsp) c (nbsp) d (nbsp) e (nbsp)
+	f (nbsp) g (nbsp) h (nbsp) i (nbsp) j (nbsp)
+	k (nbsp) l (nbsp) m (nbsp) n (nbsp) o (nbsp)
+	p (nbsp) q (nbsp) r (nbsp) s (nbsp) t
+
+(raw long word) %% With literal U+00A0 characters
+	a b c d e f g h i j k l m n o p q r s t
+
+(program entry point)
+	(very long word)
+	(very long word)
+	(very long word)
+	(par)
+	(raw long word)
+	(raw long word)
+	(raw long word)
