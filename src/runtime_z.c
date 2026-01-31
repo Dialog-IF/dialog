@@ -84,6 +84,7 @@ struct rtroutine rtroutines[] = {
 			{Z_RFALSE},
 
 			{OP_LABEL(1)},
+			{Z_JE, {VALUE(REG_LOCAL+0), SMALL(0xa0)}, 0, 7},	// nbsp
 			{Z_JE, {VALUE(REG_LOCAL+0), LARGE(0x2013)}, 0, 2},	// en dash
 			{Z_JE, {VALUE(REG_LOCAL+0), LARGE(0x2014)}, 0, 3},	// em dash
 			{Z_JE, {VALUE(REG_LOCAL+0), LARGE(0x201c)}, 0, 4},	// upper 66 quote
@@ -92,6 +93,7 @@ struct rtroutine rtroutines[] = {
 			{Z_JE, {VALUE(REG_LOCAL+0), LARGE(0x2022)}, 0, 5},	// bullet
 			{Z_JE, {VALUE(REG_LOCAL+0), LARGE(0x2018)}, 0, 6},	// upper 6 apostrophe
 			{Z_JE, {VALUE(REG_LOCAL+0), LARGE(0x2019)}, 0, 6},	// upper 9 apostrophe
+			{Z_JE, {VALUE(REG_LOCAL+0), LARGE(0x202f)}, 0, 7},	// narrow nbsp
 
 			{Z_PRINTLIT, {}, 0, 0, "?"},
 			{Z_RFALSE},
@@ -114,6 +116,10 @@ struct rtroutine rtroutines[] = {
 			
 			{OP_LABEL(6)},
 			{Z_PRINTLIT, {}, 0, 0, "'"},
+			{Z_RFALSE},
+			
+			{OP_LABEL(7)},
+			{Z_PRINTLIT, {}, 0, 0, " "},
 			{Z_RFALSE},
 
 			{Z_END},
