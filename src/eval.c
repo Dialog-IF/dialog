@@ -1255,6 +1255,11 @@ static int eval_builtin(struct eval_state *es, int builtin, value_t o1, value_t 
 			"The code must be compiled.");
 		o_line();
 		break;
+	case BI_NBSP:
+		if(!es->forwords) {
+			o_nbsp();
+		}
+		break;
 	case BI_NOSPACE:
 		if(!es->forwords) {
 			o_nospace();
