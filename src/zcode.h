@@ -82,6 +82,7 @@ struct zinstr {
 #define SPC_PENDING		2
 #define SPC_PRINTED		3
 #define SPC_LINE		4
+#define SPC_PAR			(SPC_LINE+1)
 
 #define REG_STACK		0x00 // Register 0 means push to or pop from the stack
 #define REG_LOCAL		0x01 // The first 15 registers are local to the current routine
