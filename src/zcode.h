@@ -77,6 +77,11 @@ struct zinstr {
 //	2	a normal space is pending
 //	3	a normal space has been printed
 //	4 + n	a line feed has been printed, followed by n extra blank lines
+#define SPC_AUTO		0
+#define SPC_NOSPACE		1
+#define SPC_PENDING		2
+#define SPC_PRINTED		3
+#define SPC_LINE		4
 
 #define REG_STACK		0x00 // Register 0 means push to or pop from the stack
 #define REG_LOCAL		0x01 // The first 15 registers are local to the current routine

@@ -116,6 +116,7 @@ struct builtinspec {
 	{BI_SPACE_N,		0, PREDF_SUCCEEDS,		2,	{"space", 0}},
 	{BI_LINE,		0, PREDF_SUCCEEDS,		1,	{"line"}},
 	{BI_PAR,		0, PREDF_SUCCEEDS,		1,	{"par"}},
+	{BI_NBSP,		0, PREDF_SUCCEEDS,		1,	{"nbsp"}},
 	{BI_PROGRESS_BAR,	0, PREDF_SUCCEEDS,		5,	{"progress", "bar", 0, "of", 0}},
 	{BI_ROMAN,		0, PREDF_SUCCEEDS,		1,	{"roman"}},
 	{BI_UNSTYLE,		0, PREDF_SUCCEEDS,		1,	{"unstyle"}},

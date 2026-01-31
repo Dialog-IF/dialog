@@ -158,7 +158,8 @@
 #define AAEXT0_CLEAR_LINKS	0x0f
 #define AAEXT0_CLEAR_OLD	0x10
 #define AAEXT0_CLEAR_DIV	0x11
-#define AAEXT0_N		0x12
+#define AAEXT0_NBSP		0x12	// Added in 1b/01, Å-machine 1.0
+#define AAEXT0_N		0x13
 
 #define OVAR_PARENT		0
 #define OVAR_CHILD		1
