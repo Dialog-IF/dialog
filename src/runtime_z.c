@@ -73,6 +73,8 @@ struct rtroutine rtroutines[] = {
 		(struct zinstr []) {
 			{Z_JG, {VALUE(REG_STATUSBAR), SMALL(1)}, 0, RFALSE},
 			
+	//		{Z_PRINTNUM, {VALUE(REG_LOCAL+0)}}, // Debugging
+			
 			// Check Standard major version at $32 in the header - if it's less than 1, the Z_CHECK_UNICODE opcode won't exist
 			{Z_LOADB, {SMALL(0), SMALL(0x32)}, REG_LOCAL+1},
 			{Z_JL, {VALUE(REG_LOCAL+1), SMALL(1)}, 0, 1},
@@ -158,7 +160,7 @@ struct rtroutine rtroutines[] = {
 			
 			{OP_LABEL(1)},
 			{Z_JNE, {VALUE(REG_SPACE), SMALL(SPC_NBSP)}, 0, 2},
-			{Z_CALL1N, {ROUTINE(R_UNICODE), SMALL(0xa0)}},
+			{Z_CALL2N, {ROUTINE(R_UNICODE), SMALL(0xa0)}},
 			
 			{OP_LABEL(2)},
 			{Z_CALL2N, {ROUTINE(R_PRINT_UPPER), VALUE(REG_LOCAL+0)}},
@@ -179,7 +181,7 @@ struct rtroutine rtroutines[] = {
 			
 			{OP_LABEL(1)},
 			{Z_JNE, {VALUE(REG_SPACE), SMALL(SPC_NBSP)}, 0, 2},
-			{Z_CALL1N, {ROUTINE(R_UNICODE), SMALL(0xa0)}},
+			{Z_CALL2N, {ROUTINE(R_UNICODE), SMALL(0xa0)}},
 			
 			{OP_LABEL(2)},
 			{Z_CALL2N, {ROUTINE(R_PRINT_UPPER), VALUE(REG_LOCAL+0)}},
@@ -416,7 +418,7 @@ struct rtroutine rtroutines[] = {
 			{OP_LABEL(2)},
 			{Z_STORE, {SMALL(REG_SPACE), SMALL(SPC_PRINTED)}},
 			{Z_JG, {VALUE(REG_STATUSBAR), SMALL(1)}, 0, RFALSE},
-			{Z_CALL1N, {ROUTINE(R_UNICODE), SMALL(0xa0)}},
+			{Z_CALL2N, {ROUTINE(R_UNICODE), SMALL(0xa0)}},
 			{Z_RFALSE},
 			{Z_END},
 		}
