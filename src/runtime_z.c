@@ -154,8 +154,13 @@ struct rtroutine rtroutines[] = {
 			{Z_JG, {VALUE(REG_STATUSBAR), SMALL(1)}, 0, RFALSE},
 			{Z_JNE, {VALUE(REG_SPACE), SMALL(SPC_PENDING)}, 0, 1},
 			{Z_PRINTLIT, {}, 0, 0, " "},
-
+			{Z_JUMP, {REL_LABEL(2)}},
+			
 			{OP_LABEL(1)},
+			{Z_JNE, {VALUE(REG_SPACE), SMALL(SPC_NBSP)}, 0, 2},
+			{Z_CALL1N, {ROUTINE(R_UNICODE), SMALL(0xa0)}},
+			
+			{OP_LABEL(2)},
 			{Z_CALL2N, {ROUTINE(R_PRINT_UPPER), VALUE(REG_LOCAL+0)}},
 			{Z_STORE, {SMALL(REG_SPACE), SMALL(SPC_NOSPACE)}},
 			{Z_RFALSE},
@@ -170,8 +175,13 @@ struct rtroutine rtroutines[] = {
 			{Z_JG, {VALUE(REG_STATUSBAR), SMALL(1)}, 0, RFALSE},
 			{Z_JNE, {VALUE(REG_SPACE), SMALL(SPC_PENDING)}, 0, 1},
 			{Z_PRINTLIT, {}, 0, 0, " "},
-
+			{Z_JUMP, {REL_LABEL(2)}},
+			
 			{OP_LABEL(1)},
+			{Z_JNE, {VALUE(REG_SPACE), SMALL(SPC_NBSP)}, 0, 2},
+			{Z_CALL1N, {ROUTINE(R_UNICODE), SMALL(0xa0)}},
+			
+			{OP_LABEL(2)},
 			{Z_CALL2N, {ROUTINE(R_PRINT_UPPER), VALUE(REG_LOCAL+0)}},
 			{Z_STORE, {SMALL(REG_SPACE), SMALL(SPC_AUTO)}},
 			{Z_RFALSE},
@@ -257,6 +267,17 @@ struct rtroutine rtroutines[] = {
 			{Z_JNZ, {VALUE(REG_FORWORDS)}, 0, RFALSE},
 			{Z_JGE, {VALUE(REG_SPACE), SMALL(SPC_NOSPACE)}, 0, RFALSE},
 			{Z_STORE, {SMALL(REG_SPACE), SMALL(SPC_NOSPACE)}},
+			{Z_RFALSE},
+			{Z_END},
+		}
+	},
+	{
+		R_NBSP,
+		0,
+		(struct zinstr []) {
+			{Z_JNZ, {VALUE(REG_FORWORDS)}, 0, RFALSE},
+			{Z_JGE, {VALUE(REG_SPACE), SMALL(SPC_NBSP)}, 0, RFALSE},
+			{Z_STORE, {SMALL(REG_SPACE), SMALL(SPC_NBSP)}},
 			{Z_RFALSE},
 			{Z_END},
 		}
@@ -380,12 +401,22 @@ struct rtroutine rtroutines[] = {
 		R_SYNC_SPACE,
 		0,
 		(struct zinstr []) {
+			// This could be reorganized for efficiency, but I think clarity is more useful here
 			{Z_JZ, {VALUE(REG_SPACE)}, 0, 1}, // 0 = SPC_AUTO
-			{Z_JNE, {VALUE(REG_SPACE), SMALL(SPC_PENDING)}, 0, RFALSE},
+			{Z_JE, {VALUE(REG_SPACE), SMALL(SPC_PENDING)}, 0, 1},
+			{Z_JE, {VALUE(REG_SPACE), SMALL(SPC_NBSP)}, 0, 2},
+			{Z_RFALSE},
+			
 			{OP_LABEL(1)},
 			{Z_STORE, {SMALL(REG_SPACE), SMALL(SPC_PRINTED)}},
 			{Z_JG, {VALUE(REG_STATUSBAR), SMALL(1)}, 0, RFALSE},
 			{Z_PRINTLIT, {}, 0, 0, " "},
+			{Z_RFALSE},
+			
+			{OP_LABEL(2)},
+			{Z_STORE, {SMALL(REG_SPACE), SMALL(SPC_PRINTED)}},
+			{Z_JG, {VALUE(REG_STATUSBAR), SMALL(1)}, 0, RFALSE},
+			{Z_CALL1N, {ROUTINE(R_UNICODE), SMALL(0xa0)}},
 			{Z_RFALSE},
 			{Z_END},
 		}

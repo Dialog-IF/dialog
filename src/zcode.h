@@ -74,14 +74,16 @@ struct zinstr {
 // REG_SPACE:
 //	0	pending space/nospace, to be decided when printing the next char
 //	1	space has been inhibited
-//	2	a normal space is pending
-//	3	a normal space has been printed
-//	4 + n	a line feed has been printed, followed by n extra blank lines
+// 	2	a non-breaking space is pending
+//	3	a normal space is pending
+//	4	a space (of any sort) has been printed
+//	5 + n	a line feed has been printed, followed by n extra blank lines
 #define SPC_AUTO		0
 #define SPC_NOSPACE		1
-#define SPC_PENDING		2
-#define SPC_PRINTED		3
-#define SPC_LINE		4
+#define SPC_NBSP		2
+#define SPC_PENDING		3
+#define SPC_PRINTED		4
+#define SPC_LINE		5
 #define SPC_PAR			(SPC_LINE+1) // Two newlines
 // The Å-machine uses different values for its REG_SPACE equivalent, but they're all managed by the interpreter, so we don't need to worry about them
 
@@ -377,6 +379,7 @@ enum { // Runtime routines
 	R_NOSPACE_PRINT_NOSPACE,
 	R_PRINT_UPPER,
 	R_NOSPACE,
+	R_NBSP,
 	R_SPACE,
 	R_SPACE_N,
 	R_LINE,

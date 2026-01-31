@@ -2005,6 +2005,10 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 					zi = append_instr(r, Z_CALL1N);
 					zi->oper[0] = ROUTINE(R_MEMSTATS);
 					break;
+				case BI_NBSP:
+					zi = append_instr(r, Z_CALL1N);
+					zi->oper[0] = ROUTINE(R_NBSP);
+					break;
 				case BI_NOSPACE:
 					zi = append_instr(r, Z_CALL1N);
 					zi->oper[0] = ROUTINE(R_NOSPACE);
