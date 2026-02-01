@@ -5,6 +5,8 @@ dgdebug.exe
 dialogc.exe
 **/log.txt
 **/.DS_Store
+**/*~
+**/#*#
 *.z5
 *.z8
 *.zblorb
@@ -13,5 +15,3 @@ dialogc.exe
 *.out
 /*.dg
 /manual/build
-*~
-#*#
