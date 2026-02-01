@@ -316,12 +316,12 @@ It is rendered with character graphics on the Z-machine backend.
 == Clearing the screen
 
 To clear the main text area, excluding the top status area, use `(clear)`.
-To clear the entire screen and disable the top status area, use `(clear all)`.
+To clear only the status areas (top and inline), use `(clear status bars)`.
+To do both, clearing everything on the screen, use `(clear all)`.
 These predicates may not be queried from within a span, link, or status area.
 Such queries will result in a runtime error.
 
-Be aware that on some interpreters, clearing interferes with the player's ability to scroll back
-and review earlier parts of the play session. Other interpreters might not support clearing at all.
+Be aware that on some interpreters, clearing interferes with the player's ability to scroll back and review earlier parts of the play session. Other interpreters might not support clearing at all.
 
 The Å-machine web interpreter supports clearing everything that the player has had a chance to read. This means all output up to and including the last line of input.
 The operation is triggered with `(clear old)`.
