@@ -1,5 +1,5 @@
-#define AAVM_FORMAT_MAJOR 0
-#define AAVM_FORMAT_MINOR 5
+#define AAVM_FORMAT_MAJOR 1
+#define AAVM_FORMAT_MINOR 0
 
 #define AA_NOP			0x00
 #define AA_FAIL			0x01
