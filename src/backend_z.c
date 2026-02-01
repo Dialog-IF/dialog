@@ -1979,6 +1979,11 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 					zi->oper[0] = ROUTINE(R_CLEAR);
 					zi->oper[1] = VALUE(REG_FFFF);
 					break;
+				case BI_CLEAR_STATUS:
+					zi = append_instr(r, Z_CALL2N);
+					zi->oper[0] = ROUTINE(R_CLEAR);
+					zi->oper[1] = SMALL(1);
+					break;
 				case BI_CLEAR_LINKS:
 				case BI_CLEAR_DIV:
 				case BI_CLEAR_OLD:

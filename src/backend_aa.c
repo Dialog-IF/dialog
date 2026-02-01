@@ -1296,6 +1296,10 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 					ai = add_instr(AA_EXT0);
 					ai->oper[0] = (aaoper_t) {AAO_BYTE, AAEXT0_CLEAR_OLD};
 					break;
+				case BI_CLEAR_STATUS:
+					ai = add_instr(AA_EXT0);
+					ai->oper[0] = (aaoper_t) {AAO_BYTE, AAEXT0_CLEAR_STATUS};
+					break;
 				case BI_COMPILERVERSION:
 					ai = add_instr(AA_PRINT_A_STR_A);
 					ai->oper[0] = (aaoper_t) {AAO_STRING, findstring((uint8_t *) COMPILERVERSION)};

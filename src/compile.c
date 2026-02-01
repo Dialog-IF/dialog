@@ -1402,6 +1402,7 @@ static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an,
 	|| an->predicate->builtin == BI_CLEAR_LINKS
 	|| an->predicate->builtin == BI_CLEAR_DIV
 	|| an->predicate->builtin == BI_CLEAR_OLD
+	|| an->predicate->builtin == BI_CLEAR_STATUS
 	|| an->predicate->builtin == BI_SERIALNUMBER
 	|| an->predicate->builtin == BI_COMPILERVERSION
 	|| an->predicate->builtin == BI_MEMSTATS) {
