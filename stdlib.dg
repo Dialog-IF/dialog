@@ -2659,20 +2659,31 @@
 %% Rooms generally aren't present
 ~(action [go to $] requires $ to be present)
 
+%% Utility like (last $) that also returns the everything-but-last of the list
+%% In other words, it's the opposite of ($List = [$Head | $Rest])
+(interface (split last element from $<List into $>Rest and $>Last))
+(split last element from [$Last] into [] and $Last)
+(split last element from [$Head | $OldRest] into [$Head | $NewRest] and $Last)
+	(split last element from $OldRest into $NewRest and $Last)
+
 (perform [go to $Room])
 	(current room $Here)
 	(if) ($Here = $Room) (then)
 		You are already in (the $Room).
 		(tick) (stop)
-	(elseif) (shortest path from $Here to $Room is $Path) (then)
+	(elseif)
+		(shortest path from $Here to $Room is $FullPath)
+		(split last element from $FullPath into $Path and $Final)
+	(then)
+		(now) (moving long distances) %% Switch to a more minimal reporting style
 		(exhaust) {
 			*($Dir is one of $Path)
-			(line) \( attempting to go (name $Dir) \) (line)
 			(try [go $Dir])
 			(tick)
 			(par)
 		}
-		(inhibit next tick)
+		(now) ~(moving long distances) %% And switch back for the last step
+		(try [go $Final])
 	(else)
 		You don't know how to get to (the $Room) from here.
 		(tick) (stop)
@@ -3786,8 +3797,14 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Daemons
 
+(interface (inhibit next tick))
 (inhibit next tick)
 	(now) (inhibiting next tick)
+
+%% When something dramatic happens in an action rule, we (stop) to cut off any further actions in the sequence. When something dramatic happens in an (on every tick) rule, we DON'T do that, because it would be weird to have only half a tick happen. Instead, we call this, which (stop)s once the tick is done.
+(interface (stop after this tick))
+(stop after this tick)
+	(now) (stopping after this tick)
 
 (tick)
 	(if) (inhibiting next tick) (then)
@@ -3797,6 +3814,10 @@
 		(exhaust) *(early on every tick)
 		(exhaust) *(on every tick)
 		(exhaust) *(late on every tick)
+		(if) (stopping after this tick) (then)
+			(now) ~(stopping after this tick)
+			(stop)
+		(endif)
 	(endif)
 
 %% Stories may add rules to the following predicates:
@@ -4847,6 +4868,14 @@
 	(else)
 		(par)
 		(stoppable) {
+			%% If this flag is still set, then a long-distance movement was interrupted by a (stop) before it reached its last step. We should explain this to the player.
+			(if) (moving long distances) (then)
+				(div @meta) {
+					Because something dramatic happened, your movement was cut short.
+				}
+				(now) ~(moving long distances)
+			(endif)
+			
 			(if)
 				(scoring enabled)
 				(score notifications are on)
