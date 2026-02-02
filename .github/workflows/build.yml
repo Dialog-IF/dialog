@@ -12,36 +12,36 @@ jobs:
   build-linux:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: install dependencies
-      run: sudo apt install gcc-mingw-w64
-    - name: install a more recent Frotz
-      run: |
-        git clone --depth 1 --branch 2.55 https://gitlab.com/DavidGriffith/frotz.git
-        cd frotz
-        # Note: make install-dfrotz fails because it can't write a man page, so we do the install manually.
-        make dfrotz
-        install -c -m 755 dfrotz /usr/local/bin
-    - name: get the Å-machine interpreter
-      run: git clone https://github.com/Dialog-IF/aamachine.git
-    - name: make
-      run: make --directory=./src
-    - name: make (windows)
-      run: make --directory=./src dgdebug.exe dialogc.exe
-    - name: make test
-      run: make test
-    - uses: actions/upload-artifact@v4
-      with:
-        name: linux-x86_64
-        path: |
-          src/dgdebug
-          src/dialogc
-    - uses: actions/upload-artifact@v4
-      with:
-        name: win32
-        path: |
-          src/dgdebug.exe
-          src/dialogc.exe
+      - uses: actions/checkout@v4
+      - name: install dependencies
+        run: sudo apt install gcc-mingw-w64
+      - name: install a more recent Frotz
+        run: |
+          git clone --depth 1 --branch 2.55 https://gitlab.com/DavidGriffith/frotz.git
+          cd frotz
+          # Note: make install-dfrotz fails because it can't write a man page, so we do the install manually.
+          make dfrotz
+          install -c -m 755 dfrotz /usr/local/bin
+      - name: get the Å-machine interpreter
+        run: git clone https://github.com/Dialog-IF/aamachine.git
+      - name: make
+        run: make --directory=./src
+      - name: make (windows)
+        run: make --directory=./src dgdebug.exe dialogc.exe
+      - name: make test
+        run: make test
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-x86_64
+          path: |
+            src/dgdebug
+            src/dialogc
+      - uses: actions/upload-artifact@v4
+        with:
+          name: win32
+          path: |
+            src/dgdebug.exe
+            src/dialogc.exe
 
   build-manual:
     runs-on: ubuntu-latest
@@ -72,6 +72,8 @@ jobs:
         run: |
           brew update
           brew install frotz diffutils
+      - name: get the Å-machine interpreter
+        run: git clone https://github.com/Dialog-IF/aamachine.git
       - name: make
         run: make --directory=./src
       - name: make test
