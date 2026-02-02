@@ -27,6 +27,7 @@ stdlib.dglib: $(BASEPATH)/stdlib.dg
 ## The \s is to ensure we don't wreck the *declaration* of (library version), which would crash the compiler
 
 # Create the original gold files based on the gold-standard (i.e. unmodified) dialogc and dgdebug
+# This was important back when we were first making the tests, but less so now
 %.orig_gold: %.dg stdlib.dglib
 ## Call the original dialogc and dgdebug from $PATH here, not our modified ones from $(BASEPATH)
 	touch -a $*.gold
@@ -39,6 +40,7 @@ stdlib.dglib: $(BASEPATH)/stdlib.dg
 
 origin: $(origin)
 
+# We currently only test on Z5 because any warnings produced by the compilation process should be the same across platforms, but the Z-machine has more limits than the Å-machine (e.g. Unicode coverage)
 %.out: $(BASEPATH)/src/dialogc %.dg stdlib.dglib
 	$(BASEPATH)/src/dialogc $*.dg stdlib.dglib -t z5 -o $*.z5 >$*.out 2>&1 || :
 

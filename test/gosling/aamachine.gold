@@ -1,5 +1,5 @@
-Using normal formatting.
-Loading gosling.z8.
+
+
 Dear me. What happened?
 
 Your vision is a bit blurry. Nothing hurts, at least. You can hear Watson
@@ -21,16 +21,13 @@ Your body lies at the bottom of the stairs.
 
 Ever-faithful Watson is crouched over it, whimpering faintly.
 
-Bottom of the stairs                            [                              ]
-
-> > Bottom of the stairs                            [                              ]
-
+> * *** Opening scene ***
+> x watson
 Watson is a wonderfully intelligent collie, and he’s been oh so much help in
 your past investigations. You’ve trained him quite well, if you do say so
 yourself.
 
-> Bottom of the stairs                            [                              ]
-
+> x me
 Well, you feel fine. You don’t look any different, at least to your eyes. You
 seem to be wearing your favourite dress, the one with the pattern of little
 flowers on it, which you certainly weren’t when you fell. This sort of existence
@@ -41,8 +38,7 @@ gaggle of lower-ranking constabulary. “Bloody hell...so this is how the old bi
 finally went. Never thought she’d meet her end in an accident, not after a
 career of dealing with crime.”
 
-> Bottom of the stairs                            [                              ]
-
+> north
 You focus your thoughts, and try to go north, and yet nothing seems to happen...
 
 Watson looks up at you and blinks in surprise.
@@ -56,8 +52,7 @@ The morning? No...no, that’s not right. It was just past midnight...you were
 trying to find your way downstairs with a torch...you had to get to...the
 telephone, wasn’t it? Everything is so fuzzy...
 
-> Bottom of the stairs                            [                              ]
-
+> zxcvbn
 Your mind is still a bit fuzzy, and you can’t quite make sense of that idea at
 the moment.
 
@@ -75,8 +70,7 @@ were making your way down with a torch...that’s it, the torch would prove it w
 the middle of the night, not the morning, now wouldn’t it? Now where in heaven’s
 name did it get off to?
 
-> Bottom of the stairs                            [                              ]
-
+> watson, north
 Watson perks up, about to go north—until one of the constables grabs him by the
 collar.
 
@@ -86,7 +80,8 @@ Oh, that small-minded Inspector! Even a perfunctory investigation should find
 signs of poison! But he’s so sure it was your ordinary morning routine that he
 won’t even consider the possibility.
 
-> Inspector Hughes shows not the slightest hint of recognition. You might as well
+> hughes, wait
+Inspector Hughes shows not the slightest hint of recognition. You might as well
 be talking to a brick wall.
 
 Hughes strides out while Davis finishes up her measurements. “And get that
@@ -95,7 +90,10 @@ collar and is dragging him off to the sitting room.
 
 Watson’s eyes are fixed on you as he’s pulled away, whimpering and scrabbling at
 the carpet. Even if the police won’t listen, Watson will! So you imagine
-yourself following him, and the world around you changes... Miss Gosling’s Last Case
+yourself following him, and the world around you changes... 
+
+
+Miss Gosling’s Last Case
 An interactive mystery by Daniel M. Stelzer.
 Release 3. Serial number 260202.
 VERSION. Library version 0.46 (modified).
@@ -115,34 +113,33 @@ A rubber ball lies on the floor nearby.
 
 Your ill-conceived binocular stand is fixed in front of the bay window.
 
-Sitting room                                    [=                             ]
-Exits: north west
-
 In this state, you can’t do much yourself. The best you can do is LOOK around,
 EXAMINE something, or RECALL a person.
 
 Your score has gone up by one point.
 
-> > Sitting room                                    [=                             ]
 Exits: north west
 
+> * *** Test parser errors ***
+> zxcvbn
 Watson looks up at you with a sad little whine. He has no idea how to “zxcvbn”.
 
-> Sitting room                                    [=                             ]
 Exits: north west
 
+> x zxcvbn
 Watson understands the instruction to examine something, but doesn’t understand
 what. In particular, the word “zxcvbn” seems to be confusing him.
 
-> Sitting room                                    [=                             ]
 Exits: north west
 
+> sing zxcvbn
 Watson wags his tail happily, no comprehension at all in his eyes. In
 particular, the word “zxcvbn” seems to be confusing him.
 
-> > Sitting room                                    [=                             ]
 Exits: north west
 
+> * *** Escape ***
+> x ball
 It’s a hard rubber ball, the sort Watson loves to chew on. You’ve put a treat
 inside it for him to try to work out, a little puzzle for him to solve.
 
@@ -152,18 +149,18 @@ to X.
 For anything more elaborate than that, you’ll have to rely on Watson. For
 example, tell him to TAKE THE BALL.
 
-> Sitting room                                    [=                             ]
 Exits: north west
 
+> watson, take ball
 (You don’t have to mention Watson’s name explicitly; he’s the only one around
 who can hear your commands, after all.)
 Watson opens his mouth and carefully scoops up the rubber ball.
 
 If you say INVENTORY, Watson will show you what he’s holding.
 
-> Sitting room                                    [=                             ]
 Exits: north west
 
+> inventory
 Watson holds up the rubber ball proudly for your inspection. His collar keeps
 him from moving more than four feet from the chair.
 
@@ -176,9 +173,9 @@ manipulating objects in various ways.
 You’ve taught Watson plenty of ways to manipulate objects: he can TAKE and DROP
 them, but also PUSH, PULL, OPEN, CLOSE, CLIMB, and SEARCH them, among others.
 
-> Sitting room                                    [=                             ]
 Exits: north west
 
+> push ball
 Watson bats at the toy, but the treat doesn’t come out. It’ll take more force
 than that.
 
@@ -197,28 +194,31 @@ A few special commands are always available:
     RESTART to start over from the beginning, or QUIT to exit the game
 completely
 
-> Sitting room                                    [=                             ]
 Exits: north west
 
+> bite ball
 Watson gnaws happily at the toy, chomping on it at different angles until the
 treat inside pops out!
 
-> Sitting room                                    [=                             ]
 Exits: north west
 
+> drop ball
 Watson sets the rubber ball carefully under your comfortable chair.
 
-> Sitting room                                    [=                             ]
 Exits: north west
 
+> eat treat
 Watson doesn’t need telling twice. Soon there’s nothing left of the treat.
 
-> Sitting room                                    [=                             ]
 Exits: north west
 
+> push chair
 In what direction?
 
-> Watson tugs on his lead, and the chair on its wheels glides smoothly along
+Exits: north west
+
+> w
+Watson tugs on his lead, and the chair on its wheels glides smoothly along
 behind. You drift after him to the west.
 
 The rubber ball proves too small to foul the wheels, and is left behind.
@@ -238,25 +238,22 @@ from interfering in the crime scene.
 Your collection of mystery novels is kept on a high shelf, out of Watson’s
 reach.
 
-Evening room                                    [=                             ]
-Exits: (north) east
-
 Some people do think it’s odd that you’ve taught him compass directions, but he
 would always get so confused between your right and his right. This just works
 out better all around.
 
-> Evening room                                    [=                             ]
 Exits: (north) east
 
+> x shelf
 You made sure to put the bookshelf high enough that Watson couldn’t reach it.
 It’s not that he’d chew on the books; no, he’s far too well-trained for that.
 But he has a tendency to knock things over in his excitement. Now your paperback
 murder mysteries are both safe, and within easy reach. Easy reach for a human,
 at least.
 
-> Evening room                                    [=                             ]
 Exits: (north) east
 
+> climb shelf
 Watson stretches his body, trying to reach the bookshelf, then settles back with
 a sad whimper.
 
@@ -264,49 +261,49 @@ Messages like this, telling you why you can’t do something, often indicate
 puzzles to be solved. In this case, the shelf is too high for Watson to reach;
 perhaps he could reach it if he were higher up?
 
-> Evening room (on your comfortable chair)        [=                             ]
 Exits: (north) east
 
+> jump on chair
 Watson leaps up onto your comfortable chair.
 
-> Evening room (on the bookshelf)                 [=                             ]
 Exits: (north) east
 
+> jump on shelf
 Watson leaps up onto the bookshelf.
 
-> Evening room (on the bookshelf)                 [=                             ]
 Exits: (north) east
 
+> books
 Most of your books are kept in the library upstairs, of course, but you’ve
 turned this room into such a lovely place to read in the evenings, and the
 stairs have been getting harder to manage every year. So you’ve started a
 collection of paperback mystery novels down here, for when you’re in the mood
 for some light reading.
 
-> Evening room (on the bookshelf)                 [=                             ]
 Exits: (north) east
 
+> push books
 Watson gives the books a vigorous push, sending them off the edge to land on
 your comfortable chair.
 
-> Evening room (on your comfortable chair)        [=                             ]
 Exits: (north) east
 
+> down
 Watson leaps off the bookshelf and lands on your comfortable chair.
 
-> Evening room                                    [=                             ]
 Exits: (north) east
 
+> down
 Watson leaps off your comfortable chair.
 
-> Evening room                                    [=                             ]
 Exits: (north) east
 
+> push books
 The books tumble around and under the chair’s wheels in a messy pile.
 
-> Evening room                                    [===                           ]
 Exits: (north) east
 
+> east
 (pulling your comfortable chair along)
 Watson lopes back east, pulling the chair behind him...until it catches, pulling
 him up short. One of your books is trapped under the wheel! But he keeps
@@ -325,32 +322,32 @@ Good luck, detective!
 
 Your score has gone up by one point.
 
-> Evening room                                    [===                           ]
 Exits: (north) east
 
+> west
 Watson turns to look westward, then looks back to you with a puzzled whine. He
 doesn’t see any way to go that direction.
 
-> Evening room                                    [===                           ]
 Exits: (north) east
 
+> north
 Watson noses at the police tape, but can’t find a way past.
 
-> Evening room                                    [===                           ]
 Exits: (north) east
 
+> tape
 Bright yellow tape meant to keep people out of a crime scene. It’s thoroughly
 blocking the north door.
 
-> Evening room                                    [===                           ]
-Exits: north east
+Exits: (north) east
 
+> bite tape
 Watson chomps down on the police tape, taking a big chunk out of the middle and
 chewing it happily while the ends flutter to the ground.
 
-> Bottom of the stairs                            [===                           ]
-Exits: (north) south east (west)
+Exits: north east
 
+> north
 Watson saunters through the shredded police tape, and you drift along behind.
 
 Bottom of the stairs
@@ -369,109 +366,113 @@ Your telephone hangs in its niche on the north wall.
 
 Various old newspapers are stacked in the corner.
 
-> Bottom of the stairs                            [===                           ]
-Exits: north south east (west)
+Exits: (north) south east (west)
 
+> bite tape
 Watson chomps down on the police tape, taking a big chunk out of the middle and
 chewing it happily while the ends flutter to the ground.
 
-> Bottom of the stairs                            [===                           ]
 Exits: north south east (west)
 
+> tape to the north
 Bright yellow tape meant to keep people out of a crime scene. This one has been
 chewed to bits and won’t keep anyone out of anything.
 
-> Bottom of the stairs                            [===                           ]
 Exits: north south east (west)
 
+> north
 The dining room is that way, but best avoid it for now. If Watson makes a
 nuisance of himself, the constables will secure him better next time—you need to
 get to the crime scene and prove it was murder!
 
-> > Bottom of the stairs                            [===                           ]
 Exits: north south east (west)
 
+> * *** Find torch ***
+> x torch
 Watson understands the instruction to examine something, but doesn’t understand
 what.
 
-> Bottom of the stairs                            [===                           ]
 Exits: north south east (west)
 
+> vent
 Things are always falling and getting lost in it. You kept meaning to put some
 sort of screen over it, but, well, you never quite found the time.
 
-> Bottom of the stairs                            [===                           ]
 Exits: north south east (west)
 
+> look in vent
 Watson works one paw into the grate and fishes around in there. But he turns up
 nothing but dust.
 
-> Bottom of the stairs                            [===                           ]
 Exits: north south east (west)
 
+> phone
 It is, even you have to admit, rather old-fashioned to have a telephone niche.
 Most people keep their telephones on tables now. But you always liked how it
 looked, so when you upgraded to a modern telephone, you kept it in the old
 niche. Things do occasionally roll under it and get lost.
 
-> Bottom of the stairs                            [===                           ]
 Exits: north south east (west)
 
+> look in phone
 Watson snuffles at the telephone niche, but there’s no room inside it.
 
-> Bottom of the stairs                            [===                           ]
 Exits: north south east (west)
 
+> look under phone
 Watson noses under the telephone niche, fishing around with one paw. But he
 retreats a moment later, nothing found.
 
-> Bottom of the stairs                            [===                           ]
 Exits: north south east (west)
 
+> newspaper
 You’ve gathered up the old ones here for Nigel to take the next time he comes
 by. There’s something he does with them, and he always takes them off your hands
 when they start piling up. It’s possible something could roll behind them.
 
-> Bottom of the stairs                            [===                           ]
 Exits: north south east (west)
 
+> search newspaper
 Watson pushes his nose into the stack, feeling around for anything behind it.
 Something clanks—he’s found your torch!
 
-> Bottom of the stairs                            [===                           ]
 Exits: north south east (west)
 
+> look in vent
 Watson snuffles around inside the grate, but turns up nothing.
 
-> Bottom of the stairs                            [===                           ]
 Exits: north south east (west)
 
+> get torch
 Best not to move it yet. The constables need to see that you dropped it when you
 fell, rather than Watson bringing it in later.
 
-> Bottom of the stairs                            [===                           ]
 Exits: north south east (west)
 
+> turn off torch
 Best not to move it yet. The constables need to see that you dropped it when you
 fell, rather than Watson bringing it in later.
 
-> Bottom of the stairs                            [===                           ]
 Exits: north south east (west)
 
+> bark
 Watson lets out a loud bark that echoes through the house, then looks up at you
 for approval, tail wagging happily.
 
 Off in the dining room, Davis sets aside her work with a sigh.
 
-> Bottom of the stairs                            [===                           ]
 Exits: north south east (west)
 
+> z
 Watson tries as hard as he can to demonstrate patience.
 
 Davis makes her way from the dining room to the bottom of the stairs (where you
 are).
 
-> Watson tries as hard as he can to demonstrate patience.
+Exits: north south east (west)
+
+> z
+Watson tries as hard as he can to demonstrate patience.
 
 Davis scans the room for anything amiss. Nothing, nothing...then Watson barks
 again, sniffing at the stack of newspapers, and she takes a closer look.
@@ -482,7 +483,10 @@ bright sunny day?”
 
 You watch as it clicks in her head, and she hurries to the telephone.
 “Something’s wrong here. I better ring the Inspector and tell the boys at the
-lab...” “...results back from Fletcher at the lab. The Marsh test was positive. Arsenic
+lab...” 
+
+
+“...results back from Fletcher at the lab. The Marsh test was positive. Arsenic
 poisoning, without a doubt.” Well, obviously; you could have told them yourself
 if you’d made it to the phone in time. The constables are gathered around your
 dining room table now, listening as Davis summarises the situation. “Given her
@@ -501,7 +505,6 @@ substantially.”
 “Opportunity?”
 
 Phillips clears his throat. “I’ve been going through her diary.” Inevitable, you
-
 suppose—you would have done the same—but rude nonetheless. “Fletcher says death
 occurred between midnight and 2:00 AM, and the poison must have been
 consumed—orally—somewhere between four and twelve hours before that. That gives
@@ -543,8 +546,6 @@ We’ll be asking them a few questions. We’ll have this case cracked right ope
 before it hits the papers!” He glares down at Watson, who’s snuffling curiously
 at his hand. “And get that bloody beast out of here!”
 
-Kitchen                                         [=====                         ]
-Exits: south west southeast
 
 Kitchen
 Your kitchen isn’t spacious by any stretch of the imagination, but you’ve always
@@ -558,9 +559,10 @@ The stove is tucked away to one side.
 
 Your score has gone up by one point.
 
-> > Dining room                                     [=====                         ]
-Exits: south east
+Exits: south west southeast
 
+> * *** Dining Room ***
+> w
 Watson saunters west, and you drift along behind.
 
 Dining room
@@ -576,9 +578,9 @@ On the table are a tape recorder and your torch.
 
 Davis sets her sandwich aside as she pulls out another page.
 
-> Dining room                                     [=====                         ]
 Exits: south east
 
+> cabinet
 You would never call yourself vain, or overly proud of your success. But you
 could never resist showing off a few of your best and most notable
 accomplishments. Right now, you have the evidence from the Disgybl Gwydion case
@@ -587,9 +589,9 @@ the upstairs balcony.
 
 Davis takes a bite of her sandwich.
 
-> Dining room                                     [=====                         ]
 Exits: south east
 
+> evidence
 You normally wouldn’t include an unsolved case here...much less one where the
 constables never proved there was even a crime committed at all. But it did get
 a lot of press, and it did revolve around your house—and you kicked off the
@@ -609,9 +611,9 @@ anywhere in this world.
 
 Davis sets her sandwich aside as she pulls out another page.
 
-> Dining room                                     [=====                         ]
 Exits: south east
 
+> table
 It can seat six comfortably, but nowadays your dinners are usually for one or
 two. So you’ve made sure it’s not too big for that.
 
@@ -619,17 +621,17 @@ Your torch is on the table.
 
 Davis flips one of the sheets over, tapping her pen against the table.
 
-> Dining room                                     [=====                         ]
 Exits: south east
 
+> paperwork
 Poor dear, this looks like a real mess of paperwork. It can be much easier to
 work on cases when you’re not officially part of the constabulary.
 
 Davis sets her sandwich aside as she pulls out another page.
 
-> Dining room                                     [=====                         ]
 Exits: south east
 
+> davis
 You’ve always seen promise in Davis, from when she was just starting out as a
 bright-eyed new recruit. But she’s got a certain earnestness you’ve never quite
 been able to sway her from. Now she spends most of her time taking every menial
@@ -639,73 +641,74 @@ initiative of her own...or at least, that was always your hope.
 
 Davis flips one of the sheets over, tapping her pen against the table.
 
-> > Dining room                                     [=====                         ]
 Exits: south east
 
+> * *** Access Garden ***
+> get sandwich
 Watson opens his mouth and carefully plucks the sandwich off the table.
 
 “Oi! What’s that all about?” Davis blinks in surprise as her food is snatched
 away right in front of her eyes. She rises to her feet, ready to give chase!
 
-> Dining room                                     [=====                         ]
 Exits: south east
 
+> show sandwich
 To whom?
 
-> Dining room                                     [=====                         ]
 Exits: south east
 
+> davis
 Constable Davis looks sadly at her mangled sandwich, and unceremoniously
 disposes of it. She does give Watson a little pet of appreciation, though.
 
-> Dining room                                     [=====                         ]
 Exits: south east
 
+> z
 Watson tries as hard as he can to demonstrate patience.
 
 Davis settles back into her chair and returns to work. Now bereft of her
 sandwich, she pulls a biscuit from a pack.
 
-> Dining room                                     [=====                         ]
 Exits: south east
 
+> get biscuit
 Watson opens his mouth and carefully plucks the biscuit off the table.
 
 “Oi! What’s that all about?” Davis blinks in surprise as her food is snatched
 away right in front of her eyes. She rises to her feet, ready to give chase!
 
-> Dining room                                     [=====                         ]
 Exits: south east
 
+> eat biscuit
 Watson doesn’t need telling twice. Soon there’s nothing left of the biscuit.
 
 “Gotcha!” Davis has finally cornered Watson, forcing him to open his mouth...to
 find no trace left of her food. Watson looks much happier than she does as she
 turns to leave, empty-handed.
 
-> Dining room                                     [=====                         ]
 Exits: south east
 
+> z
 Watson tries as hard as he can to demonstrate patience.
 
-> Dining room                                     [=====                         ]
 Exits: south east
 
+> z
 Watson tries as hard as he can to demonstrate patience.
 
 Davis settles back into her chair and returns to work.
 
-> Dining room                                     [=====                         ]
 Exits: south east
 
+> get biscuit
 Watson opens his mouth and carefully plucks the biscuit off the table.
 
 “Oi! What’s that all about?” Davis blinks in surprise as her food is snatched
 away right in front of her eyes. She rises to her feet, ready to give chase!
 
-> Kitchen                                         [=====                         ]
-Exits: south west southeast
+Exits: south east
 
+> e
 Watson scampers east, and you drift along behind.
 
 Kitchen
@@ -721,18 +724,18 @@ The stove is tucked away to one side.
 Davis follows from the dining room to the kitchen (where you are), in hot
 pursuit.
 
-> Kitchen                                         [=====                         ]
 Exits: south west southeast
 
+> z
 Watson tries as hard as he can to demonstrate patience.
 
 “Gotcha!” Davis has finally cornered Watson, forcing him to open his mouth. She
 looks sadly at what’s become of her biscuit, and disposes of it as she turns to
 leave.
 
-> Dining room                                     [=====                         ]
-Exits: south east
+Exits: south west southeast
 
+> w
 Watson saunters west, and you drift along behind.
 
 Dining room
@@ -745,31 +748,31 @@ Constable Davis’s seat stands conspicuously vacant.
 
 On the table are a tape recorder and your torch.
 
-> Dining room                                     [=====                         ]
 Exits: south east
 
+> z
 Watson tries as hard as he can to demonstrate patience.
 
 Davis makes her way from the kitchen to the dining room (where you are).
 
-> Dining room                                     [=====                         ]
 Exits: south east
 
+> z
 Watson tries as hard as he can to demonstrate patience.
 
 Davis settles back into her chair and returns to work.
 
-> Dining room                                     [=====                         ]
 Exits: south east
 
+> get biscuit
 Watson opens his mouth and carefully plucks the biscuit off the table.
 
 “Oi! What’s that all about?” Davis blinks in surprise as her food is snatched
 away right in front of her eyes. She rises to her feet, ready to give chase!
 
-> Kitchen                                         [=====                         ]
-Exits: south west southeast
+Exits: south east
 
+> e
 Watson scampers east, and you drift along behind.
 
 Kitchen
@@ -785,9 +788,9 @@ The stove is tucked away to one side.
 Davis follows from the dining room to the kitchen (where you are), in hot
 pursuit.
 
-> Reception room                                  [=====                         ]
-Exits: (south) northwest
+Exits: south west southeast
 
+> se
 Watson scampers southeast, and you drift along behind.
 
 Reception room
@@ -804,9 +807,9 @@ Today’s mail is scattered across the floor.
 Davis follows from the kitchen to the reception room (where you are), in hot
 pursuit.
 
-> Reception room                                  [======                        ]
-Exits: south northwest
+Exits: (south) northwest
 
+> eat biscuit
 Watson doesn’t need telling twice. Soon there’s nothing left of the biscuit.
 
 “Gotcha! Huh?” Davis looks down at Watson, then up at the front door. He lets
@@ -817,9 +820,10 @@ She flips the lock and pushes the door open before retreating, bereft of food.
 
 Your score has gone up by one point.
 
-> > Veranda                                         [======                        ]
-Exits: north south
+Exits: south northwest
 
+> * *** In Garden ***
+> s
 Watson saunters out the front door, and you drift along behind.
 
 Veranda
@@ -829,9 +833,9 @@ lawn to the south.
 
 A bin in the corner collects any stray glass for recycling.
 
-> Reception room                                  [======                        ]
-Exits: south northwest
+Exits: north south
 
+> pull bin north
 Watson maneuvers the bin carefully north, with you following behind.
 
 Reception room
@@ -851,9 +855,9 @@ Today’s mail is scattered across the floor.
 
 Davis makes her way from the reception room (where you are) to the kitchen.
 
-> Kitchen                                         [======                        ]
-Exits: south west southeast
+Exits: south northwest
 
+> push bin northwest
 Watson maneuvers the bin carefully northwest, with you following behind.
 
 Kitchen
@@ -872,9 +876,9 @@ The stove is tucked away to one side.
 
 Davis makes her way from the kitchen (where you are) to the dining room.
 
-> Hall                                            [======                        ]
-Exits: north south west
+Exits: south west southeast
 
+> push bin south
 Watson maneuvers the bin carefully south, with you following behind.
 
 Hall
@@ -888,9 +892,9 @@ The recycling bin has been pushed here, looking rather out of place.
 Davis settles back into her chair and returns to work. She reaches for a
 biscuit, but the pack is empty. She disposes of it with a sigh.
 
-> Sitting room                                    [======                        ]
-Exits: north west
+Exits: north south west
 
+> push bin south
 Watson maneuvers the bin carefully south, with you following behind.
 
 Sitting room
@@ -907,37 +911,38 @@ You see a rubber ball here.
 
 Your ill-conceived binocular stand is fixed in front of the bay window.
 
-> Sitting room                                    [======                        ]
 Exits: north west
 
+> look through window
 From this angle, you have a beautiful view of the tea garden, with its six beds
 arranged around the fountain in the center. The lavender in the fountain is a
 beautiful deep blue, but to your eyes the rest of the plants are a uniform
 yellowish colour—you’ve never been any better than Watson at distinguishing reds
 from yellows from greens.
 
-  NW  NE
+  NW  NE  
 W   <>   E
-  SW  SE
+  SW  SE  
 
-> Watson thumps his tail, about to spring into action. Did you want him to:
+Exits: north west
+
+> stand
+Watson thumps his tail, about to spring into action. Did you want him to:
 1. examine the binocular stand, or
 2. stand up?
 
 (Type the corresponding number)
 
-> Sitting room                                    [======                        ]
-Exits: north west
-
+> 1
 You’d set up a little stand in front of your best window, hoping to attach your
 binoculars to it for birdwatching. But then it never quite worked, because you
 always wanted to move them around too much; they’re much better for spying on
 people than birds. Now it just collects dust while you try to think of something
 better to put on it.
 
-> Sitting room                                    [======                        ]
 Exits: north west
 
+> x bin
 Alfred’s been so very into recycling recently, and he’s asked you to collect any
 stray glass you don’t need; he picks it up every week or so for processing.
 
@@ -945,49 +950,49 @@ A squat bottle is in the bin.
 
 A narrow bottle is in the bin.
 
-> Sitting room                                    [======                        ]
 Exits: north west
 
+> put squat on stand
 (first attempting to take the squat bottle)
 Watson opens his mouth and carefully plucks the squat bottle out of the bin.
 
 Watson sets the squat bottle carefully on the binocular stand.
 
-> Sitting room                                    [======                        ]
 Exits: north west
 
+> look through squat
 Looking through the red glass, the garden beds in the northwest, northeast,
 west, and east are a vibrant white, while the ones in the centre, southwest, and
 southeast are featureless black.
 
-  WW  WW
+  WW  WW  
 WW  BB  WW
-  BB  BB
+  BB  BB  
 
-> Sitting room                                    [======                        ]
 Exits: north west
 
+> put narrow on stand
 (first attempting to take the narrow bottle)
 Watson opens his mouth and carefully plucks the narrow bottle out of the bin.
 
 Watson sets the narrow bottle carefully on the binocular stand.
 
-> Sitting room                                    [========                      ]
 Exits: north west
 
+> look through narrow
 Looking through the green glass, the garden beds in the northeast, east,
 southwest, and southeast are a vibrant white, while the ones in the centre,
 northwest, and west are featureless black.
 
-  BB  WW
+  BB  WW  
 BB  BB  WW
-  WW  WW
+  WW  WW  
 
 Your score has gone up by one point.
 
-> Hall                                            [========                      ]
-Exits: north south west
+Exits: north west
 
+> n
 Watson saunters north, and you drift along behind.
 
 Hall
@@ -996,9 +1001,9 @@ room to the south to the kitchen to the north. To the west, dark stairs lead
 down to the cellar, and to the east used to be a closet until you had it turned
 into a tiny little lavatory.
 
-> Kitchen                                         [========                      ]
-Exits: south west southeast
+Exits: north south west
 
+> n
 Watson saunters north, and you drift along behind.
 
 Kitchen
@@ -1011,9 +1016,9 @@ The dumbwaiter shaft is set into the north wall.
 
 The stove is tucked away to one side.
 
-> Reception room                                  [========                      ]
-Exits: south northwest
+Exits: south west southeast
 
+> se
 Watson saunters southeast, and you drift along behind.
 
 Reception room
@@ -1027,9 +1032,9 @@ kitchen, and the new front door leads out to the south.
 
 Today’s mail is scattered across the floor.
 
-> Veranda                                         [========                      ]
-Exits: north south
+Exits: south northwest
 
+> s
 Watson saunters out the front door, and you drift along behind.
 
 Veranda
@@ -1037,9 +1042,9 @@ A little refuge from the weather, for when you want the fresh outdoor air
 without all the sun and the rain, between the front door to the north and the
 lawn to the south.
 
-> Lawn                                            [========                      ]
 Exits: north south
 
+> s
 Watson saunters south, and you drift along behind.
 
 Lawn
@@ -1050,9 +1055,9 @@ back to the north.
 
 Today’s newspaper lies in front of the porch steps.
 
-> Tea garden, centre                              [========                      ]
-Exits: north east west northeast northwest southwest southeast
+Exits: north south
 
+> s
 Watson saunters south, and you drift along behind.
 
 Tea garden, centre
@@ -1067,23 +1072,23 @@ sitting room.
 
 On the garden chair are a pair of gardening gloves.
 
-> Tea garden, centre                              [========                      ]
 Exits: north east west northeast northwest southwest southeast
 
+> x chair
 The perfect place to sit and appreciate the gardens.
 
 A pair of gardening gloves has been left on the chair.
 
-> Tea garden, centre                              [========                      ]
 Exits: north east west northeast northwest southwest southeast
 
+> x gloves
 Alfred must have left them here, intending to keep working on these beds
 tomorrow. He’s a diligent, hard-working man, and you’ve never known him to take
 shortcuts on his work; he prefers to handle things with his own two hands.
 
-> Tea garden, centre                              [========                      ]
 Exits: north east west northeast northwest southwest southeast
 
+> alfred
 Alfred Tucker has been your gardener for years. Ever diligent, with a good eye
 for aesthetics; it’s thanks to him that the colours of your flower beds go
 together so nicely. You could imagine him committing murder, perhaps, if he had
@@ -1092,36 +1097,36 @@ impersonal poison is not his style.
 
 Unfortunately, he isn’t anywhere near your house at the moment.
 
-> Tea garden, northeast                           [========                      ]
-Exits: west southwest southeast
+Exits: north east west northeast northwest southwest southeast
 
+> ne
 Watson saunters northeast, and you drift along behind.
 
 Tea garden, northeast
 The garden bed under the old walls is just as neat and tidy as ever, as it
 should be. The calendula is flourishing, ready for your next cup of tea.
 
-> Tea garden, east                                [========                      ]
-Exits: west northwest southwest
+Exits: west southwest southeast
 
+> se
 Watson saunters southeast, and you drift along behind.
 
 Tea garden, east
 The garden bed under the old walls is just as neat and tidy as ever, as it
 should be. The rosebush is flourishing, ready for your next cup of tea.
 
-> Tea garden, southeast                           [========                      ]
-Exits: west northeast northwest
+Exits: west northwest southwest
 
+> sw
 Watson saunters southwest, and you drift along behind.
 
 Tea garden, southeast
 The garden bed under the old walls is just as neat and tidy as ever, as it
 should be. The mint is flourishing, ready for your next cup of tea.
 
-> Tea garden, centre                              [========                      ]
-Exits: north east west northeast northwest southwest southeast
+Exits: west northeast northwest
 
+> nw
 Watson saunters northwest, and you drift along behind.
 
 Tea garden, centre
@@ -1136,36 +1141,36 @@ sitting room.
 
 On the garden chair are a pair of gardening gloves.
 
-> Tea garden, northwest                           [========                      ]
-Exits: east southwest southeast
+Exits: north east west northeast northwest southwest southeast
 
+> nw
 Watson saunters northwest, and you drift along behind.
 
 Tea garden, northwest
 The garden bed under the old walls is just as neat and tidy as ever, as it
 should be. The rosebush is flourishing, ready for your next cup of tea.
 
-> Tea garden, west                                [========                      ]
-Exits: east northeast southeast
+Exits: east southwest southeast
 
+> sw
 Watson saunters southwest, and you drift along behind.
 
 Tea garden, west
 The garden bed under the old walls is just as neat and tidy as ever, as it
 should be. The beebalm is flourishing, ready for your next cup of tea.
 
-> Tea garden, southwest                           [========                      ]
-Exits: east northeast northwest
+Exits: east northeast southeast
 
+> se
 Watson saunters southeast, and you drift along behind.
 
 Tea garden, southwest
 The garden bed under the old walls is just as neat and tidy as ever, as it
 should be. The rosebush is flourishing, ready for your next cup of tea.
 
-> Tea garden, centre                              [========                      ]
-Exits: north east west northeast northwest southwest southeast
+Exits: east northeast northwest
 
+> ne
 Watson saunters northeast, and you drift along behind.
 
 Tea garden, centre
@@ -1180,9 +1185,9 @@ sitting room.
 
 On the garden chair are a pair of gardening gloves.
 
-> Tea garden, southwest                           [========                      ]
-Exits: east northeast northwest
+Exits: north east west northeast northwest southwest southeast
 
+> xyzzy
 As you speak the word, you feel a strange sensation pulling you southwest...
 Watson saunters southwest, and you drift along behind.
 
@@ -1190,14 +1195,17 @@ Tea garden, southwest
 The garden bed under the old walls is just as neat and tidy as ever, as it
 should be. The rosebush is flourishing, ready for your next cup of tea.
 
-> Tea garden, southwest                           [========                      ]
 Exits: east northeast northwest
 
+> take rose
 Watson delicately closes his mouth around one of the buds, trying to tear it
 free of the stem without getting pricked on the thorns. Oh, your poor
 flowers...but he does succeed, in the end.
 
-> (attempting to go northeast)
+Exits: east northeast northwest
+
+> go to dining room
+(attempting to go northeast)
 Watson saunters northeast, and you drift along behind.
 
 Tea garden, centre
@@ -1217,7 +1225,6 @@ Watson saunters north, and you drift along behind.
 
 Lawn
 It’s really not big enough to be called the grounds, but you’ve always been
-
 proud of your lawn and gardens, encircling the house on all sides. The most
 important one right now is your tea garden, down to the south; the veranda is
 back to the north.
@@ -1239,7 +1246,6 @@ Reception room
 You designed this room specifically for uninvited guests. Back when the front
 door was at the west end of the house, they’d have to wait awkwardly outside
 until you had the sitting room or dining room in order. Now, there’s a place to
-
 sit and take tea with them at a moment’s notice—and admire the framed case
 reports on the wall—and that can make witnesses ever so much more willing to
 open up. What used to be the back door of the house leads northwest to the
@@ -1261,10 +1267,6 @@ The dumbwaiter shaft is set into the north wall.
 The stove is tucked away to one side.
 
 (attempting to go west)
-
-Dining room                                     [========                      ]
-Exits: south east
-
 Watson saunters west, and you drift along behind.
 
 Dining room
@@ -1280,9 +1282,9 @@ On the table are a tape recorder and your torch.
 
 Davis pulls out another page, cross-checking it against the last.
 
-> Dining room                                     [==========                    ]
 Exits: south east
 
+> show rose to davis
 “Hm? What’s this?” The constable looks down at the torn branch in Watson’s
 mouth.
 
@@ -1296,9 +1298,10 @@ they’ll say: that the roses weren’t poisoned, and Alfred is innocent.
 
 Your score has gone up by one point.
 
-> > Kitchen                                         [==========                    ]
-Exits: south west southeast
+Exits: south east
 
+> * *** Access Cellar ***
+> e
 Watson saunters east, and you drift along behind.
 
 Kitchen
@@ -1313,9 +1316,9 @@ The stove is tucked away to one side.
 
 Davis makes her way from the reception room to the kitchen (where you are).
 
-> Hall                                            [==========                    ]
-Exits: north south west
+Exits: south west southeast
 
+> s
 Watson saunters south, and you drift along behind.
 
 Hall
@@ -1326,9 +1329,9 @@ into a tiny little lavatory.
 
 Davis makes her way from the kitchen to the dining room.
 
-> Landing                                         [==========                    ]
-Exits: east northeast
+Exits: north south west
 
+> d
 Watson saunters down the cellar stairs, and you drift along behind.
 
 Landing
@@ -1343,9 +1346,9 @@ back.
 
 Davis settles back into her chair and returns to work.
 
-> Landing                                         [==========                    ]
 Exits: east northeast
 
+> album
 Lottie left it when she was over for dinner, filled with photos of her trip out
 to the Orient. Her son is some sort of archaeologist out there, with his wife,
 and she loved talking about all the intricate details of what they were doing.
@@ -1353,9 +1356,9 @@ Fiddly details have always been her favourite thing, and she kept pushing you to
 keep working on those constabulary records that weren’t lining up—she just had a
 feeling it was a sign of something worse.
 
-> Landing                                         [==========                    ]
 Exits: east northeast
 
+> lottie
 Lottie—that is, Mrs Charlotte Peabody—is your closest friend in the area, and
 her regular visits for tea and gossip are a highlight of your week. She’s a
 meticulous, analytical sort, always picking out the flaws in a plan; if she
@@ -1364,35 +1367,38 @@ method.
 
 Unfortunately, she isn’t anywhere near your house at the moment.
 
-> Pantry (in the dark)                            [==========                    ]
-Exits: southwest
+Exits: east northeast
 
+> ne
 Watson saunters northeast, and you drift along behind.
 
 Pantry (in the dark)
 It’s pitch dark, and you can barely see a thing. You can make out light to the
 southwest.
 
-> Pantry (in the dark)                            [==========                    ]
 Exits: southwest
 
+> s
 (first attempting to open the root cellar door to the south)
 The root cellar should be that way, but in the darkness you can’t seem to locate
 the door.
 
-> Pantry (in the dark)                            [==========                    ]
 Exits: southwest
 
+> door
 It should be somewhere in the south wall, but in the darkness you can’t quite
 find it.
 
-> Pantry (in the dark)                            [==========                    ]
 Exits: southwest
 
+> water
 Cold and wet, you have to imagine, though Watson is putting on a brave face and
 you yourself can’t feel it at all.
 
-> (attempting to go southwest)
+Exits: southwest
+
+> go to dining room
+(attempting to go southwest)
 Watson noses his way southwest, and you drift along behind.
 
 Landing
@@ -1412,7 +1418,6 @@ Hall
 This narrow hallway is right at the centre of the house, linking the sitting
 room to the south to the kitchen to the north. To the west, dark stairs lead
 down to the cellar, and to the east used to be a closet until you had it turned
-
 into a tiny little lavatory.
 
 (attempting to go north)
@@ -1434,10 +1439,6 @@ Watson saunters west, and you drift along behind.
 Dining room
 This is the proper place to share a meal with someone, with plenty of windows, a
 big table, and a lovely chandelier. Display cabinets along the walls show off
-
-Dining room                                     [==========                    ]
-Exits: south east
-
 some of your favourite curiosities from your long career; doors lead east to the
 kitchen and south to the rest of the house.
 
@@ -1448,22 +1449,25 @@ On the table are a tape recorder and your torch.
 
 Davis runs her hands through her hair with a sigh.
 
-> Dining room                                     [==========                    ]
 Exits: south east
 
+> get torch
 Watson opens his mouth and carefully plucks your torch off the table.
 
 Davis has no objection to the theft of your torch. She doesn’t seem to care what
 Watson does, as long as it doesn’t interfere with her paperwork or her lunch.
 
-> Dining room                                     [==========                    ]
 Exits: south east
 
+> turn it on
 Watson paws at your torch, and it switches on!
 
 Davis pulls out another page, cross-checking it against the last.
 
-> (attempting to go east)
+Exits: south east
+
+> go to pantry
+(attempting to go east)
 Watson saunters east, and you drift along behind.
 
 Kitchen
@@ -1483,7 +1487,6 @@ Hall
 This narrow hallway is right at the centre of the house, linking the sitting
 room to the south to the kitchen to the north. To the west, dark stairs lead
 down to the cellar, and to the east used to be a closet until you had it turned
-
 into a tiny little lavatory.
 
 (attempting to go west)
@@ -1506,27 +1509,27 @@ Pantry
 In the torchlight, your fears are confirmed: Watson is standing in at least
 three inches of water. Oh, what a mess...
 
-Pantry                                          [==========                    ]
-Exits: (south) southwest
-
 The door to the root cellar is now visible to the south.
 
 The dumbwaiter shaft ends here, well above Watson’s head.
 
-> Pantry                                          [==========                    ]
 Exits: (south) southwest
 
+> s
 (first attempting to open the root cellar door to the south)
 Watson whines, and holds up your torch. This door needs to be pulled open, and
 he can’t do that with his mouth occupied.
 
-> Pantry                                          [==========                    ]
 Exits: (south) southwest
 
+> drop torch
 Best not. It’s not waterproof, and with the electricity out, it’s your only
 source of light.
 
-> (attempting to go southwest)
+Exits: (south) southwest
+
+> go to kitchen
+(attempting to go southwest)
 Watson saunters southwest, and you drift along behind.
 
 Landing
@@ -1546,10 +1549,6 @@ Hall
 This narrow hallway is right at the centre of the house, linking the sitting
 room to the south to the kitchen to the north. To the west, dark stairs lead
 down to the cellar, and to the east used to be a closet until you had it turned
-
-Kitchen                                         [==========                    ]
-Exits: south west southeast
-
 into a tiny little lavatory.
 
 (attempting to go north)
@@ -1565,19 +1564,19 @@ The dumbwaiter shaft is set into the north wall.
 
 The stove is tucked away to one side.
 
-> Kitchen                                         [==========                    ]
 Exits: south west southeast
 
+> push wheel
 The dumbwaiter sinks into sight.
 
-> Kitchen                                         [==========                    ]
 Exits: south west southeast
 
+> put torch in dumbwaiter
 Watson sets your torch carefully in the dumbwaiter.
 
-> Dining room                                     [==========                    ]
-Exits: south east
+Exits: south west southeast
 
+> w
 Watson saunters west, and you drift along behind.
 
 Dining room
@@ -1593,24 +1592,24 @@ On the table is a tape recorder.
 
 Davis runs her hands through her hair with a sigh.
 
-> Dining room                                     [==========                    ]
 Exits: south east
 
+> get recorder
 Watson opens his mouth and carefully plucks the tape recorder off the table.
 
 Davis flips one of the sheets over, tapping her pen against the table.
 
-> Dining room                                     [==========                    ]
 Exits: south east
 
+> push play
 The recorder clicks on, and a tinny voice starts to play. Some sort of
 testimony, from the sound of it.
 
 Hearing the whine of the tape recorder, Davis reaches over and shuts it off.
 
-> Kitchen                                         [==========                    ]
-Exits: south west southeast
+Exits: south east
 
+> e
 Watson saunters east, and you drift along behind.
 
 Kitchen
@@ -1623,26 +1622,29 @@ The dumbwaiter is here, with your torch in it.
 
 The stove is tucked away to one side.
 
-> Kitchen                                         [==========                    ]
 Exits: south west southeast
 
+> put recorder in dumbwaiter
 Watson sets the tape recorder carefully in the dumbwaiter.
 
-> Kitchen                                         [==========                    ]
 Exits: south west southeast
 
+> play
 The recorder clicks on, and a tinny voice starts to play. Some sort of
 testimony, from the sound of it.
 
 “...their country-place, Styles Court, had been purchased by Mr Cavendish early
 in their married life...”
 
-> Kitchen                                         [==========                    ]
 Exits: south west southeast
 
+> push wheel
 The dumbwaiter sinks out of sight.
 
-> (attempting to go south)
+Exits: south west southeast
+
+> go to pantry
+(attempting to go south)
 Watson saunters south, and you drift along behind.
 
 Hall
@@ -1662,10 +1664,6 @@ that. The cellar proper is down to the northeast, in near-total darkness without
 the light from the hall windows, or you can go back up to the east.
 
 That photo album Lottie brought has been set in the corner for when she comes
-
-Pantry                                          [==========                    ]
-Exits: (south) southwest
-
 back.
 
 (attempting to go northeast)
@@ -1683,9 +1681,9 @@ torch in it.
 “...he had been completely under his wife’s ascendancy, so much so that, on
 dying, he left the place to her for her lifetime...”
 
-> Root cellar (in the dark)                       [===========                   ]
-Exits: (north) south east west northeast northwest southwest southeast
+Exits: (south) southwest
 
+> s
 (first attempting to open the root cellar door to the south)
 Watson noses the root cellar door open.
 
@@ -1702,15 +1700,16 @@ The door to the root cellar swings closed again.
 
 Your score has gone up by one point.
 
-> > Root cellar (in the dark)                       [===========                   ]
 Exits: (north) south east west northeast northwest southwest southeast
 
+> * *** In Cellar ***
+> smell
 Watson splashes through the water as he snuffles around, before stopping a few
 feet off to the northwest.
 
-> Depths of the root cellar (in the dark)         [===========                   ]
-Exits: north south east west northeast northwest southwest southeast
+Exits: (north) south east west northeast northwest southwest southeast
 
+> xyzzy
 As you speak the word, you feel a strange sensation pulling you northwest...
 Watson splashes away to the northwest, and you try your best to follow...until
 his paw hits something with a soft thump. He must have found the carrots!
@@ -1721,30 +1720,30 @@ exits.
 
 From the sound of Watson’s snuffling, there’s something at your feet.
 
-> Depths of the root cellar (in the dark)         [===========                   ]
 Exits: north south east west northeast northwest southwest southeast
 
+> carrots
 A one-peck bundle of carrots, fresh from the farmer’s market. Lottie picked them
 up as part of a good deal on onions, but she can’t stand the smell, so she
 brought them over for you and Watson to enjoy. They should be good, even if
 they’re mildly soggy now.
 
-> Depths of the root cellar (in the dark)         [=============                 ]
 Exits: north south east west northeast northwest southwest southeast
 
+> get it
 Watson opens his mouth and carefully scoops up the bundle of carrots.
 
 Your score has gone up by one point.
 
-> Depths of the root cellar (in the dark)         [=============                 ]
 Exits: north south east west northeast northwest southwest southeast
 
+> listen
 Watson is silent for a moment, listening intently, before you hear him move to
 the west. There seems to be some source of noise that way!
 
-> Root cellar (in the dark)                       [=============                 ]
-Exits: (north) south east west northeast northwest southwest southeast
+Exits: north south east west northeast northwest southwest southeast
 
+> xyzzy
 As you speak the word, you feel a strange sensation pulling you west... Watson
 splashes away to the west, and you try your best to follow...until suddenly a
 hint of light is visible in the darkness.
@@ -1753,9 +1752,9 @@ Root cellar (in the dark)
 It’s pitch dark, and you can barely see a thing. You can make out light to the
 north.
 
-> Pantry                                          [=============                 ]
-Exits: (south) southwest
+Exits: (north) south east west northeast northwest southwest southeast
 
+> north
 (first attempting to open the root cellar door to the north)
 Watson noses the root cellar door open.
 
@@ -1774,7 +1773,10 @@ The door to the root cellar swings closed again.
 
 “...their step-mother, however, had always been most generous to them...”
 
-> (attempting to go southwest)
+Exits: (south) southwest
+
+> go to dining room
+(attempting to go southwest)
 Watson saunters southwest, and you drift along behind.
 
 Landing
@@ -1794,7 +1796,6 @@ Hall
 This narrow hallway is right at the centre of the house, linking the sitting
 room to the south to the kitchen to the north. To the west, dark stairs lead
 down to the cellar, and to the east used to be a closet until you had it turned
-
 into a tiny little lavatory.
 
 (attempting to go north)
@@ -1816,10 +1817,6 @@ Watson saunters west, and you drift along behind.
 Dining room
 This is the proper place to share a meal with someone, with plenty of windows, a
 big table, and a lovely chandelier. Display cabinets along the walls show off
-
-Dining room                                     [=============                 ]
-Exits: south east
-
 some of your favourite curiosities from your long career; doors lead east to the
 kitchen and south to the rest of the house.
 
@@ -1828,17 +1825,17 @@ covers the table.
 
 Davis runs her hands through her hair with a sigh.
 
-> Dining room                                     [=============                 ]
 Exits: south east
 
+> xyzzy
 That’s that “magic word” Nigel was on about, from some new game he found? You
 don’t understand any of it, really, but he seems to enjoy it at least.
 
 Davis flips one of the sheets over, tapping her pen against the table.
 
-> Dining room                                     [===============               ]
 Exits: south east
 
+> give carrots to davis
 Davis looks down at Watson, and winces at the sight of water being dripped all
 over your rug. (Well, it can’t be helped.) It takes her a moment more to realise
 what exactly it’s dripping from.
@@ -1854,9 +1851,10 @@ innocent.
 
 Your score has gone up by one point.
 
-> > Bottom of the stairs                            [===============               ]
-Exits: north south east (west)
+Exits: south east
 
+> * *** Access Attic ***
+> s
 Watson saunters through the shredded police tape, and you drift along behind.
 
 Bottom of the stairs
@@ -1875,9 +1873,9 @@ Various old newspapers are stacked in the corner.
 
 Davis makes her way from the reception room to the kitchen.
 
-> Top of the stairs                               [===============               ]
-Exits: (north) (south) west northwest
+Exits: north south east (west)
 
+> up
 Watson saunters up the stairs, and you drift along behind.
 
 Top of the stairs
@@ -1892,9 +1890,9 @@ From the sound of it, Phillips is hard at work in the suite to the south.
 
 Davis makes her way from the kitchen to the dining room.
 
-> Upstairs hall                                   [===============               ]
-Exits: south southeast (up)
+Exits: (north) (south) west northwest
 
+> nw
 Watson saunters northwest, and you drift along behind.
 
 Upstairs hall
@@ -1910,14 +1908,14 @@ it.
 
 Davis settles back into her chair and returns to work.
 
-> Upstairs hall                                   [===============               ]
 Exits: south southeast (up)
 
+> cord
 The cord hangs down just above Watson’s head, easily within reach.
 
-> Balcony                                         [===============               ]
-Exits: (south)
+Exits: south southeast (up)
 
+> pull it
 Watson leaps upward and catches the cord in his teeth, trying to hold onto it
 with all his strength. For a moment it doesn’t seem like his weight will be
 enough...but with a steady groan the trapdoor opens and the stairs swing
@@ -1933,28 +1931,28 @@ cases is displayed proudly on the wall.
 The trapdoor to the attic is open, blocking off the passage to the north.
 Unfortunately, the stairs are on the other side.
 
-> Balcony                                         [===============               ]
 Exits: (south)
 
+> n
 The stairs to the attic block off that hallway completely.
 
-> Balcony                                         [===============               ]
 Exits: (south)
 
+> jump
 Watson peers over the edge, then look up at you with a scared whimper. He’s
 always been a good jumper, but after what happened last night, you can’t really
 blame him.
 
-> Balcony                                         [===============               ]
-Exits: north (south)
+Exits: (south)
 
+> push stairs
 Watson shoves his face and paws under the bottom step, rolling over onto his
 back and pushing with all his might. It only moves a little, but that’s enough
 for the mechanism to take over, and it snaps up into the ceiling.
 
-> Upstairs hall                                   [===============               ]
-Exits: south southeast (up)
+Exits: north (south)
 
+> n
 Watson saunters north, and you drift along behind.
 
 Upstairs hall
@@ -1968,9 +1966,9 @@ A dangling cord marks the location of the trapdoor to the attic.
 A mattress is propped up against one wall, for lack of anywhere better to put
 it.
 
-> Balcony                                         [===============               ]
-Exits: north (south)
+Exits: south southeast (up)
 
+> push mattress south
 Watson maneuvers the mattress carefully south, with you following behind.
 
 Balcony
@@ -1984,18 +1982,18 @@ A dangling cord marks the location of the trapdoor to the attic.
 A mattress is propped up against one wall, for lack of anywhere better to put
 it.
 
-> Balcony                                         [===============               ]
 Exits: north (south)
 
+> push mattress east
 With a mighty heave, Watson shoves the mattress over the edge! It tumbles end-
 over-end in a rush of air, the corners of the fabric fluttering wildly, until it
 lands with a mighty whomp at the foot of the stairs.
 
 Well, at least you won’t have to look at your own corpse any more.
 
-> Balcony                                         [===============               ]
-Exits: (south)
+Exits: north (south)
 
+> pull cord
 Watson leaps upward and catches the cord in his teeth, trying to hold onto it
 with all his strength. For a moment it doesn’t seem like his weight will be
 enough...but with a steady groan the trapdoor opens and the stairs swing
@@ -2011,9 +2009,9 @@ cases is displayed proudly on the wall.
 The trapdoor to the attic is open, blocking off the passage to the north.
 Unfortunately, the stairs are on the other side.
 
-> Bottom of the stairs (on the mattress)          [===============               ]
-Exits: north south east (west)
+Exits: (south)
 
+> jump
 Watson braces himself on the edge for a moment, steeling his nerves. Then with a
 mighty leap, he launches himself up and over the balcony! You find yourself
 drifting down with him as he plummets down the stairs and lands with a whump on
@@ -2033,9 +2031,9 @@ Your telephone hangs in its niche on the north wall.
 
 Various old newspapers are stacked in the corner.
 
-> Top of the stairs                               [===============               ]
-Exits: (north) (south) west northwest
+Exits: north south east (west)
 
+> up
 (first attempting to get off the mattress)
 Watson leaps off the mattress.
 
@@ -2051,9 +2049,9 @@ northwest, and the stairs lead back down to the west.
 
 From the sound of it, Phillips is hard at work in the suite to the south.
 
-> Upstairs hall                                   [===============               ]
-Exits: southeast up
+Exits: (north) (south) west northwest
 
+> nw
 Watson saunters northwest, and you drift along behind.
 
 Upstairs hall
@@ -2065,14 +2063,14 @@ it’s been properly repainted and made livable, at least.
 The trapdoor to the attic is open, the collapsible steps leading up to the
 south.
 
-> Upstairs hall                                   [===============               ]
 Exits: southeast up
 
+> s
 The stairs to the attic block off that hallway completely.
 
-> Attic, west (in the dark)                       [================              ]
-Exits: northeast southeast down
+Exits: southeast up
 
+> u
 Watson clambers up the attic stairs, and you drift along behind.
 
 Attic, west (in the dark)
@@ -2088,7 +2086,11 @@ Off to the southeast, you can almost make out a grandfather clock.
 
 Your score has gone up by one point.
 
-> > (attempting to go down)
+Exits: northeast southeast down
+
+> * *** In Attic ***
+> go to kitchen
+(attempting to go down)
 Watson clambers down the attic stairs, and you drift along behind.
 
 Upstairs hall
@@ -2108,7 +2110,6 @@ The afternoon light coming through the big windows makes the first floor look so
 cheerful and pleasant, and not at all like the place someone fell to her death
 just last night. It’s better that way; you’ve never wanted this house to look
 dreary by any stretch of the imagination. Identical doors lead north and south
-
 to your library and master suite, respectively; the hallway continues to the
 northwest, and the stairs lead back down to the west.
 
@@ -2151,10 +2152,6 @@ Watson saunters east, and you drift along behind.
 Kitchen
 Your kitchen isn’t spacious by any stretch of the imagination, but you’ve always
 found it cozy rather than cramped. A big door leads west to the dining room, and
-
-Kitchen                                         [================              ]
-Exits: south west southeast
-
 a smaller one leads southeast to your new reception room; the rest of the house
 is back to the south.
 
@@ -2162,30 +2159,33 @@ The dumbwaiter shaft is set into the north wall.
 
 The stove is tucked away to one side.
 
-> Kitchen                                         [================              ]
 Exits: south west southeast
 
+> push wheel
 The dumbwaiter rises into sight, bringing you a tape recorder and your torch.
 
 “...indeed, they were so young at the time of their father’s remarriage that
 they always thought of her as their own mother...”
 
-> Kitchen                                         [================              ]
 Exits: south west southeast
 
+> off
 The recorder clicks off.
 
-> Kitchen                                         [================              ]
 Exits: south west southeast
 
+> push wheel
 The dumbwaiter rises out of sight.
 
-> Kitchen                                         [================              ]
 Exits: south west southeast
 
+> push wheel
 The cables glide along their tracks, sending the dumbwaiter to the attic.
 
-> (attempting to go west)
+Exits: south west southeast
+
+> go to attic west
+(attempting to go west)
 Watson saunters west, and you drift along behind.
 
 Dining room
@@ -2205,7 +2205,6 @@ Watson saunters through the shredded police tape, and you drift along behind.
 Bottom of the stairs
 This was once the front room of your house, before you sealed off the door here
 and built the larger front room on the other side. Now it just serves as a
-
 little hallway connecting the evening room to the south to the dining room to
 the north. The stairs to the east lead up to the first floor.
 
@@ -2249,9 +2248,6 @@ Attic, west (in the dark)
 It’s pitch dark, and you can barely see a thing. You can make out light to the
 northeast and below.
 
-Attic, west (in the dark)                       [================              ]
-Exits: northeast southeast down
-
 The collapsible stairs lead down through the trapdoor to the rest of the house.
 
 A faint hint of light outlines the heavy shutters blocking the window.
@@ -2261,9 +2257,9 @@ leap to it, from the right starting point.
 
 Off to the southeast, you can almost make out a grandfather clock.
 
-> Attic, north                                    [================              ]
-Exits: southwest southeast
+Exits: northeast southeast down
 
+> n
 Watson noses his way northeast, and you drift along behind.
 
 Attic, north
@@ -2282,46 +2278,49 @@ Your old victrola rests under the dumbwaiter.
 
 Off to the southeast, you can almost make out an organ.
 
-> Attic, north                                    [================              ]
 Exits: southwest southeast
 
+> clutter
 Too many things to even list—not that that’s stopped Nigel from trying. He wants
 to make a proper inventory of it at some point, and that sort of fastidiousness
 is what he lives for.
 
-> Attic, north                                    [================              ]
 Exits: southwest southeast
 
+> nigel
 Your nephew Nigel is such a dear. He worries about everything, and at your age,
 you have to admit it’s not entirely without cause. You wouldn’t put it past him
 to contemplate murder, perhaps, but he’d immediately talk himself out of it.
 
 Unfortunately, he isn’t anywhere near your house at the moment.
 
-> Attic, north                                    [================              ]
 Exits: southwest southeast
 
+> get torch
 Watson opens his mouth and carefully plucks your torch out of the dumbwaiter.
 
-> Attic, north                                    [================              ]
 Exits: southwest southeast
 
+> vents
 There are vents set into the floor under the carpet, to keep your laboratory
 well-ventilated, but the torchlight isn’t bright enough to pick them out.
 
-> Attic, north (on the victrola)                  [================              ]
 Exits: southwest southeast
 
+> jump on victrola
 Watson leaps up onto the victrola.
 
-> Attic, north (on the victrola)                  [================              ]
 Exits: southwest southeast
 
+> jump on organ
 Watson peers toward the organ in the east side of the attic, then whimpers
 nervously. He’s a great leaper and could probably cross the distance, but he
 can’t see it well enough in the dark to be sure of his landing.
 
-> (first attempting to get off the victrola)
+Exits: southwest southeast
+
+> e
+(first attempting to get off the victrola)
 Watson leaps off the victrola.
 
 Watson saunters southeast, and you drift along behind.
@@ -2342,31 +2341,28 @@ A reed organ is positioned against the inner wall.
 
 Off to the northwest, you can almost make out a victrola.
 
-Attic, east                                     [================              ]
-Exits: (west) northwest southwest
-
 Off to the southwest, you can almost make out a grandfather clock.
 
-> Attic, east                                     [================              ]
 Exits: (west) northwest southwest
 
+> open windows
 Watson looks up at the chains, and flops down forlornly. They’re a good eight
 feet above the ground, far too high for him to jump.
 
-> Attic, east                                     [================              ]
 Exits: (west) northwest southwest
 
+> get on organ
 Watson can just barely get his paws up on top, but it’s a bit too tall to jump
 to from the ground.
 
-> Attic, east                                     [================              ]
 Exits: (west) northwest southwest
 
+> put torch on organ
 Watson sets your torch carefully on the organ.
 
-> Attic, north (in the dark)                      [================              ]
-Exits: southwest southeast
+Exits: (west) northwest southwest
 
+> n
 Watson saunters northwest, and you drift along behind.
 
 Attic, north (in the dark)
@@ -2381,12 +2377,15 @@ wall.
 Off to the southeast, you can clearly see an organ. Watson might be able to leap
 to it, from the right starting point.
 
-> Attic, north (in the dark)                      [================              ]
 Exits: southwest southeast
 
+> get on victrola
 Watson leaps up onto the victrola.
 
-> Watson focuses intently on the organ, gauging the distance for a moment. Then
+Exits: southwest southeast
+
+> jump on organ
+Watson focuses intently on the organ, gauging the distance for a moment. Then
 with a mighty leap, he launches himself across the gap!
 
 Attic, east (on the organ)
@@ -2407,35 +2406,32 @@ Your torch is on the organ.
 
 Off to the northwest, you can almost make out a victrola.
 
-Attic, east (on the organ)                      [================              ]
-Exits: (west) northwest southwest
-
 Off to the southwest, you can almost make out a grandfather clock.
 
-> Attic, east (on the organ)                      [================              ]
 Exits: (west) northwest southwest
 
+> jump on clock
 Watson peers toward the grandfather clock in the south side of the attic, then
 whimpers nervously. He’s a great leaper and could probably cross the distance,
 but he can’t see it well enough in the dark to be sure of his landing.
 
-> Attic, east (on the organ)                      [================              ]
 Exits: (west) northwest southwest
 
+> throw torch
 (first attempting to take your torch)
 Watson opens his mouth and carefully scoops up your torch.
 
 In which direction?
 
-> Attic, east (in the dark)                       [================              ]
-Exits: northwest southwest
+Exits: (west) northwest southwest
 
+> southwest
 With a sharp flick of his head, Watson flings your torch southwestward, sending
 it sailing to the south side of the attic.
 
-> Attic, south (on the grandfather clock)         [================              ]
-Exits: northeast northwest
+Exits: northwest southwest
 
+> jump on clock
 Watson focuses intently on the grandfather clock, gauging the distance for a
 moment. Then with a mighty leap, he launches himself across the gap!
 
@@ -2455,13 +2451,16 @@ The grandfather clock looms just under the windows.
 
 Off to the northeast, you can almost make out an organ.
 
-> Attic, south (on the grandfather clock)         [================              ]
 Exits: northeast northwest
 
+> get torch
 Watson stretches his body, trying to reach your torch, then settles back with a
 sad whimper.
 
-> From his perch atop the clock, Watson stretches up and catches the chain in his
+Exits: northeast northwest
+
+> open windows
+From his perch atop the clock, Watson stretches up and catches the chain in his
 mouth. With a sharp tug the shutters all around the attic snap open, and the
 afternoon sunlight streams in.
 
@@ -2482,48 +2481,45 @@ that leap.
 
 Your score has gone up by one point.
 
-Attic, south (on the grandfather clock)         [==================            ]
 Exits: northeast northwest
 
-> Attic, south (on the grandfather clock)         [==================            ]
-Exits: northeast northwest
-
+> get in vent
 Watson stretches his body, trying to reach the floor vents, then settles back
 with a sad whimper.
 
-> Attic, south                                    [==================            ]
 Exits: northeast northwest
 
+> down
 Watson leaps off the grandfather clock.
 
-> Attic, south                                    [==================            ]
 Exits: northeast northwest
 
+> get in vent
 Watson tries, but there’s a layer of carpet in the way. He’ll have to get
 through that first.
 
-> Attic, south                                    [==================            ]
 Exits: northeast northwest
 
+> open vent
 Watson paws at the carpet for a moment, but can’t find a way to open it without
 just chewing through. And surely that’s not what you want.
 
-> Attic, south                                    [==================            ]
 Exits: northeast northwest
 
+> chew carpet
 You kneel down and guide Watson’s nose to the right place, and he starts
 scratching at the carpet with furious intensity. He doesn’t get the opportunity
 to dig very often, and he’s determined to make the most of this moment. Soon a
 corner tears free, revealing the vent hidden underneath.
 
-> Attic, south (in the floor vents)               [==================            ]
-Exits: north northeast northwest
+Exits: northeast northwest
 
+> get in vent
 Watson launches himself into the floor vents, and you follow along behind.
 
-> Laboratory (in the floor vents)                 [==================            ]
-Exits: north south east west
+Exits: north northeast northwest
 
+> north
 You can’t see Watson moving, but as he scrabbles through the vents, you find
 yourself pulled along to the north.
 
@@ -2541,47 +2537,50 @@ under the carpet.
 Your box of poisons lies in the midst of the equipment, clearly labelled for
 safety.
 
-> Laboratory (in the floor vents)                 [==================            ]
 Exits: north south east west
 
+> equipment
 It’s probably a bit antiquated, by modern standards, but you’ve found it very
 serviceable.
 
-> Laboratory (in the floor vents)                 [==================            ]
 Exits: north south east west
 
+> out
 Watson tries, but there’s a layer of carpet in the way. He’ll have to get
 through that first.
 
-> Laboratory (in the floor vents)                 [==================            ]
 Exits: north south east west
 
+> chew carpet
 There’s a scratching, scrabbling noise as Watson struggles to get his teeth and
 claws into the carpet—followed by a loud, satisfying rip. His head emerges from
 the floor, tongue lolling out happily.
 
-> Laboratory (in the floor vents)                 [==================            ]
 Exits: north south east west
 
+> push carpet
 Watson nudges the carpet, and it flops loosely, not posing much of an obstacle
 now.
 
-> Laboratory                                      [==================            ]
-Exits: (east)
+Exits: north south east west
 
+> out
 Watson leaps out of the floor vents.
 
-> Laboratory                                      [==================            ]
 Exits: (east)
 
+> get poisons
 Watson opens his mouth and carefully scoops up the box of poisons.
 
-> Laboratory                                      [==================            ]
-Exits: east
+Exits: (east)
 
+> open door
 Watson noses the laboratory door open.
 
-> Watson saunters out the laboratory door, and you drift along behind.
+Exits: east
+
+> out
+Watson saunters out the laboratory door, and you drift along behind.
 
 Attic, east
 There are only two real rooms in the attic: the laboratory, in the center, and
@@ -2601,10 +2600,10 @@ leap to it, from the right starting point.
 Off to the southwest, you can clearly see a grandfather clock. Watson might be
 able to leap to it, from the right starting point.
 
-Attic, east                                     [==================            ]
 Exits: west northwest southwest
 
-> (attempting to go southwest)
+> go to dining room
+(attempting to go southwest)
 Watson saunters southwest, and you drift along behind.
 
 Attic, south
@@ -2645,7 +2644,6 @@ Watson clambers down the attic stairs, and you drift along behind.
 
 Upstairs hall
 The hall runs alongside the staircase here before bending sharply at the end,
-
 with a little balcony to the south overlooking the first floor. The top of the
 stairs is back to the southeast, and the guest room will be to the north—once
 it’s been properly repainted and made livable, at least.
@@ -2667,7 +2665,6 @@ northwest, and the stairs lead back down to the west.
 From the sound of it, Phillips is hard at work in the suite to the south.
 
 (attempting to go west)
-
 Watson saunters down the stairs, and you drift along behind.
 
 Bottom of the stairs
@@ -2689,10 +2686,6 @@ Watson saunters through the shredded police tape, and you drift along behind.
 
 Dining room
 This is the proper place to share a meal with someone, with plenty of windows, a
-
-Dining room                                     [==================            ]
-Exits: south east
-
 big table, and a lovely chandelier. Display cabinets along the walls show off
 some of your favourite curiosities from your long career; doors lead east to the
 kitchen and south to the rest of the house.
@@ -2702,9 +2695,9 @@ covers the table.
 
 Davis runs her hands through her hair with a sigh.
 
-> Dining room                                     [====================          ]
 Exits: south east
 
+> give poisons to davis
 “What’s this now?” Watson pushes the box insistently into Davis’s hands, and she
 has to turn it around to read it. “Poisons? Now where on earth did you get
 this?” She extricates it carefully from his mouth, and opens it to see the
@@ -2718,9 +2711,10 @@ tests will prove him innocent.
 
 Your score has gone up by one point.
 
-> > Kitchen                                         [====================          ]
-Exits: south west southeast
+Exits: south east
 
+> * *** Access Upstairs ***
+> e
 Watson saunters east, and you drift along behind.
 
 Kitchen
@@ -2735,9 +2729,9 @@ The stove is tucked away to one side.
 
 Davis makes her way from the reception room to the kitchen (where you are).
 
-> Reception room                                  [====================          ]
-Exits: south northwest
+Exits: south west southeast
 
+> se
 Watson saunters southeast, and you drift along behind.
 
 Reception room
@@ -2753,16 +2747,16 @@ Today’s mail is scattered across the floor.
 
 Davis makes her way from the kitchen to the dining room.
 
-> Reception room                                  [====================          ]
 Exits: south northwest
 
+> get mail
 Watson opens his mouth and carefully scoops up the mail.
 
 Davis settles back into her chair and returns to work.
 
-> Kitchen                                         [====================          ]
-Exits: south west southeast
+Exits: south northwest
 
+> nw
 Watson saunters northwest, and you drift along behind.
 
 Kitchen
@@ -2775,22 +2769,22 @@ The dumbwaiter shaft is set into the north wall.
 
 The stove is tucked away to one side.
 
-> Kitchen                                         [====================          ]
 Exits: south west southeast
 
+> put mail on stove
 Watson sets the mail carefully on the stove.
 
-> Kitchen                                         [====================          ]
 Exits: south west southeast
 
+> turn on stove
 The lighter makes a clicking sound as Watson paws at the dials, until finally he
 catches it just right, and the flame takes hold. It’s not long before the mail
 on top starts to fill the room with smoke. Really, you suppose, that’s the best
 you can expect from a dog’s cooking.
 
-> Dining room                                     [====================          ]
-Exits: south east
+Exits: south west southeast
 
+> w
 Watson saunters west, and you drift along behind.
 
 Dining room
@@ -2807,15 +2801,15 @@ A haze of smoke clouds the air.
 The smoke alarm begins to shriek. As the alarm starts to blare, Davis puts aside
 her work with a groan.
 
-> Dining room                                     [====================          ]
 Exits: south east
 
+> get alarm
 Watson stretches his body, trying to reach the smoke detector, then settles back
 with a sad whimper.
 
-> Dining room                                     [====================          ]
 Exits: south east
 
+> jump on table
 Watson leaps up onto the table.
 
 A haze of smoke clouds the air.
@@ -2825,9 +2819,9 @@ The smoke alarm continues to shriek.
 “Down from there! Now!” Davis gives Watson a little shove, and he hops down with
 a whimper.
 
-> Dining room                                     [====================          ]
 Exits: south east
 
+> z
 Watson tries as hard as he can to demonstrate patience.
 
 A haze of smoke clouds the air.
@@ -2836,9 +2830,9 @@ The smoke alarm continues to shriek.
 
 Davis gets up from her chair.
 
-> Dining room                                     [====================          ]
 Exits: south east
 
+> z
 Watson tries as hard as he can to demonstrate patience.
 
 A haze of smoke clouds the air.
@@ -2847,9 +2841,9 @@ The smoke alarm continues to shriek.
 
 Davis makes her way from the dining room (where you are) to the kitchen.
 
-> Dining room (on the table)                      [====================          ]
 Exits: south east
 
+> jump on table
 Watson leaps up onto the table.
 
 A haze of smoke clouds the air.
@@ -2859,9 +2853,9 @@ The smoke alarm continues to shriek.
 Following the smoke to the kitchen, Davis is confronted with the horrors of the
 smoldering mail, and immediately turns off the stove.
 
-> Dining room (on the table)                      [====================          ]
 Exits: south east
 
+> get alarm
 Balancing on his hind legs and stretching to his full length, Watson manages to
 knock the smoke detector down from its perch and scoop it into his mouth.
 
@@ -2869,7 +2863,10 @@ A haze of smoke clouds the air.
 
 The smoke alarm continues to shriek.
 
-> (first attempting to get off the table)
+Exits: south east
+
+> s
+(first attempting to get off the table)
 Watson leaps off the table.
 
 A haze of smoke clouds the air.
@@ -2890,9 +2887,6 @@ A mattress lies at the bottom of the stairs, where you fell.
 
 A big grate is set into the floor under the stairs.
 
-Bottom of the stairs                            [====================          ]
-Exits: north south east (west)
-
 Your telephone hangs in its niche on the north wall.
 
 Various old newspapers are stacked in the corner.
@@ -2903,9 +2897,9 @@ The smoke alarm continues to shriek.
 
 Davis settles back into her chair and returns to work.
 
-> Top of the stairs                               [====================          ]
-Exits: (north) (south) west northwest
+Exits: north south east (west)
 
+> up
 Watson saunters up the stairs, and you drift along behind.
 
 Top of the stairs
@@ -2920,14 +2914,14 @@ From the sound of it, Phillips is hard at work in the suite to the south.
 
 The alarm falls silent, and Watson can finally relax again.
 
-> Top of the stairs                               [====================          ]
 Exits: (north) (south) west northwest
 
+> drop alarm
 Watson sets the smoke detector carefully on the ground.
 
-> Bottom of the stairs                            [====================          ]
-Exits: north south east (west)
+Exits: (north) (south) west northwest
 
+> down
 Watson saunters down the stairs, and you drift along behind.
 
 Bottom of the stairs
@@ -2944,9 +2938,9 @@ Your telephone hangs in its niche on the north wall.
 
 Various old newspapers are stacked in the corner.
 
-> Dining room                                     [====================          ]
-Exits: south east
+Exits: north south east (west)
 
+> n
 Watson saunters through the shredded police tape, and you drift along behind.
 
 Dining room
@@ -2960,9 +2954,9 @@ covers the table.
 
 Davis sets the last sheet aside, turning to the next.
 
-> Kitchen                                         [====================          ]
-Exits: south west southeast
+Exits: south east
 
+> e
 Watson saunters east, and you drift along behind.
 
 Kitchen
@@ -2975,17 +2969,17 @@ The dumbwaiter shaft is set into the north wall.
 
 The stove is tucked away to one side. On the stove is some mail.
 
-> Kitchen                                         [====================          ]
 Exits: south west southeast
 
+> turn on stove
 The lighter makes a clicking sound as Watson paws at the dials, until finally he
 catches it just right, and the flame takes hold. It’s not long before the mail
 on top starts to fill the room with smoke. Really, you suppose, that’s the best
 you can expect from a dog’s cooking.
 
-> Dining room                                     [====================          ]
-Exits: south east
+Exits: south west southeast
 
+> w
 Watson saunters west, and you drift along behind.
 
 Dining room
@@ -3001,7 +2995,10 @@ A haze of smoke clouds the air.
 
 At the telltale smell of smoke, Davis puts aside her work with a groan.
 
-> Watson saunters through the shredded police tape, and you drift along behind.
+Exits: south east
+
+> s
+Watson saunters through the shredded police tape, and you drift along behind.
 
 Bottom of the stairs
 This was once the front room of your house, before you sealed off the door here
@@ -3021,10 +3018,10 @@ A haze of smoke clouds the air.
 
 Davis gets up from her chair.
 
-Bottom of the stairs                            [====================          ]
 Exits: north south east (west)
 
-> Watson saunters up the stairs, and you drift along behind.
+> up
+Watson saunters up the stairs, and you drift along behind.
 
 Top of the stairs
 The afternoon light coming through the big windows makes the first floor look so
@@ -3044,19 +3041,15 @@ The smoke alarm begins to shriek.
 
 The sound of an emergency alarm is finally enough to pull Constable Phillips
 away from his work. He throws open the door to the suite and launches himself
-
-Top of the stairs                               [=====================         ]
-Exits: (north) south west northwest
-
 down the stairs.
 
 Davis makes her way from the dining room to the kitchen.
 
 Your score has gone up by one point.
 
-> Master suite                                    [=====================         ]
-Exits: north west northeast
+Exits: (north) south west northwest
 
+> s
 Watson saunters through the suite door, and you drift along behind.
 
 Master suite
@@ -3075,9 +3068,9 @@ through the dining room to the kitchen.
 Following the smoke to the kitchen, Davis is confronted with the horrors of the
 smoldering mail, and immediately turns off the stove.
 
-> Master suite                                    [=====================         ]
 Exits: north west northeast
 
+> phillips
 “Fastidious” is perhaps the best word to describe the young constable, so
 insistent on doing everything by the book. You always appreciate his
 thoroughness in searching for clues, now that you’re in no state to be bending
@@ -3091,9 +3084,10 @@ Currently, he should be in the kitchen.
 In the top of the stairs, the smoke alarm continues to shriek. Phillips sprints
 out to the veranda, finally pausing to see if the alarm continues.
 
-> > Master suite                                    [=====================         ]
 Exits: north west northeast
 
+> * *** In Upstairs ***
+> clothes
 What could the constables have been searching for in here? You keep your
 medicines locked in the bathroom, and the keys on the nightstand in your
 bedroom.
@@ -3103,16 +3097,16 @@ to investigate this false alarm.
 
 Davis makes her way from the kitchen to the dining room.
 
-> Master suite                                    [=====================         ]
 Exits: north west northeast
 
+> search them
 Watson noses through the racks, but finds nothing except more clothes.
 
 Davis settles back into her chair and returns to work.
 
-> Bedroom                                         [=====================         ]
-Exits: (north) east
+Exits: north west northeast
 
+> w
 Watson saunters west, and you drift along behind.
 
 Bedroom
@@ -3126,22 +3120,22 @@ Your bed stands in equal disarray. You’d given no thought to tidying it up.
 
 The nightstand is placed next to the head of the bed, entirely devoid of keys.
 
-> Bedroom                                         [=====================         ]
 Exits: (north) east
 
+> bed
 Not quite as soft as you would like it, sadly; at your age, getting into and out
 of it easily has become more of a priority. Now the mattress is too firm and
 there’s an unattractively large gap underneath.
 
-> Bedroom                                         [=====================         ]
 Exits: (north) east
 
+> look under bed
 Watson snuffles around under your bed and turns up a truncheon. He looks up at
 you proudly.
 
-> Bedroom                                         [=====================         ]
 Exits: (north) east
 
+> truncheon
 You got this from the constables, at Emily’s insistence; she maintains that
 someone you exposed will eventually want revenge, and having a weapon on hand
 will make them think twice about coming into your house. She means well, but
@@ -3149,9 +3143,9 @@ she’s never quite understood how these things actually happen—you have no id
 how to use something like this effectively, and a person bent on murder won’t be
 dissuaded by it.
 
-> Bedroom                                         [=====================         ]
 Exits: (north) east
 
+> emily
 You used to feel a bit ashamed to admit it, but a companion really is a
 necessity at your age. She checks in on you periodically, arranges your
 medicines, and handles any problems before they come up; not the brightest girl,
@@ -3160,15 +3154,15 @@ and probably end up in tears for even thinking about it.
 
 Unfortunately, she isn’t anywhere near your house at the moment.
 
-> Bedroom                                         [=====================         ]
 Exits: (north) east
 
+> get truncheon
 Watson opens his mouth and carefully plucks the truncheon out from under your
 bed.
 
-> Master suite                                    [=====================         ]
-Exits: north west northeast
+Exits: (north) east
 
+> e
 Watson saunters east, and you drift along behind.
 
 Master suite
@@ -3179,9 +3173,9 @@ to the north leads out to the rest of the house.
 Your racks of clothes stand in disarray, methodically ransacked by the
 constables.
 
-> Bathroom                                        [=====================         ]
-Exits: southwest
+Exits: north west northeast
 
+> ne
 Watson saunters northeast, and you drift along behind.
 
 Bathroom
@@ -3191,25 +3185,25 @@ leads back southwest.
 
 You keep your medicines in a mirrored cabinet to one side.
 
-> Bathroom                                        [=====================         ]
 Exits: southwest
 
+> turn on sink
 Watson paws at the sink, and it switches on!
 
 Water rushes through the sink.
 
-> Bathroom                                        [=====================         ]
 Exits: southwest
 
+> turn on bath
 Watson paws at the bath, and it switches on!
 
 Water pours from the bathtub faucet, straight down the drain.
 
 Water rushes through the sink.
 
-> Bathroom                                        [=====================         ]
 Exits: southwest
 
+> flush toilet
 Watson noses at the handle, and the toilet does its best to flush. But something
 seems to be clogging it. These old pipes jam up so easily.
 
@@ -3217,18 +3211,18 @@ Water pours from the bathtub faucet, straight down the drain.
 
 Water rushes through the sink.
 
-> Bathroom                                        [=====================         ]
 Exits: southwest
 
+> drink bath
 Watson laps happily at the bath.
 
 Water pours from the bathtub faucet, straight down the drain.
 
 Water rushes through the sink.
 
-> Bathroom                                        [=====================         ]
 Exits: southwest
 
+> mirror
 More a functional piece of furniture than a beautiful one, it works as both a
 full-length mirror and a place to keep your medicines and toiletries. You don’t
 normally lock it, though; what would be the point, in your own bathroom?
@@ -3241,9 +3235,9 @@ Water pours from the bathtub faucet, straight down the drain.
 
 Water rushes through the sink.
 
-> Bathroom                                        [=====================         ]
 Exits: southwest
 
+> look behind mirror
 Watson snuffles around behind the standing mirror and turns up an earring. He
 looks up at you proudly.
 
@@ -3251,9 +3245,9 @@ Water pours from the bathtub faucet, straight down the drain.
 
 Water rushes through the sink.
 
-> Bathroom                                        [=====================         ]
 Exits: southwest
 
+> put truncheon behind mirror
 Watson manages to work the handle end into the little gap behind the cabinet,
 leaving it sticking out at an odd angle.
 
@@ -3261,9 +3255,9 @@ Water pours from the bathtub faucet, straight down the drain.
 
 Water rushes through the sink.
 
-> Bathroom                                        [=======================       ]
 Exits: southwest
 
+> push truncheon
 Watson gives the truncheon a vigorous tug, and for a moment, it seems like
 nothing will happen. But he tugs again, and the cabinet wavers—and slowly begins
 to topple forward! He darts out of the way as the whole cabinet comes crashing
@@ -3277,18 +3271,18 @@ Water rushes through the sink.
 
 Your score has gone up by one point.
 
-> Bathroom                                        [=======================       ]
 Exits: southwest
 
+> push mirror
 That seems a bit gratuitous at this point, doesn’t it?
 
 Water pours from the bathtub faucet, straight down the drain.
 
 Water rushes through the sink.
 
-> Bathroom                                        [=======================       ]
 Exits: southwest
 
+> mirror
 More a functional piece of furniture than a beautiful one, it works as both a
 full-length mirror and a place to keep your medicines and toiletries. Or at
 least, it used to.
@@ -3299,9 +3293,9 @@ Water pours from the bathtub faucet, straight down the drain.
 
 Water rushes through the sink.
 
-> Bathroom                                        [=======================       ]
 Exits: southwest
 
+> get chest
 Watson opens his mouth and carefully plucks the medicine chest out of the
 shattered mirror.
 
@@ -3309,9 +3303,9 @@ Water pours from the bathtub faucet, straight down the drain.
 
 Water rushes through the sink.
 
-> Master suite                                    [=======================       ]
-Exits: north west northeast
+Exits: southwest
 
+> sw
 Watson saunters southwest, and you drift along behind.
 
 Master suite
@@ -3322,9 +3316,9 @@ to the north leads out to the rest of the house.
 Your racks of clothes stand in disarray, methodically ransacked by the
 constables.
 
-> Top of the stairs                               [=======================       ]
-Exits: (north) south west northwest
+Exits: north west northeast
 
+> n
 Watson saunters out the suite door, and you drift along behind.
 
 Top of the stairs
@@ -3337,15 +3331,15 @@ northwest, and the stairs lead back down to the west.
 
 You see a smoke detector here.
 
-> Top of the stairs                               [=======================       ]
 Exits: (north) south west northwest
 
+> throw chest down
 Bracing his paws on the banister, Watson flings the medicine chest over the
 edge! The box tumbles downward, landing with a soft flump on the mattress.
 
-> Bottom of the stairs                            [=======================       ]
-Exits: north south east (west)
+Exits: (north) south west northwest
 
+> down
 Watson saunters down the stairs, and you drift along behind.
 
 Bottom of the stairs
@@ -3363,14 +3357,14 @@ Your telephone hangs in its niche on the north wall.
 
 Various old newspapers are stacked in the corner.
 
-> Bottom of the stairs                            [=======================       ]
 Exits: north south east (west)
 
+> get chest
 Watson opens his mouth and carefully plucks the medicine chest off the mattress.
 
-> Top of the stairs                               [=======================       ]
-Exits: (north) south west northwest
+Exits: north south east (west)
 
+> up
 Watson saunters up the stairs, and you drift along behind.
 
 Top of the stairs
@@ -3383,9 +3377,9 @@ northwest, and the stairs lead back down to the west.
 
 You see a smoke detector here.
 
-> Upstairs hall                                   [=======================       ]
-Exits: southeast up
+Exits: (north) south west northwest
 
+> nw
 Watson saunters northwest, and you drift along behind.
 
 Upstairs hall
@@ -3397,9 +3391,9 @@ it’s been properly repainted and made livable, at least.
 The trapdoor to the attic is open, the collapsible steps leading up to the
 south.
 
-> Attic, west                                     [=======================       ]
-Exits: northeast southeast down
+Exits: southeast up
 
+> up
 Watson clambers up the attic stairs, and you drift along behind.
 
 Attic, west
@@ -3418,9 +3412,9 @@ leap to it, from the right starting point.
 Off to the southeast, you can clearly see a grandfather clock. Watson might be
 able to leap to it, from the right starting point.
 
-> Attic, north                                    [=======================       ]
-Exits: southwest southeast
+Exits: northeast southeast down
 
+> ne
 Watson saunters northeast, and you drift along behind.
 
 Attic, north
@@ -3438,24 +3432,27 @@ Your old victrola rests under the dumbwaiter.
 Off to the southeast, you can clearly see an organ. Watson might be able to leap
 to it, from the right starting point.
 
-> Attic, north                                    [=======================       ]
 Exits: southwest southeast
 
+> push wheel
 The dumbwaiter sinks out of sight.
 
-> Attic, north                                    [=======================       ]
 Exits: southwest southeast
 
+> push wheel
 The cables glide along their tracks, sending the dumbwaiter to the ground floor.
 
-> Attic, north                                    [=======================       ]
 Exits: southwest southeast
 
+> put chest in shaft
 Watson drops the medicine chest into the shaft, and it falls away into the
 darkness. A moment later, you hear a clang from below. With, perhaps, a hint of
 cracking glass as well?
 
-> (attempting to go southwest)
+Exits: southwest southeast
+
+> go to kitchen
+(attempting to go southwest)
 Watson saunters southwest, and you drift along behind.
 
 Attic, west
@@ -3475,7 +3472,6 @@ Off to the southeast, you can clearly see a grandfather clock. Watson might be
 able to leap to it, from the right starting point.
 
 (attempting to go down)
-
 Watson clambers down the attic stairs, and you drift along behind.
 
 Upstairs hall
@@ -3518,7 +3514,6 @@ Your telephone hangs in its niche on the north wall.
 Various old newspapers are stacked in the corner.
 
 (attempting to go north)
-
 Watson saunters through the shredded police tape, and you drift along behind.
 
 Dining room
@@ -3541,16 +3536,13 @@ found it cozy rather than cramped. A big door leads west to the dining room, and
 a smaller one leads southeast to your new reception room; the rest of the house
 is back to the south.
 
-Kitchen                                         [=======================       ]
-Exits: south west southeast
-
 The dumbwaiter is here, with a broken medicine chest and a tape recorder in it.
 
 The stove is tucked away to one side. On the stove is some mail.
 
-> Kitchen                                         [=======================       ]
 Exits: south west southeast
 
+> chest
 You keep your various medicines locked in a little frosted-glass box, just in
 case anyone tries to tamper with them—you’ve seen the effects of that sort of
 thing far too often in your work. After that fall, it’s not securing anything
@@ -3558,15 +3550,15 @@ any more.
 
 Your pill box is hidden inside.
 
-> Kitchen                                         [=======================       ]
 Exits: south west southeast
 
+> get pills
 Watson opens his mouth and carefully plucks the pill box out of the broken
 medicine chest.
 
-> Dining room                                     [=======================       ]
-Exits: south east
+Exits: south west southeast
 
+> w
 Watson saunters west, and you drift along behind.
 
 Dining room
@@ -3580,7 +3572,10 @@ covers the table.
 
 Davis flips one of the sheets over, tapping her pen against the table.
 
-> Watson has to nudge Davis’s hand a few times with the pill box before she hears
+Exits: south east
+
+> give pills to davis
+Watson has to nudge Davis’s hand a few times with the pill box before she hears
 it rattling. “What’s this? Is this—are these the pills Phillips was turning the
 bedroom upside down for?” She actually laughs as he drops it in her hand. “How
 did you find these before he did? Such a good dog!” She opens the box and counts
@@ -3589,9 +3584,7 @@ anyone tampered with them.” They didn’t, of course; Emily is the only one to
 have the opportunity, and she’s too diligent to make that mistake. But this will
 confirm it, and rule her out once and for all.
 
-Dining room                                     [=========================     ]
-Exits: south east
-
+* *** Finale ***
 Some time later, Davis is back in the dining room, going over the files. “This
 doesn’t make sense. There were only four people with a motive and an
 opportunity...but no evidence pointing toward any of them. How else could it
@@ -3605,9 +3598,9 @@ notes.
 
 Your score has gone up by one point.
 
-> Dining room                                     [=========================     ]
 Exits: south east
 
+> look
 Dining room
 This is the proper place to share a meal with someone, with plenty of windows, a
 big table, and a lovely chandelier. Display cabinets along the walls show off
@@ -3619,9 +3612,9 @@ All three constables have convened around the table.
 Biddlecombe and Davis are having a heated debate about the evidence. Phillips is
 off in the corner, running his hands through his hair.
 
-> Bottom of the stairs                            [=========================     ]
-Exits: north south east (west)
+Exits: south east
 
+> s
 Watson saunters through the shredded police tape, and you drift along behind.
 
 Bottom of the stairs
@@ -3638,9 +3631,9 @@ Your telephone hangs in its niche on the north wall.
 
 Various old newspapers are stacked in the corner.
 
-> Top of the stairs                               [=========================     ]
-Exits: north south west northwest
+Exits: north south east (west)
 
+> up
 Watson saunters up the stairs, and you drift along behind.
 
 Top of the stairs
@@ -3653,9 +3646,9 @@ northwest, and the stairs lead back down to the west.
 
 You see a smoke detector here.
 
-> Library                                         [=========================     ]
-Exits: south
+Exits: north south west northwest
 
+> n
 Watson saunters through the library door, and you drift along behind.
 
 Library
@@ -3669,36 +3662,39 @@ The dumbwaiter used to run through here, but you covered over the shaft when you
 turned the room into a library. There was just too much risk of something
 spilling out.
 
-> Library                                         [=========================     ]
 Exits: south
 
+> drapes
 Apparently they’re an odd mixture of purple, orange, and red that clashes
 horribly with the shelves, but to you, they go together very well.
 
-> Library                                         [=========================     ]
 Exits: south
 
+> shelves
 The shelves line every wall, leaving no real place to work—your desk, after all,
 is hidden in the niche behind them. All you have to do now is open it.
 
-> Library                                         [=========================     ]
 Exits: south
 
+> open them
 It’s very simple, if you know the trick. You direct Watson to pull one
 particular book off the shelf, then a second, then a third—and as the last one
 falls, the cases swing silently outward to reveal your desk in the niche behind
 them. It’s still covered with those ledgers and files from last week; you kept
 meaning to get back to that investigation...
 
-> Library                                         [=========================     ]
 Exits: south
 
+> desk
 It is, perhaps, not truly necessary to hide your desk behind a bookcase. But
 when you came across a mechanism like this in one of your investigations, you
 simply couldn’t resist. Now your workspace is tucked away behind the shelves
 when it’s not being used.
 
-> Dozens of records and ledgers from the constabulary are laid out here, carefully
+Exits: south
+
+> ledgers
+Dozens of records and ledgers from the constabulary are laid out here, carefully
 arranged so you can compare them side by side. This isn’t the sort of business
 you normally do, but the Inspector had remarked a few weeks back that their
 auditors couldn’t make heads nor tails of the discrepancies, and you thought it
@@ -3718,28 +3714,25 @@ authority to cause that sort of snarl...
 
 Your score has gone up by one point.
 
-Library                                         [==========================    ]
 Exits: south
 
-> Library                                         [==========================    ]
-Exits: south
-
+> bark
 Watson lets out a loud bark that echoes through the house, then looks up at you
 for approval, tail wagging happily.
 
 Off in the dining room, Davis steadfastly ignores the sound. She’s investigating
 a murder now, and can’t be distracted by barking dogs!
 
-> Library                                         [==========================    ]
 Exits: south
 
+> close shelves
 Watson tugs as hard as he can, but it scarcely moves—it takes significantly more
 force to close than to open. But the counterweighting does make it swing open oh
 so beautifully.
 
-> Top of the stairs                               [==========================    ]
-Exits: north south west northwest
+Exits: south
 
+> s
 Watson saunters through the library door, and you drift along behind.
 
 Top of the stairs
@@ -3752,9 +3745,9 @@ northwest, and the stairs lead back down to the west.
 
 You see a smoke detector here.
 
-> Bottom of the stairs                            [==========================    ]
-Exits: north south east (west)
+Exits: north south west northwest
 
+> down
 Watson saunters down the stairs, and you drift along behind.
 
 Bottom of the stairs
@@ -3771,7 +3764,10 @@ Your telephone hangs in its niche on the north wall.
 
 Various old newspapers are stacked in the corner.
 
-> Watson saunters through the shredded police tape, and you drift along behind.
+Exits: north south east (west)
+
+> n
+Watson saunters through the shredded police tape, and you drift along behind.
 
 Dining room
 This is the proper place to share a meal with someone, with plenty of windows, a
@@ -3791,15 +3787,11 @@ But this isn’t time to panic; it’s time to act.
 
 You know exactly where he’s going to be: in the library, destroying the ledgers.
 You have a chance. Push him hard enough and he’ll slip—and give you the evidence
-
-Dining room                                     [==========================    ]
-Exits: south east
-
 you need for a conviction.
 
-> Kitchen                                         [==========================    ]
-Exits: south west southeast
+Exits: south east
 
+> e
 Watson saunters east, and you drift along behind.
 
 Kitchen
@@ -3812,14 +3804,14 @@ The dumbwaiter is here, with a broken medicine chest and a tape recorder in it.
 
 The stove is tucked away to one side. On the stove is some mail.
 
-> Kitchen                                         [==========================    ]
 Exits: south west southeast
 
+> record
 The recorder clicks on, and begins to record.
 
-> Dining room                                     [==========================    ]
-Exits: south east
+Exits: south west southeast
 
+> w
 Watson saunters west, and you drift along behind.
 
 Dining room
@@ -3830,9 +3822,9 @@ kitchen and south to the rest of the house.
 
 Constable Davis’s seat stands conspicuously vacant.
 
-> Bottom of the stairs                            [==========================    ]
-Exits: north south east (west)
+Exits: south east
 
+> s
 Watson saunters through the shredded police tape, and you drift along behind.
 
 Bottom of the stairs
@@ -3849,9 +3841,9 @@ Your telephone hangs in its niche on the north wall.
 
 Various old newspapers are stacked in the corner.
 
-> Top of the stairs                               [==========================    ]
-Exits: north south west northwest
+Exits: north south east (west)
 
+> up
 Watson saunters up the stairs, and you drift along behind.
 
 Top of the stairs
@@ -3864,9 +3856,9 @@ northwest, and the stairs lead back down to the west.
 
 You see a smoke detector here.
 
-> Library                                         [==========================    ]
-Exits: south
+Exits: north south west northwest
 
+> n
 Watson saunters through the library door, and you drift along behind.
 
 Library
@@ -3883,19 +3875,19 @@ The dumbwaiter used to run through here, but you covered over the shaft when you
 turned the room into a library. There was just too much risk of something
 spilling out.
 
-> Library                                         [==========================    ]
 Exits: south
 
+> push wheel
 The cables glide along their tracks, sending the dumbwaiter to the cellar.
 
-> Library                                         [==========================    ]
 Exits: south
 
+> push wheel
 The cables glide along their tracks, sending the dumbwaiter to the ground floor.
 
-> Library                                         [============================  ]
 Exits: south
 
+> push wheel
 The cables glide along their tracks, sending the dumbwaiter to the first floor.
 
 Barely a moment later the door slams open and Inspector Hughes strides in, his
@@ -3905,9 +3897,9 @@ find a single bloody thing. It’s time to take care of this myself.”
 
 Your score has gone up by one point.
 
-> Library                                         [============================  ]
 Exits: south
 
+> hughes
 You have a long history with Basil Hughes, and it’s in no small part thanks to
 your investigations that he’s risen through the ranks from Constable to
 Inspector. He has his eye on Chief Inspector now, but really, well...the man is
@@ -3917,9 +3909,9 @@ every bit the image of the modern constabulary.
 
 “Now, what have we here?” Hughes sets his briefcase on the desk.
 
-> Library                                         [============================  ]
 Exits: south
 
+> bite hughes
 You’ve trained Watson well not to get aggressive with people, but he’s smart
 enough to understand the anger behind that command—he leaps at the Inspector
 with a growl, teeth bared to bite! Hughes does his best to fend him off, but his
@@ -3928,16 +3920,17 @@ Inverness coat now has some dramatic new tears.
 “Shoo! Get out of here! Go!” With a hiss of displeasure, Hughes turns back to
 the desk.
 
-> Library                                         [============================  ]
 Exits: south
+
+> undo
 
 Undoing the last turn (bite hughes).
 
 Library
 
-> Library                                         [============================  ]
 Exits: south
 
+> kiss hughes
 Watson needs very little encouragement to throw himself upon the Inspector,
 lavishing him with distinctly unwanted canine affection. Hughes tries his
 hardest to push him away, but Watson is undeterred, and by the time the
@@ -3946,16 +3939,17 @@ Inspector fights free his face and hands are thoroughly wet.
 “Shoo! Get out of here! Go!” With a hiss of displeasure, Hughes turns back to
 the desk.
 
-> Library                                         [============================  ]
 Exits: south
+
+> undo
 
 Undoing the last turn (kiss hughes).
 
 Library
 
-> Library                                         [============================  ]
 Exits: south
 
+> vomit
 You’ve trained Watson well not to do such things in the house, but you’ve also
 trained him to recognise an emergency—and this certainly qualifies. Hughes
 freezes in his work as he hears the telltale sound behind him.
@@ -3963,16 +3957,17 @@ freezes in his work as he hears the telltale sound behind him.
 “Shoo! Get out of here! Go!” With a hiss of displeasure, Hughes turns back to
 the desk.
 
-> Library                                         [============================  ]
 Exits: south
+
+> undo
 
 Undoing the last turn (vomit).
 
 Library
 
-> Library                                         [============================  ]
 Exits: south
 
+> get briefcase
 The moment Hughes’s back is turned, Watson reaches up and gives his briefcase a
 mighty shove, sending it to the floor. The Inspector whirls around a moment too
 late to stop him from snatching it up, and he’s off on a merry chase!
@@ -3983,16 +3978,16 @@ manages to snag his case back, puffing and panting for breath.
 “Shoo! Get out of here! Go!” With a hiss of displeasure, Hughes turns back to
 the desk.
 
-> Library                                         [============================  ]
 Exits: south
 
+> get briefcase
 “Bad!” Hughes shoves Watson away before he can get hold of the case again.
 
 Hughes flips through another ledger, grumbling under his breath.
 
-> Library                                         [============================  ]
 Exits: south
 
+> jump on desk
 Watson’s tail wags for a moment, and the Inspector has only a moment of warning
 before he leaps up onto the desk, papers flying everywhere! Hughes shouts
 something incoherent and tries to push him aside, his work now scattered all
@@ -4001,9 +3996,9 @@ over the room.
 “Wretched mutt! You’re as bad as she was!” Hughes visibly composes himself for a
 moment before going back to his task.
 
-> Library                                         [==============================]
 Exits: south
 
+> bark
 Positioning himself right behind Hughes’s work, Watson waits for the perfect
 moment to let out a thunderous bark. The Inspector jumps, clenching his hand so
 hard on a pen that it snaps in half.
@@ -4023,9 +4018,9 @@ room.
 
 Your score has gone up by one point.
 
-> Library                                         [==============================]
 Exits: south
 
+> look
 Library
 Nobody else ever likes this room. They say the carpets and the drapes clash
 horribly with the bookshelves, and they can never find what they’re looking for.
@@ -4043,9 +4038,9 @@ You can hear the Inspector storming out, almost bowling over Constable Davis in
 the process. She tries in vain to apologise as he slams the front door behind
 him.
 
-> Top of the stairs                               [==============================]
-Exits: north south west northwest
+Exits: south
 
+> s
 Watson saunters through the library door, and you drift along behind.
 
 Top of the stairs
@@ -4060,9 +4055,9 @@ You see a smoke detector here.
 
 Davis makes her way from the reception room to the kitchen.
 
-> Bottom of the stairs                            [==============================]
-Exits: north south east (west)
+Exits: north south west northwest
 
+> down
 Watson saunters down the stairs, and you drift along behind.
 
 Bottom of the stairs
@@ -4081,9 +4076,9 @@ Various old newspapers are stacked in the corner.
 
 Davis makes her way from the kitchen to the dining room.
 
-> Dining room                                     [==============================]
-Exits: south east
+Exits: north south east (west)
 
+> n
 Watson saunters through the shredded police tape, and you drift along behind.
 
 Dining room
@@ -4096,9 +4091,9 @@ Constable Davis is here, looking rather frazzled.
 
 Davis settles back into her chair and returns to work.
 
-> Kitchen                                         [==============================]
-Exits: south west southeast
+Exits: south east
 
+> e
 Watson saunters east, and you drift along behind.
 
 Kitchen
@@ -4111,26 +4106,26 @@ The dumbwaiter shaft is set into the north wall.
 
 The stove is tucked away to one side. On the stove is some mail.
 
-> Kitchen                                         [==============================]
 Exits: south west southeast
 
+> push wheel
 The dumbwaiter sinks into sight, bringing you a broken medicine chest and a tape
 recorder.
 
-> Kitchen                                         [==============================]
 Exits: south west southeast
 
+> off
 The recorder clicks off.
 
-> Kitchen                                         [==============================]
 Exits: south west southeast
 
+> get recorder
 Watson opens his mouth and carefully plucks the tape recorder out of the
 dumbwaiter.
 
-> Dining room                                     [==============================]
-Exits: south east
+Exits: south west southeast
 
+> w
 Watson saunters west, and you drift along behind.
 
 Dining room
@@ -4144,7 +4139,10 @@ covers the table.
 
 Davis sets the last sheet aside, turning to the next.
 
-> “Hm? What’s’at?” Davis sounds exhausted as she looks down at the recorder. “Ah,
+Exits: south east
+
+> give recorder to davis
+“Hm? What’s’at?” Davis sounds exhausted as she looks down at the recorder. “Ah,
 you found this for us. Thanks, dog.” She checks the tape, then rewinds it and
 taps ‘play’.
 
@@ -4164,9 +4162,6 @@ and cross all the t’s, and with a confession like that, Hughes has no way to
 wiggle out of it.
 
 The front door slams, and you’re left alone in the silence. Davis will get the
-
-The End                                         [==============================]
-
 credit, of course, but you don’t mind that; you’ve had plenty of glory in your
 time. Someone else can get the accolades for solving your own murder. And Nigel
 will take good care of Watson; your will is explicit on that point.
@@ -4184,7 +4179,9 @@ Would you like to:
      QUIT the program,
      or RESTART from the beginning?
 
-> You currently have 18 points out of a maximum of 18, in 334 turns.
+> score
+
+You currently have 18 points out of a maximum of 18, in 334 turns.
 
 You’ve earned points for:
 - Finding a way to interact with the world
@@ -4204,7 +4201,6 @@ You’ve earned points for:
 - Exculpating your companion Emily
 - Discovering the real identity of the murderer
 - Hiding a tape recorder
-
 - Recording Hughes’s confession
 
 Your work here is finished.
@@ -4216,23 +4212,23 @@ Would you like to:
      QUIT the program,
      or RESTART from the beginning?
 
-> > Dining room                                     [==============================]
-Exits: south east
+> * *** Metapuzzle secrets ***
+> undo
 
 Undoing the last turn (give recorder to davis).
 
 Dining room
 
-> Dining room                                     [==============================]
 Exits: south east
 
+> drop recorder
 Watson sets the tape recorder carefully on the ground.
 
 Davis pulls out another page, cross-checking it against the last.
 
-> Kitchen                                         [==============================]
-Exits: south west southeast
+Exits: south east
 
+> find mail
 Watson leaps up and sprints off in hot pursuit of the mail, heading for the
 kitchen.
 
@@ -4249,12 +4245,15 @@ The dumbwaiter is here, with a broken medicine chest in it.
 
 The stove is tucked away to one side. On the stove is some mail.
 
-> Kitchen                                         [==============================]
 Exits: south west southeast
 
+> get mail
 Watson opens his mouth and carefully plucks the mail off the stove.
 
-> Watson leaps up and sprints off in hot pursuit of the bath, heading for the
+Exits: south west southeast
+
+> find bath
+Watson leaps up and sprints off in hot pursuit of the bath, heading for the
 bathroom.
 
 (attempting to go west)
@@ -4274,7 +4273,6 @@ covers the table.
 Davis sets the last sheet aside, turning to the next.
 
 (attempting to go south)
-
 Watson saunters through the shredded police tape, and you drift along behind.
 
 Bottom of the stairs
@@ -4296,7 +4294,6 @@ Watson saunters up the stairs, and you drift along behind.
 
 Top of the stairs
 The afternoon light coming through the big windows makes the first floor look so
-
 cheerful and pleasant, and not at all like the place someone fell to her death
 just last night. It’s better that way; you’ve never wanted this house to look
 dreary by any stretch of the imagination. Identical doors lead north and south
@@ -4319,9 +4316,6 @@ constables.
 (attempting to go northeast)
 Watson saunters northeast, and you drift along behind.
 
-Bathroom                                        [==============================]
-Exits: southwest
-
 Bathroom
 Watson is far more excited about this room than you are—it’s normally off-limits
 to him, and the sink, bath, and toilet are all mysterious and new. The only exit
@@ -4337,25 +4331,28 @@ Water pours from the bathtub faucet, straight down the drain.
 
 Water rushes through the sink.
 
-> Bathroom                                        [==============================]
 Exits: southwest
 
+> turn on bath
 Watson paws at the bath, but it is already on.
 
 Water pours from the bathtub faucet, straight down the drain.
 
 Water rushes through the sink.
 
-> Bathroom (in the bath)                          [==============================]
 Exits: southwest
 
+> get in bath
 Watson launches himself into the bath, and you follow along behind.
 
 Water pours from the bathtub faucet, thoroughly soaking Watson’s fur.
 
 Water rushes through the sink.
 
-> (attempting to go southwest)
+Exits: southwest
+
+> go to reception room
+(attempting to go southwest)
 (first attempting to get out of the bath)
 Watson leaps out of the bath.
 
@@ -4438,22 +4435,21 @@ Watson saunters southeast, and you drift along behind.
 Reception room
 You designed this room specifically for uninvited guests. Back when the front
 door was at the west end of the house, they’d have to wait awkwardly outside
-
-Reception room                                  [==============================]
-Exits: (south) northwest
-
 until you had the sitting room or dining room in order. Now, there’s a place to
 sit and take tea with them at a moment’s notice—and admire the framed case
 reports on the wall—and that can make witnesses ever so much more willing to
 open up. What used to be the back door of the house leads northwest to the
 kitchen, and the new front door leads out to the south.
 
-> Reception room                                  [==============================]
-Exits: south northwest
+Exits: (south) northwest
 
+> open door
 Watson noses the front door open.
 
-> Watson leaps up and sprints off in hot pursuit of the calendula, heading for the
+Exits: south northwest
+
+> find calendulas
+Watson leaps up and sprints off in hot pursuit of the calendula, heading for the
 northeast bed.
 
 (attempting to go south)
@@ -4494,16 +4490,12 @@ On the garden chair are a pair of gardening gloves.
 Watson saunters northeast, and you drift along behind.
 
 Tea garden, northeast
-
-Tea garden, northeast                           [==============================]
-Exits: west southwest southeast
-
 The garden bed under the old walls is just as neat and tidy as ever, as it
 should be. The calendula is flourishing, ready for your next cup of tea.
 
-> Tea garden, northeast                           [==============================]
-Exits: west southwest southeast down
+Exits: west southwest southeast
 
+> dig calendulas
 Normally, Watson would be too well-trained to obey an order like that. He knows
 perfectly well that your garden is not for digging. And yet...he knows that
 there’s something odd here, different from all the rest.
@@ -4514,9 +4506,9 @@ on itself and sinks down into something underneath! This must be where the old
 cistern was, long ago; you’d been told the house had one when you bought it, but
 you never saw it yourself.
 
-> Old cistern                                     [==============================]
-Exits: up down
+Exits: west southwest southeast down
 
+> down
 Watson clambers down the messy tunnel, and you drift along behind.
 
 Old cistern
@@ -4529,9 +4521,9 @@ A messy hole leads back to the garden above.
 
 Your score has gone up by one point.
 
-> Ancient chamber                                 [==============================]
-Exits: up
+Exits: up down
 
+> down
 Watson clambers down, and you drift along behind.
 
 Ancient chamber
@@ -4544,14 +4536,14 @@ And yet somehow it does, fifteen feet wide and round like a dome, the ancient
 walls crumbling with lichen. A roughly-hewn slab of stone stands right in the
 middle.
 
-> Ancient chamber (on the stone slab)             [==============================]
 Exits: up
 
+> get on altar
 Watson leaps up onto the stone slab.
 
-> Ancient chamber (on the stone slab)             [==============================]
 Exits: up
 
+> bite mail
 You’re not quite sure what to expect when Watson sinks his teeth into the mail.
 Some part of you remains convinced that it’s all nonsense. Another part is being
 steadily forced to accept the existence of ghosts, which you have steadfastly
@@ -4569,12 +4561,15 @@ that your story isn’t quite yet reaching its end.
 
 Your score has gone up by one point.
 
-> Ancient chamber (on the stone slab)             [==============================]
 Exits: up
 
+> drop mail
 Watson sets the mail carefully on the stone slab.
 
-> Watson leaps up and sprints off in hot pursuit of Constable Davis, heading for
+Exits: up
+
+> find davis
+Watson leaps up and sprints off in hot pursuit of Constable Davis, heading for
 the dining room.
 
 (attempting to go up)
@@ -4636,7 +4631,6 @@ without all the sun and the rain, between the front door to the north and the
 lawn to the south.
 
 (attempting to go north)
-
 Watson saunters through the front door, and you drift along behind.
 
 Reception room
@@ -4659,9 +4653,6 @@ is back to the south.
 
 The dumbwaiter is here, with a broken medicine chest in it.
 
-Dining room                                     [==============================]
-Exits: south east
-
 The stove is tucked away to one side.
 
 (attempting to go west)
@@ -4680,14 +4671,17 @@ covers the table.
 
 Davis pulls out another page, cross-checking it against the last.
 
-> Dining room                                     [==============================]
 Exits: south east
 
+> get recorder
 Watson opens his mouth and carefully scoops up the tape recorder.
 
 Davis looks for her biscuit, realises she’s run out, and sighs.
 
-> “Hm? What’s’at?” Davis sounds exhausted as she looks down at the recorder. “Ah,
+Exits: south east
+
+> give recorder to davis
+“Hm? What’s’at?” Davis sounds exhausted as she looks down at the recorder. “Ah,
 you found this for us. Thanks, dog.” She checks the tape, then rewinds it and
 taps ‘play’.
 
@@ -4707,8 +4701,6 @@ and cross all the t’s, and with a confession like that, Hughes has no way to
 wiggle out of it.
 
 The front door slams, and you’re left alone in the silence. Davis will get the
-
-The End                                         [==============================]
 credit, of course, but you don’t mind that; you’ve had plenty of glory in your
 time. Someone else can get the accolades for solving your own murder.
 
@@ -4731,12 +4723,13 @@ You scored 20 points out of 20.
 Would you like to:
      UNDO the last move,
      RESTORE a saved position,
-
      see your SCORE,
      QUIT the program,
      or RESTART from the beginning?
 
-> You currently have 20 points out of a maximum of 20, in 372 turns.
+> score
+
+You currently have 20 points out of a maximum of 20, in 372 turns.
 
 You’ve earned points for:
 - Finding a way to interact with the world
@@ -4756,7 +4749,6 @@ You’ve earned points for:
 - Exculpating your companion Emily
 - Discovering the real identity of the murderer
 - Hiding a tape recorder
-
 - Recording Hughes’s confession
 - Discovering the secrets buried under your garden (?)
 - Performing a Druidic ritual (?!)
