@@ -11,10 +11,17 @@ test/regtest/%.zblorb: src/dialogc test/regtest/%.dg stdlib.dg
 
 test: test/regtest/cloak.zblorb src/dgdebug
 	bin/regtest.py -v --game test/regtest/cloak.zblorb --interpreter dfrotz test/regtest/cloak.regtest
-	make --directory=./test/gosling test clean
-	make --directory=./test/impossible test clean
-	make --directory=./test/simple all
-	make --directory=./test/unit test
+	$(MAKE) --directory=./test/gosling test clean
+	$(MAKE) --directory=./test/impossible test clean
+	$(MAKE) --directory=./test/simple all
+	$(MAKE) -C test/unit test
 	bin/test.py doc
 
-.PHONY:		test src/dialogc src/dgdebug all
+distclean: clean
+
+clean:
+	$(MAKE) -C src clean
+	$(MAKE) -C test/gosling clean
+	$(MAKE) -C test/impossible clean
+
+.PHONY:	test clean distclean src/dialogc src/dgdebug all
