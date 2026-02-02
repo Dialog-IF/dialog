@@ -1000,17 +1000,6 @@ static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an,
 		return 1;
 	}
 
-	if(an->predicate->builtin == BI_QUIT_MINUS_N) {
-		ci = add_instr(I_QUIT);
-
-		end_routine_cl(cl);
-		if(tail == NO_TAIL) {
-			// we have to put the subsequent dead code somewhere
-			begin_routine(make_routine_id());
-		}
-		return 1;
-	}
-
 	if(an->predicate->builtin == BI_RESTART) {
 		ci = add_instr(I_RESTART);
 		end_routine_cl(cl);
