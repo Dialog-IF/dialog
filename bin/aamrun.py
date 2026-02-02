@@ -7,14 +7,13 @@ from sys import argv, exit, stderr
 import subprocess as sp
 
 USAGE = f'''Usage: {argv[0]} [file.aastory]
-Attempts to play an .aastory file in the Node interpreter,
-even with varying install locations.'''
+Attempts to play an .aastory file in the Node interpreter, despite varying install locations.'''
 
 if len(argv) != 2 or argv[1] in {'--help', '-h'}:
 	print(USAGE, file=stderr)
 	exit(1)
 
-BASE = Path(__file__).parent.parent # Root of the repository
+BASE = Path(__file__).resolve().parent.parent # Root of the repository
 OPTIONS = [
 	BASE / 'aamachine' / 'src' / 'js' / 'nodefrontend.js', # Cloned into the repo for automated builds
 	BASE.parent / 'Aamachine' / 'src' / 'js' / 'nodefrontend.js', # On my local machine
@@ -22,7 +21,10 @@ OPTIONS = [
 
 for path in OPTIONS:
 	if path.exists():
-		sp.run(['node', path, argv[1]])
+		sp.run(['node', path, '-s', '1234', argv[1]])
 		exit(0)
 print('ERROR: Could not find nodefrontend.js!', file=stderr)
+print(f'\tCurrent: {__file__}', file=stderr)
+for path in OPTIONS:
+	print(f'\tTried: {path}', file=stderr)
 exit(2)
