@@ -1,0 +1,95 @@
+[Z] Alpha
+[ZA]
+[A]
+An Interactive Fiction
+An interactive fiction by Anonymous.
+Release 1. Serial number <SERIAL>.
+<COMPILER>. <LIBRARY>
+
+Alpha
+This is room alpha.
+
+> w
+[Z] Delta
+[Z]
+You walk west.
+
+Delta
+This is room delta.
+
+> sw
+[Z] Epsilon
+[Z]
+You walk southwest.
+
+Epsilon
+This is room epsilon.
+
+You see a shiny treasure here.
+
+> go to zeta
+[Z] Zeta
+[Z]
+(northeast)
+
+Delta
+
+(east)
+
+Alpha
+
+(north)
+
+Beta
+
+(north)
+
+Zeta
+This is room zeta.
+
+> undo
+[Z] Epsilon
+[Z]
+Undoing the last turn (go to zeta).
+Epsilon
+
+> get treasure
+[Z] Epsilon
+[Z]
+You take the shiny treasure.
+
+> go to zeta
+[Z] Alpha
+[Z]
+(northeast)
+
+Delta
+
+(east)
+
+Alpha
+
+A mysterious force prevents you from passing!
+
+Because something dramatic happened, your movement was cut short.
+> undo
+[Z] Epsilon
+[Z]
+Undoing the last turn (go to zeta).
+Epsilon
+
+> go to beta
+[Z] Alpha
+[Z]
+(northeast)
+
+Delta
+
+(east)
+
+Alpha
+
+A mysterious force prevents you from passing!
+
+Because something dramatic happened, your movement was cut short.
+>

@@ -999,11 +999,19 @@
 (describe action [look])
 	look around
 
+%% We want to reset (moving long distances) just before the final [look]
+(before [look])
+	(last step of movement)
+	(now) ~(moving long distances)
+	(now) ~(last step of movement)
+
 (perform [look])
 	(current player $Player)
 	($Player is $Rel $Loc)
 	(div @roomheader) (location headline)
-	(if) (player can see) (then)
+	(if) (moving long distances) (then)
+		%% No room description, keep it brief
+	(elseif) (player can see) (then)
 		(current scope ceiling $Ceil)
 		(look $Ceil)
 		(make appearances $Rel $Loc)
@@ -2682,7 +2690,7 @@
 			(tick)
 			(par)
 		}
-		(now) ~(moving long distances) %% And switch back for the last step
+		(now) (last step of movement) %% And switch back for the last step
 		(try [go $Final])
 	(else)
 		You don't know how to get to (the $Room) from here.
@@ -2984,6 +2992,11 @@
 		(endif)
 	(endif)
 
+%% If this is a step in a long-distance movement, keep the reporting short and sweet
+(narrate leaving $ $Dir)
+	(moving long distances)
+	\( (name $Dir) \) (line)
+
 (narrate leaving $Room $Dir)
 	You
 	(if) ($Dir is one of [#up #down]) (then)
@@ -3030,6 +3043,11 @@
 
 (prevent [leave $Room $Dir by $])
 	(prevent [leave $Room $Dir])
+
+%% As above
+(narrate leaving $ $Dir by $)
+	(moving long distances)
+	\( (name $Dir) \) (line)
 
 (narrate leaving $ $Dir by $Obj)
 	You drive (the $Obj) (name $Dir).
@@ -4874,6 +4892,7 @@
 					Because something dramatic happened, your movement was cut short.
 				}
 				(now) ~(moving long distances)
+				(now) ~(last step of movement)
 			(endif)
 			
 			(if)
