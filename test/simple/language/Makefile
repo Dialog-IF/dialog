@@ -17,6 +17,7 @@ all: $(tests)
 explicit: $(explicit)
 
 # Create the original gold files based on the gold-standard (i.e. unmodified) dialogc and dgdebug
+# This was relevant when first creating the tests, but should never be needed again
 %.orig_gold: %.dg %.debug %.z.in %.d.in
 ## Call the original dialogc and dgdebug from $PATH here, not our modified ones from $(BASEPATH)
 	touch -a $*.gold

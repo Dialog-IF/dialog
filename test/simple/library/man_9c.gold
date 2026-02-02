@@ -1,5 +1,6 @@
 [Z] Repair shop
-[Z]
+[ZA]
+[A]
 The Mechanic
 An interactive fiction by Linus Åkesson.
 Release 1. Serial number <SERIAL>.
@@ -58,7 +59,7 @@ Lisa rifles through a box of parts.
 [Z] Repair shop
 [Z]
 (I only understood you as far as wanting to examine something.)
-
+[ZD]
 > x lisa
 [Z] Repair shop
 [Z]
@@ -136,7 +137,8 @@ Thursday.”
 
 Lisa nods, and you walk out into the rain.
 
-     *** You have no car. ***     
+[Z]      *** You have no car. ***
+[DA]      *** You have no car. ***    
 
 Would you like to:
      UNDO the last move,
@@ -145,4 +147,4 @@ Would you like to:
      or RESTART from the beginning?
 > quit
 Thanks for playing!
-
+[ZD]
