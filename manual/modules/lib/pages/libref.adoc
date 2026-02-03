@@ -78,6 +78,7 @@ xref:lang:control.adoc#select-var[`(cycling)`] (special syntax) +
 xref:timeprogress.adoc#statusbar[`(darkness headline)`] +
 xref:understanding.adoc#liblinks[`(default action $ $)`] +
 xref:understanding.adoc#liblinks[`(default actions enabled)`] +
+xref:understanding.adoc#liblinks[`(default actions apply to rooms)`] +
 xref:lang:io.adoc#resources[`(define resource $)`] +
 xref:timeprogress.adoc#score[`(decrease score by $)`] +
 xref:scenery.adoc#descriptions[`(descr $)`] +

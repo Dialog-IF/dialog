@@ -3427,7 +3427,7 @@
 	{
 		*(understand $Words as non-all object $Obj)
 	(or)
-		(default room actions enabled)
+		(default actions apply to rooms)
 		*(understand $Words as room name $Obj)
 	}
 	~(empty $Obj)
@@ -6603,10 +6603,12 @@
 (amusing enabled)		(fail)
 (amusing)			(fail)
 (library links enabled)		(fail)
-(default actions enabled)	(fail)
-(default room actions enabled)	(fail)
+(default actions apply to rooms)	(fail)
 (heads $)			(fail)
 (room $)			(fail)
+
+%% Effectively the same
+(default actions enabled)	(default actions apply to rooms)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Fatal runtime errors
