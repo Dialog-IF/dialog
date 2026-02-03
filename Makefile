@@ -1,3 +1,7 @@
+# If your build fails on a Mac, look at the comments in the Makefiles in
+# test/simple/language, test/simple/library, and test/simple/warnings, and
+# change the --ignore-trailing-spaces flag to --ignore-space-change in each.
+
 all: src/dialogc src/dgdebug test
 
 src/dialogc:
