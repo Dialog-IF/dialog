@@ -60,7 +60,7 @@ xref:miscfeat.adoc#pronouns[`(clear all pronouns)`] +
 xref:lang:io.adoc#clear[`(clear div)`] +
 xref:lang:io.adoc#hyperlinks[`(clear links)`] +
 xref:lang:io.adoc#clear[`(clear old)`] +
-xref:lang:io.adoc#clear[`(clear status bars)`] +
+xref:lang:io.adoc#clear[`(clear status bar)`] +
 xref:lang:choicepoints.adoc#collect-values[`(collect $)`] (special syntax) +
 xref:lang:choicepoints.adoc#collect-words[`(collect words)`] (special syntax) +
 xref:understanding.adoc#newactions[`(command $)`] +

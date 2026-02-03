@@ -316,7 +316,7 @@ It is rendered with character graphics on the Z-machine backend.
 == Clearing the screen
 
 To clear the main text area, excluding the top status area, use `(clear)`.
-To clear only the status areas (top and inline), use `(clear status bars)`.
+To clear only the status areas (top and inline), use `(clear status bar)`.
 To do both, clearing everything on the screen, use `(clear all)`.
 These predicates may not be queried from within a span, link, or status area.
 Such queries will result in a runtime error.
