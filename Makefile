@@ -21,11 +21,10 @@ tidy:
 	$(MAKE) -C src tidy
 	$(MAKE) -C test/gosling clean
 	$(MAKE) -C test/impossible clean
+	$(MAKE) -C test/simple clean
 
-clean:
+clean: tidy
 	$(MAKE) -C src clean
-	$(MAKE) -C test/gosling clean
-	$(MAKE) -C test/impossible clean
 
 install: test
 	$(MAKE) -C src install
@@ -33,9 +32,7 @@ install: test
 uninstall:
 	$(MAKE) -C src uninstall
 
-distclean:
+distclean: clean
 	$(MAKE) -C src distclean
-	$(MAKE) -C test/gosling clean
-	$(MAKE) -C test/impossible clean
 
 .PHONY:	test clean tidy install uninstall distclean src/dialogc src/dgdebug all
