@@ -2662,7 +2662,7 @@
 
 (unlikely [go to $]) %% Prefer default actions on objects to default actions on rooms, if both are enabled
 	(default actions enabled)
-	(default room actions enabled)
+	(default actions apply to rooms)
 (very unlikely [go to $Room]) %% Don't call it very unlikely just because it involves a room
 	(just) (current room $Room) %% But going to the current room should still be very unlikely
 
