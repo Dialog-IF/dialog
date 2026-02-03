@@ -3325,13 +3325,13 @@ static void chunk_head(FILE *f, struct program *prg) {
 
 	if(prg->meta_ifid) size += 10 + strlen(prg->meta_ifid);
 	pad = chunkheader(f, "HEAD", size);
-	fputc(AAVM_FORMAT_MAJOR, f);
-	fputc(5, f); // minimum required minor version of interpreter
-	fputc(2, f);
-	fputc(0, f);
+	fputc(AAVM_FORMAT_MAJOR, f); // Required major version of interpreter
+	fputc(AAVM_FORMAT_MINOR, f); // Minimum required minor version of interpreter
+	fputc(2, f); // Word size (always 2)
+	fputc(0, f); // String pointer shift amount (always 0)
 	putword(prg->meta_release, f);
 	fwrite(prg->meta_serial, 1, 6, f);
-	putword(0, f);
+	putword(0, f); // 32-bit CRC (filled in at the end)
 	putword(0, f);
 	putword(heap_sz, f);
 	putword(aux_sz, f);
