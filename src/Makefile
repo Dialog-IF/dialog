@@ -8,16 +8,27 @@ WINLIB		= ../prebuilt/win32
 MINGW32		= i686-w64-mingw32-gcc
 WINDRES		= i686-w64-mingw32-windres
 
+INSTALLDIR	= /usr/local/bin
+
 all:			dialogc dgdebug
 
-clean:
-			rm -f dialogc dgdebug dialogc.exe dgdebug.exe *.o
+tidy:
+			rm -f *.o *~ \#*\#
+
+clean: 			tidy
+			rm -f dialogc dgdebug dialogc.exe dgdebug.exe
 
 install:		dialogc dgdebug
-			cp dialogc /usr/local/bin/
-			cp dgdebug /usr/local/bin/
+			cp dialogc $(INSTALLDIR)
+			cp dgdebug $(INSTALLDIR)
 
-.PHONY:			all clean install dialogc.exe dgdebug.exe
+uninstall:
+			rm -f $(INSTALLDIR)/dialogc
+			rm -f $(INSTALLDIR)/dgdebug
+
+distclean: 		clean uninstall
+
+.PHONY:			all clean tidy install uninstall distclean dialogc.exe dgdebug.exe
 
 dialogc:		frontend.o backend_z.o runtime_z.o blorb.o dumb_output.o dumb_report.o arena.o ast.o parse.o compile.o eval.o accesspred.o unicode.o backend.o aavm.o backend_aa.o crc32.o
 			${CC} ${LDFLAGS} -o $@ $^ ${LDLIBS}

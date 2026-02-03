@@ -1,4 +1,5 @@
 # Call `make DIFF=meld` to get a fancy diff
+# If the build fails on a Mac, change --ignore-trailing-space to --ignore-space-change
 DIFF = diff --ignore-trailing-space
 
 # Base of the repository
