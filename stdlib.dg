@@ -2660,9 +2660,11 @@
 		*(dict $Room)
 	(matching all of $Filtered)
 
-(unlikely [go to (current room $)])
-
-~(very unlikely [go to $])
+(unlikely [go to $]) %% Prefer default actions on objects to default actions on rooms, if both are enabled
+	(default actions enabled)
+	(default room actions enabled)
+(very unlikely [go to $Room]) %% Don't call it very unlikely just because it involves a room
+	(just) (current room $Room) %% But going to the current room should still be very unlikely
 
 %% Rooms generally aren't present
 ~(action [go to $] requires $ to be present)
@@ -3422,7 +3424,12 @@
 (understand $Words as $Action)
 	(default actions enabled)
 	~{ (implicit action is $) ~(implicit action wants direction) }
-	*(understand $Words as non-all object $Obj)
+	{
+		*(understand $Words as non-all object $Obj)
+	(or)
+		(default room actions enabled)
+		*(understand $Words as room name $Obj)
+	}
 	~(empty $Obj)
 	~($Obj = [1])
 	(if) ($Obj = [a $RealObj]) (then)
@@ -3431,6 +3438,8 @@
 		(default action $Obj $Action)
 	(endif)
 
+(default action (current room $) [look])
+(default action (room $Obj) [go to $Obj])
 (default action $Obj [examine $Obj])
 
 (understand $Words as $Words)
@@ -6595,6 +6604,7 @@
 (amusing)			(fail)
 (library links enabled)		(fail)
 (default actions enabled)	(fail)
+(default room actions enabled)	(fail)
 (heads $)			(fail)
 (room $)			(fail)
 

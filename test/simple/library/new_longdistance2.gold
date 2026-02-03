@@ -1,0 +1,44 @@
+[Z]Alpha
+[ZA]
+[A]
+An Interactive Fiction
+An interactive fiction by Anonymous.
+Release 1. Serial number <SERIAL>.
+<COMPILER>. <LIBRARY>
+
+Alpha
+This is room alpha.
+
+> zeta
+[Z] Zeta
+[Z]
+(north)
+
+Beta
+
+(north)
+
+Zeta
+This is room zeta.
+
+> epsilon
+[Z] Epsilon
+[Z]
+(south)
+
+Beta
+
+(south)
+
+Alpha
+
+(west)
+
+Delta
+
+(southwest)
+
+Epsilon
+This is room epsilon.
+
+>
