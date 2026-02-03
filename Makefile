@@ -17,12 +17,25 @@ test: test/regtest/cloak.zblorb src/dgdebug
 	$(MAKE) -C test/unit test
 	bin/test.py doc
 
-distclean: clean
-	$(MAKE) -C src distclean
+tidy:
+	$(MAKE) -C src tidy
+	$(MAKE) -C test/gosling clean
+	$(MAKE) -C test/impossible clean
 
 clean:
 	$(MAKE) -C src clean
 	$(MAKE) -C test/gosling clean
 	$(MAKE) -C test/impossible clean
 
-.PHONY:	test clean distclean src/dialogc src/dgdebug all
+install: test
+	$(MAKE) -C src install
+
+uninstall:
+	$(MAKE) -C src uninstall
+
+distclean:
+	$(MAKE) -C src distclean
+	$(MAKE) -C test/gosling clean
+	$(MAKE) -C test/impossible clean
+
+.PHONY:	test clean tidy install uninstall distclean src/dialogc src/dgdebug all
