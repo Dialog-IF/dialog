@@ -9,4 +9,9 @@ library: ../../src/dialogc ../../src/dgdebug
 warnings: ../../src/dialogc
 	make --directory=./warnings all clean
 
-.PHONY:		all library warnings
+clean:
+	make -C language clean
+	make -C library clean
+	make -C warnings clean
+
+.PHONY:		all library warnings clean
