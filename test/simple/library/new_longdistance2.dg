@@ -1,5 +1,5 @@
 (default actions enabled)
-(default room actions enabled)
+(default actions apply to rooms)
 
 #player
 (current player *)
