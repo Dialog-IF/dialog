@@ -1,5 +1,6 @@
 [Z] Grand foyer
-[Z] 
+[ZA]
+[A]
 An Interactive Fiction
 An interactive fiction by Anonymous.
 Release 1. Serial number <SERIAL>.
@@ -93,7 +94,8 @@ You walk south through the small door.
 Professor Stroopwafel's study
 You solved the mystery of the locked door!
 
-     *** You win! ***     
+[Z]      *** You win! ***
+[DA]      *** You win! ***    
 
 Would you like to:
      UNDO the last move,

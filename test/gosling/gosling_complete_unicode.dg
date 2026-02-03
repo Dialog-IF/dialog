@@ -11781,7 +11781,7 @@
 	(line)
 	(story release $RelNum)
 	Release $RelNum.
-	Serial number (serial number).
+	Serial number SERIAL.
 	(line)
 	VERSION.
 	(library version)
