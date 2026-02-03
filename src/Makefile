@@ -8,14 +8,19 @@ WINLIB		= ../prebuilt/win32
 MINGW32		= i686-w64-mingw32-gcc
 WINDRES		= i686-w64-mingw32-windres
 
+INSTALLDIR	= /usr/local/bin
+
 all:			dialogc dgdebug
 
+distclean: clean
+			rm -f dialogc dgdebug dialogc.exe dgdebug.exe
+
 clean:
-			rm -f dialogc dgdebug dialogc.exe dgdebug.exe *.o
+			rm -f *.o
 
 install:		dialogc dgdebug
-			cp dialogc /usr/local/bin/
-			cp dgdebug /usr/local/bin/
+			cp dialogc $(INSTALLDIR)
+			cp dgdebug $(INSTALLDIR)
 
 .PHONY:			all clean install dialogc.exe dgdebug.exe
 

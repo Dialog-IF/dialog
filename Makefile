@@ -18,6 +18,7 @@ test: test/regtest/cloak.zblorb src/dgdebug
 	bin/test.py doc
 
 distclean: clean
+	$(MAKE) -C src distclean
 
 clean:
 	$(MAKE) -C src clean
