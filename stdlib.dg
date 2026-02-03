@@ -2685,9 +2685,9 @@
 		(shortest path from $Here to $Room is $FullPath)
 		(split last element from $FullPath into $Path and $Final)
 	(then)
-		(now) (moving long distances) %% Switch to a more minimal reporting style
 		(exhaust) {
 			*($Dir is one of $Path)
+			(now) (moving long distances) %% Switch to a more minimal reporting style
 			(try [go $Dir])
 			(tick)
 			(par)
