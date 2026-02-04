@@ -1288,7 +1288,7 @@ void usage(char *prgname) {
 	fprintf(stderr, "--no-entry  -n      Don't query '(program entry point)'.\n");
 	fprintf(stderr, "--quit      -q      Quit the debugger when the program terminates.\n");
 	fprintf(stderr, "\n");
-	fprintf(stderr, "--width     -w      Specify output width, in characters.\n");
+	fprintf(stderr, "--width     -w      Specify output width, in characters (-1 = infinite).\n");
 	fprintf(stderr, "--seed      -s      Specify random seed.\n");
 	fprintf(stderr, "--no-links  -L      Don't show hyperlinks in the output.\n");
 	fprintf(stderr, "--dfquirks  -D      Activate the dumbfrotz-compatible quirks mode.\n");
