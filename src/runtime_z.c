@@ -3896,7 +3896,7 @@ struct rtroutine rtroutines[] = {
 	{
 		R_CLEAR,
 		1,
-			// 0 (param): 0 for clear, -1 for clear all
+			// 0 (param): 0 for clear, 1 for clear status, -1 for clear all
 		(struct zinstr []) {
 			{Z_JNZ, {VALUE(REG_NSPAN)}, 0, 2},
 
@@ -3907,6 +3907,7 @@ struct rtroutine rtroutines[] = {
 
 			{OP_LABEL(1)},
 			{Z_ERASE_WINDOW, {VALUE(REG_LOCAL+0)}},
+			{Z_JE, {VALUE(REG_LOCAL+0), SMALL(1)}, 0, RFALSE}, // If we only cleared the status bar, don't change REG_SPACE
 			{Z_STORE, {SMALL(REG_SPACE), SMALL(4)}},
 			{Z_RFALSE},
 			{Z_END},

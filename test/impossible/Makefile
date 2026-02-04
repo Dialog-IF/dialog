@@ -1,7 +1,7 @@
 # Call `make DIFF=meld`, for example, to get a fancy diff
 DIFF = diff
 
-all: zmachine debugger
+all: test
 
 # Ensure we don't have to worry about (serial number) changing by date
 stdlib.dg: ../../stdlib.dg
@@ -25,9 +25,18 @@ debugger.out: ../../src/dgdebug ImpossibleStairs.dg stdlib.dg impossible.in
 debugger: debugger.out
 	$(DIFF) debugger.out debugger.gold
 
-test: debugger zmachine
+impossible.aastory: ../../src/dialogc ImpossibleStairs.dg stdlib.dg
+	../../src/dialogc -t aa --no-warn-not-topic ImpossibleStairs.dg stdlib.dg -o impossible.aastory
+
+aamachine.out: impossible.aastory impossible.in
+	../../bin/aamrun.py impossible.aastory <impossible.in >aamachine.out
+
+aamachine: aamachine.out
+	$(DIFF) aamachine.out aamachine.gold
+
+test: debugger zmachine aamachine
 
 clean:
-	rm -f *.z8 *.out stdlib.dg
+	rm -f *.z8 *.aastory *.out stdlib.dg
 
-.PHONY:		test clean debugger zmachine
+.PHONY:		all test clean debugger zmachine aamachine

@@ -1,5 +1,6 @@
 [Z] Tutorial room
-[Z]
+[ZA]
+[A]
 An Interactive Fiction
 An interactive fiction by Anonymous.
 Release 1. Serial number <SERIAL>.
@@ -42,7 +43,7 @@ It's white and made of plastic.
 [Z] Tutorial room (on the chair)
 [Z] 
 (I only understood you as far as wanting to get onto something.)
-
+[ZD]
 > stand
 [Z] Tutorial room
 [Z] 

@@ -1,5 +1,6 @@
 [Z] Location
-[Z]
+[ZA]
+[A]
 An Interactive Fiction
 An interactive fiction by Anonymous.
 Release 1. Serial number <SERIAL>.
@@ -16,7 +17,8 @@ You take the apple.
 
 The apple is yummy. You feel that your mission has come to an end.
 
-     *** You are no longer hungry. ***     
+[Z]      *** You are no longer hungry. ***
+[DA]      *** You are no longer hungry. ***    
 
 Would you like to:
      UNDO the last move,
@@ -26,6 +28,7 @@ Would you like to:
      QUIT the program,
      or RESTART from the beginning?
 > amusing
+[A]
 Have you tried...
 
           ...eating the transmogrifier?
@@ -38,6 +41,7 @@ Would you like to:
      QUIT the program,
      or RESTART from the beginning?
 > note
+[A]
 Thanks for playing!
 -- The Author
 
@@ -50,4 +54,4 @@ Would you like to:
      or RESTART from the beginning?
 > quit
 Thanks for playing!
-
+[ZD]

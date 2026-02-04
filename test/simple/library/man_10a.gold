@@ -1,5 +1,7 @@
+[#] This test case demonstrates that the Node Å interpreter isn't putting the proper bottom margins on the @meta divs. I don't know why.
 [Z] Location
-[Z]
+[A]
+[ZA]
 An Interactive Fiction
 An interactive fiction by Anonymous.
 Release 1. Serial number <SERIAL>.
@@ -18,7 +20,7 @@ minute ticks by.
 [Z] Location
 [Z]
 (I'm sorry, I didn't understand what you wanted to do.)
-
+[ZD]
 > play
 [Z] Location
 [Z]
@@ -57,7 +59,7 @@ You set the bow to the violin and begin to play. Another minute ticks by.
 [Z] Location
 [Z]
 (I only understood you as far as wanting to play something with the bow.)
-
+[ZD]
 > hint
 [Z] Location
 [Z]
@@ -67,7 +69,7 @@ Try yodeling a lot.
 [Z] Location
 [Z]
 (I only understood you as far as wanting to play something.)
-
+[ZD]
 > complain about violin
 [Z] Location
 [Z]
@@ -92,7 +94,7 @@ You can't complain about your childhood on planet Zyx. Another minute ticks by.
 [Z] Location
 [Z]
 (I'm sorry, I didn't understand what you wanted to do.)
-
+[ZD]
 > cast xyzzy
 [Z] Location
 [Z]
@@ -109,5 +111,5 @@ by.
 [Z] Location
 [Z]
 (I'm sorry, I didn't understand what you wanted to do.)
-
+[ZD]
 >

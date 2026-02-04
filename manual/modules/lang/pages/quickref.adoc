@@ -289,6 +289,10 @@ xref:io.adoc#clear[(clear old)]::
 
 Clears the screen from all text that the player has had a chance to read.
 
+xref:io.adoc#clear[(clear status bar)]::
+
+Removes all status areas (top and inline).
+
 xref:beyondprog.adoc#metadata[(compiler version)]::
 
 Prints the name and version of the compiler.

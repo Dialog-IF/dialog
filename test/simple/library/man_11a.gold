@@ -1,5 +1,6 @@
 [Z] Location
-[Z]
+[ZA]
+[A]
 An Interactive Fiction
 An interactive fiction by Anonymous.
 Release 1. Serial number <SERIAL>.
@@ -37,5 +38,5 @@ Location
 
 > x it
 Did you want to examine the small safe or the pearl necklace?
-
+[ZD]
 >
