@@ -19,6 +19,7 @@ test: test/regtest/cloak.zblorb src/dgdebug
 	$(MAKE) --directory=./test/impossible test clean
 	$(MAKE) --directory=./test/simple all
 	$(MAKE) -C test/unit test
+	$(MAKE) -C test/6502 test clean
 	bin/test.py doc
 
 tidy:
