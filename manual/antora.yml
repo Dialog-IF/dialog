@@ -1,19 +1,19 @@
 name: dialog
 title: Dialog
-version: 1a01
+version: 1b01
 nav:
   - modules/ROOT/nav.adoc
   - modules/lang/nav.adoc
   - modules/lib/nav.adoc
 asciidoc:
   attributes:
-    lang-ver: 1a
+    lang-ver: 1b
     lib-ver: 1.1.1-dev
     old-home-page: https://linusakesson.net/dialog/
     home-page: https://github.com/Dialog-IF/dialog/
     aa-old-home-page: https://linusakesson.net/dialog/aamachine/
     aa-home-page: https://github.com/Dialog-IF/aamachine/
     multi-query: xref:lang:choicepoints.adoc#multi-query[multi-query]
-    page-copyright: &copy; 2018-2024 Linus Åkesson, 2025- the Dialog Project
+    page-copyright: &copy; 2018-2026 Linus Åkesson and the Dialog Project
 
 
