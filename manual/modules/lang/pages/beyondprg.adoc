@@ -376,7 +376,6 @@ The compiler is written in standard C99. In the C source, identifiers are
 `lowercase_with_underscores`, and braces are set off by a space (without a line
 break):
 
-[source]
 ----
 if(cond) {
 	option1;
