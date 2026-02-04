@@ -1034,6 +1034,7 @@
 		}
 	(then)
 		%% No room description, keep it brief
+		(par)
 	(elseif) (player can see) (then)
 		(current scope ceiling $Ceil)
 		(look $Ceil)
