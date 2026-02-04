@@ -692,16 +692,20 @@
 (interface (enter $<Room))
 
 (enter $Room)
+	(now) (don't mark the room as visited yet) %% We keep ($ is visited) unset until after (narrate entering $) has had its chance to describe things
 	(move player to #in $Room)
 	(narrate entering $Room)
+	(mark the location as visited)
 
 (interface (enter $<Room by $<Vehicle))
 
 (enter $Room by $Vehicle)
 	(now) ($Vehicle is #in $Room)
 	(now) ($Vehicle is handled)
+	(now) (don't mark the room as visited yet)
 	(update environment around player)
 	(narrate entering $Room)
+	(mark the location as visited)
 
 (update environment around player)
 	(if) (current player $Player) ($Player is in room $Room) (then)
@@ -711,12 +715,19 @@
 			(now) ($Object is #in $Room)
 		}
 		(recompute visibility)
-		(if) ($Room is unvisited) (player can see) (then)
-			(now) ($Room is visited)
-		(endif)
+		(mark the location as visited)
 	(endif)
 
-(narrate entering (room $))
+(mark the location as visited)
+	(don't mark the room as visited yet) %% This flag prevents it only once
+	(now) ~(don't mark the room as visited yet)
+(mark the location as visited)
+	(if) (current room $Room) ($Room is unvisited) (player can see) (then)
+		(now) ($Room is visited)
+	(endif)
+
+(narrate entering (room $Room))
+	(now) (looking after moving)
 	(par)
 	(try [look])
 
@@ -1005,11 +1016,23 @@
 	(now) ~(moving long distances)
 	(now) ~(last step of movement)
 
+%% And (looking after moving) just after
+(on every tick)
+	(now) ~(looking after moving)
+
 (perform [look])
 	(current player $Player)
 	($Player is $Rel $Loc)
+	{ (verbosity level $Verbosity) (or) ($Verbosity = 2) } %% Just in case
 	(div @roomheader) (location headline)
-	(if) (moving long distances) (then)
+	(if)
+		(looking after moving)
+		{
+			($Verbosity = 0) (or) %% Verbosity 0: when moving at all
+			(current room $Room) ($Room is visited) ($Verbosity < 2) (or) %% Verbosity 1: when visited
+			(moving long distances) ($Verbosity < 3) %% Verbosity 2: when moving long distances
+		}
+	(then)
 		%% No room description, keep it brief
 	(elseif) (player can see) (then)
 		(current scope ceiling $Ceil)
@@ -3243,22 +3266,22 @@
 (understand command [superbrief])
 (perform [superbrief])
 	(now) (verbosity level 0)
-	(div @meta) { (story title) is now in SUPERBRIEF mode. Location details will never be shown while moving, even on a first visit. }
+	(div @meta) { (story title or default) is now in SUPERBRIEF mode. Location details will never be shown while moving, even on a first visit. }
 
 (understand command [brief])
 (perform [brief])
 	(now) (verbosity level 1)
-	(div @meta) { (story title) is now in BRIEF mode. Location details will not be shown when moving to a previously-visited area. }
+	(div @meta) { (story title or default) is now in BRIEF mode. Location details will not be shown when moving to a previously-visited area. }
 
 (understand command [verbose])
 (perform [verbose])
 	(now) (verbosity level 2)
-	(div @meta) { (story title) is now in VERBOSE mode. Location details will not be shown when travelling long distances, but will be shown after normal movement. }
+	(div @meta) { (story title or default) is now in VERBOSE mode. Location details will not be shown when travelling long distances, but will be shown after normal movement. }
 
 (understand command [superverbose])
 (perform [superverbose])
 	(now) (verbosity level 3)
-	(div @meta) { (story title) is now in SUPERVERBOSE mode. Location details will always be shown when moving. }
+	(div @meta) { (story title or default) is now in SUPERVERBOSE mode. Location details will always be shown when moving. }
 
 %% VERSION
 

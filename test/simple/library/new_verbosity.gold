@@ -1,0 +1,131 @@
+An Interactive Fiction
+An interactive fiction by Anonymous.
+Release 1. Serial number <SERIAL>.
+<COMPILER>. <LIBRARY>
+
+End of the road
+You are standing at the end of a road before a small brick building. Around you
+is a forest.
+
+> e
+You walk east.
+
+Well house
+
+> w
+You walk west.
+
+End of the road
+
+> undo
+Undoing the last turn (w).
+Well house
+
+> undo
+Undoing the last turn (e).
+End of the road
+
+> brief
+An Interactive Fiction is now in BRIEF mode. Location details will not be shown
+when moving to a previously-visited area.
+
+> e
+You walk east.
+
+Well house
+You are inside a building, a well house for a large spring. A back door leads
+north.
+
+> w
+You walk west.
+
+End of the road
+
+> look
+End of the road
+You are standing at the end of a road before a small brick building. Around you
+is a forest.
+
+> undo
+Undoing the last turn (look).
+End of the road
+
+> undo
+Undoing the last turn (w).
+Well house
+
+> undo
+Undoing the last turn (e).
+End of the road
+
+> verbose
+An Interactive Fiction is now in VERBOSE mode. Location details will not be
+shown when travelling long distances, but will be shown after normal movement.
+
+> e
+You walk east.
+
+Well house
+You are inside a building, a well house for a large spring. A back door leads
+north.
+
+> n
+You walk north.
+
+Forest
+You are in open forest, with a deep valley to one side.
+
+> go to road
+(south)
+
+Well house
+
+(west)
+
+End of the road
+You are standing at the end of a road before a small brick building. Around you
+is a forest.
+
+> undo
+Undoing the last turn (go to road).
+Forest
+
+> undo
+Undoing the last turn (n).
+Well house
+
+> undo
+Undoing the last turn (e).
+End of the road
+
+> superverbose
+An Interactive Fiction is now in SUPERVERBOSE mode. Location details will always
+be shown when moving.
+
+> e
+You walk east.
+
+Well house
+You are inside a building, a well house for a large spring. A back door leads
+north.
+
+> n
+You walk north.
+
+Forest
+You are in open forest, with a deep valley to one side.
+
+> go to road
+(south)
+
+Well house
+You are inside a building, a well house for a large spring. A back door leads
+north.
+
+(west)
+
+End of the road
+You are standing at the end of a road before a small brick building. Around you
+is a forest.
+
+>
