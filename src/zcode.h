@@ -141,7 +141,7 @@ struct zinstr {
 #define DEST_USERGLOBAL(x)	(0x200 | (x))
 
 #define LARGE(x)		(0x10000 | (x)) // "Large" (word-sized) constant
-#define REF(x)			(0x20000 | (x)) // Address of array in RAM
+#define REF(x)			(0x20000 | (x)) // Address of G_ array in RAM
 #define ROUTINE(x)		(0x30000 | (x)) // Packed address of routine in ROM
 #define REL_LABEL(x)		(0x40000 | (x)) // Address of label when used as param - this is needed for the Z_JUMP opcode, which takes the offset as a parameter instead of in the usual branch field of the instruction
 #define SMALL(x)		(0x50000 | (x)) // "Small" (byte-sized) constant
@@ -351,6 +351,7 @@ enum { // Locations in RAM
 	G_MAINSTYLE,
 	G_SELTABLE,
 	G_SCRATCH,
+	G_CASING,
 	G_PROGRAM_ENTRY,
 	G_ERROR_ENTRY,
 
