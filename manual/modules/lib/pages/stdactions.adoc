@@ -596,6 +596,8 @@ The following actions are so called _commands_. Their effects aren't part of the
 story, and no time passes in the game world when they are issued. Please refer
 to the library source code for details about what these actions do.
 
+`[brief]`
+
 `[notify off]`
 
 `[notify on]`
@@ -611,6 +613,10 @@ to the library source code for details about what these actions do.
 `[save]`
 
 `[score]`
+
+`[superbrief]`
+
+`[superverbose]`
 
 `[transcript off]`
 
