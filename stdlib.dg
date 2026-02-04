@@ -3227,13 +3227,38 @@
 		(if) (them refers to $Them) (then) "Them" refers to (the $Them). (line) (endif)
 	}
 
-%% VERBOSE / BRIEF / SUPERBRIEF
+%% VERBOSE / BRIEF / SUPERBRIEF / SUPERVERBOSE
+
+(global variable (verbosity level $))
+%% 0 = superbrief (never show room details)
+%% 1 = brief (show room details only when unvisited)
+%% 2 = verbose (show room details except when moving long distances)
+%% 3 = superverbose (always show room details)
+
+%% If the author doesn't specify, we start with "verbose"
+(startup)
+	~(verbosity level $)
+	(now) (verbosity level 2)
+
+(understand command [superbrief])
+(perform [superbrief])
+	(now) (verbosity level 0)
+	(div @meta) { (story title) is now in SUPERBRIEF mode. Location details will never be shown while moving, even on a first visit. }
+
+(understand command [brief])
+(perform [brief])
+	(now) (verbosity level 1)
+	(div @meta) { (story title) is now in BRIEF mode. Location details will not be shown when moving to a previously-visited area. }
 
 (understand command [verbose])
-(understand [brief/superbrief] as [verbose])
 (perform [verbose])
-	(div @meta) { The verbosity level of this story is not adjustable. }
-	(stop)
+	(now) (verbosity level 2)
+	(div @meta) { (story title) is now in VERBOSE mode. Location details will not be shown when travelling long distances, but will be shown after normal movement. }
+
+(understand command [superverbose])
+(perform [superverbose])
+	(now) (verbosity level 3)
+	(div @meta) { (story title) is now in SUPERVERBOSE mode. Location details will always be shown when moving. }
 
 %% VERSION
 
