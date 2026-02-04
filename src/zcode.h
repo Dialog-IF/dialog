@@ -352,6 +352,7 @@ enum { // Locations in RAM
 	G_SELTABLE,
 	G_SCRATCH,
 	G_CASING,
+	G_CASING_SIZE, // Holds a size, not an address
 	G_PROGRAM_ENTRY,
 	G_ERROR_ENTRY,
 
@@ -520,7 +521,8 @@ enum { // Runtime routines
 	R_LONGTERM_PUSH,
 	R_GET_LONGTERM_VAR,
 	R_LONGTERM_POP,
-
+	
+	R_EXT_UPPER,
 	R_PRINTNIBBLE,
 	R_PRINTHEX,
 	R_PRINTHEX8,

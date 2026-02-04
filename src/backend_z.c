@@ -4259,6 +4259,7 @@ void backend_z(
 	uint32_t org;
 	uint32_t filesize;
 	uint16_t unichar;
+	uint8_t n_casing;
 	int i, j, k;
 	struct backend_wobj *wobj;
 	struct global_string *gs;
@@ -4656,11 +4657,12 @@ void backend_z(
 	// Casing table: array of [lower ZSCII, upper ZSCII] pairs
 	// Only needed for values > 127
 	addr_casing = org;
-	org++; // First byte is table length
+	n_casing = 0;
 	for(i = 0; i < n_extended; i++) {
 		unichar = unicode_to_upper(extended_zscii[i]);
 		if(unichar == extended_zscii[i]) continue; // No separate uppercase form
 		org += 2; // Lower, upper
+		n_casing ++;
 	}
 
 	if(org > 0xfff8) {
@@ -4692,6 +4694,7 @@ void backend_z(
 	set_global_label(G_SELTABLE, addr_seltable);
 	set_global_label(G_SCRATCH, addr_scratch);
 	set_global_label(G_CASING, addr_casing);
+	set_global_label(G_CASING_SIZE, n_casing);
 
 	assert(REG_SPACE == REG_TEMP + 1);
 
@@ -4830,11 +4833,10 @@ void backend_z(
 #if 1
 		report(LVL_DEBUG, 0, "U+%04x (ZSCII %d) has uppercase equivalent U+%04x (ZSCII %d)", extended_zscii[i], EXTENDED_ZSCII_BASE+i, extended_zscii[j], EXTENDED_ZSCII_BASE+j);
 #endif
-		zcore[addr_casing + 1 + 2*k + 0] = EXTENDED_ZSCII_BASE + i;
-		zcore[addr_casing + 1 + 2*k + 1] = EXTENDED_ZSCII_BASE + j;
+		zcore[addr_casing + 2*k + 0] = EXTENDED_ZSCII_BASE + i;
+		zcore[addr_casing + 2*k + 1] = EXTENDED_ZSCII_BASE + j;
 		k++;
 	}
-	zcore[addr_casing] = k;
 #if 1
 	report(LVL_DEBUG, 0, "Total: %d entries in the table", k);
 #endif

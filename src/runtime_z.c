@@ -226,13 +226,20 @@ struct rtroutine rtroutines[] = {
 			{Z_LOADB, {VALUE(REG_LOCAL+1), SMALL(0)}, REG_LOCAL+0},
 
 			{Z_JL, {VALUE(REG_LOCAL+0), SMALL(0x61)}, 0, 4},
-			{Z_JGE, {VALUE(REG_LOCAL+0), SMALL(0x7b)}, 0, 4},
+			{Z_JGE, {VALUE(REG_LOCAL+0), SMALL(0x7b)}, 0, 5},
 
 			// convert to uppercase
 			{Z_AND, {VALUE(REG_LOCAL+0), SMALL(0xdf)}, REG_LOCAL+0},
+			{Z_JUMP, {REL_LABEL(6)}},
+			
+			{OP_LABEL(5)},
+			{Z_CALL2S, {ROUTINE(R_EXT_UPPER), VALUE(REG_LOCAL+0)}, REG_LOCAL+0},
+			
+			{OP_LABEL(6)},
 			{Z_PRINTCHAR, {VALUE(REG_LOCAL+0)}},
 			{Z_INC, {SMALL(REG_LOCAL+1)}},
 			{Z_DEC, {SMALL(REG_LOCAL+3)}},
+			{Z_JUMP, {REL_LABEL(4)}},
 
 			{OP_LABEL(4)},
 			{Z_CALLVN, {ROUTINE(R_PRINT_N_ZSCII), VALUE(REG_LOCAL+3), VALUE(REG_LOCAL+1)}},
@@ -4290,6 +4297,25 @@ struct rtroutine rtroutines[] = {
 
 			{OP_LABEL(1)},
 			// simple value
+			{Z_RET, {VALUE(REG_LOCAL+0)}},
+			{Z_END},
+		}
+	},
+	{
+		R_EXT_UPPER,
+		1,
+			// 0 (param): extended ZSCII to capitalize, then address, then result
+		(struct zinstr []) {
+			// Search for L0 in the table G_CASING, which is G_CASING_SIZE words long, looking for bytes in structures 2 bytes long; store in L0 and branch to 0 if you find it
+	//		{Z_PRINTLIT, {}, 0, 0, "In: "},
+	//		{Z_PRINTNUM, {VALUE(REG_LOCAL+0)}},
+			{Z_SCANTABLE, {VALUE(REG_LOCAL+0), REF(G_CASING), REF(G_CASING_SIZE), SMALL(2)}, REG_LOCAL+0, 1},
+			{Z_RET, {VALUE(REG_LOCAL+0)}},
+			
+			{OP_LABEL(1)},
+			{Z_LOADB, {VALUE(REG_LOCAL+0), SMALL(1)}, REG_LOCAL+0},
+	//		{Z_PRINTLIT, {}, 0, 0, "Out: "},
+	//		{Z_PRINTNUM, {VALUE(REG_LOCAL+0)}},
 			{Z_RET, {VALUE(REG_LOCAL+0)}},
 			{Z_END},
 		}
