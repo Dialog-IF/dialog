@@ -4478,6 +4478,11 @@ void backend_z(
 	nglobal = (REG_X - 0x10) + max_temp;
 	user_global_base = nglobal;
 	nglobal += next_user_global;
+	
+	if(nglobal > 240) {
+		report(LVL_ERR, 0, "%d registers are assigned (%d internal, %d temp, %d global), but the Z-machine only supports 240.", nglobal, REG_X-0x10, max_temp, next_user_global);
+		exit(1);
+	}
 
 	resolve_rnum(R_ENTRY);
 	for(i = 1; i < 64; i++) {
@@ -4973,7 +4978,8 @@ void backend_z(
 	report(LVL_DEBUG, 0, "Heap: %d words", heapsize);
 	report(LVL_DEBUG, 0, "Auxiliary heap: %d words", auxsize);
 	report(LVL_DEBUG, 0, "Long-term heap: %d words", ltssize);
-	report(LVL_DEBUG, 0, "Registers used: %d of %d* (%d%%)", nglobal, 240, nglobal*100/240);
+	report(LVL_DEBUG, 0, "Registers used: %d of %d (%d%%)", nglobal, 240, nglobal*100/240);
+	report(LVL_DEBUG, 0, "                %d internal, %d temp, %d global", REG_X-0x10, max_temp, next_user_global);
 	report(LVL_DEBUG, 0, "Properties used: %d of %d (%d%%)", next_free_prop-1, 63, (next_free_prop-1)*100/63);
 	report(LVL_DEBUG, 0, "Dynamic flags used: %d of %d (%d%%)", used_attributes, NZOBJFLAG, used_attributes*100/NZOBJFLAG);
 	if(next_flag > NZOBJFLAG) {
