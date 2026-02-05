@@ -153,6 +153,15 @@ This is not broken up.
 This goes on a line of its own.
 ```
 
+[#nbsp]
+=== The gory details
+
+When you call one of the spacing predicates, `(no space)`, `(nbsp)`, `(space)`, `(line)`, and `(par)`, Dialog doesn’t display anything immediately. Instead, the next time a word needs to be printed, Dialog inserts _the largest space that’s been requested since the last word_. This means `(no space) (space) (nbsp) (no space) (nbsp)` is equivalent to a single `(space)`, and `(par) (line) (line) (par) (space) (space)` is equivalent to a single `(par)`.
+
+The same goes for xref:io.adoc#div[div margins], which will be introduced in a later chapter. A `(par)` before a div with a one-line margin will still produce only a single blank line.
+
+(The rarely-needed `(nbsp)` creates a “non-breaking space”, which looks identical to a space, but will not allow a line break at that location. It’s mainly used between numbers and units, like “100 km” or “section 5”, and before certain punctuation marks in French. If an interpreter cannot provide this, it will produce a normal space.)
+
 [#parameters]
 == Parameters, objects, and wildcards
 

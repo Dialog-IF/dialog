@@ -248,6 +248,7 @@ xref:npc.adoc#npcaction[`(narrate $ taking $)`] +
 xref:stdactions.adoc#stdcore[`(narrate unlocking $ with $)`] +
 xref:stdactions.adoc#stdcore[`(narrate wearing $)`] +
 xref:npc.adoc#npcaction[`(narrate $ wearing $)`] +
+xref:lang:execution.adoc#nbsp[`(nbsp)`] +
 xref:lang:builtins.adoc#typechecks[`(nonempty $)`] +
 xref:lang:execution.adoc#printing[`(no space)`] +
 xref:traits.adoc#categorytraits[`(not here $)`] +

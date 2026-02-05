@@ -393,6 +393,10 @@ Unifies `$Z` with the difference between `$X` and `$Y`.
 Unifies `$Z` with the remainder after dividing `$X` by
 `$Y`.
 
+xref:execution.adoc#nbsp[(nbsp)]::
+
+Inserts a non-breaking space before the next word.
+
 (nonempty $X)::
 
 Succeeds if `$X` is bound to an non-empty list.
