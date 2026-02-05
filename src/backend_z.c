@@ -4660,9 +4660,9 @@ void backend_z(
 	n_casing = 0;
 	for(i = 0; i < n_extended; i++) {
 		unichar = unicode_to_upper(extended_zscii[i]);
-		if(unichar == extended_zscii[i]) continue; // No separate uppercase form
-		org += 2; // Lower, upper
-		n_casing ++;
+		if(unichar == extended_zscii[i]) continue; // No separate uppercase form (e.g. punctuation)
+		org += 4; // See casing section below for explanation
+		n_casing += 2; // Counts in words
 	}
 
 	if(org > 0xfff8) {
@@ -4819,6 +4819,11 @@ void backend_z(
 	}
 	
 	// Casing table
+	// Format: four-byte entries
+	// Byte 0: lowercase character (ZSCII)
+	// Byte 1: 0 if uppercase is ZSCII, 1 if uppercase is Unicode
+	// Byte 2: high byte of uppercase (unused for ZSCII)
+	// Byte 3: low byte of uppercase
 	k = 0; // Number of entries made
 	for(i = 0; i < n_extended; i++) {
 		unichar = unicode_to_upper(extended_zscii[i]);
@@ -4826,20 +4831,21 @@ void backend_z(
 		for(j = 0; j < n_extended; j++) {
 			if(extended_zscii[j] == unichar) break;
 		}
-		if(j >= n_extended) { // Not found
-			report(LVL_ERR, 0, "Uppercase equivalent for U+%04x should be U+%04x, but it was not found in the extended ZSCII table", extended_zscii[i], unichar);
-			exit(1);
+		if(j < n_extended) { // Found - store ZSCII value
+			zcore[addr_casing + 4*k + 0] = EXTENDED_ZSCII_BASE + i;
+			zcore[addr_casing + 4*k + 1] = 0;
+			zcore[addr_casing + 4*k + 2] = 0;
+			zcore[addr_casing + 4*k + 3] = EXTENDED_ZSCII_BASE + j;
+			report(LVL_DEBUG, 0, "Uppercase equivalent for U+%04x is U+%04x (ZSCII %d)", extended_zscii[i], unichar, EXTENDED_ZSCII_BASE+j);
+		} else { // Not found - store Unicode instead
+			zcore[addr_casing + 4*k + 0] = EXTENDED_ZSCII_BASE + i;
+			zcore[addr_casing + 4*k + 1] = 1;
+			zcore[addr_casing + 4*k + 2] = unichar >> 8;
+			zcore[addr_casing + 4*k + 3] = unichar & 0xff;
+			report(LVL_DEBUG, 0, "Uppercase equivalent for U+%04x is U+%04x", extended_zscii[i], unichar);
 		}
-#if 1
-		report(LVL_DEBUG, 0, "U+%04x (ZSCII %d) has uppercase equivalent U+%04x (ZSCII %d)", extended_zscii[i], EXTENDED_ZSCII_BASE+i, extended_zscii[j], EXTENDED_ZSCII_BASE+j);
-#endif
-		zcore[addr_casing + 2*k + 0] = EXTENDED_ZSCII_BASE + i;
-		zcore[addr_casing + 2*k + 1] = EXTENDED_ZSCII_BASE + j;
 		k++;
 	}
-#if 1
-	report(LVL_DEBUG, 0, "Total: %d entries in the table", k);
-#endif
 
 	init_abbrev(addr_abbrevstr, addr_abbrevtable);
 
