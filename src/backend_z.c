@@ -265,8 +265,7 @@ uint16_t resolve_rnum(uint16_t num) {
 }
 
 uint8_t add_extended_zscii(uint16_t uchar) {
-	uint8_t i = n_extended, j;
-	uint16_t upper;
+	uint8_t i = n_extended;
 	uint8_t utf8[5]; // To hold the UTF-16 character converted to UTF-8: up to four bytes plus terminator
 	// Since Z-machine only supports the BMP, really we only need *three* bytes plus terminator, but it's good to think about the future
 	
@@ -281,17 +280,6 @@ uint8_t add_extended_zscii(uint16_t uchar) {
 		report(LVL_DEBUG, 0, "Adding Unicode character U+%04x (%s) at ZSCII codepoint %d", uchar, utf8, EXTENDED_ZSCII_BASE+i);
 	}
 	n_extended++;
-	
-	// Also add the uppercase version if absent
-	upper = unicode_to_upper(uchar);
-	if(upper != uchar) { // Separate uppercase form needed!
-		for(j = 0; j < i; j++) {
-			if(extended_zscii[j] == upper) break;
-		}
-		if(j >= i) { // Not found
-			add_extended_zscii(upper);
-		}
-	}
 	
 	return EXTENDED_ZSCII_BASE + i;
 }
@@ -872,8 +860,6 @@ void prepare_dictionary_z(struct program *prg, int preserve_zscii) {
 	if(preserve_zscii) { // Use the existing table as much as possible, putting our new characters at the end of it
 		memcpy(extended_zscii, default_extended_zscii, sizeof(default_extended_zscii));
 		n_extended = sizeof(default_extended_zscii) / sizeof(default_extended_zscii[0]);
-		// If this happens, we also need to add Ÿ, because the default table has no uppercase for it
-		add_extended_zscii(0x0178);
 	} else { // Discard the existing table, giving us the maximum space possible
 		n_extended = 0;
 	}
@@ -4664,6 +4650,7 @@ void backend_z(
 		org += 4; // See casing section below for explanation
 		n_casing += 2; // Counts in words
 	}
+	used_unicode += n_casing * 2; // Count this as "Unicode data" in the output
 
 	if(org > 0xfff8) {
 		report(LVL_ERR, 0, "Base memory exhausted. Decrease heap/aux/long-term size using commandline options -H, -A, and/or -L.");
@@ -4836,13 +4823,13 @@ void backend_z(
 			zcore[addr_casing + 4*k + 1] = 0;
 			zcore[addr_casing + 4*k + 2] = 0;
 			zcore[addr_casing + 4*k + 3] = EXTENDED_ZSCII_BASE + j;
-			report(LVL_DEBUG, 0, "Uppercase equivalent for U+%04x is U+%04x (ZSCII %d)", extended_zscii[i], unichar, EXTENDED_ZSCII_BASE+j);
+			if(verbose > 2) report(LVL_DEBUG, 0, "Uppercase equivalent for U+%04x is U+%04x (ZSCII %d)", extended_zscii[i], unichar, EXTENDED_ZSCII_BASE+j);
 		} else { // Not found - store Unicode instead
 			zcore[addr_casing + 4*k + 0] = EXTENDED_ZSCII_BASE + i;
 			zcore[addr_casing + 4*k + 1] = 1;
 			zcore[addr_casing + 4*k + 2] = unichar >> 8;
 			zcore[addr_casing + 4*k + 3] = unichar & 0xff;
-			report(LVL_DEBUG, 0, "Uppercase equivalent for U+%04x is U+%04x", extended_zscii[i], unichar);
+			if(verbose > 2) report(LVL_DEBUG, 0, "Uppercase equivalent for U+%04x is U+%04x", extended_zscii[i], unichar);
 		}
 		k++;
 	}
