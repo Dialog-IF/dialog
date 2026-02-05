@@ -4315,19 +4315,15 @@ struct rtroutine rtroutines[] = {
 	},
 	{
 		R_EXT_UPPER,
-		1,
-			// 0 (param): extended ZSCII to capitalize, then address, then result
+		2,
+			// 0 (param): extended ZSCII code to capitalize, then result
+			// 1: temp (memory location)
 		(struct zinstr []) {
 			// Search for L0 in the table G_CASING, which is G_CASING_SIZE words long, looking for bytes in structures 2 bytes long; store in L0 and branch to 0 if you find it
-	//		{Z_PRINTLIT, {}, 0, 0, "In: "},
-	//		{Z_PRINTNUM, {VALUE(REG_LOCAL+0)}},
-			{Z_SCANTABLE, {VALUE(REG_LOCAL+0), REF(G_CASING), REF(G_CASING_SIZE), SMALL(2)}, REG_LOCAL+0, 1},
-			{Z_RET, {VALUE(REG_LOCAL+0)}},
+			{Z_SCANTABLE_N, {VALUE(REG_LOCAL+0), REF(G_CASING), REF(G_CASING_SIZE), SMALL(2)}, REG_LOCAL+1, 1},
+			{Z_LOADB, {VALUE(REG_LOCAL+1), SMALL(1)}, REG_LOCAL+0},
 			
 			{OP_LABEL(1)},
-			{Z_LOADB, {VALUE(REG_LOCAL+0), SMALL(1)}, REG_LOCAL+0},
-	//		{Z_PRINTLIT, {}, 0, 0, "Out: "},
-	//		{Z_PRINTNUM, {VALUE(REG_LOCAL+0)}},
 			{Z_RET, {VALUE(REG_LOCAL+0)}},
 			{Z_END},
 		}

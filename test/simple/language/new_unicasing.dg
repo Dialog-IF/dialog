@@ -9,8 +9,10 @@
 	ąąą (uppercase) ąąą
 	ÿ (uppercase) ÿ
 	ÿÿÿ (uppercase) ÿÿÿ
+	€ (uppercase) €
+	€€€ (uppercase) €€€
 	(par)
 	(exhaust) {
-		*($Word is one of [a aaa ä äää ą ąąą ÿ ÿÿÿ])
+		*($Word is one of [a aaa ä äää ą ąąą ÿ ÿÿÿ € €€€])
 		$Word (uppercase) $Word
 	}
