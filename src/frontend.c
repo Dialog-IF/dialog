@@ -112,6 +112,7 @@ struct builtinspec {
 	{BI_TRACE_ON,		0, PREDF_SUCCEEDS,		2,	{"trace", "on"}},
 	{BI_TRACE_OFF,		0, PREDF_SUCCEEDS,		2,	{"trace", "off"}},
 	{BI_NOSPACE,		0, PREDF_SUCCEEDS,		2,	{"no", "space"}},
+	{BI_NBSP,		0, PREDF_SUCCEEDS,		1,	{"nbsp"}},
 	{BI_SPACE,		0, PREDF_SUCCEEDS,		1,	{"space"}},
 	{BI_SPACE_N,		0, PREDF_SUCCEEDS,		2,	{"space", 0}},
 	{BI_LINE,		0, PREDF_SUCCEEDS,		1,	{"line"}},

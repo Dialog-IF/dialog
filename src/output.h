@@ -6,6 +6,7 @@ void o_end_box(void);
 void o_space(void);
 void o_space_n(int n);
 void o_nospace(void);
+void o_nbsp(void);
 void o_sync(void);
 void o_set_style(int style);
 void o_set_upper(void);
