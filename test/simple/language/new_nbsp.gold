@@ -4,8 +4,12 @@
 [D] a b c d e f g h i j k l m n o p q r s a b c d e f g h i j k l m n o p q r s
 [D] a b c d e f g h i j k l m n o p q r s
 
-a b c d e f g h i j k l m n o p q r s a b c d e f g h i j k l m n o p q r s
-a b c d e f g h i j k l m n o p q r s
+[#] Previously, the output would be:
+[#] a b c d e f g h i j k l m n o p q r s a b c d e f g h i j k l m n o p q r s
+[#] a b c d e f g h i j k l m n o p q r s
+[#] But now, NBSPs are handled the same as spaces in the parser
+a b c d e f g h i j k l m n o p q r s a b c d e f g h i j k l m n o p q r s a b
+c d e f g h i j k l m n o p q r s
 
 a b c d e f g h i j k l m n o p q r s a b c d e f g h i j k l m n o p q r s a b
 c d e f g h i j k l m n o p q r s
