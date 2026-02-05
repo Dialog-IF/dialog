@@ -366,6 +366,7 @@ xref:lang:io.adoc#sizing[`(status bar $ with height $)`] (special syntax) +
 xref:timeprogress.adoc#statusbar[`(status headline)`] +
 xref:timeprogress.adoc#choicemode[`(sticky $)`] +
 xref:lang:control.adoc#stoppable[`(stop)`] +
+xref:actions.adoc#tickstop[`(stop after this tick)`] +
 xref:lang:control.adoc#stoppable[`(stoppable)`] (special syntax) +
 xref:lang:control.adoc#select-var[`(stopping)`] (special syntax) +
 xref:lang:beyondprg.adoc#metadata[`(story author)`] +
