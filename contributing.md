@@ -49,3 +49,22 @@ Contributions without this may take longer to review or be rejected or reverted.
 This is a community project, but we generally strive to follow the precedent or
 vision set by Linus (the original creator of the language and tools) where we
 can.
+
+## House Style
+
+We ask that all contributions follow the house style of the manual: `#lowercase`
+for objects and dictionary words, `$PascalCase` for variables, and `(all lowercase
+words)` for predicates. (Exception: predicates that internally call `(uppercase)`
+should indicate this with capitalization, like `(The $)` or `(Print Words $)`.)
+
+The compiler is written in standard C99. In the C source, identifiers are
+`lowercase_with_underscores`, and braces are set off by a space (without a line
+break):
+
+```
+if(cond) {
+	option1;
+} else {
+	option2;
+}
+```
