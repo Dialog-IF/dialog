@@ -4238,12 +4238,14 @@ void backend_z(
 {
 	int nglobal;
 	uint16_t addr_abbrevtable, addr_abbrevstr, addr_objtable, addr_globals, addr_static;
-	uint16_t addr_scratch, addr_heap, addr_heapend, addr_aux, addr_lts, addr_extheader, addr_unicode, addr_dictionary, addr_seltable;
+	uint16_t addr_scratch, addr_heap, addr_heapend, addr_aux, addr_lts, addr_extheader, addr_unicode, addr_dictionary, addr_seltable, addr_casing;
 	uint16_t used_addressable, used_objects1, used_objects2, used_wordmaps, used_unicode, used_dictionary; // How much of the 64KiB of addressable memory have we used, for what purposes? We don't actually need this value for compilation, but if we save it for the end, we can give better diagnostics.
 	uint32_t used_routines, used_strings; // These ones need more than 16 bits to represent, since they're in high memory, not addressable memory
 	uint8_t used_attributes; // How many of the Z-machine's low-level object attributes have we used?
 	uint32_t org;
 	uint32_t filesize;
+	uint16_t unichar;
+	uint8_t n_casing;
 	int i, j, k;
 	struct backend_wobj *wobj;
 	struct global_string *gs;
@@ -4637,6 +4639,18 @@ void backend_z(
 	org += 4 + NSTOPCHAR + ndict * 6;
 	
 	used_dictionary = org - used_dictionary; // We could just use addr_dictionary for this, but I think the consistency is worth more than the extra variable
+	
+	// Casing table: array of [lower ZSCII, upper ZSCII] pairs
+	// Only needed for values > 127
+	addr_casing = org;
+	n_casing = 0;
+	for(i = 0; i < n_extended; i++) {
+		unichar = unicode_to_upper(extended_zscii[i]);
+		if(unichar == extended_zscii[i]) continue; // No separate uppercase form (e.g. punctuation)
+		org += 4; // See casing section below for explanation
+		n_casing += 2; // Counts in words
+	}
+	used_unicode += n_casing * 2; // Count this as "Unicode data" in the output
 
 	if(org > 0xfff8) {
 		report(LVL_ERR, 0, "Base memory exhausted. Decrease heap/aux/long-term size using commandline options -H, -A, and/or -L.");
@@ -4666,6 +4680,8 @@ void backend_z(
 	set_global_label(G_MAINSTYLE, 0x80);
 	set_global_label(G_SELTABLE, addr_seltable);
 	set_global_label(G_SCRATCH, addr_scratch);
+	set_global_label(G_CASING, addr_casing);
+	set_global_label(G_CASING_SIZE, n_casing);
 
 	assert(REG_SPACE == REG_TEMP + 1);
 
@@ -4787,6 +4803,35 @@ void backend_z(
 			zcore[addr_unicode + 1 + 2*i]     = extended_zscii[i] >> 8;
 			zcore[addr_unicode + 1 + 2*i + 1] = extended_zscii[i] & 0xff;
 		}
+	}
+	
+	// Casing table
+	// Format: four-byte entries
+	// Byte 0: lowercase character (ZSCII)
+	// Byte 1: 0 if uppercase is ZSCII, 1 if uppercase is Unicode
+	// Byte 2: high byte of uppercase (unused for ZSCII)
+	// Byte 3: low byte of uppercase
+	k = 0; // Number of entries made
+	for(i = 0; i < n_extended; i++) {
+		unichar = unicode_to_upper(extended_zscii[i]);
+		if(unichar == extended_zscii[i]) continue;
+		for(j = 0; j < n_extended; j++) {
+			if(extended_zscii[j] == unichar) break;
+		}
+		if(j < n_extended) { // Found - store ZSCII value
+			zcore[addr_casing + 4*k + 0] = EXTENDED_ZSCII_BASE + i;
+			zcore[addr_casing + 4*k + 1] = 0;
+			zcore[addr_casing + 4*k + 2] = 0;
+			zcore[addr_casing + 4*k + 3] = EXTENDED_ZSCII_BASE + j;
+			if(verbose > 2) report(LVL_DEBUG, 0, "Uppercase equivalent for U+%04x is U+%04x (ZSCII %d)", extended_zscii[i], unichar, EXTENDED_ZSCII_BASE+j);
+		} else { // Not found - store Unicode instead
+			zcore[addr_casing + 4*k + 0] = EXTENDED_ZSCII_BASE + i;
+			zcore[addr_casing + 4*k + 1] = 1;
+			zcore[addr_casing + 4*k + 2] = unichar >> 8;
+			zcore[addr_casing + 4*k + 3] = unichar & 0xff;
+			if(verbose > 2) report(LVL_DEBUG, 0, "Uppercase equivalent for U+%04x is U+%04x", extended_zscii[i], unichar);
+		}
+		k++;
 	}
 
 	init_abbrev(addr_abbrevstr, addr_abbrevtable);

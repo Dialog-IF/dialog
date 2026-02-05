@@ -347,9 +347,3 @@ built-in fallbacks for certain common characters. Unsupported characters come
 out as question marks, which is decidedly ugly. A future version of the language
 may introduce functionality for dealing with unsupported characters.
 
-The `(uppercase)` built-in predicate is currently limited to English
-letters (A–Z) for the Z-machine backend. It should at least be upgraded to
-support the so-called default extra characters in the ZSCII character set, which
-cover the needs of several European languages. The Å-machine backend and the
-debugger have full support.
-
