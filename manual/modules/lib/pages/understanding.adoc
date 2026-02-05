@@ -515,6 +515,24 @@ can be changed, and may depend on the object, as in the following example:
 (default action (animate $Obj) [talk to $Obj])
 ----
 
+Normally, this feature only applies to the current room and its contents:
+things the player can see or touch. Another optional feature lets this be
+extended to rooms the player has visited, for navigational purposes:
+
+[source]
+----
+(default actions apply to rooms)
+----
+
+Since examining a room is rarely useful, the standard library provides the
+following defaults:
+
+[source]
+----
+(default action (current room $) [look])
+(default action (room $Obj) [go to $Obj])
+----
+
 [#newaction]
 == Example: Defining a new action
 

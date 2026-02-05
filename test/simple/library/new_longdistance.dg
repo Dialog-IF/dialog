@@ -1,0 +1,57 @@
+#player
+(current player *)
+(* is #in #alpha)
+
+(*(room $) is visited)
+
+#alpha
+(room *)
+(name *) alpha
+(look *) This is room alpha.
+(from * go #north to #beta)
+(from * go #east to #gamma)
+(from * go #west to #delta)
+
+#beta
+(room *)
+(name *) beta
+(look *) This is room beta.
+(from * go #south to #alpha)
+(from * go #southeast to #gamma)
+(from * go #north to #zeta)
+
+#gamma
+(room *)
+(name *) gamma
+(look *) This is room gamma.
+(from * go #west to #alpha)
+(from * go #northwest to #beta)
+
+#delta
+(room *)
+(name *) delta
+(look *) This is room delta.
+(from * go #east to #alpha)
+(from * go #southwest to #epsilon)
+
+#epsilon
+(room *)
+(name *) epsilon
+(look *) This is room epsilon.
+(from * go #northeast to #delta)
+
+#zeta
+(room *)
+(name *) zeta
+(look *) This is room zeta.
+(from * go #south to #beta)
+
+#treasure
+(name *) shiny treasure
+(item *)
+(* is #in #epsilon)
+(* is handled)
+
+(prevent [leave #alpha $])
+	(* is #heldby #player)
+	A mysterious force prevents you from passing!

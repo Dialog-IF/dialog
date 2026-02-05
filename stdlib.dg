@@ -692,16 +692,20 @@
 (interface (enter $<Room))
 
 (enter $Room)
+	(now) (don't mark the room as visited yet) %% We keep ($ is visited) unset until after (narrate entering $) has had its chance to describe things
 	(move player to #in $Room)
 	(narrate entering $Room)
+	(mark the location as visited)
 
 (interface (enter $<Room by $<Vehicle))
 
 (enter $Room by $Vehicle)
 	(now) ($Vehicle is #in $Room)
 	(now) ($Vehicle is handled)
+	(now) (don't mark the room as visited yet)
 	(update environment around player)
 	(narrate entering $Room)
+	(mark the location as visited)
 
 (update environment around player)
 	(if) (current player $Player) ($Player is in room $Room) (then)
@@ -711,12 +715,19 @@
 			(now) ($Object is #in $Room)
 		}
 		(recompute visibility)
-		(if) ($Room is unvisited) (player can see) (then)
-			(now) ($Room is visited)
-		(endif)
+		(mark the location as visited)
 	(endif)
 
-(narrate entering (room $))
+(mark the location as visited)
+	(don't mark the room as visited yet) %% This flag prevents it only once
+	(now) ~(don't mark the room as visited yet)
+(mark the location as visited)
+	(if) (current room $Room) ($Room is unvisited) (player can see) (then)
+		(now) ($Room is visited)
+	(endif)
+
+(narrate entering (room $Room))
+	(now) (looking after moving)
 	(par)
 	(try [look])
 
@@ -999,11 +1010,32 @@
 (describe action [look])
 	look around
 
+%% We want to reset (moving long distances) just before the final [look]
+(before [look])
+	(last step of movement)
+	(now) ~(moving long distances)
+	(now) ~(last step of movement)
+
+%% And (looking after moving) just after
+(on every tick)
+	(now) ~(looking after moving)
+
 (perform [look])
 	(current player $Player)
 	($Player is $Rel $Loc)
+	{ (verbosity level $Verbosity) (or) ($Verbosity = 2) } %% Just in case
 	(div @roomheader) (location headline)
-	(if) (player can see) (then)
+	(if)
+		(looking after moving)
+		{
+			($Verbosity = 0) (or) %% Verbosity 0: when moving at all
+			(current room $Room) ($Room is visited) ($Verbosity < 2) (or) %% Verbosity 1: when visited
+			(moving long distances) ($Verbosity < 3) %% Verbosity 2: when moving long distances
+		}
+	(then)
+		%% No room description, keep it brief
+		(par)
+	(elseif) (player can see) (then)
 		(current scope ceiling $Ceil)
 		(look $Ceil)
 		(make appearances $Rel $Loc)
@@ -2652,27 +2684,40 @@
 		*(dict $Room)
 	(matching all of $Filtered)
 
-(unlikely [go to (current room $)])
-
-~(very unlikely [go to $])
+(unlikely [go to $]) %% Prefer default actions on objects to default actions on rooms, if both are enabled
+	(default actions enabled)
+	(default actions apply to rooms)
+(very unlikely [go to $Room]) %% Don't call it very unlikely just because it involves a room
+	(just) (current room $Room) %% But going to the current room should still be very unlikely
 
 %% Rooms generally aren't present
 ~(action [go to $] requires $ to be present)
+
+%% Utility like (last $) that also returns the everything-but-last of the list
+%% In other words, it's the opposite of ($List = [$Head | $Rest])
+(interface (split last element from $<List into $>Rest and $>Last))
+(split last element from [$Last] into [] and $Last)
+(split last element from [$Head | $OldRest] into [$Head | $NewRest] and $Last)
+	(split last element from $OldRest into $NewRest and $Last)
 
 (perform [go to $Room])
 	(current room $Here)
 	(if) ($Here = $Room) (then)
 		You are already in (the $Room).
 		(tick) (stop)
-	(elseif) (shortest path from $Here to $Room is $Path) (then)
+	(elseif)
+		(shortest path from $Here to $Room is $FullPath)
+		(split last element from $FullPath into $Path and $Final)
+	(then)
 		(exhaust) {
 			*($Dir is one of $Path)
-			(line) \( attempting to go (name $Dir) \) (line)
+			(now) (moving long distances) %% Switch to a more minimal reporting style
 			(try [go $Dir])
 			(tick)
 			(par)
 		}
-		(inhibit next tick)
+		(now) (last step of movement) %% And switch back for the last step
+		(try [go $Final])
 	(else)
 		You don't know how to get to (the $Room) from here.
 		(tick) (stop)
@@ -2973,6 +3018,11 @@
 		(endif)
 	(endif)
 
+%% If this is a step in a long-distance movement, keep the reporting short and sweet
+(narrate leaving $ $Dir)
+	(moving long distances)
+	\( (name $Dir) \) (line)
+
 (narrate leaving $Room $Dir)
 	You
 	(if) ($Dir is one of [#up #down]) (then)
@@ -3019,6 +3069,11 @@
 
 (prevent [leave $Room $Dir by $])
 	(prevent [leave $Room $Dir])
+
+%% As above
+(narrate leaving $ $Dir by $)
+	(moving long distances)
+	\( (name $Dir) \) (line)
 
 (narrate leaving $ $Dir by $Obj)
 	You drive (the $Obj) (name $Dir).
@@ -3196,13 +3251,38 @@
 		(if) (them refers to $Them) (then) "Them" refers to (the $Them). (line) (endif)
 	}
 
-%% VERBOSE / BRIEF / SUPERBRIEF
+%% VERBOSE / BRIEF / SUPERBRIEF / SUPERVERBOSE
+
+(global variable (verbosity level $))
+%% 0 = superbrief (never show room details)
+%% 1 = brief (show room details only when unvisited)
+%% 2 = verbose (show room details except when moving long distances)
+%% 3 = superverbose (always show room details)
+
+%% If the author doesn't specify, we start with "verbose"
+(startup)
+	~(verbosity level $)
+	(now) (verbosity level 2)
+
+(understand command [superbrief])
+(perform [superbrief])
+	(now) (verbosity level 0)
+	(div @meta) { (story title or default) is now in SUPERBRIEF mode. Location details will never be shown while moving, even on a first visit. }
+
+(understand command [brief])
+(perform [brief])
+	(now) (verbosity level 1)
+	(div @meta) { (story title or default) is now in BRIEF mode. Location details will not be shown when moving to a previously-visited area. }
 
 (understand command [verbose])
-(understand [brief/superbrief] as [verbose])
 (perform [verbose])
-	(div @meta) { The verbosity level of this story is not adjustable. }
-	(stop)
+	(now) (verbosity level 2)
+	(div @meta) { (story title or default) is now in VERBOSE mode. Location details will not be shown when travelling long distances, but will be shown after normal movement. }
+
+(understand command [superverbose])
+(perform [superverbose])
+	(now) (verbosity level 3)
+	(div @meta) { (story title or default) is now in SUPERVERBOSE mode. Location details will always be shown when moving. }
 
 %% VERSION
 
@@ -3393,7 +3473,12 @@
 (understand $Words as $Action)
 	(default actions enabled)
 	~{ (implicit action is $) ~(implicit action wants direction) }
-	*(understand $Words as non-all object $Obj)
+	{
+		*(understand $Words as non-all object $Obj)
+	(or)
+		(default actions apply to rooms)
+		*(understand $Words as room name $Obj)
+	}
 	~(empty $Obj)
 	~($Obj = [1])
 	(if) ($Obj = [a $RealObj]) (then)
@@ -3402,6 +3487,8 @@
 		(default action $Obj $Action)
 	(endif)
 
+(default action (current room $) [look])
+(default action (room $Obj) [go to $Obj])
 (default action $Obj [examine $Obj])
 
 (understand $Words as $Words)
@@ -3786,8 +3873,14 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Daemons
 
+(interface (inhibit next tick))
 (inhibit next tick)
 	(now) (inhibiting next tick)
+
+%% When something dramatic happens in an action rule, we (stop) to cut off any further actions in the sequence. When something dramatic happens in an (on every tick) rule, we DON'T do that, because it would be weird to have only half a tick happen. Instead, we call this, which (stop)s once the tick is done.
+(interface (stop after this tick))
+(stop after this tick)
+	(now) (stopping after this tick)
 
 (tick)
 	(if) (inhibiting next tick) (then)
@@ -3797,6 +3890,10 @@
 		(exhaust) *(early on every tick)
 		(exhaust) *(on every tick)
 		(exhaust) *(late on every tick)
+		(if) (stopping after this tick) (then)
+			(now) ~(stopping after this tick)
+			(stop)
+		(endif)
 	(endif)
 
 %% Stories may add rules to the following predicates:
@@ -4847,6 +4944,15 @@
 	(else)
 		(par)
 		(stoppable) {
+			%% If this flag is still set, then a long-distance movement was interrupted by a (stop) before it reached its last step. We should explain this to the player.
+			(if) (moving long distances) (then)
+				(div @meta) {
+					Because something dramatic happened, your movement was cut short.
+				}
+				(now) ~(moving long distances)
+				(now) ~(last step of movement)
+			(endif)
+			
 			(if)
 				(scoring enabled)
 				(score notifications are on)
@@ -6546,9 +6652,12 @@
 (amusing enabled)		(fail)
 (amusing)			(fail)
 (library links enabled)		(fail)
-(default actions enabled)	(fail)
+(default actions apply to rooms)	(fail)
 (heads $)			(fail)
 (room $)			(fail)
+
+%% Effectively the same
+(default actions enabled)	(default actions apply to rooms)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Fatal runtime errors

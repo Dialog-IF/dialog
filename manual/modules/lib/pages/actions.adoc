@@ -214,8 +214,19 @@ design pattern in action handlers is `(tick) (stop)`, which
 causes time to pass as a result of the present action, but stops any subsequent
 actions.
 
-[#preventperform]
+=== (stop after this tick)
 
+It's sometimes useful to `(stop)` all further actions in an `(on every tick)`
+rule. For example, an `(on every tick in #dungeon)` rule might trigger an
+elaborate cutscene and whisk the player off to another room entirely. After
+that, they will probably want to revise their next actions!
+
+Using `(stop)` in this context can lead to strange bugs, though, since the
+`(tick)` was cut off halfway through. A better alternative is
+`(stop after this tick)`, which allows the current tick to finish, then
+`(stop)`s immediately after.
+
+[#preventperform]
 == Instead of: Prevent, perform, after
 
 Now we return to the six action-handling predicates. We will not consider them
