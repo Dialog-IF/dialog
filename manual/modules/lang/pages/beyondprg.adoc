@@ -1,7 +1,6 @@
 = Chapter 9: Beyond the program
 
 [#metadata]
-
 == Story metadata
 
 When an interactive story is released into the wild, the community takes over,
@@ -92,7 +91,6 @@ a library appears as the last filename on the commandline, and prints a warning
 otherwise.
 
 [#interface]
-
 == Interfaces
 
 Predicates are versatile building blocks with many potential usage patterns.
@@ -123,8 +121,12 @@ This parameter is supposed to be fully bound *before* querying the predicate.
 
 This parameter is supposed to be fully bound *after* the query succeeds.
 
-[source]
+Here is an example:
 
+[source]
+----
+(interface (understand $<Words as $>Action))
+----
 
 From the above declaration, we learn that the predicate is supposed to be
 queried with a bound value—some words, presumably in a list—as the first
@@ -136,7 +138,7 @@ variable names in ordinary rule definitions, only in interface declarations.
 
 Being bound before or after a query is subtly different from being an input
 parameter or an output parameter. For instance, the library provides a
-predicated called `(length of $ into $)` that counts the elements in a
+predicate called `(length of $ into $)` that counts the elements in a
 list. The list is allowed to contain unbound values, so the first parameter of
 the interface declaration cannot begin with a `<`, even though it is
 an input. The actual declaration is:
@@ -152,7 +154,6 @@ program for interface violations—unbound values that could end up in the wrong
 place at the wrong time—and warn you about them at compile-time.
 
 [#runtimeerror]
-
 == Runtime errors
 
 Attempts to violate the constraints imposed on
@@ -181,7 +182,7 @@ succeed.
 
 A fatal runtime error will reset the Dialog evaluation state, clear the heaps,
 and restart the program from the `(error $ entry point)` predicate. The
-parameter is a small integer, representing the nature of the error:
+parameter is a numerical code representing the nature of the error:
 
 1: Heap space exhausted.
 
@@ -341,7 +342,7 @@ extended numerical range. However, this must be balanced against the stated
 design goal of a small, elegant language.
 
 There is currently no way to provide a fallback if the interpreter fails to
-print a particular unicode character, although the Z-machine backend has
+print a particular non-ASCII character, although the Z-machine backend has
 built-in fallbacks for certain common characters. Unsupported characters come
 out as question marks, which is decidedly ugly. A future version of the language
 may introduce functionality for dealing with unsupported characters.

@@ -1,5 +1,6 @@
 [Z] Tutorial room
-[Z] 
+[ZA]
+[A]
 An Interactive Fiction
 An interactive fiction by Anonymous.
 Release 1. Serial number <SERIAL>.
@@ -49,7 +50,7 @@ The sapphire: You take the sapphire out of the small bowl.
 
 > put stone in bowl
 Did you want to put the sapphire or the amethyst in the small bowl?
-
+[ZD]
 > amethyst
 [Z] Tutorial room
 [Z] 

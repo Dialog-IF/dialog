@@ -130,6 +130,7 @@ struct builtinspec {
 	{BI_CLEAR_LINKS,	0, PREDF_SUCCEEDS,		2,	{"clear", "links"}},
 	{BI_CLEAR_DIV,		0, PREDF_SUCCEEDS,		2,	{"clear", "div"}},
 	{BI_CLEAR_OLD,		0, PREDF_SUCCEEDS,		2,	{"clear", "old"}},
+	{BI_CLEAR_STATUS,	0, PREDF_SUCCEEDS,		3,	{"clear", "status", "bar"}},
 	{BI_EMBEDRESOURCE,	0, 0,				3,	{"embed", "resource", 0}},
 	{BI_GETINPUT,		0, 0,				3,	{"get", "input", 0}},
 	{BI_GETRAWINPUT,	0, 0,				5,	{"", "get", "raw", "input", 0}},	// disabled for now
@@ -2474,7 +2475,7 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 	}
 	
 	// Warn about objects never used as topics, depending on topic_warning_level
-	if(topic_warning_level == 0 && lexer.lib_file) { // Default: warn only if library file found
+	if(topic_warning_level == 0 && lexer.lib_file >= 0) { // Default: warn only if library file found
 		topic_warning_level = 1;
 	}
 	if(topic_warning_level == 1) {

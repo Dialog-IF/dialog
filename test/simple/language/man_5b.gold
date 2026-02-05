@@ -1,4 +1,4 @@
-[Z] abc 123
+[ZA] abc 123
 [Z] A B C SPACE 1 2 3
 [#] I'm not sure why dfrotz echoes the line twice, but it seems to come down to how it implements keypress input in a system that only takes line input, so it's not Dialog's fault
 A B C SPACE 1 2 3 Goodbye!

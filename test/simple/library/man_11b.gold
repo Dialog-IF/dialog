@@ -1,5 +1,6 @@
 [Z] Tutorial room
-[Z] 
+[ZA]
+[A] 
 An Interactive Fiction
 An interactive fiction by Anonymous.
 Release 1. Serial number <SERIAL>.
@@ -12,7 +13,7 @@ This is a very nondescript room, dominated by a wooden table.
 [Z] Tutorial room
 [Z]
 (I only understood you as far as wanting to take something.)
-
+[ZD]
 > open boxes
 [Z] Tutorial room
 [Z]
@@ -54,7 +55,7 @@ Did you want to:
 1. eat a marble, or
 2. eat a marble that's in the open box on the wooden table?
 (Type the corresponding number)
-
+[ZD]
 > eat a marble
 [Z] Tutorial room
 [Z]
@@ -68,5 +69,5 @@ Did you want to:
 1. put the marble on the wooden table, or
 2. put a marble that's in the open box on the wooden table on the wooden table?
 (Type the corresponding number)
-
+[ZD]
 >

@@ -1,5 +1,6 @@
 [Z] Location
-[Z]
+[ZA]
+[A]
 An Interactive Fiction
 An interactive fiction by Anonymous.
 Release 1. Serial number <SERIAL>.
@@ -19,7 +20,7 @@ It seems to be harmless.
 "Me" refers to yourself.
 "It" refers to the deck of cards.
 "Them" refers to the deck of cards.
-
+[ZD]
 > x box
 [Z] Location
 [Z]
@@ -31,7 +32,7 @@ It seems to be harmless.
 "Me" refers to yourself.
 "It" refers to the box.
 "Them" refers to the deck of cards.
-
+[ZD]
 > x candy
 [Z] Location
 [Z] 
@@ -43,5 +44,5 @@ They seem to be harmless.
 "Me" refers to yourself.
 "It" refers to the candy.
 "Them" refers to the candy.
-
+[ZD]
 >

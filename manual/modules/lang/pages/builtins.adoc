@@ -130,13 +130,20 @@ member of the list.
 
 (append $A $B $AB)::
 
-Unifies `$AB` with the concatenation of `$A`
-and `$B`. The first parameter (`$A`) must be bound.
+Unifies `$AB` with the concatenation of `$A` and `$B`. The first parameter
+(`$A`) must be bound, but both of the following are valid:
+
+[source]
+----
+	(append [1 2] [3 4] $Combined) %% [1 2 3 4]
+	(append [1 2] $Suffix [1 2 3 4]) %% [3 4]
+----
 
 (split $List by $Keyword into $Left and $Right)::
 
 See below.
 
+[#split]
 === Splitting input by keywords
 
 During parsing, it is often necessary to scan a list for certain keywords, and
@@ -184,8 +191,7 @@ following rule definition:
 	(split $X by $Y into $ and $)
 ----
 
-[#sploin]
-
+[#wordbuiltins]
 === Manipulating dictionary words
 
 Dictionary words are usually treated as atomic units, but it is possible to

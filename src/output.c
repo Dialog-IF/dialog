@@ -52,6 +52,7 @@ static int column;
 static int width = 79, height = 0;
 static int dfrotz_quirks;
 static int force_width;
+static int nowrap;
 
 // These routines correspond to part of what the Z-machine is doing.
 
@@ -186,7 +187,7 @@ void o_begin_box(char *boxclass) {
 	boxstack[boxsp].visible = boxstack[boxsp - 1].visible;
 	boxstack[boxsp].style = 0;
 	boxstack[boxsp].upper = 0;
-	boxstack[boxsp].wrap = !term_handles_wrapping();
+	boxstack[boxsp].wrap = !(term_handles_wrapping() || nowrap);
 	if(!strcmp(boxclass, "span")) {
 		boxstack[boxsp].boxclass = CLA_SPAN;
 	} else {
@@ -417,6 +418,10 @@ void o_post_input(int external_lf) {
 
 void o_reset(int force_w, int quirks) {
 	force_width = force_w;
+	if(force_width < 0) { // Negative means disable wrapping
+		force_width = 79; // Needed to size the buffer
+		nowrap = 1;
+	}
 	if(force_width) width = force_width;
 	space = SP_DONELINE + (quirks? 999 : 0);
 	wrapbuf = realloc(wrapbuf, (width + 1) * sizeof(uint16_t));
@@ -430,7 +435,7 @@ void o_reset(int force_w, int quirks) {
 	boxstack[boxsp].style = STYLE_ROMAN;
 	boxstack[boxsp].upper = 0;
 	boxstack[boxsp].visible = 1;
-	boxstack[boxsp].wrap = !term_handles_wrapping();
+	boxstack[boxsp].wrap = !(term_handles_wrapping() || nowrap);
 	dfrotz_quirks = quirks;
 }
 
@@ -443,7 +448,7 @@ void o_leave_all() {
 		boxstack[boxsp].style = STYLE_ROMAN;
 		boxstack[boxsp].upper = 0;
 		boxstack[boxsp].visible = 1;
-		boxstack[boxsp].wrap = !term_handles_wrapping();
+		boxstack[boxsp].wrap = !(term_handles_wrapping() || nowrap);
 	}
 }
 

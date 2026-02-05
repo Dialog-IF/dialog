@@ -1,0 +1,24 @@
+%% In older versions of Dialog, this would crash the compiler, because ~($Fruit is at #room) would get compiled into ~*($Fruit has parent #room), and negative multi-queries are not allowed. With that bug fixed, it should compile into ~($Fruit has parent #room) instead, and this will not crash.
+
+@($Obj is at $Parent)
+	*($Obj has parent $Parent)
+
+#apple
+(* is at #room)
+
+#banana
+(* is at #room)
+
+#cherry
+(* is at #garden)
+
+(program entry point)
+	(collect $Fruit)
+		*($Fruit is at #room)
+	(into $AtRoom)
+	At room: $AtRoom (line)
+	(collect $Fruit)
+		*(object $Fruit)
+		~($Fruit is at #room)
+	(into $NotAtRoom)
+	Not at room: $NotAtRoom

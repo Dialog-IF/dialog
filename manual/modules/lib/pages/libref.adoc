@@ -4,9 +4,9 @@ The following is an alphabetical list of publically documented library
 predicates, library macros, and built-in predicates, with links to the relevant
 sections of the manual.
 
-Note that
+Note that not all
 xref:lang:quickref.adoc#special[special syntax]
-isn't included here.
+is included here: only the elements that look like predicates.
 
 xref:understanding.adoc#liblinks[`($)`] +
 xref:understanding.adoc#liblinks[`($ $)`] +
@@ -15,6 +15,7 @@ xref:lang:varsvalues.adoc#unification[`($ = $)`] +
 xref:lang:builtins.adoc#arithmetic[`($ > $)`] +
 xref:traits.adoc#linguistictraits[`(a $)`] +
 xref:traits.adoc#linguistictraits[`(A $)`] +
+xref:lang:choicepoints.adoc#accumulate[`(accumulate $)`] (special syntax) +
 xref:actions.adoc#groupactions[`(action $ may group $ with $)`] +
 xref:actions.adoc#refusebefore[`(action $ requires $ to be present)`] +
 xref:actions.adoc#refusebefore[`(action $ requires $ to be touched)`] +
@@ -41,6 +42,7 @@ xref:items.adoc#appearance[`(appearance $ $ $)`] +
 xref:lang:builtins.adoc#listbuiltins[`(append $ $ $)`] +
 xref:understanding.adoc#newactions[`(asking for direction in $)`] +
 xref:understanding.adoc#newactions[`(asking for object in $)`] +
+xref:lang:control.adoc#select-var[`(at random)`] (special syntax) +
 xref:moving.adoc#floating[`($ attracts $)`] +
 xref:timeprogress.adoc#theintro[`(banner)`] +
 xref:actions.adoc#refusebefore[`(before $)`] +
@@ -58,6 +60,9 @@ xref:miscfeat.adoc#pronouns[`(clear all pronouns)`] +
 xref:lang:io.adoc#clear[`(clear div)`] +
 xref:lang:io.adoc#hyperlinks[`(clear links)`] +
 xref:lang:io.adoc#clear[`(clear old)`] +
+xref:lang:io.adoc#clear[`(clear status bar)`] +
+xref:lang:choicepoints.adoc#collect-values[`(collect $)`] (special syntax) +
+xref:lang:choicepoints.adoc#collect-words[`(collect words)`] (special syntax) +
 xref:understanding.adoc#newactions[`(command $)`] +
 xref:lang:beyondprg.adoc#metadata[`(compiler version)`] +
 xref:traits.adoc#categorytraits[`(consultable $)`] +
@@ -70,6 +75,7 @@ xref:timeprogress.adoc#choicemode[`(current node $)`] +
 xref:moving.adoc#moveplayer[`(current player $)`] +
 xref:moving.adoc#moveplayer[`(current room $)`] +
 xref:timeprogress.adoc#score[`(current score $)`] +
+xref:lang:control.adoc#select-var[`(cycling)`] (special syntax) +
 xref:timeprogress.adoc#statusbar[`(darkness headline)`] +
 xref:understanding.adoc#liblinks[`(default action $ $)`] +
 xref:understanding.adoc#liblinks[`(default actions enabled)`] +
@@ -78,24 +84,30 @@ xref:timeprogress.adoc#score[`(decrease score by $)`] +
 xref:scenery.adoc#descriptions[`(descr $)`] +
 xref:understanding.adoc#newactions[`(describe action $)`] +
 xref:npc.adoc#asktell[`(describe topic $)`] +
+xref:lang:io.adoc#determine-object[`(determine object $)`] (special syntax) +
 xref:scenery.adoc#descriptions[`(dict $)`] +
 xref:traits.adoc#categorytraits[`(direction $)`] +
 xref:timeprogress.adoc#choicemode[`(disp $)`] +
 xref:timeprogress.adoc#choicemode[`(display $)`] +
 xref:lang:builtins.adoc#system[`(display memory statistics)`] +
 xref:lang:builtins.adoc#arithmetic[`($ divided by $ into $)`] +
+xref:lang:io.adoc#div[`(div $)`] (special syntax) +
 xref:traits.adoc#linguistictraits[`(does $)`] +
 xref:traits.adoc#linguistictraits[`(doesn't $)`] +
 xref:traits.adoc#categorytraits[`(door $)`] +
 xref:actions.adoc#tickstop[`(early on every tick)`] +
 xref:traits.adoc#categorytraits[`(edible $)`] +
+xref:lang:control.adoc#if[`(else)`] (special syntax) +
+xref:lang:control.adoc#if[`(elseif)`] (special syntax) +
 xref:lang:io.adoc#resources[`(embed resource $)`] +
 xref:lang:builtins.adoc#typechecks[`(empty $)`] +
+xref:lang:control.adoc#if[`(endif)`] (special syntax) +
 xref:miscfeat.adoc#treeutil[`(ensure $ is held)`] +
 xref:moving.adoc#moveplayer[`(enter $)`] +
 xref:lang:beyondprg.adoc#runtimeerror[`(error $ entry point)`] +
 xref:traits.adoc#linguistictraits[`(es $)`] +
 xref:traits.adoc#categorytraits[`(excluded from all $)`] +
+xref:lang:choicepoints.adoc#exhaust[`(exhaust)`] (special syntax) +
 xref:timeprogress.adoc#theintro[`(extension version)`] +
 xref:lang:choicepoints.adoc#exhaust[`(fail)`] +
 xref:stdactions.adoc#stdreveal[`(feel $)`] +
@@ -111,15 +123,18 @@ xref:moving.adoc#doors[`@(from $ go $ through $ to $)`] +
 xref:moving.adoc#rooms[`(from $ go $ to $)`] +
 xref:npc.adoc#npcmove[`(from $ go $ to room $)`] +
 xref:moving.adoc#doors[`(from $ through $ to $)`] +
+xref:lang:io.adoc#determine-object[`(from words)`] (special syntax) +
 xref:lang:builtins.adoc#typechecks[`(fully bound $)`] +
 xref:miscfeat.adoc#fungibility[`(fungibility enabled)`] +
 xref:miscfeat.adoc#fungibility[`(fungible $ $)`] +
 xref:timeprogress.adoc#gameover[`(game over $)`] +
 xref:timeprogress.adoc#gameover[`(game over option)`] +
 xref:timeprogress.adoc#gameover[`(game over status bar)`] +
+xref:sugar.adoc#generate[`(generate $ $)`] (special syntax) +
 xref:lang:io.adoc#input[`(get input $)`] +
 xref:lang:io.adoc#input[`(get key $)`] +
 xref:miscfeat.adoc#questions[`(get number from $ to $ $)`] +
+xref:lang:dynamic.adoc#globvar[`(global variable $)`] (special syntax) +
 xref:items.adoc#clothing[`($ goes underneath $)`] +
 xref:understanding.adoc#customtokens[`(grammar entry $ $ $)`] +
 xref:understanding.adoc#grammar[`@(grammar $ for $)`] +
@@ -138,19 +153,23 @@ xref:miscfeat.adoc#treeutil[`($ has ancestor $)`] +
 xref:lang:dynamic.adoc#hasparent[`($ has parent $)`] +
 xref:scenery.adoc#objlocations[`($ has relation $)`] +
 xref:scenery.adoc#descriptions[`(heads $)`] +
+xref:lang:control.adoc#if[`(if)`] (special syntax) +
 xref:timeprogress.adoc#score[`(increase score by $)`] +
 xref:moving.adoc#light[`(inherently dark $)`] +
 xref:items.adoc#appearance[`(initial appearance $)`] +
 xref:timeprogress.adoc#choicemode[`(initial label $)`] +
+xref:lang:io.adoc#status[`(inline status bar $)`] (special syntax) +
 xref:traits.adoc#categorytraits[`(in-seat $)`] +
 xref:actions.adoc#preventperform[`(instead of $)`] +
 xref:traits.adoc#categorytraits[`(intangible $)`] +
+xref:beyondprog.adoc#interface[`(interface $)`] (special syntax) +
 xref:lang:io.adoc#resources[`(interpreter can embed $)`] +
 xref:lang:io.adoc#status[`(interpreter supports inline status bar)`] +
 xref:lang:io.adoc#hyperlinks[`(interpreter supports links)`] +
 xref:lang:builtins.adoc#system[`(interpreter supports quit)`] +
 xref:lang:io.adoc#status[`(interpreter supports status bar)`] +
 xref:lang:builtins.adoc#system[`(interpreter supports undo)`] +
+xref:choicepoints.adoc#collect-values[`(into $)`] (special syntax) +
 xref:timeprogress.adoc#theintro[`(intro)`] +
 xref:traits.adoc#linguistictraits[`(is $)`] +
 xref:scenery.adoc#objlocations[`@($ is $ $)`] +
@@ -187,6 +206,7 @@ xref:traits.adoc#linguistictraits[`(its $)`] +
 xref:traits.adoc#linguistictraits[`(Its $)`] +
 xref:traits.adoc#linguistictraits[`(itself $)`] +
 xref:lang:builtins.adoc#sploin[`(join words $ into $)`] +
+xref:lang:choicepoints.adoc#just[`(just)`] (special syntax) +
 xref:timeprogress.adoc#choicemode[`(label $)`] +
 xref:miscfeat.adoc#listutil[`(last $ $)`] +
 xref:actions.adoc#tickstop[`(late on every tick)`] +
@@ -205,12 +225,17 @@ xref:npc.adoc#npcaction[`(let $ wear $)`] +
 xref:understanding.adoc#liblinks[`(library links enabled)`] +
 xref:lang:beyondprg.adoc#metadata[`(library version)`] +
 xref:lang:execution.adoc#printing[`(line)`] +
+xref:lang:io.adoc#links[`(link)`] (special syntax) +
+xref:lang:io.adoc#links[`(link $)`] (special syntax) +
+xref:lang:io.adoc#resources[`(link resource $)`] (special syntax) +
 xref:lang:builtins.adoc#typechecks[`(list $)`] +
 xref:items.adoc#appearance[`(list objects $ $)`] +
 xref:traits.adoc#categorytraits[`(lockable $)`] +
+xref:lang:io.adoc#debugging[`(log)`] (special syntax) +
 xref:scenery.adoc#descriptions[`(look $)`] +
 xref:traits.adoc#categorytraits[`(male $)`] +
 xref:understanding.adoc#customtokens[`(match grammar token $ against $ $ into $)`] +
+xref:lang:io.adoc#determine-object[`(matching all of $)`] (special syntax) +
 xref:timeprogress.adoc#score[`(maximum score $)`] +
 xref:lang:builtins.adoc#arithmetic[`($ minus $ into $)`] +
 xref:lang:builtins.adoc#arithmetic[`($ modulo $ into $)`] +
@@ -253,6 +278,7 @@ xref:lang:builtins.adoc#typechecks[`(nonempty $)`] +
 xref:lang:execution.adoc#printing[`(no space)`] +
 xref:traits.adoc#categorytraits[`(not here $)`] +
 xref:miscfeat.adoc#pronouns[`(notice $)`] +
+xref:lang:dynamic.adoc[`(now)`] (special syntax) +
 xref:miscfeat.adoc#listutil[`(nth $ $ $)`] +
 xref:lang:builtins.adoc#typechecks[`(number $)`] +
 xref:lang:builtins.adoc#typechecks[`(object $)`] +
@@ -264,6 +290,8 @@ xref:traits.adoc#categorytraits[`(opaque $)`] +
 xref:traits.adoc#categorytraits[`(openable $)`] +
 xref:scenery.adoc#dynamic[`(open or closed $)`] +
 xref:miscfeat.adoc#dirutil[`(opposite of $ is $)`] +
+xref:lang:choicepoints.adoc#disjunction[`(or)`] (special syntax) +
+xref:lang:control.adoc#select-var[`(or)`] (special syntax, within `(select)`) +
 xref:traits.adoc#categorytraits[`(out of reach $)`] +
 xref:traits.adoc#linguistictraits[`(pair $)`] +
 xref:lang:execution.adoc#printing[`(par)`] +
@@ -271,7 +299,7 @@ xref:timeprogress.adoc#gameover[`(parse game over $)`] +
 xref:actions.adoc#preventperform[`(perform $)`] +
 xref:moving.adoc#light[`(player can see)`] +
 xref:moving.adoc#scope[`(player can see $)`] +
-xref:traits.adoc#linguistictraits[`(plural $)`] +            
+xref:traits.adoc#linguistictraits[`(plural $)`] +
 xref:items.adoc#plursynonyms[`(plural dict $)`] +
 xref:miscfeat.adoc#fungibility[`(plural name $)`] +
 xref:lang:builtins.adoc#arithmetic[`($ plus $ into $)`] +
@@ -287,6 +315,7 @@ xref:lang:io.adoc#progress[`(progress bar $ of $)`] +
 xref:traits.adoc#linguistictraits[`(proper $)`] +
 xref:npc.adoc#asktell[`(proper topic $)`] +
 xref:moving.adoc#light[`($ provides light)`] +
+xref:lang:control.adoc#select-var[`(purely at random)`] (special syntax) +
 xref:traits.adoc#categorytraits[`(pushable $)`] +
 xref:lang:control.adoc#closures[`(query $ $)`] +
 xref:lang:control.adoc#closures[`(query $)`] +
@@ -318,6 +347,7 @@ xref:lang:builtins.adoc#system[`(save undo $)`] +
 xref:miscfeat.adoc#libdebug[`(scope)`] +
 xref:timeprogress.adoc#score[`(scoring enabled)`] +
 xref:traits.adoc#categorytraits[`(seat $)`] +
+xref:lang:control.adoc#select-var[`(select)`] (special syntax) +
 xref:moving.adoc#moveplayer[`(select player $)`] +
 xref:lang:beyondprg.adoc#metadata[`(serial number)`] +
 xref:traits.adoc#categorytraits[`(sharp $)`] +
@@ -325,14 +355,19 @@ xref:moving.adoc#pathfinding[`(shortest path from $ to $ is $)`] +
 xref:traits.adoc#linguistictraits[`(singleton $)`] +
 xref:lang:execution.adoc#printing[`(space)`] +
 xref:lang:io.adoc#case[`(space $)`] +
+xref:lang:io.adoc#div[`(span $)`] (special syntax) +
 xref:miscfeat.adoc#dirutil[`(spell out $)`] +
 xref:miscfeat.adoc#listutil[`(split $ anywhere into $ and $)`] +
 xref:lang:builtins.adoc#listbuiltins[`(split $ by $ into $ and $)`] +
 xref:lang:builtins.adoc#sploin[`(split word $ into $)`] +
 xref:timeprogress.adoc#theintro[`(startup)`] +
+xref:lang:io.adoc#status[`(status bar $)`] (special syntax) +
+xref:lang:io.adoc#sizing[`(status bar $ with height $)`] (special syntax) +
 xref:timeprogress.adoc#statusbar[`(status headline)`] +
 xref:timeprogress.adoc#choicemode[`(sticky $)`] +
 xref:lang:control.adoc#stoppable[`(stop)`] +
+xref:lang:control.adoc#stoppable[`(stoppable)`] (special syntax) +
+xref:lang:control.adoc#select-var[`(stopping)`] (special syntax) +
 xref:lang:beyondprg.adoc#metadata[`(story author)`] +
 xref:lang:beyondprg.adoc#metadata[`(story blurb)`] +
 xref:lang:beyondprg.adoc#metadata[`(story ifid)`] +
@@ -354,6 +389,9 @@ xref:lang:io.adoc#case[`(The full $)`] +
 xref:traits.adoc#linguistictraits[`(the $ is)`] +
 xref:traits.adoc#linguistictraits[`(The $ is)`] +
 xref:traits.adoc#linguistictraits[`(them $)`] +
+xref:lang:control.adoc#if[`(then)`] (special syntax) +
+xref:lang:control.adoc#select-var[`(then at random)`] (special syntax) +
+xref:lang:control.adoc#select-var[`(then purely at random)`] (special syntax) +
 xref:actions.adoc#tickstop[`(tick)`] +
 xref:lang:builtins.adoc#arithmetic[`($ times $ into $)`] +
 xref:npc.adoc#asktell[`(topic $)`] +

@@ -316,12 +316,12 @@ It is rendered with character graphics on the Z-machine backend.
 == Clearing the screen
 
 To clear the main text area, excluding the top status area, use `(clear)`.
-To clear the entire screen and disable the top status area, use `(clear all)`.
+To clear only the status areas (top and inline), use `(clear status bar)`.
+To do both, clearing everything on the screen, use `(clear all)`.
 These predicates may not be queried from within a span, link, or status area.
 Such queries will result in a runtime error.
 
-Be aware that on some interpreters, clearing interferes with the player's ability to scroll back
-and review earlier parts of the play session. Other interpreters might not support clearing at all.
+Be aware that on some interpreters, clearing interferes with the player's ability to scroll back and review earlier parts of the play session. Other interpreters might not support clearing at all.
 
 The Å-machine web interpreter supports clearing everything that the player has had a chance to read. This means all output up to and including the last line of input.
 The operation is triggered with `(clear old)`.
@@ -380,6 +380,7 @@ where the split occurs between the essential and optional parts of a given dicti
 There are two built-in predicates for obtaining input from the player.
 One waits for a single keypress, while the other reads a full line of input.
 
+[#getkey]
 === Get key
 
 [source]
@@ -450,6 +451,7 @@ A simple keypress dispatcher can look like this:
 	RETURN was pressed.
 ----
 
+[#getinput]
 === Get input
 
 [source]
@@ -737,7 +739,7 @@ The following built-in predicates are also useful for debugging:
 If the program is currently running inside the interactive debugger,
 suspend execution and print the current source code filename and line number.
 When execution resumes, this query succeeds.
-+
+
 Outside of the debugger, the query simply succeeds.
 
 (trace on)::
@@ -761,6 +763,7 @@ You will generally want to do all your tracing in the debugger,
 which mercifully turns off some of the more confusing optimizations.
 That being said, tracing the optimized Z- or Å-code can be useful when trying to speed up a program.
 
+[#determine-object]
 == Determining objects from words
 
 This section is mainly of concern for library programmers, so story authors may safely skip it.

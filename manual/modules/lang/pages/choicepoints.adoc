@@ -1,5 +1,6 @@
 = Chapter 3: Choice points
 
+[#disjunction]
 == Disjunctions
 
 So far, we have seen that rule bodies can contain text and values to be printed, as well as queries to be made to predicates.
@@ -467,6 +468,7 @@ Come and buy! [#apple #orange #banana]!
 Note that the query to `(fruit $)` must be a multi-query, otherwise only the first fruit is returned.
 The first statement inside a collect-expression is nearly always a multi-query.
 
+[#collect-words]
 == Collecting words
 
 There is also a special variant of the collect-into syntax:
@@ -549,6 +551,7 @@ The list is: [hello , world!]
 Printing each word: hello, world!
 ```
 
+[#accumulate]
 == Accumulating numbers
 
 Instead of returning the collected values as a list, it is possible to add them together:

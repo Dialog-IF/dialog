@@ -100,6 +100,7 @@ So far, we have seen one kind of value: the object.
 There are three more kinds of value in the Dialog programming language:
 _Number_, _dictionary word_, and _list_.
 
+[#numbers]
 === Number
 
 A number is a non-negative integer in the range 0–16383 inclusive.
@@ -108,6 +109,7 @@ Numbers that appear in the source code must also adhere to this format:
 For instance, `007` in the source code is regarded as a word of text.
 This makes a difference inside rule heads and queries, where `007` would be considered part of the predicate name, and not a parameter.
 
+[#dictwords]
 === Dictionary word
 
 While objects represent elements of the game world, dictionary words represent input typed by the player.
@@ -144,6 +146,7 @@ Characters that have special significance in Dialog source code, such as parenth
 
 Dictionary words are case insensitive as a general rule, although the Z-machine compiler backend has limited support for case conversion of international characters.
 
+[#lists]
 === List
 
 A list is an ordered sequence of values.
@@ -341,6 +344,7 @@ When your opponent plays rock, you'd better not play #scissors.
 When your opponent plays rock, you should play #paper.
 ```
 
+[#partiallists]
 == Partial lists and recursion
 
 Dialog has a special syntax for matching the head (first element) and tail (remaining elements) of a list.

@@ -83,7 +83,6 @@ Technically the disjunction-based version works just as well as the if-based ver
 But in the spirit of defensive programming, it's generally a good idea to stick to if-statements
 when writing code with side-effects, such as printing.
 
-
 [#negation]
 == Negation
 

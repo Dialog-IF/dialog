@@ -11814,7 +11814,7 @@
 	(line)
 	(story release $RelNum)
 	Release $RelNum.
-	Serial number ZMACHINE.
+	Serial number SERIAL.
 	(line)
 	VERSION.
 	(library version)

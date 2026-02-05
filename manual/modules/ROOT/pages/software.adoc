@@ -272,6 +272,17 @@ a filename.
 Resets the game, and reads input from a text file, thus recreating the saved
 game position. The debugger will ask you for a filename.
 
+@tree::
+
+Shows the current state of the object tree (that is, the `($ has parent $)`
+per-object variable).
+
+@dynamic::
+
+Shows the current state of all dynamic predicates (global flags, global variables,
+per-object flags, and per-object variables). For global flags, it also shows
+whether they’ve been changed via `(now)`.
+
 You can get a full list of debugging commands by typing `@help` at the
 prompt. These commands can be abbreviated as long as the abbreviation is unique;
 `@h` works for `@help`, for instance.
@@ -303,7 +314,8 @@ Use queries to inspect the state of the running program, e.g. type
 that's currently a direct child of the `#box` object.
 
 Insert `(log) ...` statements to print variables and other information
-while debugging.
+while debugging. These statements will be completely ignored when compiling
+for Z-machine or Å-machine.
 
 The standard library provides `(actions on)` and `(actions off)`,
 for controlling _action tracing_. When enabled, this feature makes the library

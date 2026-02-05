@@ -3,8 +3,11 @@
 [D] Warning: new_nonlinear.debug, line 8: Possible typo: Local variable $Y only
 [D] appears once.
 [Z] QUERY (test) at new_nonlinear.dg:14
+[A] QUERY (test) new_nonlinear.dg:14
 [Z] ENTER (test) at new_nonlinear.dg:1
+[A] ENTER (test) new_nonlinear.dg:1
 [Z] QUERY ([$ $] = $) at new_nonlinear.dg:2
+[A] QUERY ([$ $] = $) new_nonlinear.dg:2
 [D] | FOUND (trace on) new_nonlinear.debug:13
 [D] | QUERY (test) new_nonlinear.debug:14
 [D] | | ENTER (test) new_nonlinear.debug:1
@@ -12,12 +15,16 @@
 [D] | | FOUND ([$ $] = [$ $]) new_nonlinear.debug:2
 Value of Y: [$ $].
 [Z] QUERY ($ = 24) at new_nonlinear.dg:4
+[A] QUERY ($ = 24) new_nonlinear.dg:4
 [D] | | QUERY ($ = 24) new_nonlinear.debug:4
 [D] | | FOUND (24 = 24) new_nonlinear.debug:4
 Value of Y: [24 24].
 [Z] QUERY (test again) at new_nonlinear.dg:6
+[A] QUERY (test again) new_nonlinear.dg:6
 [Z] ENTER (test again) at new_nonlinear.dg:8
+[A] ENTER (test again) new_nonlinear.dg:8
 [Z] QUERY ($ = 24) at new_nonlinear.dg:9
+[A] QUERY ($ = 24) new_nonlinear.dg:9
 [D] | | QUERY (test again) new_nonlinear.debug:6
 [D] | | | ENTER (test again) new_nonlinear.debug:8
 [D] | | | QUERY ($ = 24) new_nonlinear.debug:9
