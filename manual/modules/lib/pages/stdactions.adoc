@@ -628,8 +628,11 @@ to the library source code for details about what these actions do.
 
 `[version]`
 
-`AGAIN` (`G`) and `OOPS` are treated as special
-cases by the parser. They are not actions.
+`AGAIN` (`G`) and `OOPS` are treated as special cases by the parser.
+They are not actions.
+
+The `SUPERBRIEF`, `BRIEF`, `VERBOSE`, and `SUPERVERBOSE` commands affect a global
+variable, `(verbosity level $). Its effects are explained in the library source code.
 
 [#debuglib]
 == Debugging actions

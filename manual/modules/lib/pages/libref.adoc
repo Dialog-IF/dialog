@@ -435,6 +435,7 @@ xref:lang:io.adoc#case[`(unstyle)`] +
 xref:moving.adoc#moveplayer[`(update environment around player)`] +
 xref:lang:io.adoc#case[`(uppercase)`] +
 xref:traits.adoc#categorytraits[`(vehicle $)`] +
+xref:stdactions.adoc#stdmisc[`(verbosity level $)`] +
 xref:understanding.adoc#unlikely[`(very unlikely $)`] +
 xref:traits.adoc#categorytraits[`(wearable $)`] +
 xref:items.adoc#clothing[`(wearing $ covers $)`] +
