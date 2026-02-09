@@ -369,9 +369,6 @@ static int utf8_to_zscii(uint8_t *dest, int ndest, char *src, uint32_t *special,
 			} else { // Already exists in the encoding
 				dest[outpos++] = EXTENDED_ZSCII_BASE + i;
 			}
-			// In the future, we should convert extended characters to lowercase
-			// for dictionary words. For now, story authors are expected to include
-			// an explicit lowercase alias in the code where necessary.
 		}
 	}
 }
@@ -402,7 +399,6 @@ static int encode_chars(uint8_t *dest, int ndest, uint16_t *for_dict, uint8_t *s
 			if(n >= ndest) return n;
 			dest[n++] = 7 + (str - a2);
 		} else { // Not in any alphabet: use alphabet 2 character 6 (escape), then the next two pentets are the ZSCII codepoint
-			// This is where we should do case conversion for non-ASCII letters TODO
 			dest[n++] = 5;
 			if(n >= ndest) return n;
 			dest[n++] = 6;
