@@ -371,17 +371,5 @@ of the manual. The Dialog language does not require this, but the manual
 uses `#lowercase` for objects and dictionary words, `$PascalCase` for variables,
 and `(all lowercase words)` for predicates. (Exception: predicates that internally
 call `(uppercase)` should indicate this with capitalization, like `(The $)`.)
-
-The compiler is written in standard C99. In the C source, identifiers are
-`lowercase_with_underscores`, and braces are set off by a space (without a line
-break):
-
-----
-if(cond) {
-	option1;
-} else {
-	option2;
-}
-----
-
-Further details are provided in the file `contributing.md`.
+The compiler is written in standard C99. A full style guide is provided in the
+file `contributing.md`.
