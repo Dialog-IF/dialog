@@ -377,8 +377,8 @@ static int utf8_to_zscii(uint8_t *dest, int ndest, char *src, uint32_t *special,
 	}
 }
 
-static int encode_chars(uint8_t *dest, int ndest, uint16_t *for_dict, uint8_t *src) {
-	int n = 0;
+static int encode_chars(uint8_t *dest, int ndest, uint16_t *for_dict, uint8_t *src, int no_abbrevs) {
+	int i, n = 0, abbrev_applied = 0;
 	char *str, *a2 = "\r0123456789.,!?_#'\"/\\-:()";
 	uint8_t zscii;
 
@@ -386,6 +386,19 @@ static int encode_chars(uint8_t *dest, int ndest, uint16_t *for_dict, uint8_t *s
 
 	while((zscii = *src++)) {
 		if(n >= ndest) return n;
+		abbrev_applied = 0;
+		for(i = abbrev_index[zscii]; i < N_ABBREVS; i++) { // Can an abbreviation be applied here?
+			if(no_abbrevs) break; // No abbreviations when doing dictionary words (and the abbreviations themselves!)
+			if(abbreviations[i][0] != zscii) break; // No abbreviation matched
+			if(!strncmp((char*)src-1, (char*)abbreviations[i], abbrev_lengths[i])) { // Match!
+				dest[n++] = i/32+1;
+				dest[n++] = i%32;
+				abbrev_applied = 1;
+				src += abbrev_lengths[i]-1;
+				break;
+			}
+		}
+		if(abbrev_applied) continue; // Cleaner than a GOTO
 		if(zscii == ' ') { // Space: 0 in every alphabet
 			dest[n++] = 0;
 		} else if(zscii >= 'a' && zscii <= 'z') { // Lowercase letter: alphabet 0
@@ -640,7 +653,7 @@ void assemble(uint32_t org, struct routine *r) {
 			if((op & 0x30) == 0x30) {
 				zcore[org++] = op;
 				if(op == Z_PRINTLIT) {
-					n = encode_chars(pentets, MAXSTRING, 0, (uint8_t *) zi->string);
+					n = encode_chars(pentets, MAXSTRING, 0, (uint8_t *) zi->string, 0);
 					assert(n < MAXSTRING);
 					n = pack_pentets(words, pentets, n);
 					for(i = 0; i < n; i++) {
@@ -743,7 +756,7 @@ int pass1(struct routine *r, uint32_t org) {
 				if((op & 0x30) == 0x30) {
 					size++;
 					if(op == Z_PRINTLIT) {
-						n = encode_chars(pentets, MAXSTRING, 0, (uint8_t *) zi->string);
+						n = encode_chars(pentets, MAXSTRING, 0, (uint8_t *) zi->string, 0);
 						assert(n <= MAXSTRING);
 						size += ((n + 2) / 3) * 2;
 					}
@@ -903,7 +916,7 @@ void prepare_dictionary_z(struct program *prg, int preserve_zscii) {
 			}
 		}
 		assert(zbuf[0]);
-		n = encode_chars(pentets, 9, &dictionary[i].n_essential, zbuf);
+		n = encode_chars(pentets, 9, &dictionary[i].n_essential, zbuf, 1);
 		memset(pentets + n, 5, 9 - n);
 		pack_pentets(dictionary[i].encoded, pentets, 9);
 	}
@@ -962,7 +975,7 @@ void init_backend_wobj(struct program *prg, int id, struct backend_wobj *wobj, i
 				prg->worldobjnames[id]->name);
 			exit(1);
 		}
-		n = encode_chars(pentets, sizeof(pentets), 0, zbuf);
+		n = encode_chars(pentets, sizeof(pentets), 0, zbuf, 0);
 		if(n == sizeof(pentets)) {
 			report(
 				LVL_ERR,
@@ -1001,7 +1014,7 @@ uint16_t init_abbrev(uint16_t addr_abbrevstr, int dryrun) {
 		abbrev = (char*) (i < N_ABBREVS ? abbreviations[i] : "qqq"); // All 96 slots must be filled, but N_ABBREVS might be lower
 	//	report(LVL_WARN, 0, "Encoding abbrev %d: \"%s\" at pos %x", i, abbrev, addr_current);
 		
-		n = encode_chars(pentets, sizeof(pentets), 0, (uint8_t *) abbrev);
+		n = encode_chars(pentets, sizeof(pentets), 0, (uint8_t *) abbrev, 1);
 	//	report(LVL_WARN, 0, "\tNeeded %d pentets", n);
 		n = pack_pentets(words, pentets, n);
 	//	report(LVL_WARN, 0, "\tNeeded %d words", n);
@@ -4747,7 +4760,7 @@ void backend_z(
 
 			set_global_label(gs->global_label, org / packfactor);
 
-			n = encode_chars(pentets, sizeof(pentets), 0, gs->zscii);
+			n = encode_chars(pentets, sizeof(pentets), 0, gs->zscii, 0);
 			assert(n <= sizeof(pentets));
 			n = pack_pentets(words, pentets, n);
 
@@ -4988,7 +5001,7 @@ void backend_z(
 			int n;
 			uint32_t addr = global_labels[gs->global_label] * packfactor;
 
-			n = encode_chars(pentets, sizeof(pentets), 0, gs->zscii);
+			n = encode_chars(pentets, sizeof(pentets), 0, gs->zscii, 0);
 			assert(n <= sizeof(pentets));
 			n = pack_pentets(words, pentets, n);
 
