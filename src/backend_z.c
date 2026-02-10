@@ -377,9 +377,15 @@ static int utf8_to_zscii(uint8_t *dest, int ndest, char *src, uint32_t *special,
 	}
 }
 
+// Alphabets used for encoding and decoding
+const char *A0 = "abcdefghijklmnopqrstuvwxyz";
+const char *A1 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const char *A2 = "\e\r0123456789.,!?_#'\"/\\-:()";
+#define ALPHABET_OFFSET 6 // first char of the alphabet is actually value 6
+
 static int encode_chars(uint8_t *dest, int ndest, uint16_t *for_dict, uint8_t *src, int no_abbrevs) {
 	int i, n = 0, abbrev_applied = 0;
-	char *str, *a2 = "\r0123456789.,!?_#'\"/\\-:()";
+	char *str;
 	uint8_t zscii;
 
 	/* Converts from 8-bit zscii to pentets. */
@@ -401,20 +407,16 @@ static int encode_chars(uint8_t *dest, int ndest, uint16_t *for_dict, uint8_t *s
 		if(abbrev_applied) continue; // Cleaner than a GOTO
 		if(zscii == ' ') { // Space: 0 in every alphabet
 			dest[n++] = 0;
-		} else if(zscii >= 'a' && zscii <= 'z') { // Lowercase letter: alphabet 0
-			dest[n++] = 6 + zscii - 'a';
-		} else if(zscii >= 'A' && zscii <= 'Z') { // Uppercase letter: use alphabet 0 (lowercase) if this is for a dictionary word, otherwise shift to alphabet 1 (uppercase)
-			if(for_dict) {
-				dest[n++] = 6 + zscii - 'A';
-			} else {
-				dest[n++] = 4;
-				if(n >= ndest) return n;
-				dest[n++] = 6 + zscii - 'A';
-			}
-		} else if(zscii < 128 && (str = strchr(a2, (char) zscii))) { // Non-letter character found in alphabet 2 (numbers and punctuation)
+		} else if((str = strchr(A0, (char)zscii))) { // Alphabet 0
+			dest[n++] = ALPHABET_OFFSET + (str - A0);
+		} else if((str = strchr(A1, (char)zscii))) { // Alphabet 1
+			dest[n++] = 4;
+			if(n >= ndest) return n;
+			dest[n++] = ALPHABET_OFFSET + (str - A1);
+		} else if((str = strchr(A2, (char)zscii))) { // Alphabet 2
 			dest[n++] = 5;
 			if(n >= ndest) return n;
-			dest[n++] = 7 + (str - a2);
+			dest[n++] = ALPHABET_OFFSET + (str - A2);
 		} else { // Not in any alphabet: use alphabet 2 character 6 (escape), then the next two pentets are the ZSCII codepoint
 			dest[n++] = 5;
 			if(n >= ndest) return n;
