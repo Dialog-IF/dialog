@@ -377,11 +377,18 @@ static int utf8_to_zscii(uint8_t *dest, int ndest, char *src, uint32_t *special,
 	}
 }
 
+#define CUSTOM_ALPHABET // Use it, for now
 // Alphabets used for encoding and decoding
 // These ones have been modified to put some common uppercase and punctuation characters into A0 (one byte each) with the uncommon lowercase letters shunted into A1 and A2 (two bytes each)
+#ifdef CUSTOM_ALPHABET
 const char *A0 = "abcdefghi.klmnop,rstuvwTy'";
 const char *A1 = "ABCDEFGHIJKLMNOPQRS;UVWXYj";
 const char *A2 = "\e\r0123456789xq!?_#z\"/=-:()";
+#else
+const char *A0 = "abcdefghijklmnopqrstuvwxyz";
+const char *A1 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const char *A2 = "\e\r0123456789.,!?_#'\"/\\-:()";
+#endif
 #define ALPHABET_OFFSET 6 // first char of the alphabet is actually value 6
 
 static int encode_chars(uint8_t *dest, int ndest, uint16_t *for_dict, uint8_t *src, int no_abbrevs) {
@@ -4282,7 +4289,10 @@ void backend_z(
 {
 	int nglobal;
 	uint16_t addr_abbrevtable, addr_abbrevstr, addr_objtable, addr_globals, addr_static;
-	uint16_t addr_scratch, addr_heap, addr_heapend, addr_aux, addr_lts, addr_extheader, addr_unicode, addr_alphabet, addr_dictionary, addr_seltable;
+	uint16_t addr_scratch, addr_heap, addr_heapend, addr_aux, addr_lts, addr_extheader, addr_unicode, addr_dictionary, addr_seltable;
+#ifdef CUSTOM_ALPHABET
+	uint16_t addr_alphabet;
+#endif
 	uint16_t used_addressable, used_objects1, used_objects2, used_wordmaps, used_unicode, used_abbrevs, used_dictionary; // How much of the 64KiB of addressable memory have we used, for what purposes? We don't actually need this value for compilation, but if we save it for the end, we can give better diagnostics.
 	uint32_t used_routines, used_strings; // These ones need more than 16 bits to represent, since they're in high memory, not addressable memory
 	uint8_t used_attributes; // How many of the Z-machine's low-level object attributes have we used?
@@ -4665,9 +4675,11 @@ void backend_z(
 	addr_static = org;
 //	report(LVL_DEBUG, 0, "RAM done:       $%06x", org);
 	
+#ifdef CUSTOM_ALPHABET
 	addr_alphabet = org;
 	org += 3 * 26; // 3 alphabets, 26 chars each
 	used_abbrevs += 3 * 26;
+#endif
 	
 	used_wordmaps = org; // Start of wordmaps
 
@@ -4810,8 +4822,10 @@ void backend_z(
 	zcore[0x1b] = (filesize / packfactor) & 0xff;
 	//zcore[0x2e] = addr_termchar >> 8;
 	//zcore[0x2f] = addr_termchar & 0xff;
+#ifdef CUSTOM_ALPHABET
 	zcore[0x34] = addr_alphabet >> 8;
 	zcore[0x35] = addr_alphabet & 0xff;
+#endif
 	zcore[0x36] = addr_extheader >> 8; // If no header extension is needed, this will be zero
 	zcore[0x37] = addr_extheader & 0xff;
 	if(VERSION[5] == '-' && VERSION[6] == 'd') { // -dev version (check hyphen first because VERSION[6] may not exist)
@@ -4852,6 +4866,7 @@ void backend_z(
 		zcore[addr++] = value & 0xff;
 	}
 	
+#ifdef CUSTOM_ALPHABET
 	// Alphabet tables
 	for(i = 0; i < 26; i++) {
 		zcore[addr_alphabet + 0*26 + i] = A0[i];
@@ -4862,6 +4877,7 @@ void backend_z(
 	for(i = 2; i < 26; i++) { // First two bytes of A2 not encoded
 		zcore[addr_alphabet + 2*26 + i] = A2[i];
 	}
+#endif
 
 	memset(zcore + addr_lts, 0x3f, ltssize * 2);
 
