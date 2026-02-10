@@ -378,9 +378,10 @@ static int utf8_to_zscii(uint8_t *dest, int ndest, char *src, uint32_t *special,
 }
 
 // Alphabets used for encoding and decoding
-const char *A0 = "abcdefghijklmnopqrstuvwxyz";
-const char *A1 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-const char *A2 = "\e\r0123456789.,!?_#'\"/\\-:()";
+// These ones have been modified to put some common uppercase and punctuation characters into A0 (one byte each) with the uncommon lowercase letters shunted into A1 and A2 (two bytes each)
+const char *A0 = "abcdefghi.klmnop,rstuvwTy'";
+const char *A1 = "ABCDEFGHIJKLMNOPQRS;UVWXYj";
+const char *A2 = "\e\r0123456789xq!?_#z\"/=-:()";
 #define ALPHABET_OFFSET 6 // first char of the alphabet is actually value 6
 
 static int encode_chars(uint8_t *dest, int ndest, uint16_t *for_dict, uint8_t *src, int no_abbrevs) {
