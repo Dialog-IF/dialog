@@ -38,6 +38,35 @@ Project website:
 
 Release notes:
 
+	1b/01, Lib 1.1.1:
+	
+		Due to new built-in predicates in this release, all projects
+		compiled for Å-machine will need version 1.0.0 or later of the
+		Å-machine tools. Get them from github.com/Dialog-IF/aamachine/.
+		
+		Language: added (clear status bar).
+		
+		Compiler: access predicates consisting of a single multi-query
+		no longer crash the compiler when queried with ~.
+		
+		Backend: improved text compression on Z-machine (at least for
+		programs written in English), reducing text size by about 18%.
+		This will help larger programs fit within the Z-machine's
+		limits.
+		
+		Backend: added checks and diagnostics for Z-machine registers.
+		
+		Debugger: added a way to disable word-wrapping, for pipelines.
+		
+		Documentation: added cross-references to the syntax reference.
+		
+		Documentation: added "predicate-like" special syntax to the
+		library reference. This includes anything involving words
+		wrapped in parentheses, like (now) or (into $), but not ~{ }
+		or @a/#b.
+		
+		Distribution: added unit.dg, a library for unit testing.
+
 	1a/01, Lib 1.1.0:
 	
 		This is the first release handled by the community, and per

@@ -377,7 +377,7 @@ static int utf8_to_zscii(uint8_t *dest, int ndest, char *src, uint32_t *special,
 	}
 }
 
-#define CUSTOM_ALPHABET // Use it, for now
+// #define CUSTOM_ALPHABET // Currently disabled because it gives very little improvement, but that can easily be changed if it works better in the future
 // Alphabets used for encoding and decoding
 // These ones have been modified to put some common uppercase and punctuation characters into A0 (one byte each) with the uncommon lowercase letters shunted into A1 and A2 (two bytes each)
 #ifdef CUSTOM_ALPHABET
