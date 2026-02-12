@@ -927,13 +927,21 @@ void prepare_dictionary_z(struct program *prg, int preserve_zscii) {
 
 	ndict = prg->ndictword;
 	dictionary = calloc(ndict, sizeof(*dictionary));
-	
-	prepare_alphabet(); // Must do this before encoding anything
 
 	for(i = 0; i < ndict; i++) {
 		w = prg->dictwordnames[i];
 		dictionary[i].word = w;
 		assert(w->name[0]);
+		if(w->name[1]) { // Multi-char word
+			utf8_to_zscii(zbuf, sizeof(zbuf), w->name, &uchar, 1); // We don't actually use this value, but it populates the frequency array
+		}
+	}
+	
+	prepare_alphabet(); // Must do this before encoding anything
+	// We need to run through the dictionary twice: once to record all the character frequencies, then to actually encode them (after making the alphabet)
+	
+	for(i = 0; i < ndict; i++) {
+		w = dictionary[i].word;
 		if(w->name[0] >= 16 && w->name[0] <= 19 && !w->name[1]) { // Control character (for the arrow keys) - Dialog keeps these below 32, but ZSCII keeps them above 128
 			zbuf[0] = w->name[0] - 16 + 129;
 			zbuf[1] = 0;
@@ -4905,8 +4913,10 @@ void backend_z(
 	
 	if(zmachine_optimize_alphabet) {
 		// Alphabet table
-		for(i = 0; i < ALPHABET_LEN; i++) {
-			zcore[addr_alphabet + i] = alphabet[i];
+		for(i = 0; i < 26; i++) {
+			zcore[addr_alphabet + 0*26 + i] = A0[i];
+			zcore[addr_alphabet + 1*26 + i] = A1[i];
+			zcore[addr_alphabet + 2*26 + i] = A2[i];
 		}
 	}
 
