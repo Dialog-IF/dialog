@@ -377,19 +377,55 @@ static int utf8_to_zscii(uint8_t *dest, int ndest, char *src, uint32_t *special,
 	}
 }
 
-// #define CUSTOM_ALPHABET // Currently disabled because it gives very little improvement, but that can easily be changed if it works better in the future
 // Alphabets used for encoding and decoding
-// These ones have been modified to put some common uppercase and punctuation characters into A0 (one byte each) with the uncommon lowercase letters shunted into A1 and A2 (two bytes each)
-#ifdef CUSTOM_ALPHABET
-const char *A0 = "abcdefghi.klmnop,rstuvwTy'";
-const char *A1 = "ABCDEFGHIJKLMNOPQRS;UVWXYj";
-const char *A2 = "\e\r0123456789xq!?_#z\"/=-:()";
-#else
-const char *A0 = "abcdefghijklmnopqrstuvwxyz";
-const char *A1 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-const char *A2 = "\e\r0123456789.,!?_#'\"/\\-:()";
-#endif
-#define ALPHABET_OFFSET 6 // first char of the alphabet is actually value 6
+// Default one is used unless zmachine_optimize_alphabet is set
+int zmachine_optimize_alphabet = 0; // Set in frontend.c
+#define ALPHABET_LEN (26+26+24)
+#define ALPHABET_OFFSET 6 // first char of each alphabet is actually value 6
+static const char *default_alphabet = "abcdefghijklmnopqrstuvwxyz" "ABCDEFGHIJKLMNOPQRSTUVWXYZ" "0123456789.,!?_#'\"/\\-:()";
+static char alphabet[ALPHABET_LEN+1]; // Terminator
+static char A0[27], A1[27], A2[27]; // Terminators again
+
+static uint16_t dict_frequencies[256];
+
+static void prepare_alphabet() {
+	int i, j, best;
+	memset(alphabet, 0, sizeof(alphabet));
+	
+	if(zmachine_optimize_alphabet) {
+		dict_frequencies[0] = 0; // ZSCII 0 is illegal, but just to be safe
+		for(i = 0; i < ALPHABET_LEN; i++) {
+			// Choose the best character to put in slot i
+			best = 0;
+			for(j = 0; j < 256; j++) {
+				if(dict_frequencies[j] > dict_frequencies[best]) {
+					best = j;
+				}
+			}
+			if(dict_frequencies[best] == 0) break; // No more characters with positive frequency
+			alphabet[i] = best;
+			dict_frequencies[best] = 0; // Don't use it again
+		}
+		report(LVL_DEBUG, 0, "Assigned %d common characters to the alphabet: %s", i, alphabet);
+		if(i < ALPHABET_LEN) { // We broke out of the loop before finishing
+			// So fill the rest of the alphabet with default characters
+			j = 0;
+			for( ; i < ALPHABET_LEN; i++) {
+				while(strchr(alphabet, default_alphabet[j])) j++; // Find the first character in default_alphabet not already in alphabet
+				assert(j < 256);
+				alphabet[i] = default_alphabet[j];
+			}
+			report(LVL_DEBUG, 0, "Filled out the alphabet with default characters: %s", alphabet);
+		}
+	} else {
+		strcpy(alphabet, default_alphabet);
+	}
+	
+	strncpy(A0,   alphabet,      26); A0[26] = 0;
+	strncpy(A1,   alphabet+1*26, 26); A1[26] = 0;
+	strncpy(A2+2, alphabet+2*26, 24); A2[26] = 0;
+	A2[0] = '\e'; A2[1] = '\r'; // Not settable
+}
 
 static int encode_chars(uint8_t *dest, int ndest, uint16_t *for_dict, uint8_t *src, int no_abbrevs) {
 	int i, n = 0, abbrev_applied = 0;
@@ -876,7 +912,7 @@ void prepare_dictionary_z(struct program *prg, int preserve_zscii) {
 	}
 
 	if(prg->ndictword >= 0x1e00) {
-		report(LVL_ERR, 0, "Too many dictionary words.");
+		report(LVL_ERR, 0, "Too many dictionary words: you have %d, the maximum is %d.", prg->ndictword, 0x1e00);
 		exit(1);
 	}
 	
@@ -891,6 +927,8 @@ void prepare_dictionary_z(struct program *prg, int preserve_zscii) {
 
 	ndict = prg->ndictword;
 	dictionary = calloc(ndict, sizeof(*dictionary));
+	
+	prepare_alphabet(); // Must do this before encoding anything
 
 	for(i = 0; i < ndict; i++) {
 		w = prg->dictwordnames[i];
@@ -4289,10 +4327,7 @@ void backend_z(
 {
 	int nglobal;
 	uint16_t addr_abbrevtable, addr_abbrevstr, addr_objtable, addr_globals, addr_static;
-	uint16_t addr_scratch, addr_heap, addr_heapend, addr_aux, addr_lts, addr_extheader, addr_unicode, addr_dictionary, addr_seltable;
-#ifdef CUSTOM_ALPHABET
-	uint16_t addr_alphabet;
-#endif
+	uint16_t addr_scratch, addr_heap, addr_heapend, addr_aux, addr_lts, addr_extheader, addr_unicode, addr_dictionary, addr_seltable, addr_alphabet;
 	uint16_t used_addressable, used_objects1, used_objects2, used_wordmaps, used_unicode, used_abbrevs, used_dictionary; // How much of the 64KiB of addressable memory have we used, for what purposes? We don't actually need this value for compilation, but if we save it for the end, we can give better diagnostics.
 	uint32_t used_routines, used_strings; // These ones need more than 16 bits to represent, since they're in high memory, not addressable memory
 	uint8_t used_attributes; // How many of the Z-machine's low-level object attributes have we used?
@@ -4675,11 +4710,13 @@ void backend_z(
 	addr_static = org;
 //	report(LVL_DEBUG, 0, "RAM done:       $%06x", org);
 	
-#ifdef CUSTOM_ALPHABET
-	addr_alphabet = org;
-	org += 3 * 26; // 3 alphabets, 26 chars each
-	used_abbrevs += 3 * 26;
-#endif
+	if(zmachine_optimize_alphabet) {
+		addr_alphabet = org;
+		org += 3 * 26; // 3 alphabets, 26 chars each
+		used_abbrevs += 3 * 26;
+	} else {
+		addr_alphabet = 0; // Silence warning
+	}
 	
 	used_wordmaps = org; // Start of wordmaps
 
@@ -4822,10 +4859,10 @@ void backend_z(
 	zcore[0x1b] = (filesize / packfactor) & 0xff;
 	//zcore[0x2e] = addr_termchar >> 8;
 	//zcore[0x2f] = addr_termchar & 0xff;
-#ifdef CUSTOM_ALPHABET
-	zcore[0x34] = addr_alphabet >> 8;
-	zcore[0x35] = addr_alphabet & 0xff;
-#endif
+	if(zmachine_optimize_alphabet) {
+		zcore[0x34] = addr_alphabet >> 8;
+		zcore[0x35] = addr_alphabet & 0xff;
+	}
 	zcore[0x36] = addr_extheader >> 8; // If no header extension is needed, this will be zero
 	zcore[0x37] = addr_extheader & 0xff;
 	if(VERSION[5] == '-' && VERSION[6] == 'd') { // -dev version (check hyphen first because VERSION[6] may not exist)
@@ -4866,18 +4903,12 @@ void backend_z(
 		zcore[addr++] = value & 0xff;
 	}
 	
-#ifdef CUSTOM_ALPHABET
-	// Alphabet tables
-	for(i = 0; i < 26; i++) {
-		zcore[addr_alphabet + 0*26 + i] = A0[i];
+	if(zmachine_optimize_alphabet) {
+		// Alphabet table
+		for(i = 0; i < ALPHABET_LEN; i++) {
+			zcore[addr_alphabet + i] = alphabet[i];
+		}
 	}
-	for(i = 0; i < 26; i++) {
-		zcore[addr_alphabet + 1*26 + i] = A1[i];
-	}
-	for(i = 2; i < 26; i++) { // First two bytes of A2 not encoded
-		zcore[addr_alphabet + 2*26 + i] = A2[i];
-	}
-#endif
 
 	memset(zcore + addr_lts, 0x3f, ltssize * 2);
 
