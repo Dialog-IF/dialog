@@ -1,0 +1,18 @@
+%% Test (uppercase) on Unicode characters
+
+(program entry point)
+	a (uppercase) a
+	aaa (uppercase) aaa
+	ä (uppercase) ä
+	äää (uppercase) äää
+	ą (uppercase) ą
+	ąąą (uppercase) ąąą
+	ÿ (uppercase) ÿ
+	ÿÿÿ (uppercase) ÿÿÿ
+	€ (uppercase) €
+	€€€ (uppercase) €€€
+	(par)
+	(exhaust) {
+		*($Word is one of [a aaa ä äää ą ąąą ÿ ÿÿÿ € €€€])
+		$Word (uppercase) $Word
+	}
