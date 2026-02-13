@@ -4365,8 +4365,8 @@ void backend_z(
 	int nglobal;
 	uint16_t addr_abbrevtable, addr_abbrevstr, addr_objtable, addr_globals, addr_static;
 	uint16_t addr_scratch, addr_heap, addr_heapend, addr_aux, addr_lts, addr_extheader;
-  uint16_t addr_unicode, addr_dictionary, addr_seltable, addr_alphabet, addr_casing;
-	uint16_t used_addressable, used_objects1, used_objects2, used_wordmaps, used_unicode, used_dictionary; // How much of the 64KiB of addressable memory have we used, for what purposes? We don't actually need this for compilation, but if we save it for the end, we can give better diagnostics.
+	uint16_t addr_unicode, addr_dictionary, addr_seltable, addr_alphabet, addr_casing;
+	uint16_t used_addressable, used_objects1, used_objects2, used_wordmaps, used_unicode, used_abbrevs, used_dictionary; // How much of the 64KiB of addressable memory have we used, for what purposes? We don't actually need this for compilation, but if we save it for the end, we can give better diagnostics.
 	uint32_t used_routines, used_strings; // These ones need more than 16 bits to represent, since they're in high memory, not addressable memory
 	uint8_t used_attributes; // How many of the Z-machine's low-level object attributes have we used?
 	uint32_t org;
