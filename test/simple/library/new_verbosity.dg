@@ -1,0 +1,27 @@
+#player
+(current player *)
+(* is #in #room1)
+
+#room1
+(room *)
+(name *) end of the road
+(look *) You are standing at the end of a road before a small brick building. Around you is a forest.
+(from * go #east to #room2)
+
+#room2
+(room *)
+(name *) well house
+(look *) You are inside a building, a well house for a large spring. A back door leads north.
+(from * go #west to #room1)
+(from * go #north to #room3)
+
+#room3
+(room *)
+(name *) forest
+(look *) You are in open forest, with a deep valley to one side.
+(from * go #south to #room2)
+
+%% Make sure the author can control it
+(verbosity level 0)
+
+(redraw status bar) %% Annoying while testing
