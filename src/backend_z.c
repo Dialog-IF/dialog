@@ -83,8 +83,10 @@ struct wordtable {
 	uint16_t		*words;
 };
 
+int zmachine_preserve_zscii = 1; // Whether to keep the default mapping (and add to the end), or empty it out (allowing more space)
+
 uint16_t default_extended_zscii[69] = { // The default mapping, assumed by interpreters that don't support a Unicode translation table (like Ozmoo)
-	// These unicode chars map to zscii characters 155..223 in order.
+	// These Unicode chars map to zscii characters 155..223 in order.
 	0x0e4, 0x0f6, 0x0fc, 0x0c4, 0x0d6, 0x0dc, 0x0df, 0x0bb, 0x0ab, 0x0eb,
 	0x0ef, 0x0ff, 0x0cb, 0x0cf, 0x0e1, 0x0e9, 0x0ed, 0x0f3, 0x0fa, 0x0fd,
 	0x0c1, 0x0c9, 0x0cd, 0x0d3, 0x0da, 0x0dd, 0x0e0, 0x0e8, 0x0ec, 0x0f2,
@@ -274,8 +276,12 @@ uint8_t add_extended_zscii(uint16_t uchar) {
 	// Since Z-machine only supports the BMP, really we only need *three* bytes plus terminator, but it's good to think about the future
 	
 	if(n_extended+1 >= EXTENDED_ZSCII_MAX) { // But we can't!
-		unicode_to_utf8_n(utf8, 5, &uchar, 1); // Convert to UTF-8 sequence
-		report(LVL_ERR, 0, "Tried to add Unicode character U+%04x (%s) to the encoding, but all codepoints have already been allocated! Use the --no-default-uni command line option to save space.", uchar, utf8);
+		unicode_to_utf8_n(utf8, 5, &uchar, 1); // Convert to UTF-8 sequence for error reporting
+		if(zmachine_preserve_zscii) {
+			report(LVL_ERR, 0, "Tried to add Unicode character U+%04x (%s) to the encoding, but all codepoints have already been allocated! Use the --no-default-unicode command line option to save space.", uchar, utf8);
+		} else {
+			report(LVL_ERR, 0, "Tried to add Unicode character U+%04x (%s) to the encoding, but all codepoints have already been allocated! Z-machine only supports %d non-ASCII characters in dictionary words.", uchar, utf8, EXTENDED_ZSCII_MAX);
+		}
 		exit(1);
 	}
 	extended_zscii[i] = uchar;
@@ -308,7 +314,7 @@ static uint8_t unicode_to_zscii(uint16_t uchar) {
 	}
 }
 
-static uint16_t dict_frequencies[256]; // Frequency of each character in dictionary words
+static uint16_t dict_frequencies[256]; // Frequency of each character in dictionary words - most of the 256 ZSCII codepoints can't actually be used for output, but simplicity of implementation is worth a few extra bytes at compile-time
 
 static int utf8_to_zscii(uint8_t *dest, int ndest, char *src, uint32_t *special, int for_dictionary) {
 	uint8_t ch;
@@ -924,7 +930,7 @@ int cmp_dictword(const void *a, const void *b) {
 	return 0;
 }
 
-void prepare_dictionary_z(struct program *prg, int preserve_zscii) {
+void prepare_dictionary_z(struct program *prg) {
 	int i, n;
 	uint8_t pentets[9];
 	uint8_t zbuf[MAXSTRING];
@@ -945,7 +951,7 @@ void prepare_dictionary_z(struct program *prg, int preserve_zscii) {
 		exit(1);
 	}
 	
-	if(preserve_zscii) { // Use the existing table as much as possible, putting our new characters at the end of it
+	if(zmachine_preserve_zscii) { // Use the existing table as much as possible, putting our new characters at the end of it
 		memcpy(extended_zscii, default_extended_zscii, sizeof(default_extended_zscii));
 		n_extended = sizeof(default_extended_zscii) / sizeof(default_extended_zscii[0]);
 	} else { // Discard the existing table, giving us the maximum space possible
@@ -1032,14 +1038,6 @@ void prepare_dictionary_z(struct program *prg, int preserve_zscii) {
 			}
 		}
 	}
-}
-
-// Because the callback has a specific form it's supposed to take, it's easier to just write two wrappers in that form than to find another way of passing in a flag
-void prepare_dictionary_z_preserve(struct program *prg){
-	prepare_dictionary_z(prg, 1);
-}
-void prepare_dictionary_z_replace(struct program *prg){
-	prepare_dictionary_z(prg, 0);
 }
 
 void init_backend_wobj(struct program *prg, int id, struct backend_wobj *wobj, int strip) {
