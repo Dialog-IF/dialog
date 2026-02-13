@@ -1,0 +1,12 @@
+[#] The first should match nothing, the other two should match one object - without --optimize-alphabet, the first will match one, the other two will match two
+ψωμ
+[Z] ￏﾈￏﾉￎﾼ
+[#] These seem to be a bug in dumbfrotz
+No matches
+
+θελω
+Matches: #want
+
+Ελληνοσ
+Matches: #greekperson
+
