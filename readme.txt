@@ -76,6 +76,9 @@ Release notes:
 		Backend: new diagnostics show how many of the Z-machine's
 		registers are being used, and for what purposes.
 		
+		Backend: (uppercase) now works with non-ASCII characters on the
+		Z-machine backend.
+		
 		Debugger: --width -1 disables word wrapping, for piping to other
 		programs.
 		
