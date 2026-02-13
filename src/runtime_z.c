@@ -510,14 +510,9 @@ struct rtroutine rtroutines[] = {
 
 			{OP_LABEL(24)},
 			{Z_PRINTCHAR, {VALUE(REG_LOCAL+4)}},
-<<<<<<< nbsp
-
-			{Z_STORE, {SMALL(REG_SPACE), SMALL(SPC_AUTO)}},
-=======
 			
 			{OP_LABEL(29)},
-			{Z_STORE, {SMALL(REG_SPACE), SMALL(0)}},
->>>>>>> main
+			{Z_STORE, {SMALL(REG_SPACE), SMALL(SPC_AUTO)}},
 			{Z_JNE, {VALUE(REG_LOCAL+4), SMALL('(')}, 0, RFALSE},
 			{Z_TEST, {VALUE(REG_LOCAL+1), SMALL(1)}, 0, RFALSE},
 
