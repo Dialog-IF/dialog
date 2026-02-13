@@ -27,7 +27,8 @@ where each `X` is an uppercase hexadecimal digit. There's an online tool
 on the https://linusakesson.net/dialog/[Dialog website] that lets you generate
 such declarations with fresh IFID numbers. You may also use any program capable
 of generating a universally unique identifier (UUID), such as the `uuidgen`
-command under Linux (available in the Debian package `uuid-runtime`).
+command under Linux (available in the Debian package `uuid-runtime`), or the
+https://www.tads.org/ifidgen/ifidgen[TADS IFID generator].
 
 The Dialog compiler will complain if the story contains more than one hundred
 lines of source code and no IFID is provided. The standard library is not
@@ -72,7 +73,8 @@ larger than 1200 x 1200 pixels in size, and preferably square.
 The raw `z8` format has limited support for metadata, so if you select this
 output format, only the IFID and release number will be included in standard
 locations in the file. The other predicates are of course still accessible from
-within the program.
+within the program, and will (if using the standard library) be printed in the
+story banner.
 
 Two elements of metadata are supplied automatically by the compiler: The
 _compiler version string_ and the _serial number_. These can be printed from
@@ -347,9 +349,21 @@ built-in fallbacks for certain common characters. Unsupported characters come
 out as question marks, which is decidedly ugly. A future version of the language
 may introduce functionality for dealing with unsupported characters.
 
-The `(uppercase)` built-in predicate is currently limited to English
-letters (A–Z) for the Z-machine backend. It should at least be upgraded to
-support the so-called default extra characters in the ZSCII character set, which
-cover the needs of several European languages. The Å-machine backend and the
-debugger have full support.
+=== Contributing
 
+Dialog is open-source software, and is currently maintained by the community
+{home-page}[on Github]. Pull requests, bug reports, feature suggestions, and
+any other types of feedback are welcome! While Linus is no longer actively
+involved, the project is continued with his blessing, and we try to keep
+further development in line with his original vision for the language.
+
+(Of course, if you disagree with that vision, you're always welcome to create your
+own fork. The license ensures that right.)
+
+For the sake of clarity, we ask that all contributions follow the house style
+of the manual. The Dialog language does not require this, but the manual
+uses `#lowercase` for objects and dictionary words, `$PascalCase` for variables,
+and `(all lowercase words)` for predicates. (Exception: predicates that internally
+call `(uppercase)` should indicate this with capitalization, like `(The $)`.)
+The compiler is written in standard C99. A full style guide is provided in the
+file `contributing.md`.

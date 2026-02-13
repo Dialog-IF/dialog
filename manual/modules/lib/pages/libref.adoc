@@ -79,6 +79,7 @@ xref:lang:control.adoc#select-var[`(cycling)`] (special syntax) +
 xref:timeprogress.adoc#statusbar[`(darkness headline)`] +
 xref:understanding.adoc#liblinks[`(default action $ $)`] +
 xref:understanding.adoc#liblinks[`(default actions enabled)`] +
+xref:understanding.adoc#liblinks[`(default actions apply to rooms)`] +
 xref:lang:io.adoc#resources[`(define resource $)`] +
 xref:timeprogress.adoc#score[`(decrease score by $)`] +
 xref:scenery.adoc#descriptions[`(descr $)`] +
@@ -366,6 +367,7 @@ xref:lang:io.adoc#sizing[`(status bar $ with height $)`] (special syntax) +
 xref:timeprogress.adoc#statusbar[`(status headline)`] +
 xref:timeprogress.adoc#choicemode[`(sticky $)`] +
 xref:lang:control.adoc#stoppable[`(stop)`] +
+xref:actions.adoc#tickstop[`(stop after this tick)`] +
 xref:lang:control.adoc#stoppable[`(stoppable)`] (special syntax) +
 xref:lang:control.adoc#select-var[`(stopping)`] (special syntax) +
 xref:lang:beyondprg.adoc#metadata[`(story author)`] +
@@ -434,6 +436,7 @@ xref:lang:io.adoc#case[`(unstyle)`] +
 xref:moving.adoc#moveplayer[`(update environment around player)`] +
 xref:lang:io.adoc#case[`(uppercase)`] +
 xref:traits.adoc#categorytraits[`(vehicle $)`] +
+xref:stdactions.adoc#stdmisc[`(verbosity level $)`] +
 xref:understanding.adoc#unlikely[`(very unlikely $)`] +
 xref:traits.adoc#categorytraits[`(wearable $)`] +
 xref:items.adoc#clothing[`(wearing $ covers $)`] +

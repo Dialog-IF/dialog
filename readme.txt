@@ -38,6 +38,40 @@ Project website:
 
 Release notes:
 
+	1b/01, Lib 1.1.1:
+	
+		Documentation: the library reference now includes special syntax
+		like (elseif), (now), and (global variable $).
+		
+		Documentation: the syntax reference now includes cross-references
+		to where each piece of syntax is explained.
+		
+		Documentation: the @tree and @dynamic debugging commands are now
+		properly documented, though they've existed for some time.
+		
+		Language: (clear status bar) builtin clears the status bar.
+		
+		Compiler: access predicates consisting of a single multi-query
+		no longer crash the compiler when negated.
+		
+		Backend: incremented the Å-machine version. Like with Dialog,
+		major version 0 is left for Linus's use, while the community-
+		maintained version starts with major version 1.
+		
+		Backend: new diagnostics show how many of the Z-machine's
+		registers are being used, and for what purposes.
+		
+		Backend: (uppercase) now works with non-ASCII characters on the
+		Z-machine backend.
+		
+		Debugger: --width -1 disables word wrapping, for piping to other
+		programs.
+		
+		Library: New commands SUPERBRIEF, BRIEF, VERBOSE, and SUPERVERBOSE
+		change how rooms are described while going. The default behavior
+		is VERBOSE: rooms are described in full when moving one step at a
+		time, but abbreviated when travelling long distances.
+
 	1a/01, Lib 1.1.0:
 	
 		This is the first release handled by the community, and per
