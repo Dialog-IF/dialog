@@ -308,6 +308,8 @@ static uint8_t unicode_to_zscii(uint16_t uchar) {
 	}
 }
 
+static uint16_t dict_frequencies[256]; // Frequency of each character in dictionary words
+
 static int utf8_to_zscii(uint8_t *dest, int ndest, char *src, uint32_t *special, int for_dictionary) {
 	uint8_t ch;
 	uint32_t uchar;
@@ -318,6 +320,7 @@ static int utf8_to_zscii(uint8_t *dest, int ndest, char *src, uint32_t *special,
 	/* The output is always null-terminated. */
 	/* Returns number of utf8 bytes consumed. */
 	/* If for_dictionary is true, Unicode characters encountered are added to the ZSCII encoding. If false, they cause a halt instead. */
+	/* This also controls whether the frequency arrays are updated. */
 
 	for(;;) {
 		if(outpos >= ndest - 1) {
@@ -355,6 +358,7 @@ static int utf8_to_zscii(uint8_t *dest, int ndest, char *src, uint32_t *special,
 				uchar += 129 - 16;
 			}
 			dest[outpos++] = uchar;
+			dict_frequencies[uchar] ++;
 		} else if(uchar > 0xFFFF) {
 			report(LVL_ERR, 0, "Character U+%06x is outside the Basic Multilingual Plane, which the Z-machine does not support.", uchar);
 			exit(1);
@@ -372,6 +376,7 @@ static int utf8_to_zscii(uint8_t *dest, int ndest, char *src, uint32_t *special,
 				}
 			} else { // Already exists in the encoding
 				dest[outpos++] = EXTENDED_ZSCII_BASE + i;
+				dict_frequencies[EXTENDED_ZSCII_BASE + i] ++;
 			}
 		}
 	}
@@ -382,11 +387,35 @@ static int utf8_to_zscii(uint8_t *dest, int ndest, char *src, uint32_t *special,
 int zmachine_optimize_alphabet = 0; // Set in frontend.c
 #define ALPHABET_LEN (26+26+24)
 #define ALPHABET_OFFSET 6 // first char of each alphabet is actually value 6
-static const char *default_alphabet = "abcdefghijklmnopqrstuvwxyz" "ABCDEFGHIJKLMNOPQRSTUVWXYZ" "0123456789.,!?_#'\"/\\-:()";
-static char alphabet[ALPHABET_LEN+1]; // Terminator
-static char A0[27], A1[27], A2[27]; // Terminators again
+static const uint8_t default_alphabet[] = "abcdefghijklmnopqrstuvwxyz" "ABCDEFGHIJKLMNOPQRSTUVWXYZ" "0123456789.,!?_#'\"/\\-:()";
+static uint8_t alphabet[ALPHABET_LEN+1]; // Terminator
+static uint8_t A0[27], A1[27], A2[27]; // Terminators again
 
-static uint16_t dict_frequencies[256];
+// For printing alphabets during debugging
+static uint8_t alphabet_for_printing[ALPHABET_LEN*4+3*2+1];
+uint8_t *alphabet_to_string(uint8_t *alpha) {
+	int i, j = 0;
+	uint16_t unichar;
+	memset(alphabet_for_printing, 0, sizeof(alphabet_for_printing));
+	for(i = 0; i < ALPHABET_LEN; i++) {
+		if(i && i % 26 == 0) { // Mark the separation between alphabets
+			alphabet_for_printing[j++] = ' ';
+			alphabet_for_printing[j++] = '/';
+			alphabet_for_printing[j++] = ' ';
+		}
+		
+		if(alpha[i] < 128) {
+			alphabet_for_printing[j] = alpha[i];
+			j++;
+		} else {
+			unichar = extended_zscii[alpha[i] - EXTENDED_ZSCII_BASE];
+			unicode_to_utf8_n(alphabet_for_printing+j, 5, &unichar, 1);
+			j += (unichar < 0x800 ? 2 : 3);
+		}
+	}
+	alphabet_for_printing[j] = 0;
+	return alphabet_for_printing;
+}
 
 static void prepare_alphabet() {
 	int i, j, best;
@@ -406,24 +435,24 @@ static void prepare_alphabet() {
 			alphabet[i] = best;
 			dict_frequencies[best] = 0; // Don't use it again
 		}
-		report(LVL_DEBUG, 0, "Assigned %d common characters to the alphabet: %s", i, alphabet);
+		report(LVL_DEBUG, 0, "Assigned %d common characters to the alphabet: %s", i, alphabet_to_string(alphabet));
 		if(i < ALPHABET_LEN) { // We broke out of the loop before finishing
 			// So fill the rest of the alphabet with default characters
 			j = 0;
 			for( ; i < ALPHABET_LEN; i++) {
-				while(strchr(alphabet, default_alphabet[j])) j++; // Find the first character in default_alphabet not already in alphabet
+				while(strchr((char*)alphabet, (char)default_alphabet[j])) j++; // Find the first character in default_alphabet not already in alphabet
 				assert(j < 256);
 				alphabet[i] = default_alphabet[j];
 			}
-			report(LVL_DEBUG, 0, "Filled out the alphabet with default characters: %s", alphabet);
+			report(LVL_DEBUG, 0, "Filled out the alphabet with default characters: %s", alphabet_to_string(alphabet));
 		}
 	} else {
-		strcpy(alphabet, default_alphabet);
+		strcpy((char*)alphabet, (char*)default_alphabet);
 	}
 	
-	strncpy(A0,   alphabet,      26); A0[26] = 0;
-	strncpy(A1,   alphabet+1*26, 26); A1[26] = 0;
-	strncpy(A2+2, alphabet+2*26, 24); A2[26] = 0;
+	strncpy((char*)A0,   (char*)alphabet,      26); A0[26] = 0;
+	strncpy((char*)A1,   (char*)alphabet+1*26, 26); A1[26] = 0;
+	strncpy((char*)A2+2, (char*)alphabet+2*26, 24); A2[26] = 0;
 	A2[0] = '\e'; A2[1] = '\r'; // Not settable
 }
 
@@ -451,16 +480,16 @@ static int encode_chars(uint8_t *dest, int ndest, uint16_t *for_dict, uint8_t *s
 		if(abbrev_applied) continue; // Cleaner than a GOTO
 		if(zscii == ' ') { // Space: 0 in every alphabet
 			dest[n++] = 0;
-		} else if((str = strchr(A0, (char)zscii))) { // Alphabet 0
-			dest[n++] = ALPHABET_OFFSET + (str - A0);
-		} else if((str = strchr(A1, (char)zscii))) { // Alphabet 1
+		} else if((str = strchr((char*)A0, (char)zscii))) { // Alphabet 0
+			dest[n++] = ALPHABET_OFFSET + (str - (char*)A0);
+		} else if((str = strchr((char*)A1, (char)zscii))) { // Alphabet 1
 			dest[n++] = 4;
 			if(n >= ndest) return n;
-			dest[n++] = ALPHABET_OFFSET + (str - A1);
-		} else if((str = strchr(A2, (char)zscii))) { // Alphabet 2
+			dest[n++] = ALPHABET_OFFSET + (str - (char*)A1);
+		} else if((str = strchr((char*)A2, (char)zscii))) { // Alphabet 2
 			dest[n++] = 5;
 			if(n >= ndest) return n;
-			dest[n++] = ALPHABET_OFFSET + (str - A2);
+			dest[n++] = ALPHABET_OFFSET + (str - (char*)A2);
 		} else { // Not in any alphabet: use alphabet 2 character 6 (escape), then the next two pentets are the ZSCII codepoint
 			dest[n++] = 5;
 			if(n >= ndest) return n;
@@ -927,6 +956,8 @@ void prepare_dictionary_z(struct program *prg, int preserve_zscii) {
 
 	ndict = prg->ndictword;
 	dictionary = calloc(ndict, sizeof(*dictionary));
+	
+	memset(dict_frequencies, 0, sizeof(dict_frequencies)); // Prepare to record frequencies
 
 	for(i = 0; i < ndict; i++) {
 		w = prg->dictwordnames[i];

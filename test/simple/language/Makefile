@@ -40,6 +40,10 @@ explicit: $(explicit)
 
 origin: $(origin)
 
+# This one needs special command-line options
+new_greek.z5: $(BASEPATH)/src/dialogc new_greek.dg
+	$(BASEPATH)/src/dialogc new_greek.dg dummylib.dglib --no-warn-not-topic -t z5 -o new_greek.z5 --no-default-uni --optimize-alphabet -vv
+
 %.z5: $(BASEPATH)/src/dialogc %.dg
 	$(BASEPATH)/src/dialogc $*.dg dummylib.dglib --no-warn-not-topic -t z5 -o $*.z5
 

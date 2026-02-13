@@ -70,6 +70,7 @@ void usage(char *prgname) {
 	fprintf(stderr, "Only for z5, z8, or zblorb format:\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "--no-default-uni  -U    Don't preserve the default Unicode translation table.\n");
+	fprintf(stderr, "--optimize-alphabet     Increase dictionary resolution for non-English letters.\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Only for zblorb format:\n");
 	fprintf(stderr, "\n");
@@ -79,6 +80,7 @@ void usage(char *prgname) {
 }
 
 extern int topic_warning_level; // Defined in frontend.c
+extern int zmachine_optimize_alphabet; // Defined in backend_z.c
 
 int main(int argc, char **argv) {
 	struct option longopts[] = {
@@ -97,6 +99,7 @@ int main(int argc, char **argv) {
 		{"no-default-uni", 0, 0, 'U'},
 		{"warn-not-topic", 0, &topic_warning_level, 1},
 		{"no-warn-not-topic", 0, &topic_warning_level, 2},
+		{"optimize-alphabet", 0, &zmachine_optimize_alphabet, 1},
 		{0, 0, 0, 0}
 	};
 
