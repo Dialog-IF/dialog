@@ -1,7 +1,7 @@
 (program entry point)
 	*(repeat forever)
 	(get input $Words)
-	(nonempty $Words)
+	(if) (empty $Words) (then) (stop) (endif)
 	(collect $Obj)
 		(determine object $Obj)
 			*(object $Obj)
