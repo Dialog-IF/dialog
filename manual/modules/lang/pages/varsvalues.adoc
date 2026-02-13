@@ -149,7 +149,7 @@ Characters that have special significance in Dialog source code, such as parenth
 	@\(
 ----
 
-Dictionary words are case insensitive as a general rule, although the Z-machine compiler backend has limited support for case conversion of international characters.
+Dictionary words are case insensitive. On all backends, `@BiZzArE` is equivalent to `@bizarre`, and `@ΛΟΓΟΣ` equivalent to `@λογοσ`. This is a simple one-to-one replacement, though: it does not recognize alternate letter forms, so `@λογοσ` is _not_ equivalent to `@λογος`, or `@groß` to `@GROSS`. These equivalencies must be handled by the author.
 
 [#lists]
 === List
