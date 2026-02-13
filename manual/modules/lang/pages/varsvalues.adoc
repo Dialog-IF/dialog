@@ -124,7 +124,12 @@ Usually, the optional part is blank.
 However, on the Z-machine, long dictionary words are split according to an internal, low-level dictionary format.
 This usually means that the first nine letters of the word are essential, while the rest are optional.
 For instance, `@northeast` and `@NorthEastern` are considered to be the same value.
-Non-alphabetical characters require multiple slots of storage in the Z-machine, so that e.g. `@north-east` is considered the same as `@north-ea.`
+Non-alphabetical characters require multiple slots of storage in the Z-machine, so
+that e.g. `@north-east` is considered the same as `@north-ea`, and `@soupçon` the
+same as `@soupço`.
+
+This can pose a problem in non-English languages: a Greek-speaking author is likely to be disappointed that `@αυτοκίνητο` ("car") is equivalent to `@αυτός` ("this"), `@αυγή` ("dawn"), and even just `@αυ`.
+In cases like this, the `--optimize-alphabet` command-line option can redefine which characters are "alphabetical", prioritizing the ones that appear most commonly in dictionary words.
 
 The printed representation of a dictionary word is the essential part followed by the optional part.
 No `@` prefix is printed, and there is usually no visible seam between the two parts of the word.

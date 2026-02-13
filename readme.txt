@@ -54,6 +54,11 @@ Release notes:
 		This will help larger programs fit within the Z-machine's
 		limits.
 		
+		Backend: a new --optimize-alphabet option improves dictionary
+		word resolution on Z-machine for non-English writing systems.
+		Previously, words in Greek or Russian could have as few as two
+		characters in the essential part; this raises it to 9.
+		
 		Backend: added checks and diagnostics for Z-machine registers.
 		
 		Debugger: added a way to disable word-wrapping, for pipelines.

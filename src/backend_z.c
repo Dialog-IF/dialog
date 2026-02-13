@@ -83,9 +83,9 @@ struct wordtable {
 	uint16_t		*words;
 };
 
-int zmachine_preserve_zscii = 1; // Whether to keep the default mapping (and add to the end), or empty it out (allowing more space)
+int zmachine_preserve_zscii = 1; // Whether to keep the default mapping (and add to the end), or empty it out (allowing more space) - this flag starts at 1 and is cleared by frontend.c if necessary
 
-uint16_t default_extended_zscii[69] = { // The default mapping, assumed by interpreters that don't support a Unicode translation table (like Ozmoo)
+static uint16_t default_extended_zscii[69] = { // The default mapping, assumed by interpreters that don't support a Unicode translation table (like Ozmoo)
 	// These Unicode chars map to zscii characters 155..223 in order.
 	0x0e4, 0x0f6, 0x0fc, 0x0c4, 0x0d6, 0x0dc, 0x0df, 0x0bb, 0x0ab, 0x0eb,
 	0x0ef, 0x0ff, 0x0cb, 0x0cf, 0x0e1, 0x0e9, 0x0ed, 0x0f3, 0x0fa, 0x0fd,
@@ -96,8 +96,8 @@ uint16_t default_extended_zscii[69] = { // The default mapping, assumed by inter
 	0x0fe, 0x0f0, 0x0de, 0x0d0, 0x0a3, 0x153, 0x152, 0x0a1, 0x0bf
 };
 
-uint16_t extended_zscii[97]; // Unicode values for ZSCII 155..251 (each one fits in 16 bits because it's restricted to the BMP)
-uint8_t n_extended = 0; // How many of the above are filled in
+static uint16_t extended_zscii[97]; // Unicode values for ZSCII 155..251 (each one fits in 16 bits because it's restricted to the BMP)
+static uint8_t n_extended = 0; // How many of the above are filled in
 #define EXTENDED_ZSCII_BASE 155
 #define EXTENDED_ZSCII_MAX 97
 #define N_DEFAULT_EXTENDED (sizeof(default_extended_zscii)/sizeof(default_extended_zscii[0]))
