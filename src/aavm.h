@@ -1,4 +1,4 @@
-#define AAVM_FORMAT_MAJOR 1
+#define AAVM_FORMAT_MAJOR 1 // Community fork: jumped from 0.5 to 1.0
 #define AAVM_FORMAT_MINOR 0
 
 #define AA_NOP			0x00
@@ -158,8 +158,9 @@
 #define AAEXT0_CLEAR_LINKS	0x0f
 #define AAEXT0_CLEAR_OLD	0x10
 #define AAEXT0_CLEAR_DIV	0x11
-#define AAEXT0_CLEAR_STATUS	0x12
-#define AAEXT0_N		0x13
+#define AAEXT0_CLEAR_STATUS	0x12 // Added in 1b/01, Å-machine 1.0
+#define AAEXT0_NBSP		0x13	// Added in 1b/01, Å-machine 1.0
+#define AAEXT0_N		0x14
 
 #define OVAR_PARENT		0
 #define OVAR_CHILD		1

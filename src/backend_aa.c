@@ -1342,6 +1342,10 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 					ai->oper[0] = (aaoper_t) {AAO_STRING, findstring((uint8_t *) "long-term words.")};
 					ai = add_instr(AA_LINE);
 					break;
+				case BI_NBSP:
+					ai = add_instr(AA_EXT0);
+					ai->oper[0] = (aaoper_t) {AAO_BYTE, AAEXT0_NBSP};
+					break;
 				case BI_NOSPACE:
 					ai = add_instr(AA_NOSPACE);
 					break;
