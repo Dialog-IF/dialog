@@ -1238,8 +1238,8 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 			case I_BEGIN_AREA_OVERRIDE:
 				assert(ci->oper[0].tag == OPER_BOX);
 				if(ci->subop == AREA_TOP) {
-					ai = add_instr(AA_ENTER_STATUS_0);
-					ai->oper[0] = (aaoper_t) {AAO_ZERO};
+					ai = add_instr(AA_ENTER_STATUS);
+					ai->oper[0] = (aaoper_t) {AAO_BYTE, 0};
 					ai->oper[1] = (aaoper_t) {AAO_INDEX, ci->oper[0].value};
 				} else {
 					ai = add_instr(AA_ENTER_STATUS);
