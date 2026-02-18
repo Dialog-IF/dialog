@@ -194,13 +194,20 @@ played out.
 
 After an action has been tried, the standard library will generally advance time
 in the game world, by querying a predicate called `(tick)`. The default
-implementation of `(tick)` makes
+implementation of `(tick)` queries
+`(update environment around player)`
+then makes
 xref:lang:choicepoints.adoc#multi-query[multi-queries]
 to the story-supplied
-predicates `(on every tick)`, `(on every tick in $Room)`,
-`(early on every tick)`, and `(late on every tick)`. These can be
+predicates , `(early on every tick)`,
+ `(on every tick)`, and `(late on every tick)`.
+ 
+These can be
 used to print flavour text, move non-player characters, implement daemons and
 timers of various kinds, or anything else the story author might think of.
+
+The default rule for `(on every tick)` makes a multi-query to
+`(on every tick in $Room)`.
 
 Time is not advanced after _commands_, i.e. actions such as
 `[save]` and `[transcript off]` that take place
