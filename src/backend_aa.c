@@ -1576,31 +1576,46 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				break;
 			case I_COMPUTE_V:
 			case I_COMPUTE_R:
-				if(ci->subop == BI_DIV_WIDTH || ci->subop == BI_DIV_HEIGHT){ // This isn't supported by the Å-machine currently, so just fail without doing any further processing
-					ai = add_instr(AA_FAIL);
-					break;
-				}
 				if(ci->op == I_COMPUTE_V
 				&& ci->oper[2].tag != OPER_VAR
 				&& ci->oper[2].tag != OPER_ARG
 				&& ci->oper[2].tag != OPER_TEMP
 				&& ci->oper[2].tag != VAL_NIL) {
+					// Result is meant to unify with a constant; store that constant in REG_TMP
 					ai = add_instr(AA_ASSIGN);
 					ai->oper[0] = encode_value(ci->oper[2], prg);
 					ai->oper[1] = (aaoper_t) {AAO_STORE_REG, REG_TMP};
 					aao = (aaoper_t) {AAO_REG, REG_TMP};
+					ll = 1; // Temp flag
 				} else {
 					aao = encode_dest(ci->oper[2], prg, ci->op == I_COMPUTE_V);
+					ll = 0;
 				}
-				if(ci->subop == BI_PLUS && ci->oper[1].tag == VAL_NUM && ci->oper[1].value == 1) {
+				if(ci->subop == BI_DIV_WIDTH || ci->subop == BI_DIV_HEIGHT) { // These two are accessed through AA_VMINFO and need to fail if the result is 0
+					ai = add_instr(AA_VM_INFO);
+					if(ci->subop == BI_DIV_WIDTH) {
+						ai->oper[0] = (aaoper_t) {AAO_BYTE, 0x20};
+					} else {
+						ai->oper[0] = (aaoper_t) {AAO_BYTE, 0x21};
+					}
+					ai->oper[1] = aao;
+					ai = add_instr(AA_IF_EQ);
+					ai->oper[0] = (aaoper_t) {AAO_WORD, 0x4000}; // number 0
+					if(ll) { // Constant stored in REG_TMP from above
+						ai->oper[1] = aao;
+					} else {
+						ai->oper[1] = encode_value(ci->oper[2], prg);
+					}
+					ai->oper[2] = (aaoper_t) {AAO_CODE, AAFAIL};
+				} else if(ci->subop == BI_PLUS && ci->oper[1].tag == VAL_NUM && ci->oper[1].value == 1) { // Var + 1
 					ai = add_instr(AA_INC_NUM);
 					ai->oper[0] = encode_value(ci->oper[0], prg);
 					ai->oper[1] = aao;
-				} else if(ci->subop == BI_PLUS && ci->oper[0].tag == VAL_NUM && ci->oper[0].value == 1) {
+				} else if(ci->subop == BI_PLUS && ci->oper[0].tag == VAL_NUM && ci->oper[0].value == 1) { // 1 + Var
 					ai = add_instr(AA_INC_NUM);
 					ai->oper[0] = encode_value(ci->oper[1], prg);
 					ai->oper[1] = aao;
-				} else if(ci->subop == BI_MINUS && ci->oper[1].tag == VAL_NUM && ci->oper[1].value == 1) {
+				} else if(ci->subop == BI_MINUS && ci->oper[1].tag == VAL_NUM && ci->oper[1].value == 1) { // Var - 1
 					ai = add_instr(AA_DEC_NUM);
 					ai->oper[0] = encode_value(ci->oper[0], prg);
 					ai->oper[1] = aao;
