@@ -121,7 +121,7 @@ static int lexer_getc(struct lexer *lexer) {
 						exit(1);
 					}
 				}
-				report(LVL_WARN, line, "Found U+%06X", unichar);
+			// 	report(LVL_WARN, line, "Found U+%06X", unichar);
 				full_unicode_to_utf8_single(lexer->unicode_escape, unichar, line);
 				ch = lexer->unicode_escape[0]; // Serve the first byte of it as normal
 				rotate_unicode_escape(lexer);
