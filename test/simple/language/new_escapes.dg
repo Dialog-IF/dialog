@@ -1,0 +1,7 @@
+#áa
+(name \x002A) \X0000e1a
+
+(program entry point\x0029
+	(name #\X0000E1a)
+	(line)
+	a\x0020\x0020\x0020\x0020a \x003d
