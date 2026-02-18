@@ -5,8 +5,6 @@
 #include "report.h"
 #include "unicode.h"
 
-void exit(int);
-
 // Uppercase-lowercase pairs of unicode characters:
 static uint32_t knownpairs[][2] = {
 	{0x00c0, 0x00e0}, {0x00c1, 0x00e1}, {0x00c2, 0x00e2}, {0x00c3, 0x00e3},
@@ -266,7 +264,7 @@ int unicode_to_utf8(uint8_t *dest, int ndest, const uint16_t *src) {
 }
 
 // Converts *any* Unicode character (not just BMP) to UTF-8, but only a single character
-int full_unicode_to_utf8_single(uint8_t *dest, const uint32_t ch, const line_t line) {
+int full_unicode_to_utf8_single(uint8_t *dest, const uint32_t ch) {
 	if(ch < 0x80) {
 		*dest++ = ch;
 		*dest = 0;
@@ -290,7 +288,8 @@ int full_unicode_to_utf8_single(uint8_t *dest, const uint32_t ch, const line_t l
 		*dest = 0;
 		return 4;
 	} else {
-		report(LVL_ERR, line, "Escaped Unicode value \\X%06X is out of range (max 10FFFF)", ch);
-		exit(1);
+		report(LVL_WARN, 0, "Unicode value U+%X is out of range (max 10FFFF)", ch);
+		*dest = 0;
+		return 0;
 	}
 }

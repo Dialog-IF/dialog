@@ -49,8 +49,10 @@ static void rotate_unicode_escape(struct lexer *lexer) {
 	lexer->unicode_escape[3] = lexer->unicode_escape[4];
 }
 
+static void lexer_ungetc(char ch, struct lexer *lexer);
+
 static int lexer_getc(struct lexer *lexer) {
-	int ch, nextch, i;
+	int ch;
 	uint32_t unichar;
 	
 	if((ch = lexer->unicode_escape[0])) {
@@ -70,14 +72,16 @@ static int lexer_getc(struct lexer *lexer) {
 		if(*lexer->string) {
 			// Here also we must check for the new Unicode escapes
 			// The duplication of code is not ideal, but that's how the lexer is written :(
-			if(lexer->string[0] == '\\' &&
-				(lexer->string[1] == 'x' || lexer->string[1] == 'X')
-			) {
+			if(lexer->string[0] == '\\' && lexer->string[1] == 'x') {
 				unichar = 0;
-				nextch = lexer->string[1];
-				lexer->string += 2;
-				for(i = 0; i < (nextch=='X'?6:4); i++) {
+				if(lexer->string[2] != '{') {
+					report(LVL_ERR, line, "Unicode escape syntax is \\x{...}; the braces are required");
+					exit(1);
+				}
+				lexer->string += 3;
+				for(;;) {
 					ch = *lexer->string++;
+					if(ch == '}') break;
 					unichar <<= 4;
 					if(ch >= '0' && ch <= '9') {
 						unichar |= (ch - '0');
@@ -89,8 +93,12 @@ static int lexer_getc(struct lexer *lexer) {
 						report(LVL_ERR, line, "Invalid character '%c' in Unicode escape sequence", ch);
 						exit(1);
 					}
+					if(unichar > 0x10FFFF) { // Avoid overlong escapes
+						report(LVL_ERR, line, "Invalid Unicode escape sequence: maximum Unicode character is \\x{10FFFF}");
+						exit(1);
+					}
 				}
-				full_unicode_to_utf8_single(lexer->unicode_escape, unichar, line);
+				full_unicode_to_utf8_single(lexer->unicode_escape, unichar);
 				ch = lexer->unicode_escape[0]; // Serve the first byte of it as normal
 				rotate_unicode_escape(lexer);
 				return ch;
@@ -104,11 +112,16 @@ static int lexer_getc(struct lexer *lexer) {
 		ch = fgetc(lexer->file);
 		// This is where we check for the new Unicode escapes
 		if(ch == '\\') {
-			nextch = fgetc(lexer->file);
-			if(nextch == 'x' || nextch == 'X') {
+			ch = fgetc(lexer->file);
+			if(ch == 'x') {
 				unichar = 0;
-				for(i = 0; i < (nextch=='X'?6:4); i++) {
+				if(fgetc(lexer->file) != '{') {
+					report(LVL_ERR, line, "Unicode escape syntax is \\x{...}; the braces are required");
+					exit(1);
+				}
+				for(;;) {
 					ch = fgetc(lexer->file);
+					if(ch == '}') break;
 					unichar <<= 4;
 					if(ch >= '0' && ch <= '9') {
 						unichar |= (ch - '0');
@@ -116,17 +129,24 @@ static int lexer_getc(struct lexer *lexer) {
 						unichar |= 10 + (ch - 'a');
 					} else if(ch >= 'A' && ch <= 'F') {
 						unichar |= 10 + (ch - 'A');
+					} else if(ch == EOF) {
+						report(LVL_ERR, line, "File ended in the middle of a Unicode escape sequence");
+						exit(1);
 					} else {
 						report(LVL_ERR, line, "Invalid character '%c' in Unicode escape sequence", ch);
 						exit(1);
 					}
+					if(unichar > 0x10FFFF) { // Avoid overlong escapes
+						report(LVL_ERR, line, "Invalid Unicode escape sequence: maximum Unicode character is \\x{10FFFF}");
+						exit(1);
+					}
 				}
-			// 	report(LVL_WARN, line, "Found U+%06X", unichar);
-				full_unicode_to_utf8_single(lexer->unicode_escape, unichar, line);
+				full_unicode_to_utf8_single(lexer->unicode_escape, unichar);
 				ch = lexer->unicode_escape[0]; // Serve the first byte of it as normal
 				rotate_unicode_escape(lexer);
 			} else {
-				lexer->ungetcbuf = nextch; // Unget the char after the backslash
+				lexer_ungetc(ch, lexer); // Unget the character after the backslash
+				ch = '\\';
 			}
 		}
 		// If we got here, it was *not* a Unicode escape, process it normally

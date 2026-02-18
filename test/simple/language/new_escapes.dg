@@ -1,7 +1,7 @@
 #áa
-(name \x002A) \X0000e1a
+(name \x{2A}) \x{0e1}a
 
-(program entry point\x0029
-	(name #\X0000E1a)
+(program entry point\x{0029}
+	(name #\x{0000E1}a)
 	(line)
-	a\x0020\x0020\x0020\x0020a \x003d
+	a\x{20}\x{20}\x{20}\x{20}a \x{00000000003d}
