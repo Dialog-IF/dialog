@@ -13,8 +13,18 @@ interactive debugger, as well as pre-built executable files for Linux (i386 and
 x86_64) and Windows. The compiler is called `dialogc`, and the debugger
 is called `dgdebug`.
 
+Alternately, if you are on OS X, you can install the
+[Homebrew package manager](https://brew.sh/),
+and then use the command `brew install dialog-if/brew/dialog`, which will
+install `dgdebug` and `dialogc`. This command also installs Dialog's standard libraries (`stdlib.dg` and `stddebug.dg`) to
+either `/opt/homebrew/share/dialog-if` or `/usr/local/share/dialog-if`
+(for either ARM-based Macs or Intel-based Macs, respectively)
+footnote:[The command `brew --prefix dialog-if` will identify
+an installation directory; the libraries are nested at 'share/dialog-if`
+and a copy of this manual is at `share/doc/dialog-if/index.html`].
+
 Both the compiler and the interactive debugger have to be started from a
-commandline shell. Depending on what operating system you use, you may have to
+command line shell. Depending on what operating system you use, you may have to
 copy the executable files to a system-specific location, or simply navigate to
 the directory that contains them.
 
