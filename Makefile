@@ -25,6 +25,7 @@ tidy:
 	$(MAKE) -C src tidy
 	$(MAKE) -C test/gosling clean
 	$(MAKE) -C test/impossible clean
+	$(MAKE) -C test/simple clean
 
 clean: tidy
 	$(MAKE) -C src clean

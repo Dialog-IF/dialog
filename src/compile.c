@@ -991,7 +991,14 @@ static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an,
 	}
 
 	if(an->predicate->builtin == BI_QUIT_N) {
-		ci = add_instr(I_QUIT);
+		if(do_trace) {
+			v1 = (value_t) {OPER_ARG, 0};
+		} else {
+			v1 = comp_value(cl, an->children[0], seen, known_args);
+		}
+		ci = add_instr(I_QUIT_N);
+		ci->oper[0] = v1;
+		ci->oper[2] = (value_t) {OPER_PRED, an->predicate->pred_id};
 
 		end_routine_cl(cl);
 		if(tail == NO_TAIL) {

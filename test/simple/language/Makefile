@@ -4,6 +4,8 @@ DIFF = diff --ignore-trailing-space
 
 BASEPATH = ../../..
 
+DEBUG = $(BASEPATH)/src/dgdebug -q --no-warn-not-topic
+
 # List of all .nolib.dg and .lib.dg files with .dg changed to .test
 tests := $(patsubst %.dg,%.test,$(wildcard *.dg))
 rawgold := $(patsubst %.dg,%.gold,$(wildcard *.dg))
@@ -85,3 +87,6 @@ origin: $(origin)
 
 clean:
 	rm -rf *.out *.z.gold *.aa.gold *.d.gold *.z.in *.aa.in *.d.in *.z5
+
+test-quit-n.test:
+	$(DEBUG) test-quit-n.dg
