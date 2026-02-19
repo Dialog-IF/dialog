@@ -18,6 +18,8 @@ static struct arena backend_arena;
 
 static const char ifid_template[] = "NNNNNNNN-NNNN-NNNN-NNNN-NNNNNNNNNNNN";
 
+char *STOPCHARS; // Declared in common.h, defined here and in debugger.c, set in backend_z.c and backend_aa.c
+
 static int match_template(const char *txt, const char *template) {
 	for(;;) {
 		if(*template == 'N') {
@@ -63,6 +65,7 @@ void usage(char *prgname) {
 	fprintf(stderr, "--heap            -H    Set main heap size (default 1000 words).\n");
 	fprintf(stderr, "--aux             -A    Set aux heap size (default 500 words).\n");
 	fprintf(stderr, "--long-term       -L    Set long-term heap size (default 500 words).\n");
+	fprintf(stderr, "--word-seps       -W    Set word separator characters (default .,;\"()* )\n");
 	fprintf(stderr, "--strip           -s    Strip internal object names.\n");
 	fprintf(stderr, "--warn-not-topic        Always warn about objects not used as topics.\n");
 	fprintf(stderr, "--no-warn-not-topic     Never warn about objects not used as topics.\n");
@@ -96,6 +99,7 @@ int main(int argc, char **argv) {
 		{"heap", 1, 0, 'H'},
 		{"aux", 1, 0, 'A'},
 		{"long-term", 1, 0, 'L'},
+		{"word-seps", 1, 0, 'W'},
 		{"strip", 0, 0, 's'},
 		{"no-default-uni", 0, &zmachine_preserve_zscii, 0},
 		{"no-default-unicode", 0, &zmachine_preserve_zscii, 0},
@@ -111,6 +115,7 @@ int main(int argc, char **argv) {
 	char *coverfname = 0;
 	char *coveralt = 0;
 	char *resdir = 0;
+	uint8_t *wordseps = 0;
 	int auxsize = 500, heapsize = 1000, ltssize = 500;
 	int strip = 0;
 	int opt, i;
@@ -125,7 +130,7 @@ int main(int argc, char **argv) {
 	comp_init();
 
 	do {
-		opt = getopt_long(argc, argv, "?hVvo:t:r:c:a:H:A:L:s", longopts, 0);
+		opt = getopt_long(argc, argv, "?hVvo:t:r:c:a:H:A:L:sW:", longopts, 0);
 		switch(opt) {
 			case 0:
 				break; // Added DMS so long-only options are possible
@@ -153,6 +158,9 @@ int main(int argc, char **argv) {
 				break;
 			case 'a':
 				coveralt = strdup(optarg);
+				break;
+			case 'w':
+				wordseps = (uint8_t*)strdup(optarg);
 				break;
 			case 'H':
 				heapsize = strtol(optarg, 0, 10);
@@ -238,6 +246,16 @@ int main(int argc, char **argv) {
 	prg->optflags |= OPTF_NO_TRACE; // This gets cleared by the frontend if (trace on) is reachable.
 	if(aamachine) {
 		prg->max_temp = aa_get_max_temp();
+	}
+	
+	if(wordseps) {
+		if(aamachine) {
+			prepare_wordseps_aa(wordseps);
+		} else {
+			prepare_wordseps_z(wordseps);
+		}
+	} else {
+		STOPCHARS = DEFAULT_STOPCHARS;
 	}
 
 	if(!frontend(

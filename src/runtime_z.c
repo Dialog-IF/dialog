@@ -251,6 +251,23 @@ struct rtroutine rtroutines[] = {
 		}
 	},
 	{
+		R_STOPCHAR,
+		3,
+			// 0 (param): char to check
+			// 1: char for comparison
+			// 2: counter
+		(struct zinstr []) {
+			// Table layout: one byte for length, then that many byte values
+			{Z_LOADB, {REF(G_STOPCHARS), SMALL(0)}, REG_LOCAL+2},
+			{OP_LABEL(1)},
+			{Z_LOADB, {REF(G_STOPCHARS), VALUE(REG_LOCAL+2)}, REG_LOCAL+1},
+			{Z_JE, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+1)}, RTRUE},
+			{Z_DEC_JGE, {SMALL(REG_LOCAL+2), SMALL(1)}, 0, 1},
+			{Z_RFALSE},
+			{Z_END},
+		}
+	},
+	{
 		R_NOSPACE,
 		0,
 		(struct zinstr []) {
@@ -2928,9 +2945,12 @@ struct rtroutine rtroutines[] = {
 			{Z_JZ, {VALUE(REG_LOCAL+1)}, 0, RFALSE},
 			{Z_AND, {VALUE(REG_LOCAL+3), SMALL(0xff)}, REG_LOCAL+3},
 			{Z_JLE, {VALUE(REG_LOCAL+3), SMALL(0x20)}, 0, RFALSE},
-			{Z_JE, {VALUE(REG_LOCAL+3), SMALL('.'), SMALL(','), SMALL('\"')}, 0, RFALSE},
-			{Z_JE, {VALUE(REG_LOCAL+3), SMALL(';'), SMALL('*')}, 0, RFALSE},
-			{Z_JE, {VALUE(REG_LOCAL+3), SMALL('('), SMALL(')')}, 0, RFALSE},
+			// Is it a stopchar? This used to be hardcoded, but now it calls a separate routine
+			{Z_CALL2S, {ROUTINE(R_STOPCHAR), VALUE(REG_LOCAL+3)}, REG_LOCAL+5},
+			{Z_JNZ, {VALUE(REG_LOCAL+5)}, 0, RFALSE},
+		//	{Z_JE, {VALUE(REG_LOCAL+3), SMALL('.'), SMALL(','), SMALL('\"')}, 0, RFALSE},
+		//	{Z_JE, {VALUE(REG_LOCAL+3), SMALL(';'), SMALL('*')}, 0, RFALSE},
+		//	{Z_JE, {VALUE(REG_LOCAL+3), SMALL('('), SMALL(')')}, 0, RFALSE},
 			{Z_STOREB, {VALUE(REG_LOCAL+2), SMALL(0), VALUE(REG_LOCAL+3)}},
 			{Z_DEC, {SMALL(REG_LOCAL+1)}},
 			{Z_INC, {SMALL(REG_LOCAL+2)}},
