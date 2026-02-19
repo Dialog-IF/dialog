@@ -17,7 +17,7 @@
 static volatile int interrupted = 0;
 
 int use_numbered_levels = 0;
-int return_value = 0;
+int return_value = 0; // XXX: move this out of a global
 
 void eval_interrupt() {
 	interrupted = 1;

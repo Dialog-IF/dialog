@@ -144,6 +144,7 @@ struct opinfosrc {
 	{I_TRANSCRIPT,		0, OPF_CAN_FAIL,			"TRANSCRIPT"},
 	{I_UNDO,		0, OPF_CAN_FAIL,			"UNDO"},
 	{I_UNIFY,		0, OPF_CAN_FAIL,			"UNIFY"},
+	{I_QUIT_N,		1, OPF_ENDS_ROUTINE,			"QUIT"},
 };
 
 static void comp_value_into(struct clause *cl, struct astnode *an, value_t dest, uint8_t *seen, struct astnode **known_args);
