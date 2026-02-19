@@ -509,7 +509,7 @@ experience of replaying a game, while avoiding spoilers on the first
 playthrough.
 
 Hidden objects can be revealed either by directly updating the flag,
-`(now) (elephant is revealed)`, or by querying `(reveal $)` for
+`(now) (#elephant is revealed)`, or by querying `(reveal $)` for
 the given object. A hidden object is also revealed implicitly when its name is
 printed, or when `(notice $)` is invoked on it.
 
