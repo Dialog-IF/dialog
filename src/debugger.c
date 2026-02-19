@@ -45,6 +45,7 @@ struct debugger {
 
 static int force_width;
 extern int use_numbered_levels; // Defined in eval.c
+extern int return_value;        // Also defined in eval.c
 
 static void set_oflag(struct dyn_state *ds, int onum, int fnum) {
 	struct dyn_obj *o = &ds->obj[onum];
@@ -1716,5 +1717,5 @@ int debugger(int argc, char **argv) {
 	free(dbg.timestamps);
 	o_cleanup();
 	term_cleanup();
-	return 0;
+	return return_value;
 }
