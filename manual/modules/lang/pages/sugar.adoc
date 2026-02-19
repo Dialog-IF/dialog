@@ -248,7 +248,7 @@ even a single time, Dialog will happily create an `#aple` alongside your
 `#apple`, leading to hard-to-find bugs. As a safeguard, the compiler can
 optionally produce a warning for any object that never appears as a topic.
 By default, these warnings are enabled for any program that includes the
-library; but they can always be enabled or disabled on the command line.
+library; but they can always be enabled or disabled on the commandline.
 
 [#nested]
 == Nested queries in rule heads
