@@ -28,7 +28,6 @@
 #define AA_AUX_PUSH_VAL		0x14	// VALUE
 #define AA_AUX_PUSH_RAW_0	0x94	// 0
 #define AA_AUX_PUSH_RAW		0x15	// WORD/VBYTE
-#define AA_AUX_POP_VAL		0x16	// DEST
 #define AA_AUX_POP_LIST		0x17	// DEST
 #define AA_AUX_POP_LIST_CHK	0x18	// VALUE
 #define AA_AUX_POP_LIST_MATCH	0x19	// VALUE
@@ -104,7 +103,6 @@
 #define AA_PRINT_VAL		0x65	// VALUE
 #define AA_ENTER_DIV		0x66	// INDEX
 #define AA_LEAVE_DIV		0xe6
-#define AA_ENTER_STATUS_0	0x67	// INDEX
 #define AA_LEAVE_STATUS		0xe7
 #define AA_ENTER_LINK_RES	0x68	// VALUE
 #define AA_LEAVE_LINK_RES	0xe8
