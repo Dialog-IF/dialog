@@ -66,7 +66,7 @@ the banner, for instance.
 When compiling to the `zblorb` file format, it is possible to include cover
 art with your story. This is not part of the Dialog language itself, but is an
 extra service provided by the Dialog compiler. Specify the name of a JPEG or PNG file
-and, optionally, a short textual description of the image, using the commandline
+and, optionally, a short textual description of the image, using the command-line
 options `-c` and `-a` respectively. The cover image should be no
 larger than 1200 x 1200 pixels in size, and preferably square.
 
@@ -89,7 +89,7 @@ The serial number is the compilation date in `YYMMDD` format.
 
 The standard library defines a rule for `(library version)`, which prints
 the library version string. The compiler looks for this definition to check that
-a library appears as the last filename on the commandline, and prints a warning
+a library appears as the last filename on the command line, and prints a warning
 otherwise.
 
 [#interface]
@@ -172,7 +172,7 @@ re-initialize itself.
 For compiled code, the main heap, auxiliary heap, and long-term heap occupy
 1000, 500, and 500 words respectively by default, and this should be more than
 enough for most interactive stories. The size of each area can be adjusted by
-passing commandline options to the compiler. A built-in predicate,
+passing command-line options to the compiler. A built-in predicate,
 `(display memory statistics)`, prints the peak usage of each memory area
 so far. During debugging and testing, you may wish to invoke this predicate just
 before quitting, as it will tell you how close you are to the limits.

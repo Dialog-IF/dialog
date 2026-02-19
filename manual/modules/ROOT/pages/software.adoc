@@ -24,7 +24,7 @@ an installation directory; the libraries are nested at `share/dialog-if`
 and a copy of this manual is at `share/doc/dialog-if/index.html`].
 
 Both the compiler and the interactive debugger have to be started from a
-commandline shell. Depending on what operating system you use, you may have to
+command-line shell. Depending on what operating system you use, you may have to
 copy the executable files to a system-specific location, or simply navigate to
 the directory that contains them.
 
@@ -93,7 +93,7 @@ first source code file.
 The example games in this manual do not declare IFIDs, which is mandatory when
 the zblorb output format is used. To compile the examples, you must ask the
 compiler to emit raw z8 (or z5) code by adding `-t z8`
-(or `-t z5`) to the commandline:
+(or `-t z5`) to the command line:
 
 `dialogc -t z8 example.dg stdlib.dg`
 
@@ -116,7 +116,7 @@ designed to improve the performance of Dialog stories on vintage hardware beyond
 what is possible using the Z-machine. It also allows Dialog stories to be
 published on the web with support for hyperlinks and CSS styles.
 
-To compile for the Å-machine, add `-t aa` to the commandline:
+To compile for the Å-machine, add `-t aa` to the command line:
 
 [role=output]
 ```
@@ -175,7 +175,7 @@ and allows you to inspect and manipulate the program while it is running.
 
 image:debugger.png[debugger]
 
-To debug your game, launch the debugger from the commandline with your source
+To debug your game, launch the debugger from the command line with your source
 code filenames as arguments:
 
 [role=output]
@@ -185,7 +185,7 @@ dgdebug story.dg stdlib.dg
 
 The order of the filenames is significant, just like when compiling.
 
-The debugger also accepts a couple of commandline options. For a complete list,
+The debugger also accepts a couple of command-line options. For a complete list,
 type:
 
 [role=output]

@@ -49,7 +49,7 @@ The parentheses indicate that a query is to be made.
 When a query is made to a predicate, all rules defined for that predicate are consulted in program order, until one of them _succeeds_;
 we will return to the concept of success at the end of the present chapter.
 If the program comprises several source code files, the order of the rules is
-determined by the order in which the filenames appeared on the commandline.
+determined by the order in which the filenames appeared on the command line.
 
 Predicate names are case-sensitive.
 
