@@ -1,0 +1,96 @@
+(program entry point)
+	*(repeat forever)
+	(get input $Words)
+	(if) (empty $Words) (then) (stop) (endif)
+	(collect $Obj)
+		(determine object $Obj)
+			*(object $Obj)
+		(from words)
+			(name $Obj)
+		(matching all of $Words)
+	(into $Options)
+	(if) (empty $Options) (then)
+		No matches
+	(else)
+		Matches: (print list $Options)
+	(endif)
+	(par) (fail)
+
+(print list [$Last])
+	$Last
+(print list [$Head|$Tail])
+	$Head , (print list $Tail)
+
+%% Now, we define a whole bunch of Greek words
+
+#food
+(name *) φαγητό φαγητο
+
+#class
+(name *) μάθημα μαθημα
+
+#apple
+(name *) μήλο μηλο
+
+#goodmorning
+(name *) καλημέρα καλημερα
+
+#goodafternoon
+(name *) καλησπέρα καλησπερα
+
+#bread
+(name *) ψωμί ψωμι
+
+#want
+(name *) θέλω θελω
+
+#wanted
+(name *) θέλησα θελησα
+
+#go
+(name *) πάω παω
+
+#house
+(name *) σπίτι σπιτι
+
+#child
+(name *) παιδί παιδι
+
+#friend
+(name *) φίλος φιλος φίλοσ φιλοσ
+
+#love
+(name *) αγάπη αγαπη
+
+#great
+(name *) ωραία ωραια
+
+#time
+(name *) ώρα ωρα
+
+#know
+(name *) ξέρω ξερω
+
+#soul
+(name *) ψυχή ψυχη
+
+#read
+(name *) διαβάζω διαβαζω
+
+#work
+(name *) δουλειά δουλεια
+
+#well
+(name *) λοιπόν λοιπον
+
+#this
+(name *) αυτός αυτος αυτόσ αυτοσ
+
+#car
+(name *) αυτοκίνητο αυτοκινητο
+
+#greeklanguage
+(name *) ελληνικά ελληνικα
+
+#greekperson
+(name *) Έλληνος Ελληνος Έλληνοσ Ελληνοσ

@@ -1225,6 +1225,7 @@ static int eval_builtin(struct eval_state *es, int builtin, value_t o1, value_t 
 		}
 		o_clear(1);
 		break;
+	case BI_CLEAR_STATUS:
 	case BI_CLEAR_LINKS:
 	case BI_CLEAR_DIV:
 	case BI_CLEAR_OLD:

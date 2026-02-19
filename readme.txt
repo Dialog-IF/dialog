@@ -38,6 +38,55 @@ Project website:
 
 Release notes:
 
+	1b/01, Lib 1.1.1:
+  
+		Due to new built-in predicates in this release, all projects
+		compiled for Å-machine will need version 1.0.0 or later of the
+		Å-machine tools. Get them from github.com/Dialog-IF/aamachine/.
+		
+		Language: added (clear status bar).
+		
+		Distribution: added unit.dg, a library for unit testing.
+
+		Documentation: the library reference now includes special syntax
+		like (elseif), (now), and (global variable $).
+		
+		Documentation: the syntax reference now includes cross-references
+		to where each piece of syntax is explained.
+		
+		Documentation: the @tree and @dynamic debugging commands are now
+		properly documented, though they've existed for some time.
+		
+		Compiler: access predicates consisting of a single multi-query
+		no longer crash the compiler when negated.
+    
+    Backend: improved text compression on Z-machine (at least for
+		programs written in English), reducing text size by about 18%.
+		This will help larger programs fit within the Z-machine's limits.
+		
+		Backend: a new --optimize-alphabet option improves dictionary
+		word resolution on Z-machine for non-English writing systems.
+		Previously, words in Greek or Russian could have as few as two
+		characters in the essential part; this raises it to 9.
+		
+		Backend: incremented the Å-machine version. Like with Dialog,
+		major version 0 is left for Linus's use, while the community-
+		maintained version starts with major version 1.
+		
+		Backend: new diagnostics show how many of the Z-machine's
+		registers are being used, and for what purposes.
+		
+		Backend: (uppercase) now works with non-ASCII characters on the
+		Z-machine backend.
+		
+		Debugger: --width -1 disables word wrapping, for piping to other
+		programs.
+		
+		Library: New commands SUPERBRIEF, BRIEF, VERBOSE, and SUPERVERBOSE
+		change how rooms are described while going. The default behavior
+		is VERBOSE: rooms are described in full when moving one step at a
+		time, but abbreviated when travelling long distances.
+
 	1a/01, Lib 1.1.0:
 	
 		This is the first release handled by the community, and per

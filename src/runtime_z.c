@@ -226,11 +226,17 @@ struct rtroutine rtroutines[] = {
 			{Z_LOADB, {VALUE(REG_LOCAL+1), SMALL(0)}, REG_LOCAL+0},
 
 			{Z_JL, {VALUE(REG_LOCAL+0), SMALL(0x61)}, 0, 4},
-			{Z_JGE, {VALUE(REG_LOCAL+0), SMALL(0x7b)}, 0, 4},
+			{Z_JGE, {VALUE(REG_LOCAL+0), SMALL(0x7b)}, 0, 5},
 
 			// convert to uppercase
 			{Z_AND, {VALUE(REG_LOCAL+0), SMALL(0xdf)}, REG_LOCAL+0},
 			{Z_PRINTCHAR, {VALUE(REG_LOCAL+0)}},
+			{Z_JUMP, {REL_LABEL(6)}},
+			
+			{OP_LABEL(5)}, // Extended ZSCII needs its own routine
+			{Z_CALL2N, {ROUTINE(R_EXT_UPPER), VALUE(REG_LOCAL+0)}},
+			
+			{OP_LABEL(6)}, // Move the pointer to past the first char
 			{Z_INC, {SMALL(REG_LOCAL+1)}},
 			{Z_DEC, {SMALL(REG_LOCAL+3)}},
 
@@ -445,21 +451,28 @@ struct rtroutine rtroutines[] = {
 			// convert to uppercase
 			{Z_STORE, {SMALL(REG_UPPER), SMALL(0)}},
 			{Z_JL, {VALUE(REG_LOCAL+4), SMALL(0x61)}, 0, 14},
+			{Z_JGE, {VALUE(REG_LOCAL+4), SMALL(155)}, 0, 26}, // Ext char
 			{Z_JGE, {VALUE(REG_LOCAL+4), SMALL(0x7b)}, 0, 14},
 			{Z_AND, {VALUE(REG_LOCAL+4), SMALL(0xdf)}, REG_LOCAL+4},
+			{Z_JUMP, {REL_LABEL(14)}},
+			
+			{OP_LABEL(26)}, // Ext chars need their own printing routine
+			{Z_CALL2N, {ROUTINE(R_EXT_UPPER), VALUE(REG_LOCAL+4)}},
+			{Z_JUMP, {REL_LABEL(29)}},
 
-			{OP_LABEL(14)},
+			{OP_LABEL(14)}, // Check for control characters
 			{Z_JLE, {VALUE(REG_LOCAL+4), SMALL(32)}, 0, 25},
 			{Z_JL, {VALUE(REG_LOCAL+4), SMALL(129)}, 0, 24},
 			{Z_JG, {VALUE(REG_LOCAL+4), SMALL(132)}, 0, 24},
 
-			{OP_LABEL(25)},
+			{OP_LABEL(25)}, // We print all control characters as @\? on this backend
 			{Z_PRINTCHAR, {SMALL('\\')}},
 			{Z_STORE, {SMALL(REG_LOCAL+4), SMALL('?')}},
 
 			{OP_LABEL(24)},
 			{Z_PRINTCHAR, {VALUE(REG_LOCAL+4)}},
-
+			
+			{OP_LABEL(29)},
 			{Z_STORE, {SMALL(REG_SPACE), SMALL(0)}},
 			{Z_JNE, {VALUE(REG_LOCAL+4), SMALL('(')}, 0, RFALSE},
 			{Z_TEST, {VALUE(REG_LOCAL+1), SMALL(1)}, 0, RFALSE},
@@ -597,13 +610,20 @@ struct rtroutine rtroutines[] = {
 			{Z_PRINTADDR, {VALUE(REG_LOCAL+0)}},
 			{Z_OUTPUT_STREAM, {LARGE(0x10000-3)}},
 
-			{Z_LOADW, {VALUE(REG_LOCAL+4), SMALL(0)}, REG_LOCAL+3},
-			{Z_LOADB, {VALUE(REG_LOCAL+4), SMALL(2)}, REG_LOCAL+0},
+			{Z_LOADW, {VALUE(REG_LOCAL+4), SMALL(0)}, REG_LOCAL+3}, // Length
+			{Z_LOADB, {VALUE(REG_LOCAL+4), SMALL(2)}, REG_LOCAL+0}, // First char
 
 			{Z_JL, {VALUE(REG_LOCAL+0), SMALL(0x61)}, 0, 13},
+			{Z_JGE, {VALUE(REG_LOCAL+0), SMALL(155)}, 0, 27}, // Ext char
 			{Z_JGE, {VALUE(REG_LOCAL+0), SMALL(0x7b)}, 0, 13},
 			{Z_AND, {VALUE(REG_LOCAL+0), SMALL(0xdf)}, REG_LOCAL+0},
 			{Z_PRINTCHAR, {VALUE(REG_LOCAL+0)}},
+			{Z_JUMP, {REL_LABEL(28)}},
+			
+			{OP_LABEL(27)},
+			{Z_CALL2N, {ROUTINE(R_EXT_UPPER), VALUE(REG_LOCAL+0)}},
+			
+			{OP_LABEL(28)},
 			{Z_ADD, {VALUE(REG_LOCAL+4), SMALL(3)}, REG_LOCAL+4},
 			{Z_DEC, {SMALL(REG_LOCAL+3)}},
 
@@ -3896,7 +3916,7 @@ struct rtroutine rtroutines[] = {
 	{
 		R_CLEAR,
 		1,
-			// 0 (param): 0 for clear, -1 for clear all
+			// 0 (param): 0 for clear, 1 for clear status, -1 for clear all
 		(struct zinstr []) {
 			{Z_JNZ, {VALUE(REG_NSPAN)}, 0, 2},
 
@@ -3907,6 +3927,7 @@ struct rtroutine rtroutines[] = {
 
 			{OP_LABEL(1)},
 			{Z_ERASE_WINDOW, {VALUE(REG_LOCAL+0)}},
+			{Z_JE, {VALUE(REG_LOCAL+0), SMALL(1)}, 0, RFALSE}, // If we only cleared the status bar, don't change REG_SPACE
 			{Z_STORE, {SMALL(REG_SPACE), SMALL(4)}},
 			{Z_RFALSE},
 			{Z_END},
@@ -4290,6 +4311,33 @@ struct rtroutine rtroutines[] = {
 			{OP_LABEL(1)},
 			// simple value
 			{Z_RET, {VALUE(REG_LOCAL+0)}},
+			{Z_END},
+		}
+	},
+	{
+		R_EXT_UPPER,
+		2,
+			// 0 (param): extended ZSCII code to print capitalized
+			// 1: temp (memory location, then type byte)
+		(struct zinstr []) {
+			// Search for L0 in the table G_CASING, which is G_CASING_SIZE words long, looking for bytes in structures 4 bytes long; store in L1 and branch to 1 if you find it
+			{Z_SCANTABLE, {VALUE(REG_LOCAL+0), REF(G_CASING), REF(G_CASING_SIZE), SMALL(4)}, REG_LOCAL+1, 1},
+			{Z_PRINTCHAR, {VALUE(REG_LOCAL+0)}},
+			{Z_RFALSE},
+			
+			{OP_LABEL(1)}, // It was found!
+			{Z_LOADW, {VALUE(REG_LOCAL+1), SMALL(1)}, REG_LOCAL+0}, // Bytes 2-3
+			{Z_LOADB, {VALUE(REG_LOCAL+1), SMALL(1)}, REG_LOCAL+1},
+			{Z_JNZ, {VALUE(REG_LOCAL+1)}, 0, 2},
+			
+			// Type byte 0: it's a ZSCII character
+			{Z_PRINTCHAR, {VALUE(REG_LOCAL+0)}},
+			{Z_RFALSE},
+			
+			{OP_LABEL(2)},
+			// Type byte 1: it's a Unicode character
+			{Z_CALL2N, {ROUTINE(R_UNICODE), VALUE(REG_LOCAL+0)}}, // R_UNICODE checks printability
+			{Z_RFALSE},
 			{Z_END},
 		}
 	},

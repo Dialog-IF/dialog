@@ -1,7 +1,8 @@
-# Call `make DIFF=meld`, for example, to get a fancy diff
+# Call `make DIFF=meld` to get a fancy diff
 # If the build fails on a Mac, change --ignore-trailing-space to --ignore-space-change
 DIFF = diff --ignore-trailing-space
 
+# Base of the repository
 BASEPATH = ../../..
 
 DEBUG = $(BASEPATH)/src/dgdebug -q --no-warn-not-topic
@@ -19,6 +20,7 @@ all: $(tests)
 explicit: $(explicit)
 
 # Create the original gold files based on the gold-standard (i.e. unmodified) dialogc and dgdebug
+# This was relevant when first creating the tests, but should never be needed again
 %.orig_gold: %.dg %.debug %.z.in %.d.in
 ## Call the original dialogc and dgdebug from $PATH here, not our modified ones from $(BASEPATH)
 	touch -a $*.gold
@@ -39,6 +41,12 @@ explicit: $(explicit)
 	rm -f $*.z.out $*.d.out $*.z5
 
 origin: $(origin)
+
+# These two need special command-line options
+new_greek.z5: $(BASEPATH)/src/dialogc new_greek.dg
+	$(BASEPATH)/src/dialogc new_greek.dg dummylib.dglib --no-warn-not-topic -t z5 -o new_greek.z5 --no-default-uni --optimize-alphabet -vv
+new_russian.z5: $(BASEPATH)/src/dialogc new_russian.dg
+	$(BASEPATH)/src/dialogc new_russian.dg dummylib.dglib --no-warn-not-topic -t z5 -o new_russian.z5 --no-default-uni --optimize-alphabet -vv
 
 %.z5: $(BASEPATH)/src/dialogc %.dg
 	$(BASEPATH)/src/dialogc $*.dg dummylib.dglib --no-warn-not-topic -t z5 -o $*.z5
@@ -69,24 +77,30 @@ origin: $(origin)
 	perl -i -pe 's/ $$//' $*.z.out
 
 %.aa.out: %.aastory %.aa.in
-	echo TODO IMPLEMENT THIS
-	touch $*.aa.out
+	$(BASEPATH)/bin/aamrun.py $*.aastory <$*.aa.in >$*.aa.out
+## Remove trailing spaces from lines for easier diffing
+	perl -i -pe 's/ $$//' $*.aa.out
+## When getting character input, Node interpreter inexplicably sometimes produces CRLF instead of LF, so we need to account for that
+	perl -i -pe 's/\r\n/\n/g' $*.aa.out
 
 %.d.out: $(BASEPATH)/src/dgdebug %.debug %.d.in
 	$(BASEPATH)/src/dgdebug -qD -w 80 -s 1234 $*.debug --no-warn-not-topic <$*.d.in >$*.d.out
 ## Remove trailing spaces from lines for easier diffing
 	perl -i -pe 's/ $$//' $*.d.out
 
-%.test: %.z.out %.d.out %.z.gold %.d.gold
+%.test: %.z.out %.d.out %.aa.out %.z.gold %.d.gold %.aa.gold
 	$(DIFF) $*.z.out $*.z.gold
 	$(DIFF) $*.d.out $*.d.gold
+	$(DIFF) $*.aa.out $*.aa.gold
 
-%.test_explicit: %.z.out %.d.out %.z.gold %.d.gold
+%.test_explicit: %.z.out %.d.out %.aa.out %.z.gold %.d.gold %.aa.gold
 	diff $*.z.out $*.z.gold || meld $*.z.out $*.z.gold
 	diff $*.d.out $*.d.gold || meld $*.d.out $*.d.gold
+	diff $*.aa.out $*.aa.gold || meld $*.aa.out $*.aa.gold
 
 clean:
-	rm -rf *.out *.z.gold *.aa.gold *.d.gold *.z.in *.aa.in *.d.in *.z5
-
+	rm -rf *.out *.z.gold *.aa.gold *.d.gold *.z.in *.aa.in *.d.in *.z5 *.aastory
+  
 test-quit-n.test:
 	$(DEBUG) test-quit-n.dg
+  

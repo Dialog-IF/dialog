@@ -194,13 +194,20 @@ played out.
 
 After an action has been tried, the standard library will generally advance time
 in the game world, by querying a predicate called `(tick)`. The default
-implementation of `(tick)` makes
+implementation of `(tick)` queries
+`(update environment around player)`
+then makes
 xref:lang:choicepoints.adoc#multi-query[multi-queries]
 to the story-supplied
-predicates `(on every tick)`, `(on every tick in $Room)`,
-`(early on every tick)`, and `(late on every tick)`. These can be
+predicates , `(early on every tick)`,
+ `(on every tick)`, and `(late on every tick)`.
+ 
+These can be
 used to print flavour text, move non-player characters, implement daemons and
 timers of various kinds, or anything else the story author might think of.
+
+The default rule for `(on every tick)` makes a multi-query to
+`(on every tick in $Room)`.
 
 Time is not advanced after _commands_, i.e. actions such as
 `[save]` and `[transcript off]` that take place
@@ -214,8 +221,19 @@ design pattern in action handlers is `(tick) (stop)`, which
 causes time to pass as a result of the present action, but stops any subsequent
 actions.
 
-[#preventperform]
+=== (stop after this tick)
 
+It's sometimes useful to `(stop)` all further actions in an `(on every tick)`
+rule. For example, an `(on every tick in #dungeon)` rule might trigger an
+elaborate cutscene and whisk the player off to another room entirely. After
+that, they will probably want to revise their next actions!
+
+Using `(stop)` in this context can lead to strange bugs, though, since the
+`(tick)` was cut off halfway through. A better alternative is
+`(stop after this tick)`, which allows the current tick to finish, then
+`(stop)`s immediately after.
+
+[#preventperform]
 == Instead of: Prevent, perform, after
 
 Now we return to the six action-handling predicates. We will not consider them
