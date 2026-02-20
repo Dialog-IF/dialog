@@ -51,12 +51,10 @@ attribution is given.
 [#compiler]
 == The compiler
 
-Dialog is a compiled language. Source code is stored in text files with the
-filename extension `.dg`. When international characters are used, they must
-be encoded in UTF-8. The compiler delivers its output in `.zblorb`,
-`.z8`, `.z5`, or `.aastory` format. When the zblorb format is
-chosen, the compiler can optionally include cover art with the story, but this
-feature is not regarded as a part of the Dialog language itself.
+Dialog is a compiled language. Source code is stored in text files with the filename extension `.dg`, which must be encoded in UTF-8.
+The compiler delivers its output in `.zblorb`, `.z8`, `.z5`, or `.aastory` format.
+When the zblorb format is chosen, the compiler can optionally include cover art with the story,
+but this feature is not regarded as a part of the Dialog language itself.
 
 image:overview.png[overview]
 
