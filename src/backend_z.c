@@ -5218,7 +5218,7 @@ void backend_z(
 			report(LVL_WARN, 0, "Ignoring cover image options for the %s output format.", format);
 		}
 	} else if(!strcmp(format, "zblorb")) {
-		if(!prg->meta_ifid) {
+		if(!prg->meta_ifid) { // Shouldn't be possible now, caught in backend.c instead
 			report(LVL_ERR, 0, "An IFID declaration is mandatory for the blorb output format.");
 			exit(1);
 		}
