@@ -2337,17 +2337,23 @@ struct rtroutine rtroutines[] = {
 			
 			{OP_LABEL(1)}, // Width in either window, or height in the statusbar
 			{Z_JNZ, {VALUE(REG_LOCAL+0)}, 0, 3}, // If it's the latter, branch
+			{Z_JZ, {VALUE(REG_XFULLSIZE)}, 0, 4}, // If zero, crash
 			{Z_OR, {VALUE(REG_XFULLSIZE), VALUE(REG_4000)}, REG_PUSH}, // This register holds the full width of the current div; OR it with $4000 to mark it as a number
 			{Z_RET_POPPED},
 			
 			{OP_LABEL(2)}, // Height, in main window
 			{Z_LOADB, {SMALL(0), SMALL(0x20)}, REG_LOCAL+1}, // Get screen height into a local variable
+			{Z_JZ, {VALUE(REG_LOCAL+1)}, 0, 4}, // If zero, crash
 			{Z_OR, {VALUE(REG_LOCAL+1), VALUE(REG_4000)}, REG_PUSH}, // And OR it again
 			{Z_RET_POPPED},
 			
 			{OP_LABEL(3)}, // Height, in status bar
+			{Z_JZ, {VALUE(REG_CURRSPLIT)}, 0, 4}, // If zero, crash
 			{Z_OR, {VALUE(REG_CURRSPLIT), VALUE(REG_4000)}, REG_PUSH}, // Third verse, same as the first, just with REG_CURRSPLIT this time (total status bar height)
 			{Z_RET_POPPED},
+			
+			{OP_LABEL(4)}, // Information not available
+			{Z_THROW, {SMALL(0), VALUE(REG_FAILJMP)}}, // Fail
 			
 			{Z_END},
 		}
