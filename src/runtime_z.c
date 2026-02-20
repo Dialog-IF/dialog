@@ -258,11 +258,11 @@ struct rtroutine rtroutines[] = {
 			// 2: counter
 		(struct zinstr []) {
 			// Table layout: one byte for length, then that many byte values
-			{Z_LOADB, {REF(G_STOPCHARS), SMALL(0)}, REG_LOCAL+2},
-			{OP_LABEL(1)},
+			{Z_LOADB, {REF(G_STOPCHARS), SMALL(0)}, REG_LOCAL+2}, // Get length
+			{OP_LABEL(1)}, // Run through table
 			{Z_LOADB, {REF(G_STOPCHARS), VALUE(REG_LOCAL+2)}, REG_LOCAL+1},
-			{Z_JE, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+1)}, RTRUE},
-			{Z_DEC_JGE, {SMALL(REG_LOCAL+2), SMALL(1)}, 0, 1},
+			{Z_JE, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+1)}, 0, RTRUE},
+			{Z_DEC_JGE, {SMALL(REG_LOCAL+2), SMALL(1)}, 0, 1}, // Hit 0? rfalse
 			{Z_RFALSE},
 			{Z_END},
 		}

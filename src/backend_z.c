@@ -159,7 +159,7 @@ static uint8_t unicode_to_zscii(uint16_t);
 void prepare_wordseps_z(const uint8_t *wordseps) {
 	int i, len = strlen((char*)wordseps); // Overestimate
 	uint16_t unichars[len+1];
-	utf8_to_unicode(unichars, len, wordseps);
+	utf8_to_unicode(unichars, len+1, wordseps);
 	len = 0;
 	while(unichars[len]) len++; // utf8_to_unicode leaves a null terminator
 	STOPCHARS = malloc((len+1) * sizeof(uint8_t));
