@@ -46,6 +46,16 @@ new_greek.z5: $(BASEPATH)/src/dialogc new_greek.dg
 new_russian.z5: $(BASEPATH)/src/dialogc new_russian.dg
 	$(BASEPATH)/src/dialogc new_russian.dg dummylib.dglib --no-warn-not-topic -t z5 -o new_russian.z5 --no-default-uni --optimize-alphabet -vv
 
+# Likewise
+new_stopchars2.z5: $(BASEPATH)/src/dialogc new_stopchars2.dg
+	$(BASEPATH)/src/dialogc new_stopchars2.dg dummylib.dglib --no-warn-not-topic -t z5 -o new_stopchars2.z5 -W "="
+new_stopchars2.aastory: $(BASEPATH)/src/dialogc new_stopchars2.dg
+	$(BASEPATH)/src/dialogc new_stopchars2.dg dummylib.dglib --no-warn-not-topic -t aa -o new_stopchars2.aastory -W "="
+new_stopchars2.d.out: $(BASEPATH)/src/dgdebug new_stopchars2.debug new_stopchars2.d.in
+	$(BASEPATH)/src/dgdebug -qD -w 80 -s 1234 new_stopchars2.debug --no-warn-not-topic -W "=" <new_stopchars2.d.in >new_stopchars2.d.out
+## Remove trailing spaces from lines for easier diffing
+	perl -i -pe 's/ $$//' new_stopchars2.d.out
+
 %.z5: $(BASEPATH)/src/dialogc %.dg
 	$(BASEPATH)/src/dialogc $*.dg dummylib.dglib --no-warn-not-topic -t z5 -o $*.z5
 
