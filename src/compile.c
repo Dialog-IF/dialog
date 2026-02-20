@@ -1387,6 +1387,7 @@ static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an,
 	if(an->predicate->builtin == BI_TRACE_ON
 	|| an->predicate->builtin == BI_TRACE_OFF
 	|| an->predicate->builtin == BI_NOSPACE
+	|| an->predicate->builtin == BI_NBSP
 	|| an->predicate->builtin == BI_SPACE
 	|| an->predicate->builtin == BI_LINE
 	|| an->predicate->builtin == BI_PAR
