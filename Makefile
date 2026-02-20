@@ -21,11 +21,16 @@ test: test/regtest/cloak.zblorb src/dgdebug
 	$(MAKE) -C test/unit test
 	bin/test.py doc
 
+# Splitting this one out because making the prereqs is hard on Mac
+test-6502:
+	$(MAKE) -C test/6502 test clean
+
 tidy:
 	$(MAKE) -C src tidy
 	$(MAKE) -C test/gosling clean
 	$(MAKE) -C test/impossible clean
 	$(MAKE) -C test/simple clean
+	$(MAKE) -C test/6502 clean
 
 clean: tidy
 	$(MAKE) -C src clean
@@ -39,4 +44,4 @@ uninstall:
 distclean: clean
 	$(MAKE) -C src distclean
 
-.PHONY:	test clean tidy install uninstall distclean src/dialogc src/dgdebug all
+.PHONY:	test clean tidy install uninstall distclean src/dialogc src/dgdebug all test-6502
