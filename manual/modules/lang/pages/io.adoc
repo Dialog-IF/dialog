@@ -355,7 +355,10 @@ Predicates are also provided to determine the height and width of an existing di
 	(current div height $Height)
 ----
 
-These unify their parameter with the appropriate dimension, in ch or em units. However, note that not all interpreters can provide this information—on a screen reader or messaging platform, for example, there might not be any screen to measure! If this happens, the predicate will simply fail. This is currently the case in all existing Å-machine interpreters.
+These unify their parameter with the appropriate dimension, in ch or em units.
+However, note that not all interpreters can provide this information—on a screen
+reader or messaging platform, for example, there might not be any screen to
+measure! If this happens, the predicate will simply fail.
 
 On the Z-machine backend, these predicates are most useful within the top status area, which always has fixed dimensions and a monospace font. If used anywhere else, they will attempt to provide the width and height of the entire screen.
 
