@@ -57,6 +57,9 @@ Release notes:
 		Documentation: the @tree and @dynamic debugging commands are now
 		properly documented, though they've existed for some time.
 		
+		Compiler: warnings and errors about missing IFIDs will now
+		generate a new IFID to use, if possible.
+		
 		Compiler: access predicates consisting of a single multi-query
 		no longer crash the compiler when negated.
     
