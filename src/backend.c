@@ -50,8 +50,9 @@ void suggest_new_ifid(int level) {
 	if(unavailable) {
 		report(level, 0, "You can get one at <https://www.tads.org/ifidgen/ifidgen>.");
 	} else {
-		report(level, 0, "Add this one to your story:");
+		report(level, 0, "For example, you could use:");
 		report(level, 0, "(story ifid) %s", suggestion);
+		report(level, 0, "Or get one at <https://www.tads.org/ifidgen/ifidgen>.");
 	}
 }
 
