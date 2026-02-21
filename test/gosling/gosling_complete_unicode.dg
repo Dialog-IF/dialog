@@ -9799,7 +9799,7 @@
 	(if) (yesno) (then)
 		(display quit message)
 		(line)
-		(quit)
+		(quit 0) %% doublecheck that we're not compiling (quit $) into something that falls over
 	(endif)
 	(stop)
 
@@ -11928,7 +11928,7 @@
 (parse game over [quit/q])
 	(display quit message)
 	(line)
-	(quit)
+	(quit 0) %% doublecheck that we're not compiling (quit $) into something that falls over
 
 (parse game over $)
 	(div @meta) { Please type one of the given words. }
