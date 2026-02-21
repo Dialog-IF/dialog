@@ -100,7 +100,9 @@ new_russian.z5: $(BASEPATH)/src/dialogc new_russian.dg
 
 clean:
 	rm -rf *.out *.z.gold *.aa.gold *.d.gold *.z.in *.aa.in *.d.in *.z5 *.aastory
-  
-test-quit-n.test:
-	$(DEBUG) test-quit-n.dg
-  
+
+test-quit-0.test:
+	($(DEBUG) test-quit-0.dg || exit 1)
+
+test-quit-1.test:
+	($(DEBUG) test-quit-1.dg && exit 1)
