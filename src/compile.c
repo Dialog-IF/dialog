@@ -144,6 +144,7 @@ struct opinfosrc {
 	{I_TRANSCRIPT,		0, OPF_CAN_FAIL,			"TRANSCRIPT"},
 	{I_UNDO,		0, OPF_CAN_FAIL,			"UNDO"},
 	{I_UNIFY,		0, OPF_CAN_FAIL,			"UNIFY"},
+	{I_QUIT_N,		1, OPF_ENDS_ROUTINE,			"QUIT"},
 };
 
 static void comp_value_into(struct clause *cl, struct astnode *an, value_t dest, uint8_t *seen, struct astnode **known_args);
@@ -981,6 +982,24 @@ static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an,
 
 	if(an->predicate->builtin == BI_QUIT) {
 		ci = add_instr(I_QUIT);
+		end_routine_cl(cl);
+		if(tail == NO_TAIL) {
+			// we have to put the subsequent dead code somewhere
+			begin_routine(make_routine_id());
+		}
+		return 1;
+	}
+
+	if(an->predicate->builtin == BI_QUIT_N) {
+		if(do_trace) {
+			v1 = (value_t) {OPER_ARG, 0};
+		} else {
+			v1 = comp_value(cl, an->children[0], seen, known_args);
+		}
+		ci = add_instr(I_QUIT_N);
+		ci->oper[0] = v1;
+		ci->oper[2] = (value_t) {OPER_PRED, an->predicate->pred_id};
+
 		end_routine_cl(cl);
 		if(tail == NO_TAIL) {
 			// we have to put the subsequent dead code somewhere
