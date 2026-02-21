@@ -38,7 +38,7 @@ static int fill_randomness();
 
 static int fill_randomness() {
 	int res;
-	FILE *fp = fopen("/dev/random", "rb");
+	FILE *fp = fopen("/dev/urandom", "rb");
 	if(!fp) {
 		return 1;
 	}
