@@ -638,7 +638,7 @@ variable, `(verbosity level $). Its effects are explained in the library source 
 == Debugging actions
 
 In addition to the standard library, the official Dialog distribution archive
-includes a _debugging extension_, which can be added to the compiler commandline
+includes a _debugging extension_, which can be added to the compiler command line
 before the standard library (but after the story). This extension adds a number
 of useful actions that generally should not be part of a released game. The
 in-game syntax should be evident from the action names:
