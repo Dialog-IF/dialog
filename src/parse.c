@@ -176,6 +176,21 @@ static void lexer_ungetc(char ch, struct lexer *lexer) {
 	lexer->ungetcbuf = ch;
 }
 
+// We have to watch for one particular multi-byte construction often enough that it's useful to have a macro for it
+#define NBSP_TO_SPACE() \
+	/* The only non-ASCII character we watch for here is the NBSP, because it's easily copied by accident and hard to catch when it happens */ \
+	if(ch == 0xc2) { /* C2 A0 is the encoding of NBSP (U+00A0) in UTF-8 */ \
+		ch = lexer_getc(lexer); \
+		column++; \
+		if(ch == 0xa0) { /* If we find one... */ \
+			ch = ' '; /* Treat it as a space */ \
+		} else { /* Some other non-ASCII character? */ \
+			lexer_ungetc(ch, lexer); /* Put ch back in the buffer */ \
+			column--; \
+			ch = 0xc2; /* And set ch back to C2 to continue parsing */ \
+		} \
+	}
+
 static int next_token(struct lexer *lexer, int parsemode) {
 	int ch;
 	char buf[MAXWORDLENGTH + 1];
@@ -195,7 +210,9 @@ static int next_token(struct lexer *lexer, int parsemode) {
 	for(;;) {
 		ch = lexer_getc(lexer);
 		column++;
-
+		
+		NBSP_TO_SPACE();
+		
 		if(ch == EOF) {
 			return 0;
 		} else if(ch == '\n') {
@@ -214,6 +231,9 @@ static int next_token(struct lexer *lexer, int parsemode) {
 			for(;;) {
 				ch = lexer_getc(lexer);
 				column++;
+				
+				NBSP_TO_SPACE();
+				
 				if(ch != EOF && (
 					valid_varname_char((uint8_t) ch)
 					|| ch == '\\'
@@ -376,6 +396,9 @@ static int next_token(struct lexer *lexer, int parsemode) {
 			for(;;) {
 				ch = lexer_getc(lexer);
 				column++;
+				
+				NBSP_TO_SPACE();
+				
 				if(ch == EOF
 				|| strchr("\n\r\t ()[]{}~%*$@#", ch)
 				|| (parsemode == PMODE_VALUE && ch == '|')
@@ -487,6 +510,7 @@ static int look_ahead_for_slash(struct lexer *lexer) {
 	do {
 		ch = lexer_getc(lexer);
 		column++;
+		NBSP_TO_SPACE();
 	} while(ch == ' ' || ch == '\t');
 
 	found = (ch == '/');

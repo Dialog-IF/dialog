@@ -160,6 +160,8 @@ char *aaext0name[AAEXT0_N] = {
 	"clear_links",
 	"clear_old",
 	"clear_div",
+	"clear_status",
+	"nbsp"
 };
 
 void aavm_init() {

@@ -11,7 +11,7 @@ traits never contain any side effects (such as printing text).
 As far as the Dialog compiler is concerned, traits are just ordinary predicates.
 
 We declare that the table is a supporter by ensuring that the query
-`(supporter `table)# succeeds. The easiest way to achieve this is with
+`(supporter #table)` succeeds. The easiest way to achieve this is with
 the rule definition:
 
 [source]
@@ -21,9 +21,9 @@ the rule definition:
 
 Trait predicates are supposed to fail for objects that aren't part of the
 category. For instance, if the player ever tries to put an object on top of
-themselves, the library will at some point make a query to [.code]#(supporter
-#player)# to check whether this is allowed. That query will fail (unless, of
-course, we also add `(supporter `player)# to our program).
+themselves, the library will at some point make a query to `(supporter
+#player)` to check whether this is allowed. That query will fail (unless, of
+course, we also add `(supporter #player)` to our program).
 
 In the standard library, as a convention, traits are named with a category noun
 or adjective preceding the object, e.g. `(openable $)`, whereas
