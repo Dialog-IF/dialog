@@ -16,8 +16,8 @@
 	margin-top: 1em;
 
 (show width)
-	(current div width $Width)
-	(current div height $Height)
+	{ (current div width $Width) (or) ($Width = @unavailable) }
+	{ (current div height $Height) (or) ($Height = @unavailable) }
 	$Width (space) × (space) $Height
 (show width)
 	\[Not given\]
