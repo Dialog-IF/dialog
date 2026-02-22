@@ -12,6 +12,7 @@
 enum {
 	SP_AUTO = 0,
 	SP_INHIBIT,
+	SP_NBSP,
 	SP_SPACE,
 	SP_DONESPACE,
 	SP_DONELINE	// + number of blank lines printed
@@ -139,6 +140,12 @@ static void sendspace() {
 	}
 }
 
+static void sendnbsp() { // Send a space without wrapping
+	if(!boxstack[boxsp].visible) return;
+	
+	wrapbuf[wrappos++] = ' ';
+}
+
 static void sendstyle(int style) {
 	if(wrappos) syncwrap();
 	wrapstyle = style;
@@ -247,11 +254,22 @@ void o_nospace() {
 	}
 }
 
+void o_nbsp() {
+	if(!boxstack[boxsp].visible) return;
+	
+	if(space < SP_NBSP) {
+		space = SP_NBSP;
+	}
+}
+
 void o_sync() {
 	if(!boxstack[boxsp].visible) return;
 
 	if(space == SP_AUTO || space == SP_SPACE) {
 		sendspace();
+		space = SP_DONESPACE;
+	} else if(space == SP_NBSP) {
+		sendnbsp();
 		space = SP_DONESPACE;
 	}
 	syncwrap();
@@ -264,6 +282,9 @@ void o_set_style(int style) {
 	if(style) {
 		if(space == SP_AUTO || space == SP_SPACE) {
 			sendspace();
+			space = SP_DONESPACE;
+		} else if(space == SP_NBSP) {
+			sendnbsp();
 			space = SP_DONESPACE;
 		}
 		boxstack[boxsp].style |= style;
@@ -287,6 +308,8 @@ void o_print_word_n(const char *utf8, int n) {
 			sendspace();
 		} else if(space == SP_AUTO && !strchr(NO_SPACE_BEFORE " ", *utf8)) {
 			sendspace();
+		} else if(space == SP_NBSP) {
+			sendnbsp();
 		}
 		sendstr_n(utf8, n);
 		space = strchr(NO_SPACE_AFTER " ", utf8[n - 1])? SP_INHIBIT : SP_AUTO;
@@ -302,6 +325,8 @@ void o_print_opaque_word(const char *utf8) {
 
 	if(space == SP_SPACE || space == SP_AUTO) {
 		sendspace();
+	} else if(space == SP_NBSP) {
+		sendnbsp();
 	}
 	sendstr_n(utf8, strlen(utf8));
 	space = SP_AUTO;

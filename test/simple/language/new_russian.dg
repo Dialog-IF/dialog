@@ -1,0 +1,135 @@
+(program entry point)
+	*(repeat forever)
+	(get input $Words)
+	(if) (empty $Words) (then) (stop) (endif)
+	(collect $Obj)
+		(determine object $Obj)
+			*(object $Obj)
+		(from words)
+			(name $Obj)
+		(matching all of $Words)
+	(into $Options)
+	(if) (empty $Options) (then)
+		No matches
+	(else)
+		Matches: (print list $Options)
+	(endif)
+	(par) (fail)
+
+(print list [$Last])
+	$Last
+(print list [$Head|$Tail])
+	$Head , (print list $Tail)
+
+%% As in new_greek we define a bunch of Russian words; this time we also use Russian for the object names to test how those are encoded
+
+#вы
+(name *) вы
+
+#плащ
+(name *) плащ
+
+#крючок
+(name *) крючок
+
+#крюк
+(name *) крюк
+
+#вельветовый-плащ
+(name *) вельветовый плащ
+
+#медный-крючок
+(name *) медный крючок
+
+#гардероб
+(name *) гардероб
+
+#фойе
+(name *) фойе
+
+#записка
+(name *) записка
+
+#запись
+(name *) запись
+
+#это
+(name *) это
+
+#выйти
+(name *) выйти
+
+#сохранить
+(name *) сохранить
+
+#взять
+(name *) взять
+
+#надеть
+(name *) надеть
+
+#найти
+(name *) найти
+
+#снять
+(name *) снять
+
+#сняться
+(name *) сняться
+
+#поднять
+(name *) поднять
+
+#повесить
+(name *) повесить
+
+#выходы
+(name *) выходы
+
+#выход
+(name *) выход
+
+#осмотреть
+(name *) осмотреть
+
+#смотреть
+(name *) смотреть
+
+#загрузить
+(name *) загрузить
+
+#помощь
+(name *) помощь
+
+#съесть
+(name *) съесть
+
+#обнять
+(name *) обнять
+
+#открыть
+(name *) открыть
+
+#открутить
+(name *) открутить
+
+#откусить
+(name *) откусить
+
+#под
+(name *) под
+
+#над
+(name *) над
+
+#в
+(name *) в
+
+#на
+(name *) на
+
+#внутрь
+(name *) внутрь
+
+#внутри
+(name *) внутри

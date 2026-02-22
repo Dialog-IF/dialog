@@ -18,6 +18,7 @@ void o_begin_box(char *boxclass) 		{ bail_out(); }
 void o_end_box()				{ bail_out(); }
 void o_space()					{ bail_out(); }
 void o_space_n(int n)				{ bail_out(); }
+void o_nbsp()					{ bail_out(); }
 void o_nospace()				{ bail_out(); }
 void o_sync()					{ bail_out(); }
 void o_set_style(int style)			{ bail_out(); }
