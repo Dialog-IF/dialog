@@ -71,6 +71,7 @@ struct lexer {
 	uint32_t		totalwords;
 	int			errorflag;
 	int			lib_file;
+	uint8_t		unicode_escape[5]; // Used to implement \x1234 and \X123456
 };
 
 int parse_file(struct lexer *lexer, int filenum, struct clause ***clause_dest_ptr);

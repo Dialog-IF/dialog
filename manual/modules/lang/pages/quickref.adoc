@@ -12,6 +12,10 @@ xref:execution.adoc#printing[Special characters]: ::
 `\`, parentheses, brackets, and braces. Prefix by `\` to
 print.
 
+xref:sugar.adoc#unicode[Unicode escapes]: ::
+
+`\x{3C4}` is exactly equivalent to character U+03C4.
+
 xref:execution.adoc#predicates[Rule definitions]: ::
 
 * The rule head is in the leftmost column.

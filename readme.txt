@@ -46,8 +46,11 @@ Release notes:
 		
 		Language: added (clear status bar).
 		
+		Language: new escape syntax \x{3C4} is equivalent to the Unicode
+		character U+03C4.
+		
 		Distribution: added unit.dg, a library for unit testing.
-
+		
 		Documentation: the library reference now includes special syntax
 		like (elseif), (now), and (global variable $).
 		

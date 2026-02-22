@@ -262,3 +262,34 @@ int unicode_to_utf8(uint8_t *dest, int ndest, const uint16_t *src) {
 
 	return unicode_to_utf8_n(dest, ndest, src, n);
 }
+
+// Converts *any* Unicode character (not just BMP) to UTF-8, but only a single character
+int full_unicode_to_utf8_single(uint8_t *dest, const uint32_t ch) {
+	if(ch < 0x80) {
+		*dest++ = ch;
+		*dest = 0;
+		return 1;
+	} else if(ch < 0x800) {
+		*dest++ = 0xc0 |  (ch >>  6); // 11000000
+		*dest++ = 0x80 | ((ch >>  0) & 0x3f);
+		*dest = 0;
+		return 2;
+	} else if(ch < 0x10000) {
+		*dest++ = 0xe0 |  (ch >> 12); // 11100000
+		*dest++ = 0x80 | ((ch >>  6) & 0x3f);
+		*dest++ = 0x80 | ((ch >>  0) & 0x3f);
+		*dest = 0;
+		return 3;
+	} else if(ch < 0x110000) {
+		*dest++ = 0xf0 |  (ch >> 18); // 11110000
+		*dest++ = 0x80 | ((ch >> 12) & 0x3f);
+		*dest++ = 0x80 | ((ch >>  6) & 0x3f);
+		*dest++ = 0x80 | ((ch >>  0) & 0x3f);
+		*dest = 0;
+		return 4;
+	} else {
+		report(LVL_WARN, 0, "Unicode value U+%X is out of range (max 10FFFF)", ch);
+		*dest = 0;
+		return 0;
+	}
+}

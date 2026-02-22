@@ -41,25 +41,115 @@ static int valid_varname_char(uint8_t ch) {
 		|| ch == '-';
 }
 
+// With such a small array, it's easier just to unroll the loop
+static void rotate_unicode_escape(struct lexer *lexer) {
+	lexer->unicode_escape[0] = lexer->unicode_escape[1];
+	lexer->unicode_escape[1] = lexer->unicode_escape[2];
+	lexer->unicode_escape[2] = lexer->unicode_escape[3];
+	lexer->unicode_escape[3] = lexer->unicode_escape[4];
+}
+
+static void lexer_ungetc(char ch, struct lexer *lexer);
+
 static int lexer_getc(struct lexer *lexer) {
+	int ch;
+	uint32_t unichar;
+	
+	if((ch = lexer->unicode_escape[0])) {
+		rotate_unicode_escape(lexer);
+		return ch;
+	}
 	if(lexer->ungetbackslash) {
 		lexer->ungetbackslash = 0;
 		return '\\';
 	}
 	if(lexer->ungetcbuf) {
-		int ch = lexer->ungetcbuf;
+		ch = lexer->ungetcbuf;
 		lexer->ungetcbuf = 0;
 		return ch;
 	}
 	if(lexer->string) {
 		if(*lexer->string) {
+			// Here also we must check for the new Unicode escapes
+			// The duplication of code is not ideal, but that's how the lexer is written :(
+			if(lexer->string[0] == '\\' && lexer->string[1] == 'x') {
+				unichar = 0;
+				if(lexer->string[2] != '{') {
+					report(LVL_ERR, line, "Unicode escape syntax is \\x{...}; the braces are required");
+					exit(1);
+				}
+				lexer->string += 3;
+				for(;;) {
+					ch = *lexer->string++;
+					if(ch == '}') break;
+					unichar <<= 4;
+					if(ch >= '0' && ch <= '9') {
+						unichar |= (ch - '0');
+					} else if(ch >= 'a' && ch <= 'f') {
+						unichar |= 10 + (ch - 'a');
+					} else if(ch >= 'A' && ch <= 'F') {
+						unichar |= 10 + (ch - 'A');
+					} else {
+						report(LVL_ERR, line, "Invalid character '%c' in Unicode escape sequence", ch);
+						exit(1);
+					}
+					if(unichar > 0x10FFFF) { // Avoid overlong escapes
+						report(LVL_ERR, line, "Invalid Unicode escape sequence: maximum Unicode character is \\x{10FFFF}");
+						exit(1);
+					}
+				}
+				full_unicode_to_utf8_single(lexer->unicode_escape, unichar);
+				ch = lexer->unicode_escape[0]; // Serve the first byte of it as normal
+				rotate_unicode_escape(lexer);
+				return ch;
+			}
 			return *lexer->string++;
 		} else {
 			lexer->string = 0;
 		}
 	}
 	if(lexer->file) {
-		int ch = fgetc(lexer->file);
+		ch = fgetc(lexer->file);
+		// This is where we check for the new Unicode escapes
+		if(ch == '\\') {
+			ch = fgetc(lexer->file);
+			if(ch == 'x') {
+				unichar = 0;
+				if(fgetc(lexer->file) != '{') {
+					report(LVL_ERR, line, "Unicode escape syntax is \\x{...}; the braces are required");
+					exit(1);
+				}
+				for(;;) {
+					ch = fgetc(lexer->file);
+					if(ch == '}') break;
+					unichar <<= 4;
+					if(ch >= '0' && ch <= '9') {
+						unichar |= (ch - '0');
+					} else if(ch >= 'a' && ch <= 'f') {
+						unichar |= 10 + (ch - 'a');
+					} else if(ch >= 'A' && ch <= 'F') {
+						unichar |= 10 + (ch - 'A');
+					} else if(ch == EOF) {
+						report(LVL_ERR, line, "File ended in the middle of a Unicode escape sequence");
+						exit(1);
+					} else {
+						report(LVL_ERR, line, "Invalid character '%c' in Unicode escape sequence", ch);
+						exit(1);
+					}
+					if(unichar > 0x10FFFF) { // Avoid overlong escapes
+						report(LVL_ERR, line, "Invalid Unicode escape sequence: maximum Unicode character is \\x{10FFFF}");
+						exit(1);
+					}
+				}
+				full_unicode_to_utf8_single(lexer->unicode_escape, unichar);
+				ch = lexer->unicode_escape[0]; // Serve the first byte of it as normal
+				rotate_unicode_escape(lexer);
+			} else {
+				lexer_ungetc(ch, lexer); // Unget the character after the backslash
+				ch = '\\';
+			}
+		}
+		// If we got here, it was *not* a Unicode escape, process it normally
 		if(ch == 9
 		|| ch == 10
 		|| ch == 12 // Form feed: requested by users to break pages in emacs
@@ -76,6 +166,13 @@ static int lexer_getc(struct lexer *lexer) {
 }
 
 static void lexer_ungetc(char ch, struct lexer *lexer) {
+	if(ch == '\\') {
+		lexer->ungetbackslash = 1;
+		return;
+	}
+	if(lexer->ungetcbuf) {
+		report(LVL_WARN, line, "Lexer stashed char '%c' being replaced by '%c'", lexer->ungetcbuf, ch);
+	}
 	lexer->ungetcbuf = ch;
 }
 
