@@ -1379,7 +1379,7 @@ static void generate_output_from_utf8(struct program *prg, struct routine *r, in
 				/* String ended with a unicode character */
 				zi = append_instr(r, Z_STORE);
 				zi->oper[0] = SMALL(REG_SPACE);
-				zi->oper[1] = SMALL(!post_space);
+				zi->oper[1] = SMALL(post_space ? SPC_AUTO : SPC_NOSPACE);
 			}
 		} else if(utf8[pos + n]) {
 			/* String too long (for runtime uppercase buffer) */
@@ -1407,7 +1407,7 @@ static void generate_output_from_utf8(struct program *prg, struct routine *r, in
 				assert(!pre_space);
 				zi = append_instr(r, Z_STORE);
 				zi->oper[0] = SMALL(REG_SPACE);
-				zi->oper[1] = SMALL(!post_space);
+				zi->oper[1] = SMALL(post_space ? SPC_AUTO : SPC_NOSPACE);
 			}
 		}
 	}
@@ -1535,7 +1535,7 @@ void compile_trace_output(struct predname *predname, uint16_t label) {
 			if(i) {
 				zi = append_instr(r, Z_STORE);
 				zi->oper[0] = SMALL(REG_SPACE);
-				zi->oper[1] = SMALL(0);
+				zi->oper[1] = SMALL(SPC_AUTO);
 			}
 			zi = append_instr(r, Z_CALL2N);
 			zi->oper[0] = ROUTINE(R_TRACE_VALUE);
@@ -2149,6 +2149,10 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				case BI_MEMSTATS:
 					zi = append_instr(r, Z_CALL1N);
 					zi->oper[0] = ROUTINE(R_MEMSTATS);
+					break;
+				case BI_NBSP:
+					zi = append_instr(r, Z_CALL1N);
+					zi->oper[0] = ROUTINE(R_NBSP);
 					break;
 				case BI_NOSPACE:
 					zi = append_instr(r, Z_CALL1N);
@@ -3706,7 +3710,7 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				zi->store = REG_TEMP;
 				zi = append_instr(r, Z_STORE);
 				zi->oper[0] = SMALL(REG_SPACE);
-				zi->oper[1] = SMALL(4);
+				zi->oper[1] = SMALL(SPC_LINE);
 				break;
 			case I_RESTORE_CHOICE:
 				if(ci->oper[0].tag == OPER_VAR) {

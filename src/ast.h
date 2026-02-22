@@ -116,6 +116,7 @@ enum {
 	BI_TRACE_OFF,
 
 	BI_NOSPACE, // Output control
+	BI_NBSP, // New in 1b/01
 	BI_SPACE,
 	BI_SPACE_N,
 	BI_LINE,

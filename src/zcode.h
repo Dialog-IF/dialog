@@ -74,9 +74,18 @@ struct zinstr {
 // REG_SPACE:
 //	0	pending space/nospace, to be decided when printing the next char
 //	1	space has been inhibited
-//	2	a normal space is pending
-//	3	a normal space has been printed
-//	4 + n	a line feed has been printed, followed by n extra blank lines
+// 	2	a non-breaking space is pending
+//	3	a normal space is pending
+//	4	a space (of any sort) has been printed
+//	5 + n	a line feed has been printed, followed by n extra blank lines
+#define SPC_AUTO		0
+#define SPC_NOSPACE		1
+#define SPC_NBSP		2
+#define SPC_PENDING		3
+#define SPC_PRINTED		4
+#define SPC_LINE		5
+#define SPC_PAR			(SPC_LINE+1) // Two newlines
+// The Å-machine uses different values for its REG_SPACE equivalent, but they're all managed by the interpreter, so we don't need to worry about them
 
 #define REG_STACK		0x00 // Register 0 means push to or pop from the stack
 #define REG_LOCAL		0x01 // The first 15 registers are local to the current routine
@@ -122,7 +131,7 @@ struct zinstr {
 #define REG_E000		0x32
 #define REG_FFFF		0x33
 #define REG_AUXBASE		0x34
-#define REG_NIL			0x35	/* 1fff */
+#define REG_NIL			0x35	/* 1fff = [] */
 #define REG_R_SPA		0x36	/* R_SPACE_PRINT_AUTO */
 #define REG_R_USIMPLE		0x37	/* R_UNIFY_SIMPLE */
 
@@ -136,6 +145,7 @@ struct zinstr {
 
 // Z-machine has 256 registers, so as long as REG_A is 0xf2 or less, we'll be fine
 // Any unused registers above that are used for temporaries as needed, then above that, user globals, and Dialog will adapt to however many we leave it
+// TODO: what happens if there are no registers left for user globals? I don't think this limit has ever been hit, but...
 
 #define REG_PUSH		0x100 // TODO: Why is this needed? Register 0 already means pushing to the stack
 #define DEST_USERGLOBAL(x)	(0x200 | (x))
@@ -236,7 +246,7 @@ struct zinstr {
 // 0x09: PULL
 #define Z_SPLIT_WINDOW	(ZVAR | 0x0a)
 #define Z_SET_WINDOW	(ZVAR | 0x0b)
-// 0x0c: CALL_VS2
+// 0x0c: CALL_VS2 (the version that takes up to 7 args instead of up to 3)
 #define Z_ERASE_WINDOW	(ZVAR | 0x0d)
 #define Z_ERASE_LINE	(ZVAR | 0x0e)
 #define Z_SET_CURSOR	(ZVAR | 0x0f)
@@ -271,7 +281,7 @@ struct zinstr {
 // 0x0e-0x0f: [undefined]
 // 0x10-0x1d are only defined in version 6, for windowing
 // 0x1e-0x1f: [undefined]
-// 0x20-0xff: [free for interpreter use]
+// 0x20-0xff: [will never be defined; meant for individual interpreters' use]
 
 // Negated versions of all the branch opcodes - setting the highest bit of the branch offset negates the condition
 #define Z_VERIFY_N	(OP_NOT | Z_VERIFY)
@@ -373,6 +383,7 @@ enum { // Runtime routines
 	R_PRINT_UPPER,
 	R_STOPCHAR,
 	R_NOSPACE,
+	R_NBSP,
 	R_SPACE,
 	R_SPACE_N,
 	R_LINE,
