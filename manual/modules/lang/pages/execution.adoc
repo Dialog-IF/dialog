@@ -160,7 +160,7 @@ When you call one of the spacing predicates, `(no space)`, `(nbsp)`, `(space)`, 
 
 The same goes for xref:io.adoc#div[div margins], which will be introduced in a later chapter. A `(par)` before a div with a one-line margin will still produce only a single blank line.
 
-(The rarely-needed `(nbsp)` creates a “non-breaking space”, which looks identical to a space, but will not allow a line break at that location. It’s mainly used between numbers and units, like “100 km” or “section 5”, and before certain punctuation marks in French. If an interpreter cannot provide this, it will produce a normal space.)
+(The rarely-needed `(nbsp)` creates a “non-breaking space”, which looks identical to a space, but will not allow a line break at that location. It’s mainly used between numbers and units, like “100 km” or “section 5”, and and in various non-English languages, such as before certain punctuation marks in French. If an interpreter cannot provide this, it will produce a normal space.)
 
 [#parameters]
 == Parameters, objects, and wildcards
