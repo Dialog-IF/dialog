@@ -5,7 +5,9 @@ DIFF = diff --ignore-trailing-space
 # Base of the repository
 BASEPATH = ../../..
 
-# List of all .dg files with .dg changed to .test
+DEBUG = $(BASEPATH)/src/dgdebug -q --no-warn-not-topic
+
+# List of all .nolib.dg and .lib.dg files with .dg changed to .test
 tests := $(patsubst %.dg,%.test,$(wildcard *.dg))
 rawgold := $(patsubst %.dg,%.gold,$(wildcard *.dg))
 rawinput := $(patsubst %.dg,%.in,$(wildcard *.dg))
@@ -98,3 +100,9 @@ new_russian.z5: $(BASEPATH)/src/dialogc new_russian.dg
 
 clean:
 	rm -rf *.out *.z.gold *.aa.gold *.d.gold *.z.in *.aa.in *.d.in *.z5 *.aastory
+
+test-quit-0.test:
+	($(DEBUG) test-quit-0.dg || exit 1)
+
+test-quit-1.test:
+	($(DEBUG) test-quit-1.dg && exit 1)

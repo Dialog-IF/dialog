@@ -189,6 +189,8 @@ enum {
 	BI_BREAK_GETKEY,
 	BI_BREAK_FAIL,
 
+	BI_QUIT_N,        // more VM control, put here to not change the values of other builtins
+
 	NBUILTIN
 };
 

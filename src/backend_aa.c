@@ -2284,6 +2284,7 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				ai->oper[0] = (aaoper_t) {AAO_CODE, labelbase + ci->oper[0].value};
 				break;
 			case I_QUIT:
+			case I_QUIT_N:
 				ai = add_instr(AA_EXT0);
 				ai->oper[0] = (aaoper_t) {AAO_BYTE, AAEXT0_QUIT};
 				break;

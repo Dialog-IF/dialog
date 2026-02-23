@@ -135,6 +135,8 @@ enum {
 	I_BREAKPOINT,		// -E
 	I_TRACEPOINT,		// -- file number, line number, predicate id, subop = kind
 
+	I_QUIT_N,			// return value for debugger
+
 	N_OPCODES
 };
 

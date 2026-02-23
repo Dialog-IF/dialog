@@ -17,6 +17,7 @@
 static volatile int interrupted = 0;
 
 int use_numbered_levels = 0;
+int return_value = 0; // XXX: move this out of a global
 
 void eval_interrupt() {
 	interrupted = 1;
@@ -1321,6 +1322,9 @@ static int eval_builtin(struct eval_state *es, int builtin, value_t o1, value_t 
 			o_set_upper();
 		}
 		break;
+	case BI_QUIT_N:
+		o1 = eval_deref(o1, es);
+		return_value = o1.value;
 	default:
 		printf("unimplemented builtin %d\n", builtin); exit(1);
 	}
@@ -2517,6 +2521,10 @@ static int eval_run(struct eval_state *es) {
 			}
 			es->stopchoice = es->choice;
 			break;
+		case I_QUIT_N:
+			return_value = ci->oper[0].value;
+			pred_release(pp.pred);
+			return ESTATUS_QUIT;
 		case I_QUIT:
 			pred_release(pp.pred);
 			return ESTATUS_QUIT;

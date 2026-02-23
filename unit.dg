@@ -56,7 +56,7 @@
 (error $Code entry point)
 	(bold) FAILED TEST -- FATAL ERROR $Code. (roman) (par)
 	(now) ~(all tests pass)
-	(quit 1)                 %% or -1 if we ever get signed integers
+	(quit 1)
 
 (run-test $Test)
 	(if)
@@ -76,8 +76,6 @@
 	*(split $List by [$Head] into $ and $Rest)
 	(append $Tail $ $Rest)
 
-%% Delete this interface and predicate if lft adds a builtin for it in
-%% dgdebug, to specify the exit status from the debugger for CI/CD pipelines
-%% and/or shell scripts.
-(interface (quit $<ExitStatus))
-(quit $)   (quit)
+%% uncomment the following if using 1a/01 or earlier, including 0m/03
+%%(interface (quit $<ExitStatus))
+%%(quit $)   (quit)
