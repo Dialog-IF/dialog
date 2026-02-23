@@ -1,0 +1,6 @@
+#player
+(current player *)
+(* is #in #room)
+
+#room
+(room *)

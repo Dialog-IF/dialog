@@ -41,6 +41,9 @@ stdlib.dglib: $(BASEPATH)/stdlib.dg
 
 origin: $(origin)
 
+serial.out: $(BASEPATH)/src/dialogc serial.dg stdlib.dglib
+	$(BASEPATH)/src/dialogc serial.dg stdlib.dglib -t z5 -o serial.z5 --override-serial 0123456789 >serial.out 2>&1 || :
+
 # We currently only test on Z5 because any warnings produced by the compilation process should be the same across platforms, but the Z-machine has more limits than the Å-machine (e.g. Unicode coverage)
 %.out: $(BASEPATH)/src/dialogc %.dg stdlib.dglib
 	$(BASEPATH)/src/dialogc $*.dg stdlib.dglib -t z5 -o $*.z5 >$*.out 2>&1 || :
