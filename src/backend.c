@@ -254,6 +254,7 @@ int main(int argc, char **argv) {
 		} else {
 			prepare_wordseps_z(wordseps);
 		}
+		free(wordseps);
 	} else {
 		STOPCHARS = DEFAULT_STOPCHARS;
 	}

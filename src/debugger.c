@@ -1424,6 +1424,7 @@ int debugger(int argc, char **argv) {
 	
 	if(wordseps) {
 		prepare_wordseps(wordseps);
+		free(wordseps);
 	} else {
 		STOPCHARS = " " DEFAULT_STOPCHARS;
 	}
