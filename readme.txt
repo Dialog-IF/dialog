@@ -59,6 +59,10 @@ Release notes:
 		
 		Compiler: access predicates consisting of a single multi-query
 		no longer crash the compiler when negated.
+		
+		Compiler: a new --override-serial option makes builds reproducible
+		by overriding the release date and serial number fields. This is
+		not recommended, but occasionally necessary.
     
     Backend: improved text compression on Z-machine (at least for
 		programs written in English), reducing text size by about 18%.
