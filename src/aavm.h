@@ -1,4 +1,4 @@
-#define AAVM_FORMAT_MAJOR 1
+#define AAVM_FORMAT_MAJOR 1 // Community fork: jumped from 0.5 to 1.0
 #define AAVM_FORMAT_MINOR 0
 
 #define AA_NOP			0x00
@@ -28,7 +28,6 @@
 #define AA_AUX_PUSH_VAL		0x14	// VALUE
 #define AA_AUX_PUSH_RAW_0	0x94	// 0
 #define AA_AUX_PUSH_RAW		0x15	// WORD/VBYTE
-#define AA_AUX_POP_VAL		0x16	// DEST
 #define AA_AUX_POP_LIST		0x17	// DEST
 #define AA_AUX_POP_LIST_CHK	0x18	// VALUE
 #define AA_AUX_POP_LIST_MATCH	0x19	// VALUE
@@ -104,7 +103,6 @@
 #define AA_PRINT_VAL		0x65	// VALUE
 #define AA_ENTER_DIV		0x66	// INDEX
 #define AA_LEAVE_DIV		0xe6
-#define AA_ENTER_STATUS_0	0x67	// INDEX
 #define AA_LEAVE_STATUS		0xe7
 #define AA_ENTER_LINK_RES	0x68	// VALUE
 #define AA_LEAVE_LINK_RES	0xe8
@@ -158,8 +156,9 @@
 #define AAEXT0_CLEAR_LINKS	0x0f
 #define AAEXT0_CLEAR_OLD	0x10
 #define AAEXT0_CLEAR_DIV	0x11
-#define AAEXT0_CLEAR_STATUS	0x12
-#define AAEXT0_N		0x13
+#define AAEXT0_CLEAR_STATUS	0x12 // Added in 1b/01, Å-machine 1.0
+#define AAEXT0_NBSP		0x13	// Added in 1b/01, Å-machine 1.0
+#define AAEXT0_N		0x14
 
 #define OVAR_PARENT		0
 #define OVAR_CHILD		1

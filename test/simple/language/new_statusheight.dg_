@@ -1,3 +1,5 @@
+%% Test currently disabled because dfrotz doesn't support status bar height, and Z-machine is the only platform that cares
+
 %% This isn't very useful for automated testing, because dfrotz doesn't obey the status bar height directives
 %% But 
 
