@@ -66,6 +66,7 @@ void usage(char *prgname) {
 	fprintf(stderr, "--strip           -s    Strip internal object names.\n");
 	fprintf(stderr, "--warn-not-topic        Always warn about objects not used as topics.\n");
 	fprintf(stderr, "--no-warn-not-topic     Never warn about objects not used as topics.\n");
+	fprintf(stderr, "--override-serial       Override serial number for reproducible builds.\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Only for z5, z8, or zblorb format:\n");
 	fprintf(stderr, "\n");
@@ -82,8 +83,10 @@ void usage(char *prgname) {
 extern int topic_warning_level; // Defined in frontend.c
 extern int zmachine_optimize_alphabet; // Defined in backend_z.c
 extern int zmachine_preserve_zscii; // Defined in backend_z.c
+static int serial_overridden;
 
 int main(int argc, char **argv) {
+	
 	struct option longopts[] = {
 		{"help", 0, 0, 'h'},
 		{"version", 0, 0, 'V'},
@@ -102,6 +105,7 @@ int main(int argc, char **argv) {
 		{"warn-not-topic", 0, &topic_warning_level, 1},
 		{"no-warn-not-topic", 0, &topic_warning_level, 2},
 		{"optimize-alphabet", 0, &zmachine_optimize_alphabet, 1},
+		{"override-serial", 1, &serial_overridden, 2},
 		{0, 0, 0, 0}
 	};
 
@@ -111,6 +115,7 @@ int main(int argc, char **argv) {
 	char *coverfname = 0;
 	char *coveralt = 0;
 	char *resdir = 0;
+	char *override_serial_with = 0;
 	int auxsize = 500, heapsize = 1000, ltssize = 500;
 	int strip = 0;
 	int opt, i;
@@ -128,6 +133,10 @@ int main(int argc, char **argv) {
 		opt = getopt_long(argc, argv, "?hVvo:t:r:c:a:H:A:L:s", longopts, 0);
 		switch(opt) {
 			case 0:
+				if(serial_overridden == 2) { // Long-only option with arg
+					override_serial_with = strdup(optarg);
+					serial_overridden = 1;
+				}
 				break; // Added DMS so long-only options are possible
 			case '?':
 			case 'h':
@@ -292,9 +301,26 @@ int main(int argc, char **argv) {
 	} else if(need_meta) {
 		report(LVL_WARN, 0, "No release number declared.");
 	}
-
-	get_timestamp(compiletime_buf, reldate_buf);
-
+	
+	if(serial_overridden) {
+		if(strlen(override_serial_with) != 10) {
+			report(LVL_ERR, 0, "Argument of --override-serial must be exactly 10 characters in the format YYYY-MM-DD");
+			exit(1);
+		}
+		strcpy(reldate_buf, override_serial_with);
+		compiletime_buf[0] = reldate_buf[2]; // yyYy-mm-dd
+		compiletime_buf[1] = reldate_buf[3]; // yyyY-mm-dd
+		compiletime_buf[2] = reldate_buf[5]; // yyyy-Mm-dd
+		compiletime_buf[3] = reldate_buf[6]; // yyyy-mM-dd
+		compiletime_buf[4] = reldate_buf[8]; // yyyy-mm-Dd
+		compiletime_buf[5] = reldate_buf[9]; // yyyy-mm-dD
+		compiletime_buf[6] = 0;
+		report(LVL_WARN, 0, "Release date has been set to \"%s\" and serial number has been set to \"%s\". This is not recommended, and should only be used when necessary for reproducible builds.", reldate_buf, compiletime_buf);
+		free(override_serial_with);
+	} else {
+		get_timestamp(compiletime_buf, reldate_buf);
+	}
+	
 	prg->meta_serial = arena_strdup(&prg->arena, compiletime_buf);
 	prg->meta_reldate = arena_strdup(&prg->arena, reldate_buf);
 
