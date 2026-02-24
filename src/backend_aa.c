@@ -117,6 +117,20 @@ static int *altstring;
 static struct segment *segment;
 static int nsegment, nalloc_segment;
 
+static uint8_t resolve_aachar(uint32_t);
+void prepare_wordseps_aa(const uint8_t *wordseps) {
+	int i, len = strlen((char*)wordseps); // Overestimate
+	uint16_t unichars[len+1]; // Terminator
+	utf8_to_unicode(unichars, len+1, wordseps);
+	len = 0;
+	while(unichars[len]) len++; // utf8_to_unicode leaves a null terminator
+	STOPCHARS = malloc((len+1) * sizeof(uint8_t));
+	for(i = 0; i < len; i++) {
+		STOPCHARS[i] = resolve_aachar(unichars[i]);
+	}
+	STOPCHARS[i] = 0;
+}
+
 static int cmp_aadict(const void *a, const void *b) {
 	const struct dictentry *aa = a;
 	const struct dictentry *bb = b;

@@ -1,0 +1,20 @@
+%% Compile this version with -W "="
+(try joining $List)
+	(join words $List into $Joined)
+	Joined $List into $Joined
+(try joining $List)
+	Unable to join $List
+
+(length of [] into 0)
+(length of [$|$Tail] into $Length)
+	(length of $Tail into $Lm1)
+	($Lm1 plus 1 into $Length)
+
+(program entry point)
+	(try joining [a . b . c]) (line)
+	(try joining [a = b = c]) (line)
+	> (get input $Words)
+	(length of $Words into $Length)
+	Got $Length words: $Words
+%% Silences compiler warnings when running without the library
+(library version)

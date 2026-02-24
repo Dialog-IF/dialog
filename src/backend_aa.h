@@ -1,5 +1,6 @@
 
 void prepare_dictionary_aa(struct program *prg);
+void prepare_wordseps_aa(const uint8_t *wordseps);
 
 void backend_aa(
 	char *filename,
