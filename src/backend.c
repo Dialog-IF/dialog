@@ -13,6 +13,7 @@
 #include "frontend.h"
 #include "compile.h"
 #include "report.h"
+#include "ifid.h"
 
 static struct arena backend_arena;
 
@@ -41,6 +42,18 @@ static void get_timestamp(char *dest, char *longdest) {
 	tm = localtime(&t);
 	snprintf(dest, 8, "%02d%02d%02d", tm->tm_year % 100, tm->tm_mon + 1, tm->tm_mday);
 	snprintf(longdest, 11, "%04d-%02d-%02d", 1900 + tm->tm_year, tm->tm_mon + 1, tm->tm_mday);
+}
+
+void suggest_new_ifid(int level) {
+	char suggestion[37];
+	int unavailable = generate_ifid(suggestion);
+	if(unavailable) {
+		report(level, 0, "You can get one at <https://www.tads.org/ifidgen/ifidgen>.");
+	} else {
+		report(level, 0, "For example, you could use:");
+		report(level, 0, "(story ifid) %s", suggestion);
+		report(level, 0, "Or get one at <https://www.tads.org/ifidgen/ifidgen>.");
+	}
 }
 
 void usage(char *prgname) {
@@ -107,7 +120,7 @@ int main(int argc, char **argv) {
 
 	char *prgname = argv[0];
 	char *outname = 0;
-	char *format = "zblorb";
+	char *format = "z8";
 	char *coverfname = 0;
 	char *coveralt = 0;
 	char *resdir = 0;
@@ -254,8 +267,13 @@ int main(int argc, char **argv) {
 
 	prg->meta_ifid = decode_metadata_str(BI_STORY_IFID, 0, prg, &prg->arena);
 	if(!prg->meta_ifid) {
-		if(need_meta) {
+		if(!strcmp(format, "zblorb")) { // Mandatory for zblorb, make it an error
+			report(LVL_ERR, 0, "An IFID is mandatory for the blorb output format.");
+			suggest_new_ifid(LVL_ERR);
+			exit(1);
+		} else if(need_meta) {
 			report(LVL_WARN, 0, "No IFID declared.");
+			suggest_new_ifid(LVL_WARN);
 		}
 	} else if(!match_template(prg->meta_ifid, ifid_template)) {
 		report(LVL_WARN, find_builtin(prg, BI_STORY_IFID)->pred->clauses[0]->line, "Ignoring invalid IFID. It should have the format %s, where N is an uppercase hexadecimal digit.", ifid_template);
