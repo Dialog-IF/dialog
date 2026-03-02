@@ -356,11 +356,17 @@ Predicates are also provided to determine the height and width of an existing di
 ----
 
 These unify their parameter with the appropriate dimension, in ch or em units.
+In other words, this tells you how many characters you can safely print without
+hitting the edge of the current div. (How many "0" characters, specifically,
+in the case of a non-monospace font.)
 However, note that not all interpreters can provide this information—on a screen
 reader or messaging platform, for example, there might not be any screen to
 measure! If this happens, the predicate will simply fail.
 
-On the Z-machine backend, these predicates are most useful within the top status area, which always has fixed dimensions and a monospace font. If used anywhere else, they will attempt to provide the width and height of the entire screen.
+On the Z-machine backend and the Commodore 64 Å-machine interpreter, these
+predicates are most useful within the top status area, which always has fixed
+dimensions and a monospace font. If used anywhere else, they will attempt to 
+provide the width and height of the entire screen.
 
 [#input]
 == Input
