@@ -41,6 +41,11 @@ stdlib.dglib: $(BASEPATH)/stdlib.dg
 
 origin: $(origin)
 
+# This one is non-deterministic so we need to sed the results afterward
+ifid.out: $(BASEPATH)/src/dialogc ifid.dg stdlib.dglib
+	$(BASEPATH)/src/dialogc $*.dg stdlib.dglib -t z5 -o ifid.z5 >ifid.out 2>&1 || :
+	perl -i -pe 's/[0-9A-F][0-9A-F]/XX/g' ifid.out
+
 # We currently only test on Z5 because any warnings produced by the compilation process should be the same across platforms, but the Z-machine has more limits than the Å-machine (e.g. Unicode coverage)
 %.out: $(BASEPATH)/src/dialogc %.dg stdlib.dglib
 	$(BASEPATH)/src/dialogc $*.dg stdlib.dglib -t z5 -o $*.z5 >$*.out 2>&1 || :

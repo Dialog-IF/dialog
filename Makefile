@@ -10,11 +10,11 @@ src/dialogc:
 src/dgdebug:
 	$(MAKE) -C src dgdebug
 
-test/regtest/%.zblorb: src/dialogc test/regtest/%.dg stdlib.dg
+test/regtest/%.z8: src/dialogc test/regtest/%.dg stdlib.dg
 	$+
 
-test: test/regtest/cloak.zblorb src/dgdebug
-	bin/regtest.py -v --game test/regtest/cloak.zblorb --interpreter dfrotz test/regtest/cloak.regtest
+test: test/regtest/cloak.z8 src/dgdebug
+	bin/regtest.py -v --game test/regtest/cloak.z8 --interpreter dfrotz test/regtest/cloak.regtest
 	$(MAKE) --directory=./test/gosling test clean
 	$(MAKE) --directory=./test/impossible test clean
 	$(MAKE) --directory=./test/simple all
