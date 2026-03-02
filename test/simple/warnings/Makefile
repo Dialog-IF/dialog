@@ -41,6 +41,9 @@ stdlib.dglib: $(BASEPATH)/stdlib.dg
 
 origin: $(origin)
 
+serial.out: $(BASEPATH)/src/dialogc serial.dg stdlib.dglib
+	$(BASEPATH)/src/dialogc serial.dg stdlib.dglib -t z5 -o serial.z5 --override-serial 0123456789 >serial.out 2>&1 || :
+
 # This one is non-deterministic so we need to sed the results afterward
 ifid.out: $(BASEPATH)/src/dialogc ifid.dg stdlib.dglib
 	$(BASEPATH)/src/dialogc $*.dg stdlib.dglib -t z5 -o ifid.z5 >ifid.out 2>&1 || :

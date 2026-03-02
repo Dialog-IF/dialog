@@ -63,6 +63,10 @@ Release notes:
 		Compiler: access predicates consisting of a single multi-query
 		no longer crash the compiler when negated.
 		
+		Compiler: a new --override-serial option makes builds reproducible
+		by overriding the release date and serial number fields. This is
+		not recommended, but occasionally necessary.
+    
 		Compiler: --word-seps option can change which characters are
 		considered word separators (by default . , ; ( ) " * )
 		
