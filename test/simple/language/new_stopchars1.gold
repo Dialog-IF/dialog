@@ -1,0 +1,5 @@
+Unable to join [a . b . c]
+Joined [a = b = c] into a=b=c
+> w x.y=z
+[DA] Got 4 words: [w x . y=z]
+[Z] Got 4 words: [w x . y=z+]

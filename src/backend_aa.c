@@ -117,6 +117,20 @@ static int *altstring;
 static struct segment *segment;
 static int nsegment, nalloc_segment;
 
+static uint8_t resolve_aachar(uint32_t);
+void prepare_wordseps_aa(const uint8_t *wordseps) {
+	int i, len = strlen((char*)wordseps); // Overestimate
+	uint16_t unichars[len+1]; // Terminator
+	utf8_to_unicode(unichars, len+1, wordseps);
+	len = 0;
+	while(unichars[len]) len++; // utf8_to_unicode leaves a null terminator
+	STOPCHARS = malloc((len+1) * sizeof(uint8_t));
+	for(i = 0; i < len; i++) {
+		STOPCHARS[i] = resolve_aachar(unichars[i]);
+	}
+	STOPCHARS[i] = 0;
+}
+
 static int cmp_aadict(const void *a, const void *b) {
 	const struct dictentry *aa = a;
 	const struct dictentry *bb = b;
@@ -1238,8 +1252,8 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 			case I_BEGIN_AREA_OVERRIDE:
 				assert(ci->oper[0].tag == OPER_BOX);
 				if(ci->subop == AREA_TOP) {
-					ai = add_instr(AA_ENTER_STATUS_0);
-					ai->oper[0] = (aaoper_t) {AAO_ZERO};
+					ai = add_instr(AA_ENTER_STATUS);
+					ai->oper[0] = (aaoper_t) {AAO_BYTE, 0};
 					ai->oper[1] = (aaoper_t) {AAO_INDEX, ci->oper[0].value};
 				} else {
 					ai = add_instr(AA_ENTER_STATUS);
@@ -1341,6 +1355,10 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 					ai = add_instr(AA_PRINT_A_STR_A);
 					ai->oper[0] = (aaoper_t) {AAO_STRING, findstring((uint8_t *) "long-term words.")};
 					ai = add_instr(AA_LINE);
+					break;
+				case BI_NBSP:
+					ai = add_instr(AA_EXT0);
+					ai->oper[0] = (aaoper_t) {AAO_BYTE, AAEXT0_NBSP};
 					break;
 				case BI_NOSPACE:
 					ai = add_instr(AA_NOSPACE);
