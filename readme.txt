@@ -85,6 +85,10 @@ Release notes:
 		Backend: (uppercase) now works with non-ASCII characters on the
 		Z-machine backend.
 		
+		Backend: (current div width $) and (current div height $) are now
+		supported on Å-machine. The predicates will still fail if the
+		interpreter cannot provide the information.
+		
 		Debugger: --width -1 disables word wrapping, for piping to other
 		programs.
 		
