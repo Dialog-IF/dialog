@@ -139,7 +139,7 @@ dictionary words are displayed with a plus sign (`+`) separating the essential p
 
 Dictionary words may contain any characters supported by the underlying platform, e.g. the _ZSCII character set_ in the case of the Z-machine. On both the Z-machine and Å-machine backends, the Dialog compiler will attempt to extend this set with any additional characters found in dictionary words, allowing words like `@你好` and `@đầu`. But this ability has limits: the Z-machine can support only 96 non-ASCII characters, while the Å-machine can support only 128. This restriction may be loosened in the future.
 
-A handful of characters are used to separate words when parsing input. These cannot appear together with other characters in a dictionary word—they have to stand on their own, as a single-character word.
+A handful of characters are used to separate words when parsing input. These cannot appear together with other characters in a dictionary word—they have to stand on their own, as a single-character word.footnote:[Which characters these are can be adjusted on the command line. This is very rarely needed in English, but can be helpful for other languages: Coptic, for example, uses a ⳾ character instead of a full stop.]
 They are: `. , ; * " ( )`
 
 Characters that have special significance in Dialog source code, such as parentheses, can be escaped by a backslash:
@@ -149,7 +149,7 @@ Characters that have special significance in Dialog source code, such as parenth
 	@\(
 ----
 
-Dictionary words are case insensitive. On all backends, `@BiZzArE` is equivalent to `@bizarre`, and `@ΛΟΓΟΣ` equivalent to `@λογοσ`. This is a simple one-to-one replacement, though: it does not recognize alternate letter forms, so `@λογοσ` is _not_ equivalent to `@λογος`, or `@groß` to `@GROSS`. These equivalencies must be handled by the author.
+Dictionary words are case insensitive: `@BiZzArE` is equivalent to `@bizarre`, and `@ΛΟΓΟΣ` equivalent to `@λογοσ`. This is a simple one-to-one replacement, though: it does not recognize alternate letter forms, so `@λογοσ` is _not_ equivalent to `@λογος`, or `@groß` to `@GROSS`. These equivalencies must be handled by the author.
 
 [#lists]
 === List

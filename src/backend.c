@@ -13,10 +13,13 @@
 #include "frontend.h"
 #include "compile.h"
 #include "report.h"
+#include "ifid.h"
 
 static struct arena backend_arena;
 
 static const char ifid_template[] = "NNNNNNNN-NNNN-NNNN-NNNN-NNNNNNNNNNNN";
+
+char *STOPCHARS; // Declared in common.h, defined here and in debugger.c, set in backend_z.c and backend_aa.c
 
 static int match_template(const char *txt, const char *template) {
 	for(;;) {
@@ -43,6 +46,18 @@ static void get_timestamp(char *dest, char *longdest) {
 	snprintf(longdest, 11, "%04d-%02d-%02d", 1900 + tm->tm_year, tm->tm_mon + 1, tm->tm_mday);
 }
 
+void suggest_new_ifid(int level) {
+	char suggestion[37];
+	int unavailable = generate_ifid(suggestion);
+	if(unavailable) {
+		report(level, 0, "You can get one at <https://www.tads.org/ifidgen/ifidgen>.");
+	} else {
+		report(level, 0, "For example, you could use:");
+		report(level, 0, "(story ifid) %s", suggestion);
+		report(level, 0, "Or get one at <https://www.tads.org/ifidgen/ifidgen>.");
+	}
+}
+
 void usage(char *prgname) {
 	fprintf(stderr, "Dialog compiler " VERSION ".\n");
 	fprintf(stderr, "Original compiler copyright 2018-2021 Linus Akesson.\n");
@@ -63,6 +78,7 @@ void usage(char *prgname) {
 	fprintf(stderr, "--heap            -H    Set main heap size (default 1000 words).\n");
 	fprintf(stderr, "--aux             -A    Set aux heap size (default 500 words).\n");
 	fprintf(stderr, "--long-term       -L    Set long-term heap size (default 500 words).\n");
+	fprintf(stderr, "--word-seps       -W    Set word separator characters (default .,;\"()* )\n");
 	fprintf(stderr, "--strip           -s    Strip internal object names.\n");
 	fprintf(stderr, "--warn-not-topic        Always warn about objects not used as topics.\n");
 	fprintf(stderr, "--no-warn-not-topic     Never warn about objects not used as topics.\n");
@@ -99,6 +115,7 @@ int main(int argc, char **argv) {
 		{"heap", 1, 0, 'H'},
 		{"aux", 1, 0, 'A'},
 		{"long-term", 1, 0, 'L'},
+		{"word-seps", 1, 0, 'W'},
 		{"strip", 0, 0, 's'},
 		{"no-default-uni", 0, &zmachine_preserve_zscii, 0},
 		{"no-default-unicode", 0, &zmachine_preserve_zscii, 0},
@@ -111,11 +128,12 @@ int main(int argc, char **argv) {
 
 	char *prgname = argv[0];
 	char *outname = 0;
-	char *format = "zblorb";
+	char *format = "z8";
 	char *coverfname = 0;
 	char *coveralt = 0;
 	char *resdir = 0;
 	char *override_serial_with = 0;
+	uint8_t *wordseps = 0;
 	int auxsize = 500, heapsize = 1000, ltssize = 500;
 	int strip = 0;
 	int opt, i;
@@ -130,7 +148,7 @@ int main(int argc, char **argv) {
 	comp_init();
 
 	do {
-		opt = getopt_long(argc, argv, "?hVvo:t:r:c:a:H:A:L:s", longopts, 0);
+		opt = getopt_long(argc, argv, "?hVvo:t:r:c:a:W:H:A:L:s", longopts, 0);
 		switch(opt) {
 			case 0:
 				if(serial_overridden == 2) { // Long-only option with arg
@@ -162,6 +180,9 @@ int main(int argc, char **argv) {
 				break;
 			case 'a':
 				coveralt = strdup(optarg);
+				break;
+			case 'W':
+				wordseps = (uint8_t*)strdup(optarg);
 				break;
 			case 'H':
 				heapsize = strtol(optarg, 0, 10);
@@ -248,6 +269,17 @@ int main(int argc, char **argv) {
 	if(aamachine) {
 		prg->max_temp = aa_get_max_temp();
 	}
+	
+	if(wordseps) {
+		if(aamachine) {
+			prepare_wordseps_aa(wordseps);
+		} else {
+			prepare_wordseps_z(wordseps);
+		}
+		free(wordseps);
+	} else {
+		STOPCHARS = DEFAULT_STOPCHARS;
+	}
 
 	if(!frontend(
 		prg,
@@ -263,8 +295,13 @@ int main(int argc, char **argv) {
 
 	prg->meta_ifid = decode_metadata_str(BI_STORY_IFID, 0, prg, &prg->arena);
 	if(!prg->meta_ifid) {
-		if(need_meta) {
+		if(!strcmp(format, "zblorb")) { // Mandatory for zblorb, make it an error
+			report(LVL_ERR, 0, "An IFID is mandatory for the blorb output format.");
+			suggest_new_ifid(LVL_ERR);
+			exit(1);
+		} else if(need_meta) {
 			report(LVL_WARN, 0, "No IFID declared.");
+			suggest_new_ifid(LVL_WARN);
 		}
 	} else if(!match_template(prg->meta_ifid, ifid_template)) {
 		report(LVL_WARN, find_builtin(prg, BI_STORY_IFID)->pred->clauses[0]->line, "Ignoring invalid IFID. It should have the format %s, where N is an uppercase hexadecimal digit.", ifid_template);
