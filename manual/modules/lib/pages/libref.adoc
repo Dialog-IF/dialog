@@ -131,7 +131,7 @@ xref:miscfeat.adoc#fungibility[`(fungible $ $)`] +
 xref:timeprogress.adoc#gameover[`(game over $)`] +
 xref:timeprogress.adoc#gameover[`(game over option)`] +
 xref:timeprogress.adoc#gameover[`(game over status bar)`] +
-xref:sugar.adoc#generate[`(generate $ $)`] (special syntax) +
+xref:lang:sugar.adoc#generate[`(generate $ $)`] (special syntax) +
 xref:lang:io.adoc#input[`(get input $)`] +
 xref:lang:io.adoc#input[`(get key $)`] +
 xref:miscfeat.adoc#questions[`(get number from $ to $ $)`] +
@@ -163,14 +163,14 @@ xref:lang:io.adoc#status[`(inline status bar $)`] (special syntax) +
 xref:traits.adoc#categorytraits[`(in-seat $)`] +
 xref:actions.adoc#preventperform[`(instead of $)`] +
 xref:traits.adoc#categorytraits[`(intangible $)`] +
-xref:beyondprog.adoc#interface[`(interface $)`] (special syntax) +
+xref:lang:beyondprg.adoc#interface[`(interface $)`] (special syntax) +
 xref:lang:io.adoc#resources[`(interpreter can embed $)`] +
 xref:lang:io.adoc#status[`(interpreter supports inline status bar)`] +
 xref:lang:io.adoc#hyperlinks[`(interpreter supports links)`] +
 xref:lang:builtins.adoc#system[`(interpreter supports quit)`] +
 xref:lang:io.adoc#status[`(interpreter supports status bar)`] +
 xref:lang:builtins.adoc#system[`(interpreter supports undo)`] +
-xref:choicepoints.adoc#collect-values[`(into $)`] (special syntax) +
+xref:lang:choicepoints.adoc#collect-values[`(into $)`] (special syntax) +
 xref:timeprogress.adoc#theintro[`(intro)`] +
 xref:traits.adoc#linguistictraits[`(is $)`] +
 xref:scenery.adoc#objlocations[`@($ is $ $)`] +
@@ -274,6 +274,7 @@ xref:npc.adoc#npcaction[`(narrate $ taking $)`] +
 xref:stdactions.adoc#stdcore[`(narrate unlocking $ with $)`] +
 xref:stdactions.adoc#stdcore[`(narrate wearing $)`] +
 xref:npc.adoc#npcaction[`(narrate $ wearing $)`] +
+xref:lang:execution.adoc#nbsp[`(nbsp)`] +
 xref:lang:builtins.adoc#typechecks[`(nonempty $)`] +
 xref:lang:execution.adoc#printing[`(no space)`] +
 xref:traits.adoc#categorytraits[`(not here $)`] +

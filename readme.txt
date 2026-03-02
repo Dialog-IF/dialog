@@ -59,8 +59,11 @@ Release notes:
 		
 		Compiler: access predicates consisting of a single multi-query
 		no longer crash the compiler when negated.
-    
-    Backend: improved text compression on Z-machine (at least for
+		
+		Compiler: --word-seps option can change which characters are
+		considered word separators (by default . , ; ( ) " * )
+		
+		Backend: improved text compression on Z-machine (at least for
 		programs written in English), reducing text size by about 18%.
 		This will help larger programs fit within the Z-machine's limits.
 		

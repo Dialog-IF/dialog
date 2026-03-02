@@ -155,6 +155,20 @@ static int nwordtable;
 
 static struct backend_wobj *backendwobj;
 
+static uint8_t unicode_to_zscii(uint16_t);
+void prepare_wordseps_z(const uint8_t *wordseps) {
+	int i, len = strlen((char*)wordseps); // Overestimate
+	uint16_t unichars[len+1];
+	utf8_to_unicode(unichars, len+1, wordseps);
+	len = 0;
+	while(unichars[len]) len++; // utf8_to_unicode leaves a null terminator
+	STOPCHARS = malloc((len+1) * sizeof(uint8_t));
+	for(i = 0; i < len; i++) {
+		STOPCHARS[i] = unicode_to_zscii(unichars[i]);
+	}
+	STOPCHARS[i] = 0;
+}
+
 void set_global_label(uint16_t lab, uint16_t val) {
 	assert(lab < nalloc_global_label);
 	global_labels[lab] = val;
@@ -1365,7 +1379,7 @@ static void generate_output_from_utf8(struct program *prg, struct routine *r, in
 				/* String ended with a unicode character */
 				zi = append_instr(r, Z_STORE);
 				zi->oper[0] = SMALL(REG_SPACE);
-				zi->oper[1] = SMALL(!post_space);
+				zi->oper[1] = SMALL(post_space ? SPC_AUTO : SPC_NOSPACE);
 			}
 		} else if(utf8[pos + n]) {
 			/* String too long (for runtime uppercase buffer) */
@@ -1393,7 +1407,7 @@ static void generate_output_from_utf8(struct program *prg, struct routine *r, in
 				assert(!pre_space);
 				zi = append_instr(r, Z_STORE);
 				zi->oper[0] = SMALL(REG_SPACE);
-				zi->oper[1] = SMALL(!post_space);
+				zi->oper[1] = SMALL(post_space ? SPC_AUTO : SPC_NOSPACE);
 			}
 		}
 	}
@@ -1521,7 +1535,7 @@ void compile_trace_output(struct predname *predname, uint16_t label) {
 			if(i) {
 				zi = append_instr(r, Z_STORE);
 				zi->oper[0] = SMALL(REG_SPACE);
-				zi->oper[1] = SMALL(0);
+				zi->oper[1] = SMALL(SPC_AUTO);
 			}
 			zi = append_instr(r, Z_CALL2N);
 			zi->oper[0] = ROUTINE(R_TRACE_VALUE);
@@ -2135,6 +2149,10 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				case BI_MEMSTATS:
 					zi = append_instr(r, Z_CALL1N);
 					zi->oper[0] = ROUTINE(R_MEMSTATS);
+					break;
+				case BI_NBSP:
+					zi = append_instr(r, Z_CALL1N);
+					zi->oper[0] = ROUTINE(R_NBSP);
 					break;
 				case BI_NOSPACE:
 					zi = append_instr(r, Z_CALL1N);
@@ -3692,7 +3710,7 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				zi->store = REG_TEMP;
 				zi = append_instr(r, Z_STORE);
 				zi->oper[0] = SMALL(REG_SPACE);
-				zi->oper[1] = SMALL(4);
+				zi->oper[1] = SMALL(SPC_LINE);
 				break;
 			case I_RESTORE_CHOICE:
 				if(ci->oper[0].tag == OPER_VAR) {
@@ -4814,6 +4832,7 @@ void backend_z(
 	set_global_label(G_TEMPSPACE_REGISTERS, addr_globals + (REG_TEMP - 0x10) * 2);
 	set_global_label(G_ARG_REGISTERS, addr_globals + (REG_A - 0x10) * 2);
 	set_global_label(G_DICT_TABLE, addr_dictionary + 4 + NSTOPCHAR);
+	set_global_label(G_STOPCHARS, addr_dictionary);
 	set_global_label(G_OBJECT_ID_END, prg->nworldobj);
 	set_global_label(G_MAINSTYLE, 0x80);
 	set_global_label(G_SELTABLE, addr_seltable);
@@ -5113,8 +5132,8 @@ void backend_z(
 	zcore[addr_dictionary + 1 + NSTOPCHAR + 2] = ndict & 0xff;
 	for(i = 0; i < ndict; i++) {
 		for(j = 0; j < 3; j++) {
-			zcore[addr_dictionary + 4 + NSTOPCHAR + i * 6 + j * 2 + 0] = dictionary[i].encoded[j] >> 8;
-			zcore[addr_dictionary + 4 + NSTOPCHAR + i * 6 + j * 2 + 1] = dictionary[i].encoded[j] & 0xff;
+			zcore[addr_dictionary + 4+NSTOPCHAR + i*6 + j*2 + 0] = dictionary[i].encoded[j] >> 8;
+			zcore[addr_dictionary + 4+NSTOPCHAR + i*6 + j*2 + 1] = dictionary[i].encoded[j] & 0xff;
 		}
 	}
 

@@ -340,7 +340,7 @@ Disables the transcript feature. This predicate always succeeds.
 Prints a line of information specific to the compiler backend, about the peak
 memory usage in the heap, auxiliary heap, and long-term heap areas. This only
 works for compiled code (Z-machine or Å-machine). The size of these areas can be
-adjusted by passing commandline options to the compiler. During debugging and
+adjusted by passing command-line options to the compiler. During debugging and
 testing, you may wish to invoke this predicate just before quitting, as it will
 tell you how close you are to the limits.
 
