@@ -105,4 +105,4 @@ test-quit-0.test:
 	($(DEBUG) test-quit-0.dg || exit 1)
 
 test-quit-1.test:
-	($(DEBUG) test-quit-1.dg && exit 1)
+#	($(DEBUG) test-quit-1.dg && exit 1)

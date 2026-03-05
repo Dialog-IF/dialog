@@ -1317,9 +1317,6 @@ static int eval_builtin(struct eval_state *es, int builtin, value_t o1, value_t 
 			o_set_upper();
 		}
 		break;
-	case BI_QUIT_N:
-		o1 = eval_deref(o1, es);
-		return_value = o1.value;
 	default:
 		printf("unimplemented builtin %d\n", builtin); exit(1);
 	}
@@ -2518,8 +2515,8 @@ static int eval_run(struct eval_state *es) {
 			break;
 		case I_QUIT_N:
 			return_value = ci->oper[0].value;
-			pred_release(pp.pred);
-			return ESTATUS_QUIT;
+			//printf("setting return value to %d\n", return_value);
+			// drop through
 		case I_QUIT:
 			pred_release(pp.pred);
 			return ESTATUS_QUIT;

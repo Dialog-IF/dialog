@@ -999,6 +999,7 @@ static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an,
 		ci = add_instr(I_QUIT_N);
 		ci->oper[0] = v1;
 		ci->oper[2] = (value_t) {OPER_PRED, an->predicate->pred_id};
+		//printf("compiling, return value should be %d\n", ci->oper[0].value);
 
 		end_routine_cl(cl);
 		if(tail == NO_TAIL) {
