@@ -101,6 +101,7 @@ struct builtinspec {
 	{BI_BOUND,		0, 0,				2,	{"bound", 0}},
 	{BI_FULLY_BOUND,	0, 0,				3,	{"fully", "bound", 0}},
 	{BI_QUIT,		0, PREDF_SUCCEEDS,		1,	{"quit"}},
+	{BI_QUIT_N,             0, PREDF_SUCCEEDS,              2,      {"quit", 0}},
 	{BI_RESTART,		0, PREDF_SUCCEEDS,		1,	{"restart"}},
 	{BI_BREAKPOINT,		0, PREDF_SUCCEEDS,		1,	{"breakpoint"}},
 	{BI_SAVE,		0, 0,				2,	{"save", 0}},

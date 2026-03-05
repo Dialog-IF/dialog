@@ -17,6 +17,7 @@
 static volatile int interrupted = 0;
 
 int use_numbered_levels = 0;
+int return_value = 0; // XXX: move this out of a global
 
 void eval_interrupt() {
 	interrupted = 1;
@@ -2517,6 +2518,10 @@ static int eval_run(struct eval_state *es) {
 			}
 			es->stopchoice = es->choice;
 			break;
+		case I_QUIT_N:
+			return_value = ci->oper[0].value;
+			//printf("setting return value to %d\n", return_value);
+			// drop through
 		case I_QUIT:
 			pred_release(pp.pred);
 			return ESTATUS_QUIT;

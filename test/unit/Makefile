@@ -1,8 +1,7 @@
 all: test 
 
-DEBUG=../../src/dgdebug -q 
-STDLIB=../../unit.dg ../../stdlib.dg | tee log.txt \
-	| grep "tests passed successfully"
+DEBUG=../../src/dgdebug -q --no-warn-not-topic
+STDLIB=../../unit.dg ../../stdlib.dg
 
 test: time
 
