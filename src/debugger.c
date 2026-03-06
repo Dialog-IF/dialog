@@ -1309,9 +1309,11 @@ void usage(char *prgname) {
 	fprintf(stderr, "--no-links  -L      Don't show hyperlinks in the output.\n");
 	fprintf(stderr, "--dfquirks  -D      Activate the dumbfrotz-compatible quirks mode.\n");
 	fprintf(stderr, "--numbered  -N      Show call depth with numbers during tracing.\n");
+	fprintf(stderr, "--no-header         Don't show version information at startup.\n");
 }
 
 extern int topic_warning_level; // Defined in frontend.c
+static int suppress_header = 0; // Easier to make it global and static rather than local
 
 int debugger(int argc, char **argv) {
 	struct option longopts[] = {
@@ -1329,6 +1331,7 @@ int debugger(int argc, char **argv) {
 		{"word-seps", 1, 0, 'W'},
 		{"warn-not-topic", 0, &topic_warning_level, 1},
 		{"no-warn-not-topic", 0, &topic_warning_level, 2},
+		{"no-header", 0, &suppress_header, 1},
 		{0, 0, 0, 0}
 	};
 
@@ -1409,13 +1412,15 @@ int debugger(int argc, char **argv) {
 	o_reset(force_width, dfrotz_quirks);
 	comp_init();
 
-	o_begin_box("intdebugger");
-	o_set_style(STYLE_BOLD);
-	o_print_str(DEBUGGERNAME ".");
-	o_set_style(STYLE_ROMAN);
-	o_line();
-	o_print_str("Type @help at the game prompt for a brief introduction.");
-	o_end_box();
+	if(!suppress_header) {
+		o_begin_box("intdebugger");
+		o_set_style(STYLE_BOLD);
+		o_print_str(DEBUGGERNAME ".");
+		o_set_style(STYLE_ROMAN);
+		o_line();
+		o_print_str("Type @help at the game prompt for a brief introduction.");
+		o_end_box();
+	}
 
 	if(dfrotz_quirks) {
 		o_sync();
