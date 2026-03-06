@@ -340,7 +340,7 @@ Disables the transcript feature. This predicate always succeeds.
 Succeeds if the transcript feature is currently active. Since transcripting
 continues across a `(restart)`, `(restore)`, or `(restore undo)`, this might
 succeed even though `(transcript on)` was never called, or fail even though
-`(transcript on)` succeeded on a previous turn.
+`(transcript on)` previously succeeded.
 
 (display memory statistics)::
 
