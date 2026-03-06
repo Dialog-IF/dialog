@@ -96,6 +96,9 @@ Release notes:
 		Debugger: --width -1 disables word wrapping, for piping to other
 		programs.
 		
+		Debugger: --no-header option suppresses version information, for
+		the same reason.
+		
 		Library: New commands SUPERBRIEF, BRIEF, VERBOSE, and SUPERVERBOSE
 		change how rooms are described while going. The default behavior
 		is VERBOSE: rooms are described in full when moving one step at a
