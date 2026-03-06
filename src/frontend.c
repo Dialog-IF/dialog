@@ -148,6 +148,7 @@ struct builtinspec {
 	{BI_HAVE_UNDO,		0, 0,				3,	{"interpreter", "supports", "undo"}},
 	{BI_HAVE_LINK,		0, 0,				3,	{"interpreter", "supports", "links"}},
 	{BI_HAVE_QUIT,		0, 0,				3,	{"interpreter", "supports", "quit"}},
+	{BI_SCRIPT_ACTIVE,	0, 0,				2,	{"transcript", "active"}},
 	{BI_HAVE_STATUS,	0, 0,				4,	{"interpreter", "supports", "status", "bar"}},
 	{BI_HAVE_INLINE_STATUS,	0, 0,				5,	{"interpreter", "supports", "inline", "status", "bar"}},
 	{BI_CAN_EMBED,		0, 0,				4,	{"interpreter", "can", "embed", 0}},

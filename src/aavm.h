@@ -181,6 +181,7 @@
 #define AAFEAT_SAVE		0x41
 #define AAFEAT_LINKS		0x42
 #define AAFEAT_QUIT		0x43
+#define AAFEAT_SCRIPT		0x50
 #define AAFEAT_TOP_AREA		0x60
 #define AAFEAT_INLINE_AREA	0x61
 

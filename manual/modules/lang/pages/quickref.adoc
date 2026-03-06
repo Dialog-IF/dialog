@@ -521,6 +521,10 @@ xref:io.adoc#debugging[(trace on)]::
 
 Enables query tracing.
 
+xref:builtins.adoc#system[(transcript active)]::
+
+Tests if transcription is currently active.
+
 xref:builtins.adoc#system[(transcript off)]::
 
 Disables transcription.
