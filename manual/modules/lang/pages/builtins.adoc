@@ -335,6 +335,13 @@ error, or if the operation was cancelled, the query fails.
 
 Disables the transcript feature. This predicate always succeeds.
 
+(transcript active)::
+
+Succeeds if the transcript feature is currently active. Since transcripting
+continues across a `(restart)`, `(restore)`, or `(restore undo)`, this might
+succeed even though `(transcript on)` was never called, or fail even though
+`(transcript on)` succeeded on a previous turn.
+
 (display memory statistics)::
 
 Prints a line of information specific to the compiler backend, about the peak

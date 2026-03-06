@@ -46,6 +46,8 @@ Release notes:
 		
 		Language: added (clear status bar).
 		
+		Language: added (transcript active).
+		
 		Distribution: added unit.dg, a library for unit testing.
 
 		Documentation: the library reference now includes special syntax
