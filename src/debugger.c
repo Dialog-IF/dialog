@@ -1296,7 +1296,7 @@ void usage(char *prgname) {
 	fprintf(stderr, "--version   -V      Display the program version.\n");
 	fprintf(stderr, "--help      -h      Display this information.\n");
 	fprintf(stderr, "--verbose   -v      Increase verbosity (may be used multiple times).\n");
-	fprintf(stderr, "--word-seps -W      Set word separator characters (default .,;\"()* )\n");
+	fprintf(stderr, "--word-seps -W      Set word separator characters (default .,;\"()* ).\n");
 	fprintf(stderr, "--warn-not-topic    Always warn about objects not used as topics.\n");
 	fprintf(stderr, "--no-warn-not-topic Never warn about objects not used as topics.\n");
 	fprintf(stderr, "\n");

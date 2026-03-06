@@ -78,7 +78,7 @@ void usage(char *prgname) {
 	fprintf(stderr, "--heap            -H    Set main heap size (default 1000 words).\n");
 	fprintf(stderr, "--aux             -A    Set aux heap size (default 500 words).\n");
 	fprintf(stderr, "--long-term       -L    Set long-term heap size (default 500 words).\n");
-	fprintf(stderr, "--word-seps       -W    Set word separator characters (default .,;\"()* )\n");
+	fprintf(stderr, "--word-seps       -W    Set word separator characters (default .,;\"()* ).\n");
 	fprintf(stderr, "--strip           -s    Strip internal object names.\n");
 	fprintf(stderr, "--warn-not-topic        Always warn about objects not used as topics.\n");
 	fprintf(stderr, "--no-warn-not-topic     Never warn about objects not used as topics.\n");
