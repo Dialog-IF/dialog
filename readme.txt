@@ -68,7 +68,7 @@ Release notes:
 		Compiler: a new --override-serial option makes builds reproducible
 		by overriding the release date and serial number fields. This is
 		not recommended, but occasionally necessary.
-    
+		
 		Compiler: --word-seps option can change which characters are
 		considered word separators (by default . , ; ( ) " * )
 		
@@ -102,6 +102,9 @@ Release notes:
 		change how rooms are described while going. The default behavior
 		is VERBOSE: rooms are described in full when moving one step at a
 		time, but abbreviated when travelling long distances.
+		
+		Library: Transcript comments (commands starting with an asterisk)
+		now produce a warning if transcripting is not active.
 
 	1a/01, Lib 1.1.0:
 	
