@@ -8,4 +8,7 @@ test: time
 time:
 	$(DEBUG) time-tests.dg time.dg $(STDLIB)
 
-.PHONY: test all time
+clean:
+# nothing to do
+
+.PHONY: test all time clean

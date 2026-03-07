@@ -1,6 +1,6 @@
 # Call `make DIFF=meld` to get a fancy diff
 # If the build fails on a Mac, change --ignore-trailing-space to --ignore-space-change
-DIFF = diff --ignore-trailing-space
+DIFF = diff --ignore-space-change
 
 # Base of the repository
 BASEPATH = ../../..
@@ -14,7 +14,9 @@ rawinput := $(patsubst %.dg,%.in,$(wildcard *.dg))
 origin := $(patsubst %.dg,%.orig_gold,$(wildcard *.dg))
 explicit := $(patsubst %.dg,%.test_explicit,$(wildcard *.dg))
 
-all: $(tests)
+all: $(tests) clean
+
+test: $(tests)
 
 # This version shows meld results afterward if there were differences
 explicit: $(explicit)
@@ -106,3 +108,5 @@ test-quit-0.test:
 
 test-quit-1.test:
 #	($(DEBUG) test-quit-1.dg && exit 1)
+
+.PHONY: all test clean

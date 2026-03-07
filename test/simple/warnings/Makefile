@@ -11,7 +11,9 @@ rawinput := $(patsubst %.dg,%.in,$(wildcard *.dg))
 origin := $(patsubst %.dg,%.orig_gold,$(wildcard *.dg))
 explicit := $(patsubst %.dg,%.test_explicit,$(wildcard *.dg))
 
-all: $(tests)
+all: $(tests) clean
+
+test: $(tests)
 
 # This version shows meld results afterward if there were differences
 explicit: $(explicit)
@@ -53,3 +55,5 @@ origin: $(origin)
 
 clean:
 	rm -rf *.out stdlib.dglib *.z5
+
+.PHONY: all test clean
