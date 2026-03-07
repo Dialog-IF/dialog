@@ -422,8 +422,8 @@ void o_reset(int force_w, int quirks) {
 		force_width = 79; // Needed to size the buffer
 		nowrap = 1;
 	}
-	update_size();
 	if(force_width) width = force_width;
+	update_size();
 	space = SP_DONELINE + (quirks? 999 : 0);
 	wrapbuf = realloc(wrapbuf, (width + 1) * sizeof(uint16_t));
 	wrappos = 0;
