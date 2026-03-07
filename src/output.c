@@ -280,13 +280,14 @@ void o_set_style(int style) {
 	if(!boxstack[boxsp].visible) return;
 
 	if(style) {
-		if(space == SP_AUTO || space == SP_SPACE) {
+		// https://github.com/Dialog-IF/dialog/issues/189
+	/*	if(space == SP_AUTO || space == SP_SPACE) {
 			sendspace();
 			space = SP_DONESPACE;
 		} else if(space == SP_NBSP) {
 			sendnbsp();
 			space = SP_DONESPACE;
-		}
+		}	*/
 		boxstack[boxsp].style |= style;
 	} else {
 		boxstack[boxsp].style &= STYLE_DEBUG;
