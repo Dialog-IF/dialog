@@ -4,15 +4,19 @@ DIFF = diff --ignore-trailing-space
 
 # Base of the repository
 BASEPATH = ../../..
+DGDEBUG = $(BASEPATH)/src/dgdebug
+DEBUG = $(DGDEBUG) -q --no-warn-not-topic
 
-# List of all .dg files with .dg changed to .test
+# List of all .nolib.dg and .lib.dg files with .dg changed to .test
 tests := $(patsubst %.dg,%.test,$(wildcard *.dg))
 rawgold := $(patsubst %.dg,%.gold,$(wildcard *.dg))
 rawinput := $(patsubst %.dg,%.in,$(wildcard *.dg))
 origin := $(patsubst %.dg,%.orig_gold,$(wildcard *.dg))
 explicit := $(patsubst %.dg,%.test_explicit,$(wildcard *.dg))
 
-all: $(tests)
+all: $(tests) clean
+
+test: $(tests)
 
 # This version shows meld results afterward if there were differences
 explicit: $(explicit)
@@ -96,7 +100,7 @@ new_stopchars2.d.out: $(BASEPATH)/src/dgdebug new_stopchars2.debug new_stopchars
 ## Remove trailing spaces from lines for easier diffing
 	perl -i -pe 's/ $$//' $*.d.out
 
-%.test: %.z.out %.d.out %.aa.out %.z.gold %.d.gold %.aa.gold
+%.test: %.z.out %.d.out %.aa.out %.z.gold %.d.gold %.aa.gold $(DGDEBUG)
 	$(DIFF) $*.z.out $*.z.gold
 	$(DIFF) $*.d.out $*.d.gold
 	$(DIFF) $*.aa.out $*.aa.gold
@@ -108,3 +112,11 @@ new_stopchars2.d.out: $(BASEPATH)/src/dgdebug new_stopchars2.debug new_stopchars
 
 clean:
 	rm -rf *.out *.z.gold *.aa.gold *.d.gold *.z.in *.aa.in *.d.in *.z5 *.aastory
+
+#test-quit-0.test: $(DGDEBUG)
+#	$(DEBUG) test-quit-0.dg || exit 1
+
+#test-quit-1.test: $(DGDEBUG)
+#	$(DEBUG) test-quit-1.dg && exit 1
+
+.PHONY: all test clean
