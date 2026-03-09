@@ -5,14 +5,16 @@ DIFF = diff --ignore-trailing-space
 # Base of the repository
 BASEPATH = ../../..
 
-# List of all .nolib.dg and .lib.dg files with .dg changed to .test
+# List of all .dg files with .dg changed to .test
 tests := $(patsubst %.dg,%.test,$(wildcard *.dg))
 rawgold := $(patsubst %.dg,%.gold,$(wildcard *.dg))
 rawinput := $(patsubst %.dg,%.in,$(wildcard *.dg))
 origin := $(patsubst %.dg,%.orig_gold,$(wildcard *.dg))
 explicit := $(patsubst %.dg,%.test_explicit,$(wildcard *.dg))
 
-all: $(tests)
+all: $(tests) clean
+
+test: $(tests)
 
 # This version shows meld results afterward if there were differences
 explicit: $(explicit)
@@ -105,3 +107,5 @@ origin: $(origin)
 
 clean:
 	rm -rf *.out *.z.gold *.aa.gold *.d.gold *.z.in *.aa.in *.d.in stdlib.dglib *.z5 *.aastory
+
+.PHONY: all test clean
