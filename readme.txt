@@ -60,10 +60,20 @@ Release notes:
 		Documentation: the @tree and @dynamic debugging commands are now
 		properly documented, though they've existed for some time.
 		
+		Compiler: warnings and errors about missing IFIDs will now
+		generate a new IFID to use, if possible.
+		
 		Compiler: access predicates consisting of a single multi-query
 		no longer crash the compiler when negated.
+		
+		Compiler: a new --override-serial option makes builds reproducible
+		by overriding the release date and serial number fields. This is
+		not recommended, but occasionally necessary.
     
-    Backend: improved text compression on Z-machine (at least for
+		Compiler: --word-seps option can change which characters are
+		considered word separators (by default . , ; ( ) " * )
+		
+		Backend: improved text compression on Z-machine (at least for
 		programs written in English), reducing text size by about 18%.
 		This will help larger programs fit within the Z-machine's limits.
 		
@@ -81,6 +91,10 @@ Release notes:
 		
 		Backend: (uppercase) now works with non-ASCII characters on the
 		Z-machine backend.
+		
+		Backend: (current div width $) and (current div height $) are now
+		supported on Å-machine. The predicates will still fail if the
+		interpreter cannot provide the information.
 		
 		Debugger: --width -1 disables word wrapping, for piping to other
 		programs.

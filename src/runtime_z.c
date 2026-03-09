@@ -269,6 +269,23 @@ struct rtroutine rtroutines[] = {
 		}
 	},
 	{
+		R_STOPCHAR,
+		3,
+			// 0 (param): char to check
+			// 1: char for comparison
+			// 2: counter
+		(struct zinstr []) {
+			// Table layout: one byte for length, then that many byte values
+			{Z_LOADB, {REF(G_STOPCHARS), SMALL(0)}, REG_LOCAL+2}, // Get length
+			{OP_LABEL(1)}, // Run through table
+			{Z_LOADB, {REF(G_STOPCHARS), VALUE(REG_LOCAL+2)}, REG_LOCAL+1},
+			{Z_JE, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+1)}, 0, RTRUE},
+			{Z_DEC_JGE, {SMALL(REG_LOCAL+2), SMALL(1)}, 0, 1}, // Hit 0? rfalse
+			{Z_RFALSE},
+			{Z_END},
+		}
+	},
+	{
 		R_NOSPACE,
 		0,
 		(struct zinstr []) {
@@ -2376,17 +2393,23 @@ struct rtroutine rtroutines[] = {
 			
 			{OP_LABEL(1)}, // Width in either window, or height in the statusbar
 			{Z_JNZ, {VALUE(REG_LOCAL+0)}, 0, 3}, // If it's the latter, branch
+			{Z_JZ, {VALUE(REG_XFULLSIZE)}, 0, 4}, // If zero, crash
 			{Z_OR, {VALUE(REG_XFULLSIZE), VALUE(REG_4000)}, REG_PUSH}, // This register holds the full width of the current div; OR it with $4000 to mark it as a number
 			{Z_RET_POPPED},
 			
 			{OP_LABEL(2)}, // Height, in main window
 			{Z_LOADB, {SMALL(0), SMALL(0x20)}, REG_LOCAL+1}, // Get screen height into a local variable
+			{Z_JZ, {VALUE(REG_LOCAL+1)}, 0, 4}, // If zero, crash
 			{Z_OR, {VALUE(REG_LOCAL+1), VALUE(REG_4000)}, REG_PUSH}, // And OR it again
 			{Z_RET_POPPED},
 			
 			{OP_LABEL(3)}, // Height, in status bar
+			{Z_JZ, {VALUE(REG_CURRSPLIT)}, 0, 4}, // If zero, crash
 			{Z_OR, {VALUE(REG_CURRSPLIT), VALUE(REG_4000)}, REG_PUSH}, // Third verse, same as the first, just with REG_CURRSPLIT this time (total status bar height)
 			{Z_RET_POPPED},
+			
+			{OP_LABEL(4)}, // Information not available
+			{Z_THROW, {SMALL(0), VALUE(REG_FAILJMP)}}, // Fail
 			
 			{Z_END},
 		}
@@ -2967,9 +2990,12 @@ struct rtroutine rtroutines[] = {
 			{Z_JZ, {VALUE(REG_LOCAL+1)}, 0, RFALSE},
 			{Z_AND, {VALUE(REG_LOCAL+3), SMALL(0xff)}, REG_LOCAL+3},
 			{Z_JLE, {VALUE(REG_LOCAL+3), SMALL(0x20)}, 0, RFALSE},
-			{Z_JE, {VALUE(REG_LOCAL+3), SMALL('.'), SMALL(','), SMALL('\"')}, 0, RFALSE},
-			{Z_JE, {VALUE(REG_LOCAL+3), SMALL(';'), SMALL('*')}, 0, RFALSE},
-			{Z_JE, {VALUE(REG_LOCAL+3), SMALL('('), SMALL(')')}, 0, RFALSE},
+			// Is it a stopchar? This used to be hardcoded, but now it calls a separate routine
+			{Z_CALL2S, {ROUTINE(R_STOPCHAR), VALUE(REG_LOCAL+3)}, REG_LOCAL+5},
+			{Z_JNZ, {VALUE(REG_LOCAL+5)}, 0, RFALSE},
+		//	{Z_JE, {VALUE(REG_LOCAL+3), SMALL('.'), SMALL(','), SMALL('\"')}, 0, RFALSE},
+		//	{Z_JE, {VALUE(REG_LOCAL+3), SMALL(';'), SMALL('*')}, 0, RFALSE},
+		//	{Z_JE, {VALUE(REG_LOCAL+3), SMALL('('), SMALL(')')}, 0, RFALSE},
 			{Z_STOREB, {VALUE(REG_LOCAL+2), SMALL(0), VALUE(REG_LOCAL+3)}},
 			{Z_DEC, {SMALL(REG_LOCAL+1)}},
 			{Z_INC, {SMALL(REG_LOCAL+2)}},
