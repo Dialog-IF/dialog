@@ -15,7 +15,7 @@ test: src/dgdebug
 
 # Splitting this one out because making the prereqs is hard on Mac
 test-6502:
-	$(MAKE) -C test/6502 test clean
+	$(MAKE) -C test/6502 6502 clean
 
 tidy:
 	$(MAKE) -C src tidy

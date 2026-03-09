@@ -7,7 +7,7 @@ BASEPATH = ../../..
 DGDEBUG = $(BASEPATH)/src/dgdebug
 DEBUG = $(DGDEBUG) -q --no-warn-not-topic
 
-# List of all .nolib.dg and .lib.dg files with .dg changed to .test
+# List of all .dg files with .dg changed to .test
 tests := $(patsubst %.dg,%.test,$(wildcard *.dg))
 rawgold := $(patsubst %.dg,%.gold,$(wildcard *.dg))
 rawinput := $(patsubst %.dg,%.in,$(wildcard *.dg))

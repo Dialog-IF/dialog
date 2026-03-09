@@ -10,6 +10,6 @@ test: cloak.zblorb
 	$(REGTEST) --game cloak.zblorb --interpreter dfrotz cloak.regtest
 
 clean:
-	rm *.zblorb *.z8
+	rm -f *.zblorb
 
 .PHONY: all test clean

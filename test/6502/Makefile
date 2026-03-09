@@ -19,7 +19,8 @@ impossible.aastory: ../../src/dialogc ImpossibleStairs.dg stdlib.dg
 6502: 6502.out
 	$(DIFF) 6502.out 6502.gold
 
-test: 6502
+test:
+# point this at 6502 if and when it's buildable on a Mac
 
 clean:
 	rm -f *.aastory *.out stdlib.dg
