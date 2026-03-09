@@ -409,6 +409,10 @@ xref:builtins.adoc#arithmetic[($X modulo $Y into $Z)]::
 Unifies `$Z` with the remainder after dividing `$X` by
 `$Y`.
 
+xref:execution.adoc#nbsp[(nbsp)]::
+
+Inserts a non-breaking space before the next word.
+
 xref:builtins.adoc#typechecks[(nonempty $X)]::
 
 Succeeds if `$X` is bound to an non-empty list.
