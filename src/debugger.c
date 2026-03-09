@@ -45,6 +45,7 @@ struct debugger {
 
 static int force_width;
 extern int use_numbered_levels; // Defined in eval.c
+extern int return_value;        // Defined in eval.c
 
 char *STOPCHARS; // Declared in common.h, defined here and in backend.c
 
@@ -1469,6 +1470,7 @@ int debugger(int argc, char **argv) {
 		case ESTATUS_SUCCESS:
 		case ESTATUS_FAILURE:
 		case ESTATUS_QUIT:
+			//printf("about to quit, return value is %d\n", return_value);
 			if(quitopt) {
 				o_sync();
 				running = 0;
@@ -1500,6 +1502,7 @@ int debugger(int argc, char **argv) {
 			dbg.status = ESTATUS_DEBUGGER;
 			break;
 		case ESTATUS_RESTART:
+			return_value = 0;
 			o_reset(force_width, dfrotz_quirks);
 			if(!restart(&dbg)) {
 				running = 0;
@@ -1744,5 +1747,5 @@ int debugger(int argc, char **argv) {
 	free(dbg.timestamps);
 	o_cleanup();
 	term_cleanup();
-	return 0;
+	return return_value;
 }
