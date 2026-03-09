@@ -38,7 +38,6 @@ static struct aaopinfo aaopinfosrc[] = {
 	{AA_POP_STOP,		{}, 0,							"pop_stop"},
 	{AA_SPLIT_WORD,		{AAO_VALUE, AAO_DEST}, 0,				"split_word"},
 	{AA_JOIN_WORDS,		{AAO_VALUE, AAO_DEST}, 0,				"join_words"},
-	{AA_AUX_POP_VAL,	{AAO_DEST}, 0,						"aux_pop_val"},
 	{AA_AUX_POP_LIST,	{AAO_DEST}, 0,						"aux_pop_list"},
 	{AA_AUX_POP_LIST_CHK,	{AAO_VALUE}, 0,						"aux_pop_list_chk"},
 	{AA_AUX_POP_LIST_MATCH,	{AAO_VALUE}, 0,						"aux_pop_list_match"},
@@ -109,7 +108,6 @@ static struct aaopinfo aaopinfosrc[] = {
 	{AA_PRINT_VAL,		{AAO_VALUE}, 0,						"print_val"},
 	{AA_ENTER_DIV,		{AAO_INDEX}, 0,						"enter_div"},
 	{AA_LEAVE_DIV,		{}, 0,							"leave_div"},
-	{AA_ENTER_STATUS_0,	{AAO_ZERO, AAO_INDEX}, 0,				"enter_status"},
 	{AA_LEAVE_STATUS,	{}, 0,							"leave_status"},
 	{AA_ENTER_LINK_RES,	{AAO_VALUE}, 0,						"enter_link_res"},
 	{AA_LEAVE_LINK_RES,	{}, 0,							"leave_link_res"},
@@ -160,6 +158,8 @@ char *aaext0name[AAEXT0_N] = {
 	"clear_links",
 	"clear_old",
 	"clear_div",
+	"clear_status",
+	"nbsp"
 };
 
 void aavm_init() {

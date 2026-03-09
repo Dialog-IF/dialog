@@ -47,6 +47,21 @@ static int force_width;
 extern int use_numbered_levels; // Defined in eval.c
 extern int return_value;        // Defined in eval.c
 
+char *STOPCHARS; // Declared in common.h, defined here and in backend.c
+
+static void prepare_wordseps(uint8_t *wordseps) {
+	int i;
+	for(i = 0; i < strlen((char*)wordseps); i++) {
+		if(i > 0x7f) {
+			report(LVL_ERR, 0, "Non-ASCII word separators are not currently supported in the debugger.");
+			exit(1);
+		}
+	}
+	STOPCHARS = malloc(strlen((char*)wordseps) + 2);
+	STOPCHARS[0] = ' ';
+	strcpy(STOPCHARS+1, (char*)wordseps);
+}
+
 static void set_oflag(struct dyn_state *ds, int onum, int fnum) {
 	struct dyn_obj *o = &ds->obj[onum];
 
@@ -1282,6 +1297,7 @@ void usage(char *prgname) {
 	fprintf(stderr, "--version   -V      Display the program version.\n");
 	fprintf(stderr, "--help      -h      Display this information.\n");
 	fprintf(stderr, "--verbose   -v      Increase verbosity (may be used multiple times).\n");
+	fprintf(stderr, "--word-seps -W      Set word separator characters (default .,;\"()* )\n");
 	fprintf(stderr, "--warn-not-topic    Always warn about objects not used as topics.\n");
 	fprintf(stderr, "--no-warn-not-topic Never warn about objects not used as topics.\n");
 	fprintf(stderr, "\n");
@@ -1311,6 +1327,7 @@ int debugger(int argc, char **argv) {
 		{"no-links", 0, 0, 'L'},
 		{"dfquirks", 0, 0, 'D'},
 		{"numbered", 0, 0, 'N'},
+		{"word-seps", 1, 0, 'W'},
 		{"warn-not-topic", 0, &topic_warning_level, 1},
 		{"no-warn-not-topic", 0, &topic_warning_level, 2},
 		{0, 0, 0, 0}
@@ -1331,11 +1348,12 @@ int debugger(int argc, char **argv) {
 	char numbuf[8], chbuf[8];
 	struct word *w;
 	uint16_t unibuf[2];
+	uint8_t *wordseps = 0;
 
 	dbg.timestamps = calloc(argc, sizeof(struct timespec));
 
 	do {
-		opt = getopt_long(argc, argv, "?hVvtnqw:s:LDN", longopts, 0);
+		opt = getopt_long(argc, argv, "?hVvtnqw:s:W:LDN", longopts, 0);
 		switch(opt) {
 			case 0:
 				break; // Changed DMS to allow long-only options
@@ -1363,6 +1381,9 @@ int debugger(int argc, char **argv) {
 				break;
 			case 's':
 				dbg.randomseed = strtol(optarg, 0, 10);
+				break;
+			case 'W':
+				wordseps = (uint8_t*)strdup(optarg);
 				break;
 			case 'L':
 				hide_links = 1;
@@ -1400,6 +1421,13 @@ int debugger(int argc, char **argv) {
 	if(dfrotz_quirks) {
 		o_sync();
 		o_post_input(1);
+	}
+	
+	if(wordseps) {
+		prepare_wordseps(wordseps);
+		free(wordseps);
+	} else {
+		STOPCHARS = " " DEFAULT_STOPCHARS;
 	}
 
 	if(!dbg.nfilename) {
@@ -1651,7 +1679,7 @@ int debugger(int argc, char **argv) {
 					i = strlen((char *) termbuf);
 					while(i >= 0) {
 						i--;
-						if(i < 0 || strchr(STOPCHARS " ", termbuf[i])) {
+						if(i < 0 || strchr(STOPCHARS, termbuf[i])) {
 							if(termbuf[i + 1]) {
 								v = parse_input_word(&dbg.es, termbuf + i + 1);
 								if(v.tag == VAL_ERROR) break;
