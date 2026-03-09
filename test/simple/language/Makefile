@@ -4,8 +4,8 @@ DIFF = diff --ignore-space-change
 
 # Base of the repository
 BASEPATH = ../../..
-
-DEBUG = $(BASEPATH)/src/dgdebug -q --no-warn-not-topic
+DGDEBUG = $(BASEPATH)/src/dgdebug
+DEBUG = $(DGDEBUG) -q --no-warn-not-topic
 
 # List of all .nolib.dg and .lib.dg files with .dg changed to .test
 tests := $(patsubst %.dg,%.test,$(wildcard *.dg))
@@ -90,7 +90,7 @@ new_russian.z5: $(BASEPATH)/src/dialogc new_russian.dg
 ## Remove trailing spaces from lines for easier diffing
 	perl -i -pe 's/ $$//' $*.d.out
 
-%.test: %.z.out %.d.out %.aa.out %.z.gold %.d.gold %.aa.gold
+%.test: %.z.out %.d.out %.aa.out %.z.gold %.d.gold %.aa.gold $(DGDEBUG)
 	$(DIFF) $*.z.out $*.z.gold
 	$(DIFF) $*.d.out $*.d.gold
 	$(DIFF) $*.aa.out $*.aa.gold
@@ -103,10 +103,10 @@ new_russian.z5: $(BASEPATH)/src/dialogc new_russian.dg
 clean:
 	rm -rf *.out *.z.gold *.aa.gold *.d.gold *.z.in *.aa.in *.d.in *.z5 *.aastory
 
-test-quit-0.test:
-	($(DEBUG) test-quit-0.dg || exit 1)
+test-quit-0.test: $(DGDEBUG)
+	$(DEBUG) test-quit-0.dg || exit 1
 
-test-quit-1.test:
-#	($(DEBUG) test-quit-1.dg && exit 1)
+test-quit-1.test: $(DGDEBUG)
+	$(DEBUG) test-quit-1.dg && exit 1
 
 .PHONY: all test clean

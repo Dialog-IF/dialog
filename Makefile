@@ -10,9 +10,6 @@ src/dialogc:
 src/dgdebug:
 	$(MAKE) -C src dgdebug
 
-test/regtest/%.zblorb: src/dialogc test/regtest/%.dg stdlib.dg
-	$+
-
 test: src/dgdebug
 	$(MAKE) -C test all
 
