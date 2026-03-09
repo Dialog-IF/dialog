@@ -13,6 +13,10 @@ src/dgdebug:
 test: src/dgdebug
 	$(MAKE) -C test all
 
+# Splitting this one out because making the prereqs is hard on Mac
+test-6502:
+	$(MAKE) -C test/6502 test clean
+
 tidy:
 	$(MAKE) -C src tidy
 	$(MAKE) -C test clean
@@ -29,4 +33,4 @@ uninstall:
 distclean: clean
 	$(MAKE) -C src distclean
 
-.PHONY:	test clean tidy install uninstall distclean src/dialogc src/dgdebug all
+.PHONY:	test clean tidy install uninstall distclean src/dialogc src/dgdebug all test-6502
