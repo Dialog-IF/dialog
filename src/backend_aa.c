@@ -1919,6 +1919,20 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 					ai->oper[2] = (aaoper_t) {AAO_CODE, labelbase + ci->implicit};
 				}
 				break;
+			case I_IF_SCRIPT_ACTIVE:
+				ai = add_instr(AA_VM_INFO);
+				ai->oper[0] = (aaoper_t) {AAO_BYTE, AAFEAT_SCRIPT};
+				ai->oper[1] = (aaoper_t) {AAO_STORE_REG, REG_TMP};
+				ai = add_instr(AA_IF_RAW_EQ | 0x80);
+				if(!ci->subop) ai->op ^= AA_NEG_FLIP;
+				ai->oper[0] = (aaoper_t) {AAO_ZERO};
+				ai->oper[1] = (aaoper_t) {AAO_REG, REG_TMP};
+				if(ci->implicit == 0xffff) {
+					ai->oper[2] = (aaoper_t) {AAO_CODE, AAFAIL};
+				} else {
+					ai->oper[2] = (aaoper_t) {AAO_CODE, labelbase + ci->implicit};
+				}
+				break;
 			case I_IF_HAVE_STATUS:
 				assert(ci->oper[0].tag == VAL_RAW);
 				ai = add_instr(AA_VM_INFO);
