@@ -93,6 +93,9 @@ Release notes:
 		supported on Å-machine. The predicates will still fail if the
 		interpreter cannot provide the information.
 		
+		Backend: Å-machine backend now reports when non-ASCII characters
+		are added to the character set.
+		
 		Debugger: --width -1 disables word wrapping, for piping to other
 		programs.
 		
