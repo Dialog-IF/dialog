@@ -415,6 +415,10 @@ void o_post_input(int external_lf) {
 		column = 0;
 		delayed_spaces = 0;
 	}
+	// Reset the style to 0, then set it back to what it should be
+	// This helps external tools parse the output
+	term_effectstyle(0);
+	term_effectstyle(wrapstyle);
 }
 
 void o_reset(int force_w, int quirks) {
