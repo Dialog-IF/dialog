@@ -10,22 +10,16 @@ src/dialogc:
 src/dgdebug:
 	$(MAKE) -C src dgdebug
 
-test/regtest/%.z8: src/dialogc test/regtest/%.dg stdlib.dg
-	$+
+test: src/dgdebug
+	$(MAKE) -C test all
 
-test: test/regtest/cloak.z8 src/dgdebug
-	bin/regtest.py -v --game test/regtest/cloak.z8 --interpreter dfrotz test/regtest/cloak.regtest
-	$(MAKE) --directory=./test/gosling test clean
-	$(MAKE) --directory=./test/impossible test clean
-	$(MAKE) --directory=./test/simple all
-	$(MAKE) -C test/unit test
-	bin/test.py doc
+# Splitting this one out because making the prereqs is hard on Mac
+test-6502:
+	$(MAKE) -C test/6502 6502 clean
 
 tidy:
 	$(MAKE) -C src tidy
-	$(MAKE) -C test/gosling clean
-	$(MAKE) -C test/impossible clean
-	$(MAKE) -C test/simple clean
+	$(MAKE) -C test clean
 
 clean: tidy
 	$(MAKE) -C src clean
@@ -39,4 +33,4 @@ uninstall:
 distclean: clean
 	$(MAKE) -C src distclean
 
-.PHONY:	test clean tidy install uninstall distclean src/dialogc src/dgdebug all
+.PHONY:	test clean tidy install uninstall distclean src/dialogc src/dgdebug all test-6502
