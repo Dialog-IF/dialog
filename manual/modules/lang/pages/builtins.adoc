@@ -277,8 +277,8 @@ Immediately terminates the program. This predicate neither fails nor succeeds.
 (quit $ExitStatus)::
 
 Immediately terminates the program. If the program is being run under the 
-debugger, the exit status for the debugger will be set to $ExitStatus. If the
-program is compiled and run outside the debugger, $ExitStatus is ignored.
+debugger, the exit status for the debugger will be set to `$ExitStatus`. If the
+program is compiled and run outside the debugger, `$ExitStatus` is ignored.
 
 (restart)::
 
