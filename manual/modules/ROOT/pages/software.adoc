@@ -70,7 +70,7 @@ feature is not regarded as a part of the Dialog language itself.
 
 image:overview.png[overview]
 
-To compile a Dialog story into `zblorb` format, invoke the compiler with
+To compile a Dialog story into `z8` format, invoke the compiler with
 the source code filenames as arguments, and optionally use [.nobreak]#`-o`#
 to specify an output filename. The default output filename is constructed from
 the name of the first source code file, combined with a filename extension that
@@ -85,29 +85,29 @@ library) should appear in between. For instance:
 dialogc story.dg stddebug.dg stdlib.dg
 ```
 
-This will produce a file called `story.zblorb`, based on the name of the
+This will produce a file called `story.z8`, based on the name of the
 first source code file.
 
-=== Producing raw Z-code images
+=== Producing stories for the Z-machine
 
-The example games in this manual do not declare IFIDs, which is mandatory when
-the zblorb output format is used. To compile the examples, you must ask the
-compiler to emit raw z8 (or z5) code by adding `-t z8`
-(or `-t z5`) to the command line:
+By default, the compiler uses the `z8` output format, producing story files for
+version 8 of the Z-machine. Adding `-t z5` to the command line will instead make
+a Z-machine version 5 file, limited to 256 KiB rather than 512 KiB for `z8`.
+However, the `z5` format is more compact, and switching to this format can reduce
+the size of the story file by about 5%.
 
-`dialogc -t z8 example.dg stdlib.dg`
-
-This will produce a file called `example.z8`.
+Raw Z-code files are quite limited: they only contain the story itself, like a
+paper manuscript of a book. `-t zblorb` switches to the `zblorb` output format,
+which is a `z8` file packaged with extra bibliographic information: the 
+metaphorical cover, title page, and other details wrapped around a published
+book. This is generally better for a proper release, but it requires you to
+include those various details, making it less good for the brief examples in the
+manual.
 
 The examples in Part I do not make use of the standard library at all, so they
 are compiled like this:
 
-`dialogc -t z8 example.dg`
-
-When you use the `z5` output format, the resulting file is limited to
-256 KiB, compared to 512 KiB for `z8`. However, the `z5` format is
-more compact, and switching to this format can reduce the size of the story file
-by about 5%.
+`dialogc -t z5 example.dg`
 
 === Producing stories for the Å-machine
 
@@ -138,6 +138,15 @@ aambundle -o my_game example.aastory
 creates a directory called `my_game`, and populates it with all the
 necessary `html`, `css`, and `js` files. Simply point a web
 browser to the `play.html` file in this directory to run the game.
+
+Only one of the `js` files in that directory contains the story itself; the rest
+provide all the interpreter machinery to run it. To rebuild only that one `js`
+file without overwriting any changes you've made to the others, use:
+
+[role=output]
+```
+aambundle -t web:story -o my_game/resources/story.js example.aastory
+```
 
 To create a Commodore 64 disk image, use the following command instead:
 

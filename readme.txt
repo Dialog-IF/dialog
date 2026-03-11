@@ -57,9 +57,16 @@ Release notes:
 		Documentation: the @tree and @dynamic debugging commands are now
 		properly documented, though they've existed for some time.
 		
+		Compiler: warnings and errors about missing IFIDs will now
+		generate a new IFID to use, if possible.
+		
 		Compiler: access predicates consisting of a single multi-query
 		no longer crash the compiler when negated.
 		
+		Compiler: a new --override-serial option makes builds reproducible
+		by overriding the release date and serial number fields. This is
+		not recommended, but occasionally necessary.
+    
 		Compiler: --word-seps option can change which characters are
 		considered word separators (by default . , ; ( ) " * )
 		
@@ -86,10 +93,21 @@ Release notes:
 		supported on Å-machine. The predicates will still fail if the
 		interpreter cannot provide the information.
 		
+		Backend: Å-machine backend now reports when non-ASCII characters
+		are added to the character set.
+		
 		Debugger: --width -1 disables word wrapping, for piping to other
 		programs.
 		
-		Library: New commands SUPERBRIEF, BRIEF, VERBOSE, and SUPERVERBOSE
+		Debugger: --no-header option suppresses version information, for
+		the same reason.
+		
+		Debugger: now tags fixed-width text with an ANSI escape sequence.
+
+		Debugger: terminal width will now be measured immediately after
+		launching.
+		
+		Library: new commands SUPERBRIEF, BRIEF, VERBOSE, and SUPERVERBOSE
 		change how rooms are described while going. The default behavior
 		is VERBOSE: rooms are described in full when moving one step at a
 		time, but abbreviated when travelling long distances.
