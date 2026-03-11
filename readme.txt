@@ -96,6 +96,8 @@ Release notes:
 		Debugger: --width -1 disables word wrapping, for piping to other
 		programs.
 		
+		Debugger: now tags fixed-width text with an ANSI escape sequence.
+
 		Debugger: terminal width will now be measured immediately after
 		launching.
 		
