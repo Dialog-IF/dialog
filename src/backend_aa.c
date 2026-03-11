@@ -157,6 +157,8 @@ static int cmp_aadict_len(const void *a, const void *b) {
 
 static uint8_t resolve_aachar(uint32_t uchar) {
 	int i;
+	uint8_t utf8[5]; // For logging purposes
+	uint16_t utf16; // Ditto
 
 	if(uchar < 127) {
 		return uchar;
@@ -172,6 +174,9 @@ static uint8_t resolve_aachar(uint32_t uchar) {
 			exit(1);
 		}
 
+		utf16 = (uint16_t)uchar;
+		unicode_to_utf8_n(utf8, 5, &utf16, 1); // Convert to UTF-8 sequence
+		report(LVL_DEBUG, 0, "Adding Unicode character U+%04x (%s) at codepoint %d", uchar, utf8, 128+i);
 		charmap[i].glyph = uchar;
 		ncharmap++;
 

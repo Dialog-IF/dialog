@@ -93,13 +93,21 @@ Release notes:
 		supported on Å-machine. The predicates will still fail if the
 		interpreter cannot provide the information.
 		
+		Backend: Å-machine backend now reports when non-ASCII characters
+		are added to the character set.
+		
 		Debugger: --width -1 disables word wrapping, for piping to other
 		programs.
 		
 		Debugger: --no-header option suppresses version information, for
 		the same reason.
 		
-		Library: New commands SUPERBRIEF, BRIEF, VERBOSE, and SUPERVERBOSE
+		Debugger: now tags fixed-width text with an ANSI escape sequence.
+
+		Debugger: terminal width will now be measured immediately after
+		launching.
+		
+		Library: new commands SUPERBRIEF, BRIEF, VERBOSE, and SUPERVERBOSE
 		change how rooms are described while going. The default behavior
 		is VERBOSE: rooms are described in full when moving one step at a
 		time, but abbreviated when travelling long distances.

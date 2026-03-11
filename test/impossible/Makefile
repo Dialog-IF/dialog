@@ -1,7 +1,7 @@
 # Call `make DIFF=meld`, for example, to get a fancy diff
 DIFF = diff
 
-all: test
+all: test clean
 
 # Ensure we don't have to worry about (serial number) changing by date
 stdlib.dg: ../../stdlib.dg
