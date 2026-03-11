@@ -57,9 +57,16 @@ Release notes:
 		Documentation: the @tree and @dynamic debugging commands are now
 		properly documented, though they've existed for some time.
 		
+		Compiler: warnings and errors about missing IFIDs will now
+		generate a new IFID to use, if possible.
+		
 		Compiler: access predicates consisting of a single multi-query
 		no longer crash the compiler when negated.
 		
+		Compiler: a new --override-serial option makes builds reproducible
+		by overriding the release date and serial number fields. This is
+		not recommended, but occasionally necessary.
+    
 		Compiler: --word-seps option can change which characters are
 		considered word separators (by default . , ; ( ) " * )
 		
@@ -90,6 +97,9 @@ Release notes:
 		programs.
 		
 		Debugger: now tags fixed-width text with an ANSI escape sequence.
+
+		Debugger: terminal width will now be measured immediately after
+		launching.
 		
 		Library: new commands SUPERBRIEF, BRIEF, VERBOSE, and SUPERVERBOSE
 		change how rooms are described while going. The default behavior
