@@ -402,6 +402,7 @@ xref:npc.adoc#asktell[`(topic keyword $ implies $)`] +
 xref:traits.adoc#categorytraits[`(towards-name $)`] +
 xref:lang:io.adoc#debugging[`(trace off)`] +
 xref:lang:io.adoc#debugging[`(trace on)`] +
+xref:lang:builtins.adoc#system[`(transcript active)`] +
 xref:lang:builtins.adoc#system[`(transcript off)`] +
 xref:lang:builtins.adoc#system[`(transcript on)`] +
 xref:actions.adoc#actionprocess[`(try $)`] +
