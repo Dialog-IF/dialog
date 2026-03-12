@@ -85,7 +85,7 @@ void term_get_size(int *width, int *height) {
 
 	if(!ioctl(0, TIOCGWINSZ, &ws)) {
 		*width = (ws.ws_col >= 1)? ws.ws_col - 1 : 0;
-		if(io_tag_lines) width -= 2; // For the tags
+		if(io_tag_lines) *width -= 2; // For the tags
 		*height = ws.ws_row;
 		term_height = ws.ws_row;
 	} else {

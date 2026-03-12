@@ -1,0 +1,21 @@
+An Interactive Fiction
+An interactive fiction by Anonymous.
+Release 1. Serial number <SERIAL>.
+<COMPILER>. <LIBRARY>
+
+Library
+The wall features a poster and a button.
+
+> x poster
+It shows the alphabet: A B C D E F G H I J K L M N O P Q R S T U V W X Y Z a b c
+d e f g h i j k l m n o p q r s t u v w x y z
+
+> push button
+Are you sure? > yes
+There's a flash of light...
+
+[Press any key to continue]
+
+And then nothing happens. Oh well.
+
+>

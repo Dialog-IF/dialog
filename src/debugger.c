@@ -45,7 +45,7 @@ struct debugger {
 
 static int force_width;
 extern int use_numbered_levels; // Defined in eval.c
-int io_tag_lines = 0; // Used in term_tty.c
+int io_tag_lines = 0; // Used in term_tty.c, output.c
 
 char *STOPCHARS; // Declared in common.h, defined here and in backend.c
 
@@ -1419,7 +1419,7 @@ int debugger(int argc, char **argv) {
 	comp_init();
 
 	if(io_tag_lines) o_line(); // Avoid special cases
-  if(!suppress_header) {
+	if(!suppress_header) {
 		o_begin_box("intdebugger");
 		o_set_style(STYLE_BOLD);
 		o_print_str(DEBUGGERNAME ".");
