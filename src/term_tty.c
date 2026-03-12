@@ -132,6 +132,11 @@ int term_sendlf() {
 	return 0;
 }
 
+int term_sendfakelf() {
+	if(io_tag_lines) printf("  ");
+	return 0;
+}
+
 void term_clear(int all) {
 	if(unread_lines && isatty(1)) {
 		term_effectstyle(0);

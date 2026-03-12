@@ -407,7 +407,7 @@ void o_clear(int all) {
 	space = SP_DONELINE + (dfrotz_quirks? 999 : 0);
 	column = 0;
 	delayed_spaces = 0;
-	if(io_tag_lines) term_sendlf();
+	if(io_tag_lines) term_sendfakelf();
 }
 
 void o_post_input(int external_lf) {
@@ -416,7 +416,7 @@ void o_post_input(int external_lf) {
 		space = SP_DONELINE + (dfrotz_quirks? 999 : 0);
 		column = 0;
 		delayed_spaces = 0;
-		if(io_tag_lines) term_sendlf();
+		if(io_tag_lines) term_sendfakelf();
 	}
 }
 
