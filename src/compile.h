@@ -91,6 +91,7 @@ enum {
 	I_IF_HAVE_LINK,		// -- implicit routine, subop = negate
 	I_IF_HAVE_UNDO,		// -- implicit routine, subop = negate
 	I_IF_HAVE_QUIT,		// -- implicit routine, subop = negate
+	I_IF_SCRIPT_ACTIVE,	// -- implicit routine, subop = negate
 	I_IF_HAVE_STATUS,	// -- implicit routine, raw area number, subop = negate
 	I_IF_CAN_EMBED,		// -- value, implicit routine, subop = negate
 

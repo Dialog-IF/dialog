@@ -109,6 +109,7 @@ void term_effectstyle(int style) {
 		if(style & STYLE_ITALIC) printf("\033[4m");
 		if(style & STYLE_REVERSE) printf("\033[7m");
 		if(style & STYLE_DEBUG) printf("\033[36m");
+		if(style & STYLE_FIXED) printf("\033[50m"); // Not widely supported by terminals, but can be used by external tools
 	}
 	termstyle = style;
 }
