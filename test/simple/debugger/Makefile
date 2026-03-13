@@ -35,6 +35,10 @@ linetags.out: $(DGDEBUG) linetags.debug linetags.in
 	$(DGDEBUG) -qD -w 80 -s 1234 linetags.debug --no-header --tag-lines <linetags.in >linetags.out
 	perl -i -pe 's/ $$//' linetags.out
 
+numbered.out: $(DGDEBUG) numbered.dg dummylib.dglib
+	$(DGDEBUG) -qD -w 80 -s 1234 numbered.dg dummylib.dglib --numbered >numbered.out
+	perl -i -pe 's/ $$//' numbered.out
+
 %.out: $(DGDEBUG) %.debug %.in
 	$(DGDEBUG) -qD -w 80 -s 1234 $*.debug <$*.in >$*.out
 ## Remove trailing spaces from lines for easier diffing
@@ -47,6 +51,6 @@ linetags.out: $(DGDEBUG) linetags.debug linetags.in
 	diff $*.out $*.gold || meld $*.out $*.gold
 
 clean:
-	rm -rf *.out *.debug *.dglib
+	rm -rf *.out *.debug stdlib.dglib
 
 .PHONY: all test clean
