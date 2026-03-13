@@ -54,6 +54,8 @@ static int dfrotz_quirks;
 static int force_width;
 static int nowrap;
 
+extern int io_tag_lines; // debugger.c
+
 // These routines correspond to part of what the Z-machine is doing.
 
 static void syncwrap();
@@ -406,6 +408,7 @@ void o_clear(int all) {
 	space = SP_DONELINE + (dfrotz_quirks? 999 : 0);
 	column = 0;
 	delayed_spaces = 0;
+	if(io_tag_lines) term_sendfakelf();
 }
 
 void o_post_input(int external_lf) {
@@ -414,6 +417,7 @@ void o_post_input(int external_lf) {
 		space = SP_DONELINE + (dfrotz_quirks? 999 : 0);
 		column = 0;
 		delayed_spaces = 0;
+		if(io_tag_lines) term_sendfakelf();
 	}
 	// Reset the style to 0, then set it back to what it should be
 	// This helps external tools parse the output

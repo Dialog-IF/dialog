@@ -104,6 +104,9 @@ Release notes:
 		Debugger: --no-header option suppresses version information, for
 		the same reason.
 		
+		Debugger: --tag-lines option explicitly marks requests for key
+		and line input, for the same reason.
+		
 		Debugger: now tags fixed-width text with an ANSI escape sequence.
 
 		Debugger: terminal width will now be measured immediately after
