@@ -49,6 +49,8 @@ Release notes:
 		Language: new escape syntax \x{3C4} is equivalent to the Unicode
 		character U+03C4.
 		
+		Language: added (transcript active).
+		
 		Distribution: added unit.dg, a library for unit testing.
 		
 		Documentation: the library reference now includes special syntax
@@ -69,7 +71,7 @@ Release notes:
 		Compiler: a new --override-serial option makes builds reproducible
 		by overriding the release date and serial number fields. This is
 		not recommended, but occasionally necessary.
-    
+		
 		Compiler: --word-seps option can change which characters are
 		considered word separators (by default . , ; ( ) " * )
 		
@@ -96,13 +98,27 @@ Release notes:
 		supported on Å-machine. The predicates will still fail if the
 		interpreter cannot provide the information.
 		
+		Backend: Å-machine backend now reports when non-ASCII characters
+		are added to the character set.
+		
 		Debugger: --width -1 disables word wrapping, for piping to other
 		programs.
 		
-		Library: New commands SUPERBRIEF, BRIEF, VERBOSE, and SUPERVERBOSE
+		Debugger: --no-header option suppresses version information, for
+		the same reason.
+		
+		Debugger: now tags fixed-width text with an ANSI escape sequence.
+
+		Debugger: terminal width will now be measured immediately after
+		launching.
+		
+		Library: new commands SUPERBRIEF, BRIEF, VERBOSE, and SUPERVERBOSE
 		change how rooms are described while going. The default behavior
 		is VERBOSE: rooms are described in full when moving one step at a
 		time, but abbreviated when travelling long distances.
+		
+		Library: Transcript comments (commands starting with an asterisk)
+		now produce a warning if transcripting is not active.
 
 	1a/01, Lib 1.1.0:
 	
