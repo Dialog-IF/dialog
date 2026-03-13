@@ -184,7 +184,7 @@ For anything more elaborate than that, you’ll have to rely on Watson. Once
 you’ve drawn his attention to something, the link bar will show the various
 things he can do with it.
 
-You can also type in commands for Watson directly, like TAKE THE BALL . This is
+You can also type in commands for Watson directly, like TAKE THE BALL. This is
 never truly necessary—the game can be played entirely via links—but can
 sometimes be easier than searching for the right link for what you want to
 express.
@@ -229,13 +229,13 @@ Watson bats at the toy, but the treat doesn’t come out. It’ll take more forc
 than that.
 
 A few special commands are always available:
-- <UNDO > to take back your last action
-- <SAVE > and <RESTORE > to save your game
-- <THINK > to list the puzzles you’re facing and the ones you’ve already solved
-- <HELP > for a full list of commands
-- <ABOUT > for information about the game
-- <MAP > to see a map of the house
-- <HINTS > if you’re stuck on a puzzle
+- <UNDO> to take back your last action
+- <SAVE> and <RESTORE> to save your game
+- <THINK> to list the puzzles you’re facing and the ones you’ve already solved
+- <HELP> for a full list of commands
+- <ABOUT> for information about the game
+- <MAP> to see a map of the house
+- <HINTS> if you’re stuck on a puzzle
 There are links to these at the top of the page for easy access.
 
 <look> - <Watson> - holding <the rubber ball>
