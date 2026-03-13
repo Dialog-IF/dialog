@@ -170,6 +170,10 @@ int term_sendlf() {
 	return 0;
 }
 
+int term_sendfakelf() {
+	return 0;
+}
+
 void term_effectstyle(int style) {
 	if(style != termstyle) {
 		if(!style) {

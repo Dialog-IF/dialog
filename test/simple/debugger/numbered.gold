@@ -1,0 +1,185 @@
+| 1 FOUND (trace on) numbered.dg:17
+| 1 QUERY (try 1) numbered.dg:18
+| 2 ENTER (try 1) numbered.dg:3
+One!
+
+* * *
+
+| 1 FOUND (try 1) numbered.dg:18
+| 1 QUERY (try 5) numbered.dg:19
+| 2 ENTER (try 5) numbered.dg:5
+| 2 QUERY (5 modulo 2 into 0) numbered.dg:6
+| 2 ENTER (try 5) numbered.dg:10
+| 2 QUERY (5 times 3 into $) numbered.dg:11
+| 2 FOUND (5 times 3 into 15) numbered.dg:11
+| 2 QUERY (15 plus 1 into $) numbered.dg:12
+| 2 FOUND (15 plus 1 into 16) numbered.dg:12
+5>>
+| 2 QUERY (try 16) numbered.dg:14
+| 3 ENTER (try 16) numbered.dg:5
+| 3 QUERY (16 modulo 2 into 0) numbered.dg:6
+| 3 FOUND (16 modulo 2 into 0) numbered.dg:6
+| 3 QUERY (16 divided by 2 into $) numbered.dg:7
+| 3 FOUND (16 divided by 2 into 8) numbered.dg:7
+16>
+| 3 QUERY (try 8) numbered.dg:9
+| 4 ENTER (try 8) numbered.dg:5
+| 4 QUERY (8 modulo 2 into 0) numbered.dg:6
+| 4 FOUND (8 modulo 2 into 0) numbered.dg:6
+| 4 QUERY (8 divided by 2 into $) numbered.dg:7
+| 4 FOUND (8 divided by 2 into 4) numbered.dg:7
+8>
+| 4 QUERY (try 4) numbered.dg:9
+| 5 ENTER (try 4) numbered.dg:5
+| 5 QUERY (4 modulo 2 into 0) numbered.dg:6
+| 5 FOUND (4 modulo 2 into 0) numbered.dg:6
+| 5 QUERY (4 divided by 2 into $) numbered.dg:7
+| 5 FOUND (4 divided by 2 into 2) numbered.dg:7
+4>
+| 5 QUERY (try 2) numbered.dg:9
+| 6 ENTER (try 2) numbered.dg:5
+| 6 QUERY (2 modulo 2 into 0) numbered.dg:6
+| 6 FOUND (2 modulo 2 into 0) numbered.dg:6
+| 6 QUERY (2 divided by 2 into $) numbered.dg:7
+| 6 FOUND (2 divided by 2 into 1) numbered.dg:7
+2>
+| 6 QUERY (try 1) numbered.dg:9
+| 7 ENTER (try 1) numbered.dg:3
+One!
+
+* * *
+
+| 6 FOUND (try 1) numbered.dg:9
+| 5 FOUND (try 2) numbered.dg:9
+| 4 FOUND (try 4) numbered.dg:9
+| 3 FOUND (try 8) numbered.dg:9
+| 2 FOUND (try 16) numbered.dg:14
+| 1 FOUND (try 5) numbered.dg:19
+| 1 QUERY (try 11) numbered.dg:20
+| 2 ENTER (try 11) numbered.dg:5
+| 2 QUERY (11 modulo 2 into 0) numbered.dg:6
+| 2 ENTER (try 11) numbered.dg:10
+| 2 QUERY (11 times 3 into $) numbered.dg:11
+| 2 FOUND (11 times 3 into 33) numbered.dg:11
+| 2 QUERY (33 plus 1 into $) numbered.dg:12
+| 2 FOUND (33 plus 1 into 34) numbered.dg:12
+11>>
+| 2 QUERY (try 34) numbered.dg:14
+| 3 ENTER (try 34) numbered.dg:5
+| 3 QUERY (34 modulo 2 into 0) numbered.dg:6
+| 3 FOUND (34 modulo 2 into 0) numbered.dg:6
+| 3 QUERY (34 divided by 2 into $) numbered.dg:7
+| 3 FOUND (34 divided by 2 into 17) numbered.dg:7
+34>
+| 3 QUERY (try 17) numbered.dg:9
+| 4 ENTER (try 17) numbered.dg:5
+| 4 QUERY (17 modulo 2 into 0) numbered.dg:6
+| 4 ENTER (try 17) numbered.dg:10
+| 4 QUERY (17 times 3 into $) numbered.dg:11
+| 4 FOUND (17 times 3 into 51) numbered.dg:11
+| 4 QUERY (51 plus 1 into $) numbered.dg:12
+| 4 FOUND (51 plus 1 into 52) numbered.dg:12
+17>>
+| 4 QUERY (try 52) numbered.dg:14
+| 5 ENTER (try 52) numbered.dg:5
+| 5 QUERY (52 modulo 2 into 0) numbered.dg:6
+| 5 FOUND (52 modulo 2 into 0) numbered.dg:6
+| 5 QUERY (52 divided by 2 into $) numbered.dg:7
+| 5 FOUND (52 divided by 2 into 26) numbered.dg:7
+52>
+| 5 QUERY (try 26) numbered.dg:9
+| 6 ENTER (try 26) numbered.dg:5
+| 6 QUERY (26 modulo 2 into 0) numbered.dg:6
+| 6 FOUND (26 modulo 2 into 0) numbered.dg:6
+| 6 QUERY (26 divided by 2 into $) numbered.dg:7
+| 6 FOUND (26 divided by 2 into 13) numbered.dg:7
+26>
+| 6 QUERY (try 13) numbered.dg:9
+| 7 ENTER (try 13) numbered.dg:5
+| 7 QUERY (13 modulo 2 into 0) numbered.dg:6
+| 7 ENTER (try 13) numbered.dg:10
+| 7 QUERY (13 times 3 into $) numbered.dg:11
+| 7 FOUND (13 times 3 into 39) numbered.dg:11
+| 7 QUERY (39 plus 1 into $) numbered.dg:12
+| 7 FOUND (39 plus 1 into 40) numbered.dg:12
+13>>
+| 7 QUERY (try 40) numbered.dg:14
+| 8 ENTER (try 40) numbered.dg:5
+| 8 QUERY (40 modulo 2 into 0) numbered.dg:6
+| 8 FOUND (40 modulo 2 into 0) numbered.dg:6
+| 8 QUERY (40 divided by 2 into $) numbered.dg:7
+| 8 FOUND (40 divided by 2 into 20) numbered.dg:7
+40>
+| 8 QUERY (try 20) numbered.dg:9
+| 9 ENTER (try 20) numbered.dg:5
+| 9 QUERY (20 modulo 2 into 0) numbered.dg:6
+| 9 FOUND (20 modulo 2 into 0) numbered.dg:6
+| 9 QUERY (20 divided by 2 into $) numbered.dg:7
+| 9 FOUND (20 divided by 2 into 10) numbered.dg:7
+20>
+| 9 QUERY (try 10) numbered.dg:9
+|10 ENTER (try 10) numbered.dg:5
+|10 QUERY (10 modulo 2 into 0) numbered.dg:6
+|10 FOUND (10 modulo 2 into 0) numbered.dg:6
+|10 QUERY (10 divided by 2 into $) numbered.dg:7
+|10 FOUND (10 divided by 2 into 5) numbered.dg:7
+10>
+|10 QUERY (try 5) numbered.dg:9
+|11 ENTER (try 5) numbered.dg:5
+|11 QUERY (5 modulo 2 into 0) numbered.dg:6
+|11 ENTER (try 5) numbered.dg:10
+|11 QUERY (5 times 3 into $) numbered.dg:11
+|11 FOUND (5 times 3 into 15) numbered.dg:11
+|11 QUERY (15 plus 1 into $) numbered.dg:12
+|11 FOUND (15 plus 1 into 16) numbered.dg:12
+5>>
+|11 QUERY (try 16) numbered.dg:14
+|12 ENTER (try 16) numbered.dg:5
+|12 QUERY (16 modulo 2 into 0) numbered.dg:6
+|12 FOUND (16 modulo 2 into 0) numbered.dg:6
+|12 QUERY (16 divided by 2 into $) numbered.dg:7
+|12 FOUND (16 divided by 2 into 8) numbered.dg:7
+16>
+|12 QUERY (try 8) numbered.dg:9
+|13 ENTER (try 8) numbered.dg:5
+|13 QUERY (8 modulo 2 into 0) numbered.dg:6
+|13 FOUND (8 modulo 2 into 0) numbered.dg:6
+|13 QUERY (8 divided by 2 into $) numbered.dg:7
+|13 FOUND (8 divided by 2 into 4) numbered.dg:7
+8>
+|13 QUERY (try 4) numbered.dg:9
+|14 ENTER (try 4) numbered.dg:5
+|14 QUERY (4 modulo 2 into 0) numbered.dg:6
+|14 FOUND (4 modulo 2 into 0) numbered.dg:6
+|14 QUERY (4 divided by 2 into $) numbered.dg:7
+|14 FOUND (4 divided by 2 into 2) numbered.dg:7
+4>
+|14 QUERY (try 2) numbered.dg:9
+|15 ENTER (try 2) numbered.dg:5
+|15 QUERY (2 modulo 2 into 0) numbered.dg:6
+|15 FOUND (2 modulo 2 into 0) numbered.dg:6
+|15 QUERY (2 divided by 2 into $) numbered.dg:7
+|15 FOUND (2 divided by 2 into 1) numbered.dg:7
+2>
+|15 QUERY (try 1) numbered.dg:9
+|16 ENTER (try 1) numbered.dg:3
+One!
+
+* * *
+
+|15 FOUND (try 1) numbered.dg:9
+|14 FOUND (try 2) numbered.dg:9
+|13 FOUND (try 4) numbered.dg:9
+|12 FOUND (try 8) numbered.dg:9
+|11 FOUND (try 16) numbered.dg:14
+|10 FOUND (try 5) numbered.dg:9
+| 9 FOUND (try 10) numbered.dg:9
+| 8 FOUND (try 20) numbered.dg:9
+| 7 FOUND (try 40) numbered.dg:14
+| 6 FOUND (try 13) numbered.dg:9
+| 5 FOUND (try 26) numbered.dg:9
+| 4 FOUND (try 52) numbered.dg:14
+| 3 FOUND (try 17) numbered.dg:9
+| 2 FOUND (try 34) numbered.dg:14
+| 1 FOUND (try 11) numbered.dg:20
+

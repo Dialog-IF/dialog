@@ -54,6 +54,8 @@ static int dfrotz_quirks;
 static int force_width;
 static int nowrap;
 
+extern int io_tag_lines; // debugger.c
+
 // These routines correspond to part of what the Z-machine is doing.
 
 static void syncwrap();
@@ -280,13 +282,14 @@ void o_set_style(int style) {
 	if(!boxstack[boxsp].visible) return;
 
 	if(style) {
-		if(space == SP_AUTO || space == SP_SPACE) {
+		// https://github.com/Dialog-IF/dialog/issues/189
+	/*	if(space == SP_AUTO || space == SP_SPACE) {
 			sendspace();
 			space = SP_DONESPACE;
 		} else if(space == SP_NBSP) {
 			sendnbsp();
 			space = SP_DONESPACE;
-		}
+		}	*/
 		boxstack[boxsp].style |= style;
 	} else {
 		boxstack[boxsp].style &= STYLE_DEBUG;
@@ -405,6 +408,7 @@ void o_clear(int all) {
 	space = SP_DONELINE + (dfrotz_quirks? 999 : 0);
 	column = 0;
 	delayed_spaces = 0;
+	if(io_tag_lines) term_sendfakelf();
 }
 
 void o_post_input(int external_lf) {
@@ -413,7 +417,12 @@ void o_post_input(int external_lf) {
 		space = SP_DONELINE + (dfrotz_quirks? 999 : 0);
 		column = 0;
 		delayed_spaces = 0;
+		if(io_tag_lines) term_sendfakelf();
 	}
+	// Reset the style to 0, then set it back to what it should be
+	// This helps external tools parse the output
+	term_effectstyle(0);
+	term_effectstyle(wrapstyle);
 }
 
 void o_reset(int force_w, int quirks) {
