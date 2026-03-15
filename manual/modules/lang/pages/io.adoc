@@ -148,14 +148,14 @@ The standard library uses this to define the following convenient predicates:
 [source]
 ----
 (A full $Obj)	(uppercase) (a full $Obj)
-(A $Obj)	    (uppercase) (a $Obj)
-(It $Obj)	    (uppercase) (it $Obj)
-(Its $Obj)	    (uppercase) (its $Obj)
-(Name $Obj)	    (uppercase) (name $Obj)
-(That $Obj)	    (uppercase) (that $Obj)
+(A $Obj)		(uppercase) (a $Obj)
+(It $Obj)		(uppercase) (it $Obj)
+(Its $Obj)		(uppercase) (its $Obj)
+(Name $Obj)		(uppercase) (name $Obj)
+(That $Obj)		(uppercase) (that $Obj)
 (The full $Obj)	(uppercase) (the full $Obj)
 (The $Obj is)	(uppercase) (the $Obj is)
-(The $Obj)	    (uppercase) (the $Obj)
+(The $Obj)		(uppercase) (the $Obj)
 ----
 
 The built-in predicate `(space $)` prints a given number of space characters in succession.
@@ -823,3 +823,66 @@ each of those two objects in turn.
 But if there are dozens of large hats, `$Obj` may instead be left unbound;
 the compiler is allowed to make a trade-off between speed and memory footprint.
 Either way, after this step, the operation proceeds as in the unoptimized case.
+
+[#bodystyle]
+=== Body styles
+
+It is also possible to set the "body style" of the story: the style used outside
+of any divs and spans. This is a dangerous power, and is less widely supported
+than ordinary divs and spans; results may vary from interpreter to interpreter.
+Still, adjusting the background color of the page can be an effective way to
+mark a dramatic shift in the game, or just to set a more interesting mood than
+the default black and white.
+
+To set a new body style:
+
+[source]
+----
+	(body style $Class)
+----
+
+Or undo it again:
+
+[source]
+----
+	(reset body style)
+----
+
+The latter is equivalent to setting the body style to an empty style class, and
+in fact, that's how it is implemented under the hood. Whether a new body style
+applies to existing text depends on the interpreter, so it is safest to
+`(clear)` the screen after changing the body style.
+
+In theory, a body style can use all the same properties as a div or span style,
+but in practice, `color` and `background-color` are the most useful. These,
+though, come with their own set of caveats. Most Z-machine interpreters only
+apply a new background color after `(clear)`ing the screen---but some, like
+Gargoyle, apply a new background color at the next `(get key $)` or `(get input 
+$)` instead. Gargoyle also applies a body style's `color` to existing text, but
+only if that text has no color of its own (from a div, span, or previous body
+style); other interpreters do not.
+
+On the Å-machine, only the web interpreter supports body styles. It applies them
+to the entire screen (including existing text) immediately, without waiting for
+a `(clear)`. Setting the `color` and `background-color`, though, may produce
+unexpected results. If the user has set dark mode, either explicitly in the
+interpreter options or implicitly in their browser settings, that may override
+the `color` and `background-color`---or worse, only one of the two!
+
+For this interpreter specifically, a set of custom properties are provided, to
+work with the user's dark mode setting rather than against it:
+
+----
+--black: #000000; // Used for overall background in night mode and text in day mode
+--white: #eeeeee; // Used for overall background in day mode and menu options when hovered
+--darkgray: #222222; // Used for transcript text/background depending on mode
+--medgray: #888888; // Used for the menu lines, "close" button on the transcript, and "about" background
+--lightgray: #cccccc; // Used for text in night mode, menu background, progress bar outline
+--offwhite: #dddddd; // Used for menu lines and "close" button hover, transcript text/background
+--progtop: #d3d3d3; // Top half of the progress bar
+--progbot: #c4c4c4; // Bottom half of the progress bar
+--link: #875; // Links
+--alink: #aa8; // Hovered links
+----
+
+These properties are not recognized by the other backends.
