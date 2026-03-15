@@ -399,6 +399,25 @@ to its location is printed. By default, this flag is enabled for all
 non-singleton doors, so that the game might ask the player: Did you want to open
 the door to the north or the door to the east?
 
+[#taggednames]
+== Name tags
+
+Technically, `(a $)` and `(the $)` don't directly call `(name $)`. Instead, they
+call an intermediate predicate `(tagged name $)`, which calls `(name $)`.
+
+Most authors will never need to work with `(tagged name $)`, and this extra
+layer of indirection will be optimized away by the compiler. Sometimes, though,
+it is useful to attach extra words to the beginning or end of an object's name,
+for an entire category of objects:
+
+```
+(tagged name (container $Obj))
+	($Obj is open)
+	open (name $Obj)
+(an (container $Obj))
+	($Obj is open)
+```
+
 [#categorytraits]
 == Standard traits for categorizing objects
 
