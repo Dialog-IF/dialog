@@ -1412,11 +1412,32 @@ static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an,
 	|| an->predicate->builtin == BI_CLEAR_DIV
 	|| an->predicate->builtin == BI_CLEAR_OLD
 	|| an->predicate->builtin == BI_CLEAR_STATUS
+	|| an->predicate->builtin == BI_GLOBAL_UNSTYLE
 	|| an->predicate->builtin == BI_SERIALNUMBER
 	|| an->predicate->builtin == BI_COMPILERVERSION
 	|| an->predicate->builtin == BI_MEMSTATS) {
 		ci = add_instr(I_BUILTIN);
 		ci->oper[2] = (value_t) {OPER_PRED, an->predicate->pred_id};
+		post_rule_trace(prg, cl, an, seen);
+		return 0;
+	}
+	
+	if(an->predicate->builtin == BI_GLOBAL_STYLE) {
+		int box;
+		if(an->children[0]->kind == AN_DICTWORD) {
+			box = find_boxclass(prg, an->children[0]->word);
+		} else {
+			report(
+				LVL_ERR,
+				an->line,
+				"The parameter of (global style $) must be a dictionary word."
+				);
+			prg->errorflag = 1;
+			box = -1;
+		}
+		ci = add_instr(I_BUILTIN);
+		ci->oper[2] = (value_t) {OPER_PRED, an->predicate->pred_id};
+		ci->oper[0] = (value_t) {OPER_BOX, box};
 		post_rule_trace(prg, cl, an, seen);
 		return 0;
 	}
