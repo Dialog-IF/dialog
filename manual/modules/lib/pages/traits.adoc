@@ -411,11 +411,13 @@ it is useful to attach extra words to the beginning or end of an object's name,
 for an entire category of objects:
 
 ```
-(tagged name (container $Obj))
+(open container $Obj)
+	(container $Obj)
+	~(room $Obj)
 	($Obj is open)
+(tagged name (open container $Obj))
 	open (name $Obj)
-(an (container $Obj))
-	($Obj is open)
+(an (open container $Obj))
 ```
 
 [#categorytraits]
