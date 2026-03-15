@@ -526,6 +526,7 @@ static value_t value_of(value_t v, struct eval_state *es) {
 		env = &es->envstack[es->env];
 		assert(v.value < env->nvar);
 		return env->vars[v.value];
+	case OPER_BOX: // Only for BI_GLOBAL_STYLE, currently unimplemented
 	case VAL_NUM:
 	case VAL_OBJ:
 	case VAL_DICT:
