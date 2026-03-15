@@ -1,0 +1,30 @@
+#player
+(current player *)
+(* is #in #room)
+
+#room
+(room *)
+
+#box
+(name *) box
+(container *)
+(* is #in #room)
+(* is open)
+(item *)
+(* is handled)
+
+#crate
+(name *) crate
+(container *)
+(* is #in #room)
+(* is closed)
+(item *)
+(* is handled)
+
+(tagged name (container $Obj))
+	~(room $Obj)
+	($Obj is open)
+	open (name $Obj)
+(an (container $Obj))
+	~(room $Obj)
+	($Obj is open)

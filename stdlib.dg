@@ -387,7 +387,7 @@
 %% Rooms and doors
 
 (name (room $))		location
-(room header $Room)	(Expanded name $Room)
+(room header $Room)	(Tagged name $Room)
 (look (room $R))	You are here.
 
 (interface (from $<Room go $>Dir to room $>Obj))
@@ -4170,7 +4170,7 @@
 (interface (A $<Obj))
 (interface (A full $<Obj))
 (interface (Name $<Obj))
-(interface (Expanded name $<Obj))
+(interface (Tagged name $<Obj))
 (interface (The $<Obj))
 (interface (The full $<Obj))
 
@@ -4372,7 +4372,7 @@
 (interface (Its $<Obj))
 
 (Name $Obj)		(uppercase) (name $Obj)
-(Expanded name $Obj)	(uppercase) (tagged name $Obj)
+(Tagged name $Obj)	(uppercase) (tagged name $Obj)
 (A $Obj)		(uppercase) (a $Obj)
 (The $Obj)		(uppercase) (the $Obj)
 (A full $Obj)		(uppercase) (a full $Obj)
