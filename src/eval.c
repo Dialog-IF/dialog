@@ -1241,6 +1241,9 @@ static int eval_builtin(struct eval_state *es, int builtin, value_t o1, value_t 
 			o_set_style(STYLE_FIXED);
 		}
 		break;
+	case BI_GLOBAL_STYLE: // Not currently supported, but could be
+	case BI_GLOBAL_UNSTYLE:
+		break;
 	case BI_ITALIC:
 		if(!es->forwords) {
 			o_set_style(STYLE_ITALIC);
