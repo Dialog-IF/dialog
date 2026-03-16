@@ -1537,9 +1537,21 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 					ai = add_instr(AA_AUX_POP_LIST);
 					ai->oper[0] = (aaoper_t) {AAO_STORE_REG, REG_TMP};
 					ai = add_instr(AA_MAKE_PAIR_D);
-					ai->oper[0] = encode_dest(ci->oper[0], prg, 1);
 					ai->oper[1] = (aaoper_t) {AAO_REG, REG_NIL};
 					ai->oper[2] = (aaoper_t) {AAO_REG, REG_TMP};
+					// If we can store directly into the result, then do it
+					if(ci->oper[0].tag == OPER_TEMP
+					|| ci->oper[0].tag == OPER_VAR
+					|| ci->oper[0].tag == OPER_ARG
+					|| ci->oper[0].tag == VAL_NIL) {
+						ai->oper[0] = encode_dest(ci->oper[0], prg, 1);
+					} else {
+						// Otherwise, store into REG_TMP, then unify
+						ai->oper[0] = (aaoper_t) {AAO_STORE_REG, REG_TMP};
+						ai = add_instr(AA_ASSIGN);
+						ai->oper[0] = encode_value(ci->oper[0], prg);
+						ai->oper[1] = (aaoper_t) {AAO_REG, REG_TMP};
+					}
 				} else {
 					ai = add_instr(AA_AUX_POP_LIST);
 					if(ci->oper[0].tag == OPER_TEMP
