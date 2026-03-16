@@ -63,7 +63,7 @@ jobs:
       - name: build site with antora
         run: |
           cd manual
-          npm i @antora/lunr-extension
+          npm i https://github.com/Randozart/dialog-antora-lunr-extension#dialog-punctuation-fix
           npx antora@3.1.10 ./local-antora-playbook.yml
       - uses: actions/upload-artifact@v4
         with:
