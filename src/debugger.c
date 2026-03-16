@@ -45,6 +45,7 @@ struct debugger {
 
 static int force_width;
 extern int use_numbered_levels; // Defined in eval.c
+extern int return_value; // Defined in eval.c
 int io_tag_lines = 0; // Used in term_tty.c, output.c
 
 char *STOPCHARS; // Declared in common.h, defined here and in backend.c
