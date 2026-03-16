@@ -65,6 +65,8 @@ struct segment {
 	uint8_t			visited;
 };
 
+static int warned_about_invisible_spans = 0; // To avoid a flood of warnings
+
 static struct charmap charmap[128];
 static int ncharmap;
 static uint32_t charbits[129];	// for chars 20..a0 where 7f is extended and a0 is end, lsb first, set stop bit
@@ -1271,6 +1273,13 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				if(ci->subop == BOX_SPAN) {
 					ai = add_instr(AA_ENTER_SPAN);
 					ai->oper[0] = (aaoper_t) {AAO_INDEX, ci->oper[0].value};
+					
+					if(prg->boxclasses[ci->oper[0].value].style & STYLE_INVISIBLE
+						&& !warned_about_invisible_spans) {
+						report(LVL_WARN, 0, "(span @%s) makes an invisible span. This is legal, but can produce strange spacing.", prg->boxclasses[ci->oper[0].value].word->name);
+						report(LVL_WARN, 0, "It is recommended to use invisible styles only for divs, not spans.");
+						warned_about_invisible_spans = 1;
+					}
 				} else {
 					ai = add_instr(AA_ENTER_DIV);
 					ai->oper[0] = (aaoper_t) {AAO_INDEX, ci->oper[0].value};
