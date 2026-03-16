@@ -1276,7 +1276,7 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 					
 					if(prg->boxclasses[ci->oper[0].value].style & STYLE_INVISIBLE
 						&& !warned_about_invisible_spans) {
-						report(LVL_WARN, 0, "(span @%s) makes an invisible span. This is legal, but can produce strange spacing.", prg->boxclasses[ci->oper[0].value].word->name);
+						report(LVL_WARN, 0, "(span @%s) makes an invisible span. This is legal, but can produce strange spacing.", prg->boxclasses[ci->oper[0].value].class->name);
 						report(LVL_WARN, 0, "It is recommended to use invisible styles only for divs, not spans.");
 						warned_about_invisible_spans = 1;
 					}
