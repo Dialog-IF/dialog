@@ -3184,8 +3184,8 @@
 	(div @meta) {
 		(if) (transcript on) (then)
 			Transcript enabled.
-		(elseif) (interpreter supports inline status bar) (then)
-			%% Do nothing, web interpreter
+		(elseif) (transcript active) (then)
+			%% Do nothing, transcripting is already active
 		(else)
 			Failed to enable transcript.
 			(stop)
@@ -4995,8 +4995,12 @@
 
 	%% '*' is by convention used by testers to put comments in a
 	%% transcript. Ignore it and try again.
-
-	~($Words = [\* | $])
+	(if) ($Words = [\* | $]) (then)
+		(if) ~(transcript active) (then)
+			(div @meta) { A transcript is not currently being recorded. Use SCRIPT ON to start one. }
+		(endif)
+		(fail)
+	(endif)
 
 (interface (get choice of $<ChoiceList into $>Words))
 

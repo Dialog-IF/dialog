@@ -18,6 +18,7 @@ int term_getkey(const char *prompt);
 
 void term_sendbytes(uint8_t *utf8, int nbyte);
 int term_sendlf(); // returns true if this involved a more prompt
+int term_sendfakelf(); // Do all the stuff surrounding a newline, but assume the newline was printed by something else already
 void term_effectstyle(int style);
 void term_clear(int all);
 

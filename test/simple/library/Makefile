@@ -5,7 +5,7 @@ DIFF = diff --ignore-trailing-space
 # Base of the repository
 BASEPATH = ../../..
 
-# List of all .nolib.dg and .lib.dg files with .dg changed to .test
+# List of all .dg files with .dg changed to .test
 tests := $(patsubst %.dg,%.test,$(wildcard *.dg))
 rawgold := $(patsubst %.dg,%.gold,$(wildcard *.dg))
 rawinput := $(patsubst %.dg,%.in,$(wildcard *.dg))

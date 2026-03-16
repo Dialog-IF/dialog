@@ -157,6 +157,8 @@ static int cmp_aadict_len(const void *a, const void *b) {
 
 static uint8_t resolve_aachar(uint32_t uchar) {
 	int i;
+	uint8_t utf8[5]; // For logging purposes
+	uint16_t utf16; // Ditto
 
 	if(uchar < 127) {
 		return uchar;
@@ -172,6 +174,9 @@ static uint8_t resolve_aachar(uint32_t uchar) {
 			exit(1);
 		}
 
+		utf16 = (uint16_t)uchar;
+		unicode_to_utf8_n(utf8, 5, &utf16, 1); // Convert to UTF-8 sequence
+		report(LVL_DEBUG, 0, "Adding Unicode character U+%04x (%s) at codepoint %d", uchar, utf8, 128+i);
 		charmap[i].glyph = uchar;
 		ncharmap++;
 
@@ -1903,6 +1908,20 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 			case I_IF_HAVE_QUIT:
 				ai = add_instr(AA_VM_INFO);
 				ai->oper[0] = (aaoper_t) {AAO_BYTE, AAFEAT_QUIT};
+				ai->oper[1] = (aaoper_t) {AAO_STORE_REG, REG_TMP};
+				ai = add_instr(AA_IF_RAW_EQ | 0x80);
+				if(!ci->subop) ai->op ^= AA_NEG_FLIP;
+				ai->oper[0] = (aaoper_t) {AAO_ZERO};
+				ai->oper[1] = (aaoper_t) {AAO_REG, REG_TMP};
+				if(ci->implicit == 0xffff) {
+					ai->oper[2] = (aaoper_t) {AAO_CODE, AAFAIL};
+				} else {
+					ai->oper[2] = (aaoper_t) {AAO_CODE, labelbase + ci->implicit};
+				}
+				break;
+			case I_IF_SCRIPT_ACTIVE:
+				ai = add_instr(AA_VM_INFO);
+				ai->oper[0] = (aaoper_t) {AAO_BYTE, AAFEAT_SCRIPT};
 				ai->oper[1] = (aaoper_t) {AAO_STORE_REG, REG_TMP};
 				ai = add_instr(AA_IF_RAW_EQ | 0x80);
 				if(!ci->subop) ai->op ^= AA_NEG_FLIP;

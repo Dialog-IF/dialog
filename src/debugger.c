@@ -45,7 +45,7 @@ struct debugger {
 
 static int force_width;
 extern int use_numbered_levels; // Defined in eval.c
-extern int return_value;        // Defined in eval.c
+int io_tag_lines = 0; // Used in term_tty.c, output.c
 
 char *STOPCHARS; // Declared in common.h, defined here and in backend.c
 
@@ -1297,7 +1297,7 @@ void usage(char *prgname) {
 	fprintf(stderr, "--version   -V      Display the program version.\n");
 	fprintf(stderr, "--help      -h      Display this information.\n");
 	fprintf(stderr, "--verbose   -v      Increase verbosity (may be used multiple times).\n");
-	fprintf(stderr, "--word-seps -W      Set word separator characters (default .,;\"()* )\n");
+	fprintf(stderr, "--word-seps -W      Set word separator characters (default .,;\"()* ).\n");
 	fprintf(stderr, "--warn-not-topic    Always warn about objects not used as topics.\n");
 	fprintf(stderr, "--no-warn-not-topic Never warn about objects not used as topics.\n");
 	fprintf(stderr, "\n");
@@ -1310,9 +1310,12 @@ void usage(char *prgname) {
 	fprintf(stderr, "--no-links  -L      Don't show hyperlinks in the output.\n");
 	fprintf(stderr, "--dfquirks  -D      Activate the dumbfrotz-compatible quirks mode.\n");
 	fprintf(stderr, "--numbered  -N      Show call depth with numbers during tracing.\n");
+	fprintf(stderr, "--tag-lines -T      Prepend output with \"  \", input with \"> \" or \") \".\n");
+	fprintf(stderr, "--no-header         Don't show version information at startup.\n");
 }
 
 extern int topic_warning_level; // Defined in frontend.c
+static int suppress_header = 0; // Easier to make it global and static rather than local
 
 int debugger(int argc, char **argv) {
 	struct option longopts[] = {
@@ -1330,6 +1333,8 @@ int debugger(int argc, char **argv) {
 		{"word-seps", 1, 0, 'W'},
 		{"warn-not-topic", 0, &topic_warning_level, 1},
 		{"no-warn-not-topic", 0, &topic_warning_level, 2},
+		{"tag-lines", 0, 0, 'T'},
+		{"no-header", 0, &suppress_header, 1},
 		{0, 0, 0, 0}
 	};
 
@@ -1353,7 +1358,7 @@ int debugger(int argc, char **argv) {
 	dbg.timestamps = calloc(argc, sizeof(struct timespec));
 
 	do {
-		opt = getopt_long(argc, argv, "?hVvtnqw:s:W:LDN", longopts, 0);
+		opt = getopt_long(argc, argv, "?hVvtnqw:s:W:LDNT", longopts, 0);
 		switch(opt) {
 			case 0:
 				break; // Changed DMS to allow long-only options
@@ -1394,6 +1399,9 @@ int debugger(int argc, char **argv) {
 			case 'N':
 				use_numbered_levels = 1;
 				break;
+			case 'T':
+				io_tag_lines = 1;
+				break;
 			default:
 				if(opt >= 0) {
 					fprintf(stderr, "Unimplemented option '%c'\n", opt);
@@ -1410,13 +1418,16 @@ int debugger(int argc, char **argv) {
 	o_reset(force_width, dfrotz_quirks);
 	comp_init();
 
-	o_begin_box("intdebugger");
-	o_set_style(STYLE_BOLD);
-	o_print_str(DEBUGGERNAME ".");
-	o_set_style(STYLE_ROMAN);
-	o_line();
-	o_print_str("Type @help at the game prompt for a brief introduction.");
-	o_end_box();
+	if(io_tag_lines) o_line(); // Avoid special cases
+	if(!suppress_header) {
+		o_begin_box("intdebugger");
+		o_set_style(STYLE_BOLD);
+		o_print_str(DEBUGGERNAME ".");
+		o_set_style(STYLE_ROMAN);
+		o_line();
+		o_print_str("Type @help at the game prompt for a brief introduction.");
+		o_end_box();
+	}
 
 	if(dfrotz_quirks) {
 		o_sync();

@@ -505,6 +505,8 @@ static int eval_pop_undo(struct eval_state *es) {
 		}
 		o_set_style(es->divstyle);
 	}
+	// Note: this does NOT evaluate the whole div stack for the purpose of `inherit` properties
+	// Undoing with a non-empty div stack is rare, though, so it's generally fine
 
 	arena_free(&u->arena);
 
@@ -1431,9 +1433,8 @@ static int eval_run(struct eval_state *es) {
 						o_par_n(es->program->boxclasses[ci->oper[0].value].margintop);
 						o_begin_box("box");
 					}
-					if(es->program->boxclasses[ci->oper[0].value].style) {
-						es->divstyle = es->program->boxclasses[ci->oper[0].value].style & 0x7f;
-					}
+					es->divstyle &= ~(es->program->boxclasses[ci->oper[0].value].unstyle);
+					es->divstyle |=  (es->program->boxclasses[ci->oper[0].value].style & 0x7f);
 					o_set_style(STYLE_ROMAN);
 					o_set_style(es->divstyle);
 				}
@@ -2077,6 +2078,10 @@ static int eval_run(struct eval_state *es) {
 		case I_IF_HAVE_UNDO:
 		case I_IF_HAVE_QUIT:
 			res = 1;
+			if(ci->subop ^ res) perform_branch(ci->implicit, es, &pp, &pc);
+			break;
+		case I_IF_SCRIPT_ACTIVE:
+			res = 0;
 			if(ci->subop ^ res) perform_branch(ci->implicit, es, &pp, &pc);
 			break;
 		case I_IF_HAVE_STATUS:
