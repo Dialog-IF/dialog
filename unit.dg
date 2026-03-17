@@ -15,6 +15,10 @@
 
 (interface (assert $<Var = $<Val))
 
+(interface (assert $<Var > $<Val))
+
+(interface (assert $<Var < $<Val))
+
 (keep running on failure) %% negate to stop at first failed test
 
 %% We can't just (exhaust *(test $)), because that actually runs each test
@@ -26,13 +30,23 @@
 
 %%----------------------------- IMPLEMENTATION -----------------------------
 
-%% We almost don't need this, since that final line already does what we
+%% We almost don't need these, since that final line already does what we
 %% want, but adding binding checks can be useful.
 
 (assert $Thing1 = $Thing2) %% true if both are bound and ($Thing1 = $Thing2)
 	(fully bound $Thing1)
 	(bound $Thing2)
 	($Thing1 = $Thing2)
+
+(assert $Thing1 > $Thing2)
+	(fully bound $Thing1)
+	(bound $Thing2)
+	($Thing1 > $Thing2)
+
+(assert $Thing1 < $Thing2)
+	(fully bound $Thing1)
+	(bound $Thing2)
+	($Thing1 < $Thing2)
 
 (global variable (number of failures 0))
 
@@ -80,7 +94,7 @@
 
 (error $Code entry point)
 	(bold) FAILED TEST -- FATAL ERROR $Code. (roman) (par)
-	(quit 1)
+	(quit 2)
 
 %% patch for ($ contains sublist $) issues; delete when fixed
 ($List contains sublist [$Head | $Tail])
