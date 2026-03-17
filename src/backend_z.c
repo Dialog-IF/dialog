@@ -2137,6 +2137,20 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 					zi->oper[0] = ROUTINE(R_ENABLE_STYLE);
 					zi->oper[1] = SMALL(8);
 					break;
+				case BI_GLOBAL_STYLE:
+					zi = append_instr(r, Z_CALLVN);
+					zi->oper[0] = ROUTINE(R_GLOBAL_STYLE);
+					zi->oper[1] = LARGE((uint16_t)(prg->boxclasses[ci->oper[0].value].color));
+					zi->oper[2] = LARGE((uint16_t)(prg->boxclasses[ci->oper[0].value].bgcolor));
+					zi->oper[3] = SMALL(prg->boxclasses[ci->oper[0].value].style);
+					break;
+				case BI_GLOBAL_UNSTYLE:
+					zi = append_instr(r, Z_CALLVN);
+					zi->oper[0] = ROUTINE(R_GLOBAL_STYLE);
+					zi->oper[1] = LARGE(0xFFFE); // Fg: initial
+					zi->oper[2] = LARGE(0xFFFE); // Bg: initial
+					zi->oper[3] = SMALL(0); // Style: 0
+					break;
 				case BI_ITALIC:
 					zi = append_instr(r, Z_CALL2N);
 					zi->oper[0] = ROUTINE(R_ENABLE_STYLE);

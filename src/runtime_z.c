@@ -3898,6 +3898,35 @@ struct rtroutine rtroutines[] = {
 		}
 	},
 	{
+		R_GLOBAL_STYLE,
+		3,
+			// 0 (param): foreground color
+			// 1 (param): background color
+			// 2 (param): style
+		(struct zinstr []) {
+			{Z_JZ, {VALUE(REG_NSPAN)}, 0, 1}, // Crash if in a span
+			{Z_JNZ, {VALUE(REG_STATUSBAR)}, 0, 1}, // Or a status bar
+			{Z_THROW, {SMALL(FATAL_IO), VALUE(REG_FATALJMP)}},
+			{OP_LABEL(1)},
+			
+			// If the value is -1 (INHERIT), change it to -2 (INITIAL)
+			{Z_JNE, {VALUE(REG_LOCAL+0), VALUE(REG_FFFF)}, 0, 2},
+			{Z_DEC, {SMALL(REG_LOCAL+0)}},
+			{OP_LABEL(2)},
+			{Z_JNE, {VALUE(REG_LOCAL+1), VALUE(REG_FFFF)}, 0, 3},
+			{Z_DEC, {SMALL(REG_LOCAL+1)}},
+			{OP_LABEL(3)},
+			
+			// Store into REG_FGCOLOR and REG_BGCOLOR
+			{Z_STORE, {SMALL(REG_FGCOLOR), VALUE(REG_LOCAL+0)}},
+			{Z_STORE, {SMALL(REG_BGCOLOR), VALUE(REG_LOCAL+1)}},
+			{Z_STORE, {SMALL(REG_STYLE), VALUE(REG_LOCAL+2)}},
+			{Z_CALL1N, {ROUTINE(R_RESET_STYLE)}},
+			{Z_RFALSE},
+			{Z_END},
+		}
+	},
+	{
 		R_PROGRESS_BAR,
 		3,
 			// 0 (param): position (tagged integer)
