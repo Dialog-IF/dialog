@@ -40,9 +40,6 @@ Release notes:
 
 	1b/01, Lib 1.1.1:
 
-		Library: added unit.dg, a unit testing library, allowing for
-		unit tests written in Dialog. (Documentation chapter TBW.)
-
 		Language: added (quit $), to let unit.dg tests cause make
 		to fail when they fail.
   
