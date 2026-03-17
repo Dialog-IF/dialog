@@ -3724,6 +3724,7 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				zi->oper[1] = VALUE(REG_CHOICE);
 				break;
 			case I_QUIT:
+			case I_QUIT_N:
 				zi = append_instr(r, Z_QUIT);
 				break;
 			case I_RESTART:
