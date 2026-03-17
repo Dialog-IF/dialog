@@ -54,10 +54,10 @@
 		(quit 1)
 	(endif)
 
-(error $Code entry point)
-	(bold) FAILED TEST -- FATAL ERROR $Code. (roman) (par)
-	(now) ~(all tests pass)
-	(quit 1)
+(increment failures)
+    (number of failures $Failures)
+	($Failures plus 1 into $FailuresPlusOne)
+	(now) (number of failures $FailuresPlusOne)
 
 (run-test $Test)
 	(if)
@@ -68,11 +68,13 @@
 		Passed! (line)
 	(else)
 		(bold) Failed. (roman) (space) :-\( (line)
-		(number of failures $Failures)
-		($Failures plus 1 into $FailuresPlusOne)
-		(now) (number of failures $FailuresPlusOne)
+		(increment failures)
 		(if) ~(keep running on failure) (then) (stop) (endif)
 	(endif)
+
+(error $Code entry point)
+	(bold) FAILED TEST -- FATAL ERROR $Code. (roman) (par)
+	(quit 1)
 
 %% patch for ($ contains sublist $) issues; delete when fixed
 ($List contains sublist [$Head | $Tail])
