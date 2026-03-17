@@ -1,2 +1,138 @@
-= Chapter 12: Testing
+= Chapter 12: Testing and Debugging
+
+Interactive fiction games such as those that you'll write with Dialog
+require a lot of testing to get right. Dialog provides several
+facilites to help you test your code, and a full-featured debugger to
+work out why your code isn't behaving as expected.
+
+[#unittests]
+== Unit Tests
+
+Included in the Dialog library is `unit.dg`, a library that allows you
+to write unit tests for your code in Dialog. See the
+xref:ROOT:software.adoc[Software Page] for more information on where
+to find `unit.dg`.
+
+Unit tests are short, simple tests that exercise small pieces of your
+code. They can save quite a bit of debugging, and even more helpully,
+will let you know if you've accidentally broken something unrelated
+when you make a change to some other part of your game, if you run
+them whenever you recompile a new change.
+
+[#writing]
+=== Writing Unit Tests
+
+As an example, suppose that we've pulled together a small extension to
+use in our game:
+
+[source]
+----
+(extension version) Helper utilities v0.1, by A.N. Author (line)
+
+(interface (max $<X and $<Y into $>Max))
+
+(interface (min $<X and $<Y into $>Min))
+
+(interface ($<Number is odd))
+
+(max $X and $Y into $Result)
+	(if) ($X > $Y) (then)
+		($Result = $X)
+	(else)
+		($Result = $Y)
+	(endif)
+
+(min $X and $Y into $Result)
+	(if) ($X < $Y) (then)
+		($Result = $X)
+	(else)
+		($Result = $Y)
+	(endif)
+
+($Num is odd)
+	(number $Num)
+	($Num > 0)
+	($Num modulo 2 into $Mod)
+	($Mod = 1)
+----
+
+Assuming that we saved the above code into a file named `utils.dg`, we
+can create a corresponding test file, `utils-tests.dg`, like so:
+
+[source]
+----
+%% dgdebug -q utils-tests.dg utils.dg unit.dg stdlib.dg
+
+(list of tests [
+      #max-first-is-bigger
+      ])
+
+#max-first-is-bigger
+(test *)
+      (max 3 and 2 into $Max)
+      (assert $Max = 3)
+----
+
+...and we have our first test! We're only testing one test case, so
+far, and we're definitely going to want more. When we run the test, we
+get the following:
+
+[source]
+----
+$ dgdebug -q utils-tests.dg utils.dg unit.dg stdlib.dg 
+Dialog Interactive Debugger (dgdebug) version 1b/01.
+Type @help at the game prompt for a brief introduction.
+Attempting 1 tests
+Testing #max-first-is-bigger: Passed!
+1 tests passed successfully.
+----
+
+Let's look at some of the details of our first draft of
+`utils-tests.dg`. First of all, by convention, we put a comment in the
+first line of the file with the command line that we need to run to
+successfully run our tests under the debugger. We run unit tests with
+the debugger, rather than compiling them into Å-machine code or Z-code
+to run with an interpreter. (We'll get to another kind of test that
+does use the compiler and your interpreters later in this chapter.)
+The `-q` option is important, as it causes the debugger to exit when
+it finishes running our unit tests.
+
+For more elaborate project files or extensions that have multiple
+dependencies, the first-line comment might spill over multiple lines,
+like this:
+
+[source]
+----
+%% dgdebug -q damage-tests.dg damage.dg schema.dg sectored-grid.dg \
+%%            unit.dg stdlib.dg
+----
+
+We need this comment because it isn't always obvious what files need
+to be included, nor in what order they need to be arranged. The last
+two files that you include will generally be `unit.dg` and
+`stdlib.dg`.
+
+Secondly, we have a global variable, `(list of tests $)`, which
+contains a list of all the tests that should be run. We need this
+variable because simply using `exhaust` to run through them all would
+cause them to run immediately, without any set up or teardown. (More
+on those later.)
+
+Finally, we have the test itself, which is an object, with a `(test
+$)` property. Evaluating the `(test $)` property will run the test. We
+could alternatively use a syntax like this, to more closely match how
+unit tests are declared in test frameworks from other languages:
+
+[source]
+----
+(test #max-first-is-bigger)
+      (max 3 and 2 into $Max)
+      (assert $Max = 3)
+----
+
+That will work equally well, but the debugger will throw some warnings
+at us, which we can suppress with the `--no-warn-not-topic` option.
+
+[#choosing]
+=== Choosing the Right Test Cases
 
