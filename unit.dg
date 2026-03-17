@@ -39,7 +39,7 @@
 (program entry point)
 	(list of tests $Tests)
 	(length of $Tests into $Number)
-	(bold) Attempting $Number tests (roman) (line)
+	(bold) Attempting $Number tests. (roman) (line)
 	(stoppable) (exhaust) {
 		*($Test is one of $Tests)
 		Testing $Test:

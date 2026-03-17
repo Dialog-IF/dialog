@@ -1,6 +1,8 @@
 %% utils.dg
 %% Useful utility routines for Stellar Union games.
 
+(extension version)		   Helper utilities v1.0, by Susan Davis
+
 %%-------------------------------- INTERFACES --------------------------------
 
 (interface (take last $<N from $<List into $>Suffix))
@@ -76,4 +78,3 @@
 	($Num > 0)
 	($Num modulo 2 into $Mod)
 	($Mod = 1)
-
