@@ -500,7 +500,7 @@ static int eval_pop_undo(struct eval_state *es) {
 	o_set_style(STYLE_ROMAN);
 	if(es->divsp) {
 		if(es->program->boxclasses[es->divstack[es->divsp - 1]].style) {
-			es->divstyle = es->program->boxclasses[es->divstack[es->divsp - 1]].style & 0x7f;
+			es->divstyle = es->program->boxclasses[es->divstack[es->divsp - 1]].style & 0xff;
 		}
 		o_set_style(es->divstyle);
 	}
@@ -1433,7 +1433,7 @@ static int eval_run(struct eval_state *es) {
 						o_begin_box("box");
 					}
 					es->divstyle &= ~(es->program->boxclasses[ci->oper[0].value].unstyle);
-					es->divstyle |=  (es->program->boxclasses[ci->oper[0].value].style & 0x7f);
+					es->divstyle |=  (es->program->boxclasses[ci->oper[0].value].style & 0xff);
 					o_set_style(STYLE_ROMAN);
 					o_set_style(es->divstyle);
 				}

@@ -279,6 +279,9 @@ void o_sync() {
 }
 
 void o_set_style(int style) {
+	if(style & STYLE_INVISIBLE){ // Invisibility is handled at this level instead of in sendstyle
+		boxstack[boxsp].visible = 0;
+	}
 	if(!boxstack[boxsp].visible) return;
 
 	if(style) {
@@ -293,9 +296,6 @@ void o_set_style(int style) {
 		boxstack[boxsp].style |= style;
 	} else {
 		boxstack[boxsp].style &= STYLE_DEBUG;
-	}
-	if(style & STYLE_INVISIBLE){ // Invisibility is handled at this level instead of in sendstyle
-		boxstack[boxsp].visible = 0;
 	}
 	sendstyle(boxstack[boxsp].style);
 }
