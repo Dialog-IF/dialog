@@ -19,6 +19,10 @@ will let you know if you've accidentally broken something unrelated
 when you make a change to some other part of your game, if you run
 them whenever you recompile a new change.
 
+Dialog's syntax and matching mechanism make the language particularly
+well-suited to writing succint and readable ("intention-revealing")
+tests, as we'll see in the examples below.
+
 [#writing]
 === Writing Unit Tests
 
@@ -36,24 +40,22 @@ use in our game:
 (interface ($<Number is odd))
 
 (max $X and $Y into $Result)
-	(if) ($X > $Y) (then)
-		($Result = $X)
-	(else)
-		($Result = $Y)
-	(endif)
+     (if) ($X > $Y) (then)
+     	  ($Result = $X)
+     (else)
+	  ($Result = $Y)
+     (endif)
 
 (min $X and $Y into $Result)
-	(if) ($X < $Y) (then)
-		($Result = $X)
-	(else)
-		($Result = $Y)
-	(endif)
+     (if) ($X < $Y) (then)
+     	  ($Result = $X)
+     (else)
+	  ($Result = $Y)
+     (endif)
 
 ($Num is odd)
-	(number $Num)
-	($Num > 0)
-	($Num modulo 2 into $Mod)
-	($Mod = 1)
+     ($Num modulo 2 into $Mod)
+     ($Mod = 1)
 ----
 
 Assuming that we saved the above code into a file named `utils.dg`, we
@@ -82,9 +84,9 @@ get the following:
 $ dgdebug -q utils-tests.dg utils.dg unit.dg stdlib.dg 
 Dialog Interactive Debugger (dgdebug) version 1b/01.
 Type @help at the game prompt for a brief introduction.
-Attempting 1 tests
+Attempting 1 test.
 Testing #max-first-is-bigger: Passed!
-1 tests passed successfully.
+1 test passed successfully.
 ----
 
 Let's look at some of the details of our first draft of
@@ -133,6 +135,76 @@ unit tests are declared in test frameworks from other languages:
 That will work equally well, but the debugger will throw some warnings
 at us, which we can suppress with the `--no-warn-not-topic` option.
 
+Using `(assert $X = $Y)` does much the same thing that `($X = $Y)`
+does by itself, but it throws in a few extra checks to prove that the
+arguments are bound. You don't have to use it in your own tests, but
+it can reveal failures that a straight comparison wouldn't.
+
 [#choosing]
 === Choosing the Right Test Cases
 
+When you're choosing what to test, it's important to not just test for
+the things that you want to go right, but to test all of the ways that
+you can think of your code going wrong. For example, if we were to add
+some more tests to our `utils-tests.dg`, it might look like this:
+
+[source]
+----
+%% dgdebug -q --no-warn-not-topic utils-tests.dg utils.dg unit.dg stdlib.dg
+
+(list of tests [
+      #max-first-is-bigger
+      #max-second-is-bigger
+      #max-equal-values
+      #max-bad-input-list
+      #max-bad-input-object
+      #max-bad-input-not-bound
+      ])
+
+(test #max-first-is-bigger)
+      (max 3 and 2 into $Max)
+      (assert $Max = 3)
+
+(test #max-second-is-bigger)
+      (max 2 and 3 into $Max)
+      (assert $Max = 3)
+
+(test #max-equal-values)
+      (max 2 and 2 into $Max)
+      (assert $Max = 2)
+
+(test #max-bad-input-list)
+      (max 2 and [2 3 4] into $Max)
+      ~(bound $Max)
+
+(test #max-bad-input-object)
+      (max #max-bad-input-object and 2 into $Max)
+      ~(bound $Max)
+
+(test #max-bad-input-not-bound)
+      (max 2 and $ into $Max)
+      ~(bound $Max)
+----
+
+Now when we run the debugger, we get this:
+
+[source]
+----
+$ dgdebug -q --no-warn-not-topic utils-tests.dg utils.dg unit.dg stdlib.dg
+Dialog Interactive Debugger (dgdebug) version 1b/01.
+Type @help at the game prompt for a brief introduction.
+Warning: utils-tests.dg, line 33: Parameter #2 of (max $ and $ into $) can be
+(partially) unbound, which violates the interface declaration at utils.dg:3.
+Attempting 6 tests.
+Testing #max-first-is-bigger: Passed!
+Testing #max-second-is-bigger: Passed!
+Testing #max-equal-values: Passed!
+Testing #max-bad-input-list: Failed. :-(
+Testing #max-bad-input-object: Failed. :-(
+Testing #max-bad-input-not-bound: Failed. :-(
+3 TESTS FAILED.
+----
+
+What happened? Well, the tests did exactly what they were supposed to
+have done: they found problems in our code! Specifically, we're not
+handling bad input 
