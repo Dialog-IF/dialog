@@ -1,0 +1,7 @@
+#áa
+(name \x{2A}) \x{0e1}a
+
+(program entry point\x{0029}
+	(name #\x{0000E1}a)
+	(line)
+	a\x{20}\x{20}\x{20}\x{20}a \x{00000000003d}
