@@ -294,6 +294,9 @@ void o_set_style(int style) {
 	} else {
 		boxstack[boxsp].style &= STYLE_DEBUG;
 	}
+	if(style & STYLE_INVISIBLE){ // Invisibility is handled at this level instead of in sendstyle
+		boxstack[boxsp].visible = 0;
+	}
 	sendstyle(boxstack[boxsp].style);
 }
 
