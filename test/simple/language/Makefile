@@ -114,9 +114,9 @@ clean:
 	rm -rf *.out *.z.gold *.aa.gold *.d.gold *.z.in *.aa.in *.d.in *.z5 *.aastory
 
 test-quit-0.test: $(DGDEBUG)
-	$(DEBUG) test-quit-0.dg || exit 1
+	$(DEBUG) test-quit-0.dg
 
-test-quit-1.test: $(DGDEBUG)
-	$(DEBUG) test-quit-1.dg && exit 1
+test-quit-13.test: $(DGDEBUG)
+	./test-quit-13.sh
 
 .PHONY: all test clean
