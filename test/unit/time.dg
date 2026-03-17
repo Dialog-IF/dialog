@@ -2,7 +2,7 @@
 %% Basic handling of time. Day of week not supported for now.
 %% Provided here as an example of how to use unit.dg
 
-(extension version)	Time and date 1a/02, by Susan Davis (line)
+(extension version)	Time and date 1b/01, by Susan Davis (line)
 
 (global variable (current time $)) %% time of day, in minutes from midnight
 
@@ -33,6 +33,12 @@
 
 %% override for a different time zone
 (timezone letter)	Z
+
+%% negate to stop time from advancing on every tick
+(time is running)
+
+%% un-negate to not advance time on the next tick ("free" command)
+~(suspend this tick)
 
 %%----------------------------------------------------------------------
 
@@ -162,4 +168,8 @@
 	(set time [$NewTime $NewDate $M $Y])
 	(normalize date)
 
-(late on every tick)	(elapse 1 minutes)
+(late on every tick)
+	(if) (time is running) ~(suspend this tick) (then)
+		 (elapse 1 minutes)
+	(endif)
+	(now) ~(suspend this tick)
