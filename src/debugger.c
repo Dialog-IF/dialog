@@ -1482,7 +1482,6 @@ int debugger(int argc, char **argv) {
 		case ESTATUS_SUCCESS:
 		case ESTATUS_FAILURE:
 		case ESTATUS_QUIT:
-			//printf("about to quit, return value is %d\n", return_value);
 			if(quitopt) {
 				o_sync();
 				running = 0;
