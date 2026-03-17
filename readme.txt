@@ -39,6 +39,12 @@ Project website:
 Release notes:
 
 	1b/01, Lib 1.1.1:
+
+		Library: added unit.dg, a unit testing library, allowing for
+		unit tests written in Dialog. (Documentation chapter TBW.)
+
+		Language: added (quit $), to let unit.dg tests cause make
+		to fail when they fail.
   
 		Due to new built-in predicates in this release, all projects
 		compiled for Å-machine will need version 1.0.0 or later of the
