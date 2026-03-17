@@ -34,7 +34,7 @@
 	(bound $Thing2)
 	($Thing1 = $Thing2)
 
-(all tests pass)
+(global variable (number of failures 0))
 
 (program entry point)
 	(list of tests $Tests)
@@ -45,11 +45,12 @@
 		Testing $Test:
 		(run-test $Test)
 	}
-	(if) (all tests pass) (then)
+	(number of failures $Failures)
+	(if) ($Failures = 0) (then)
 		(bold) $Number tests passed successfully. (roman) (par)
 		(quit 0)
 	(else)
-		(bold) FAILED TEST. (roman) (par)
+		(bold) $Failures TESTS FAILED. (roman) (par)
 		(quit 1)
 	(endif)
 
@@ -67,7 +68,9 @@
 		Passed! (line)
 	(else)
 		(bold) Failed. (roman) (space) :-\( (line)
-		(now) ~(all tests pass)
+		(number of failures $Failures)
+		($Failures plus 1 into $FailuresPlusOne)
+		(now) (number of failures $FailuresPlusOne)
 		(if) ~(keep running on failure) (then) (stop) (endif)
 	(endif)
 
