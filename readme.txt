@@ -39,6 +39,9 @@ Project website:
 Release notes:
 
 	1b/01, Lib 1.1.1:
+
+		Language: added (quit $), to let unit.dg tests cause make
+		to fail when they fail.
   
 		Due to new built-in predicates in this release, all projects
 		compiled for Å-machine will need version 1.0.0 or later of the
@@ -46,10 +49,13 @@ Release notes:
 		
 		Language: added (clear status bar).
 		
+		Language: new escape syntax \x{3C4} is equivalent to the Unicode
+		character U+03C4.
+		
 		Language: added (transcript active).
 		
 		Distribution: added unit.dg, a library for unit testing.
-
+		
 		Documentation: the library reference now includes special syntax
 		like (elseif), (now), and (global variable $).
 		
