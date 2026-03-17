@@ -39,7 +39,9 @@
 (program entry point)
 	(list of tests $Tests)
 	(length of $Tests into $Number)
-	(bold) Attempting $Number tests (roman) (line)
+	(bold) Attempting $Number test
+	(if) ($Number > 1) (then) (no space) s (endif)
+	(no space) . (roman) (line)
 	(stoppable) (exhaust) {
 		*($Test is one of $Tests)
 		Testing $Test:
@@ -47,10 +49,14 @@
 	}
 	(number of failures $Failures)
 	(if) ($Failures = 0) (then)
-		(bold) $Number tests passed successfully. (roman) (par)
+		(bold) $Number test
+		(if) ($Number > 1) (then) (no space) s (endif)
+		passed successfully. (roman) (par)
 		(quit 0)
 	(else)
-		(bold) $Failures TESTS FAILED. (roman) (par)
+		(bold) $Failures TEST
+		(if) ($Failures > 1) (then) (no space) S (endif)
+		FAILED. (roman) (par)
 		(quit 1)
 	(endif)
 
