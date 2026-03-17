@@ -25,6 +25,8 @@ struct histentry {
 	uint16_t		*content;
 };
 
+extern int io_tag_lines; // debugger.c
+
 static struct histentry *tophist;
 static term_int_callback_t term_int_callback;
 static int unread_lines;
@@ -83,6 +85,7 @@ void term_get_size(int *width, int *height) {
 
 	if(!ioctl(0, TIOCGWINSZ, &ws)) {
 		*width = (ws.ws_col >= 1)? ws.ws_col - 1 : 0;
+		if(io_tag_lines) *width -= 2; // For the tags
 		*height = ws.ws_row;
 		term_height = ws.ws_row;
 	} else {
@@ -113,6 +116,7 @@ void term_effectstyle(int style) {
 
 int term_sendlf() {
 	fputc('\n', stdout);
+	if(io_tag_lines) printf("  ");
 	unread_lines++;
 	if(term_height > 1 && isatty(1)) {
 		if(unread_lines >= term_height - 1) {
@@ -125,6 +129,11 @@ int term_sendlf() {
 	} else {
 		unread_lines = 0;
 	}
+	return 0;
+}
+
+int term_sendfakelf() {
+	if(io_tag_lines) printf("  ");
 	return 0;
 }
 
@@ -340,6 +349,7 @@ int term_getkey(const char *prompt) {
 	int ch;
 	int i;
 
+	if(io_tag_lines) printf("\n) ");
 	fflush(stdout);
 
 	if(!isatty(0)) {
@@ -362,7 +372,9 @@ int term_getkey(const char *prompt) {
 			suspend();
 			charout('\r');
 			charout('\n');
+			if(io_tag_lines) printf("  ");
 			(void) write(1, prompt, strlen(prompt));
+			if(io_tag_lines) printf("\n) ");
 		} else {
 			suspend();
 		}
@@ -387,7 +399,8 @@ int term_getline(const char *prompt, uint8_t *buffer, int bufsize, int is_filena
 	int xpos = 0, len = 0;
 	uint16_t *buf;
 	struct histentry *currhist = 0;
-
+	
+	if(io_tag_lines) printf("\n> ");
 	fflush(stdout);
 
 	if(!isatty(0)) {
@@ -547,6 +560,7 @@ int term_getline(const char *prompt, uint8_t *buffer, int bufsize, int is_filena
 
 	charout('\r');
 	charout('\n');
+	if(io_tag_lines) printf("  ");
 
 	tty_restore();
 

@@ -39,6 +39,9 @@ Project website:
 Release notes:
 
 	1b/01, Lib 1.1.1:
+
+		Language: added (quit $), to let unit.dg tests cause make
+		to fail when they fail.
   
 		Due to new built-in predicates in this release, all projects
 		compiled for Å-machine will need version 1.0.0 or later of the
@@ -106,6 +109,9 @@ Release notes:
 		
 		Debugger: --no-header option suppresses version information, for
 		the same reason.
+		
+		Debugger: --tag-lines option explicitly marks requests for key
+		and line input, for the same reason.
 		
 		Debugger: now tags fixed-width text with an ANSI escape sequence.
 

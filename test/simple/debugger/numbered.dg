@@ -1,0 +1,20 @@
+%% Collatz Conjecture demo
+
+(try 1)
+	One! (par) \* \* \* (par)
+(try $N)
+	($N modulo 2 into 0)
+	($N divided by 2 into $NN)
+	$N >
+	(try $NN)
+(try $N)
+	($N times 3 into $NN)
+	($NN plus 1 into $NNN)
+	$N >>
+	(try $NNN)
+
+(program entry point)
+	(trace on)
+	(try 1)
+	(try 5)
+	(try 11)
