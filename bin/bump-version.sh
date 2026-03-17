@@ -12,6 +12,7 @@ LIBRARY_VERSION="$2"
 
 sed -Ei "s|DIALOG_VERSION=.+|DIALOG_VERSION=$COMPILER_VERSION|" src/Makefile
 sed -Ei "s|\(library version\) Library version .+|(library version) Library version $LIBRARY_VERSION.|" stdlib.dg
+sed -Ei "s|\(extension version\) Unit test runner .+|(extension version) Unit test runner $LIBRARY_VERSION by Susan Davis (line)|" stdlib.dg
 
 sed -Ei "s|    lang-ver: .+|    lang-ver: $LANGUAGE_VERSION|" manual/antora.yml
 sed -Ei "s|    lib-ver: .+|    lib-ver: $LIBRARY_VERSION|" manual/antora.yml
