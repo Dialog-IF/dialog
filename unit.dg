@@ -1,5 +1,5 @@
 %% unit.dg
-(extension version)	Unit test runner 1a/02 by Susan Davis (line)
+(extension version)	Unit test runner 1b/01-dev by Susan Davis (line)
 
 %% See example(s) in test/unit in Dialog source distribution.
 %% Licensed under the same license as the rest of Dialog.
@@ -34,7 +34,7 @@
 	(bound $Thing2)
 	($Thing1 = $Thing2)
 
-(all tests pass)
+(global variable (number of failures 0))
 
 (program entry point)
 	(list of tests $Tests)
@@ -45,18 +45,19 @@
 		Testing $Test:
 		(run-test $Test)
 	}
-	(if) (all tests pass) (then)
+	(number of failures $Failures)
+	(if) ($Failures = 0) (then)
 		(bold) $Number tests passed successfully. (roman) (par)
 		(quit 0)
 	(else)
-		(bold) FAILED TEST. (roman) (par)
+		(bold) $Failures TESTS FAILED. (roman) (par)
 		(quit 1)
 	(endif)
 
-(error $Code entry point)
-	(bold) FAILED TEST -- FATAL ERROR $Code. (roman) (par)
-	(now) ~(all tests pass)
-	(quit 1)
+(increment failures)
+    (number of failures $Failures)
+	($Failures plus 1 into $FailuresPlusOne)
+	(now) (number of failures $FailuresPlusOne)
 
 (run-test $Test)
 	(if)
@@ -67,9 +68,13 @@
 		Passed! (line)
 	(else)
 		(bold) Failed. (roman) (space) :-\( (line)
-		(now) ~(all tests pass)
+		(increment failures)
 		(if) ~(keep running on failure) (then) (stop) (endif)
 	(endif)
+
+(error $Code entry point)
+	(bold) FAILED TEST -- FATAL ERROR $Code. (roman) (par)
+	(quit 1)
 
 %% patch for ($ contains sublist $) issues; delete when fixed
 ($List contains sublist [$Head | $Tail])
