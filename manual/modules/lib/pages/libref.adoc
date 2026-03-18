@@ -321,6 +321,7 @@ xref:traits.adoc#categorytraits[`(pushable $)`] +
 xref:lang:control.adoc#closures[`(query $ $)`] +
 xref:lang:control.adoc#closures[`(query $)`] +
 xref:lang:builtins.adoc#system[`(quit)`] +
+xref:lang:builtins.adoc#system[`(quit $)`] +
 xref:lang:builtins.adoc#arithmetic[`(random from $ to $ into $)`] +
 xref:miscfeat.adoc#listutil[`(randomly select $ from $)`] +
 xref:miscfeat.adoc#listutil[`($ recursively contains $)`] +
