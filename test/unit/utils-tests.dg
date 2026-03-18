@@ -13,16 +13,24 @@
 	#increase-element-beyond-max
 	#decrease-element
 	#decrease-element-below-zero
-	#max-different
+	#max-first-is-bigger
 	#intentionally-fail-this-test-also
-	#max-same
-	#min-different
-	#min-same
+	#max-second-is-bigger
+	#max-equal-values
+	#min-first-is-bigger
+	#min-second-is-bigger
+	#min-equal-values
 	#0-isnt-odd
 	#1-is-odd
 	#2-isnt-odd
 	#3-is-odd
 	#intentionally-fail-3-is-even
+	#assert-greater-true
+	#assert-greater-false
+	#assert-greater-even
+	#assert-lesser-true
+	#assert-lesser-false
+	#assert-lesser-even
 	])
 
 (test #take-last-n)
@@ -58,19 +66,23 @@
 (test #decrease-element-below-zero)
 	~(decrease element 3 in [1 2 3 4 5] by 4 into $)
 
-(test #max-different)
-	(max 2 and 3 into 3)
-	(max 3 and 2 into 3)
+(test #max-first-is-bigger)
+	  (max 3 and 2 into 3)
 
-(test #max-same)
-	(max 2 and 2 into 2)
+(test #max-second-is-bigger)
+	  (max 2 and 3 into 3)
 
-(test #min-different)
-	(min 2 and 3 into 2)
-	(min 3 and 2 into 2)
+(test #max-equal-values)
+	  (max 2 and 2 into 2)
 
-(test #min-same)
-	(min 2 and 2 into 2)
+(test #min-first-is-bigger)
+	  (min 3 and 2 into 2)
+
+(test #min-second-is-bigger)
+	  (min 2 and 3 into 2)
+
+(test #min-equal-values)
+	  (min 2 and 2 into 2)
 
 (test #0-isnt-odd)
       ~(0 is odd)
@@ -93,3 +105,21 @@
 #intentionally-fail-3-is-even
 (test *)
 	  (3 is even)
+
+(test #assert-greater-true)
+	  (assert 3 > 2)
+
+(test #assert-greater-false)
+	  ~(assert 2 > 3)
+
+(test #assert-greater-even)
+	  ~(assert 2 > 2)
+
+(test #assert-lesser-true)
+	  (assert 2 < 3)
+
+(test #assert-lesser-false)
+	  ~(assert 3 < 2)
+
+(test #assert-lesser-even)
+	  ~(assert 2 < 2)
