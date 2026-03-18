@@ -1,0 +1,7 @@
+(style class @invisible)
+	display: none;
+
+(program entry point)
+	Normal 1
+	(div @invisible) Invisible
+	Normal 2
