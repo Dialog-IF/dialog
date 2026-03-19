@@ -81,9 +81,9 @@
 
 (run-test $Test)
 	(if)
-		(stoppable) (set up $Test)   %% don't fail if absent
+		(stoppable) (exhaust) *(set up $Test)   %% don't fail if absent
 		(test $Test)
-		(stoppable) (clean up $Test) %% don't fail if absent
+		(stoppable) (exhaust) *(clean up $Test) %% don't fail if absent
 	(then)
 		Passed! (line)
 	(else)
