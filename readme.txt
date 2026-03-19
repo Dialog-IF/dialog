@@ -19,6 +19,8 @@ Directory structure:
 
 	stddebug.dg	The Dialog standard debugging extension.
 
+	unit.dg		The Dialog unit testing library.
+
 Building the software under Linux (requires a C compiler and make):
 
 	cd src
