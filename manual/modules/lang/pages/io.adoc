@@ -603,7 +603,15 @@ The _location_ may be followed by one or more _options_, separated from the file
 (define resource @bg) music/bg.ogg, channel 1, loop
 ----
 
-Which options are recognized, and what effects they might have, depends on the backend and interpreter used. At present, no interpreters make use of them. However, unrecognized options will never be an error: interpreters are free to use as many or as few as they like.
+Which options are recognized, and what effects they might have, depends on the
+backend and interpreter used. Unrecognized options will never be an error:
+interpreters are free to use as many or as few as they like.
+
+Currently, only the Å-machine web interpreter uses options at all, and only for audio:
+* `channel` followed by a space and one or more alphanumeric characters specifies which channel to play the sound on. A different audio resource played on the same channel will replace the old one after a brief cross-fade. Playing a resource while the same resource is already playing will not restart it, so it is safe to embed your background music every turn. If not specified, the default channel is `main`.
+* `loop` specifies that the audio should repeat forever rather than stopping at the end. A looping sound only ends when another sound is played on the same channel.
+
+For all other interpreters, backends, and file types, any options will be ignored.
 
 === Links to resources
 
@@ -658,7 +666,8 @@ The alt-text appears at the end of the resource definition, separated from the l
 ----
 
 If no alt-text is specified, the filename (i.e. location) is used as a default value.
-Only the actual filename (that is, `manual.pdf` rather than `feelies/manual.pdf`) is used as alt-text, not the full path. Options, if provided, must come first; any commas after a semicolon will be taken as a literal part of the alt-text.
+Only the actual filename (that is, `manual.pdf` rather than `feelies/manual.pdf`) is used as alt-text, not the full path.
+Options, if provided, must come first; any commas after a semicolon will be taken as a literal part of the alt-text.
 
 The built-in predicate `(interpreter can embed $)` checks whether the current interpreter is capable of
 displaying a given resource.
@@ -692,12 +701,12 @@ embed png files.
 Otherwise, there will be no paragraph break, and no alt-text.
 
 With an eye towards future extensibility, this language feature has been designed to be open-ended.
-Resources could conceivably be any kind of multimedia, including sound and animation.
+Resources could conceivably be any kind of multimedia, including graphics, sound, and animation.
 Interpreters are supposed to restrict this vast space of possibilities to a manageable set
 of supported file formats.
 The current version of the Å-machine web interpreter, for instance,
-only embeds graphics in `png` or `jpeg` format.
-Other backends (Z-machine, debugger) just print the alt-text.
+only embeds graphics in `png` or `jpeg` format, and audio in `ogg`, `mp3`, or `wav` format.
+Other interpreters and backends (Z-machine, debugger) just print the alt-text.
 
 === About local filenames
 

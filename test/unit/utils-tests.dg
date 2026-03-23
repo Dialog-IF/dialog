@@ -1,0 +1,125 @@
+%% dgdebug -q utils-tests.dg utils.dg unit.dg stdlib.dg
+
+(list of tests [
+	#take-last-n
+	#take-last-zero
+	#take-last-more-than-len
+	#replace-element
+	#replace-element-zero
+	#replace-element-beyond-end
+	#increase-element
+	#increase-element-with-max
+	#intentionally-fail-this-test
+	#increase-element-beyond-max
+	#decrease-element
+	#decrease-element-below-zero
+	#max-first-is-bigger
+	#intentionally-fail-this-test-also
+	#max-second-is-bigger
+	#max-equal-values
+	#min-first-is-bigger
+	#min-second-is-bigger
+	#min-equal-values
+	#0-isnt-odd
+	#1-is-odd
+	#2-isnt-odd
+	#3-is-odd
+	#intentionally-fail-3-is-even
+	#assert-greater-true
+	#assert-greater-false
+	#assert-greater-even
+	#assert-lesser-true
+	#assert-lesser-false
+	#assert-lesser-even
+	])
+
+(test #take-last-n)
+	(take last 3 from [1 2 3 4 5 6] into [4 5 6])
+
+(test #take-last-zero)
+	(take last 0 from [1 2 3 4 5 6] into [])
+
+(test #take-last-more-than-len)
+	~(take last 7 from [1 2 3 5 6 7] into $)
+
+(test #replace-element)
+	(replace element 3 in [1 2 3 4 5] with 6 into [1 2 6 4 5])
+
+(test #replace-element-zero)
+	~(replace element 0 in [1 2 3 4 5] with 6 into $)
+
+(test #replace-element-beyond-end)
+	~(replace element 6 in [1 2 3 4 5] with 6 into $)
+
+(test #increase-element)
+	(increase element 3 in [1 2 3 4 5] by 3 into [1 2 6 4 5])
+
+(test #increase-element-with-max)
+	(increase element 3 in [1 2 3 4 5] by 3 into [1 2 6 4 5] with max 7)
+
+(test #increase-element-beyond-max)
+	(increase element 3 in [1 2 3 4 5] by 5 into [1 2 7 4 5] with max 7)
+
+(test #decrease-element)
+	(decrease element 3 in [1 2 3 4 5] by 2 into [1 2 1 4 5])
+
+(test #decrease-element-below-zero)
+	~(decrease element 3 in [1 2 3 4 5] by 4 into $)
+
+(test #max-first-is-bigger)
+	  (max 3 and 2 into 3)
+
+(test #max-second-is-bigger)
+	  (max 2 and 3 into 3)
+
+(test #max-equal-values)
+	  (max 2 and 2 into 2)
+
+(test #min-first-is-bigger)
+	  (min 3 and 2 into 2)
+
+(test #min-second-is-bigger)
+	  (min 2 and 3 into 2)
+
+(test #min-equal-values)
+	  (min 2 and 2 into 2)
+
+(test #0-isnt-odd)
+      ~(0 is odd)
+
+(test #1-is-odd)
+      (1 is odd)
+
+(test #2-isnt-odd)
+      ~(2 is odd)
+
+(test #3-is-odd)
+      (3 is odd)
+
+(test #intentionally-fail-this-test)
+	  (fail)
+
+(test #intentionally-fail-this-test-also)
+	  (fail)
+
+#intentionally-fail-3-is-even
+(test *)
+	  (3 is even)
+
+(test #assert-greater-true)
+	  (assert 3 > 2)
+
+(test #assert-greater-false)
+	  ~(assert 2 > 3)
+
+(test #assert-greater-even)
+	  ~(assert 2 > 2)
+
+(test #assert-lesser-true)
+	  (assert 2 < 3)
+
+(test #assert-lesser-false)
+	  ~(assert 3 < 2)
+
+(test #assert-lesser-even)
+	  ~(assert 2 < 2)

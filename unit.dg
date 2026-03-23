@@ -1,5 +1,5 @@
 %% unit.dg
-(extension version)	Unit test runner 1a/02 by Susan Davis (line)
+(extension version)	Unit test runner 1.1.1-dev by Susan Davis (line)
 
 %% See example(s) in test/unit in Dialog source distribution.
 %% Licensed under the same license as the rest of Dialog.
@@ -15,6 +15,10 @@
 
 (interface (assert $<Var = $<Val))
 
+(interface (assert $<Var > $<Val))
+
+(interface (assert $<Var < $<Val))
+
 (keep running on failure) %% negate to stop at first failed test
 
 %% We can't just (exhaust *(test $)), because that actually runs each test
@@ -26,7 +30,7 @@
 
 %%----------------------------- IMPLEMENTATION -----------------------------
 
-%% We almost don't need this, since that final line already does what we
+%% We almost don't need these, since that final line already does what we
 %% want, but adding binding checks can be useful.
 
 (assert $Thing1 = $Thing2) %% true if both are bound and ($Thing1 = $Thing2)
@@ -34,50 +38,65 @@
 	(bound $Thing2)
 	($Thing1 = $Thing2)
 
-(all tests pass)
+(assert $Thing1 > $Thing2)
+	(fully bound $Thing1)
+	(bound $Thing2)
+	($Thing1 > $Thing2)
+
+(assert $Thing1 < $Thing2)
+	(fully bound $Thing1)
+	(bound $Thing2)
+	($Thing1 < $Thing2)
+
+(global variable (number of failures 0))
 
 (program entry point)
 	(list of tests $Tests)
 	(length of $Tests into $Number)
-	(bold) Attempting $Number tests (roman) (line)
+	(bold) Attempting $Number test
+	(if) ($Number > 1) (then) (no space) s (endif)
+	(no space) . (roman) (line)
 	(stoppable) (exhaust) {
 		*($Test is one of $Tests)
 		Testing $Test:
 		(run-test $Test)
 	}
-	(if) (all tests pass) (then)
-		(bold) $Number tests passed successfully. (roman) (par)
+	(number of failures $Failures)
+	(if) ($Failures = 0) (then)
+		(bold) $Number test
+		(if) ($Number > 1) (then) (no space) s (endif)
+		passed successfully. (roman) (par)
 		(quit 0)
 	(else)
-		(bold) FAILED TEST. (roman) (par)
+		(bold) $Failures TEST
+		(if) ($Failures > 1) (then) (no space) S (endif)
+		FAILED. (roman) (par)
 		(quit 1)
 	(endif)
 
-(error $Code entry point)
-	(bold) FAILED TEST -- FATAL ERROR $Code. (roman) (par)
-	(now) ~(all tests pass)
-	(quit 1)                 %% or -1 if we ever get signed integers
+(increment failures)
+    (number of failures $Failures)
+	($Failures plus 1 into $FailuresPlusOne)
+	(now) (number of failures $FailuresPlusOne)
 
 (run-test $Test)
 	(if)
-		(stoppable) (set up $Test)   %% don't fail if absent
+		(stoppable) (exhaust) *(set up $Test)   %% don't fail if absent
 		(test $Test)
-		(stoppable) (clean up $Test) %% don't fail if absent
+		(stoppable) (exhaust) *(clean up $Test) %% don't fail if absent
 	(then)
 		Passed! (line)
 	(else)
 		(bold) Failed. (roman) (space) :-\( (line)
-		(now) ~(all tests pass)
+		(increment failures)
 		(if) ~(keep running on failure) (then) (stop) (endif)
 	(endif)
+
+(error $Code entry point)
+	(bold) FAILED TEST -- FATAL ERROR $Code. (roman) (par)
+	(quit 2)
 
 %% patch for ($ contains sublist $) issues; delete when fixed
 ($List contains sublist [$Head | $Tail])
 	*(split $List by [$Head] into $ and $Rest)
 	(append $Tail $ $Rest)
-
-%% Delete this interface and predicate if lft adds a builtin for it in
-%% dgdebug, to specify the exit status from the debugger for CI/CD pipelines
-%% and/or shell scripts.
-(interface (quit $<ExitStatus))
-(quit $)   (quit)
