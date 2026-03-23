@@ -1,0 +1,18 @@
+(style class @invis1)
+	display: none;
+(style class @invis2)
+	display: none;
+(style class @vis)
+
+(program entry point)
+	(div @invis1) Invisible %% No warning for invisible div
+	(div @invis1) Invisible
+	(div @invis1) Invisible
+	(par)
+	(span @vis) Visible %% No warning for visible span
+	(span @vis) Visible
+	(span @vis) Visible
+	(par)
+	(span @invis2) Invisible %% Yes warning for invisible span
+	(span @invis2) Invisible %% But only the first one
+	(span @invis2) Invisible
