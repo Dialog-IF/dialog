@@ -1315,6 +1315,7 @@ void usage(char *prgname) {
 	fprintf(stderr, "--numbered  -N      Show call depth with numbers during tracing.\n");
 	fprintf(stderr, "--tag-lines -T      Prepend output with \"  \", input with \"> \" or \") \".\n");
 	fprintf(stderr, "--no-header         Don't show version information at startup.\n");
+	fprintf(stderr, "--unit-test -u      Same as --no-warn-not-topic --quit --height=-1.\n");
 }
 
 extern int topic_warning_level; // Defined in frontend.c
@@ -1339,6 +1340,7 @@ int debugger(int argc, char **argv) {
 		{"no-warn-not-topic", 0, &topic_warning_level, 2},
 		{"tag-lines", 0, 0, 'T'},
 		{"no-header", 0, &suppress_header, 1},
+		{"unit-test", 0, 0, 'u'},
 		{0, 0, 0, 0}
 	};
 
@@ -1362,7 +1364,7 @@ int debugger(int argc, char **argv) {
 	dbg.timestamps = calloc(argc, sizeof(struct timespec));
 
 	do {
-		opt = getopt_long(argc, argv, "?hVvtnqw:H:s:W:LDNT", longopts, 0);
+		opt = getopt_long(argc, argv, "?hVvtnqw:H:s:W:LDNTu", longopts, 0);
 		switch(opt) {
 			case 0:
 				break; // Changed DMS to allow long-only options
@@ -1408,6 +1410,11 @@ int debugger(int argc, char **argv) {
 				break;
 			case 'T':
 				io_tag_lines = 1;
+				break;
+			case 'u': // --no-warn-not-topic --quit --height=-1
+				topic_warning_level = 2;
+				quitopt = 1;
+				force_height = -1;
 				break;
 			default:
 				if(opt >= 0) {
