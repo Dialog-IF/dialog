@@ -20,7 +20,7 @@ void o_end_self_link();
 void o_progress_bar(int position, int total);
 void o_clear(int all);
 void o_post_input(int external_lf);
-void o_reset(int force_width, int quirks);
+void o_reset(int force_width, int force_height, int quirks);
 void o_leave_all(void);
 void o_cleanup(void);
 int o_get_width(void);

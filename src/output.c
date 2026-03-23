@@ -52,6 +52,7 @@ static int column;
 static int width = 79, height = 0;
 static int dfrotz_quirks;
 static int force_width;
+static int force_height;
 static int nowrap;
 
 extern int io_tag_lines; // debugger.c
@@ -61,12 +62,14 @@ extern int io_tag_lines; // debugger.c
 static void syncwrap();
 
 static void update_size() {
-	int w;
+	int w, h;
 
-	term_get_size(&w, &height);
+	term_get_size(&w, &h, force_width, force_height);
 	if(force_width) w = force_width;
+	if(force_height) h = force_height;
 	if(w < width) syncwrap();
 	width = w;
+	height = h;
 	wrapbuf = realloc(wrapbuf, (width + 1) * sizeof(uint16_t));
 }
 
@@ -428,13 +431,15 @@ void o_post_input(int external_lf) {
 	term_effectstyle(wrapstyle);
 }
 
-void o_reset(int force_w, int quirks) {
+void o_reset(int force_w, int force_h, int quirks) {
 	force_width = force_w;
 	if(force_width < 0) { // Negative means disable wrapping
 		force_width = 79; // Needed to size the buffer
 		nowrap = 1;
 	}
 	if(force_width) width = force_width;
+	force_height = force_h;
+	if(force_height) height = force_height;
 	update_size();
 	space = SP_DONELINE + (quirks? 999 : 0);
 	wrapbuf = realloc(wrapbuf, (width + 1) * sizeof(uint16_t));

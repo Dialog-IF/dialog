@@ -131,7 +131,7 @@ int term_getkey(const char *prompt) {
 	}
 }
 
-void term_get_size(int *width, int *height) {
+void term_get_size(int *width, int *height, int force_w, int force_h) {
 	*width = 79;
 	*height = 0;
 }

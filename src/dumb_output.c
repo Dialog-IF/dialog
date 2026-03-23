@@ -34,7 +34,7 @@ void o_progress_bar(int a, int b)		{ bail_out(); }
 void o_clear(int all)				{ bail_out(); }
 void o_post_input(int external_lf)		{ bail_out(); }
 
-void o_reset(int force_w, int quirks) {
+void o_reset(int force_w, int force_h, int quirks) {
 	force_width = force_w;
 }
 

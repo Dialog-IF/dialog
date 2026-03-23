@@ -44,6 +44,7 @@ struct debugger {
 };
 
 static int force_width;
+static int force_height;
 extern int use_numbered_levels; // Defined in eval.c
 extern int return_value; // Defined in eval.c
 int io_tag_lines = 0; // Used in term_tty.c, output.c
@@ -1307,6 +1308,7 @@ void usage(char *prgname) {
 	fprintf(stderr, "--quit      -q      Quit the debugger when the program terminates.\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "--width     -w      Specify output width, in characters (-1 = infinite).\n");
+	fprintf(stderr, "--height    -H      Specify output height, in lines (-1 = infinite).\n");
 	fprintf(stderr, "--seed      -s      Specify random seed.\n");
 	fprintf(stderr, "--no-links  -L      Don't show hyperlinks in the output.\n");
 	fprintf(stderr, "--dfquirks  -D      Activate the dumbfrotz-compatible quirks mode.\n");
@@ -1327,6 +1329,7 @@ int debugger(int argc, char **argv) {
 		{"no-entry", 0, 0, 'n'},
 		{"quit", 0, 0, 'q'},
 		{"width", 1, 0, 'w'},
+		{"height", 1, 0, 'H'},
 		{"seed", 1, 0, 's'},
 		{"no-links", 0, 0, 'L'},
 		{"dfquirks", 0, 0, 'D'},
@@ -1359,7 +1362,7 @@ int debugger(int argc, char **argv) {
 	dbg.timestamps = calloc(argc, sizeof(struct timespec));
 
 	do {
-		opt = getopt_long(argc, argv, "?hVvtnqw:s:W:LDNT", longopts, 0);
+		opt = getopt_long(argc, argv, "?hVvtnqw:H:s:W:LDNT", longopts, 0);
 		switch(opt) {
 			case 0:
 				break; // Changed DMS to allow long-only options
@@ -1384,6 +1387,9 @@ int debugger(int argc, char **argv) {
 				break;
 			case 'w':
 				force_width = strtol(optarg, 0, 10);
+				break;
+			case 'H':
+				force_height = strtol(optarg, 0, 10);
 				break;
 			case 's':
 				dbg.randomseed = strtol(optarg, 0, 10);
@@ -1416,7 +1422,7 @@ int debugger(int argc, char **argv) {
 	dbg.filenames = argv + optind;
 
 	term_init(eval_interrupt);
-	o_reset(force_width, dfrotz_quirks);
+	o_reset(force_width, force_height, dfrotz_quirks);
 	comp_init();
 
 	if(io_tag_lines) o_line(); // Avoid special cases
@@ -1514,7 +1520,7 @@ int debugger(int argc, char **argv) {
 			break;
 		case ESTATUS_RESTART:
 			return_value = 0;
-			o_reset(force_width, dfrotz_quirks);
+			o_reset(force_width, force_height, dfrotz_quirks);
 			if(!restart(&dbg)) {
 				running = 0;
 				break;
@@ -1538,7 +1544,7 @@ int debugger(int argc, char **argv) {
 			o_print_str("entry point)");
 			o_end_box();
 			eval_reinitialize(&dbg.es);
-			o_reset(force_width, dfrotz_quirks);
+			o_reset(force_width, force_height, dfrotz_quirks);
 			v = (value_t) {VAL_NUM, dbg.status};
 			dbg.status = eval_program_entry(&dbg.es, find_builtin(dbg.prg, BI_ERROR_ENTRY), &v);
 			break;

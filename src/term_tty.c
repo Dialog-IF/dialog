@@ -32,6 +32,7 @@ static term_int_callback_t term_int_callback;
 static int unread_lines;
 static int termstyle;
 static int term_height;
+static int force_height;
 static int did_tcsetattr;
 static struct termios tio_orig;
 static uint16_t last_filename[256];
@@ -80,17 +81,19 @@ void morefunc() {
 	}
 }
 
-void term_get_size(int *width, int *height) {
+void term_get_size(int *width, int *height, int force_w, int force_h) {
 	struct winsize ws;
-
+	force_height = force_h;
+	
 	if(!ioctl(0, TIOCGWINSZ, &ws)) {
 		*width = (ws.ws_col >= 1)? ws.ws_col - 1 : 0;
 		if(io_tag_lines) *width -= 2; // For the tags
 		*height = ws.ws_row;
-		term_height = ws.ws_row;
+		term_height = force_height ? force_height : ws.ws_row;
 	} else {
 		*width = 79;
 		*height = 0;
+		term_height = force_height ? force_height : ws.ws_row;
 	}
 }
 
