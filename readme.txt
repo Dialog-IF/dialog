@@ -76,6 +76,9 @@ Release notes:
 		Compiler: access predicates consisting of a single multi-query
 		no longer crash the compiler when negated.
 		
+		Compiler: (accumulate $) into a constant value no longer crashes
+		the compiler on Å-machine.
+		
 		Compiler: a new --override-serial option makes builds reproducible
 		by overriding the release date and serial number fields. This is
 		not recommended, but occasionally necessary.
