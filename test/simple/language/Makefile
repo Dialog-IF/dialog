@@ -1,13 +1,13 @@
 # Call `make DIFF=meld` to get a fancy diff
 # If the build fails on a Mac, change --ignore-trailing-space to --ignore-space-change
-DIFF = diff --ignore-trailing-space
+DIFF = diff --ignore-space-change
 
 # Base of the repository
 BASEPATH = ../../..
 DGDEBUG = $(BASEPATH)/src/dgdebug
 DEBUG = $(DGDEBUG) -q --no-warn-not-topic
 
-# List of all .dg files with .dg changed to .test
+# List of all .nolib.dg and .lib.dg files with .dg changed to .test
 tests := $(patsubst %.dg,%.test,$(wildcard *.dg))
 rawgold := $(patsubst %.dg,%.gold,$(wildcard *.dg))
 rawinput := $(patsubst %.dg,%.in,$(wildcard *.dg))
@@ -113,10 +113,10 @@ new_stopchars2.d.out: $(BASEPATH)/src/dgdebug new_stopchars2.debug new_stopchars
 clean:
 	rm -rf *.out *.z.gold *.aa.gold *.d.gold *.z.in *.aa.in *.d.in *.z5 *.aastory
 
-#test-quit-0.test: $(DGDEBUG)
-#	$(DEBUG) test-quit-0.dg || exit 1
+test-quit-0.test: $(DGDEBUG)
+	$(DEBUG) test-quit-0.dg
 
-#test-quit-1.test: $(DGDEBUG)
-#	$(DEBUG) test-quit-1.dg && exit 1
+test-quit-13.test: $(DGDEBUG)
+	./test-quit-13.sh
 
 .PHONY: all test clean

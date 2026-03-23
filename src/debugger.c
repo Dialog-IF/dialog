@@ -45,6 +45,7 @@ struct debugger {
 
 static int force_width;
 extern int use_numbered_levels; // Defined in eval.c
+extern int return_value; // Defined in eval.c
 int io_tag_lines = 0; // Used in term_tty.c, output.c
 
 char *STOPCHARS; // Declared in common.h, defined here and in backend.c
@@ -1512,6 +1513,7 @@ int debugger(int argc, char **argv) {
 			dbg.status = ESTATUS_DEBUGGER;
 			break;
 		case ESTATUS_RESTART:
+			return_value = 0;
 			o_reset(force_width, dfrotz_quirks);
 			if(!restart(&dbg)) {
 				running = 0;
@@ -1756,5 +1758,5 @@ int debugger(int argc, char **argv) {
 	free(dbg.timestamps);
 	o_cleanup();
 	term_cleanup();
-	return 0;
+	return return_value;
 }
