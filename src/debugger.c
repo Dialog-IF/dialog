@@ -47,7 +47,8 @@ static int force_width;
 static int force_height;
 extern int use_numbered_levels; // Defined in eval.c
 extern int return_value; // Defined in eval.c
-int io_tag_lines = 0; // Used in term_tty.c, output.c
+int io_tag_lines; // Used in term_tty.c, output.c
+static int dfrotz_quirks;
 
 char *STOPCHARS; // Declared in common.h, defined here and in backend.c
 
@@ -1144,6 +1145,16 @@ static void cmd_restore(struct debugger *dbg) {
 	}
 }
 
+static void cmd_more(struct debugger *dbg) {
+	force_height = 0;
+	o_reset(force_width, force_height, dfrotz_quirks);
+}
+
+static void cmd_nomore(struct debugger *dbg) {
+	force_height = -1;
+	o_reset(force_width, force_height, dfrotz_quirks);
+}
+
 struct debugcmd {
 	char	*name;
 	void	(*invoke)(struct debugger *dbg);
@@ -1153,6 +1164,8 @@ struct debugcmd {
 	{"dynamic",	cmd_dyn,	"Show the current state of all dynamic predicates."},
 	{"g",		cmd_again,	"Same as @again."},
 	{"help",	cmd_help,	"Display this help text."},
+	{"more",	cmd_more,	"Enable [more] prompts for long output, if possible."},
+	{"nomore",	cmd_nomore,	"Disable [more] prompts for long output, if possible."},
 	{"quit",	cmd_quit,	"Quit the debugger."},
 	{"replay",	cmd_replay,	"Restart, then replay the accumulated game input."},
 	{"restore",	cmd_restore,	"Restart and read game input from a file."},
@@ -1355,7 +1368,7 @@ int debugger(int argc, char **argv) {
 	struct predname *predname;
 	int initial_trace = 0, no_entry = 0, quitopt = 0;
 	struct timeval tv;
-	int dfrotz_quirks = 0, hide_links = 0;
+	int hide_links = 0;
 	char numbuf[8], chbuf[8];
 	struct word *w;
 	uint16_t unibuf[2];
