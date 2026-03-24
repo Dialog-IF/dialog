@@ -198,3 +198,6 @@ void term_effectstyle(int style) {
 		termstyle = style;
 	}
 }
+
+void term_colors(int fg, int bg) {
+}

@@ -31,6 +31,7 @@ static struct histentry *tophist;
 static term_int_callback_t term_int_callback;
 static int unread_lines;
 static int termstyle;
+static int termfg = OCOLOR_INITIAL, termbg = OCOLOR_INITIAL;
 static int term_height;
 static int did_tcsetattr;
 static struct termios tio_orig;
@@ -112,6 +113,19 @@ void term_effectstyle(int style) {
 		if(style & STYLE_FIXED) printf("\033[50m"); // Not widely supported by terminals, but can be used by external tools
 	}
 	termstyle = style;
+}
+
+void term_colors(int fg, int bg) { // OCOLOR_* = ANSI escape color (0-7 or 9)
+	if(fg != termfg && isatty(1)) {
+		assert(fg != OCOLOR_INHERIT);
+		if(fg != OCOLOR_INITIAL) printf("\033[3%dm", fg);
+		termfg = fg;
+	}
+	if(bg != termbg && isatty(1)) {
+		assert(bg != OCOLOR_INHERIT);
+		if(bg != OCOLOR_INITIAL) printf("\033[4%dm", bg);
+		termbg = bg;
+	}
 }
 
 int term_sendlf() {
