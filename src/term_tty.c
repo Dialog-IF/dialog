@@ -121,7 +121,7 @@ void term_effectstyle(int style) {
 void term_colors(int fg, int bg) { // OCOLOR_* = ANSI escape color (0-7 or 9)
 	int cat;
 	if(fg != termfg && isatty(1)) {
-		assert(fg != OCOLOR_INHERIT);
+		assert(fg != OCOLOR_INHERIT); // INHERIT should never get this far - we should only be sent actual colors at this stage
 		cat = fg ? 9 : 3; // Use code 9X (bright colors) if not black; for black, use 3X (dim colors)
 		printf("\033[%d%dm", cat, fg);
 		termfg = fg;
