@@ -115,6 +115,9 @@ Release notes:
 		Backend: Å-machine backend now reports when non-ASCII characters
 		are added to the character set.
 		
+		Debugger: now supports color and background-color style class
+		properties in a very minimal way.
+		
 		Debugger: --width -1 disables word wrapping, for piping to other
 		programs.
 		

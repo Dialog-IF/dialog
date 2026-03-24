@@ -92,7 +92,7 @@ Supported values are `normal`, `bold`, and `inherit`.
 font-family::
 The value is checked for the presence or absence of the keyword `monospace`, or for the exact text `inherit`.
 
-font-decoration::
+text-decoration::
 The value is checked for the presence or absence of the keyword `reverse`, or for the exact text `inherit`. A value containing `reverse` instructs the interpreter to reverse the foreground and background colors, whatever they might be; this is not standard CSS, but is more widely supported on retro hardware than setting the colors directly.
 
 display::
