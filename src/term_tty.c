@@ -111,6 +111,9 @@ void term_effectstyle(int style) {
 		if(style & STYLE_REVERSE) printf("\033[7m");
 		if(style & STYLE_DEBUG) printf("\033[36m");
 		if(style & STYLE_FIXED) printf("\033[50m"); // Not widely supported by terminals, but can be used by external tools
+		// This also clobbers the colors though
+		termfg = OCOLOR_INITIAL;
+		termbg = OCOLOR_INITIAL;
 	}
 	termstyle = style;
 }
@@ -118,12 +121,12 @@ void term_effectstyle(int style) {
 void term_colors(int fg, int bg) { // OCOLOR_* = ANSI escape color (0-7 or 9)
 	if(fg != termfg && isatty(1)) {
 		assert(fg != OCOLOR_INHERIT);
-		if(fg != OCOLOR_INITIAL) printf("\033[3%dm", fg);
+		printf("\033[3%dm", fg);
 		termfg = fg;
 	}
 	if(bg != termbg && isatty(1)) {
 		assert(bg != OCOLOR_INHERIT);
-		if(bg != OCOLOR_INITIAL) printf("\033[4%dm", bg);
+		printf("\033[4%dm", bg);
 		termbg = bg;
 	}
 }

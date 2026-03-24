@@ -28,7 +28,7 @@ static int eval_color(int16_t rawcolor, int inheritfrom) {
 	if(rawcolor >= 0) return OCOLOR_INITIAL;
 	if(rawcolor == COLOR_INHERIT) return inheritfrom;
 	if(rawcolor == COLOR_INITIAL) return OCOLOR_INITIAL;
-	return (-1) - rawcolor;
+	return (-3) - rawcolor;
 }
 
 value_t eval_deref(value_t v, struct eval_state *es) {
@@ -1450,7 +1450,7 @@ static int eval_run(struct eval_state *es) {
 					es->divstyle &= ~(es->program->boxclasses[ci->oper[0].value].unstyle);
 					es->divstyle |=  (es->program->boxclasses[ci->oper[0].value].style & 0xff);
 					es->divfg = eval_color(es->program->boxclasses[ci->oper[0].value].color, es->divfg);
-					es->divbg = eval_color(es->program->boxclasses[ci->oper[0].value].color, es->divbg);
+					es->divbg = eval_color(es->program->boxclasses[ci->oper[0].value].bgcolor, es->divbg);
 					o_set_style(STYLE_ROMAN);
 					o_set_style_colors(es->divstyle, es->divfg, es->divbg);
 				}
@@ -1793,9 +1793,11 @@ static int eval_run(struct eval_state *es) {
 				v = es->auxstack[--es->aux]; // Pull style
 				assert(v.tag == VAL_NUM);
 				es->divstyle = v.value;
+				assert(es->aux);
 				v = es->auxstack[--es->aux]; // Pull fg
 				assert(v.tag == VAL_NUM);
 				es->divfg = v.value;
+				assert(es->aux);
 				v = es->auxstack[--es->aux]; // Pull bg
 				assert(v.tag == VAL_NUM);
 				es->divbg = v.value;
