@@ -2239,6 +2239,9 @@
 
 ~(action [shout to $] requires $ to be touched)
 
+(perform [shout to (current player $)])
+	You call out a few well-chosen words.
+
 (perform [shout to $Obj])
 	(try [talk to $Obj])
 
