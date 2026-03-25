@@ -122,20 +122,28 @@ void term_colors(int fg, int bg) { // OCOLOR_* = ANSI escape color (0-7 or 9)
 	int cat;
 	if(fg != termfg && isatty(1)) {
 		assert(fg != OCOLOR_INHERIT); // INHERIT should never get this far - we should only be sent actual colors at this stage
-		cat = fg ? 9 : 3; // Use code 9X (bright colors) if not black; for black, use 3X (dim colors)
+		cat = (fg == 0 || fg == 9) ? 3 : 9; // Use code 9X (bright colors) if not black; for black, use 3X (dim colors)
 		printf("\033[%d%dm", cat, fg);
 		termfg = fg;
 	}
 	if(bg != termbg && isatty(1)) {
 		assert(bg != OCOLOR_INHERIT);
-		cat = bg ? 10 : 4; // Use code 10X (bright colors) if not black; for black, use 4X (dim colors)
+		cat = (bg == 0 || bg == 9) ? 4 : 10; // Use code 10X (bright colors) if not black; for black, use 4X (dim colors)
 		printf("\033[%d%dm", cat, bg);
 		termbg = bg;
 	}
 }
 
+static void reset_bgcolor() { // Reset the background color after a newline
+	int bg = termbg;
+	termbg = OCOLOR_INITIAL;
+	term_colors(termfg, bg);
+}
+
 int term_sendlf() {
+	printf("\033[49m"); // Always reset background color before scrolling, to avoid weird behavior with the new line produced
 	fputc('\n', stdout);
+	reset_bgcolor();
 	if(io_tag_lines) printf("  ");
 	unread_lines++;
 	if(term_height > 1 && isatty(1)) {
