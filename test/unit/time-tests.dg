@@ -1,4 +1,4 @@
-%% dgdebug -q time-tests.dg time.dg ../../unit.dg ../../stdlib.dg
+%% dgdebug -q time-tests.dg time.dg unit.dg stdlib.dg
 
 %% Here's a worked example of some unit tests for a Dialog extension.
 %% By convention, the top line of the test file specifies the command
@@ -9,6 +9,7 @@
 	#hours-minutes-assert
 	#hours-minutes-zero
 	#hours-minutes-after-midnight
+	#tick-tock
 	#leading-zero-zero
 	#leading-zero-one
 	#leading-zero-nine
@@ -42,6 +43,9 @@
 	#elapse-3-days
 	#elapse-11-days
 	#elapse-12-days
+	#suspend-tick
+	#stop-time
+	#restart-time
 	])
 
 (current time 891)
@@ -228,3 +232,36 @@
 (test #elapse-12-days)
 	(elapse 12 days)
 	(current date [24 1 1969])
+
+(test #tick-tock)
+	(time is running)
+	~(suspend this tick)
+	(tick)
+	(14 hours 52 minutes)
+	(tick)
+	(14 hours 53 minutes)
+
+(test #suspend-tick)
+	(now) (suspend this tick)
+	(tick)
+	(14 hours 51 minutes)
+	~(suspend this tick)
+	(tick)
+	(14 hours 52 minutes)
+
+(test #stop-time)
+	(now) ~(time is running)
+	~(suspend this tick)
+	(tick)
+	(14 hours 51 minutes)
+	(tick)
+	(14 hours 51 minutes)
+
+(test #restart-time)
+	(now) ~(time is running)
+	(14 hours 51 minutes)
+	(tick)
+	(14 hours 51 minutes)
+	(now) (time is running)
+	(tick)
+	(14 hours 52 minutes)
