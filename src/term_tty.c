@@ -141,7 +141,7 @@ static void reset_bgcolor() { // Reset the background color after a newline
 }
 
 int term_sendlf() {
-	printf("\033[49m"); // Always reset background color before scrolling, to avoid weird behavior with the new line produced
+	if(isatty(1)) printf("\033[49m"); // Always reset background color before scrolling, to avoid weird behavior with the new line produced
 	fputc('\n', stdout);
 	reset_bgcolor();
 	if(io_tag_lines) printf("  ");
