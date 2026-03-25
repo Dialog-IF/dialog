@@ -81,7 +81,9 @@ or who prefer to play on vintage hardware.
 Never change the text colour without also changing the background colour,
 as the player may be using an interpreter with a dark or light default background.
 
-The Z-machine backend, and the 8-bit Å-machine interpreter, only support a limited number of style attributes. For divs and spans in the main text area, they are:
+The Z-machine backend, the 8-bit Å-machine interpreter, and the interactive
+debugger only support a limited number of style attributes. For divs and spans
+in the main text area, they are:
 
 font-style::
 Supported values are `normal`, `italic`, and `inherit`.
@@ -110,15 +112,25 @@ The size of the resulting margin is the given number of blank lines.
 
 There is currently no support for the combined `margin` and `font` attributes.
 
-The Z-machine also supports two additional properties that the 8-bit Å-machine interpreter does not:
+The Z-machine and debugger also support two additional properties that the
+8-bit Å-machine interpreter does not:
 
 color::
-Supported values are `initial`, `inherit`, `black`, `red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, `white`, or a pound sign `#` followed by six hexadecimal digits. Interpreters are more likely to support the named colors than the hexadecimal ones. The value `initial` specifies the interpreter's original choice of color, before receiving any instructions from the program; there is no way to know if this is a light or dark color, so best practice is to set both `color` and `background-color` to `initial`, or neither of them.
+Supported values are `initial`, `inherit`, `black`, `red`, `green`, `yellow`,
+`blue`, `magenta`, `cyan`, `white`, or a pound sign `#` followed by six
+hexadecimal digits. Interpreters are more likely to support the named colors
+than the hexadecimal ones. The value `initial` specifies the interpreter's
+original choice of color, before receiving any instructions from the program;
+there is no way to know if this is a light or dark color, so best practice is
+to set both `color` and `background-color` to `initial`, or neither of them.
 
 background-color::
 Supported values are the same as for `color`.
 
-Be aware that not all interpreters allow these properties to be combined. A span (or combination of spans) intended to be both bold and italic may be displayed as only one or the other—or even as something else, like bright text and underlining—depending on the interpreter's capabilities.
+Be aware that not all interpreters allow these properties to be combined. A
+span (or combination of spans) intended to be both bold and italic may be
+displayed as only one or the other—or even as something else, like bright text
+and underlining—depending on the interpreter's capabilities.
 
 === Nested style contexts and the flow of execution
 
@@ -233,7 +245,10 @@ The built-in predicate `(space $)` prints a given number of space characters in 
 In addition to spans and divs, it is possible to change the current text style on the fly.
 Use the built-in predicates `(bold)`, `(italic)`, `(reverse)`, and `(fixed pitch)`
 to enable each respective style, and `(roman)` to disable all four.
-The predicate `(unstyle)` reverts to the default style of the current div or span, which is roman by default. Note that these predicates are deprecated, and may be removed in a future version of Dialog; divs and spans should be used instead whenever possible.
+The predicate `(unstyle)` reverts to the default style of the current div or
+span, which is roman by default. Note that these predicates are deprecated, and
+may be removed in a future version of Dialog; divs and spans should be used
+instead whenever possible.
 
 [#status]
 == Status areas
