@@ -12,10 +12,12 @@ src/dgdebug:
 
 test: src/dgdebug
 	$(MAKE) -C test all
+	echo All normal tests successful!
 
 # Splitting this one out because making the prereqs is hard on Mac
 test-6502:
 	$(MAKE) -C test/6502 6502 clean
+	echo 6502 tests successful!
 
 tidy:
 	$(MAKE) -C src tidy

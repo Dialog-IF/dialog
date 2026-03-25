@@ -1,0 +1,2 @@
+Warning: (span @invis2) makes an invisible span. This is legal, but can produce strange spacing.
+Warning: It is recommended to use invisible styles only for divs, not spans.

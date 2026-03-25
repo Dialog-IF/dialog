@@ -1,5 +1,5 @@
 %% unit.dg
-(extension version)	Unit test runner 1b/01-dev by Susan Davis (line)
+(extension version)	Unit test runner 1.1.1-dev by Susan Davis (line)
 
 %% See example(s) in test/unit in Dialog source distribution.
 %% Licensed under the same license as the rest of Dialog.
@@ -15,6 +15,10 @@
 
 (interface (assert $<Var = $<Val))
 
+(interface (assert $<Var > $<Val))
+
+(interface (assert $<Var < $<Val))
+
 (keep running on failure) %% negate to stop at first failed test
 
 %% We can't just (exhaust *(test $)), because that actually runs each test
@@ -26,7 +30,7 @@
 
 %%----------------------------- IMPLEMENTATION -----------------------------
 
-%% We almost don't need this, since that final line already does what we
+%% We almost don't need these, since that final line already does what we
 %% want, but adding binding checks can be useful.
 
 (assert $Thing1 = $Thing2) %% true if both are bound and ($Thing1 = $Thing2)
@@ -34,12 +38,24 @@
 	(bound $Thing2)
 	($Thing1 = $Thing2)
 
+(assert $Thing1 > $Thing2)
+	(fully bound $Thing1)
+	(bound $Thing2)
+	($Thing1 > $Thing2)
+
+(assert $Thing1 < $Thing2)
+	(fully bound $Thing1)
+	(bound $Thing2)
+	($Thing1 < $Thing2)
+
 (global variable (number of failures 0))
 
 (program entry point)
 	(list of tests $Tests)
 	(length of $Tests into $Number)
-	(bold) Attempting $Number tests. (roman) (line)
+	(bold) Attempting $Number test
+	(if) ($Number > 1) (then) (no space) s (endif)
+	(no space) . (roman) (line)
 	(stoppable) (exhaust) {
 		*($Test is one of $Tests)
 		Testing $Test:
@@ -47,10 +63,14 @@
 	}
 	(number of failures $Failures)
 	(if) ($Failures = 0) (then)
-		(bold) $Number tests passed successfully. (roman) (par)
+		(bold) $Number test
+		(if) ($Number > 1) (then) (no space) s (endif)
+		passed successfully. (roman) (par)
 		(quit 0)
 	(else)
-		(bold) $Failures TESTS FAILED. (roman) (par)
+		(bold) $Failures TEST
+		(if) ($Failures > 1) (then) (no space) S (endif)
+		FAILED. (roman) (par)
 		(quit 1)
 	(endif)
 
@@ -61,9 +81,9 @@
 
 (run-test $Test)
 	(if)
-		(stoppable) (set up $Test)   %% don't fail if absent
+		(stoppable) (exhaust) *(set up $Test)   %% don't fail if absent
 		(test $Test)
-		(stoppable) (clean up $Test) %% don't fail if absent
+		(stoppable) (exhaust) *(clean up $Test) %% don't fail if absent
 	(then)
 		Passed! (line)
 	(else)
@@ -74,7 +94,7 @@
 
 (error $Code entry point)
 	(bold) FAILED TEST -- FATAL ERROR $Code. (roman) (par)
-	(quit 1)
+	(quit 2)
 
 %% patch for ($ contains sublist $) issues; delete when fixed
 ($List contains sublist [$Head | $Tail])
