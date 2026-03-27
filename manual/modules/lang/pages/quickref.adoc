@@ -450,6 +450,11 @@ xref:builtins.adoc#system[(quit)]::
 
 Immediately terminates the interpreter.
 
+xref:builtins.adoc#system[(quit $Status)]::
+
+As `(quit)`, but also sets the exit status of the interactive debugger.
+On Z-machine or Å-machine, it is exactly equivalent to `(quit)`.
+
 xref:builtins.adoc#arithmetic[(random from $X to $Y into $Z)]::
 
 Unifies `$Z` with a random number in the range `$X` to `$Y`
