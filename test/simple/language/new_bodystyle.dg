@@ -1,0 +1,21 @@
+(style class @fancy)
+	color: red;
+	background-color: blue;
+	font-style: italic;
+	font-weight: bold;
+
+(program entry point)
+	Start
+	(get key $)
+	(body style @fancy)
+	Fancy
+	(get key $)
+	(clear)
+	Cleared fancy
+	(get key $)
+	(reset body style)
+	Reset
+	(get key $)
+	(clear)
+	Cleared reset
+	(get key $)

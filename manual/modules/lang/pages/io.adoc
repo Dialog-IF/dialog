@@ -81,7 +81,9 @@ or who prefer to play on vintage hardware.
 Never change the text colour without also changing the background colour,
 as the player may be using an interpreter with a dark or light default background.
 
-The Z-machine backend, and the 8-bit Å-machine interpreter, only support a limited number of style attributes. For divs and spans in the main text area, they are:
+The Z-machine backend, the 8-bit Å-machine interpreter, and the interactive
+debugger only support a limited number of style attributes. For divs and spans
+in the main text area, they are:
 
 font-style::
 Supported values are `normal`, `italic`, and `inherit`.
@@ -112,15 +114,25 @@ The size of the resulting margin is the given number of blank lines.
 
 There is currently no support for the combined `margin` and `font` attributes.
 
-The Z-machine also supports two additional properties that the 8-bit Å-machine interpreter does not:
+The Z-machine and debugger also support two additional properties that the
+8-bit Å-machine interpreter does not:
 
 color::
-Supported values are `initial`, `inherit`, `black`, `red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, `white`, or a pound sign `#` followed by six hexadecimal digits. Interpreters are more likely to support the named colors than the hexadecimal ones. The value `initial` specifies the interpreter's original choice of color, before receiving any instructions from the program; there is no way to know if this is a light or dark color, so best practice is to set both `color` and `background-color` to `initial`, or neither of them.
+Supported values are `initial`, `inherit`, `black`, `red`, `green`, `yellow`,
+`blue`, `magenta`, `cyan`, `white`, or a pound sign `#` followed by six
+hexadecimal digits. Interpreters are more likely to support the named colors
+than the hexadecimal ones. The value `initial` specifies the interpreter's
+original choice of color, before receiving any instructions from the program;
+there is no way to know if this is a light or dark color, so best practice is
+to set both `color` and `background-color` to `initial`, or neither of them.
 
 background-color::
 Supported values are the same as for `color`.
 
-Be aware that not all interpreters allow these properties to be combined. A span (or combination of spans) intended to be both bold and italic may be displayed as only one or the other—or even as something else, like bright text and underlining—depending on the interpreter's capabilities.
+Be aware that not all interpreters allow these properties to be combined. A
+span (or combination of spans) intended to be both bold and italic may be
+displayed as only one or the other—or even as something else, like bright text
+and underlining—depending on the interpreter's capabilities.
 
 === Nested style contexts and the flow of execution
 
@@ -141,6 +153,76 @@ Regardless of how the inner statement terminates, the div or span is concluded a
 and the style attributes of the surrounding context are restored on the fly.
 In case of a div, for instance, this means that the bottom margin takes effect.
 
+[#bodystyle]
+=== Body styles
+
+It is also possible to set the "body style" of the story: the style used outside
+of any divs and spans. This is a dangerous power, and is less widely supported
+than ordinary divs and spans; results may vary from interpreter to interpreter.
+Still, adjusting the background color of the page can be an effective way to
+mark a dramatic shift in the game, or just to set a more interesting mood than
+the default black and white.
+
+To set a new body style:
+
+[source]
+----
+	(body style $Class)
+----
+
+Or undo it again:
+
+[source]
+----
+	(reset body style)
+----
+
+The latter is equivalent to setting the body style to an empty style class, and
+in fact, that is how it is implemented under the hood. Whether a new body style
+applies to existing text depends on the interpreter, so it is safest to
+xref:#clear[clear the screen] after changing the body style.
+
+In theory, a body style can use all the same properties as a div or span style,
+but in practice, `color` and `background-color` are the most useful. These,
+though, come with their own set of caveats. Most Z-machine interpreters only
+apply a new background color after clearing the screen---but some, like
+Gargoyle, apply a new background color at the next `(get key $)` or `(get input 
+$)` instead. Gargoyle also applies a body style's `color` to existing text, but
+only if that text has no color of its own (from a div, span, or previous body
+style). Other interpreters leave existing text unmodified.
+
+On the Å-machine, only the web interpreter supports body styles. It applies them
+to the entire screen (including existing text) immediately, without needing the screen to be cleared. Setting the `color` and `background-color` works, but is
+not ideal: it does not affect UI elements like the menu or transcript, and does
+not respect the user's choice of light or dark mode.
+
+For the Å-machine web interpreter specifically, a set of custom properties can
+be used instead:
+
+----
+--theme-darkest: #000000;
+--theme-dark: #222222;
+--theme-medium: #888888;
+--theme-light: #cccccc;
+--theme-lightest: #eeeeee;
+--accent-dark: #875;
+--accent-light: #aa8;
+----
+
+These properties are used for all aspects of the web interpreter, from the game
+text to the menus and buttons to the transcript window. By default, the `theme-`
+properties are various shades of gray, while the `accent-` properties are a
+greenish brown.
+
+From these properties, a dozen more are defined, such as `--night-bg` (the page
+background in night mode) and `--ui-hover` (interface elements when hovered).
+These can also be adjusted in a body style, if (say) you want different link
+colors in night mode and day mode, or want progress bars to use the theme
+colors instead of the accent colors. For a full list, look at the CSS files for
+the interpreter.
+
+These custom properties are not recognized by the other backends.
+
 [#case]
 == Case conversion and inline styles
 
@@ -150,14 +232,14 @@ The standard library uses this to define the following convenient predicates:
 [source]
 ----
 (A full $Obj)	(uppercase) (a full $Obj)
-(A $Obj)	    (uppercase) (a $Obj)
-(It $Obj)	    (uppercase) (it $Obj)
-(Its $Obj)	    (uppercase) (its $Obj)
-(Name $Obj)	    (uppercase) (name $Obj)
-(That $Obj)	    (uppercase) (that $Obj)
+(A $Obj)		(uppercase) (a $Obj)
+(It $Obj)		(uppercase) (it $Obj)
+(Its $Obj)		(uppercase) (its $Obj)
+(Name $Obj)		(uppercase) (name $Obj)
+(That $Obj)		(uppercase) (that $Obj)
 (The full $Obj)	(uppercase) (the full $Obj)
 (The $Obj is)	(uppercase) (the $Obj is)
-(The $Obj)	    (uppercase) (the $Obj)
+(The $Obj)		(uppercase) (the $Obj)
 ----
 
 The built-in predicate `(space $)` prints a given number of space characters in succession.
@@ -165,7 +247,10 @@ The built-in predicate `(space $)` prints a given number of space characters in 
 In addition to spans and divs, it is possible to change the current text style on the fly.
 Use the built-in predicates `(bold)`, `(italic)`, `(reverse)`, and `(fixed pitch)`
 to enable each respective style, and `(roman)` to disable all four.
-The predicate `(unstyle)` reverts to the default style of the current div or span, which is roman by default. Note that these predicates are deprecated, and may be removed in a future version of Dialog; divs and spans should be used instead whenever possible.
+The predicate `(unstyle)` reverts to the default style of the current div or
+span, which is roman by default. Note that these predicates are deprecated, and
+may be removed in a future version of Dialog; divs and spans should be used
+instead whenever possible.
 
 [#status]
 == Status areas

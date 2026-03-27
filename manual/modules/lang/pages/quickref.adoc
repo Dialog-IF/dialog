@@ -261,6 +261,10 @@ xref:builtins.adoc#listbuiltins[(append $A $B $AB)]::
 Unifies `$AB` with the concatenation of `$A` (which must be bound)
 and `$B`.
 
+xref:io.adoc#bodystyle[(body style $Class)]::
+
+Applies a style class to the main body of output.
+
 xref:io.adoc#case[(bold)]::
 
 Enables bold text.
@@ -459,6 +463,10 @@ xref:choicepoints.adoc#repeat[(repeat forever)]::
 
 Provides an infinite supply of choice points. Generally invoked with a
 multi-query.
+
+xref:io.adoc#bodystyle[(reset body style)]::
+
+Undoes the effects of `(body style $)`.
 
 xref:builtins.adoc#system[(restart)]::
 

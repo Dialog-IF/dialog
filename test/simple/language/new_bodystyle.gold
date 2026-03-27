@@ -1,0 +1,18 @@
+[#] None of our test terps support styling, so this mostly just tests that nothing crashes
+[#] Test the story files in Gargoyle, Frotz, Å-Web for actual checks
+[D] Start Fancy Cleared fancy Reset Cleared reset
+[Z] Start
+[Z] Start Fancy
+[Z] Cleared fancy
+[Z] Cleared fancy Reset
+[Z] Cleared reset
+[A] Start 
+[A] Fancy 
+[A]
+[A]
+[A] Cleared fancy 
+[A] Reset 
+[A]
+[A]
+[A] Cleared reset 
+[A]

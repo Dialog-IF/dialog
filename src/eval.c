@@ -527,6 +527,7 @@ static value_t value_of(value_t v, struct eval_state *es) {
 		env = &es->envstack[es->env];
 		assert(v.value < env->nvar);
 		return env->vars[v.value];
+	case OPER_BOX: // Only for BI_GLOBAL_STYLE, currently unimplemented
 	case VAL_NUM:
 	case VAL_OBJ:
 	case VAL_DICT:
@@ -1241,6 +1242,9 @@ static int eval_builtin(struct eval_state *es, int builtin, value_t o1, value_t 
 		if(!es->forwords) {
 			o_set_style(STYLE_FIXED);
 		}
+		break;
+	case BI_GLOBAL_STYLE: // Not currently supported, but could be
+	case BI_GLOBAL_UNSTYLE:
 		break;
 	case BI_ITALIC:
 		if(!es->forwords) {
