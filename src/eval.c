@@ -2104,6 +2104,12 @@ static int eval_run(struct eval_state *es) {
 			res = 1;
 			if(ci->subop ^ res) perform_branch(ci->implicit, es, &pp, &pc);
 			break;
+		case I_IF_HAVE_STYLE:
+		case I_IF_HAVE_COLOR:
+			res = o_is_pretty();
+			if(ci->subop ^ res) perform_branch(ci->implicit, es, &pp, &pc);
+			break;
+		case I_IF_HAVE_ALIGN:
 		case I_IF_SCRIPT_ACTIVE:
 			res = 0;
 			if(ci->subop ^ res) perform_branch(ci->implicit, es, &pp, &pc);

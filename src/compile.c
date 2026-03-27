@@ -87,6 +87,9 @@ struct opinfosrc {
 	{I_IF_HAVE_LINK,	0, OPF_BRANCH,				"IF_HAVE_LINK"},
 	{I_IF_HAVE_UNDO,	0, OPF_BRANCH,				"IF_HAVE_UNDO"},
 	{I_IF_HAVE_QUIT,	0, OPF_BRANCH,				"IF_HAVE_QUIT"},
+	{I_IF_HAVE_STYLE,	0, OPF_BRANCH,				"IF_HAVE_STYLE"},
+	{I_IF_HAVE_COLOR,	0, OPF_BRANCH,				"IF_HAVE_COLOR"},
+	{I_IF_HAVE_ALIGN,	0, OPF_BRANCH,				"IF_HAVE_ALIGN"},
 	{I_IF_SCRIPT_ACTIVE,0, OPF_BRANCH,				"IF_SCRIPT_ACTIVE"},
 	{I_IF_HAVE_STATUS,	0, OPF_BRANCH,				"IF_HAVE_STATUS"},
 	{I_IF_MATCH,		0, OPF_BRANCH,				"IF_MATCH"},
@@ -1364,6 +1367,27 @@ static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an,
 
 	if(an->predicate->builtin == BI_HAVE_QUIT) {
 		ci = add_instr(I_IF_HAVE_QUIT);
+		ci->subop = 1;
+		post_rule_trace(prg, cl, an, seen);
+		return 0;
+	}
+	
+	if(an->predicate->builtin == BI_HAVE_STYLE) {
+		ci = add_instr(I_IF_HAVE_STYLE);
+		ci->subop = 1;
+		post_rule_trace(prg, cl, an, seen);
+		return 0;
+	}
+	
+	if(an->predicate->builtin == BI_HAVE_COLOR) {
+		ci = add_instr(I_IF_HAVE_COLOR);
+		ci->subop = 1;
+		post_rule_trace(prg, cl, an, seen);
+		return 0;
+	}
+	
+	if(an->predicate->builtin == BI_HAVE_ALIGN) {
+		ci = add_instr(I_IF_HAVE_ALIGN);
 		ci->subop = 1;
 		post_rule_trace(prg, cl, an, seen);
 		return 0;

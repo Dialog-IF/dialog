@@ -1898,51 +1898,39 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 					ai->oper[3] = (aaoper_t) {AAO_CODE, labelbase + ci->implicit};
 				}
 				break;
-			case I_IF_HAVE_LINK:
-				ai = add_instr(AA_VM_INFO);
-				ai->oper[0] = (aaoper_t) {AAO_BYTE, AAFEAT_LINKS};
-				ai->oper[1] = (aaoper_t) {AAO_STORE_REG, REG_TMP};
-				ai = add_instr(AA_IF_RAW_EQ | 0x80);
-				if(!ci->subop) ai->op ^= AA_NEG_FLIP;
-				ai->oper[0] = (aaoper_t) {AAO_ZERO};
-				ai->oper[1] = (aaoper_t) {AAO_REG, REG_TMP};
-				if(ci->implicit == 0xffff) {
-					ai->oper[2] = (aaoper_t) {AAO_CODE, AAFAIL};
-				} else {
-					ai->oper[2] = (aaoper_t) {AAO_CODE, labelbase + ci->implicit};
-				}
-				break;
+			case I_IF_HAVE_LINK: // VM_INFO
 			case I_IF_HAVE_UNDO:
-				ai = add_instr(AA_VM_INFO);
-				ai->oper[0] = (aaoper_t) {AAO_BYTE, AAFEAT_UNDO};
-				ai->oper[1] = (aaoper_t) {AAO_STORE_REG, REG_TMP};
-				ai = add_instr(AA_IF_RAW_EQ | 0x80);
-				if(!ci->subop) ai->op ^= AA_NEG_FLIP;
-				ai->oper[0] = (aaoper_t) {AAO_ZERO};
-				ai->oper[1] = (aaoper_t) {AAO_REG, REG_TMP};
-				if(ci->implicit == 0xffff) {
-					ai->oper[2] = (aaoper_t) {AAO_CODE, AAFAIL};
-				} else {
-					ai->oper[2] = (aaoper_t) {AAO_CODE, labelbase + ci->implicit};
-				}
-				break;
 			case I_IF_HAVE_QUIT:
-				ai = add_instr(AA_VM_INFO);
-				ai->oper[0] = (aaoper_t) {AAO_BYTE, AAFEAT_QUIT};
-				ai->oper[1] = (aaoper_t) {AAO_STORE_REG, REG_TMP};
-				ai = add_instr(AA_IF_RAW_EQ | 0x80);
-				if(!ci->subop) ai->op ^= AA_NEG_FLIP;
-				ai->oper[0] = (aaoper_t) {AAO_ZERO};
-				ai->oper[1] = (aaoper_t) {AAO_REG, REG_TMP};
-				if(ci->implicit == 0xffff) {
-					ai->oper[2] = (aaoper_t) {AAO_CODE, AAFAIL};
-				} else {
-					ai->oper[2] = (aaoper_t) {AAO_CODE, labelbase + ci->implicit};
-				}
-				break;
+			case I_IF_HAVE_STYLE:
+			case I_IF_HAVE_COLOR:
+			case I_IF_HAVE_ALIGN:
 			case I_IF_SCRIPT_ACTIVE:
 				ai = add_instr(AA_VM_INFO);
-				ai->oper[0] = (aaoper_t) {AAO_BYTE, AAFEAT_SCRIPT};
+				switch(ci->op) { // More foolproof than an array
+					case I_IF_HAVE_LINK:
+						ai->oper[0] = (aaoper_t) {AAO_BYTE, AAFEAT_LINKS};
+						break;
+					case I_IF_HAVE_UNDO:
+						ai->oper[0] = (aaoper_t) {AAO_BYTE, AAFEAT_UNDO};
+						break;
+					case I_IF_HAVE_QUIT:
+						ai->oper[0] = (aaoper_t) {AAO_BYTE, AAFEAT_QUIT};
+						break;
+					case I_IF_HAVE_STYLE:
+						ai->oper[0] = (aaoper_t) {AAO_BYTE, AAFEAT_STYLE};
+						break;
+					case I_IF_HAVE_COLOR:
+						ai->oper[0] = (aaoper_t) {AAO_BYTE, AAFEAT_COLOR};
+						break;
+					case I_IF_HAVE_ALIGN:
+						ai->oper[0] = (aaoper_t) {AAO_BYTE, AAFEAT_ALIGN};
+						break;
+					case I_IF_SCRIPT_ACTIVE:
+						ai->oper[0] = (aaoper_t) {AAO_BYTE, AAFEAT_SCRIPT};
+						break;
+					default:
+						assert(0);
+				}
 				ai->oper[1] = (aaoper_t) {AAO_STORE_REG, REG_TMP};
 				ai = add_instr(AA_IF_RAW_EQ | 0x80);
 				if(!ci->subop) ai->op ^= AA_NEG_FLIP;

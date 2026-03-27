@@ -48,3 +48,7 @@ void o_cleanup() {
 int o_get_width() {
 	return force_width? force_width : 79;
 }
+
+int o_is_pretty() {
+	return 0;
+}
