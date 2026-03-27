@@ -17,6 +17,7 @@ static int argc = 1;
 static char **argv;
 static term_int_callback_t term_int_callback;
 static int termstyle;
+static int termfg = OCOLOR_INITIAL, termbg = OCOLOR_INITIAL;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
 	if(InitGlk(0x00000601) == 0) exit(0);
@@ -28,8 +29,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 }
 
 int winglk_startup_code(const char* cmdline) {
-	int i;
-	
 	// There used to be an elaborate block of code here that took the LPSTRING command line provided by Windows and parsed it out into argc and argv
 	// But the parsing was quite basic (just splitting on every run of spaces) and didn't take into account things like quoting and escaping
 	// Since the Windows versions are only expected to be built with MinGW, we instead use MinGW's built-in way of accessing argc and argv directly
@@ -38,6 +37,7 @@ int winglk_startup_code(const char* cmdline) {
 	argv = __argv;
 	
 #if 0
+	int i;
 	printf("cmdline \"%s\"\n", cmdline);
 	for(i = 0; i < argc; i++) {
 		printf(" %d: \"%s\"\n", i, argv[i]);
@@ -196,5 +196,27 @@ void term_effectstyle(int style) {
 			glk_set_style(style_Emphasized);
 		}
 		termstyle = style;
+	}
+}
+
+// https://zspec.jaredreisinger.com/08-screen#8_3
+static int32_t ansi_to_glk_color[] = {
+	0x000000, // black
+	0xef0000, // red
+	0x00d000, // green
+	0xefef00, // yellow
+	0x006fb0, // blue
+	0xff00ff, // magenta
+	0x00efef, // cyan
+	0xffffff, // white
+	zcolor_Current, // inherit
+	zcolor_Default // initial
+};
+
+void term_colors(int fg, int bg) {
+	if(termfg != fg || termbg != bg) {
+		garglk_set_zcolors(ansi_to_glk_color[fg], ansi_to_glk_color[bg]);
+		termfg = fg;
+		termbg = bg;
 	}
 }
