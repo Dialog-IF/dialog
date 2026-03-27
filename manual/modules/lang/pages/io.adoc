@@ -92,11 +92,11 @@ Supported values are `normal`, `bold`, and `inherit`.
 font-family::
 The value is checked for the presence or absence of the keyword `monospace`, or for the exact text `inherit`.
 
-font-decoration::
+text-decoration::
 The value is checked for the presence or absence of the keyword `reverse`, or for the exact text `inherit`. A value containing `reverse` instructs the interpreter to reverse the foreground and background colors, whatever they might be; this is not standard CSS, but is more widely supported on retro hardware than setting the colors directly.
 
 display::
-Supported values are `none` and `inherit`. Spans marked with `display: none` are not displayed in any way, but their contents _will_ appear in the xref:builtins.adoc#system[transcript]. If any important information is conveyed in a status area, this can be used to ensure it's also recorded in the transcript.
+Supported values are `none` and `inherit`. Content marked with `display: none` is not displayed in any way, but _will_ appear in the xref:builtins.adoc#system[transcript]. If any important information is conveyed in a status area, this can be used to ensure it's also recorded in the transcript.
 
 CAUTION: Using `display:none` on spans (rather than divs) is not recommended, because any spacing around them will still be visible. This is true for all backends.
 

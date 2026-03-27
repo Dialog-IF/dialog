@@ -9,6 +9,7 @@ void o_nospace(void);
 void o_nbsp(void);
 void o_sync(void);
 void o_set_style(int style);
+void o_set_style_colors(int style, int fg, int bg);
 void o_set_upper(void);
 void o_print_word(const char *utf8);
 void o_print_opaque_word(const char *utf8);
