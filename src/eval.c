@@ -17,6 +17,7 @@
 static volatile int interrupted = 0;
 
 int use_numbered_levels = 0;
+int return_value = 0; // XXX: move this out of a global
 
 void eval_interrupt() {
 	interrupted = 1;
@@ -500,7 +501,7 @@ static int eval_pop_undo(struct eval_state *es) {
 	o_set_style(STYLE_ROMAN);
 	if(es->divsp) {
 		if(es->program->boxclasses[es->divstack[es->divsp - 1]].style) {
-			es->divstyle = es->program->boxclasses[es->divstack[es->divsp - 1]].style & 0x7f;
+			es->divstyle = es->program->boxclasses[es->divstack[es->divsp - 1]].style & 0xff;
 		}
 		o_set_style(es->divstyle);
 	}
@@ -1437,7 +1438,7 @@ static int eval_run(struct eval_state *es) {
 						o_begin_box("box");
 					}
 					es->divstyle &= ~(es->program->boxclasses[ci->oper[0].value].unstyle);
-					es->divstyle |=  (es->program->boxclasses[ci->oper[0].value].style & 0x7f);
+					es->divstyle |=  (es->program->boxclasses[ci->oper[0].value].style & 0xff);
 					o_set_style(STYLE_ROMAN);
 					o_set_style(es->divstyle);
 				}
@@ -2526,6 +2527,18 @@ static int eval_run(struct eval_state *es) {
 			}
 			es->stopchoice = es->choice;
 			break;
+		case I_QUIT_N:
+			v0 = value_of(ci->oper[0], es);
+			if(v0.tag == VAL_NUM) {
+				return_value = v0.value;
+			//	printf("setting return value to %d\n", return_value);
+			} else {
+				o_begin_box("debugger");
+				o_print_opaque_word("Warning: tried to quit with non-numeric status");
+				pp_value(es, v0, 1, 1);
+				o_end_box();
+			}
+			// drop through
 		case I_QUIT:
 			pred_release(pp.pred);
 			return ESTATUS_QUIT;

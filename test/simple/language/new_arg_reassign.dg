@@ -1,0 +1,9 @@
+%% Issue #204
+
+(program entry point)
+	(temp 1)
+
+(temp 1)
+	(show [ [1] [2] ])
+
+(show $X) $X
