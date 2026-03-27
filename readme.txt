@@ -44,6 +44,8 @@ Release notes:
 		compiled for Å-machine will need version 1.0.0 or later of the
 		Å-machine tools. Get them from github.com/Dialog-IF/aamachine/.
 		
+		Language: added (body style $) and (reset body style).
+		
 		Language: added (clear status bar).
 		
 		Language: added (transcript active).
