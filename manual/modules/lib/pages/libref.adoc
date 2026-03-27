@@ -165,11 +165,15 @@ xref:actions.adoc#preventperform[`(instead of $)`] +
 xref:traits.adoc#categorytraits[`(intangible $)`] +
 xref:lang:beyondprg.adoc#interface[`(interface $)`] (special syntax) +
 xref:lang:io.adoc#resources[`(interpreter can embed $)`] +
+xref:lang:io.adoc#styletest[(interpreter supports color)] +
+xref:lang:io.adoc#styletest[(interpreter supports colour)] +
 xref:lang:io.adoc#status[`(interpreter supports inline status bar)`] +
 xref:lang:io.adoc#hyperlinks[`(interpreter supports links)`] +
 xref:lang:builtins.adoc#system[`(interpreter supports quit)`] +
 xref:lang:io.adoc#status[`(interpreter supports status bar)`] +
+xref:lang:io.adoc#styletest[(interpreter supports styling)] +
 xref:lang:builtins.adoc#system[`(interpreter supports undo)`] +
+xref:lang:io.adoc#styletest[(interpreter supports text alignment)] +
 xref:lang:choicepoints.adoc#collect-values[`(into $)`] (special syntax) +
 xref:timeprogress.adoc#theintro[`(intro)`] +
 xref:traits.adoc#linguistictraits[`(is $)`] +

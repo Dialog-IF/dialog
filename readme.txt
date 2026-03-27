@@ -59,6 +59,9 @@ Release notes:
 		
 		Language: added (transcript active).
 		
+		Language: added a way to test for basic style support, basic
+		color support, and text alignment support.
+		
 		Distribution: added unit.dg, a library for unit testing.
 		
 		Documentation: the library reference now includes special syntax

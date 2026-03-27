@@ -154,6 +154,7 @@ struct builtinspec {
 	{BI_HAVE_INLINE_STATUS,	0, 0,				5,	{"interpreter", "supports", "inline", "status", "bar"}},
 	{BI_HAVE_STYLE,		0, 0,				3,	{"interpreter", "supports", "styling"}},
 	{BI_HAVE_COLOR,		0, 0,				3,	{"interpreter", "supports", "color"}},
+	{BI_HAVE_COLOR,		0, 0,				3,	{"interpreter", "supports", "colour"}}, // For the Brits
 	{BI_HAVE_ALIGN,		0, 0,				4,	{"interpreter", "supports", "text", "alignment"}},
 	{BI_CAN_EMBED,		0, 0,				4,	{"interpreter", "can", "embed", 0}},
 	{BI_PROGRAM_ENTRY,	PREDNF_DEFINABLE_BI, 0,		3,	{"program", "entry", "point"}},
