@@ -4023,6 +4023,7 @@ struct rtroutine rtroutines[] = {
 			{Z_ERASE_WINDOW, {VALUE(REG_LOCAL+0)}},
 			{Z_JE, {VALUE(REG_LOCAL+0), SMALL(1)}, 0, RFALSE}, // If we only cleared the status bar, don't change REG_SPACE
 			{Z_STORE, {SMALL(REG_SPACE), SMALL(SPC_LINE)}},
+			{Z_CALL1N, {ROUTINE(R_RESET_STYLE)}},
 			{Z_RFALSE},
 			{Z_END},
 		}
