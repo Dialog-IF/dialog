@@ -27,5 +27,5 @@ void term_colors(int fg, int bg);
 void term_clear(int all);
 
 int term_is_interactive(void);
-void term_get_size(int *width, int *height);
+void term_get_size(int *width, int *height, int force_w, int force_h);
 int term_handles_wrapping(void);

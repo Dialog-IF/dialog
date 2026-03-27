@@ -44,9 +44,11 @@ struct debugger {
 };
 
 static int force_width;
+static int force_height;
 extern int use_numbered_levels; // Defined in eval.c
 extern int return_value; // Defined in eval.c
-int io_tag_lines = 0; // Used in term_tty.c, output.c
+int io_tag_lines; // Used in term_tty.c, output.c
+static int dfrotz_quirks;
 
 char *STOPCHARS; // Declared in common.h, defined here and in backend.c
 
@@ -1143,6 +1145,16 @@ static void cmd_restore(struct debugger *dbg) {
 	}
 }
 
+static void cmd_more(struct debugger *dbg) {
+	force_height = 0;
+	o_reset(force_width, force_height, dfrotz_quirks);
+}
+
+static void cmd_nomore(struct debugger *dbg) {
+	force_height = -1;
+	o_reset(force_width, force_height, dfrotz_quirks);
+}
+
 struct debugcmd {
 	char	*name;
 	void	(*invoke)(struct debugger *dbg);
@@ -1152,6 +1164,8 @@ struct debugcmd {
 	{"dynamic",	cmd_dyn,	"Show the current state of all dynamic predicates."},
 	{"g",		cmd_again,	"Same as @again."},
 	{"help",	cmd_help,	"Display this help text."},
+	{"more",	cmd_more,	"Enable [more] prompts for long output, if possible."},
+	{"nomore",	cmd_nomore,	"Disable [more] prompts for long output, if possible."},
 	{"quit",	cmd_quit,	"Quit the debugger."},
 	{"replay",	cmd_replay,	"Restart, then replay the accumulated game input."},
 	{"restore",	cmd_restore,	"Restart and read game input from a file."},
@@ -1307,12 +1321,14 @@ void usage(char *prgname) {
 	fprintf(stderr, "--quit      -q      Quit the debugger when the program terminates.\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "--width     -w      Specify output width, in characters (-1 = infinite).\n");
+	fprintf(stderr, "--height    -H      Specify output height, in lines (-1 = infinite).\n");
 	fprintf(stderr, "--seed      -s      Specify random seed.\n");
 	fprintf(stderr, "--no-links  -L      Don't show hyperlinks in the output.\n");
 	fprintf(stderr, "--dfquirks  -D      Activate the dumbfrotz-compatible quirks mode.\n");
 	fprintf(stderr, "--numbered  -N      Show call depth with numbers during tracing.\n");
 	fprintf(stderr, "--tag-lines -T      Prepend output with \"  \", input with \"> \" or \") \".\n");
 	fprintf(stderr, "--no-header         Don't show version information at startup.\n");
+	fprintf(stderr, "--unit-test -u      Same as --no-warn-not-topic --quit --height=-1.\n");
 }
 
 extern int topic_warning_level; // Defined in frontend.c
@@ -1327,6 +1343,7 @@ int debugger(int argc, char **argv) {
 		{"no-entry", 0, 0, 'n'},
 		{"quit", 0, 0, 'q'},
 		{"width", 1, 0, 'w'},
+		{"height", 1, 0, 'H'},
 		{"seed", 1, 0, 's'},
 		{"no-links", 0, 0, 'L'},
 		{"dfquirks", 0, 0, 'D'},
@@ -1336,6 +1353,7 @@ int debugger(int argc, char **argv) {
 		{"no-warn-not-topic", 0, &topic_warning_level, 2},
 		{"tag-lines", 0, 0, 'T'},
 		{"no-header", 0, &suppress_header, 1},
+		{"unit-test", 0, 0, 'u'},
 		{0, 0, 0, 0}
 	};
 
@@ -1350,7 +1368,7 @@ int debugger(int argc, char **argv) {
 	struct predname *predname;
 	int initial_trace = 0, no_entry = 0, quitopt = 0;
 	struct timeval tv;
-	int dfrotz_quirks = 0, hide_links = 0;
+	int hide_links = 0;
 	char numbuf[8], chbuf[8];
 	struct word *w;
 	uint16_t unibuf[2];
@@ -1359,7 +1377,7 @@ int debugger(int argc, char **argv) {
 	dbg.timestamps = calloc(argc, sizeof(struct timespec));
 
 	do {
-		opt = getopt_long(argc, argv, "?hVvtnqw:s:W:LDNT", longopts, 0);
+		opt = getopt_long(argc, argv, "?hVvtnqw:H:s:W:LDNTu", longopts, 0);
 		switch(opt) {
 			case 0:
 				break; // Changed DMS to allow long-only options
@@ -1385,6 +1403,9 @@ int debugger(int argc, char **argv) {
 			case 'w':
 				force_width = strtol(optarg, 0, 10);
 				break;
+			case 'H':
+				force_height = strtol(optarg, 0, 10);
+				break;
 			case 's':
 				dbg.randomseed = strtol(optarg, 0, 10);
 				break;
@@ -1403,6 +1424,11 @@ int debugger(int argc, char **argv) {
 			case 'T':
 				io_tag_lines = 1;
 				break;
+			case 'u': // --no-warn-not-topic --quit --height=-1
+				topic_warning_level = 2;
+				quitopt = 1;
+				force_height = -1;
+				break;
 			default:
 				if(opt >= 0) {
 					fprintf(stderr, "Unimplemented option '%c'\n", opt);
@@ -1416,7 +1442,7 @@ int debugger(int argc, char **argv) {
 	dbg.filenames = argv + optind;
 
 	term_init(eval_interrupt);
-	o_reset(force_width, dfrotz_quirks);
+	o_reset(force_width, force_height, dfrotz_quirks);
 	comp_init();
 
 	if(io_tag_lines) o_line(); // Avoid special cases
@@ -1514,7 +1540,7 @@ int debugger(int argc, char **argv) {
 			break;
 		case ESTATUS_RESTART:
 			return_value = 0;
-			o_reset(force_width, dfrotz_quirks);
+			o_reset(force_width, force_height, dfrotz_quirks);
 			if(!restart(&dbg)) {
 				running = 0;
 				break;
@@ -1538,7 +1564,7 @@ int debugger(int argc, char **argv) {
 			o_print_str("entry point)");
 			o_end_box();
 			eval_reinitialize(&dbg.es);
-			o_reset(force_width, dfrotz_quirks);
+			o_reset(force_width, force_height, dfrotz_quirks);
 			v = (value_t) {VAL_NUM, dbg.status};
 			dbg.status = eval_program_entry(&dbg.es, find_builtin(dbg.prg, BI_ERROR_ENTRY), &v);
 			break;

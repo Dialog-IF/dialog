@@ -1,6 +1,6 @@
 all: test 
 
-DEBUG=../../src/dgdebug -q --no-warn-not-topic
+DEBUG=../../src/dgdebug -u
 STDLIB=../../unit.dg ../../stdlib.dg
 
 test: time utils pass-1 fail-1
