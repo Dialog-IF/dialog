@@ -152,6 +152,10 @@ struct builtinspec {
 	{BI_SCRIPT_ACTIVE,	0, 0,				2,	{"transcript", "active"}},
 	{BI_HAVE_STATUS,	0, 0,				4,	{"interpreter", "supports", "status", "bar"}},
 	{BI_HAVE_INLINE_STATUS,	0, 0,				5,	{"interpreter", "supports", "inline", "status", "bar"}},
+	{BI_HAVE_STYLE,		0, 0,				3,	{"interpreter", "supports", "styling"}},
+	{BI_HAVE_COLOR,		0, 0,				3,	{"interpreter", "supports", "color"}},
+	{BI_HAVE_COLOR,		0, 0,				3,	{"interpreter", "supports", "colour"}}, // For the Brits
+	{BI_HAVE_ALIGN,		0, 0,				4,	{"interpreter", "supports", "text", "alignment"}},
 	{BI_CAN_EMBED,		0, 0,				4,	{"interpreter", "can", "embed", 0}},
 	{BI_PROGRAM_ENTRY,	PREDNF_DEFINABLE_BI, 0,		3,	{"program", "entry", "point"}},
 	{BI_ERROR_ENTRY,	PREDNF_DEFINABLE_BI, 0,		4,	{"error", 0, "entry", "point"}},
