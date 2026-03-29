@@ -23,6 +23,14 @@ void eval_interrupt() {
 	interrupted = 1;
 }
 
+// Converts COLOR_ (Z-machine) to OCOLOR_ (ANSI escapes)
+static int eval_color(int16_t rawcolor, int inheritfrom) {
+	if(rawcolor >= 0) return OCOLOR_INITIAL;
+	if(rawcolor == COLOR_INHERIT) return inheritfrom;
+	if(rawcolor == COLOR_INITIAL) return OCOLOR_INITIAL;
+	return (-3) - rawcolor;
+}
+
 value_t eval_deref(value_t v, struct eval_state *es) {
 	int pos;
 
@@ -503,7 +511,9 @@ static int eval_pop_undo(struct eval_state *es) {
 		if(es->program->boxclasses[es->divstack[es->divsp - 1]].style) {
 			es->divstyle = es->program->boxclasses[es->divstack[es->divsp - 1]].style & 0xff;
 		}
-		o_set_style(es->divstyle);
+		es->divfg = eval_color(es->program->boxclasses[es->divstack[es->divsp-1]].color, OCOLOR_INITIAL);
+		es->divbg = eval_color(es->program->boxclasses[es->divstack[es->divsp-1]].bgcolor, OCOLOR_INITIAL);
+		o_set_style_colors(es->divstyle, es->divfg, es->divbg);
 	}
 	// Note: this does NOT evaluate the whole div stack for the purpose of `inherit` properties
 	// Undoing with a non-empty div stack is rare, though, so it's generally fine
@@ -527,6 +537,7 @@ static value_t value_of(value_t v, struct eval_state *es) {
 		env = &es->envstack[es->env];
 		assert(v.value < env->nvar);
 		return env->vars[v.value];
+	case OPER_BOX: // Only for BI_GLOBAL_STYLE
 	case VAL_NUM:
 	case VAL_OBJ:
 	case VAL_DICT:
@@ -1194,10 +1205,16 @@ static int eval_compute(struct eval_state *es, int op, int a, int b, int *res) {
 		}
 		break;
 	case BI_DIV_WIDTH:
-		*res = o_get_width();
+		r = o_get_width();
+		if(r <= 0) return 0;
+		*res = r;
 		return 1;
 		break;
-	case BI_DIV_HEIGHT: // Not exposed by output.c; it could be in the future, but for now, just fail
+	case BI_DIV_HEIGHT:
+		r = o_get_height();
+		if(r <= 0) return 0;
+		*res = r;
+		return 1;
 		break;
 	default:
 		printf("unimplemented computation %d\n", op);
@@ -1208,6 +1225,7 @@ static int eval_compute(struct eval_state *es, int op, int a, int b, int *res) {
 }
 
 static int eval_builtin(struct eval_state *es, int builtin, value_t o1, value_t o2) {
+	int fg, bg, st;
 	assert(builtin);
 	switch(builtin) {
 	case BI_BOLD:
@@ -1241,6 +1259,25 @@ static int eval_builtin(struct eval_state *es, int builtin, value_t o1, value_t 
 		if(!es->forwords) {
 			o_set_style(STYLE_FIXED);
 		}
+		break;
+	case BI_GLOBAL_STYLE:
+	case BI_GLOBAL_UNSTYLE:
+		if(es->divsp) { // Crash if in a box OR in a span
+			return ESTATUS_ERR_IO;
+		}
+		if(builtin == BI_GLOBAL_STYLE) {
+			fg = eval_color(es->program->boxclasses[o1.value].color, OCOLOR_INITIAL);
+			bg = eval_color(es->program->boxclasses[o1.value].bgcolor, OCOLOR_INITIAL);
+			st = es->program->boxclasses[o1.value].style;
+		} else {
+			fg = OCOLOR_INITIAL;
+			bg = OCOLOR_INITIAL;
+			st = STYLE_ROMAN;
+		}
+		es->divfg = fg;
+		es->divbg = bg;
+		es->divstyle = st;
+		o_set_style_colors(es->divstyle, es->divfg, es->divbg);
 		break;
 	case BI_ITALIC:
 		if(!es->forwords) {
@@ -1421,7 +1458,11 @@ static int eval_run(struct eval_state *es) {
 					pred_release(pp.pred);
 					return ESTATUS_ERR_IO;
 				} else {
-					if(!push_aux(es, (value_t) {VAL_NUM, es->divstyle})) {
+					if(
+						!push_aux(es, (value_t) {VAL_NUM, es->divbg}) || // Push bg
+						!push_aux(es, (value_t) {VAL_NUM, es->divfg}) || // Push fg
+						!push_aux(es, (value_t) {VAL_NUM, es->divstyle}) // Push style
+					) {
 						pred_release(pp.pred);
 						return ESTATUS_ERR_AUX;
 					}
@@ -1435,8 +1476,10 @@ static int eval_run(struct eval_state *es) {
 					}
 					es->divstyle &= ~(es->program->boxclasses[ci->oper[0].value].unstyle);
 					es->divstyle |=  (es->program->boxclasses[ci->oper[0].value].style & 0xff);
+					es->divfg = eval_color(es->program->boxclasses[ci->oper[0].value].color, es->divfg);
+					es->divbg = eval_color(es->program->boxclasses[ci->oper[0].value].bgcolor, es->divbg);
 					o_set_style(STYLE_ROMAN);
-					o_set_style(es->divstyle);
+					o_set_style_colors(es->divstyle, es->divfg, es->divbg);
 				}
 			}
 			break;
@@ -1757,7 +1800,7 @@ static int eval_run(struct eval_state *es) {
 					o_par_n(es->program->boxclasses[ci->oper[0].value].marginbottom);
 				}
 				o_set_style(STYLE_ROMAN);
-				o_set_style(es->divstyle);
+				o_set_style_colors(es->divstyle, es->divfg, es->divbg);
 			}
 			break;
 		case I_END_BOX:
@@ -1774,11 +1817,19 @@ static int eval_run(struct eval_state *es) {
 					o_par_n(es->program->boxclasses[ci->oper[0].value].marginbottom);
 				}
 				assert(es->aux);
-				v = es->auxstack[--es->aux];
+				v = es->auxstack[--es->aux]; // Pull style
 				assert(v.tag == VAL_NUM);
 				es->divstyle = v.value;
+				assert(es->aux);
+				v = es->auxstack[--es->aux]; // Pull fg
+				assert(v.tag == VAL_NUM);
+				es->divfg = v.value;
+				assert(es->aux);
+				v = es->auxstack[--es->aux]; // Pull bg
+				assert(v.tag == VAL_NUM);
+				es->divbg = v.value;
 				o_set_style(STYLE_ROMAN);
-				o_set_style(es->divstyle);
+				o_set_style_colors(es->divstyle, es->divfg, es->divbg);
 			}
 			break;
 		case I_END_LINK:
@@ -3016,6 +3067,10 @@ void eval_reinitialize(struct eval_state *es) {
 	es->inStatus = 0;
 	es->nSpan = 0;
 	es->nLink = 0;
+	
+	es->divstyle = STYLE_ROMAN;
+	es->divfg = OCOLOR_INITIAL;
+	es->divbg = OCOLOR_INITIAL;
 }
 
 int eval_initial(struct eval_state *es, struct predname *predname, value_t *args) {

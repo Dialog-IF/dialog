@@ -120,6 +120,7 @@ static struct aaopinfo aaopinfosrc[] = {
 	{AA_EMBED_RES,		{AAO_VALUE}, 0,						"embed_res"},
 	{AA_CAN_EMBED_RES,	{AAO_VALUE, AAO_DEST}, 0,				"can_embed_res"},
 	{AA_PROGRESS,		{AAO_VALUE, AAO_VALUE}, 0,				"progress"},
+	{AA_SET_BODY,		{AAO_INDEX}, 0,						"set_body"},
 	{AA_ENTER_SPAN,		{AAO_INDEX}, 0,						"enter_span"},
 	{AA_LEAVE_SPAN,		{}, 0,							"leave_span"},
 	{AA_ENTER_STATUS,	{AAO_BYTE, AAO_INDEX}, 0,				"enter_status"},

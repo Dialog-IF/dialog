@@ -132,6 +132,8 @@ struct builtinspec {
 	{BI_CLEAR_DIV,		0, PREDF_SUCCEEDS,		2,	{"clear", "div"}},
 	{BI_CLEAR_OLD,		0, PREDF_SUCCEEDS,		2,	{"clear", "old"}},
 	{BI_CLEAR_STATUS,	0, PREDF_SUCCEEDS,		3,	{"clear", "status", "bar"}},
+	{BI_GLOBAL_STYLE,	1, PREDF_SUCCEEDS,		3,	{"body", "style", 0}},
+	{BI_GLOBAL_UNSTYLE,	0, PREDF_SUCCEEDS,		3,	{"reset", "body", "style"}},
 	{BI_EMBEDRESOURCE,	0, 0,				3,	{"embed", "resource", 0}},
 	{BI_GETINPUT,		0, 0,				3,	{"get", "input", 0}},
 	{BI_GETRAWINPUT,	0, 0,				5,	{"", "get", "raw", "input", 0}},	// disabled for now
@@ -2968,11 +2970,14 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 					} else if(strcmp(param, "inherit")) { // Something that's not monospace was specified, and it was *not* inherit
 						bc->unstyle |= STYLE_FIXED;
 					}
-				} else if(1 == sscanf(str, "font-decoration : %s", param)) {
+				} else if(1 == sscanf(str, "text-decoration : %s", param)) {
 					if(strstr(str, "reverse")) { // This is not a standard CSS property, but there is no standard CSS property for reverse video, and unrecognized property values are explicitly not an error in CSS
 						bc->style |= STYLE_REVERSE;
 					} else if(strcmp(param, "inherit")) { // As above, something that's not reverse was specified, and it's *not* inherit
 						bc->unstyle |= STYLE_REVERSE;
+					}
+					if(strstr(str, "debug")) { // It's sometimes useful to set the STYLE_DEBUG flag manually. This is deliberately not documented.
+						bc->style |= STYLE_DEBUG;
 					}
 				} else if(1 == sscanf(str, "display : %s", param)) {
 					if(!strcmp(param, "none")) { // display:none indicates that a span/div should be sent to the transcript but not to the screen, like the quote boxes in Trinity
@@ -3017,6 +3022,9 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 				(bc->unstyle & STYLE_FIXED)? "no" : "inherit");
 			if(bc->style & STYLE_INVISIBLE) {
 				printf("\tUndisplayed\n");
+			}
+			if(bc->style & STYLE_DEBUG) {
+				printf("\tDebug\n");
 			}
 			if(bc->color < 0) { // Print negatives in decimal
 				printf("\tColor:\t%d\n", bc->color);

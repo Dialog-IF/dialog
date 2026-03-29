@@ -21,6 +21,8 @@
 
 (keep running on failure) %% negate to stop at first failed test
 
+(using color) %% negate to use default output instead of green and red
+
 %% We can't just (exhaust *(test $)), because that actually runs each test
 %% without setup, cleanup, or failure checks, so we work around that with
 %% a global variable, populated with all the tests. You can quarantine tests
@@ -48,6 +50,16 @@
 	(bound $Thing2)
 	($Thing1 < $Thing2)
 
+(style class @green-bar)
+	   color: green;
+
+(style class @red-bar)
+	   color: red;
+
+(style class @no-color)
+	   color: initial;
+	   background-color: initial;
+
 (global variable (number of failures 0))
 
 (program entry point)
@@ -56,16 +68,17 @@
 	(bold) Attempting $Number test
 	(if) ($Number > 1) (then) (no space) s (endif)
 	(no space) . (roman) (line)
+	(if) (using color) (then) (body style @green-bar) (endif)
 	(stoppable) (exhaust) {
 		*($Test is one of $Tests)
-		Testing $Test:
 		(run-test $Test)
 	}
+	(body style @no-color)
 	(number of failures $Failures)
 	(if) ($Failures = 0) (then)
 		(bold) $Number test
 		(if) ($Number > 1) (then) (no space) s (endif)
-		passed successfully. (roman) (par)
+		(bold)  passed successfully. (roman) (par)
 		(quit 0)
 	(else)
 		(bold) $Failures TEST
@@ -78,21 +91,26 @@
     (number of failures $Failures)
 	($Failures plus 1 into $FailuresPlusOne)
 	(now) (number of failures $FailuresPlusOne)
+	(if) (using color) (then) (body style @red-bar) (endif)
 
 (run-test $Test)
+	Testing $Test :
 	(if)
 		(stoppable) (exhaust) *(set up $Test)   %% don't fail if absent
 		(test $Test)
 		(stoppable) (exhaust) *(clean up $Test) %% don't fail if absent
 	(then)
-		Passed! (line)
+	 	Passed! (line)
 	(else)
-		(bold) Failed. (roman) (space) :-\( (line)
 		(increment failures)
+		(bold) Failed. (roman) (space) :-\( (line)
 		(if) ~(keep running on failure) (then) (stop) (endif)
 	(endif)
 
 (error $Code entry point)
+	(if) (using color) (then)
+		 (body style @red-bar)
+    (endif)
 	(bold) FAILED TEST -- FATAL ERROR $Code. (roman) (par)
 	(quit 2)
 

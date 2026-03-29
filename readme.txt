@@ -49,6 +49,8 @@ Release notes:
 		Language: deprecated display:none; on spans. This remains legal,
 		but will produce a warning.
 		
+		Language: added (body style $) and (reset body style).
+		
 		Language: added (quit $), to let unit.dg tests cause make
 		to fail when they fail.
 		
@@ -115,19 +117,29 @@ Release notes:
 		Backend: Å-machine backend now reports when non-ASCII characters
 		are added to the character set.
 		
+		Debugger: now supports color and background-color style class
+		properties in a very minimal way.
+		
 		Debugger: --width -1 disables word wrapping, for piping to other
 		programs.
 		
 		Debugger: --no-header option suppresses version information, for
 		the same reason.
 		
+		Debugger: --height option allows forcing a terminal height; -1
+		means infinite. New @more and @nomore debugging commands can
+		change this at run-time.
+		
 		Debugger: --tag-lines option explicitly marks requests for key
 		and line input, for the same reason.
 		
 		Debugger: now tags fixed-width text with an ANSI escape sequence.
-
+		
 		Debugger: terminal width will now be measured immediately after
 		launching.
+		
+		Debugger: --unit-test option is equivalent to --no-warn-not-topic
+		--quit --height=-1, but much shorter to type.
 		
 		Library: new commands SUPERBRIEF, BRIEF, VERBOSE, and SUPERVERBOSE
 		change how rooms are described while going. The default behavior
