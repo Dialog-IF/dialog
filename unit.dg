@@ -98,12 +98,11 @@
     (number of failures $Failures)
 	($Failures plus 1 into $FailuresPlusOne)
 	(now) (number of failures $FailuresPlusOne)
-	(update body style)
 
 (run-test $Test)
 	(update body style)
 	Testing $Test :
-	(reset body style)
+	(reset body style) %% display output from the test itself in default colours
 	(if)
 		(stoppable) (exhaust) *(set up $Test)   %% don't fail if absent
 		(test $Test)
@@ -113,6 +112,7 @@
 	 	Passed! (line)
 	(else)
 		(increment failures)
+		(update body style)
 		(bold) Failed. (roman) (space) :-\( (line)
 		(if) ~(keep running on failure) (then) (stop) (endif)
 	(endif)
