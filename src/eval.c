@@ -1206,13 +1206,13 @@ static int eval_compute(struct eval_state *es, int op, int a, int b, int *res) {
 		break;
 	case BI_DIV_WIDTH:
 		r = o_get_width();
-		if(r < 0) return 0;
+		if(r <= 0) return 0;
 		*res = r;
 		return 1;
 		break;
 	case BI_DIV_HEIGHT:
 		r = o_get_height();
-		if(r < 0) return 0;
+		if(r <= 0) return 0;
 		*res = r;
 		return 1;
 		break;
