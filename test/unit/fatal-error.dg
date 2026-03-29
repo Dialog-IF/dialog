@@ -3,20 +3,7 @@
 (list of tests [#bottles-of-beer])
 
 (bottles of beer $Bottles)
-	  (bottles of beer $FewerBottles) %% overflow the heap
-	  (if) ($Bottles > 1) (then)
-	        $Bottles bottles of beer on the wall, (line)
-			($Bottles minus 1 into $FewerBottles)
-			$Bottles bottles of beer. (line)
-			You take one down, and pass it around. (line)
-			$FewerBottles bottles of beer on the wall. (line)
-			(bottles of beer $FewerBottles)
-	  (else)
-		    One bottle of beer on the wall, (line)
-			one bottle of beer. (line)
-			You take it down, and pass it around. (line)
-			No more bottles of beer on the wall!
-	  (endif)
+	  (bottles of beer $Bottles) %% overflow the heap
 
 (test #bottles-of-beer)
 	  (bottles of beer 16383)
