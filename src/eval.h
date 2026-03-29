@@ -101,7 +101,9 @@ struct eval_state {
 
 	uint8_t			forwords;
 	uint8_t			trace;
-	uint8_t			divstyle;
+	uint8_t			divstyle; // Style (italic etc)
+	uint8_t			divfg; // Foreground ocolor
+	uint8_t			divbg; // Background ocolor
 	uint8_t			divsp;
 	uint8_t			errorflag;	// set on e.g. heap overflow
 	uint8_t			hide_links;
