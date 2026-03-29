@@ -2891,7 +2891,7 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 					zi = append_instr(r, OP_LABEL(ll));
 				}
 				break;
-			case I_IF_HAVE_QUIT:
+			case I_IF_HAVE_QUIT: // Always succeeds
 				if(!ci->subop) {
 					if(ci->implicit == 0xffff) {
 						zi = append_instr(r, Z_RFALSE);
@@ -2934,7 +2934,76 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 					zi = append_instr(r, OP_LABEL(ll));
 				}
 				break;
-			case I_IF_HAVE_STATUS:
+			case I_IF_HAVE_STYLE: // Flags 1 bits 2+3
+				zi = append_instr(r, Z_LOADB);
+				zi->oper[0] = SMALL(0);
+				zi->oper[1] = SMALL(1);
+				zi->store = REG_TEMP;
+				zi = append_instr(r, Z_TEST);
+				zi->oper[0] = VALUE(REG_TEMP);
+				zi->oper[1] = SMALL(0x0C); // 00001100
+				if(ci->subop) zi->op ^= OP_NOT;
+				if(ci->implicit == 0xffff) {
+					zi->branch = RFALSE;
+				} else if(pred->routines[ci->implicit].reftrack == r_id) {
+					zi->branch = llabel[ci->implicit];
+					if(!encountered[ci->implicit]) {
+						rstack[rsp++] = ci->implicit;
+						encountered[ci->implicit] = 1;
+					}
+				} else {
+					ll = r->next_label++;
+					zi->op ^= OP_NOT;
+					zi->branch = ll;
+					zi = append_instr(r, Z_RET);
+					zi->oper[0] = ROUTINE(rlabel[ci->implicit]);
+					zi = append_instr(r, OP_LABEL(ll));
+				}
+				break;
+			case I_IF_HAVE_COLOR: // Flags 1 bit 0
+				zi = append_instr(r, Z_LOADB);
+				zi->oper[0] = SMALL(0);
+				zi->oper[1] = SMALL(1);
+				zi->store = REG_TEMP;
+				zi = append_instr(r, Z_TEST);
+				zi->oper[0] = VALUE(REG_TEMP);
+				zi->oper[1] = SMALL(0x01);
+				if(ci->subop) zi->op ^= OP_NOT;
+				if(ci->implicit == 0xffff) {
+					zi->branch = RFALSE;
+				} else if(pred->routines[ci->implicit].reftrack == r_id) {
+					zi->branch = llabel[ci->implicit];
+					if(!encountered[ci->implicit]) {
+						rstack[rsp++] = ci->implicit;
+						encountered[ci->implicit] = 1;
+					}
+				} else {
+					ll = r->next_label++;
+					zi->op ^= OP_NOT;
+					zi->branch = ll;
+					zi = append_instr(r, Z_RET);
+					zi->oper[0] = ROUTINE(rlabel[ci->implicit]);
+					zi = append_instr(r, OP_LABEL(ll));
+				}
+				break;
+			case I_IF_HAVE_ALIGN: // Always fails
+				if(ci->subop) { // So no code unless inverted
+					if(ci->implicit == 0xffff) {
+						zi = append_instr(r, Z_RFALSE);
+					} else if(pred->routines[ci->implicit].reftrack == r_id) {
+						zi = append_instr(r, Z_JUMP);
+						zi->oper[0] = REL_LABEL(llabel[ci->implicit]);
+						if(!encountered[ci->implicit]) {
+							rstack[rsp++] = ci->implicit;
+							encountered[ci->implicit] = 1;
+						}
+					} else {
+						zi = append_instr(r, Z_RET);
+						zi->oper[0] = ROUTINE(rlabel[ci->implicit]);
+					}
+				}
+				break;
+			case I_IF_HAVE_STATUS: // Yes for top, no for inline
 				assert(ci->oper[0].tag == VAL_RAW);
 				if((ci->oper[0].value == 0) ^ !!ci->subop) {
 					if(ci->implicit == 0xffff) {

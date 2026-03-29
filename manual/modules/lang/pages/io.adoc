@@ -120,11 +120,13 @@ The Z-machine and debugger also support two additional properties that the
 color::
 Supported values are `initial`, `inherit`, `black`, `red`, `green`, `yellow`,
 `blue`, `magenta`, `cyan`, `white`, or a pound sign `#` followed by six
-hexadecimal digits. Interpreters are more likely to support the named colors
+hexadecimal digits. Interpreters are more likely to support the named colours
 than the hexadecimal ones. The value `initial` specifies the interpreter's
-original choice of color, before receiving any instructions from the program;
-there is no way to know if this is a light or dark color, so best practice is
+original choice of colour, before receiving any instructions from the program;
+there is no way to know if this is a light or dark colour, so best practice is
 to set both `color` and `background-color` to `initial`, or neither of them.
+
+CAUTION: Note the spelling! It must be "color", not "colour".
 
 background-color::
 Supported values are the same as for `color`.
@@ -152,6 +154,46 @@ In this case, the `(div $)` or `(span $)` expression also fails.
 Regardless of how the inner statement terminates, the div or span is concluded as usual,
 and the style attributes of the surrounding context are restored on the fly.
 In case of a div, for instance, this means that the bottom margin takes effect.
+
+[#styletest]
+=== Testing for style support
+
+Since different interpreters support different amounts of styling, Dialog does
+offer a limited way to test for this support. 
+
+----
+(interpreter supports styling)
+----
+
+This predicate will succeed if the interpreter can offer a minimal level of
+styling: at the very least, bold and italic spans will look different. They
+might be rendered with bright colors instead of bold text, or underlines
+instead of italics, and it may not be possible to combine them—but the
+interpreter believes that players will be able to tell them apart.
+
+----
+(interpreter supports color)
+(interpreter supports colour)
+----
+
+This predicate will succeed if the interpreter supports the `color` and
+`background-color` properties, for at least the eight basic colours listed
+above. The two spellings are equivalent.
+
+----
+(interpreter supports text alignment)
+----
+
+This predicate will succeed if the interpreter supports the `text-align`
+property, controlling how text is positioned within a div.
+
+Keep in mind, though, that these predicates are intended only as guidelines.
+Even if an interpreter can produce yellow and green text, for example, a
+colour-blind player might not see the difference. And even if the interpreter
+provides "bold" and "italic" tags to a screen reader, that screen reader might
+not pronounce them any differently. Treat these predicates as an educated guess
+rather than a universal truth, and make sure your players can actually tell
+your styles apart before you rely on them for crucial information.
 
 [#bodystyle]
 === Body styles
@@ -217,8 +259,8 @@ greenish brown.
 From these properties, a dozen more are defined, such as `--night-bg` (the page
 background in night mode) and `--ui-hover` (interface elements when hovered).
 These can also be adjusted in a body style, if (say) you want different link
-colors in night mode and day mode, or want progress bars to use the theme
-colors instead of the accent colors. For a full list, look at the CSS files for
+colours in night mode and day mode, or want progress bars to use the theme
+colours instead of the accent colours. For a full list, look at the CSS files for
 the interpreter.
 
 These custom properties are not recognized by the other backends.
