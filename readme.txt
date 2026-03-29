@@ -91,6 +91,9 @@ Release notes:
 		Compiler: --word-seps option can change which characters are
 		considered word separators (by default . , ; ( ) " * )
 		
+		Backend: added a workaround for an interpreter bug involving
+		colors after a restart.
+		
 		Backend: improved text compression on Z-machine (at least for
 		programs written in English), reducing text size by about 18%.
 		This will help larger programs fit within the Z-machine's limits.
