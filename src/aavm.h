@@ -115,6 +115,7 @@
 #define AA_EMBED_RES		0x6c	// VALUE
 #define AA_CAN_EMBED_RES	0xec	// VALUE DEST
 #define AA_PROGRESS		0x6d	// VALUE VALUE
+#define AA_SET_BODY		0xed	// INDEX
 #define AA_ENTER_SPAN		0x6e	// INDEX
 #define AA_LEAVE_SPAN		0xee
 #define AA_ENTER_STATUS		0x6f	// BYTE INDEX

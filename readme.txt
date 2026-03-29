@@ -49,6 +49,8 @@ Release notes:
 		Language: deprecated display:none; on spans. This remains legal,
 		but will produce a warning.
 		
+		Language: added (body style $) and (reset body style).
+		
 		Language: added (quit $), to let unit.dg tests cause make
 		to fail when they fail.
 		
