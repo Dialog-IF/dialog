@@ -49,6 +49,7 @@ xref:actions.adoc#refusebefore[`(before $)`] +
 xref:timeprogress.adoc#choicemode[`(before disp $)`] +
 xref:moving.adoc#doors[`($ blocks light)`] +
 xref:moving.adoc#doors[`($ blocks passage)`] +
+xref:lang:io.adoc#bodystyle[`(body style $)`] +
 xref:lang:io.adoc#case[`(bold)`] +
 xref:lang:builtins.adoc#typechecks[`(bound $)`] +
 xref:lang:io.adoc#debugging[`(breakpoint)`] +
@@ -333,6 +334,7 @@ xref:lang:io.adoc#input[`(removable word endings)`] +
 xref:miscfeat.adoc#listutil[`(remove duplicates $ $)`] +
 xref:miscfeat.adoc#listutil[`(remove from $ matching $ into $)`] +
 xref:lang:choicepoints.adoc#repeat[`(repeat forever)`] +
+xref:lang:io.adoc#bodystyle[`(reset body style)`] +
 xref:lang:builtins.adoc#system[`(restart)`] +
 xref:lang:builtins.adoc#system[`(restore)`] +
 xref:scenery.adoc#hidden[`(reveal $)`] +

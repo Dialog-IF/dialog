@@ -520,6 +520,7 @@ enum { // Runtime routines
 	R_END_SPAN,
 	R_END_BOX_FLOAT,
 	R_END_BOX,
+	R_GLOBAL_STYLE,
 	R_PROGRESS_BAR,
 	R_EMBED_RES,
 	R_CLEAR,
