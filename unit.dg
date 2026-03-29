@@ -122,9 +122,13 @@
 	(endif)
 
 (error $Code entry point)
-	(div @red-bar) {
-		 (bold) FAILED TEST -- FATAL ERROR $Code. (roman) (par)
-    }
+    (if) (using color) (then)
+		(div @red-bar) {
+			 (bold) FAILED TEST -- FATAL ERROR $Code. (roman) (par)
+        }
+	(else)
+			 (bold) FAILED TEST -- FATAL ERROR $Code. (roman) (par)
+	(endif)
 	(quit 2)
 
 %% patch for ($ contains sublist $) issues; delete when fixed
