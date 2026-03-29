@@ -382,6 +382,7 @@ xref:lang:beyondprg.adoc#metadata[`(story title)`] +
 xref:lang:io.adoc#div[`(style class $)`] +
 xref:traits.adoc#categorytraits[`(supporter $)`] +
 xref:traits.adoc#categorytraits[`(switchable $)`] +
+xref:traits.adoc#taggednames[`(tagged name $)`] +
 xref:miscfeat.adoc#listutil[`(take $ from $ into $)`] +
 xref:timeprogress.adoc#choicemode[`(terminating $)`] +
 xref:traits.adoc#linguistictraits[`(that $)`] +
