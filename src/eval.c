@@ -1252,6 +1252,29 @@ static int eval_builtin(struct eval_state *es, int builtin, value_t o1, value_t 
 			o_set_style(STYLE_FIXED);
 		}
 		break;
+<<<<<<< Updated upstream
+=======
+	case BI_GLOBAL_STYLE:
+	case BI_GLOBAL_UNSTYLE:
+		if(es->divsp) { // Crash if in a box OR in a span
+			return ESTATUS_ERR_IO;
+		}
+		if(builtin == BI_GLOBAL_STYLE) {
+			assert(o1.tag == OPER_BOX);
+			fg = eval_color(es->program->boxclasses[o1.value].color, OCOLOR_INITIAL);
+			bg = eval_color(es->program->boxclasses[o1.value].bgcolor, OCOLOR_INITIAL);
+			st = es->program->boxclasses[o1.value].style;
+		} else {
+			fg = OCOLOR_INITIAL;
+			bg = OCOLOR_INITIAL;
+			st = STYLE_ROMAN;
+		}
+		es->divfg = fg;
+		es->divbg = bg;
+		es->divstyle = st;
+		o_set_style_colors(es->divstyle, es->divfg, es->divbg);
+		break;
+>>>>>>> Stashed changes
 	case BI_ITALIC:
 		if(!es->forwords) {
 			o_set_style(STYLE_ITALIC);
