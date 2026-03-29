@@ -497,3 +497,7 @@ void o_cleanup() {
 int o_get_width() {
 	return width;
 }
+
+int o_get_height() {
+	return height;
+}
