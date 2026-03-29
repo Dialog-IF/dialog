@@ -657,10 +657,16 @@ static void comp_value_into(struct clause *cl, struct astnode *an, value_t dest,
 		ci->oper[0] = dest;
 		ci->oper[1] = sub[0];
 		ci->oper[2] = sub[1];
+		if(dest.tag == OPER_ARG) { // See issue #204
+			known_args[dest.value] = NULL;
+		}
 	} else {
 		ci = add_instr(I_ASSIGN);
 		ci->oper[0] = dest;
 		ci->oper[1] = comp_tag_simple(an);
+		if(dest.tag == OPER_ARG) { // See issue #204
+			known_args[dest.value] = an;
+		}
 	}
 }
 

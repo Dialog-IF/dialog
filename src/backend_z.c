@@ -83,6 +83,8 @@ struct wordtable {
 	uint16_t		*words;
 };
 
+static int warned_about_invisible_spans = 0; // To avoid a flood of warnings
+
 int zmachine_preserve_zscii = 1; // Whether to keep the default mapping (and add to the end), or empty it out (allowing more space) - this flag starts at 1 and is cleared by frontend.c if necessary
 
 static uint16_t default_extended_zscii[69] = { // The default mapping, assumed by interpreters that don't support a Unicode translation table (like Ozmoo)
@@ -2074,6 +2076,13 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				if(ci->subop == BOX_SPAN) {
 					zi = append_instr(r, Z_CALL1N);
 					zi->oper[0] = ROUTINE(R_BEGIN_SPAN);
+					
+					if(prg->boxclasses[ci->oper[0].value].style & STYLE_INVISIBLE
+						&& !warned_about_invisible_spans) {
+						report(LVL_WARN, 0, "(span @%s) makes an invisible span. This is legal, but can produce strange spacing.", prg->boxclasses[ci->oper[0].value].class->name);
+						report(LVL_WARN, 0, "It is recommended to use invisible styles only for divs, not spans.");
+						warned_about_invisible_spans = 1;
+					}
 				} else {
 					zi = append_instr(r, Z_CALLVN);
 					if(prg->boxclasses[ci->oper[0].value].flags & BOXF_FLOATLEFT) {
