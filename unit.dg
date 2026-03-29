@@ -56,10 +56,6 @@
 (style class @red-bar)
 	   color: red;
 
-(style class @no-color)
-	   color: initial;
-	   background-color: initial;
-
 (global variable (number of failures 0))
 
 (program entry point)
@@ -68,12 +64,11 @@
 	(bold) Attempting $Number test
 	(if) ($Number > 1) (then) (no space) s (endif)
 	(no space) . (roman) (line)
-	(if) (using color) (then) (body style @green-bar) (endif)
 	(stoppable) (exhaust) {
 		*($Test is one of $Tests)
 		(run-test $Test)
 	}
-	(body style @no-color)
+	(reset body style)
 	(number of failures $Failures)
 	(if) ($Failures = 0) (then)
 		(bold) $Number test
@@ -87,22 +82,37 @@
 		(quit 1)
 	(endif)
 
+(update body style)
+	(if) (using color) (then)
+		 (number of failures $Failures)
+		 (if) ($Failures = 0) (then)
+		 	  (body style @green-bar)
+		 (else)
+		 	  (body style @red-bar)
+		 (endif)
+	(else)
+		 (reset body style)
+	(endif)
+
 (increment failures)
     (number of failures $Failures)
 	($Failures plus 1 into $FailuresPlusOne)
 	(now) (number of failures $FailuresPlusOne)
-	(if) (using color) (then) (body style @red-bar) (endif)
 
 (run-test $Test)
+	(update body style)
 	Testing $Test :
+	(reset body style) %% display output from the test itself in default colours
 	(if)
 		(stoppable) (exhaust) *(set up $Test)   %% don't fail if absent
 		(test $Test)
 		(stoppable) (exhaust) *(clean up $Test) %% don't fail if absent
 	(then)
+		(update body style)
 	 	Passed! (line)
 	(else)
 		(increment failures)
+		(update body style)
 		(bold) Failed. (roman) (space) :-\( (line)
 		(if) ~(keep running on failure) (then) (stop) (endif)
 	(endif)
