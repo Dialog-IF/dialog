@@ -57,6 +57,8 @@
 	   color: red;
 
 (style class @no-color)
+	   color: initial;
+	   background-color: initial;
 
 (global variable (number of failures 0))
 
@@ -66,10 +68,12 @@
 	(bold) Attempting $Number test
 	(if) ($Number > 1) (then) (no space) s (endif)
 	(no space) . (roman) (line)
+	(if) (using color) (then) (body style @green-bar) (endif)
 	(stoppable) (exhaust) {
 		*($Test is one of $Tests)
 		(run-test $Test)
 	}
+	(body style @no-color)
 	(number of failures $Failures)
 	(if) ($Failures = 0) (then)
 		(bold) $Number test
@@ -87,48 +91,27 @@
     (number of failures $Failures)
 	($Failures plus 1 into $FailuresPlusOne)
 	(now) (number of failures $FailuresPlusOne)
+	(if) (using color) (then) (body style @red-bar) (endif)
 
 (run-test $Test)
-    (number of failures $Failures)
-	(if) ~(using color) (then)
-		Testing $Test :
-	(elseif) ($Failures = 0) (then)
-		(span @green-bar) { Testing $Test : }
-	(else)
-		(span @red-bar)   { Testing $Test : }
-	(endif)
+	Testing $Test :
 	(if)
 		(stoppable) (exhaust) *(set up $Test)   %% don't fail if absent
 		(test $Test)
 		(stoppable) (exhaust) *(clean up $Test) %% don't fail if absent
 	(then)
-		(if) ~(using color) (then)
-  		 	Passed! (line)
-		(elseif) ($Failures = 0) (then)
-			(span @green-bar) { Passed! (line) }
-		(else)
- 			(span @red-bar)   { Passed! (line) }
-		(endif)
+	 	Passed! (line)
 	(else)
-		(if) (using color) (then)
-		    (span @red-bar) {
-				  (bold) Failed. (roman) (space) :-\( (line)
-		    }
-		(else)
-			(bold) Failed. (roman) (space) :-\( (line)
-		(endif)
 		(increment failures)
+		(bold) Failed. (roman) (space) :-\( (line)
 		(if) ~(keep running on failure) (then) (stop) (endif)
 	(endif)
 
 (error $Code entry point)
-    (if) (using color) (then)
-		(div @red-bar) {
-			 (bold) FAILED TEST -- FATAL ERROR $Code. (roman) (par)
-        }
-	(else)
-			 (bold) FAILED TEST -- FATAL ERROR $Code. (roman) (par)
-	(endif)
+	(if) (using color) (then)
+		 (body style @red-bar)
+    (endif)
+	(bold) FAILED TEST -- FATAL ERROR $Code. (roman) (par)
 	(quit 2)
 
 %% patch for ($ contains sublist $) issues; delete when fixed
