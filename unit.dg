@@ -21,6 +21,8 @@
 
 (keep running on failure) %% negate to stop at first failed test
 
+(using color) %% negate to use default output instead of green and red
+
 %% We can't just (exhaust *(test $)), because that actually runs each test
 %% without setup, cleanup, or failure checks, so we work around that with
 %% a global variable, populated with all the tests. You can quarantine tests
@@ -48,6 +50,14 @@
 	(bound $Thing2)
 	($Thing1 < $Thing2)
 
+(style class @green-bar)
+	   color: green;
+
+(style class @red-bar)
+	   color: red;
+
+(style class @no-color)
+
 (global variable (number of failures 0))
 
 (program entry point)
@@ -58,14 +68,13 @@
 	(no space) . (roman) (line)
 	(stoppable) (exhaust) {
 		*($Test is one of $Tests)
-		Testing $Test:
 		(run-test $Test)
 	}
 	(number of failures $Failures)
 	(if) ($Failures = 0) (then)
 		(bold) $Number test
 		(if) ($Number > 1) (then) (no space) s (endif)
-		passed successfully. (roman) (par)
+		(bold)  passed successfully. (roman) (par)
 		(quit 0)
 	(else)
 		(bold) $Failures TEST
@@ -80,20 +89,42 @@
 	(now) (number of failures $FailuresPlusOne)
 
 (run-test $Test)
+    (number of failures $Failures)
+	(if) ~(using color) (then)
+		Testing $Test :
+	(elseif) ($Failures = 0) (then)
+		(span @green-bar) { Testing $Test : }
+	(else)
+		(span @red-bar)   { Testing $Test : }
+	(endif)
 	(if)
 		(stoppable) (exhaust) *(set up $Test)   %% don't fail if absent
 		(test $Test)
 		(stoppable) (exhaust) *(clean up $Test) %% don't fail if absent
 	(then)
-		Passed! (line)
+		(if) ~(using color) (then)
+  		 	Passed! (line)
+		(elseif) ($Failures = 0) (then)
+			(span @green-bar) { Passed! (line) }
+		(else)
+ 			(span @red-bar)   { Passed! (line) }
+		(endif)
 	(else)
-		(bold) Failed. (roman) (space) :-\( (line)
+		(if) (using color) (then)
+		    (span @red-bar) {
+				  (bold) Failed. (roman) (space) :-\( (line)
+		    }
+		(else)
+			(bold) Failed. (roman) (space) :-\( (line)
+		(endif)
 		(increment failures)
 		(if) ~(keep running on failure) (then) (stop) (endif)
 	(endif)
 
 (error $Code entry point)
-	(bold) FAILED TEST -- FATAL ERROR $Code. (roman) (par)
+	(div @red-bar) {
+		 (bold) FAILED TEST -- FATAL ERROR $Code. (roman) (par)
+    }
 	(quit 2)
 
 %% patch for ($ contains sublist $) issues; delete when fixed
