@@ -157,11 +157,10 @@ In case of a div, for instance, this means that the bottom margin takes effect.
 === Body styles
 
 It is also possible to set the "body style" of the story: the style used outside
-of any divs and spans. This is a dangerous power, and is less widely supported
-than ordinary divs and spans; results may vary from interpreter to interpreter.
-Still, adjusting the background color of the page can be an effective way to
-mark a dramatic shift in the game, or just to set a more interesting mood than
-the default black and white.
+of any divs and spans. This is a dangerous power, and results may vary from
+interpreter to interpreter. Still, adjusting the background colour of the page
+can be an effective way to mark a dramatic shift in the game, or just to set an
+appropriate mood.
 
 To set a new body style:
 
@@ -185,14 +184,15 @@ xref:#clear[clear the screen] after changing the body style.
 In theory, a body style can use all the same properties as a div or span style,
 but in practice, `color` and `background-color` are the most useful. These,
 though, come with their own set of caveats. Most Z-machine interpreters only
-apply a new background color after clearing the screen---but some, like
-Gargoyle, apply a new background color at the next `(get key $)` or `(get input 
+apply a new background colour after clearing the screen—but some, like
+Gargoyle, apply a new background colour at the next `(get key $)` or `(get input 
 $)` instead. Gargoyle also applies a body style's `color` to existing text, but
-only if that text has no color of its own (from a div, span, or previous body
+only if that text has no colour of its own (from a div, span, or previous body
 style). Other interpreters leave existing text unmodified.
 
 On the Å-machine, only the web interpreter supports body styles. It applies them
-to the entire screen (including existing text) immediately, without needing the screen to be cleared. Setting the `color` and `background-color` works, but is
+to the entire screen (including existing text) immediately, without needing the
+screen to be cleared. Setting the `color` and `background-color` works, but is
 not ideal: it does not affect UI elements like the menu or transcript, and does
 not respect the user's choice of light or dark mode.
 
@@ -209,7 +209,7 @@ be used instead:
 --accent-light: #aa8;
 ----
 
-These properties are used for all aspects of the web interpreter, from the game
+These colours are used for all aspects of the web interpreter, from the game
 text to the menus and buttons to the transcript window. By default, the `theme-`
 properties are various shades of gray, while the `accent-` properties are a
 greenish brown.
