@@ -300,6 +300,14 @@ Shows the current state of all dynamic predicates (global flags, global variable
 per-object flags, and per-object variables). For global flags, it also shows
 whether they’ve been changed via `(now)`.
 
+@more::
+
+Enables \[more\] prompts after each page of output.
+
+@nomore::
+
+Disables \[more\] prompts, so many pages of output can appear at once.
+
 You can get a full list of debugging commands by typing `@help` at the
 prompt. These commands can be abbreviated as long as the abbreviation is unique;
 `@h` works for `@help`, for instance.
