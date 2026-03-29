@@ -25,3 +25,4 @@ void o_reset(int force_width, int force_height, int quirks);
 void o_leave_all(void);
 void o_cleanup(void);
 int o_get_width(void);
+int o_get_height(void);
