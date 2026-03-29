@@ -64,7 +64,6 @@
 	(bold) Attempting $Number test
 	(if) ($Number > 1) (then) (no space) s (endif)
 	(no space) . (roman) (line)
-	(update body style)
 	(stoppable) (exhaust) {
 		*($Test is one of $Tests)
 		(run-test $Test)
@@ -102,6 +101,7 @@
 	(update body style)
 
 (run-test $Test)
+	(update body style)
 	Testing $Test :
 	(reset body style)
 	(if)
