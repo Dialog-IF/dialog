@@ -261,6 +261,10 @@ xref:builtins.adoc#listbuiltins[(append $A $B $AB)]::
 Unifies `$AB` with the concatenation of `$A` (which must be bound)
 and `$B`.
 
+xref:io.adoc#bodystyle[(body style $Class)]::
+
+Applies a style class to the main body of output.
+
 xref:io.adoc#case[(bold)]::
 
 Enables bold text.
@@ -470,6 +474,11 @@ xref:builtins.adoc#system[(quit)]::
 
 Immediately terminates the interpreter.
 
+xref:builtins.adoc#system[(quit $Status)]::
+
+As `(quit)`, but also sets the exit status of the interactive debugger.
+On Z-machine or Å-machine, it is exactly equivalent to `(quit)`.
+
 xref:builtins.adoc#arithmetic[(random from $X to $Y into $Z)]::
 
 Unifies `$Z` with a random number in the range `$X` to `$Y`
@@ -479,6 +488,10 @@ xref:choicepoints.adoc#repeat[(repeat forever)]::
 
 Provides an infinite supply of choice points. Generally invoked with a
 multi-query.
+
+xref:io.adoc#bodystyle[(reset body style)]::
+
+Undoes the effects of `(body style $)`.
 
 xref:builtins.adoc#system[(restart)]::
 

@@ -498,6 +498,10 @@ int o_get_width() {
 	return width;
 }
 
+int o_get_height() {
+	return height;
+}
+
 int o_is_pretty() { // Can we output basic styles and colors? (Currently those two things always go together; this should be split apart if they ever don't.)
 	return term_is_interactive();
 }

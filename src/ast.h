@@ -135,6 +135,8 @@ enum {
 	BI_CLEAR_OLD,
 	BI_CLEAR_STATUS,
 	BI_PROGRESS_BAR,
+	BI_GLOBAL_STYLE,
+	BI_GLOBAL_UNSTYLE,
 
 	BI_OBJECT, // This one doesn't count as just a test because it can be called with an unbound parameter
 	BI_GETINPUT,

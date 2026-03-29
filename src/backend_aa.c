@@ -1336,6 +1336,16 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 					ai = add_instr(AA_SET_STYLE);
 					ai->oper[0] = (aaoper_t) {AAO_BYTE, AASTYLE_FIXED};
 					break;
+				case BI_GLOBAL_STYLE:
+					assert(ci->oper[0].tag == OPER_BOX);
+					ai = add_instr(AA_SET_BODY);
+					ai->oper[0] = (aaoper_t) {AAO_INDEX, ci->oper[0].value};
+					break;
+				case BI_GLOBAL_UNSTYLE:
+					int box = find_boxclass(prg, find_word(prg, "*empty")); // Created empty in compile.c
+					ai = add_instr(AA_SET_BODY);
+					ai->oper[0] = (aaoper_t) {AAO_INDEX, box};
+					break;
 				case BI_ITALIC:
 					ai = add_instr(AA_SET_STYLE);
 					ai->oper[0] = (aaoper_t) {AAO_BYTE, AASTYLE_ITALIC};

@@ -5,6 +5,7 @@
 #include "report.h"
 
 static int force_width;
+static int force_height;
 
 static void bail_out() {
 	report(LVL_ERR, 0, "Output is not allowed during initial value evaluation.");
@@ -37,6 +38,7 @@ void o_post_input(int external_lf)		{ bail_out(); }
 
 void o_reset(int force_w, int force_h, int quirks) {
 	force_width = force_w;
+	force_height = force_h;
 }
 
 void o_leave_all() {
@@ -47,6 +49,10 @@ void o_cleanup() {
 
 int o_get_width() {
 	return force_width? force_width : 79;
+}
+
+int o_get_height() {
+	return force_height? force_height : 0;
 }
 
 int o_is_pretty() {

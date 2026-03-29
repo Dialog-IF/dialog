@@ -1470,6 +1470,36 @@ static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an,
 		post_rule_trace(prg, cl, an, seen);
 		return 0;
 	}
+	
+	if(an->predicate->builtin == BI_GLOBAL_STYLE) {
+		int box;
+		if(an->children[0]->kind == AN_DICTWORD) {
+			box = find_boxclass(prg, an->children[0]->word);
+		} else {
+			report(
+				LVL_ERR,
+				an->line,
+				"The parameter of (body style $) must be a dictionary word."
+				);
+			prg->errorflag = 1;
+			box = -1;
+		}
+		ci = add_instr(I_BUILTIN);
+		ci->oper[2] = (value_t) {OPER_PRED, an->predicate->pred_id};
+		ci->oper[0] = (value_t) {OPER_BOX, box};
+		post_rule_trace(prg, cl, an, seen);
+		return 0;
+	}
+	
+	if(an->predicate->builtin == BI_GLOBAL_UNSTYLE) {
+		// If this predicate is called, we make a special empty boxclass to use
+		find_boxclass(prg, find_word(prg, "*empty"));
+		// Then we handle it like any other builtin
+		ci = add_instr(I_BUILTIN);
+		ci->oper[2] = (value_t) {OPER_PRED, an->predicate->pred_id};
+		post_rule_trace(prg, cl, an, seen);
+		return 0;
+	}
 
 	if(an->predicate->builtin == BI_SPACE_N) {
 		if(do_trace) {

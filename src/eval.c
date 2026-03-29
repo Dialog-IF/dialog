@@ -537,6 +537,7 @@ static value_t value_of(value_t v, struct eval_state *es) {
 		env = &es->envstack[es->env];
 		assert(v.value < env->nvar);
 		return env->vars[v.value];
+	case OPER_BOX: // Only for BI_GLOBAL_STYLE
 	case VAL_NUM:
 	case VAL_OBJ:
 	case VAL_DICT:
@@ -1204,10 +1205,16 @@ static int eval_compute(struct eval_state *es, int op, int a, int b, int *res) {
 		}
 		break;
 	case BI_DIV_WIDTH:
-		*res = o_get_width();
+		r = o_get_width();
+		if(r <= 0) return 0;
+		*res = r;
 		return 1;
 		break;
-	case BI_DIV_HEIGHT: // Not exposed by output.c; it could be in the future, but for now, just fail
+	case BI_DIV_HEIGHT:
+		r = o_get_height();
+		if(r <= 0) return 0;
+		*res = r;
+		return 1;
 		break;
 	default:
 		printf("unimplemented computation %d\n", op);
@@ -1218,6 +1225,7 @@ static int eval_compute(struct eval_state *es, int op, int a, int b, int *res) {
 }
 
 static int eval_builtin(struct eval_state *es, int builtin, value_t o1, value_t o2) {
+	int fg, bg, st;
 	assert(builtin);
 	switch(builtin) {
 	case BI_BOLD:
@@ -1251,6 +1259,25 @@ static int eval_builtin(struct eval_state *es, int builtin, value_t o1, value_t 
 		if(!es->forwords) {
 			o_set_style(STYLE_FIXED);
 		}
+		break;
+	case BI_GLOBAL_STYLE:
+	case BI_GLOBAL_UNSTYLE:
+		if(es->divsp) { // Crash if in a box OR in a span
+			return ESTATUS_ERR_IO;
+		}
+		if(builtin == BI_GLOBAL_STYLE) {
+			fg = eval_color(es->program->boxclasses[o1.value].color, OCOLOR_INITIAL);
+			bg = eval_color(es->program->boxclasses[o1.value].bgcolor, OCOLOR_INITIAL);
+			st = es->program->boxclasses[o1.value].style;
+		} else {
+			fg = OCOLOR_INITIAL;
+			bg = OCOLOR_INITIAL;
+			st = STYLE_ROMAN;
+		}
+		es->divfg = fg;
+		es->divbg = bg;
+		es->divstyle = st;
+		o_set_style_colors(es->divstyle, es->divfg, es->divbg);
 		break;
 	case BI_ITALIC:
 		if(!es->forwords) {
