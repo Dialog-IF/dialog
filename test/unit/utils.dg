@@ -21,6 +21,8 @@
 
 (interface ($<Number is odd))
 
+(interface ($<Number is even))
+
 %%------------------------------ IMPLEMENTATION ------------------------------
 
 (take last $N from $List into $Suffix)

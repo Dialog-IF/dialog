@@ -10,15 +10,15 @@ time:
 
 utils:
 	$(DEBUG) utils-tests.dg utils.dg $(STDLIB) \
-		 | grep "3 TESTS FAILED." > /dev/null
+		 | grep "3 TESTS FAILED" > /dev/null
 
 pass-1:
 	$(DEBUG) pass-1.dg $(STDLIB) \
-		 | grep "1 test passed successfully." > /dev/null
+		 | grep "1 test passed successfully" > /dev/null
 
 fail-1:
 	$(DEBUG) fail-1.dg $(STDLIB) \
-		 | grep "1 TEST FAILED." > /dev/null
+		 | grep "1 TEST FAILED" > /dev/null
 
 fatal-error:
 	$(DEBUG) fatal-error.dg $(STDLIB) \
