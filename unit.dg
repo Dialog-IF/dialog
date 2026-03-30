@@ -23,6 +23,8 @@
 
 (using color) %% negate to use default output instead of green and red
 
+~(list failed tests) %% un-negate to list the tests that failed at the end
+
 %% We can't just (exhaust *(test $)), because that actually runs each test
 %% without setup, cleanup, or failure checks, so we work around that with
 %% a global variable, populated with all the tests. You can quarantine tests
@@ -58,6 +60,8 @@
 
 (global variable (number of failures 0))
 
+(global variable (list of failures []))
+
 (program entry point)
 	(list of tests $Tests)
 	(length of $Tests into $Number)
@@ -78,7 +82,13 @@
 	(else)
 		(bold) $Failures TEST
 		(if) ($Failures > 1) (then) (no space) S (endif)
-		FAILED. (roman) (par)
+		FAILED (roman)
+		(if) (list failed tests) (then)
+			 (list of failures $FailureList)
+			 : (list failures $FailureList) (par)
+		(else)
+			 (bold) . (roman) (par)
+		(endif)
 		(quit 1)
 	(endif)
 
@@ -94,10 +104,18 @@
 		 (reset body style)
 	(endif)
 
-(increment failures)
+($Test has failed)
     (number of failures $Failures)
 	($Failures plus 1 into $FailuresPlusOne)
 	(now) (number of failures $FailuresPlusOne)
+	(list of failures $List)
+	(length of $List into $Len)
+	(if) ($Len = 0) (then)
+		 ($ListPlusTest = [ $Test ])
+    (else)
+	 	 (append $List [$Test] $ListPlusTest)
+    (endif)
+	(now) (list of failures $ListPlusTest)
 
 (run-test $Test)
 	(update body style)
@@ -111,10 +129,25 @@
 		(update body style)
 	 	Passed! (line)
 	(else)
-		(increment failures)
+		($Test has failed)
 		(update body style)
 		(bold) Failed. (roman) (space) :-\( (line)
 		(if) ~(keep running on failure) (then) (stop) (endif)
+	(endif)
+
+(list failures $Tests)
+	($Tests = [$First | $Rest])
+	(roman) $First (no space)
+	(length of $Rest into $Len)
+	(if) ($Len = 0) (then)
+		(bold) . (roman)
+	(elseif) ($Len = 1) (then)
+		, and
+	(else)
+	    ,
+	(endif)
+	(if) ($Len > 0) (then)
+		(list failures $Rest)
 	(endif)
 
 (error $Code entry point)

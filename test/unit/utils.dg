@@ -1,7 +1,7 @@
 %% utils.dg
-%% Useful utility routines for Stellar Union games.
+%% Example file for testing unit.dg.
 
-(extension version)		   Helper utilities v1.0, by Susan Davis
+(extension version) Helper utilities v1.0, by Susan Davis.
 
 %%-------------------------------- INTERFACES --------------------------------
 
