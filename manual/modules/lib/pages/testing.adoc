@@ -31,13 +31,11 @@ use in our game:
 
 [source]
 ----
-(extension version) Helper utilities v0.1, by A.N. Author (line)
+(extension version) Min and Max v0.1, by A.N. Author (line)
 
 (interface (max $<X and $<Y into $>Max))
 
 (interface (min $<X and $<Y into $>Min))
-
-(interface ($<Number is odd))
 
 (max $X and $Y into $Result)
      (if) ($X > $Y) (then)
@@ -52,18 +50,14 @@ use in our game:
      (else)
 	  ($Result = $Y)
      (endif)
-
-($Num is odd)
-     ($Num modulo 2 into $Mod)
-     ($Mod = 1)
 ----
 
-Assuming that we saved the above code into a file named `utils.dg`, we
-can create a corresponding test file, `utils-tests.dg`, like so:
+Assuming that we saved the above code into a file named `minmax.dg`, we
+can create a corresponding test file, `minmax-tests.dg`, like so:
 
 [source]
 ----
-%% dgdebug -q utils-tests.dg utils.dg unit.dg stdlib.dg
+%% dgdebug -u minmax-tests.dg minmax.dg unit.dg stdlib.dg
 
 (list of tests [
       #max-first-is-bigger
@@ -81,7 +75,7 @@ get the following:
 
 [source]
 ----
-$ dgdebug -q utils-tests.dg utils.dg unit.dg stdlib.dg 
+$ dgdebug -u minmax-tests.dg minmax.dg unit.dg stdlib.dg 
 Dialog Interactive Debugger (dgdebug) version 1b/01.
 Type @help at the game prompt for a brief introduction.
 Attempting 1 test.
@@ -90,14 +84,15 @@ Testing #max-first-is-bigger: Passed!
 ----
 
 Let's look at some of the details of our first draft of
-`utils-tests.dg`. First of all, by convention, we put a comment in the
+`minmax-tests.dg`. First of all, by convention, we put a comment in the
 first line of the file with the command line that we need to run to
 successfully run our tests under the debugger. We run unit tests with
 the debugger, rather than compiling them into Å-machine code or Z-code
 to run with an interpreter. (We'll get to another kind of test that
 does use the compiler and your interpreters later in this chapter.)
-The `-q` option is important, as it causes the debugger to exit when
-it finishes running our unit tests.
+The `-u` option is important, as it causes the debugger to exit when
+it finishes running our unit tests, and suppresses some warnings and
+the `[more]` prompt.
 
 For more elaborate project files or extensions that have multiple
 dependencies, the first-line comment might spill over multiple lines,
@@ -105,7 +100,7 @@ like this:
 
 [source]
 ----
-%% dgdebug -q damage-tests.dg damage.dg schema.dg sectored-grid.dg \
+%% dgdebug -u damage-tests.dg damage.dg schema.dg sectored-grid.dg \
 %%            unit.dg stdlib.dg
 ----
 
@@ -162,11 +157,11 @@ into one statement.
 When you're choosing what to test, it's important to not just test for
 the things that you want to go right, but to test all of the ways that
 you can think of your code going wrong. For example, if we were to add
-some more tests to our `utils-tests.dg`, it might look like this:
+some more tests to our `minmax-tests.dg`, it might look like this:
 
 [source]
 ----
-%% dgdebug -q --no-warn-not-topic utils-tests.dg utils.dg unit.dg stdlib.dg
+%% dgdebug -u minmax-tests.dg minmax.dg unit.dg stdlib.dg
 
 (list of tests [
       #max-first-is-bigger
