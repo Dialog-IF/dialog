@@ -1328,7 +1328,8 @@ void usage(char *prgname) {
 	fprintf(stderr, "--numbered  -N      Show call depth with numbers during tracing.\n");
 	fprintf(stderr, "--tag-lines -T      Prepend output with \"  \", input with \"> \" or \") \".\n");
 	fprintf(stderr, "--no-header         Don't show version information at startup.\n");
-	fprintf(stderr, "--unit-test -u      Same as --no-warn-not-topic --quit --height=-1.\n");
+	fprintf(stderr, "--unit-test -u      Same as --no-warn-not-topic --quit --height=-1\n");
+	fprintf(stderr, "                    --no-header.\n");
 }
 
 extern int topic_warning_level; // Defined in frontend.c
@@ -1428,6 +1429,7 @@ int debugger(int argc, char **argv) {
 				topic_warning_level = 2;
 				quitopt = 1;
 				force_height = -1;
+				suppress_header = 1;
 				break;
 			default:
 				if(opt >= 0) {
