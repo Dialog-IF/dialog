@@ -5,7 +5,7 @@ DIFF = diff --ignore-space-change
 # Base of the repository
 BASEPATH = ../../..
 DGDEBUG = $(BASEPATH)/src/dgdebug
-DEBUG = $(DGDEBUG) -q --no-warn-not-topic
+DEBUG = $(DGDEBUG) -u
 
 # List of all .nolib.dg and .lib.dg files with .dg changed to .test
 tests := $(patsubst %.dg,%.test,$(wildcard *.dg))
