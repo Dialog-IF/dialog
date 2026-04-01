@@ -1428,6 +1428,7 @@ int debugger(int argc, char **argv) {
 				topic_warning_level = 2;
 				quitopt = 1;
 				force_height = -1;
+				suppress_header = 1;
 				break;
 			default:
 				if(opt >= 0) {
