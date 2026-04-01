@@ -260,4 +260,4 @@ Testing #max-bad-input-not-bound: Passed!
 ----
 
 So, our current code thinks that `[2 3 4]` is greater than 2, which
-makes no sense. Ideally, the 
+makes no sense. Ideally, the code should
