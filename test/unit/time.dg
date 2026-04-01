@@ -137,14 +137,17 @@
 
 (elapse $D days)
 	(if) ($D > 11) (then)
-		($D minus 11 into $Additional)
-		(elapse $Additional days)
 		($Days = 11)
+		($D minus 11 into $Additional)
 	(else)
 		($Days = $D)
+		($Additional = 0)
 	(endif)
 	($Days times 1440 into $Minutes)
 	(elapse $Minutes minutes)
+	(if) ($Additional > 0) (then)
+		(elapse $Additional days)
+	(endif)
 
 %% hook for handling elapsing past the end of a month, and having to care
 %% about calendars and leap years; by default, we don't bother with this,

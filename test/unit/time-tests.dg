@@ -1,4 +1,4 @@
-%% dgdebug -u time-tests.dg time.dg ../../unit.dg ../../stdlib.dg
+%% dgdebug -u time-tests.dg time.dg unit.dg stdlib.dg
 
 %% Here's a worked example of some unit tests for a Dialog extension.
 %% By convention, the top line of the test file specifies the command
@@ -26,11 +26,12 @@
 	#military-time-afternoon
 	#nato-time
 	#nato-time-union
-	#short-date-eu
 	#short-date
-	#full-date-eu
+	#short-date-eu
 	#full-date
+	#full-date-eu
 	#set-time
+	#elapse-0-minutes
 	#elapse-8-minutes
 	#elapse-9-minutes
 	#elapse-60-minutes
@@ -40,9 +41,11 @@
 	#elapse-4-hours
 	#elapse-23-hours
 	#elapse-25-hours
+	#elapse-0-days
 	#elapse-3-days
 	#elapse-11-days
 	#elapse-12-days
+	#elapse-23-days
 	#suspend-tick
 	#stop-time
 	#restart-time
@@ -53,9 +56,9 @@
 (current date [12 1 1969])
 
 (clean up $)	(set time [891 12 1 1969])
-
-%% intentionally split to prove that we can invoke it more than once
-(clean up $)	(now) (using north american dates)
+		  		(now) (using north american dates)
+				(now) (time is running)
+				(now) ~(suspend next tick)
 
 %%----------------------------------------------------------------------
 
@@ -180,6 +183,10 @@
 	(7 hours 10 minutes)
 	(current date [13 1 1969])
 
+(test #elapse-0-minutes)
+	(elapse 0 minutes)
+	(14 hours 51 minutes)
+
 (test #elapse-8-minutes)
 	(elapse 8 minutes)
 	(14 hours 59 minutes)
@@ -198,13 +205,13 @@
 
 (test #elapse-past-midnight)
 	(elapse 1339 minutes)
-	(13 hours 10 minutes)
 	(current date [13 1 1969])
+	(13 hours 10 minutes)
 
 (test #elapse-multiple-days)
 	(elapse 4320 minutes)
-	(14 hours 51 minutes)
 	(current date [15 1 1969])
+	(14 hours 51 minutes)
 
 (test #elapse-4-hours)
 	(elapse 4 hours)
@@ -212,26 +219,38 @@
 
 (test #elapse-23-hours)
 	(elapse 23 hours)
-	(13 hours 51 minutes)
 	(current date [13 1 1969])
+	(13 hours 51 minutes)
 
 (test #elapse-25-hours)
 	(elapse 25 hours)
-	(15 hours 51 minutes)
 	(current date [13 1 1969])
+	(15 hours 51 minutes)
+
+(test #elapse-0-days)
+	(elapse 0 days)
+	(current date [12 1 1969])
+	(14 hours 51 minutes)
 
 (test #elapse-3-days)
 	(elapse 3 days)
-	(14 hours 51 minutes)
 	(current date [15 1 1969])
+	(14 hours 51 minutes)
 
 (test #elapse-11-days)
 	(elapse 11 days)
 	(current date [23 1 1969])
+	(14 hours 51 minutes)
 
 (test #elapse-12-days)
 	(elapse 12 days)
 	(current date [24 1 1969])
+	(14 hours 51 minutes)
+
+(test #elapse-23-days)
+	(elapse 23 days)
+	(current date [35 1 1969]) %% this is why there's a (normalize date) hook
+	(14 hours 51 minutes)
 
 (test #tick-tock)
 	(time is running)
