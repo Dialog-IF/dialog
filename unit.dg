@@ -64,7 +64,7 @@
 	(list of tests $Tests)
 	(length of $Tests into $Number)
 	(bold) Attempting $Number test
-	(if) ($Number > 1) (then) (no space) s (endif)
+	(if) ~($Number = 1) (then) (no space) s (endif)
 	(no space) . (roman) (line)
 	(stoppable) (exhaust) {
 		*($Test is one of $Tests)
@@ -74,13 +74,13 @@
 	(list of failures $Failures)
 	(if) ($Failures = []) (then)
 		(bold) $Number test
-		(if) ($Number > 1) (then) (no space) s (endif)
+		(if) ~($Number = 1) (then) (no space) s (endif)
 		(bold)  passed successfully. (roman) (par)
 		(quit 0)
 	(else)
 		(length of $Failures into $Num)
 		(bold) $Num TEST
-		(if) ($Num > 1) (then) (no space) S (endif)
+		(if) ~($Num = 1) (then) (no space) S (endif)
 		FAILED
 		(if) (list failing tests) (then)
 			 (roman) $Failures (bold)
