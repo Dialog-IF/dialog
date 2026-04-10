@@ -19,6 +19,8 @@
 
 (interface ($<Number is odd))
 
+(interface ($<Number is even))
+
 %%------------------------------ IMPLEMENTATION ------------------------------
 
 (take last $N from $List into $Suffix)
@@ -77,3 +79,5 @@
 	($Num modulo 2 into $Mod)
 	($Mod = 1)
 
+($Num is even)
+	~($Num is odd)

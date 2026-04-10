@@ -1,4 +1,4 @@
-%% dgdebug -q pass-1.dg unit.dg stdlib.dg
+%% dgdebug -u pass-1.dg unit.dg stdlib.dg
 
 (list of tests [
 	#pass-this-test

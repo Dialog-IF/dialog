@@ -141,8 +141,9 @@ Release notes:
 		Debugger: terminal width will now be measured immediately after
 		launching.
 		
-		Debugger: --unit-test option is equivalent to --no-warn-not-topic
-		--quit --height=-1, but much shorter to type.
+		Debugger: --unit-test option is equivalent to --no-header
+		--no-warn-not-topic --quit --height=-1, but much shorter
+		to type.
 		
 		Library: new commands SUPERBRIEF, BRIEF, VERBOSE, and SUPERVERBOSE
 		change how rooms are described while going. The default behavior
