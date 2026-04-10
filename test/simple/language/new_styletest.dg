@@ -1,0 +1,24 @@
+(program entry point)
+	Styling:
+	(if) (interpreter supports styling) (then)
+		Yes
+	(else)
+		No
+	(endif)
+	(line)
+	
+	Color:
+	(if) (interpreter supports color) (then)
+		Yes
+	(else)
+		No
+	(endif)
+	(line)
+	
+	Alignment:
+	(if) (interpreter supports text alignment) (then)
+		Yes
+	(else)
+		No
+	(endif)
+	(line)
