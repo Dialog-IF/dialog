@@ -23,6 +23,8 @@
 
 (using color) %% negate to use default output instead of green and red
 
+~(list failing tests) %% un-negate to summarize failing tests at the end
+
 %% We can't just (exhaust *(test $)), because that actually runs each test
 %% without setup, cleanup, or failure checks, so we work around that with
 %% a global variable, populated with all the tests. You can quarantine tests
@@ -56,53 +58,72 @@
 (style class @red-bar)
 	   color: red;
 
-(style class @no-color)
-	   color: initial;
-	   background-color: initial;
-
-(global variable (number of failures 0))
+(global variable (list of failures []))
 
 (program entry point)
 	(list of tests $Tests)
 	(length of $Tests into $Number)
 	(bold) Attempting $Number test
-	(if) ($Number > 1) (then) (no space) s (endif)
+	(if) ~($Number = 1) (then) (no space) s (endif)
 	(no space) . (roman) (line)
-	(if) (using color) (then) (body style @green-bar) (endif)
 	(stoppable) (exhaust) {
 		*($Test is one of $Tests)
 		(run-test $Test)
 	}
-	(body style @no-color)
-	(number of failures $Failures)
-	(if) ($Failures = 0) (then)
+	(reset body style)
+	(list of failures $Failures)
+	(if) ($Failures = []) (then)
 		(bold) $Number test
-		(if) ($Number > 1) (then) (no space) s (endif)
+		(if) ~($Number = 1) (then) (no space) s (endif)
 		(bold)  passed successfully. (roman) (par)
 		(quit 0)
 	(else)
-		(bold) $Failures TEST
-		(if) ($Failures > 1) (then) (no space) S (endif)
-		FAILED. (roman) (par)
+		(length of $Failures into $Num)
+		(bold) $Num TEST
+		(if) ~($Num = 1) (then) (no space) S (endif)
+		FAILED
+		(if) (list failing tests) (then)
+			 (roman) $Failures (bold)
+		(endif)
+		(no space) . (roman) (par)
 		(quit 1)
 	(endif)
 
-(increment failures)
-    (number of failures $Failures)
-	($Failures plus 1 into $FailuresPlusOne)
-	(now) (number of failures $FailuresPlusOne)
-	(if) (using color) (then) (body style @red-bar) (endif)
+(update body style)
+	(if) (using color) (then)
+		 (list of failures $Failures)
+		 (if) ($Failures = []) (then)
+		 	  (body style @green-bar)
+		 (else)
+		 	  (body style @red-bar)
+		 (endif)
+	(else)
+		 (reset body style)
+	(endif)
+
+($Test has failed)
+	(list of failures $List)
+	(if) ($List = []) (then)
+		 ($ListPlusTest = [$Test])
+	(else)
+		 (append $List [$Test] $ListPlusTest)
+	(endif)
+	(now) (list of failures $ListPlusTest)
 
 (run-test $Test)
+	(update body style)
 	Testing $Test :
+	(reset body style) %% display output from the test itself in default colours
 	(if)
 		(stoppable) (exhaust) *(set up $Test)   %% don't fail if absent
 		(test $Test)
 		(stoppable) (exhaust) *(clean up $Test) %% don't fail if absent
 	(then)
+		(update body style)
 	 	Passed! (line)
 	(else)
-		(increment failures)
+		($Test has failed)
+		(update body style)
 		(bold) Failed. (roman) (space) :-\( (line)
 		(if) ~(keep running on failure) (then) (stop) (endif)
 	(endif)

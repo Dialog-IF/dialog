@@ -361,6 +361,15 @@ Succeeds if the current interpreter supports the resource identified by
 `$Id`, and is able to display it using `(embed resource $Id)`
 without falling back on just printing the alt-text.
 
+xref:io.adoc#styletest[(interpreter supports color)]::
+
+Succeeds if the current interpreter supports changing the colour of the text
+and background.
+
+xref:io.adoc#styletest[(interpreter supports colour)]::
+
+Alternate spelling of `(interpreter supports color)`.
+
 xref:io.adoc#status-inline[(interpreter supports inline status bar)]::
 
 Succeeds if the current interpreter supports inline status areas.
@@ -380,6 +389,17 @@ subsequently restored on a different interpreter.
 xref:io.adoc#top-status[(interpreter supports status bar)]::
 
 Succeeds if the current interpreter supports the top status area.
+
+xref:io.adoc#styletest[(interpreter supports styling)]::
+
+Succeeds if the current interpreter supports basic styling. At the very least,
+this means bold and italic spans will look different from normal text, and from
+each other.
+
+xref:io.adoc#styletest[(interpreter supports text alignment)]::
+
+Succeeds if the current interpreter can change the alignment of text: centering
+it or aligning it to the right margin.
 
 xref:builtins.adoc#system[(interpreter supports undo)]::
 
