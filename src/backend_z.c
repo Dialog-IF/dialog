@@ -3820,6 +3820,9 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				zi = append_instr(r, Z_QUIT);
 				break;
 			case I_RESTART:
+				zi = append_instr(r, Z_COLOR); // Workaround for a bug in Bocfel: colors are not properly reset when restarting. So, we reset them ourselves.
+				zi->oper[0] = SMALL(1); // 1 = initial
+				zi->oper[1] = SMALL(1);
 				zi = append_instr(r, Z_RESTART);
 				break;
 			case I_RESTORE:

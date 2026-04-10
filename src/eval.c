@@ -1266,6 +1266,7 @@ static int eval_builtin(struct eval_state *es, int builtin, value_t o1, value_t 
 			return ESTATUS_ERR_IO;
 		}
 		if(builtin == BI_GLOBAL_STYLE) {
+			assert(o1.tag == OPER_BOX);
 			fg = eval_color(es->program->boxclasses[o1.value].color, OCOLOR_INITIAL);
 			bg = eval_color(es->program->boxclasses[o1.value].bgcolor, OCOLOR_INITIAL);
 			st = es->program->boxclasses[o1.value].style;
