@@ -54,3 +54,7 @@ int o_get_width() {
 int o_get_height() {
 	return force_height? force_height : 0;
 }
+
+int o_is_pretty() {
+	return 0;
+}
