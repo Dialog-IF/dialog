@@ -8,7 +8,6 @@
 #include "output.h"
 #include "terminal.h"
 #include "unicode.h"
-#include "report.h"
 
 enum {
 	SP_AUTO = 0,
@@ -71,6 +70,7 @@ static void update_size() {
 	term_get_size(&w, &h, force_width, force_height);
 	if(force_width) w = force_width;
 	if(force_height) h = force_height;
+	if(w < 1) w = 79; // Can happen if the terminal is unable to supply an answer (in particular, the pseudo-tty in emacs can't provide a size immediately on startup)
 	if(w < width) syncwrap();
 	width = w;
 	height = h;
@@ -190,11 +190,6 @@ void o_par() {
 }
 
 void o_begin_box(char *boxclass) {
-	
-	if(!strcmp(boxclass, "intdebugger")) { // For testing
-		report(LVL_WARN, 0, "Dimensions: %d by %d", width, height);
-	}
-	
 	if(boxsp == nalloc_box - 1) {
 		nalloc_box = 2 * boxsp + 8;
 		boxstack = realloc(boxstack, nalloc_box * sizeof(struct boxstate));
