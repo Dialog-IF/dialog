@@ -189,6 +189,11 @@ void o_par() {
 }
 
 void o_begin_box(char *boxclass) {
+	
+	if(!strcmp(boxclass, "intdebugger")) { // For testing
+		report(LVL_WARN, 0, "Dimensions: %d by %d", width, height);
+	}
+	
 	if(boxsp == nalloc_box - 1) {
 		nalloc_box = 2 * boxsp + 8;
 		boxstack = realloc(boxstack, nalloc_box * sizeof(struct boxstate));

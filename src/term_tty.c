@@ -112,9 +112,9 @@ void term_effectstyle(int style) {
 		if(style & STYLE_BOLD) printf("\033[1m");
 		if(style & STYLE_ITALIC) printf("\033[4m");
 		if(style & STYLE_REVERSE) printf("\033[7m");
-		if(style & STYLE_DEBUG) printf("\033[36m");
+		if(style & STYLE_DEBUG) printf("\033[36m"); // Cyan
 		if(style & STYLE_FIXED) printf("\033[50m"); // Not widely supported by terminals, but can be used by external tools
-		// This also clobbers the colors though
+		// This also clobbers the colors though, so we should set them again
 		termfg = OCOLOR_INITIAL;
 		termbg = OCOLOR_INITIAL;
 	}
@@ -137,19 +137,14 @@ void term_colors(int fg, int bg) { // OCOLOR_* = ANSI escape color (0-7 or 9)
 	}
 }
 
-static void reset_bgcolor() { // Reset the background color after a newline
-	int bg = termbg;
-	termbg = OCOLOR_INITIAL;
-	term_colors(termfg, bg);
-}
-
 int term_sendlf() {
-	if(isatty(1)) printf("\033[49m"); // Always reset background color before scrolling, to avoid weird behavior with the new line produced
+	int savedbg = termbg;
+	term_colors(termfg, OCOLOR_INITIAL); // Set the background color to INITIAL before anything that might scroll the screen, so that the next line is filled with INITIAL instead of anything else
 	fputc('\n', stdout);
-	reset_bgcolor();
+	term_colors(termfg, savedbg);
 	if(io_tag_lines) printf("  ");
 	unread_lines++;
-	if(term_height > 1 && isatty(1)) {
+	if(term_height > 0 && isatty(1)) {
 		if(unread_lines >= term_height - 1) {
 			term_effectstyle(0);
 			fflush(stdout);
