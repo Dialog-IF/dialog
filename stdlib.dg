@@ -2256,8 +2256,9 @@
 
 ~(action [call $] requires $ to be touched)
 
-(prevent [call (current player $)])
+(perform [call (current player $)])
 	Why call when you're already right here?
+	(tick) (stop)
 
 (perform [call $Obj])
 	(try [talk to $Obj])
