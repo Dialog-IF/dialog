@@ -176,7 +176,7 @@ void o_line() {
 void o_par_n(int n) {
 	if(!boxstack[boxsp].visible) return;
 
-	if(height && n > height) n = height;
+	if(height > 0 && n > height) n = height;
 	o_line();
 	while(space < SP_DONELINE + n) {
 		sendlf();
