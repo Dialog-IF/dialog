@@ -8,6 +8,7 @@
 #include "output.h"
 #include "terminal.h"
 #include "unicode.h"
+#include "report.h"
 
 enum {
 	SP_AUTO = 0,
