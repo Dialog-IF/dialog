@@ -43,7 +43,7 @@ dgdebug.exe:		debugger.c frontend.c report.c arena.c ast.c parse.c compile.c eva
 			${MINGW32} -L ${WINLIB} -I ${WININCLUDE} ${CFLAGS} -o $@ $^ -lGlk
 
 # A stripped-down version of dgdebug that runs in the Windows terminal, for use with things like dgt
-dgdebug_tty.exe:	debugger.c frontend.c report.c arena.c ast.c parse.c compile.c eval.c term_wintty.c accesspred.c output.c unicode.c fs_tty.c
+dgdebug_tty.exe:	debugger.c frontend.c report.c arena.c ast.c parse.c compile.c eval.c term_tty.c accesspred.c output.c unicode.c fs_tty.c
 			${MINGW32} ${CFLAGS} -o $@ $^
 
 winglk-res.o:		winglk-res.rc winglk-res.manifest
