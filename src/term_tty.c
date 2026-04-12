@@ -99,9 +99,9 @@ void term_get_size(int *width, int *height, int force_w, int force_h) {
 	struct winsize ws;
 #endif
 	
-	force_height = force_h;	
+	force_height = force_h;
 	*width = 0; *height = 0;
-
+	
 #ifndef _WIN32
 	if(!ioctl(0, TIOCGWINSZ, &ws)) {
 		*width = (ws.ws_col >= 1)? ws.ws_col - 1 : 0;
@@ -109,13 +109,12 @@ void term_get_size(int *width, int *height, int force_w, int force_h) {
 		*height = ws.ws_row;
 	}
 #endif
-	if(*width == 0) { // Could not calculate
+	if(*width <= 0) { // Could not calculate: TIOCGWINSZ was not available, did not succeed, or returned 0
 		envvar = getenv("COLUMNS");
 		if(envvar) *width = atoi(envvar);
 		if(*width == 0) *width = 79;
 	}
-	
-	if(*height == 0) { // Likewise
+	if(*height <= 0) { // Likewise
 		envvar = getenv("LINES");
 		if(envvar) *height = atoi(envvar);
 		// Default to 0
