@@ -12,7 +12,7 @@
 	#include <termios.h>
 	#define NEVER_A_TTY 0
 #else
-	#define NEVER_A_TTY 1
+	#define NEVER_A_TTY 1 // The fancy line-editing doesn't work on Windows (which lacks ANSI escapes), so we just pretend that a Windows terminal is never interactive, and therefore should not do anything fancy and readlineish
 #endif
 
 #include "common.h"
@@ -166,8 +166,8 @@ int term_sendlf() {
 	int savedbg = termbg;
 	term_colors(termfg, OCOLOR_INITIAL); // Set the background color to INITIAL before anything that might scroll the screen, so that the next line is filled with INITIAL instead of anything else
 	fputc('\n', stdout);
-	term_colors(termfg, savedbg);
 	if(io_tag_lines) printf("  ");
+	term_colors(termfg, savedbg);
 	unread_lines++;
 	if(term_height > 0 && isatty(1)) {
 		if(unread_lines >= term_height - 1) {
