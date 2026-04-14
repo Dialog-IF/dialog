@@ -5,10 +5,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/ioctl.h>
 #include <sys/types.h>
-#include <termios.h>
 #include <unistd.h>
+#ifndef _WIN32
+	#include <sys/ioctl.h>
+	#include <termios.h>
+	#define NEVER_A_TTY 0
+#else
+	#define NEVER_A_TTY 1
+#endif
 
 #include "common.h"
 #include "terminal.h"
@@ -34,11 +39,14 @@ static int termstyle;
 static int termfg = OCOLOR_INITIAL, termbg = OCOLOR_INITIAL;
 static int term_height;
 static int force_height;
+static uint16_t last_filename[256];
+#ifndef _WIN32
 static int did_tcsetattr;
 static struct termios tio_orig;
-static uint16_t last_filename[256];
+#endif
 
 void tty_setup() {
+#ifndef _WIN32
 	struct termios tio;
 
 	if(!tcgetattr(0, &tio)) {
@@ -54,13 +62,16 @@ void tty_setup() {
 	} else {
 		did_tcsetattr = 0;
 	}
+#endif
 }
 
 void tty_restore() {
+#ifndef _WIN32
 	if(did_tcsetattr) {
 		tcsetattr(0, TCSANOW, &tio_orig);
 		did_tcsetattr = 0;
 	}
+#endif
 }
 
 void term_ticker() {
@@ -83,19 +94,33 @@ void morefunc() {
 }
 
 void term_get_size(int *width, int *height, int force_w, int force_h) {
+	char *envvar;
+#ifndef _WIN32
 	struct winsize ws;
-	force_height = force_h;
+#endif
 	
+	force_height = force_h;
+	*width = 0; *height = 0;
+	
+#ifndef _WIN32
 	if(!ioctl(0, TIOCGWINSZ, &ws)) {
 		*width = (ws.ws_col >= 1)? ws.ws_col - 1 : 0;
 		if(io_tag_lines) *width -= 2; // For the tags
 		*height = ws.ws_row;
-		term_height = force_height ? force_height : ws.ws_row;
-	} else {
-		*width = 79;
-		*height = 0;
-		term_height = force_height ? force_height : ws.ws_row;
 	}
+#endif
+	if(*width <= 0) { // Could not calculate: TIOCGWINSZ was not available, did not succeed, or returned 0
+		envvar = getenv("COLUMNS");
+		if(envvar) *width = atoi(envvar);
+		if(*width == 0) *width = 79;
+	}
+	if(*height <= 0) { // Likewise
+		envvar = getenv("LINES");
+		if(envvar) *height = atoi(envvar);
+		// Default to 0
+	}
+	
+	term_height = force_height ? force_height : *height;
 }
 
 int term_is_interactive() {
@@ -318,21 +343,24 @@ static int getkey() {
 	}
 }
 
+#ifndef _WIN32
 static void sighandler(int sig) {
 	if(sig == SIGINT) {
 		term_int_callback();
 	}
 }
+#endif
 
 void term_init(term_int_callback_t callback) {
 	term_int_callback = callback;
+#ifndef _WIN32
 	if(isatty(0)) {
 		if(signal(SIGINT, sighandler) == SIG_ERR) {
 			fprintf(stderr, "Failed to install signal handler for ^C.\n");
 			exit(1);
 		}
 	}
-
+#endif
 }
 
 void term_cleanup() {
@@ -367,7 +395,9 @@ int term_handles_wrapping() {
 
 static void suspend() {
 	tty_restore();
+#ifndef _WIN32
 	kill(0, SIGSTOP);
+#endif
 	tty_setup();
 }
 
@@ -378,7 +408,7 @@ int term_getkey(const char *prompt) {
 	if(io_tag_lines) printf("\n) ");
 	fflush(stdout);
 
-	if(!isatty(0)) {
+	if(NEVER_A_TTY || !isatty(0)) {
 		ch = fgetc(stdin);
 		return (ch == EOF)? -1 : ch;
 	}
@@ -429,7 +459,7 @@ int term_getline(const char *prompt, uint8_t *buffer, int bufsize, int is_filena
 	if(io_tag_lines) printf("\n> ");
 	fflush(stdout);
 
-	if(!isatty(0)) {
+	if(NEVER_A_TTY || !isatty(0)) {
 		if(fgets((char *) buffer, bufsize, stdin)) {
 			len = strlen((char *) buffer);
 			if(len && buffer[len - 1] == '\n') buffer[--len] = 0;
