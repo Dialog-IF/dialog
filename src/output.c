@@ -70,6 +70,7 @@ static void update_size() {
 	term_get_size(&w, &h, force_width, force_height);
 	if(force_width) w = force_width;
 	if(force_height) h = force_height;
+	if(w < 1) w = 79; // Can happen if the terminal is unable to supply an answer (in particular, the pseudo-tty in emacs can't provide a size immediately on startup)
 	if(w < width) syncwrap();
 	width = w;
 	height = h;
@@ -176,7 +177,7 @@ void o_line() {
 void o_par_n(int n) {
 	if(!boxstack[boxsp].visible) return;
 
-	if(height && n > height) n = height;
+	if(height > 0 && n > height) n = height;
 	o_line();
 	while(space < SP_DONELINE + n) {
 		sendlf();
