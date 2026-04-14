@@ -35,6 +35,8 @@ enum {
 struct boxstate {
 	uint8_t		boxclass;
 	uint8_t		style;
+	uint8_t		fgcolor; // 0-7 colors, 8 OCOLOR_INHERIT, 9 OCOLOR_INITIAL
+	uint8_t		bgcolor;
 	uint8_t		upper;
 	uint8_t		visible;
 	uint8_t		wrap;
@@ -48,10 +50,12 @@ static uint16_t *wrapbuf;
 static int delayed_spaces;
 static int wrappos;
 static int wrapstyle;
+static int wrapfg = OCOLOR_INITIAL, wrapbg = OCOLOR_INITIAL;
 static int column;
 static int width = 79, height = 0;
 static int dfrotz_quirks;
 static int force_width;
+static int force_height;
 static int nowrap;
 
 extern int io_tag_lines; // debugger.c
@@ -61,12 +65,15 @@ extern int io_tag_lines; // debugger.c
 static void syncwrap();
 
 static void update_size() {
-	int w;
+	int w, h;
 
-	term_get_size(&w, &height);
+	term_get_size(&w, &h, force_width, force_height);
 	if(force_width) w = force_width;
+	if(force_height) h = force_height;
+	if(w < 1) w = 79; // Can happen if the terminal is unable to supply an answer (in particular, the pseudo-tty in emacs can't provide a size immediately on startup)
 	if(w < width) syncwrap();
 	width = w;
+	height = h;
 	wrapbuf = realloc(wrapbuf, (width + 1) * sizeof(uint16_t));
 }
 
@@ -92,6 +99,7 @@ static void syncwrap() {
 	if(wrapstyle) {
 		term_effectstyle(wrapstyle);
 	}
+	term_colors(wrapfg, wrapbg);
 	unicode_to_utf8_n(utf8, (wrappos + 1) * 3, wrapbuf, wrappos);
 	term_sendbytes(utf8, strlen((char *) utf8));
 	column += wrappos;
@@ -148,9 +156,11 @@ static void sendnbsp() { // Send a space without wrapping
 	wrapbuf[wrappos++] = ' ';
 }
 
-static void sendstyle(int style) {
+static void sendstyle(int style, int fg, int bg) {
 	if(wrappos) syncwrap();
 	wrapstyle = style;
+	wrapfg = fg;
+	wrapbg = bg;
 }
 
 // These routines correspond to what the runtime layer is doing.
@@ -167,7 +177,7 @@ void o_line() {
 void o_par_n(int n) {
 	if(!boxstack[boxsp].visible) return;
 
-	if(height && n > height) n = height;
+	if(height > 0 && n > height) n = height;
 	o_line();
 	while(space < SP_DONELINE + n) {
 		sendlf();
@@ -188,6 +198,8 @@ void o_begin_box(char *boxclass) {
 
 	boxstack[boxsp].visible = boxstack[boxsp - 1].visible;
 	boxstack[boxsp].style = 0;
+	boxstack[boxsp].fgcolor = OCOLOR_INITIAL;
+	boxstack[boxsp].bgcolor = OCOLOR_INITIAL;
 	boxstack[boxsp].upper = 0;
 	boxstack[boxsp].wrap = !(term_handles_wrapping() || nowrap);
 	if(!strcmp(boxclass, "span")) {
@@ -218,7 +230,7 @@ void o_begin_box(char *boxclass) {
 			boxstack[boxsp].boxclass = CLA_UNKNOWN;
 		}
 	}
-	sendstyle(boxstack[boxsp].style);
+	sendstyle(boxstack[boxsp].style, boxstack[boxsp].fgcolor, boxstack[boxsp].bgcolor);
 }
 
 void o_end_box() {
@@ -227,7 +239,7 @@ void o_end_box() {
 			o_line();
 		}
 		boxsp--;
-		sendstyle(boxstack[boxsp].style);
+		sendstyle(boxstack[boxsp].style, boxstack[boxsp].fgcolor, boxstack[boxsp].bgcolor);
 	} else {
 		o_line();
 	}
@@ -276,25 +288,33 @@ void o_sync() {
 	}
 	syncwrap();
 	term_effectstyle(wrapstyle);
+	term_colors(wrapfg, wrapbg);
 }
 
-void o_set_style(int style) {
+void o_set_style_colors(int style, int fg, int bg) {
+	if(style & STYLE_INVISIBLE){ // Invisibility is handled at this level instead of in sendstyle
+		boxstack[boxsp].visible = 0;
+	}
 	if(!boxstack[boxsp].visible) return;
 
 	if(style) {
-		// https://github.com/Dialog-IF/dialog/issues/189
-	/*	if(space == SP_AUTO || space == SP_SPACE) {
-			sendspace();
-			space = SP_DONESPACE;
-		} else if(space == SP_NBSP) {
-			sendnbsp();
-			space = SP_DONESPACE;
-		}	*/
 		boxstack[boxsp].style |= style;
 	} else {
 		boxstack[boxsp].style &= STYLE_DEBUG;
 	}
-	sendstyle(boxstack[boxsp].style);
+	
+	if(fg != OCOLOR_INHERIT) {
+		boxstack[boxsp].fgcolor = fg;
+	}
+	if(bg != OCOLOR_INHERIT) {
+		boxstack[boxsp].bgcolor = bg;
+	}
+	
+	sendstyle(boxstack[boxsp].style, boxstack[boxsp].fgcolor, boxstack[boxsp].bgcolor);
+}
+
+void o_set_style(int style) {
+	o_set_style_colors(style, OCOLOR_INHERIT, OCOLOR_INHERIT);
 }
 
 void o_set_upper() {
@@ -425,13 +445,15 @@ void o_post_input(int external_lf) {
 	term_effectstyle(wrapstyle);
 }
 
-void o_reset(int force_w, int quirks) {
+void o_reset(int force_w, int force_h, int quirks) {
 	force_width = force_w;
 	if(force_width < 0) { // Negative means disable wrapping
 		force_width = 79; // Needed to size the buffer
 		nowrap = 1;
 	}
 	if(force_width) width = force_width;
+	force_height = force_h;
+	if(force_height) height = force_height;
 	update_size();
 	space = SP_DONELINE + (quirks? 999 : 0);
 	wrapbuf = realloc(wrapbuf, (width + 1) * sizeof(uint16_t));
@@ -443,6 +465,8 @@ void o_reset(int force_w, int quirks) {
 	}
 	boxstack[boxsp].boxclass = CLA_MAIN;
 	boxstack[boxsp].style = STYLE_ROMAN;
+	boxstack[boxsp].fgcolor = OCOLOR_INITIAL;
+	boxstack[boxsp].bgcolor = OCOLOR_INITIAL;
 	boxstack[boxsp].upper = 0;
 	boxstack[boxsp].visible = 1;
 	boxstack[boxsp].wrap = !(term_handles_wrapping() || nowrap);
@@ -473,4 +497,12 @@ void o_cleanup() {
 
 int o_get_width() {
 	return width;
+}
+
+int o_get_height() {
+	return height;
+}
+
+int o_is_pretty() { // Can we output basic styles and colors? (Currently those two things always go together; this should be split apart if they ever don't.)
+	return term_is_interactive();
 }

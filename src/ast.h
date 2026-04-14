@@ -135,6 +135,8 @@ enum {
 	BI_CLEAR_OLD,
 	BI_CLEAR_STATUS,
 	BI_PROGRESS_BAR,
+	BI_GLOBAL_STYLE,
+	BI_GLOBAL_UNSTYLE,
 
 	BI_OBJECT, // This one doesn't count as just a test because it can be called with an unbound parameter
 	BI_GETINPUT,
@@ -159,6 +161,9 @@ enum {
 	BI_HAVE_QUIT,
 	BI_HAVE_STATUS,
 	BI_HAVE_INLINE_STATUS,
+	BI_HAVE_STYLE,
+	BI_HAVE_COLOR,
+	BI_HAVE_ALIGN,
 	BI_CAN_EMBED,
 	BI_CAN_EMBED_INTERNAL,
 	BI_SCRIPT_ACTIVE,
@@ -189,6 +194,8 @@ enum {
 	BI_BREAKPOINT_AGAIN,
 	BI_BREAK_GETKEY,
 	BI_BREAK_FAIL,
+
+	BI_QUIT_N,        // more VM control, put here to not change the values of other builtins
 
 	NBUILTIN
 };

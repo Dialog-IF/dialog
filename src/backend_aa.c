@@ -65,6 +65,8 @@ struct segment {
 	uint8_t			visited;
 };
 
+static int warned_about_invisible_spans = 0; // To avoid a flood of warnings
+
 static struct charmap charmap[128];
 static int ncharmap;
 static uint32_t charbits[129];	// for chars 20..a0 where 7f is extended and a0 is end, lsb first, set stop bit
@@ -1271,6 +1273,13 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				if(ci->subop == BOX_SPAN) {
 					ai = add_instr(AA_ENTER_SPAN);
 					ai->oper[0] = (aaoper_t) {AAO_INDEX, ci->oper[0].value};
+					
+					if(prg->boxclasses[ci->oper[0].value].style & STYLE_INVISIBLE
+						&& !warned_about_invisible_spans) {
+						report(LVL_WARN, 0, "(span @%s) makes an invisible span. This is legal, but can produce strange spacing.", prg->boxclasses[ci->oper[0].value].class->name);
+						report(LVL_WARN, 0, "It is recommended to use invisible styles only for divs, not spans.");
+						warned_about_invisible_spans = 1;
+					}
 				} else {
 					ai = add_instr(AA_ENTER_DIV);
 					ai->oper[0] = (aaoper_t) {AAO_INDEX, ci->oper[0].value};
@@ -1326,6 +1335,16 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				case BI_FIXED:
 					ai = add_instr(AA_SET_STYLE);
 					ai->oper[0] = (aaoper_t) {AAO_BYTE, AASTYLE_FIXED};
+					break;
+				case BI_GLOBAL_STYLE:
+					assert(ci->oper[0].tag == OPER_BOX);
+					ai = add_instr(AA_SET_BODY);
+					ai->oper[0] = (aaoper_t) {AAO_INDEX, ci->oper[0].value};
+					break;
+				case BI_GLOBAL_UNSTYLE:
+					int box = find_boxclass(prg, find_word(prg, "*empty")); // Created empty in compile.c
+					ai = add_instr(AA_SET_BODY);
+					ai->oper[0] = (aaoper_t) {AAO_INDEX, box};
 					break;
 				case BI_ITALIC:
 					ai = add_instr(AA_SET_STYLE);
@@ -1537,9 +1556,21 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 					ai = add_instr(AA_AUX_POP_LIST);
 					ai->oper[0] = (aaoper_t) {AAO_STORE_REG, REG_TMP};
 					ai = add_instr(AA_MAKE_PAIR_D);
-					ai->oper[0] = encode_dest(ci->oper[0], prg, 1);
 					ai->oper[1] = (aaoper_t) {AAO_REG, REG_NIL};
 					ai->oper[2] = (aaoper_t) {AAO_REG, REG_TMP};
+					// If we can store directly into the result, then do it
+					if(ci->oper[0].tag == OPER_TEMP
+					|| ci->oper[0].tag == OPER_VAR
+					|| ci->oper[0].tag == OPER_ARG
+					|| ci->oper[0].tag == VAL_NIL) {
+						ai->oper[0] = encode_dest(ci->oper[0], prg, 1);
+					} else {
+						// Otherwise, store into REG_TMP, then unify
+						ai->oper[0] = (aaoper_t) {AAO_STORE_REG, REG_TMP};
+						ai = add_instr(AA_ASSIGN);
+						ai->oper[0] = encode_value(ci->oper[0], prg);
+						ai->oper[1] = (aaoper_t) {AAO_REG, REG_TMP};
+					}
 				} else {
 					ai = add_instr(AA_AUX_POP_LIST);
 					if(ci->oper[0].tag == OPER_TEMP
@@ -1877,51 +1908,39 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 					ai->oper[3] = (aaoper_t) {AAO_CODE, labelbase + ci->implicit};
 				}
 				break;
-			case I_IF_HAVE_LINK:
-				ai = add_instr(AA_VM_INFO);
-				ai->oper[0] = (aaoper_t) {AAO_BYTE, AAFEAT_LINKS};
-				ai->oper[1] = (aaoper_t) {AAO_STORE_REG, REG_TMP};
-				ai = add_instr(AA_IF_RAW_EQ | 0x80);
-				if(!ci->subop) ai->op ^= AA_NEG_FLIP;
-				ai->oper[0] = (aaoper_t) {AAO_ZERO};
-				ai->oper[1] = (aaoper_t) {AAO_REG, REG_TMP};
-				if(ci->implicit == 0xffff) {
-					ai->oper[2] = (aaoper_t) {AAO_CODE, AAFAIL};
-				} else {
-					ai->oper[2] = (aaoper_t) {AAO_CODE, labelbase + ci->implicit};
-				}
-				break;
+			case I_IF_HAVE_LINK: // VM_INFO
 			case I_IF_HAVE_UNDO:
-				ai = add_instr(AA_VM_INFO);
-				ai->oper[0] = (aaoper_t) {AAO_BYTE, AAFEAT_UNDO};
-				ai->oper[1] = (aaoper_t) {AAO_STORE_REG, REG_TMP};
-				ai = add_instr(AA_IF_RAW_EQ | 0x80);
-				if(!ci->subop) ai->op ^= AA_NEG_FLIP;
-				ai->oper[0] = (aaoper_t) {AAO_ZERO};
-				ai->oper[1] = (aaoper_t) {AAO_REG, REG_TMP};
-				if(ci->implicit == 0xffff) {
-					ai->oper[2] = (aaoper_t) {AAO_CODE, AAFAIL};
-				} else {
-					ai->oper[2] = (aaoper_t) {AAO_CODE, labelbase + ci->implicit};
-				}
-				break;
 			case I_IF_HAVE_QUIT:
-				ai = add_instr(AA_VM_INFO);
-				ai->oper[0] = (aaoper_t) {AAO_BYTE, AAFEAT_QUIT};
-				ai->oper[1] = (aaoper_t) {AAO_STORE_REG, REG_TMP};
-				ai = add_instr(AA_IF_RAW_EQ | 0x80);
-				if(!ci->subop) ai->op ^= AA_NEG_FLIP;
-				ai->oper[0] = (aaoper_t) {AAO_ZERO};
-				ai->oper[1] = (aaoper_t) {AAO_REG, REG_TMP};
-				if(ci->implicit == 0xffff) {
-					ai->oper[2] = (aaoper_t) {AAO_CODE, AAFAIL};
-				} else {
-					ai->oper[2] = (aaoper_t) {AAO_CODE, labelbase + ci->implicit};
-				}
-				break;
+			case I_IF_HAVE_STYLE:
+			case I_IF_HAVE_COLOR:
+			case I_IF_HAVE_ALIGN:
 			case I_IF_SCRIPT_ACTIVE:
 				ai = add_instr(AA_VM_INFO);
-				ai->oper[0] = (aaoper_t) {AAO_BYTE, AAFEAT_SCRIPT};
+				switch(ci->op) { // More foolproof than an array
+					case I_IF_HAVE_LINK:
+						ai->oper[0] = (aaoper_t) {AAO_BYTE, AAFEAT_LINKS};
+						break;
+					case I_IF_HAVE_UNDO:
+						ai->oper[0] = (aaoper_t) {AAO_BYTE, AAFEAT_UNDO};
+						break;
+					case I_IF_HAVE_QUIT:
+						ai->oper[0] = (aaoper_t) {AAO_BYTE, AAFEAT_QUIT};
+						break;
+					case I_IF_HAVE_STYLE:
+						ai->oper[0] = (aaoper_t) {AAO_BYTE, AAFEAT_STYLE};
+						break;
+					case I_IF_HAVE_COLOR:
+						ai->oper[0] = (aaoper_t) {AAO_BYTE, AAFEAT_COLOR};
+						break;
+					case I_IF_HAVE_ALIGN:
+						ai->oper[0] = (aaoper_t) {AAO_BYTE, AAFEAT_ALIGN};
+						break;
+					case I_IF_SCRIPT_ACTIVE:
+						ai->oper[0] = (aaoper_t) {AAO_BYTE, AAFEAT_SCRIPT};
+						break;
+					default:
+						assert(0);
+				}
 				ai->oper[1] = (aaoper_t) {AAO_STORE_REG, REG_TMP};
 				ai = add_instr(AA_IF_RAW_EQ | 0x80);
 				if(!ci->subop) ai->op ^= AA_NEG_FLIP;
@@ -2332,6 +2351,7 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				ai->oper[0] = (aaoper_t) {AAO_CODE, labelbase + ci->oper[0].value};
 				break;
 			case I_QUIT:
+			case I_QUIT_N:
 				ai = add_instr(AA_EXT0);
 				ai->oper[0] = (aaoper_t) {AAO_BYTE, AAEXT0_QUIT};
 				break;

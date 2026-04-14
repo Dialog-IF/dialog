@@ -87,6 +87,9 @@ struct opinfosrc {
 	{I_IF_HAVE_LINK,	0, OPF_BRANCH,				"IF_HAVE_LINK"},
 	{I_IF_HAVE_UNDO,	0, OPF_BRANCH,				"IF_HAVE_UNDO"},
 	{I_IF_HAVE_QUIT,	0, OPF_BRANCH,				"IF_HAVE_QUIT"},
+	{I_IF_HAVE_STYLE,	0, OPF_BRANCH,				"IF_HAVE_STYLE"},
+	{I_IF_HAVE_COLOR,	0, OPF_BRANCH,				"IF_HAVE_COLOR"},
+	{I_IF_HAVE_ALIGN,	0, OPF_BRANCH,				"IF_HAVE_ALIGN"},
 	{I_IF_SCRIPT_ACTIVE,0, OPF_BRANCH,				"IF_SCRIPT_ACTIVE"},
 	{I_IF_HAVE_STATUS,	0, OPF_BRANCH,				"IF_HAVE_STATUS"},
 	{I_IF_MATCH,		0, OPF_BRANCH,				"IF_MATCH"},
@@ -145,6 +148,7 @@ struct opinfosrc {
 	{I_TRANSCRIPT,		0, OPF_CAN_FAIL,			"TRANSCRIPT"},
 	{I_UNDO,		0, OPF_CAN_FAIL,			"UNDO"},
 	{I_UNIFY,		0, OPF_CAN_FAIL,			"UNIFY"},
+	{I_QUIT_N,		1, OPF_ENDS_ROUTINE,			"QUIT"},
 };
 
 static void comp_value_into(struct clause *cl, struct astnode *an, value_t dest, uint8_t *seen, struct astnode **known_args);
@@ -656,10 +660,16 @@ static void comp_value_into(struct clause *cl, struct astnode *an, value_t dest,
 		ci->oper[0] = dest;
 		ci->oper[1] = sub[0];
 		ci->oper[2] = sub[1];
+		if(dest.tag == OPER_ARG) { // See issue #204
+			known_args[dest.value] = NULL;
+		}
 	} else {
 		ci = add_instr(I_ASSIGN);
 		ci->oper[0] = dest;
 		ci->oper[1] = comp_tag_simple(an);
+		if(dest.tag == OPER_ARG) { // See issue #204
+			known_args[dest.value] = an;
+		}
 	}
 }
 
@@ -982,6 +992,25 @@ static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an,
 
 	if(an->predicate->builtin == BI_QUIT) {
 		ci = add_instr(I_QUIT);
+		end_routine_cl(cl);
+		if(tail == NO_TAIL) {
+			// we have to put the subsequent dead code somewhere
+			begin_routine(make_routine_id());
+		}
+		return 1;
+	}
+
+	if(an->predicate->builtin == BI_QUIT_N) {
+		if(do_trace) {
+			v1 = (value_t) {OPER_ARG, 0};
+		} else {
+			v1 = comp_value(cl, an->children[0], seen, known_args);
+		}
+		ci = add_instr(I_QUIT_N);
+		ci->oper[0] = v1;
+		ci->oper[2] = (value_t) {OPER_PRED, an->predicate->pred_id};
+		//printf("compiling, return value should be %d\n", ci->oper[0].value);
+
 		end_routine_cl(cl);
 		if(tail == NO_TAIL) {
 			// we have to put the subsequent dead code somewhere
@@ -1342,6 +1371,27 @@ static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an,
 		post_rule_trace(prg, cl, an, seen);
 		return 0;
 	}
+	
+	if(an->predicate->builtin == BI_HAVE_STYLE) {
+		ci = add_instr(I_IF_HAVE_STYLE);
+		ci->subop = 1;
+		post_rule_trace(prg, cl, an, seen);
+		return 0;
+	}
+	
+	if(an->predicate->builtin == BI_HAVE_COLOR) {
+		ci = add_instr(I_IF_HAVE_COLOR);
+		ci->subop = 1;
+		post_rule_trace(prg, cl, an, seen);
+		return 0;
+	}
+	
+	if(an->predicate->builtin == BI_HAVE_ALIGN) {
+		ci = add_instr(I_IF_HAVE_ALIGN);
+		ci->subop = 1;
+		post_rule_trace(prg, cl, an, seen);
+		return 0;
+	}
 
 	if(an->predicate->builtin == BI_SCRIPT_ACTIVE) {
 		ci = add_instr(I_IF_SCRIPT_ACTIVE);
@@ -1415,6 +1465,36 @@ static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an,
 	|| an->predicate->builtin == BI_SERIALNUMBER
 	|| an->predicate->builtin == BI_COMPILERVERSION
 	|| an->predicate->builtin == BI_MEMSTATS) {
+		ci = add_instr(I_BUILTIN);
+		ci->oper[2] = (value_t) {OPER_PRED, an->predicate->pred_id};
+		post_rule_trace(prg, cl, an, seen);
+		return 0;
+	}
+	
+	if(an->predicate->builtin == BI_GLOBAL_STYLE) {
+		int box;
+		if(an->children[0]->kind == AN_DICTWORD) {
+			box = find_boxclass(prg, an->children[0]->word);
+		} else {
+			report(
+				LVL_ERR,
+				an->line,
+				"The parameter of (body style $) must be a dictionary word."
+				);
+			prg->errorflag = 1;
+			box = -1;
+		}
+		ci = add_instr(I_BUILTIN);
+		ci->oper[2] = (value_t) {OPER_PRED, an->predicate->pred_id};
+		ci->oper[0] = (value_t) {OPER_BOX, box};
+		post_rule_trace(prg, cl, an, seen);
+		return 0;
+	}
+	
+	if(an->predicate->builtin == BI_GLOBAL_UNSTYLE) {
+		// If this predicate is called, we make a special empty boxclass to use
+		find_boxclass(prg, find_word(prg, "*empty"));
+		// Then we handle it like any other builtin
 		ci = add_instr(I_BUILTIN);
 		ci->oper[2] = (value_t) {OPER_PRED, an->predicate->pred_id};
 		post_rule_trace(prg, cl, an, seen);

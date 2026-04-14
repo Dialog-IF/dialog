@@ -1,0 +1,8 @@
+%% dgdebug -u fail-1.dg unit.dg stdlib.dg
+
+(list of tests [
+	#intentionally-fail-this-test
+	])
+
+(test #intentionally-fail-this-test)
+	  (fail)

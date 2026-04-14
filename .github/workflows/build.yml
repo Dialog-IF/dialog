@@ -32,7 +32,7 @@ jobs:
       - name: make
         run: make --directory=./src
       - name: make (windows)
-        run: make --directory=./src dgdebug.exe dialogc.exe
+        run: make --directory=./src dgdebug.exe dgdebug_tty.exe dialogc.exe
       - name: make test
         run: make test
       - name: make test-6502
@@ -48,6 +48,7 @@ jobs:
           name: win32
           path: |
             src/dgdebug.exe
+            src/dgdebug_tty.exe
             src/dialogc.exe
 
   build-manual:
@@ -63,7 +64,7 @@ jobs:
       - name: build site with antora
         run: |
           cd manual
-          npm i @antora/lunr-extension
+          npm i @antora/lunr-extension@github:Randozart/dialog-antora-lunr-extension#dialog-punctuation-fix
           npx antora@3.1.10 ./local-antora-playbook.yml
       - uses: actions/upload-artifact@v4
         with:

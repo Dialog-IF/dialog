@@ -5,6 +5,7 @@
 #include "report.h"
 
 static int force_width;
+static int force_height;
 
 static void bail_out() {
 	report(LVL_ERR, 0, "Output is not allowed during initial value evaluation.");
@@ -22,6 +23,7 @@ void o_nbsp()					{ bail_out(); }
 void o_nospace()				{ bail_out(); }
 void o_sync()					{ bail_out(); }
 void o_set_style(int style)			{ bail_out(); }
+void o_set_style_colors(int style, int fg, int bg)	{ bail_out(); }
 void o_set_upper()				{ bail_out(); }
 void o_print_word(const char *utf8)		{ bail_out(); }
 void o_print_opaque_word(const char *utf8)	{ bail_out(); }
@@ -34,8 +36,9 @@ void o_progress_bar(int a, int b)		{ bail_out(); }
 void o_clear(int all)				{ bail_out(); }
 void o_post_input(int external_lf)		{ bail_out(); }
 
-void o_reset(int force_w, int quirks) {
+void o_reset(int force_w, int force_h, int quirks) {
 	force_width = force_w;
+	force_height = force_h;
 }
 
 void o_leave_all() {
@@ -46,4 +49,12 @@ void o_cleanup() {
 
 int o_get_width() {
 	return force_width? force_width : 79;
+}
+
+int o_get_height() {
+	return force_height? force_height : 0;
+}
+
+int o_is_pretty() {
+	return 0;
 }

@@ -1,5 +1,5 @@
 %% unit.dg
-(extension version)	Unit test runner 1a/02 by Susan Davis (line)
+(extension version)	Unit test runner 1.1.1-dev by Susan Davis (line)
 
 %% See example(s) in test/unit in Dialog source distribution.
 %% Licensed under the same license as the rest of Dialog.
@@ -15,7 +15,15 @@
 
 (interface (assert $<Var = $<Val))
 
+(interface (assert $<Var > $<Val))
+
+(interface (assert $<Var < $<Val))
+
 (keep running on failure) %% negate to stop at first failed test
+
+(using color) %% negate to use default output instead of green and red
+
+~(list failing tests) %% un-negate to summarize failing tests at the end
 
 %% We can't just (exhaust *(test $)), because that actually runs each test
 %% without setup, cleanup, or failure checks, so we work around that with
@@ -26,7 +34,7 @@
 
 %%----------------------------- IMPLEMENTATION -----------------------------
 
-%% We almost don't need this, since that final line already does what we
+%% We almost don't need these, since that final line already does what we
 %% want, but adding binding checks can be useful.
 
 (assert $Thing1 = $Thing2) %% true if both are bound and ($Thing1 = $Thing2)
@@ -34,50 +42,100 @@
 	(bound $Thing2)
 	($Thing1 = $Thing2)
 
-(all tests pass)
+(assert $Thing1 > $Thing2)
+	(fully bound $Thing1)
+	(bound $Thing2)
+	($Thing1 > $Thing2)
+
+(assert $Thing1 < $Thing2)
+	(fully bound $Thing1)
+	(bound $Thing2)
+	($Thing1 < $Thing2)
+
+(style class @green-bar)
+	   color: green;
+
+(style class @red-bar)
+	   color: red;
+
+(global variable (list of failures []))
 
 (program entry point)
 	(list of tests $Tests)
 	(length of $Tests into $Number)
-	(bold) Attempting $Number tests (roman) (line)
+	(bold) Attempting $Number test
+	(if) ~($Number = 1) (then) (no space) s (endif)
+	(no space) . (roman) (line)
 	(stoppable) (exhaust) {
 		*($Test is one of $Tests)
-		Testing $Test:
 		(run-test $Test)
 	}
-	(if) (all tests pass) (then)
-		(bold) $Number tests passed successfully. (roman) (par)
+	(reset body style)
+	(list of failures $Failures)
+	(if) ($Failures = []) (then)
+		(bold) $Number test
+		(if) ~($Number = 1) (then) (no space) s (endif)
+		(bold)  passed successfully. (roman) (par)
 		(quit 0)
 	(else)
-		(bold) FAILED TEST. (roman) (par)
+		(length of $Failures into $Num)
+		(bold) $Num TEST
+		(if) ~($Num = 1) (then) (no space) S (endif)
+		FAILED
+		(if) (list failing tests) (then)
+			 (roman) $Failures (bold)
+		(endif)
+		(no space) . (roman) (par)
 		(quit 1)
 	(endif)
 
-(error $Code entry point)
-	(bold) FAILED TEST -- FATAL ERROR $Code. (roman) (par)
-	(now) ~(all tests pass)
-	(quit 1)                 %% or -1 if we ever get signed integers
+(update body style)
+	(if) (using color) (then)
+		 (list of failures $Failures)
+		 (if) ($Failures = []) (then)
+		 	  (body style @green-bar)
+		 (else)
+		 	  (body style @red-bar)
+		 (endif)
+	(else)
+		 (reset body style)
+	(endif)
+
+($Test has failed)
+	(list of failures $List)
+	(if) ($List = []) (then)
+		 ($ListPlusTest = [$Test])
+	(else)
+		 (append $List [$Test] $ListPlusTest)
+	(endif)
+	(now) (list of failures $ListPlusTest)
 
 (run-test $Test)
+	(update body style)
+	Testing $Test :
+	(reset body style) %% display output from the test itself in default colours
 	(if)
-		(stoppable) (set up $Test)   %% don't fail if absent
+		(stoppable) (exhaust) *(set up $Test)   %% don't fail if absent
 		(test $Test)
-		(stoppable) (clean up $Test) %% don't fail if absent
+		(stoppable) (exhaust) *(clean up $Test) %% don't fail if absent
 	(then)
-		Passed! (line)
+		(update body style)
+	 	Passed! (line)
 	(else)
+		($Test has failed)
+		(update body style)
 		(bold) Failed. (roman) (space) :-\( (line)
-		(now) ~(all tests pass)
 		(if) ~(keep running on failure) (then) (stop) (endif)
 	(endif)
+
+(error $Code entry point)
+	(if) (using color) (then)
+		 (body style @red-bar)
+    (endif)
+	(bold) FAILED TEST -- FATAL ERROR $Code. (roman) (par)
+	(quit 2)
 
 %% patch for ($ contains sublist $) issues; delete when fixed
 ($List contains sublist [$Head | $Tail])
 	*(split $List by [$Head] into $ and $Rest)
 	(append $Tail $ $Rest)
-
-%% Delete this interface and predicate if lft adds a builtin for it in
-%% dgdebug, to specify the exit status from the debugger for CI/CD pipelines
-%% and/or shell scripts.
-(interface (quit $<ExitStatus))
-(quit $)   (quit)

@@ -19,6 +19,8 @@ Directory structure:
 
 	stddebug.dg	The Dialog standard debugging extension.
 
+	unit.dg		The Dialog unit testing library.
+
 Building the software under Linux (requires a C compiler and make):
 
 	cd src
@@ -44,12 +46,26 @@ Release notes:
 		compiled for Å-machine will need version 1.0.0 or later of the
 		Å-machine tools. Get them from github.com/Dialog-IF/aamachine/.
 		
+		Language: deprecated display:none; on spans. This remains legal,
+		but will produce a warning.
+		
+		Language: added (body style $) and (reset body style).
+		
+		Language: added (quit $), to let unit.dg tests cause make
+		to fail when they fail.
+		
 		Language: added (clear status bar).
+		
+		Language: new escape syntax \x{3C4} is equivalent to the Unicode
+		character U+03C4.
 		
 		Language: added (transcript active).
 		
+		Language: added a way to test for basic style support, basic
+		color support, and text alignment support.
+		
 		Distribution: added unit.dg, a library for unit testing.
-
+		
 		Documentation: the library reference now includes special syntax
 		like (elseif), (now), and (global variable $).
 		
@@ -59,11 +75,17 @@ Release notes:
 		Documentation: the @tree and @dynamic debugging commands are now
 		properly documented, though they've existed for some time.
 		
+		Compiler: fixed an obscure bug that's difficult to describe
+		concisely. See report #204 for details.
+		
 		Compiler: warnings and errors about missing IFIDs will now
 		generate a new IFID to use, if possible.
 		
 		Compiler: access predicates consisting of a single multi-query
 		no longer crash the compiler when negated.
+		
+		Compiler: (accumulate $) into a constant value no longer crashes
+		the compiler on Å-machine.
 		
 		Compiler: a new --override-serial option makes builds reproducible
 		by overriding the release date and serial number fields. This is
@@ -71,6 +93,9 @@ Release notes:
 		
 		Compiler: --word-seps option can change which characters are
 		considered word separators (by default . , ; ( ) " * )
+		
+		Backend: added a workaround for an interpreter bug involving
+		colors after a restart.
 		
 		Backend: improved text compression on Z-machine (at least for
 		programs written in English), reducing text size by about 18%.
@@ -98,19 +123,30 @@ Release notes:
 		Backend: Å-machine backend now reports when non-ASCII characters
 		are added to the character set.
 		
+		Debugger: now supports color and background-color style class
+		properties in a very minimal way.
+		
 		Debugger: --width -1 disables word wrapping, for piping to other
 		programs.
 		
 		Debugger: --no-header option suppresses version information, for
 		the same reason.
 		
+		Debugger: --height option allows forcing a terminal height; -1
+		means infinite. New @more and @nomore debugging commands can
+		change this at run-time.
+		
 		Debugger: --tag-lines option explicitly marks requests for key
 		and line input, for the same reason.
 		
 		Debugger: now tags fixed-width text with an ANSI escape sequence.
-
+		
 		Debugger: terminal width will now be measured immediately after
 		launching.
+		
+		Debugger: --unit-test option is equivalent to --no-header
+		--no-warn-not-topic --quit --height=-1, but much shorter
+		to type.
 		
 		Library: new commands SUPERBRIEF, BRIEF, VERBOSE, and SUPERVERBOSE
 		change how rooms are described while going. The default behavior

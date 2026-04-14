@@ -12,6 +12,10 @@ xref:execution.adoc#printing[Special characters]: ::
 `\`, parentheses, brackets, and braces. Prefix by `\` to
 print.
 
+xref:sugar.adoc#unicode[Unicode escapes]: ::
+
+`\x{3C4}` is exactly equivalent to character U+03C4.
+
 xref:execution.adoc#predicates[Rule definitions]: ::
 
 * The rule head is in the leftmost column.
@@ -257,6 +261,10 @@ xref:builtins.adoc#listbuiltins[(append $A $B $AB)]::
 Unifies `$AB` with the concatenation of `$A` (which must be bound)
 and `$B`.
 
+xref:io.adoc#bodystyle[(body style $Class)]::
+
+Applies a style class to the main body of output.
+
 xref:io.adoc#case[(bold)]::
 
 Enables bold text.
@@ -353,6 +361,15 @@ Succeeds if the current interpreter supports the resource identified by
 `$Id`, and is able to display it using `(embed resource $Id)`
 without falling back on just printing the alt-text.
 
+xref:io.adoc#styletest[(interpreter supports color)]::
+
+Succeeds if the current interpreter supports changing the colour of the text
+and background.
+
+xref:io.adoc#styletest[(interpreter supports colour)]::
+
+Alternate spelling of `(interpreter supports color)`.
+
 xref:io.adoc#status-inline[(interpreter supports inline status bar)]::
 
 Succeeds if the current interpreter supports inline status areas.
@@ -372,6 +389,17 @@ subsequently restored on a different interpreter.
 xref:io.adoc#top-status[(interpreter supports status bar)]::
 
 Succeeds if the current interpreter supports the top status area.
+
+xref:io.adoc#styletest[(interpreter supports styling)]::
+
+Succeeds if the current interpreter supports basic styling. At the very least,
+this means bold and italic spans will look different from normal text, and from
+each other.
+
+xref:io.adoc#styletest[(interpreter supports text alignment)]::
+
+Succeeds if the current interpreter can change the alignment of text: centering
+it or aligning it to the right margin.
 
 xref:builtins.adoc#system[(interpreter supports undo)]::
 
@@ -446,6 +474,11 @@ xref:builtins.adoc#system[(quit)]::
 
 Immediately terminates the interpreter.
 
+xref:builtins.adoc#system[(quit $Status)]::
+
+As `(quit)`, but also sets the exit status of the interactive debugger.
+On Z-machine or Å-machine, it is exactly equivalent to `(quit)`.
+
 xref:builtins.adoc#arithmetic[(random from $X to $Y into $Z)]::
 
 Unifies `$Z` with a random number in the range `$X` to `$Y`
@@ -455,6 +488,10 @@ xref:choicepoints.adoc#repeat[(repeat forever)]::
 
 Provides an infinite supply of choice points. Generally invoked with a
 multi-query.
+
+xref:io.adoc#bodystyle[(reset body style)]::
+
+Undoes the effects of `(body style $)`.
 
 xref:builtins.adoc#system[(restart)]::
 

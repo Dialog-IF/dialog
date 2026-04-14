@@ -61,12 +61,10 @@ attribution is given.
 [#compiler]
 == The compiler
 
-Dialog is a compiled language. Source code is stored in text files with the
-filename extension `.dg`. When international characters are used, they must
-be encoded in UTF-8. The compiler delivers its output in `.zblorb`,
-`.z8`, `.z5`, or `.aastory` format. When the zblorb format is
-chosen, the compiler can optionally include cover art with the story, but this
-feature is not regarded as a part of the Dialog language itself.
+Dialog is a compiled language. Source code is stored in text files with the filename extension `.dg`, which must be encoded in UTF-8.
+The compiler delivers its output in `.zblorb`, `.z8`, `.z5`, or `.aastory` format.
+When the zblorb format is chosen, the compiler can optionally include cover art with the story,
+but this feature is not regarded as a part of the Dialog language itself.
 
 image:overview.png[overview]
 
@@ -301,6 +299,14 @@ per-object variable).
 Shows the current state of all dynamic predicates (global flags, global variables,
 per-object flags, and per-object variables). For global flags, it also shows
 whether they’ve been changed via `(now)`.
+
+@more::
+
+Enables \[more\] prompts after each page of output.
+
+@nomore::
+
+Disables \[more\] prompts, so many pages of output can appear at once.
 
 You can get a full list of debugging commands by typing `@help` at the
 prompt. These commands can be abbreviated as long as the abbreviation is unique;
