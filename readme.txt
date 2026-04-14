@@ -148,6 +148,10 @@ Release notes:
 		--no-warn-not-topic --quit --height=-1, but much shorter
 		to type.
 		
+		Library: actions [shout] and [shout to $] have been removed. Now
+		SHOUT asks for clarification and SHOUT TO X maps to [call #X].
+		[call (current player $)] has a new failure message.
+		
 		Library: new commands SUPERBRIEF, BRIEF, VERBOSE, and SUPERVERBOSE
 		change how rooms are described while going. The default behavior
 		is VERBOSE: rooms are described in full when moving one step at a
