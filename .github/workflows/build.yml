@@ -32,7 +32,7 @@ jobs:
       - name: make
         run: make --directory=./src
       - name: make (windows)
-        run: make --directory=./src dgdebug.exe dialogc.exe
+        run: make --directory=./src dgdebug.exe dgdebug_tty.exe dialogc.exe
       - name: make test
         run: make test
       - name: make test-6502
@@ -48,6 +48,7 @@ jobs:
           name: win32
           path: |
             src/dgdebug.exe
+            src/dgdebug_tty.exe
             src/dialogc.exe
 
   build-manual:

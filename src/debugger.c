@@ -1147,12 +1147,16 @@ static void cmd_restore(struct debugger *dbg) {
 
 static void cmd_more(struct debugger *dbg) {
 	force_height = 0;
+	o_end_box();
 	o_reset(force_width, force_height, dfrotz_quirks);
+	o_begin_box("debugger"); // Because the debugger will attempt to end it again after this
 }
 
 static void cmd_nomore(struct debugger *dbg) {
 	force_height = -1;
+	o_end_box();
 	o_reset(force_width, force_height, dfrotz_quirks);
+	o_begin_box("debugger"); // Because the debugger will attempt to end it again after this
 }
 
 struct debugcmd {
