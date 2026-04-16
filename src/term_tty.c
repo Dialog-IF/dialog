@@ -9,7 +9,7 @@
 #include <unistd.h>
 #ifdef _WIN32
 	#include <windows.h>
-	#define NEVER_A_TTY 1 // Windows doesn't support messing with line echoing, so we let the shell handle history and line editing by pretending it's not a TTY
+	#define NEVER_A_TTY 1 // Windows doesn't support messing with line echoing, so we let the terminal handle history and line editing by telling dgdebug that it's not a TTY
 #else
 	#include <sys/ioctl.h>
 	#include <termios.h>
@@ -79,6 +79,7 @@ void tty_restore() {
 #endif
 }
 
+// This function is called periodically during processing. It's part of the API specifically for the Glk version, where control has to be handed over to Glk to update the graphics and such. But it turns out to be convenient for us here too now: this function will be called in the main thread, while interrupt handlers (on Windows specifically) will not be.
 void term_ticker() {
 #ifdef _WIN32
 	if(interrupt_flag) {
@@ -384,6 +385,7 @@ void term_init(term_int_callback_t callback) {
 	term_int_callback = callback;
 	if(isatty(0)) {
 #ifdef _WIN32
+		// https://stackoverflow.com/a/16826362/3233017
 		if(!SetConsoleCtrlHandler((PHANDLER_ROUTINE)sighandler, TRUE)) {
 			fprintf(stderr, "Failed to install signal handler for ^C.\n");
 			exit(1);
