@@ -159,6 +159,8 @@ Release notes:
 		
 		Library: Transcript comments (commands starting with an asterisk)
 		now produce a warning if transcripting is not active.
+		
+		Library: added (tagged name $).
 
 	1a/01, Lib 1.1.0:
 	
