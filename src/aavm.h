@@ -115,6 +115,7 @@
 #define AA_EMBED_RES		0x6c	// VALUE
 #define AA_CAN_EMBED_RES	0xec	// VALUE DEST
 #define AA_PROGRESS		0x6d	// VALUE VALUE
+#define AA_SET_BODY		0xed	// INDEX
 #define AA_ENTER_SPAN		0x6e	// INDEX
 #define AA_LEAVE_SPAN		0xee
 #define AA_ENTER_STATUS		0x6f	// BYTE INDEX
@@ -181,6 +182,9 @@
 #define AAFEAT_SAVE		0x41
 #define AAFEAT_LINKS		0x42
 #define AAFEAT_QUIT		0x43
+#define AAFEAT_STYLE		0x44
+#define AAFEAT_COLOR		0x45
+#define AAFEAT_ALIGN		0x46
 #define AAFEAT_SCRIPT		0x50
 #define AAFEAT_TOP_AREA		0x60
 #define AAFEAT_INLINE_AREA	0x61

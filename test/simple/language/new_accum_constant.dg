@@ -1,0 +1,10 @@
+%% Issue 207
+(program entry point)
+	(accumulate $N)
+		*($N is one of [1 2 3])
+	(into 6)
+	Six!
+	(accumulate $N)
+		*($N is one of [1 2 3])
+	(into 5)
+	Five!

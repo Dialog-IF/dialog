@@ -1,4 +1,4 @@
-%% dgdebug -q time-tests.dg time.dg ../../unit.dg ../../stdlib.dg
+%% dgdebug -u time-tests.dg time.dg ../../unit.dg ../../stdlib.dg
 
 %% Here's a worked example of some unit tests for a Dialog extension.
 %% By convention, the top line of the test file specifies the command
@@ -25,10 +25,10 @@
 	#military-time-afternoon
 	#nato-time
 	#nato-time-union
-	#short-date
 	#short-date-eu
-	#full-date
+	#short-date
 	#full-date-eu
+	#full-date
 	#set-time
 	#elapse-8-minutes
 	#elapse-9-minutes
@@ -49,7 +49,9 @@
 (current date [12 1 1969])
 
 (clean up $)	(set time [891 12 1 1969])
-		  		(now) (using north american dates)
+
+%% intentionally split to prove that we can invoke it more than once
+(clean up $)	(now) (using north american dates)
 
 %%----------------------------------------------------------------------
 

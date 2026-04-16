@@ -83,6 +83,8 @@ struct wordtable {
 	uint16_t		*words;
 };
 
+static int warned_about_invisible_spans = 0; // To avoid a flood of warnings
+
 int zmachine_preserve_zscii = 1; // Whether to keep the default mapping (and add to the end), or empty it out (allowing more space) - this flag starts at 1 and is cleared by frontend.c if necessary
 
 static uint16_t default_extended_zscii[69] = { // The default mapping, assumed by interpreters that don't support a Unicode translation table (like Ozmoo)
@@ -2074,6 +2076,13 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				if(ci->subop == BOX_SPAN) {
 					zi = append_instr(r, Z_CALL1N);
 					zi->oper[0] = ROUTINE(R_BEGIN_SPAN);
+					
+					if(prg->boxclasses[ci->oper[0].value].style & STYLE_INVISIBLE
+						&& !warned_about_invisible_spans) {
+						report(LVL_WARN, 0, "(span @%s) makes an invisible span. This is legal, but can produce strange spacing.", prg->boxclasses[ci->oper[0].value].class->name);
+						report(LVL_WARN, 0, "It is recommended to use invisible styles only for divs, not spans.");
+						warned_about_invisible_spans = 1;
+					}
 				} else {
 					zi = append_instr(r, Z_CALLVN);
 					if(prg->boxclasses[ci->oper[0].value].flags & BOXF_FLOATLEFT) {
@@ -2136,6 +2145,20 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 					zi = append_instr(r, Z_CALL2N);
 					zi->oper[0] = ROUTINE(R_ENABLE_STYLE);
 					zi->oper[1] = SMALL(8);
+					break;
+				case BI_GLOBAL_STYLE:
+					zi = append_instr(r, Z_CALLVN);
+					zi->oper[0] = ROUTINE(R_GLOBAL_STYLE);
+					zi->oper[1] = LARGE((uint16_t)(prg->boxclasses[ci->oper[0].value].color));
+					zi->oper[2] = LARGE((uint16_t)(prg->boxclasses[ci->oper[0].value].bgcolor));
+					zi->oper[3] = SMALL(prg->boxclasses[ci->oper[0].value].style);
+					break;
+				case BI_GLOBAL_UNSTYLE:
+					zi = append_instr(r, Z_CALLVN);
+					zi->oper[0] = ROUTINE(R_GLOBAL_STYLE);
+					zi->oper[1] = LARGE(0xFFFE); // Fg: initial
+					zi->oper[2] = LARGE(0xFFFE); // Bg: initial
+					zi->oper[3] = SMALL(0); // Style: 0
 					break;
 				case BI_ITALIC:
 					zi = append_instr(r, Z_CALL2N);
@@ -2868,7 +2891,7 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 					zi = append_instr(r, OP_LABEL(ll));
 				}
 				break;
-			case I_IF_HAVE_QUIT:
+			case I_IF_HAVE_QUIT: // Always succeeds
 				if(!ci->subop) {
 					if(ci->implicit == 0xffff) {
 						zi = append_instr(r, Z_RFALSE);
@@ -2911,7 +2934,76 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 					zi = append_instr(r, OP_LABEL(ll));
 				}
 				break;
-			case I_IF_HAVE_STATUS:
+			case I_IF_HAVE_STYLE: // Flags 1 bits 2+3
+				zi = append_instr(r, Z_LOADB);
+				zi->oper[0] = SMALL(0);
+				zi->oper[1] = SMALL(1);
+				zi->store = REG_TEMP;
+				zi = append_instr(r, Z_TEST);
+				zi->oper[0] = VALUE(REG_TEMP);
+				zi->oper[1] = SMALL(0x0C); // 00001100
+				if(ci->subop) zi->op ^= OP_NOT;
+				if(ci->implicit == 0xffff) {
+					zi->branch = RFALSE;
+				} else if(pred->routines[ci->implicit].reftrack == r_id) {
+					zi->branch = llabel[ci->implicit];
+					if(!encountered[ci->implicit]) {
+						rstack[rsp++] = ci->implicit;
+						encountered[ci->implicit] = 1;
+					}
+				} else {
+					ll = r->next_label++;
+					zi->op ^= OP_NOT;
+					zi->branch = ll;
+					zi = append_instr(r, Z_RET);
+					zi->oper[0] = ROUTINE(rlabel[ci->implicit]);
+					zi = append_instr(r, OP_LABEL(ll));
+				}
+				break;
+			case I_IF_HAVE_COLOR: // Flags 1 bit 0
+				zi = append_instr(r, Z_LOADB);
+				zi->oper[0] = SMALL(0);
+				zi->oper[1] = SMALL(1);
+				zi->store = REG_TEMP;
+				zi = append_instr(r, Z_TEST);
+				zi->oper[0] = VALUE(REG_TEMP);
+				zi->oper[1] = SMALL(0x01);
+				if(ci->subop) zi->op ^= OP_NOT;
+				if(ci->implicit == 0xffff) {
+					zi->branch = RFALSE;
+				} else if(pred->routines[ci->implicit].reftrack == r_id) {
+					zi->branch = llabel[ci->implicit];
+					if(!encountered[ci->implicit]) {
+						rstack[rsp++] = ci->implicit;
+						encountered[ci->implicit] = 1;
+					}
+				} else {
+					ll = r->next_label++;
+					zi->op ^= OP_NOT;
+					zi->branch = ll;
+					zi = append_instr(r, Z_RET);
+					zi->oper[0] = ROUTINE(rlabel[ci->implicit]);
+					zi = append_instr(r, OP_LABEL(ll));
+				}
+				break;
+			case I_IF_HAVE_ALIGN: // Always fails
+				if(ci->subop) { // So no code unless inverted
+					if(ci->implicit == 0xffff) {
+						zi = append_instr(r, Z_RFALSE);
+					} else if(pred->routines[ci->implicit].reftrack == r_id) {
+						zi = append_instr(r, Z_JUMP);
+						zi->oper[0] = REL_LABEL(llabel[ci->implicit]);
+						if(!encountered[ci->implicit]) {
+							rstack[rsp++] = ci->implicit;
+							encountered[ci->implicit] = 1;
+						}
+					} else {
+						zi = append_instr(r, Z_RET);
+						zi->oper[0] = ROUTINE(rlabel[ci->implicit]);
+					}
+				}
+				break;
+			case I_IF_HAVE_STATUS: // Yes for top, no for inline
 				assert(ci->oper[0].tag == VAL_RAW);
 				if((ci->oper[0].value == 0) ^ !!ci->subop) {
 					if(ci->implicit == 0xffff) {
@@ -3724,9 +3816,13 @@ static void generate_code(struct program *prg, struct routine *r, struct predica
 				zi->oper[1] = VALUE(REG_CHOICE);
 				break;
 			case I_QUIT:
+			case I_QUIT_N:
 				zi = append_instr(r, Z_QUIT);
 				break;
 			case I_RESTART:
+				zi = append_instr(r, Z_COLOR); // Workaround for a bug in Bocfel: colors are not properly reset when restarting. So, we reset them ourselves.
+				zi->oper[0] = SMALL(1); // 1 = initial
+				zi->oper[1] = SMALL(1);
 				zi = append_instr(r, Z_RESTART);
 				break;
 			case I_RESTORE:

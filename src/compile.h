@@ -91,6 +91,9 @@ enum {
 	I_IF_HAVE_LINK,		// -- implicit routine, subop = negate
 	I_IF_HAVE_UNDO,		// -- implicit routine, subop = negate
 	I_IF_HAVE_QUIT,		// -- implicit routine, subop = negate
+	I_IF_HAVE_STYLE,	// -- implicit routine, subop = negate
+	I_IF_HAVE_COLOR,	// -- implicit routine, subop = negate
+	I_IF_HAVE_ALIGN,	// -- implicit routine, subop = negate
 	I_IF_SCRIPT_ACTIVE,	// -- implicit routine, subop = negate
 	I_IF_HAVE_STATUS,	// -- implicit routine, raw area number, subop = negate
 	I_IF_CAN_EMBED,		// -- value, implicit routine, subop = negate
@@ -135,6 +138,8 @@ enum {
 
 	I_BREAKPOINT,		// -E
 	I_TRACEPOINT,		// -- file number, line number, predicate id, subop = kind
+
+	I_QUIT_N,			// return value for debugger
 
 	N_OPCODES
 };

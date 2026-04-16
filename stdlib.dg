@@ -2230,25 +2230,6 @@
 (perform [curse])
 	You mumble a few well-chosen words to yourself.
 
-%% SHOUT TO <obj> (redirected to TALK TO by default)
-%% SHOUT (redirected to TALK by default)
-
-(grammar [shout/yell/scream to [animate]] for [shout to $])
-
-(unlikely [shout to $Obj])
-	~(animate $Obj)
-
-~(action [shout to $] requires $ to be touched)
-
-(perform [shout to $Obj])
-	(try [talk to $Obj])
-
-(grammar [shout/yell/scream] for [shout])
-
-(perform [shout])
-	To whom?
-	(asking for object in [shout to []])
-
 %% PRAY
 
 (grammar [pray] for itself)
@@ -2263,12 +2244,12 @@
 (perform [shrug])
 	You shrug indifferently.
 
-%% CALL <obj> (redirected to SHOUT TO by default)
-%% CALL (redirected to SHOUT by default)
+%% CALL <obj> (redirected to TALK TO by default)
+%% CALL (redirected to CALL TO by default)
 %% Stories containing a phone would override these.
 
 (grammar [call [animate]] for [call $])
-(grammar [call to [animate]] for [call $])
+(grammar [call/shout to [animate]] for [call $])
 (grammar [call] for itself)
 
 (unlikely [call $Obj])
@@ -2276,11 +2257,16 @@
 
 ~(action [call $] requires $ to be touched)
 
+(perform [call (current player $)])
+	Why call when you're already right here?
+	(tick) (stop)
+
 (perform [call $Obj])
-	(try [shout to $Obj])
+	(try [talk to $Obj])
 
 (perform [call])
-	(try [shout])
+	Call whom?
+	(asking for object in [call []])
 
 %% GREET <obj> (redirected to TALK TO by default)
 %% GREET

@@ -1,0 +1,83 @@
+%% utils.dg
+%% Useful utility routines for Stellar Union games.
+
+%%-------------------------------- INTERFACES --------------------------------
+
+(interface (take last $<N from $<List into $>Suffix))
+
+(interface (replace element $<N in $<List with $<Element into $>NewList))
+
+(interface (decrease element $<N in $<List by $<Num into $>NewList))
+
+(interface (increase element $<N in $<List by $<Num into $>NewList))
+
+(interface (increase element $<N in $<List by $<Num into $>New with max $<Max))
+
+(interface (max $<X and $<Y into $>Max))
+
+(interface (min $<X and $<Y into $>Min))
+
+(interface ($<Number is odd))
+
+(interface ($<Number is even))
+
+%%------------------------------ IMPLEMENTATION ------------------------------
+
+(take last $N from $List into $Suffix)
+	(reverse $List $Reverse)
+	(take $N from $Reverse into $After)
+	(reverse $After $Suffix)
+
+(replace element $N in $List with $Element into $NewList)
+	($N > 0)
+	(length of $List into $Len)
+	~($Len < $N) %% fail fast if trying to replace past end of list
+	($N minus 1 into $PrefixLen)
+	($Len minus $N into $SuffixLen)
+	(take $PrefixLen from $List into $Prefix)
+	(take last $SuffixLen from $List into $Suffix)
+	(append $Prefix [$Element] $Front)
+	(append $Front $Suffix $NewList)
+
+(increase element $N in $List by $Num into $NewList)
+	(nth $List $N $Element)
+	($Element plus $Num into $NewElement)
+	(replace element $N in $List with $NewElement into $NewList)
+
+(increase element $N in $List by $Num into $NewList with max $Max)
+	(nth $List $N $Element)
+	($Element plus $Num into $Proposed)
+	(if) ($Proposed > $Max) (then)
+		($NewElement = $Max)
+	(else)
+		($NewElement = $Proposed)
+	(endif)
+	(replace element $N in $List with $NewElement into $NewList)
+
+(decrease element $N in $List by $Num into $NewList)
+	(nth $List $N $Element)
+	($Element minus $Num into $NewElement)
+	(replace element $N in $List with $NewElement into $NewList)
+
+(max $X and $Y into $Result)
+	(if) ($X > $Y) (then)
+		($Result = $X)
+	(else)
+		($Result = $Y)
+	(endif)
+
+(min $X and $Y into $Result)
+	(if) ($X < $Y) (then)
+		($Result = $X)
+	(else)
+		($Result = $Y)
+	(endif)
+
+($Num is odd)
+	(number $Num)
+	($Num > 0)
+	($Num modulo 2 into $Mod)
+	($Mod = 1)
+
+($Num is even)
+	~($Num is odd)
