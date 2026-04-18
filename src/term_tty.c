@@ -446,7 +446,7 @@ int term_getkey(const char *prompt) {
 	fflush(stdout);
 
 	if(NEVER_A_TTY || !isatty(0)) {
-		unread_lines = 0; // Usually doesn't matter if !isatty(0) but does on Windows
+		if(isatty(0)) unread_lines = 0; // For Windows specifically
 		ch = fgetc(stdin);
 		return (ch == EOF)? -1 : ch;
 	}
@@ -498,7 +498,7 @@ int term_getline(const char *prompt, uint8_t *buffer, int bufsize, int is_filena
 	fflush(stdout);
 
 	if(NEVER_A_TTY || !isatty(0)) {
-		unread_lines = 0; // Usually doesn't matter if !isatty(0) but does on Windows
+		if(isatty(0)) unread_lines = 0; // For Windows specifically
 		if(fgets((char *) buffer, bufsize, stdin)) {
 			len = strlen((char *) buffer);
 			if(len && buffer[len - 1] == '\n') buffer[--len] = 0;
