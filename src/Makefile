@@ -42,6 +42,10 @@ dialogc.exe:		frontend.c backend_z.c runtime_z.c blorb.c dumb_output.c dumb_repo
 dgdebug.exe:		debugger.c frontend.c report.c arena.c ast.c parse.c compile.c eval.c accesspred.c output.c unicode.c term_winglk.c winglk-res.o fs_winglk.c
 			${MINGW32} -L ${WINLIB} -I ${WININCLUDE} ${CFLAGS} -o $@ $^ -lGlk
 
+# A stripped-down version of dgdebug that runs in the Windows terminal, for use with things like dgt
+dgdebug_tty.exe:	debugger.c frontend.c report.c arena.c ast.c parse.c compile.c eval.c term_tty.c accesspred.c output.c unicode.c fs_tty.c
+			${MINGW32} ${CFLAGS} -o $@ $^
+
 winglk-res.o:		winglk-res.rc winglk-res.manifest
 			${WINDRES} $< $@
 

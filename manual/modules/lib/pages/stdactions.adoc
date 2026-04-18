@@ -491,17 +491,11 @@ image:communication.png[communication]
 [talk]::
 • Diverts to `[talk to $]`, after asking for clarification.
 
-[shout to $Obj]::
+[call $Obj]::
 • Diverts to `[talk to $]`.
 
-[shout]::
-• Diverts to `[shout to $]`, after asking for clarification.
-
-[call $Obj]::
-• Diverts to `[shout to $]`.
-
 [call]::
-• Diverts to `[shout]`.
+• Diverts to `[call $]`, after asking for clarification.
 
 [ask $Obj about $Topic]::
 • Diverts to `[talk to $ about $]`.

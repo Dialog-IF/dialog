@@ -67,6 +67,7 @@
 %% Interface declarations for predicates typically defined in story code
 
 (interface (name $<Obj))
+(interface (tagged name $<Obj))
 (interface (descr $<Obj))
 (interface (initial appearance $<Obj))
 (interface (appearance $<Obj))
@@ -386,7 +387,7 @@
 %% Rooms and doors
 
 (name (room $))		location
-(room header $Room)	(Name $Room)
+(room header $Room)	(Tagged name $Room)
 (look (room $R))	You are here.
 
 (interface (from $<Room go $>Dir to room $>Obj))
@@ -2229,25 +2230,6 @@
 (perform [curse])
 	You mumble a few well-chosen words to yourself.
 
-%% SHOUT TO <obj> (redirected to TALK TO by default)
-%% SHOUT (redirected to TALK by default)
-
-(grammar [shout/yell/scream to [animate]] for [shout to $])
-
-(unlikely [shout to $Obj])
-	~(animate $Obj)
-
-~(action [shout to $] requires $ to be touched)
-
-(perform [shout to $Obj])
-	(try [talk to $Obj])
-
-(grammar [shout/yell/scream] for [shout])
-
-(perform [shout])
-	To whom?
-	(asking for object in [shout to []])
-
 %% PRAY
 
 (grammar [pray] for itself)
@@ -2262,12 +2244,12 @@
 (perform [shrug])
 	You shrug indifferently.
 
-%% CALL <obj> (redirected to SHOUT TO by default)
-%% CALL (redirected to SHOUT by default)
+%% CALL <obj> (redirected to TALK TO by default)
+%% CALL (redirected to CALL TO by default)
 %% Stories containing a phone would override these.
 
 (grammar [call [animate]] for [call $])
-(grammar [call to [animate]] for [call $])
+(grammar [call/shout to [animate]] for [call $])
 (grammar [call] for itself)
 
 (unlikely [call $Obj])
@@ -2275,11 +2257,16 @@
 
 ~(action [call $] requires $ to be touched)
 
+(perform [call (current player $)])
+	Why call when you're already right here?
+	(tick) (stop)
+
 (perform [call $Obj])
-	(try [shout to $Obj])
+	(try [talk to $Obj])
 
 (perform [call])
-	(try [shout])
+	Call whom?
+	(asking for object in [call []])
 
 %% GREET <obj> (redirected to TALK TO by default)
 %% GREET
@@ -4169,6 +4156,7 @@
 (interface (A $<Obj))
 (interface (A full $<Obj))
 (interface (Name $<Obj))
+(interface (Tagged name $<Obj))
 (interface (The $<Obj))
 (interface (The full $<Obj))
 
@@ -4289,10 +4277,10 @@
 (That's $Obj)		(current player $Obj) You're
 
 (a (proper $Obj))	(maybe link $Obj)
-(the (proper $Obj))	(name $Obj)
+(the (proper $Obj))	(tagged name $Obj)
 
 (a (your $Obj))		your (maybe link $Obj)
-(the (your $Obj))	your (name $Obj)
+(the (your $Obj))	your (tagged name $Obj)
 
 (a (singleton $Obj))	(maybe link $Obj {(the $_)})
 
@@ -4340,7 +4328,7 @@
 (it (gender-neutral $) es)
 
 (a $Obj)		a (maybe link $Obj)
-(the $Obj)		the (name $Obj)
+(the $Obj)		the (tagged name $Obj)
 (it $)			it
 (them $)		it
 (itself $)		itself
@@ -4363,12 +4351,14 @@
 (doesn't $Obj)		(does $Obj) (no space) n't
 (it $Obj doesn't)	(it $Obj does) (no space) n't
 
+(tagged name $Obj) (name $Obj)
 (name $)
 
 %% Avoid a compiler warning, since the library doesn't use this:
 (interface (Its $<Obj))
 
 (Name $Obj)		(uppercase) (name $Obj)
+(Tagged name $Obj)	(uppercase) (tagged name $Obj)
 (A $Obj)		(uppercase) (a $Obj)
 (The $Obj)		(uppercase) (the $Obj)
 (A full $Obj)		(uppercase) (a full $Obj)
@@ -4381,14 +4371,14 @@
 (interface ($<Obj))
 
 ($Obj)
-	(link) (name $Obj)
+	(link) (tagged name $Obj)
 
 (interface ($<Obj $<Text))
 
 ($Obj $Text)
 	(if) (interpreter supports links) (then)
 		(collect words)
-			(name $Obj)
+			(tagged name $Obj)
 		(into $Words)
 		(link $Words) (query $Text)
 	(else)
@@ -4397,9 +4387,9 @@
 
 (maybe link $Obj)
 	(if) (library links enabled) (then)
-		(link) (name $Obj)
+		(link) (tagged name $Obj)
 	(else)
-		(name $Obj)
+		(tagged name $Obj)
 	(endif)
 
 (maybe link $Obj $Closure)
@@ -4514,7 +4504,7 @@
 %% By default, any word mentioned in the name rule is included:
 
 (dict $Obj)
-	(name $Obj)
+	(tagged name $Obj)
 
 %% The plural dict should only mention nouns, so the default rule can't
 %% invoke (plural name $).
