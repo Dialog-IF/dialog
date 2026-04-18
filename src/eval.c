@@ -785,14 +785,15 @@ static void begin_link(struct eval_state *es, value_t v) {
 			strcpy(buf + pos, es->program->dictwordnames[v.value]->name);
 			pos += len;
 		} else if(v.tag == VAL_DICTEXT) {
+			if(pos + 1 >= sizeof(buf)) break;
+			if(pos) buf[pos++] = ' ';
 			for(i = 0; i < 2; i++) {
 				v2 = es->heap[v.value + i];
 				while(v2.tag == VAL_PAIR) {
 					v3 = es->heap[v2.value + 0];
 					if(v3.tag == VAL_DICT) {
 						len = strlen(es->program->dictwordnames[v3.value]->name);
-						if(pos + 1 + len >= sizeof(buf)) break;
-						if(pos) buf[pos++] = ' ';
+						if(pos + len >= sizeof(buf)) break;
 						strcpy(buf + pos, es->program->dictwordnames[v3.value]->name);
 						pos += len;
 					}
@@ -800,8 +801,7 @@ static void begin_link(struct eval_state *es, value_t v) {
 				}
 				if(v2.tag == VAL_DICT) {
 					len = strlen(es->program->dictwordnames[v2.value]->name);
-					if(pos + 1 + len >= sizeof(buf)) break;
-					if(pos) buf[pos++] = ' ';
+					if(pos + len >= sizeof(buf)) break;
 					strcpy(buf + pos, es->program->dictwordnames[v2.value]->name);
 					pos += len;
 				}
