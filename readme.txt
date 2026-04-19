@@ -32,7 +32,7 @@ Cross-compiling the Windows version of the software under Linux (requires
 mingw32):
 
 	cd src
-	make dialogc.exe dgdebug.exe
+	make dialogc.exe dgdebug.exe dgdebug_gui.exe
 
 Project website:
 
@@ -41,10 +41,14 @@ Project website:
 Release notes:
 
 	1b/01, Lib 1.1.1:
-  
+	
 		Due to new built-in predicates in this release, all projects
 		compiled for Å-machine will need version 1.0.0 or later of the
 		Å-machine tools. Get them from github.com/Dialog-IF/aamachine/.
+		
+		Note that the debugger will now use the terminal on Windows,
+		rather than opening its own graphical window. To get the old
+		behavior, run dgdebug_gui.exe instead of dgdebug.exe.
 		
 		Language: deprecated display:none; on spans. This remains legal,
 		but will produce a warning.
@@ -63,6 +67,9 @@ Release notes:
 		
 		Language: added a way to test for basic style support, basic
 		color support, and text alignment support.
+		
+		Distribution: introduced a terminal version of the debugger on
+		Windows, equivalent to the Mac and Linux versions.
 		
 		Distribution: added unit.dg, a library for unit testing.
 		
