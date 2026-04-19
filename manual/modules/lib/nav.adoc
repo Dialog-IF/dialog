@@ -10,4 +10,5 @@
 ** xref:npc.adoc[Non-player characters]
 ** xref:understanding.adoc[Understanding player input]
 ** xref:miscfeat.adoc[Miscellaneous features]
+** xref:testing.adoc[Testing]
 ** xref:libref.adoc[Predicate Index]
