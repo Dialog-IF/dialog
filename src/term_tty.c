@@ -146,18 +146,41 @@ void term_effectstyle(int style) {
 	termstyle = style;
 }
 
+// Currently using a color scheme proposed by HAL9000:
+// https://intfiction.org/t/is-it-better-to-use-30m-colors-or-90m-colors/79571/48
+static int32_t ansi_to_24bit_color[] = {
+	0x262626, // black
+	0xdf2050, // red
+	0x18aa49, // green
+	0xb5a926, // yellow
+	0x6361ea, // blue
+	0xbf1cbf, // magenta
+	0x21baba, // cyan
+	0xf2f2f2, // white
+};
+
 void term_colors(int fg, int bg) { // OCOLOR_* = ANSI escape color (0-7 or 9)
-	int cat;
+	int32_t color;
 	if(fg != termfg && isatty(1)) {
 		assert(fg != OCOLOR_INHERIT); // INHERIT should never get this far - we should only be sent actual colors at this stage
-		cat = (fg == 0 || fg == 9) ? 3 : 9; // Use code 9X (bright colors) if not black; for black, use 3X (dim colors)
-		printf("\033[%d%dm", cat, fg);
+		printf("\033[3");
+		if(fg == OCOLOR_INITIAL) {
+			printf("9m");
+		} else {
+			color = ansi_to_24bit_color[fg];
+			printf("8;2;%d;%d;%dm", color>>16, (color>>8)&0xff, color&0xff);
+		}
 		termfg = fg;
 	}
 	if(bg != termbg && isatty(1)) {
 		assert(bg != OCOLOR_INHERIT);
-		cat = (bg == 0 || bg == 9) ? 4 : 10; // Use code 10X (bright colors) if not black; for black, use 4X (dim colors)
-		printf("\033[%d%dm", cat, bg);
+		printf("\033[4");
+		if(bg == OCOLOR_INITIAL) {
+			printf("9m");
+		} else {
+			color = ansi_to_24bit_color[bg];
+			printf("8;2;%d;%d;%dm", color>>16, (color>>8)&0xff, color&0xff);
+		}
 		termbg = bg;
 	}
 }

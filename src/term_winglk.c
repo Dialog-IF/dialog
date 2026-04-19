@@ -199,16 +199,17 @@ void term_effectstyle(int style) {
 	}
 }
 
-// https://zspec.jaredreisinger.com/08-screen#8_3
+// Currently using a color scheme proposed by HAL9000:
+// https://intfiction.org/t/is-it-better-to-use-30m-colors-or-90m-colors/79571/48
 static int32_t ansi_to_glk_color[] = {
-	0x000000, // black
-	0xef0000, // red
-	0x00d000, // green
-	0xefef00, // yellow
-	0x006fb0, // blue
-	0xff00ff, // magenta
-	0x00efef, // cyan
-	0xffffff, // white
+	0x262626, // black
+	0xdf2050, // red
+	0x18aa49, // green
+	0xb5a926, // yellow
+	0x6361ea, // blue
+	0xbf1cbf, // magenta
+	0x21baba, // cyan
+	0xf2f2f2, // white
 	zcolor_Current, // inherit
 	zcolor_Default // initial
 };
