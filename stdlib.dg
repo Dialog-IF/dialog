@@ -1149,6 +1149,10 @@
 	}
 	Your feelings for yourself are primarily of a platonic nature.
 
+(perform [kiss (animate $Obj)])
+	(The $Obj) (doesn't $Obj) seem receptive to that sort of thing.
+	(tick) (stop)
+
 (perform [kiss $Obj])
 	(The $Obj is) unmoved by your display of affection.
 
