@@ -7,12 +7,13 @@
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
-#ifndef _WIN32
+#ifdef _WIN32
+	#include <windows.h>
+	#define NEVER_A_TTY 1 // Windows doesn't support messing with line echoing, so we let the terminal handle history and line editing by telling dgdebug that it's not a TTY
+#else
 	#include <sys/ioctl.h>
 	#include <termios.h>
 	#define NEVER_A_TTY 0
-#else
-	#define NEVER_A_TTY 1 // The fancy line-editing doesn't work on Windows (which lacks ANSI escapes), so we just pretend that a Windows terminal is never interactive, and therefore should not do anything fancy and readlineish
 #endif
 
 #include "common.h"
@@ -40,13 +41,16 @@ static int termfg = OCOLOR_INITIAL, termbg = OCOLOR_INITIAL;
 static int term_height;
 static int force_height;
 static uint16_t last_filename[256];
-#ifndef _WIN32
+#ifdef _WIN32
+static volatile int interrupt_flag; // Since Windows puts signal handlers in a separate thread
+#else
 static int did_tcsetattr;
 static struct termios tio_orig;
 #endif
 
 void tty_setup() {
-#ifndef _WIN32
+#ifdef _WIN32
+#else
 	struct termios tio;
 
 	if(!tcgetattr(0, &tio)) {
@@ -66,7 +70,8 @@ void tty_setup() {
 }
 
 void tty_restore() {
-#ifndef _WIN32
+#ifdef _WIN32
+#else
 	if(did_tcsetattr) {
 		tcsetattr(0, TCSANOW, &tio_orig);
 		did_tcsetattr = 0;
@@ -74,7 +79,15 @@ void tty_restore() {
 #endif
 }
 
+// This function is called periodically during processing. It's part of the API specifically for the Glk version, where control has to be handed over to Glk to update the graphics and such. But it turns out to be convenient for us here too now: this function will be called in the main thread, while interrupt handlers (on Windows specifically) will not be.
 void term_ticker() {
+#ifdef _WIN32
+	if(interrupt_flag) {
+		term_int_callback();
+		interrupt_flag = 0;
+	}
+#else
+#endif
 }
 
 void morefunc() {
@@ -95,21 +108,30 @@ void morefunc() {
 
 void term_get_size(int *width, int *height, int force_w, int force_h) {
 	char *envvar;
-#ifndef _WIN32
+#ifdef _WIN32
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+#else
 	struct winsize ws;
 #endif
 	
 	force_height = force_h;
 	*width = 0; *height = 0;
 	
-#ifndef _WIN32
+#ifdef _WIN32
+	// https://stackoverflow.com/a/12642749/3233017
+	if(GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi)) {
+		*width = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+		if(io_tag_lines) *width -= 2; // For the tags
+		*height = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+	}
+#else
 	if(!ioctl(0, TIOCGWINSZ, &ws)) {
 		*width = (ws.ws_col >= 1)? ws.ws_col - 1 : 0;
 		if(io_tag_lines) *width -= 2; // For the tags
 		*height = ws.ws_row;
 	}
 #endif
-	if(*width <= 0) { // Could not calculate: TIOCGWINSZ was not available, did not succeed, or returned 0
+	if(*width <= 0) { // Could not calculate: platform window size query was not available, did not succeed, or returned 0
 		envvar = getenv("COLUMNS");
 		if(envvar) *width = atoi(envvar);
 		if(*width == 0) *width = 79;
@@ -366,7 +388,15 @@ static int getkey() {
 	}
 }
 
-#ifndef _WIN32
+#ifdef _WIN32
+static BOOL WINAPI sighandler(DWORD sig) {
+	if(sig == CTRL_C_EVENT) {
+		interrupt_flag = 1;
+		return TRUE;
+	}
+	return FALSE;
+}
+#else
 static void sighandler(int sig) {
 	if(sig == SIGINT) {
 		term_int_callback();
@@ -376,14 +406,20 @@ static void sighandler(int sig) {
 
 void term_init(term_int_callback_t callback) {
 	term_int_callback = callback;
-#ifndef _WIN32
 	if(isatty(0)) {
+#ifdef _WIN32
+		// https://stackoverflow.com/a/16826362/3233017
+		if(!SetConsoleCtrlHandler((PHANDLER_ROUTINE)sighandler, TRUE)) {
+			fprintf(stderr, "Failed to install signal handler for ^C.\n");
+			exit(1);
+		}
+#else
 		if(signal(SIGINT, sighandler) == SIG_ERR) {
 			fprintf(stderr, "Failed to install signal handler for ^C.\n");
 			exit(1);
 		}
-	}
 #endif
+	}
 }
 
 void term_cleanup() {
@@ -418,7 +454,8 @@ int term_handles_wrapping() {
 
 static void suspend() {
 	tty_restore();
-#ifndef _WIN32
+#ifdef _WIN32
+#else
 	kill(0, SIGSTOP);
 #endif
 	tty_setup();
@@ -432,6 +469,7 @@ int term_getkey(const char *prompt) {
 	fflush(stdout);
 
 	if(NEVER_A_TTY || !isatty(0)) {
+		if(isatty(0)) unread_lines = 0; // For Windows specifically
 		ch = fgetc(stdin);
 		return (ch == EOF)? -1 : ch;
 	}
@@ -483,6 +521,7 @@ int term_getline(const char *prompt, uint8_t *buffer, int bufsize, int is_filena
 	fflush(stdout);
 
 	if(NEVER_A_TTY || !isatty(0)) {
+		if(isatty(0)) unread_lines = 0; // For Windows specifically
 		if(fgets((char *) buffer, bufsize, stdin)) {
 			len = strlen((char *) buffer);
 			if(len && buffer[len - 1] == '\n') buffer[--len] = 0;

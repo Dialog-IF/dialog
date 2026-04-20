@@ -9,8 +9,8 @@ Versions from 2025 onward can be found here:
 {home-page}
 
 The archive contains the full source code for the Dialog compiler and
-interactive debugger, as well as pre-built executable files for Linux (i386 and
-x86_64) and Windows. The compiler is called `dialogc`, and the debugger
+interactive debugger, as well as pre-built executable files for Linux
+(x86_64) and Windows. The compiler is called `dialogc`, and the debugger
 is called `dgdebug`.
 
 Alternately, if you are on OS X, you can install the
@@ -28,9 +28,9 @@ command-line shell. Depending on what operating system you use, you may have to
 copy the executable files to a system-specific location, or simply navigate to
 the directory that contains them.
 
-The Windows version of the debugger makes use of a third-party library,
-_Windows Glk_ by David Kinder. Make sure to put the two included `DLL`
-files in the same directory as the executable file (`dgdebug.exe`).
+The graphical version of the debugger on Windows makes use of a third-party
+library, _Windows Glk_ by David Kinder. Make sure to put the two included `DLL`
+files in the same directory as the executable file (`dgdebug_gui.exe`).
 
 To check that everything is in place, try the following two commands:
 
@@ -215,8 +215,8 @@ This can be used to inspect or control the
 running program.
 
 The debugger remains operational after your program terminates. To start over,
-type `(restart)`. To quit the debugger, either press Control-D (Linux),
-close the window (Windows), or type the special command `@quit`.
+type `(restart)`. To quit the debugger, press Control-D (terminal),
+close the window (GUI), or type the special command `@quit`.
 
 === Modifying a running game
 
@@ -314,10 +314,9 @@ prompt. These commands can be abbreviated as long as the abbreviation is unique;
 
 === Suspending execution
 
-The terminal version of the debugger (i.e. _not_ the Windows Glk version) allows
-you to suspend a running computation by pressing Control-C at any time. This
-will immediately take you to a prompt where you can type queries and debugging
-commands.
+The terminal version of the debugger allows you to suspend a running computation
+by pressing Control-C at any time. This will immediately take you to a prompt
+where you can type queries and debugging commands.
 
 To resume execution, type a blank line at this prompt.
 
@@ -411,4 +410,3 @@ system-wide location, type “`sudo make install`”.
 
 The Windows binaries can be cross-compiled on a Linux system using the
 `Mingw32` toolchain.
-

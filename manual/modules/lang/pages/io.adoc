@@ -697,11 +697,10 @@ A query to `(clear links)` transforms earlier hyperlinks into regular, non-click
 This is useful after a substantial scope change, such as when the player has moved to a different room.
 Links in the status areas are not affected.
 
-
 Å-machine interpreters are not required to support hyperlinks at all,
 and some may provide an option to turn them off for players who find them distracting.
 The built-in predicate `(interpreter supports links)` can be used to check whether hyperlinks
-are supported and enabled.
+are both supported and enabled.
 When they are not, the would-be-clickable text shows up as normal text.
 
 Hyperlinks are always disabled on the Z-machine backend.
@@ -721,24 +720,24 @@ The _id_ is any bound Dialog-value, such as an integer, a dictionary word, an ob
 The _location_ is either a URL with one of the schemes `http`, `https`, or `mailto`,
 or a local filename.
 Local files are copied into the `.aastory` file,
-and this is the recommended way to work with _feelies_ and embedded graphics.
+and this is the recommended way to work with "feelies" and embedded graphics.
 
-The _location_ may be followed by one or more _options_, separated from the filename by a comma. For example:
+The _location_ may be followed by one or more _options_, separated by commas. An option may be a simple string, or a key and a value separated by a colon. For example:
 
 [source]
 ----
-(define resource @bg) music/bg.ogg, channel 1, loop
+(define resource @bg) music/bg.ogg, channel: 1, loop
 ----
 
 Which options are recognized, and what effects they might have, depends on the
 backend and interpreter used. Unrecognized options will never be an error:
 interpreters are free to use as many or as few as they like.
 
-Currently, only the Å-machine web interpreter uses options at all, and only for audio:
-* `channel` followed by a space and one or more alphanumeric characters specifies which channel to play the sound on. A different audio resource played on the same channel will replace the old one after a brief cross-fade. Playing a resource while the same resource is already playing will not restart it, so it is safe to embed your background music every turn. If not specified, the default channel is `main`.
+Currently, only the Å-machine web interpreter uses options at all, primarily for audio files:
+* `channel` followed by a value specifies which channel to play the sound on. A different audio resource played on the same channel will replace the old one after a brief cross-fade. Playing a resource while the same resource is already playing will not restart it, so it is safe to play your background music every turn. If not specified, the default channel is `main`.
 * `loop` specifies that the audio should repeat forever rather than stopping at the end. A looping sound only ends when another sound is played on the same channel.
 
-For all other interpreters, backends, and file types, any options will be ignored.
+But future versions of these interpreters may make more use of options, if applicable.
 
 === Links to resources
 
@@ -844,6 +843,53 @@ A different resource directory can be specified with the `-r` option to `dialogc
 All resources bundled into an `.aastory` file must have unique filenames, regardless of their path.
 Thus, you can't define one resource with the filename “hero/face.png” and another with the filename “heroine/face.png”.
 This restriction might be relaxed in future versions.
+
+=== Fonts
+
+On the Å-machine web interpreter specifically (and no other), any font
+resources—that is, any resources whose filenames end in .TTF, .OTF, .EOT,
+.WOFF, or .WOFF2—will be embedded into the web page so that
+xref:#div[style classes]
+can refer to them. Any options provided will be embedded into the CSS.
+
+In other words, a resource definition like this:
+
+[source]
+----
+(define resource @font)
+	HighTowerTextMedium.woff2,
+	font-family: "Hightower",
+	font-weight: "normal"
+----
+
+Will be converted into a CSS declaration:
+
+[source,subs="quotes"]
+----
+@font-face {
+	font-family: "Hightower";
+	font-weight: "normal";
+	src: url("path/to/HighTowerTextMedium.woff2");
+}
+----
+
+Which can now be used in style classes.
+
+[source]
+----
+(style class @bodystyle)
+	font-family: "Hightower", serif;
+----
+
+At present, this happens when the page loads, with no `(embed resource $)`
+necessary. This ensures the browser has time to load the font before any Dialog
+code is executed, letting it be used right away. But it's good practice to use
+`(embed resource $)` anyway: other interpreters may handle this differently.
+
+This is, strictly speaking, not a feature of Dialog at all; Dialog merely
+provides the resource to the Å-machine interpreter, which does the real work.
+Future versions of the interpreter might allow other resources to be embedded
+in the same way, like stylesheets or scripts.
 
 [#debugging]
 == Debugging
