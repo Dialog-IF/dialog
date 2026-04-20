@@ -155,6 +155,8 @@ Release notes:
 		--no-warn-not-topic --quit --height=-1, but much shorter
 		to type.
 		
+		Debugger: fixed bug when a link target contains unknown words.
+		
 		Library: actions [shout] and [shout to $] have been removed. Now
 		SHOUT asks for clarification and SHOUT TO X maps to [call #X].
 		[call (current player $)] has a new failure message.
@@ -166,6 +168,13 @@ Release notes:
 		
 		Library: Transcript comments (commands starting with an asterisk)
 		now produce a warning if transcripting is not active.
+		
+		Library: added (tagged name $).
+		
+		Library: the default response to hugging or kissing a person
+		previously said that they were unmoved by your display of affection.
+		Now it instead says that they don't seem receptive, and thus you
+		don't actually hug or kiss them at all.
 
 	1a/01, Lib 1.1.0:
 	
