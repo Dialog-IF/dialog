@@ -26,8 +26,8 @@ The test cases in the development repository (not included in the official
 releases) are released under the same license unless otherwise specified.
 See the LICENSE.txt files in the individual test directories for details.
 
-The Windows version of the Dialog Interactive Debugger (dgdebug) uses Windows
-Glk by David Kinder. A header file, and two precompiled libraries are
+The GUI version of the Dialog Interactive Debugger (dgdebug) uses Windows
+Glk by David Kinder. A header file and two precompiled libraries are
 distributed as part of this archive, under to the following (MIT) license:
 
 	WinGlk.h
