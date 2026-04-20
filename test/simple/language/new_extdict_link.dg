@@ -1,0 +1,4 @@
+%% See issue #243
+(program entry point)
+	(join words [word s] into $Plural)
+	(link [$Plural]) { $Plural }

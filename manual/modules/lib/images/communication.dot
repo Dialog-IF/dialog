@@ -1,0 +1,13 @@
+digraph G {
+	node [shape=plaintext];
+	"[talk]" -> "[talk to $Obj]" [style=dotted,label="To whom?"];
+	"[call]" -> "[call $Obj]" [style=dotted, label="Call whom?"];
+	"[call $Obj]" -> "[talk to $Obj]";
+	"[tell $Obj to | $Action]" -> "[greet $Obj]" [label="If $Action is [greet]"];
+	"[greet $Obj]" -> "[talk to $Obj]";
+	"[ask $Obj about $Topic]" -> "[talk to $Obj about $Topic]";
+	"[tell $Obj about $Topic]" -> "[talk to $Obj about $Topic]";
+	"[talk to $Obj about $Topic]" -> "[talk to $Obj]";
+	"[ask $Obj]" -> "[talk to $Obj]";
+	"[tell $Obj]" -> "[talk to $Obj]";
+}

@@ -5,10 +5,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/ioctl.h>
 #include <sys/types.h>
-#include <termios.h>
 #include <unistd.h>
+#ifdef _WIN32
+	#include <windows.h>
+	#define NEVER_A_TTY 1 // Windows doesn't support messing with line echoing, so we let the terminal handle history and line editing by telling dgdebug that it's not a TTY
+#else
+	#include <sys/ioctl.h>
+	#include <termios.h>
+	#define NEVER_A_TTY 0
+#endif
 
 #include "common.h"
 #include "terminal.h"
@@ -34,11 +40,17 @@ static int termstyle;
 static int termfg = OCOLOR_INITIAL, termbg = OCOLOR_INITIAL;
 static int term_height;
 static int force_height;
+static uint16_t last_filename[256];
+#ifdef _WIN32
+static volatile int interrupt_flag; // Since Windows puts signal handlers in a separate thread
+#else
 static int did_tcsetattr;
 static struct termios tio_orig;
-static uint16_t last_filename[256];
+#endif
 
 void tty_setup() {
+#ifdef _WIN32
+#else
 	struct termios tio;
 
 	if(!tcgetattr(0, &tio)) {
@@ -54,16 +66,28 @@ void tty_setup() {
 	} else {
 		did_tcsetattr = 0;
 	}
+#endif
 }
 
 void tty_restore() {
+#ifdef _WIN32
+#else
 	if(did_tcsetattr) {
 		tcsetattr(0, TCSANOW, &tio_orig);
 		did_tcsetattr = 0;
 	}
+#endif
 }
 
+// This function is called periodically during processing. It's part of the API specifically for the Glk version, where control has to be handed over to Glk to update the graphics and such. But it turns out to be convenient for us here too now: this function will be called in the main thread, while interrupt handlers (on Windows specifically) will not be.
 void term_ticker() {
+#ifdef _WIN32
+	if(interrupt_flag) {
+		term_int_callback();
+		interrupt_flag = 0;
+	}
+#else
+#endif
 }
 
 void morefunc() {
@@ -83,19 +107,42 @@ void morefunc() {
 }
 
 void term_get_size(int *width, int *height, int force_w, int force_h) {
+	char *envvar;
+#ifdef _WIN32
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+#else
 	struct winsize ws;
-	force_height = force_h;
+#endif
 	
+	force_height = force_h;
+	*width = 0; *height = 0;
+	
+#ifdef _WIN32
+	// https://stackoverflow.com/a/12642749/3233017
+	if(GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi)) {
+		*width = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+		if(io_tag_lines) *width -= 2; // For the tags
+		*height = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+	}
+#else
 	if(!ioctl(0, TIOCGWINSZ, &ws)) {
 		*width = (ws.ws_col >= 1)? ws.ws_col - 1 : 0;
 		if(io_tag_lines) *width -= 2; // For the tags
 		*height = ws.ws_row;
-		term_height = force_height ? force_height : ws.ws_row;
-	} else {
-		*width = 79;
-		*height = 0;
-		term_height = force_height ? force_height : ws.ws_row;
 	}
+#endif
+	if(*width <= 0) { // Could not calculate: platform window size query was not available, did not succeed, or returned 0
+		envvar = getenv("COLUMNS");
+		if(envvar) *width = atoi(envvar);
+		if(*width == 0) *width = 79;
+	}
+	if(*height <= 0) { // Likewise
+		envvar = getenv("LINES");
+		if(envvar) *height = atoi(envvar);
+		// Default to 0
+	}
+	
+	term_height = force_height ? force_height : *height;
 }
 
 int term_is_interactive() {
@@ -112,44 +159,62 @@ void term_effectstyle(int style) {
 		if(style & STYLE_BOLD) printf("\033[1m");
 		if(style & STYLE_ITALIC) printf("\033[4m");
 		if(style & STYLE_REVERSE) printf("\033[7m");
-		if(style & STYLE_DEBUG) printf("\033[36m");
+		if(style & STYLE_DEBUG) printf("\033[36m"); // Cyan
 		if(style & STYLE_FIXED) printf("\033[50m"); // Not widely supported by terminals, but can be used by external tools
-		// This also clobbers the colors though
+		// This also clobbers the colors though, so we should set them again
 		termfg = OCOLOR_INITIAL;
 		termbg = OCOLOR_INITIAL;
 	}
 	termstyle = style;
 }
 
+// Currently using a color scheme proposed by HAL9000:
+// https://intfiction.org/t/is-it-better-to-use-30m-colors-or-90m-colors/79571/48
+static int32_t ansi_to_24bit_color[] = {
+	0x262626, // black
+	0xdf2050, // red
+	0x18aa49, // green
+	0xb5a926, // yellow
+	0x6361ea, // blue
+	0xbf1cbf, // magenta
+	0x21baba, // cyan
+	0xf2f2f2, // white
+};
+
 void term_colors(int fg, int bg) { // OCOLOR_* = ANSI escape color (0-7 or 9)
-	int cat;
+	int32_t color;
 	if(fg != termfg && isatty(1)) {
 		assert(fg != OCOLOR_INHERIT); // INHERIT should never get this far - we should only be sent actual colors at this stage
-		cat = (fg == 0 || fg == 9) ? 3 : 9; // Use code 9X (bright colors) if not black; for black, use 3X (dim colors)
-		printf("\033[%d%dm", cat, fg);
+		printf("\033[3");
+		if(fg == OCOLOR_INITIAL) {
+			printf("9m");
+		} else {
+			color = ansi_to_24bit_color[fg];
+			printf("8;2;%d;%d;%dm", color>>16, (color>>8)&0xff, color&0xff);
+		}
 		termfg = fg;
 	}
 	if(bg != termbg && isatty(1)) {
 		assert(bg != OCOLOR_INHERIT);
-		cat = (bg == 0 || bg == 9) ? 4 : 10; // Use code 10X (bright colors) if not black; for black, use 4X (dim colors)
-		printf("\033[%d%dm", cat, bg);
+		printf("\033[4");
+		if(bg == OCOLOR_INITIAL) {
+			printf("9m");
+		} else {
+			color = ansi_to_24bit_color[bg];
+			printf("8;2;%d;%d;%dm", color>>16, (color>>8)&0xff, color&0xff);
+		}
 		termbg = bg;
 	}
 }
 
-static void reset_bgcolor() { // Reset the background color after a newline
-	int bg = termbg;
-	termbg = OCOLOR_INITIAL;
-	term_colors(termfg, bg);
-}
-
 int term_sendlf() {
-	if(isatty(1)) printf("\033[49m"); // Always reset background color before scrolling, to avoid weird behavior with the new line produced
+	int savedbg = termbg;
+	term_colors(termfg, OCOLOR_INITIAL); // Set the background color to INITIAL before anything that might scroll the screen, so that the next line is filled with INITIAL instead of anything else
 	fputc('\n', stdout);
-	reset_bgcolor();
 	if(io_tag_lines) printf("  ");
+	term_colors(termfg, savedbg);
 	unread_lines++;
-	if(term_height > 1 && isatty(1)) {
+	if(term_height > 0 && isatty(1)) {
 		if(unread_lines >= term_height - 1) {
 			term_effectstyle(0);
 			fflush(stdout);
@@ -323,21 +388,38 @@ static int getkey() {
 	}
 }
 
+#ifdef _WIN32
+static BOOL WINAPI sighandler(DWORD sig) {
+	if(sig == CTRL_C_EVENT) {
+		interrupt_flag = 1;
+		return TRUE;
+	}
+	return FALSE;
+}
+#else
 static void sighandler(int sig) {
 	if(sig == SIGINT) {
 		term_int_callback();
 	}
 }
+#endif
 
 void term_init(term_int_callback_t callback) {
 	term_int_callback = callback;
 	if(isatty(0)) {
+#ifdef _WIN32
+		// https://stackoverflow.com/a/16826362/3233017
+		if(!SetConsoleCtrlHandler((PHANDLER_ROUTINE)sighandler, TRUE)) {
+			fprintf(stderr, "Failed to install signal handler for ^C.\n");
+			exit(1);
+		}
+#else
 		if(signal(SIGINT, sighandler) == SIG_ERR) {
 			fprintf(stderr, "Failed to install signal handler for ^C.\n");
 			exit(1);
 		}
+#endif
 	}
-
 }
 
 void term_cleanup() {
@@ -372,7 +454,10 @@ int term_handles_wrapping() {
 
 static void suspend() {
 	tty_restore();
+#ifdef _WIN32
+#else
 	kill(0, SIGSTOP);
+#endif
 	tty_setup();
 }
 
@@ -383,7 +468,8 @@ int term_getkey(const char *prompt) {
 	if(io_tag_lines) printf("\n) ");
 	fflush(stdout);
 
-	if(!isatty(0)) {
+	if(NEVER_A_TTY || !isatty(0)) {
+		if(isatty(0)) unread_lines = 0; // For Windows specifically
 		ch = fgetc(stdin);
 		return (ch == EOF)? -1 : ch;
 	}
@@ -434,7 +520,8 @@ int term_getline(const char *prompt, uint8_t *buffer, int bufsize, int is_filena
 	if(io_tag_lines) printf("\n> ");
 	fflush(stdout);
 
-	if(!isatty(0)) {
+	if(NEVER_A_TTY || !isatty(0)) {
+		if(isatty(0)) unread_lines = 0; // For Windows specifically
 		if(fgets((char *) buffer, bufsize, stdin)) {
 			len = strlen((char *) buffer);
 			if(len && buffer[len - 1] == '\n') buffer[--len] = 0;

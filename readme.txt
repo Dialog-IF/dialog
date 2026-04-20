@@ -32,7 +32,7 @@ Cross-compiling the Windows version of the software under Linux (requires
 mingw32):
 
 	cd src
-	make dialogc.exe dgdebug.exe
+	make dialogc.exe dgdebug.exe dgdebug_gui.exe
 
 Project website:
 
@@ -41,10 +41,14 @@ Project website:
 Release notes:
 
 	1b/01, Lib 1.1.1:
-  
+	
 		Due to new built-in predicates in this release, all projects
 		compiled for Å-machine will need version 1.0.0 or later of the
 		Å-machine tools. Get them from github.com/Dialog-IF/aamachine/.
+		
+		Note that the debugger will now use the terminal on Windows,
+		rather than opening its own graphical window. To get the old
+		behavior, run dgdebug_gui.exe instead of dgdebug.exe.
 		
 		Language: deprecated display:none; on spans. This remains legal,
 		but will produce a warning.
@@ -63,6 +67,9 @@ Release notes:
 		
 		Language: added a way to test for basic style support, basic
 		color support, and text alignment support.
+		
+		Distribution: introduced a terminal version of the debugger on
+		Windows, equivalent to the Mac and Linux versions.
 		
 		Distribution: added unit.dg, a library for unit testing.
 		
@@ -148,6 +155,12 @@ Release notes:
 		--no-warn-not-topic --quit --height=-1, but much shorter
 		to type.
 		
+		Debugger: fixed bug when a link target contains unknown words.
+		
+		Library: actions [shout] and [shout to $] have been removed. Now
+		SHOUT asks for clarification and SHOUT TO X maps to [call #X].
+		[call (current player $)] has a new failure message.
+		
 		Library: new commands SUPERBRIEF, BRIEF, VERBOSE, and SUPERVERBOSE
 		change how rooms are described while going. The default behavior
 		is VERBOSE: rooms are described in full when moving one step at a
@@ -155,6 +168,13 @@ Release notes:
 		
 		Library: Transcript comments (commands starting with an asterisk)
 		now produce a warning if transcripting is not active.
+		
+		Library: added (tagged name $).
+		
+		Library: the default response to hugging or kissing a person
+		previously said that they were unmoved by your display of affection.
+		Now it instead says that they don't seem receptive, and thus you
+		don't actually hug or kiss them at all.
 
 	1a/01, Lib 1.1.0:
 	
