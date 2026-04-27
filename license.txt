@@ -22,6 +22,15 @@ modification, are permitted provided that the following conditions are met:
 	(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 	OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+Note that these requirements are meant to apply to the Dialog compiler, not
+to the output of that compiler. You can distribute the resulting Z-machine
+and Å-machine bytecode in any way you like, without needing to include this
+license file or comply with the attribution requirements (for the library
+or for the Z-machine runtime routines). We hope to formalize this properly
+in a future release.
+
+---
+
 The test cases in the development repository (not included in the official
 releases) are released under the same license unless otherwise specified.
 See the LICENSE.txt files in the individual test directories for details.
