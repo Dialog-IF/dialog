@@ -46,6 +46,7 @@ tidy:
 
 clean: tidy
 	$(MAKE) -C src clean
+	rm -f stdlib.unicode.dg
 
 install: src/dialogc src/dgdebug
 	$(MAKE) -C src install
