@@ -22,6 +22,13 @@ modification, are permitted provided that the following conditions are met:
 	(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 	OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+Note that this license is meant to apply to the Dialog compiler, not to the
+output of that compiler. We do not consider Z-machine or Å-machine bytecode
+to be a "redistribution in binary form" of the standard library or the
+compiler's runtime routines. (In other words, you don't need to include
+this license file when you release your games—only if you distribute the
+compiler itself.)
+
 The test cases in the development repository (not included in the official
 releases) are released under the same license unless otherwise specified.
 See the LICENSE.txt files in the individual test directories for details.
