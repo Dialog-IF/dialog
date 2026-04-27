@@ -29,8 +29,9 @@ compiler's runtime routines.
 
 In other words, you don't need to include this license file when you
 release your games—only if you distribute the compiler itself. This license
-is not meant to impose any restrictions on what you can use the compiler's
-output for, and we hope to formalize this properly in a future release.
+is not meant to impose any restrictions on how you can distribute programs
+compiled with Dialog, and we hope to formalize that properly in a future
+release.
 
 ---
 
