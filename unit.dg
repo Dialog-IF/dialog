@@ -105,11 +105,7 @@
 
 ($Test has failed)
 	(list of failures $List)
-	(if) ($List = []) (then)
-		 ($ListPlusTest = [$Test])
-	(else)
-		 (append $List [$Test] $ListPlusTest)
-	(endif)
+	(append $List [$Test] $ListPlusTest)
 	(now) (list of failures $ListPlusTest)
 
 (run-test $Test)
