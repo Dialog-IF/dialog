@@ -203,7 +203,7 @@ Now when we run the debugger, we get this:
 
 [source]
 ----
-$ dgdebug -q --no-warn-not-topic utils-tests.dg utils.dg unit.dg stdlib.dg
+$ dgdebug -u utils-tests.dg utils.dg unit.dg stdlib.dg
 Dialog Interactive Debugger (dgdebug) version 1b/01.
 Type @help at the game prompt for a brief introduction.
 Warning: utils-tests.dg, line 36: Parameter #2 of (max $ and $ into $) can be
@@ -241,7 +241,7 @@ code for. When we run this, we get the following:
 
 [source]
 ----
-% dgdebug -q --no-warn-not-topic utils-tests.dg utils.dg unit.dg stdlib.dg
+% dgdebug -u utils-tests.dg utils.dg unit.dg stdlib.dg
 Dialog Interactive Debugger (dgdebug) version 1b/01-dev.
 Type @help at the game prompt for a brief introduction.
 Warning: utils-tests.dg, line 36: Parameter #2 of (max $ and $ into $) can be
