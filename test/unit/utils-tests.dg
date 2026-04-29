@@ -1,37 +1,248 @@
 %% dgdebug -u utils-tests.dg utils.dg unit.dg stdlib.dg
 
 (list of tests [
+	#max-different
+	#max-same
+	#min-different
+	#min-same
+	#0-isnt-odd-or-even
+	#1-is-odd
+	#2-is-even
+	#3-is-odd
+	#delta-4-2
+	#delta-2-4
+	#delta-2-2
+	#delta-0-0
+	#range-5-3
+	#range-3-5
+	#range-3-3
+	#range-0-3
+	#range-0-0
+	#intentionally-fail
+	#3-div-3-rounding-up
+	#4-div-3-rounding-up
+	#5-div-3-rounding-up
+	#6-div-3-rounding-up
+	#10-plus-20
+	#10-plus-20-max-25
+	#8192-plus-8191-max-16380
+	#8192-plus-8192-max-16380
+	#16380-plus-3
+	#16380-plus-4
+	#30-minus-20
+	#30-minus-40
+	#split-number
+	#split-smaller
+	#split-smallest
+	#sort-4-2
+	#sort-2-4
+	#sort-0-0
+	#sort-1-2-3
+	#sort-1-3-2
+	#sort-2-3-1
+	#sort-2-1-3
+	#sort-3-2-1
+	#sort-3-1-2
+	#intentionally-fail-this-too
 	#take-last-n
 	#take-last-zero
 	#take-last-more-than-len
 	#replace-element
 	#replace-element-zero
 	#replace-element-beyond-end
+	#replace-element-with-max
+	#replace-element-beyond-max
 	#increase-element
+	#increase-element-zero
+	#increase-element-beyond-end
 	#increase-element-with-max
-	#intentionally-fail-this-test
 	#increase-element-beyond-max
 	#decrease-element
 	#decrease-element-below-zero
-	#max-first-is-bigger
-	#intentionally-fail-this-test-also
-	#max-second-is-bigger
-	#max-equal-values
-	#min-first-is-bigger
-	#min-second-is-bigger
-	#min-equal-values
-	#0-isnt-odd
-	#1-is-odd
-	#2-isnt-odd
-	#3-is-odd
-	#intentionally-fail-3-is-even
-	#assert-greater-true
-	#assert-greater-false
-	#assert-greater-even
-	#assert-lesser-true
-	#assert-lesser-false
-	#assert-lesser-even
+	#decrease-element-zero
+	#decrease-element-beyond-end
+	#match-one-of-the-key
+	#match-three-of-the-key
+	#match-zero-of-the-key
+	#dont-match-element-0
+	#dont-match-element-beyond-end
+	#match-not-one-of-the-key
+	#match-not-three-of-the-key
+	#match-not-zero-of-the-key
+	#12345-begins-with-12
+	#12345-begins-with-12345
+	#12345-doesnt-begin-with-22
+	#12345-doesnt-begin-with-123456
+	#12345-doesnt-begin-with-scalar
+	#12345-doesnt-begin-with-nested
+	#find-12
+	#find-22
+	#dont-find-99
+	#dont-find-123456
+	#dont-find-scalar
+	#dont-find-in-empty-list
+	#set-1-in-1-to-2
+	#set-1-in-2-to-2
+	#set-2-in-22-to-3
+	#set-2-in-22-to-4
+	#set-4-in-12345-to-6
+	#set-4-in-32456-to-7
+	#dont-set-6-in-12345
+	#dont-set-0-in-12345
+	#find-type-and-id
+	#dont-find-type-and-id
+	#intentionally-fail-yet-again
+	#remove-1-2
+	#remove-2-2
+	#remove-3-2
+	#remove-4-1
+	#remove-7-7
+	#remove-1-2-twice
+	#remove-3-2-twice
+	#remove-in-filter
+	#remove-multiple-match
+	#remove-in-empty-filter
+	#remove-empty-list-in-filter
+	#remove-in-disjoint-filter
 	])
+
+(global variable (list of lists [
+	[1 2 3 4 5]
+	[2 2 4 5 6]
+	[3 2 4 5 6]
+	[3 2 4 6 7]
+	[4 1 7 8 9]]))
+
+%%-----------------------------------------------------------------------------
+
+(test #max-different)
+	(max 2 and 3 into 3)
+	(max 3 and 2 into 3)
+
+(test #max-same)
+	(max 2 and 2 into 2)
+
+(test #min-different)
+	(min 2 and 3 into 2)
+	(min 3 and 2 into 2)
+
+(test #min-same)
+	(min 2 and 2 into 2)
+
+(test #0-isnt-odd-or-even)
+    ~(0 is odd)
+	~(0 is even)
+
+(test #1-is-odd)
+    (1 is odd)
+	~(1 is even)
+
+(test #2-is-even)
+    ~(2 is odd)
+	(2 is even)
+
+(test #3-is-odd)
+    (3 is odd)
+	~(3 is even)
+
+(test #delta-4-2)
+	(4 delta 2 into 2)
+
+(test #delta-2-4)
+	(2 delta 4 into 2)
+
+(test #delta-2-2)
+	(2 delta 2 into 0)
+
+(test #delta-0-0)
+	(0 delta 0 into 0)
+
+(test #range-5-3)
+	(5 is within 2 of 3)
+
+(test #range-3-5)
+	(3 is within 2 of 5)
+
+(test #range-3-3)
+	(3 is within 0 of 3)
+
+(test #range-0-3)
+	(0 is within 3 of 3)
+
+(test #range-0-0)
+	(0 is within 0 of 0)
+
+(test #3-div-3-rounding-up)
+	(3 divided by 3 into 1 rounding up)
+
+(test #4-div-3-rounding-up)
+	(4 divided by 3 into 2 rounding up)
+
+(test #5-div-3-rounding-up)
+	(5 divided by 3 into 2 rounding up)
+
+(test #6-div-3-rounding-up)
+	(6 divided by 3 into 2 rounding up)
+
+(test #sort-4-2)
+	(sort 4 2 into 2 4)
+
+(test #sort-2-4)
+	(sort 2 4 into 2 4)
+
+(test #sort-0-0)
+	(sort 0 0 into 0 0)
+
+(test #sort-1-2-3)
+	(sort 1 2 3 into 1 2 3)
+
+(test #sort-1-3-2)
+	(sort 1 3 2 into 1 2 3)
+
+(test #sort-2-3-1)
+	(sort 2 3 1 into 1 2 3)
+
+(test #sort-2-1-3)
+	(sort 2 1 3 into 1 2 3)
+
+(test #sort-3-2-1)
+	(sort 3 2 1 into 1 2 3)
+
+(test #sort-3-1-2)
+	(sort 3 1 2 into 1 2 3)
+
+(test #10-plus-20)
+	(add 10 to 20 into 30)
+
+(test #10-plus-20-max-25)
+    (add 10 to 20 into 25 max 25)
+
+(test #8192-plus-8191-max-16380)
+    (add 8192 to 8191 into 16380 max 16380)
+
+(test #8192-plus-8192-max-16380)
+    (add 8192 to 8192 into 16380 max 16380)
+
+(test #16380-plus-3)
+	(add 3 to 16380 into 16383)
+
+(test #16380-plus-4)
+	(add 4 to 16380 into 16383)
+
+(test #30-minus-20)
+    (subtract 20 from 30 into 10)
+
+(test #30-minus-40)
+    (subtract 40 from 30 into 0)
+
+(test #split-number)
+	(split 1789 into 1 7 8 9)
+
+(test #split-smaller)
+	(split 789 into 0 7 8 9)
+
+(test #split-smallest)
+	(split 1 into 0 0 0 1)
 
 (test #take-last-n)
 	(take last 3 from [1 2 3 4 5 6] into [4 5 6])
@@ -51,8 +262,20 @@
 (test #replace-element-beyond-end)
 	~(replace element 6 in [1 2 3 4 5] with 6 into $)
 
+(test #replace-element-with-max)
+	(replace element 3 in [1 2 3 4 5] with 6 into [1 2 6 4 5] with max 7)
+
+(test #replace-element-beyond-max)
+	(replace element 3 in [1 2 3 4 5] with 8 into [1 2 7 4 5] with max 7)
+
 (test #increase-element)
 	(increase element 3 in [1 2 3 4 5] by 3 into [1 2 6 4 5])
+
+(test #increase-element-zero)
+	~(increase element 0 in [1 2 3 4 5] by 3 into $)
+
+(test #increase-element-beyond-end)
+	~(increase element 6 in [1 2 3 4 5] by 3 into $)
 
 (test #increase-element-with-max)
 	(increase element 3 in [1 2 3 4 5] by 3 into [1 2 6 4 5] with max 7)
@@ -63,63 +286,216 @@
 (test #decrease-element)
 	(decrease element 3 in [1 2 3 4 5] by 2 into [1 2 1 4 5])
 
+(test #decrease-element-zero)
+	~(decrease element 0 in [1 2 3 4 5] by 2 into $)
+
+(test #decrease-element-beyond-end)
+	~(decrease element 6 in [1 2 3 4 5] by 2 into $)
+
 (test #decrease-element-below-zero)
 	~(decrease element 3 in [1 2 3 4 5] by 4 into $)
 
-(test #max-first-is-bigger)
-	  (max 3 and 2 into 3)
+(test #match-one-of-the-key)
+	(list of lists $List)
+	(take from $List where element 1 is 1 into [[1 2 3 4 5]])
 
-(test #max-second-is-bigger)
-	  (max 2 and 3 into 3)
+(test #match-three-of-the-key)
+	(list of lists $List)
+	(take from $List where element 3 is 4 into [
+	    [2 2 4 5 6]
+	    [3 2 4 5 6]
+	    [3 2 4 6 7]])
 
-(test #max-equal-values)
-	  (max 2 and 2 into 2)
+(test #match-zero-of-the-key)
+	(list of lists $List)
+	(take from $List where element 5 is 8 into [])
 
-(test #min-first-is-bigger)
-	  (min 3 and 2 into 2)
+(test #match-not-one-of-the-key)
+	(list of lists $List)
+	(take from $List where element 1 is not 1 into [
+		[2 2 4 5 6]
+		[3 2 4 5 6]
+		[3 2 4 6 7]
+		[4 1 7 8 9]])
 
-(test #min-second-is-bigger)
-	  (min 2 and 3 into 2)
+(test #match-not-three-of-the-key)
+	(list of lists $List)
+	(take from $List where element 3 is not 4 into [
+	    [1 2 3 4 5]
+	    [4 1 7 8 9]])
 
-(test #min-equal-values)
-	  (min 2 and 2 into 2)
+(test #match-not-zero-of-the-key)
+	(list of lists $List)
+	(take from $List where element 5 is not 8 into $List)
 
-(test #0-isnt-odd)
-      ~(0 is odd)
+(test #dont-match-element-0)
+	(list of lists $List)
+	~(take from $List where element 0 is 8 into $)
 
-(test #1-is-odd)
-      (1 is odd)
+(test #dont-match-element-beyond-end)
+	(list of lists $List)
+	~(take from $List where element 6 is 8 into $)
 
-(test #2-isnt-odd)
-      ~(2 is odd)
+(test #12345-begins-with-12)
+	([1 2 3 4 5] begins with sublist [1 2])
 
-(test #3-is-odd)
-      (3 is odd)
+(test #12345-begins-with-12345)
+	([1 2 3 4 5] begins with sublist [1 2 3 4 5])
 
-(test #intentionally-fail-this-test)
-	  (fail)
+(test #12345-doesnt-begin-with-22)
+	~([1 2 3 4 5] begins with sublist [2 2])
 
-(test #intentionally-fail-this-test-also)
-	  (fail)
+(test #12345-doesnt-begin-with-123456)
+	~([1 2 3 4 5] begins with sublist [1 2 3 4 5 6])
 
-#intentionally-fail-3-is-even
-(test *)
-	  (3 is even)
+(test #12345-doesnt-begin-with-scalar)
+	~([1 2 3 4 5] begins with sublist 1)
 
-(test #assert-greater-true)
-	  (assert 3 > 2)
+(test #12345-doesnt-begin-with-nested)
+	~([1 2 3 4 5] begins with sublist [[1] [2]])
 
-(test #assert-greater-false)
-	  ~(assert 2 > 3)
+(test #find-12)
+    (list of lists $List)
+	(find in $List beginning with sublist [1 2] into [1 2 3 4 5])
 
-(test #assert-greater-even)
-	  ~(assert 2 > 2)
+(test #find-22)
+    (list of lists $List)
+	(find in $List beginning with sublist [2 2] into [2 2 4 5 6])
 
-(test #assert-lesser-true)
-	  (assert 2 < 3)
+(test #dont-find-99)
+    (list of lists $List)
+	~(find in $List beginning with sublist [9 9] into $)
 
-(test #assert-lesser-false)
-	  ~(assert 3 < 2)
+(test #dont-find-123456)
+    (list of lists $List)
+	~(find in $List beginning with sublist [1 2 3 4 5 6] into $)
 
-(test #assert-lesser-even)
-	  ~(assert 2 < 2)
+(test #dont-find-scalar)
+    (list of lists $List)
+	~(find in $List beginning with sublist 1 into $)
+
+(test #dont-find-in-empty-list)
+	~(find in [] beginning with sublist [1 2] into $)
+
+(test #set-1-in-1-to-2)
+    (set element 1 in [1] in [[1]] to 2 into [[2]])
+
+(test #set-1-in-2-to-2)
+    (set element 1 in [2] in [[1]] to 2 into [[1]])
+
+(test #set-2-in-22-to-3)
+    (set element 2 in [2] in [[1 2] [2 2]] to 3 into [[1 2] [2 3]])
+
+(test #set-2-in-22-to-4)
+    (set element 2 in [2] in [[1 2] [2 2] [3 2]] to 4 into [[1 2] [2 4] [3 2]])
+
+(test #set-4-in-12345-to-6)
+	(list of lists $List)
+	(set element 4 in [1 2] in $List to 6 into $NewList)
+	(length of $NewList into 5)
+	(find in $NewList beginning with sublist [1 2] into [1 2 3 6 5])
+
+(test #set-4-in-32456-to-7)
+	(list of lists $List)
+	(set element 4 in [3 2] in $List to 7 into $NewList)
+	(length of $NewList into 5)
+	(find in $NewList beginning with sublist [3 2] into [3 2 4 7 6])
+
+(test #dont-set-6-in-12345)
+	(list of lists $List)
+	~(set element 6 in [1 2] in $List to 6 into $)
+
+(test #dont-set-0-in-12345)
+	(list of lists $List)
+	~(set element 0 in [1 2] in $List to 6 into $)
+
+(test #find-type-and-id)
+	  (list of lists $List)
+	  (find 2 2 in $List into [2 2 4 5 6])
+
+(test #dont-find-type-and-id)
+	  (list of lists $List)
+	  ~(find 9 9 in $List into $)
+
+(test #remove-1-2)
+	  (list of lists $List)
+	  (remove 1 2 from $List into $NewList)
+	  (assert $NewList = [
+		[2 2 4 5 6]
+		[3 2 4 5 6]
+		[3 2 4 6 7]
+		[4 1 7 8 9]])
+
+(test #remove-1-2-twice)
+	  (list of lists $List)
+	  (remove 1 2 from $List into $NewList)
+	  (remove 1 2 from $NewList into $NewerList)
+	  (assert $NewerList = [
+		[2 2 4 5 6]
+		[3 2 4 5 6]
+		[3 2 4 6 7]
+		[4 1 7 8 9]])
+
+(test #remove-2-2)
+	  (list of lists $List)
+	  (remove 2 2 from $List into $NewList)
+	  (assert $NewList = [
+	  	[1 2 3 4 5]
+		[3 2 4 5 6]
+		[3 2 4 6 7]
+		[4 1 7 8 9]])
+
+(test #remove-3-2)
+	  (list of lists $List)
+	  (remove 3 2 from $List into $NewList)
+	  (assert $NewList = [
+	  	[1 2 3 4 5]
+		[2 2 4 5 6]
+		[3 2 4 6 7]
+		[4 1 7 8 9]])
+
+(test #remove-3-2-twice)
+	  (list of lists $List)
+	  (remove 3 2 from $List into $NewList)
+	  (remove 3 2 from $NewList into $NewerList)
+	  (assert $NewerList = [
+	  	[1 2 3 4 5]
+		[2 2 4 5 6]
+		[4 1 7 8 9]])
+
+(test #remove-4-1)
+	  (list of lists $List)
+	  (remove 4 1 from $List into $NewList)
+	  (assert $NewList = [
+	  	[1 2 3 4 5]
+		[2 2 4 5 6]
+		[3 2 4 5 6]
+		[3 2 4 6 7]])
+
+(test #remove-7-7)
+	  (list of lists $List)
+	  (remove 7 7 from $List into $List)
+
+(test #remove-in-filter)
+	  (list of lists $List)
+	  (remove from $List found in [[1 2] [4 1]] into [
+		[2 2 4 5 6]
+		[3 2 4 5 6]
+		[3 2 4 6 7]])
+
+(test #remove-multiple-match)
+	  (list of lists $List)
+	  (remove from $List found in [[3 2] [4 1]] into [
+		[1 2 3 4 5]
+		[2 2 4 5 6]])
+
+(test #remove-in-empty-filter)
+	  (list of lists $List)
+	  (remove from $List found in [] into $List)
+
+(test #remove-empty-list-in-filter)
+	  (remove from [] found in [[1 2] [4 1]] into [])
+
+(test #remove-in-disjoint-filter)
+	  (list of lists $List)
+	  (remove from $List found in [[7 8] [9 9]] into $List)
