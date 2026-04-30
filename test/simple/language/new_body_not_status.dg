@@ -1,0 +1,18 @@
+(style class @body)
+	color: green;
+	background-color: black;
+	font-style: italic;
+
+(style class @status)
+	height: 1em;
+
+(program entry point)
+	(body style @body)
+	(clear)
+	Outside line 1.
+	(status bar @status) { This is a top status bar. }
+	Outside line 2.
+	(inline status bar @status) { This is an inline status bar. }
+	Outside line 3.
+	(reset body style)
+	Outside line 4.
