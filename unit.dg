@@ -4,6 +4,8 @@
 %% See example(s) in test/unit in Dialog source distribution.
 %% Licensed under the same license as the rest of Dialog.
 
+%%-------------------------------- INTERFACES --------------------------------
+
 %% (test #foo) expr will pass if expr is true and fail if expr is false.
 %% Include #foo in the global variable (list of tests [test1 test2 ...])
 
@@ -103,11 +105,7 @@
 
 ($Test has failed)
 	(list of failures $List)
-	(if) ($List = []) (then)
-		 ($ListPlusTest = [$Test])
-	(else)
-		 (append $List [$Test] $ListPlusTest)
-	(endif)
+	(append $List [$Test] $ListPlusTest)
 	(now) (list of failures $ListPlusTest)
 
 (run-test $Test)
@@ -134,8 +132,3 @@
     (endif)
 	(bold) FAILED TEST -- FATAL ERROR $Code. (roman) (par)
 	(quit 2)
-
-%% patch for ($ contains sublist $) issues; delete when fixed
-($List contains sublist [$Head | $Tail])
-	*(split $List by [$Head] into $ and $Rest)
-	(append $Tail $ $Rest)
