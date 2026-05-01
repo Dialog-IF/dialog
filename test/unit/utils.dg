@@ -1,7 +1,7 @@
 %% utils.dg
-%% Useful utility routines for Stellar Union games.
+%% Useful utility routines for Dialog projects.
 
-(extension version)	Arithmetic and list handling v0.1 by Susan Davis (line)
+(extension version)	Arithmetic and list handling v0.2 by Susan Davis (line)
 
 %%-------------------------------- INTERFACES --------------------------------
 

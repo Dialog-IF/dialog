@@ -2,7 +2,9 @@
 %% Basic handling of time. Day of week not supported for now.
 %% Provided here as an example of how to use unit.dg
 
-(extension version)	Time and date 1b/01, by Susan Davis (line)
+(extension version)	Time and date v0.2, by Susan Davis (line)
+
+%%----------------------------------------------------------------------
 
 (global variable (current time $)) %% time of day, in minutes from midnight
 
