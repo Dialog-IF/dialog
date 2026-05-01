@@ -1,11 +1,41 @@
 %% utils.dg
-%% Useful utility routines for Stellar Union games.
+%% Useful utility routines for Dialog projects.
+
+(extension version)	Arithmetic and list handling v0.2 by Susan Davis (line)
 
 %%-------------------------------- INTERFACES --------------------------------
+
+(interface ($<Number is odd))  %% yagni?
+
+(interface ($<Number is even)) %% yagni?
+
+(interface (max $<X and $<Y into $>Max))
+
+(interface (min $<X and $<Y into $>Min))
+
+(interface ($<Num1 delta $<Num2 into $>Result))
+
+(interface ($<Num1 is within $<Range of $<Num2))
+
+(interface (add $<X to $<Y into $>Z))           %% safe, capped at maxint
+
+(interface (add $<X to $<Y into $>Z max $<Max)) %% safe, capped at maxint
+
+(interface (subtract $<X from $<Y into $>Z))    %% safe, capped at 0
+
+(interface ($<Num1 divided by $<Num2 into $>Result rounding up))
+
+(interface (split $<Number into $>Thousands $>Hundreds $>Tens $>Ones))
+
+(interface (sort $<X $<Y into $>High $>Low))
+
+(interface (sort $<X $<Y $<Z into $>High $>Mid $>Low))
 
 (interface (take last $<N from $<List into $>Suffix))
 
 (interface (replace element $<N in $<List with $<Element into $>NewList))
+
+(interface (replace element $<N in $<List with $<Num into $>New with max $<Max))
 
 (interface (decrease element $<N in $<List by $<Num into $>NewList))
 
@@ -13,15 +43,120 @@
 
 (interface (increase element $<N in $<List by $<Num into $>New with max $<Max))
 
-(interface (max $<X and $<Y into $>Max))
+(interface ($<List begins with sublist $<Sublist))
 
-(interface (min $<X and $<Y into $>Min))
+%% From a list of lists, select the sublists where a specific element matches
+%% the key, and return a list of them.
+(interface (take from $<List where element $<Num is $<Key into $>Sublist))
 
-(interface ($<Number is odd))
+%% From a list of lists, select the sublists where a specific element does
+%% NOT matche the key, and return a list of them.
+(interface (take from $<List where element $<Num is not $<Key into $>Sublist))
 
-(interface ($<Number is even))
+%% From a list of lists, find the first (and only, if we know there are no
+%% duplicates) sublist where the key matches a specific element.
+(interface (find in $<List element $<Num is $<Key into $>Match))
+
+%% From a list of lists, find the first (and only, if we know there are no
+%% duplicates) sublist that begins with the specified sublist.
+(interface (find in $<List beginning with sublist $<Head into $>Match))
+
+%% Same, but construct a sublist to search for two elements
+(interface (find $<X $<Y in $<List into $>Match))
+
+(interface (set element $<Num in $<Head in $<List to $<Value into $>NewList))
+
+(interface (remove from $<List beginning with sublist $<Head into $>NewList))
+
+(interface (remove $<X $<Y from $<List into $>NewList))
+
+(interface (remove from $<List found in $<Filter into $>NewList))
 
 %%------------------------------ IMPLEMENTATION ------------------------------
+
+($Num is odd) %% yagni?
+	(number $Num)
+	($Num > 0)
+	($Num modulo 2 into $Mod)
+	($Mod = 1)
+
+($Num is even) %% yagni?
+	($Num > 0)
+	~($Num is odd)
+
+(max $X and $Y into $Result)
+	(if) ($X > $Y) (then)
+		($Result = $X)
+	(else)
+		($Result = $Y)
+	(endif)
+
+(min $X and $Y into $Result)
+	(if) ($X < $Y) (then)
+		($Result = $X)
+	(else)
+		($Result = $Y)
+	(endif)
+
+($X delta $Y into $Result)
+	(if) ($X > $Y) (then)
+		($X minus $Y into $Result)
+	(else)
+		($Y minus $X into $Result)
+	(endif)
+
+($Num1 is within $Range of $Num2)
+	($Num1 delta $Num2 into $Delta)
+	~($Delta > $Range)
+
+(add $X to $Y into $Z)
+    (add $X to $Y into $Z max 16383)
+
+(add $X to $Y into $Z max $Max)
+	(if) ($X plus $Y into $Sum) (then)
+		($Proposed = $Sum)
+	(else)
+		($Proposed = 16383)
+	(endif)
+	(if) ($Proposed > $Max) (then)
+		($Z = $Max)
+	(else)
+		($Z = $Proposed)
+	(endif)
+
+(subtract $Y from $X into $Z)
+    (if) ($Y > $X) (then)
+		($Z = 0)
+	(else)
+		($X minus $Y into $Z)
+	(endif)
+
+($Num1 divided by $Num2 into $Result rounding up)
+	(subtract 1 from $Num1 into $Num)
+	($Num divided by $Num2 into $Div)
+	($Div plus 1 into $Result)
+
+(split $Number into $Thousands $Hundreds $Tens $Ones)
+	($Number divided by 1000 into $Thousands)
+	($Number modulo 1000 into $Remaining1)
+	($Remaining1 divided by 100 into $Hundreds)
+	($Remaining1 modulo 100 into $Remaining2)
+	($Remaining2 divided by 10 into $Tens)
+	($Remaining2 modulo 10 into $Ones)
+
+(sort $X $Y into $RX $RY)
+	(if) ($X > $Y) (then)
+		($RX = $Y)
+		($RY = $X)
+	(else)
+		($RX = $X)
+		($RY = $Y)
+	(endif)
+
+(sort $X $Y $Z into $RX $RY $RZ)
+    (sort $X $Y into $L1 $H1)
+	(sort $H1 $Z into $L2 $RZ)
+	(sort $L1 $L2 into $RX $RY)
 
 (take last $N from $List into $Suffix)
 	(reverse $List $Reverse)
@@ -39,19 +174,16 @@
 	(append $Prefix [$Element] $Front)
 	(append $Front $Suffix $NewList)
 
+(replace element $N in $List with $New into $NewList with max $Max)
+	(min $New and $Max into $Value)
+	(replace element $N in $List with $Value into $NewList)
+
 (increase element $N in $List by $Num into $NewList)
-	(nth $List $N $Element)
-	($Element plus $Num into $NewElement)
-	(replace element $N in $List with $NewElement into $NewList)
+	(increase element $N in $List by $Num into $NewList with max 16383)
 
 (increase element $N in $List by $Num into $NewList with max $Max)
 	(nth $List $N $Element)
-	($Element plus $Num into $Proposed)
-	(if) ($Proposed > $Max) (then)
-		($NewElement = $Max)
-	(else)
-		($NewElement = $Proposed)
-	(endif)
+	(add $Num to $Element into $NewElement max $Max)
 	(replace element $N in $List with $NewElement into $NewList)
 
 (decrease element $N in $List by $Num into $NewList)
@@ -59,25 +191,83 @@
 	($Element minus $Num into $NewElement)
 	(replace element $N in $List with $NewElement into $NewList)
 
-(max $X and $Y into $Result)
-	(if) ($X > $Y) (then)
-		($Result = $X)
-	(else)
-		($Result = $Y)
+(take from [] where element $ is $ into [])
+
+(take from $List where element $Num is $Key into $Sublist)
+	($List = [$Head | $Tail])
+    (nth $Head $Num $Value)
+    (if) ($Value = $Key) (then)
+        (take from $Tail where element $Num is $Key into $Remainder)
+	    (append [$Head] $Remainder $Sublist)
+    (else)
+        (take from $Tail where element $Num is $Key into $Sublist)
 	(endif)
 
-(min $X and $Y into $Result)
-	(if) ($X < $Y) (then)
-		($Result = $X)
-	(else)
-		($Result = $Y)
+(take from [] where element $ is not $ into [])
+
+(take from $List where element $Num is not $Key into $Sublist)
+	($List = [$Head | $Tail])
+    (nth $Head $Num $Value)
+    (if) ~($Value = $Key) (then)
+        (take from $Tail where element $Num is not $Key into $Remainder)
+	    (append [$Head] $Remainder $Sublist)
+    (else)
+        (take from $Tail where element $Num is not $Key into $Sublist)
 	(endif)
 
-($Num is odd)
-	(number $Num)
-	($Num > 0)
-	($Num modulo 2 into $Mod)
-	($Mod = 1)
+($List begins with sublist $Sublist)
+	(length of $Sublist into $Length)
+	(take $Length from $List into $Prefix)
+	($Sublist = $Prefix)
 
-($Num is even)
-	~($Num is odd)
+(find in $List beginning with sublist $Sublist into $Match)
+  	~(empty $List) %% fail if we don't find it
+	($List = [$Head | $Tail])
+	(if) ($Head begins with sublist $Sublist) (then)
+		($Match = $Head)
+	(else)
+	    (find in $Tail beginning with sublist $Sublist into $Match)
+	(endif)
+
+(find $X $Y in $List into $Match)
+	(find in $List beginning with sublist [$X $Y] into $Match)
+
+(remove from [] beginning with sublist $ into [])
+
+(remove from $List beginning with sublist $Sublist into $NewList)
+	($List = [$Head | $Tail])
+	(if) ($Head begins with sublist $Sublist) (then)
+		($NewList = $Tail)
+	(else)
+		(remove from $Tail beginning with sublist $Sublist into $Remainder)
+		(append [$Head] $Remainder $NewList)
+	(endif)
+
+(remove $X $Y from $List into $NewList)
+	(remove from $List beginning with sublist [$X $Y] into $NewList)
+
+(remove from [] found in $ into [])
+
+(remove from $List found in [] into $List)
+
+(remove from $List found in $Filter into $Result)
+	([$Head | $Tail] = $Filter)
+	([$X $Y | $] = $Head)
+	(remove $X $Y from $List into $NewList)
+	(if) ($List = $NewList) (then)
+		(remove from $NewList found in $Tail into $Result)
+	(else)
+		(remove from $NewList found in $Filter into $Result)
+	(endif)
+
+(set element $ in $ in [] to $ into [])
+
+(set element $Num in $Sublist in $List to $Value into $NewList)
+	($List = [$Head | $Tail])
+	(if) ($Head begins with sublist $Sublist) (then)
+		 (replace element $Num in $Head with $Value into $NewHead)
+		 ($NewList = [$NewHead | $Tail])
+	(else)
+	     (set element $Num in $Sublist in $Tail to $Value into $NewTail)
+		 ($NewList = [$Head | $NewTail])
+	(endif)

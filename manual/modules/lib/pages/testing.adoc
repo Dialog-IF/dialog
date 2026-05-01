@@ -1,0 +1,263 @@
+= Chapter 12: Testing and Debugging
+
+Interactive fiction games such as those that you'll write with Dialog
+require a lot of testing to get right. Dialog provides several
+facilites to help you test your code, and a full-featured debugger to
+work out why your code isn't behaving as expected.
+
+[#unittests]
+== Unit Tests
+
+Included in the Dialog library is `unit.dg`, a library that allows you
+to write unit tests for your code in Dialog. See the
+xref:ROOT:software.adoc[Software Page] for more information on where
+to find `unit.dg`.
+
+Unit tests are short, simple tests that exercise small pieces of your
+code. They can save quite a bit of debugging, and even more helpully,
+will let you know if you've accidentally broken something unrelated
+when you make a change to some other part of your game, if you run
+them whenever you recompile a new change.
+
+Dialog's syntax and unification mechanism make the language particularly
+well-suited to writing succint and readable ("intention-revealing")
+tests, as we'll see in the examples below.
+
+[#writing]
+=== Writing Unit Tests
+
+As an example, suppose that we've pulled together a small extension to
+use in our game:
+
+[source]
+----
+(extension version) Min and Max v0.1, by A.N. Author (line)
+
+(interface (max $<X and $<Y into $>Max))
+
+(interface (min $<X and $<Y into $>Min))
+
+(max $X and $Y into $Result)
+     (if) ($X > $Y) (then)
+     	  ($Result = $X)
+     (else)
+	  ($Result = $Y)
+     (endif)
+
+(min $X and $Y into $Result)
+     (if) ($X < $Y) (then)
+     	  ($Result = $X)
+     (else)
+	  ($Result = $Y)
+     (endif)
+----
+
+Assuming that we saved the above code into a file named `minmax.dg`, we
+can create a corresponding test file, `minmax-tests.dg`, like so:
+
+[source]
+----
+%% dgdebug -u minmax-tests.dg minmax.dg unit.dg stdlib.dg
+
+(list of tests [
+      #max-first-is-bigger
+      ])
+
+#max-first-is-bigger
+(test *)
+      (max 3 and 2 into $Max)
+      (assert $Max = 3)
+----
+
+...and we have our first test! We're only testing one test case, so
+far, and we're definitely going to want more. When we run the test, we
+get the following:
+
+[source]
+----
+$ dgdebug -u minmax-tests.dg minmax.dg unit.dg stdlib.dg 
+Dialog Interactive Debugger (dgdebug) version 1b/01.
+Type @help at the game prompt for a brief introduction.
+Attempting 1 test.
+Testing #max-first-is-bigger: Passed!
+1 test passed successfully.
+----
+
+Let's look at some of the details of our first draft of
+`minmax-tests.dg`. First of all, by convention, we put a comment in the
+first line of the file with the command line that we need to run to
+successfully run our tests under the debugger. We run unit tests with
+the debugger, rather than compiling them into Å-machine code or Z-code
+to run with an interpreter. (We'll get to another kind of test that
+does use the compiler and your interpreters later in this chapter.)
+The `-u` option is important, as it causes the debugger to exit when
+it finishes running our unit tests, and suppresses some warnings and
+the `[more]` prompt.
+
+For more elaborate project files or extensions that have multiple
+dependencies, the first-line comment might spill over multiple lines,
+like this:
+
+[source]
+----
+%% dgdebug -u damage-tests.dg damage.dg schema.dg sectored-grid.dg \
+%%            unit.dg stdlib.dg
+----
+
+We need this comment because it isn't always obvious what files need
+to be included, nor in what order they need to be arranged. The last
+two files that you include will generally be `unit.dg` and
+`stdlib.dg`.
+
+Secondly, we have a global variable, `(list of tests $)`, which
+contains a list of all the tests that should be run. We need this
+variable because simply using `exhaust` to run through them all would
+cause them to run immediately, without any set up or teardown. (More
+on those later.)
+
+Finally, we have the test itself, which is an object, with a `(test
+$)` property. Evaluating the `(test $)` property will run the test. We
+could alternatively use a syntax like this, to more closely match how
+unit tests are declared in test frameworks from other languages:
+
+[source]
+----
+(test #max-first-is-bigger)
+      (max 3 and 2 into $Max)
+      (assert $Max = 3)
+----
+
+That will work equally well, and is slightly more readable, but the
+debugger will throw some warnings at us, which we can suppress with
+the `--no-warn-not-topic` option. 
+
+Using `(assert $X = $Y)` does much the same thing that `($X = $Y)`
+does by itself, but it throws in a few extra checks to prove that the
+arguments are bound. You don't have to use it in your own tests, but
+it can reveal failures that a straight comparison wouldn't.
+
+While we're at it, we can eliminate that `assert` altogether, and
+simply test like this:
+
+[source]
+----
+(test #max-first-is-bigger)
+      (max 3 and 2 into 3)
+----
+
+This works because unification lets you plug in a constant value into
+what's supposed to be one of the outputs, and it will fail to unify
+(and thus fail the test) if the answer is wrong. That lets us write a
+lot of our tests as one-liners, combining the test and its assertions
+into one statement.
+
+[#choosing]
+=== Choosing the Right Test Cases
+
+When you're choosing what to test, it's important to not just test for
+the things that you want to go right, but to test all of the ways that
+you can think of your code going wrong. For example, if we were to add
+some more tests to our `minmax-tests.dg`, it might look like this:
+
+[source]
+----
+%% dgdebug -u minmax-tests.dg minmax.dg unit.dg stdlib.dg
+
+(list of tests [
+      #max-first-is-bigger
+      #max-second-is-bigger
+      #max-equal-values
+      #max-bad-input-list
+      #max-bad-input-object
+      #max-bad-input-word
+      #max-bad-input-not-bound
+      ])
+
+(test #max-first-is-bigger)
+      (max 3 and 2 into 2)
+
+(test #max-second-is-bigger)
+      (max 2 and 3 into 3)
+
+(test #max-equal-values)
+      (max 2 and 2 into 2)
+
+(test #max-bad-input-list)
+      (max 2 and [2 3 4] into $Max)
+      ~(bound $Max)
+
+(test #max-bad-input-object)
+      (max #max-bad-input-object and 2 into $Max)
+      ~(bound $Max)
+
+(test #max-bad-input-word)
+      (max 2 and @Max into $Max)
+      ~(bound $Max)
+
+(test #max-bad-input-not-bound)
+      (max 2 and $ into $Max)
+      ~(bound $Max)
+----
+
+Now when we run the debugger, we get this:
+
+[source]
+----
+$ dgdebug -u utils-tests.dg utils.dg unit.dg stdlib.dg
+Dialog Interactive Debugger (dgdebug) version 1b/01.
+Type @help at the game prompt for a brief introduction.
+Warning: utils-tests.dg, line 36: Parameter #2 of (max $ and $ into $) can be
+(partially) unbound, which violates the interface declaration at utils.dg:3.
+Warning: utils.dg, line 9: Rule can leave parameter #3 (partially) unbound,
+which violates the interface declaration at utils.dg:3.
+Attempting 7 tests.
+Testing #max-first-is-bigger: Passed!
+Testing #max-second-is-bigger: Passed!
+Testing #max-equal-values: Passed!
+Testing #max-bad-input-list: Failed. :-(
+Testing #max-bad-input-object: Failed. :-(
+Testing #max-bad-input-word: Failed. :-(
+Testing #max-bad-input-not-bound: Passed!
+3 TESTS FAILED.
+----
+
+What happened? Well, the tests did exactly what they were supposed to
+have done: they found problems in our code! Specifically, we're not
+handling bad input correctly. To find out what went wrong, we can add
+some output into our tests:
+
+[source]
+----
+(test #max-bad-input-list)
+      (max 2 and [2 3 4] into $Max)
+      $Max
+      ~(bound $Max)
+----
+
+It doesn't matter whether or not we use `(log)` to identify the output
+as debugger-only, since we're only ever running this code in the
+debugger, and never as part of the story that we're writing the
+code for. When we run this, we get the following:
+
+[source]
+----
+% dgdebug -u utils-tests.dg utils.dg unit.dg stdlib.dg
+Dialog Interactive Debugger (dgdebug) version 1b/01-dev.
+Type @help at the game prompt for a brief introduction.
+Warning: utils-tests.dg, line 36: Parameter #2 of (max $ and $ into $) can be
+(partially) unbound, which violates the interface declaration at utils.dg:3.
+Warning: utils.dg, line 9: Rule can leave parameter #3 (partially) unbound,
+which violates the interface declaration at utils.dg:3.
+Attempting 7 tests.
+Testing #max-first-is-bigger: Passed!
+Testing #max-second-is-bigger: Passed!
+Testing #max-equal-values: Passed!
+Testing #max-bad-input-list: [2 3 4] Failed. :-(
+Testing #max-bad-input-object: Failed. :-(
+Testing #max-bad-input-word: Failed. :-(
+Testing #max-bad-input-not-bound: Passed!
+3 TESTS FAILED.
+----
+
+So, our current code thinks that `[2 3 4]` is greater than 2, which
+makes no sense. Ideally, the code should

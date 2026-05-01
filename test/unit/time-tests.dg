@@ -1,4 +1,4 @@
-%% dgdebug -u time-tests.dg time.dg ../../unit.dg ../../stdlib.dg
+%% dgdebug -u time-tests.dg time.dg unit.dg stdlib.dg
 
 %% Here's a worked example of some unit tests for a Dialog extension.
 %% By convention, the top line of the test file specifies the command
@@ -9,6 +9,7 @@
 	#hours-minutes-assert
 	#hours-minutes-zero
 	#hours-minutes-after-midnight
+	#tick-tock
 	#leading-zero-zero
 	#leading-zero-one
 	#leading-zero-nine
@@ -25,11 +26,12 @@
 	#military-time-afternoon
 	#nato-time
 	#nato-time-union
-	#short-date-eu
 	#short-date
-	#full-date-eu
+	#short-date-eu
 	#full-date
+	#full-date-eu
 	#set-time
+	#elapse-0-minutes
 	#elapse-8-minutes
 	#elapse-9-minutes
 	#elapse-60-minutes
@@ -39,9 +41,14 @@
 	#elapse-4-hours
 	#elapse-23-hours
 	#elapse-25-hours
+	#elapse-0-days
 	#elapse-3-days
 	#elapse-11-days
 	#elapse-12-days
+	#elapse-23-days
+	#suspend-tick
+	#stop-time
+	#restart-time
 	])
 
 (current time 891)
@@ -49,9 +56,9 @@
 (current date [12 1 1969])
 
 (clean up $)	(set time [891 12 1 1969])
-
-%% intentionally split to prove that we can invoke it more than once
-(clean up $)	(now) (using north american dates)
+		  		(now) (using north american dates)
+				(now) (time is running)
+				(now) ~(suspend next tick)
 
 %%----------------------------------------------------------------------
 
@@ -81,100 +88,84 @@
 	(24 hours 1 minutes)
 
 (test #leading-zero-zero)
-	(collect words) (leading zero 0) (into $Words)
-	($Words = [0 0])
+	(collect words) (leading zero 0) (into [0 0])
 
 (test #leading-zero-one)
-	(collect words) (leading zero 1) (into $Words)
-	($Words = [0 1])
+	(collect words) (leading zero 1) (into [0 1])
 
 (test #leading-zero-nine)
-	(collect words) (leading zero 9) (into $Words)
-	($Words = [0 9])
+	(collect words) (leading zero 9) (into [0 9])
 
 (test #leading-zero-ten)
-	(collect words) (leading zero 10) (into $Words)
-	($Words = [10])
+	(collect words) (leading zero 10) (into [10])
 
 (test #clock-time)
-	(collect words) (clock time) (into $Words)
-	($Words = [2 : 51 pm])
+	(collect words) (clock time) (into [2 : 51 pm])
 
 (test #clock-time-midnight)
 	(now) (current time 0)
-	(collect words) (clock time) (into $Words)
-	($Words = [12 : 0 0 am])
+	(collect words) (clock time) (into [12 : 0 0 am])
 
 (test #clock-time-noon)
 	(now) (current time 720)
-	(collect words) (clock time) (into $Words)
-	($Words = [12 : 0 0 pm])
+	(collect words) (clock time) (into [12 : 0 0 pm])
 
 (test #clock-time-morning)
 	(now) (current time 390)
-	(collect words) (clock time) (into $Words)
-	($Words = [6 : 30 am])
+	(collect words) (clock time) (into [6 : 30 am])
 
 (test #clock-time-afternoon)
 	(now) (current time 980)
-	(collect words) (clock time) (into $Words)
-	($Words = [4 : 20 pm])
+	(collect words) (clock time) (into [4 : 20 pm])
 
 (test #military-time)
-	(collect words) (military time) (into $Words)
-	($Words = [14 : 51])
+	(collect words) (military time) (into [14 : 51])
 
 (test #military-time-midnight)
 	(now) (current time 0)
-	(collect words) (military time) (into $Words)
-	($Words = [0 0 : 0 0])
+	(collect words) (military time) (into [0 0 : 0 0])
 
 (test #military-time-noon)
 	(now) (current time 720)
-	(collect words) (military time) (into $Words)
-	($Words = [12 : 0 0])
+	(collect words) (military time) (into [12 : 0 0])
 
 (test #military-time-morning)
 	(now) (current time 390)
-	(collect words) (military time) (into $Words)
-	($Words = [0 6 : 30])
+	(collect words) (military time) (into [0 6 : 30])
 
 (test #military-time-afternoon)
 	(now) (current time 980)
-	(collect words) (military time) (into $Words)
-	($Words = [16 : 20])
+	(collect words) (military time) (into [16 : 20])
 
 (test #nato-time)
-	(collect words) (nato time) (into $Words)
-	($Words = [12 14 51 Z jan 69])
+	(collect words) (nato time) (into [12 14 51 Z jan 69])
 
 (test #nato-time-union)
 	(set time [750 5 3 2273])
-	(collect words) (nato time) (into $Words)
-	($Words = [0 5 12 30 Z mar 73])
+	(collect words) (nato time) (into [0 5 12 30 Z mar 73])
 
 (test #short-date)
-	(collect words) (short date) (into $Words)
-	($Words = [1 \/ 12 \/ 1969])
+	(collect words) (short date) (into [1 \/ 12 \/ 1969])
 
 (test #short-date-eu)
 	(now) ~(using north american dates)
-	(collect words) (short date) (into $Words)
-	($Words = [12 - 1 - 1969])
+	(collect words) (short date) (into [12 - 1 - 1969])
 
 (test #full-date)
-	(collect words) (full date) (into $Words)
-	($Words = [January 12 , 1969])
+	(collect words) (full date) (into [January 12 , 1969])
 
 (test #full-date-eu)
 	(now) ~(using north american dates)
-	(collect words) (full date) (into $Words)
-	($Words = [12 January , 1969])
+	(collect words) (full date) (into [12 January , 1969])
 
 (test #set-time)
 	(set time [430 13 1 1969])
 	(7 hours 10 minutes)
 	(current date [13 1 1969])
+
+(test #elapse-0-minutes)
+	(elapse 0 minutes)
+	(14 hours 51 minutes)
 
 (test #elapse-8-minutes)
 	(elapse 8 minutes)
@@ -194,13 +185,13 @@
 
 (test #elapse-past-midnight)
 	(elapse 1339 minutes)
-	(13 hours 10 minutes)
 	(current date [13 1 1969])
+	(13 hours 10 minutes)
 
 (test #elapse-multiple-days)
 	(elapse 4320 minutes)
-	(14 hours 51 minutes)
 	(current date [15 1 1969])
+	(14 hours 51 minutes)
 
 (test #elapse-4-hours)
 	(elapse 4 hours)
@@ -208,23 +199,68 @@
 
 (test #elapse-23-hours)
 	(elapse 23 hours)
-	(13 hours 51 minutes)
 	(current date [13 1 1969])
+	(13 hours 51 minutes)
 
 (test #elapse-25-hours)
 	(elapse 25 hours)
-	(15 hours 51 minutes)
 	(current date [13 1 1969])
+	(15 hours 51 minutes)
+
+(test #elapse-0-days)
+	(elapse 0 days)
+	(current date [12 1 1969])
+	(14 hours 51 minutes)
 
 (test #elapse-3-days)
 	(elapse 3 days)
-	(14 hours 51 minutes)
 	(current date [15 1 1969])
+	(14 hours 51 minutes)
 
 (test #elapse-11-days)
 	(elapse 11 days)
 	(current date [23 1 1969])
+	(14 hours 51 minutes)
 
 (test #elapse-12-days)
 	(elapse 12 days)
 	(current date [24 1 1969])
+	(14 hours 51 minutes)
+
+(test #elapse-23-days)
+	(elapse 23 days)
+	(current date [35 1 1969]) %% this is why there's a (normalize date) hook
+	(14 hours 51 minutes)
+
+(test #tick-tock)
+	(time is running)
+	~(suspend this tick)
+	(tick)
+	(14 hours 52 minutes)
+	(tick)
+	(14 hours 53 minutes)
+
+(test #suspend-tick)
+	(now) (suspend this tick)
+	(tick)
+	(14 hours 51 minutes)
+	~(suspend this tick)
+	(tick)
+	(14 hours 52 minutes)
+
+(test #stop-time)
+	(now) ~(time is running)
+	~(suspend this tick)
+	(tick)
+	(14 hours 51 minutes)
+	(tick)
+	(14 hours 51 minutes)
+
+(test #restart-time)
+	(now) ~(time is running)
+	(14 hours 51 minutes)
+	(tick)
+	(14 hours 51 minutes)
+	(now) (time is running)
+	(tick)
+	(14 hours 52 minutes)
