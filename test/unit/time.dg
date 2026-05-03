@@ -10,25 +10,49 @@
 
 (global variable (current date [$ $ $])) %% [day, month, year]
 
-(interface (current time into $>Timestamp))
+(global variable (month starts on $)) %% day of week of first day of month
 
-(interface (set time $<Timestamp))
+(interface (set time $<Time))
+
+(interface (set time $<Hour $<Minute))
+
+(interface (set date $<Day $<Month $<Year))
 
 (interface (clock time))
 
+(interface (clock time for $<Time))
+
 (interface (military time))
+
+(interface (military time for $<Time))
 
 (interface (short date))
 
+(interface (short date for $<Date))
+
 (interface (full date))
 
+(interface (full date for $<Date))
+
+(interface (full date with weekday))
+
+(interface (full date with weekday for $<Date))
+
 (interface (nato time))
+
+(interface (nato time for $<Date $<Time))
 
 (interface (elapse $<Num minutes))
 
 (interface (elapse $<Num hours))
 
 (interface (elapse $<Num days))
+
+(interface (elapse $<Num weeks))
+
+(interface (elapse $<Num months))
+
+(interface (elapse $<Num years))
 
 %% negate to get D-M-Y dates
 (using north american dates)
@@ -44,8 +68,7 @@
 
 %%----------------------------------------------------------------------
 
-($Hours hours $Minutes minutes)
-	(current time $Time)
+($Hours hours $Minutes minutes for $Time)
 	($Time divided by 60 into $Hours)
 	($Time modulo 60 into $Minutes)
 
@@ -56,7 +79,11 @@
 	$Num
 
 (clock time)
-	($H hours $Minutes minutes)
+	(current time $Time)
+	(clock time for $Time)
+
+(clock time for $Time)
+	($H hours $Minutes minutes for $Time)
 	($H modulo 12 into $Hr)
 	(if) ($Hr = 0) (then)
 		($Hours = 12)
@@ -72,11 +99,19 @@
 	(endif)
 
 (military time)
-	($H hours $M minutes)
+	(current time $Time)
+	(military time for $Time)
+
+(military time for $Time)
+	($H hours $M minutes for $Time)
 	(leading zero $H) : (leading zero $M)
 
 (short date)
-	(current date [$D $M $Y])
+	(current date $Date)
+	(short date for $Date)
+
+(short date for $Date)
+	($Date = [$D $M $Y])
 	(if) (using north american dates) (then)
 		$M \/ $D \/ $Y
 	(else)
@@ -97,22 +132,54 @@
 (month for 12)	December
 
 (full date)
-	(current date [$D $M $Y])
+	(current date $Date)
+	(full date for $Date)
+
+(full date for $Date)
+	($Date = [$D $M $Y])
 	(if) (using north american dates) (then)
 		(month for $M) $D, $Y
 	(else)
 		$D (month for $M), $Y
 	(endif)
 
-(mon for 1)	Jan
-(mon for 2)	Feb
-(mon for 3)	Mar
-(mon for 4)	Apr
-(mon for 5)	May
-(mon for 6)	Jun
-(mon for 7)	Jul
-(mon for 8)	Aug
-(mon for 9)	Sep
+%% The assumption is that the events of a game will take place during a given
+%% month, and that any dates you're feeding to this rule will take place that
+%% month. Violating that assumption will give the wrong weekday.
+
+(weekday for 0)	Sunday
+(weekday for 1)	Monday
+(weekday for 2)	Tuesday
+(weekday for 3)	Wednesday
+(weekday for 4)	Thursday
+(weekday for 5)	Friday
+(weekday for 6)	Saturday
+
+(weekday for $Date)
+	(list $Date)
+	($Date = [$D $ $])
+	($D minus 1 into $Day)
+	(month starts on $First)
+	($Day plus $First into $Sum)
+	($Sum modulo 7 into $Weekday)
+	(weekday for $Weekday)
+
+(full date with weekday)
+	(current date $Date)
+	(full date with weekday for $Date)
+
+(full date with weekday for $Date)
+	(weekday for $Date) (no space) , (full date for $Date)
+
+(mon for 1)		Jan
+(mon for 2)		Feb
+(mon for 3)		Mar
+(mon for 4)		Apr
+(mon for 5)		May
+(mon for 6)		Jun
+(mon for 7)		Jul
+(mon for 8)		Aug
+(mon for 9)		Sep
 (mon for 10)	Oct
 (mon for 11)	Nov
 (mon for 12)	Dec
