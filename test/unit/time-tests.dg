@@ -30,11 +30,8 @@
 	#short-date-eu
 	#full-date
 	#full-date-eu
-<<<<<<< test-documentation
-=======
 	#full-date-weekday
 	#full-date-weekday-eu
->>>>>>> main
 	#set-time
 	#elapse-0-minutes
 	#elapse-8-minutes
@@ -60,15 +57,12 @@
 
 (current date [12 1 1969])
 
-<<<<<<< test-documentation
-=======
 (month starts on 3) %% Wednesday
 
 ($H hours $M minutes)
 	(current time $Time)
 	($H hours $M minutes for $Time)
 
->>>>>>> main
 (clean up $)	(set time [891 12 1 1969])
 		  		(now) (using north american dates)
 				(now) (time is running)
@@ -171,8 +165,6 @@
 (test #full-date-eu)
 	(now) ~(using north american dates)
 	(collect words) (full date) (into [12 January , 1969])
-<<<<<<< test-documentation
-=======
 
 (test #full-date-weekday)
 	(collect words) (full date with weekday) (into [Sunday , January 12 , 1969])
@@ -180,7 +172,6 @@
 (test #full-date-weekday-eu)
 	(now) ~(using north american dates)
 	(collect words) (full date with weekday) (into [Sunday , 12 January , 1969])
->>>>>>> main
 
 (test #set-time)
 	(set time [430 13 1 1969])
