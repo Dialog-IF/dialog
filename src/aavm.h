@@ -103,7 +103,9 @@
 #define AA_PRINT_VAL		0x65	// VALUE
 #define AA_ENTER_DIV		0x66	// INDEX
 #define AA_LEAVE_DIV		0xe6
-#define AA_LEAVE_STATUS		0xe7
+// 0x67 and 0xe7 used to be ENTER_STATUS0 and LEAVE_STATUS
+// But now see 0x6f and 0xef instead
+#define AA_SET_BODY		0x67	// INDEX
 #define AA_ENTER_LINK_RES	0x68	// VALUE
 #define AA_LEAVE_LINK_RES	0xe8
 #define AA_ENTER_LINK		0x69	// VALUE
@@ -115,10 +117,10 @@
 #define AA_EMBED_RES		0x6c	// VALUE
 #define AA_CAN_EMBED_RES	0xec	// VALUE DEST
 #define AA_PROGRESS		0x6d	// VALUE VALUE
-#define AA_SET_BODY		0xed	// INDEX
 #define AA_ENTER_SPAN		0x6e	// INDEX
 #define AA_LEAVE_SPAN		0xee
 #define AA_ENTER_STATUS		0x6f	// BYTE INDEX
+#define AA_LEAVE_STATUS		0xef
 #define AA_EXT0			0x70	// BYTE
 #define AA_SAVE			0x72	// CODE
 #define AA_SAVE_UNDO		0xf2	// CODE

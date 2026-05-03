@@ -737,7 +737,7 @@ Currently, only the Å-machine web interpreter uses options at all, primarily fo
 * `channel` followed by a value specifies which channel to play the sound on. A different audio resource played on the same channel will replace the old one after a brief cross-fade. Playing a resource while the same resource is already playing will not restart it, so it is safe to play your background music every turn. If not specified, the default channel is `main`.
 * `loop` specifies that the audio should repeat forever rather than stopping at the end. A looping sound only ends when another sound is played on the same channel.
 
-But future versions of these interpreters may make more use of options, if applicable.
+But any interpreter is free to make use of options in whatever ways it likes.
 
 === Links to resources
 
