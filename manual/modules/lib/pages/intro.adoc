@@ -24,12 +24,12 @@ The library is provided in two parts: `stdlib.dg` is the main library;
 and `stddebug.dg` adds additional commands and predicates that are 
 only used when developing.
 
-It is common and expected that you will include a copy of the standard
-library as part of your own project and it is not unusual to
-edit this copy of the standard library should needs require.
-
-See the xref:ROOT:software.adoc[Software page] for information on where
-to obtain these files.
+It is common and expected that you will include a copy of the standard library
+as part of your own project and it is not unusual to edit this copy of the
+library should needs require. See the xref:ROOT:software.adoc[Software page]
+for information on where to obtain these files. Some people even distribute their own modified versions of the library, such as a version with Unicode quotation
+marks `“ ”` in place of the ASCII `" "` at
+https://github.com/dstelzer/dialog-unicode .
 
 [#liboverview]
 == Architecture of the library
