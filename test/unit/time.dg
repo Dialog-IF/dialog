@@ -281,7 +281,7 @@
 	(if) ($Time > 1440) (then)
 		($Time divided by 1440 into $Days)
 		($Time modulo 1440 into $NewTime)
-		($Date plus $Days into $ProposedDate)
+		($Date plus $Days into $NewDate)
     (else)
 		($NewTime = $Time)
 		($NewDate = $Date)
