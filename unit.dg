@@ -2,7 +2,9 @@
 (extension version)	Unit test runner 1.1.1-dev by Susan Davis (line)
 
 %% See example(s) in test/unit in Dialog source distribution.
-%% Licensed under the same license as the rest of Dialog.
+
+%% Copyright © 2026, Susan Davis. All rights reserved. Licensed under the same
+%% license as the rest of Dialog; see license.txt or LICENSE for details.
 
 %%-------------------------------- INTERFACES --------------------------------
 
