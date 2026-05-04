@@ -18,6 +18,22 @@
 
 (global variable (january starts on $)) %% day of week on New Year's day
 
+(global variable (time rate 1)) %% default number of minutes per move
+
+%% negate to get D-M-Y dates
+(using north american dates)
+
+%% override for a different time zone
+(timezone letter)	Z
+
+%% negate to stop time from advancing on every tick
+(time is running)
+
+%% un-negate to not advance time on the next tick ("free" command)
+~(suspend this tick)
+
+%%-------------------------------- INTERFACES --------------------------------
+
 (interface (set time $<Time))
 
 (interface (set time $<Hour $<Minute))
@@ -62,19 +78,7 @@
 
 (interface (elapse $<Num years))
 
-%% negate to get D-M-Y dates
-(using north american dates)
-
-%% override for a different time zone
-(timezone letter)	Z
-
-%% negate to stop time from advancing on every tick
-(time is running)
-
-%% un-negate to not advance time on the next tick ("free" command)
-~(suspend this tick)
-
-%%----------------------------------------------------------------------
+%%------------------------------ IMPLEMENTATION ------------------------------
 
 ($Hours hours $Minutes minutes for $Time)
 	($Time divided by 60 into $Hours)
@@ -373,6 +377,7 @@
 
 (late on every tick)
 	(if) (time is running) ~(suspend this tick) (then)
-		 (elapse 1 minutes)
+		 (time rate $Rate)
+		 (elapse $Rate minutes)
 	(endif)
 	(now) ~(suspend this tick)

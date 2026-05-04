@@ -47,7 +47,6 @@
 	#january-1969-starts-with-wednesday
 	#january-1999-starts-with-friday
 	#january-1753-starts-with-monday
-	#tick-tock
 	#leading-zero-zero
 	#leading-zero-one
 	#leading-zero-nine
@@ -108,6 +107,8 @@
 	#elapse-2000-years
 	#elapse-14414-years
 	#dont-elapse-16383-years
+	#tick-tock
+	#time-rate
 	#suspend-tick
 	#stop-time
 	#restart-time
@@ -118,11 +119,13 @@
 (january starts on 3) %% Wednesday
 
 (clean up $)	(set time [891 12 1969])
+	   	  		(now) (january starts on 3)
 		  		(now) (using north american dates)
 				(now) (time is running)
 				(now) ~(suspend next tick)
+				(now) (time rate 1)
 
-%%----------------------------------------------------------------------
+%%----------------------------------------------------------------------------
 
 %% It's more succinct to just use the values you're asserting on directly,
 %% and let binding fail if the test fails, but if you want to be more
@@ -497,6 +500,18 @@
 	(14 hours 52 minutes)
 	(tick)
 	(14 hours 53 minutes)
+
+(test #time-rate)
+	(now) (time rate 5)
+	(time is running)
+	~(suspend this tick)
+	(tick)
+	(14 hours 56 minutes)
+	(tick)
+	(15 hours 1 minutes)
+	(now) (time rate 2)
+	(tick)
+	(15 hours 3 minutes)
 
 (test #suspend-tick)
 	(now) (suspend this tick)
