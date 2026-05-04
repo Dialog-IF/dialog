@@ -103,6 +103,7 @@
 	#dont-elapse-16383-months
 	#elapse-0-years
 	#elapse-2-years
+	#elapse-57-years
 	#elapse-200-years
 	#elapse-2000-years
 	#elapse-14414-years
@@ -469,6 +470,10 @@
 (test #elapse-2-years)
 	(elapse 2 years)
 	(current datetime [891 12 1971])
+
+(test #elapse-57-years)
+	(elapse 57 years)
+	(current datetime [891 12 2026])
 
 (test #elapse-200-years)
 	(elapse 200 years)
