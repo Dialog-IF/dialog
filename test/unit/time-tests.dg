@@ -71,6 +71,7 @@
 	#full-date-weekday
 	#full-date-weekday-eu
 	#full-date-union
+	#normalize-pathological
 	#set-time
 	#set-time-only
 	#set-date
@@ -331,6 +332,10 @@
 (test #full-date-union)
 	(set time [750 64 2273])
 	(collect words) (full date with weekday) (into [Wednesday , March 5 , 2273])
+
+(test #normalize-pathological)
+	(set time [16383 16372 2026])
+	(current datetime [543 312 2070])
 
 (test #set-time)
 	(set time [430 12 1969])
