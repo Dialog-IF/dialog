@@ -7,6 +7,7 @@
 (list of tests [
 	#hours-minutes
 	#hours-minutes-assert
+	#day-month-year
 	#1969-is-not-a-leap-year
 	#1980-is-a-leap-year
 	#2000-is-a-leap-year
@@ -93,6 +94,12 @@
 	#elapse-23-days
 	#elapse-16017-days
 	#dont-elapse-16383-days
+	#elapse-0-months
+	#elapse-2-months
+	#elapse-past-highest-date
+	#elapse-18-months
+	#elapse-16371-months
+	#dont-elapse-16383-months
 	#elapse-0-years
 	#elapse-2-years
 	#elapse-200-years
@@ -130,6 +137,9 @@
 %% Here's a more succinct formulation of the above.
 (test #hours-minutes)
 	(14 hours 51 minutes)
+
+(test #day-month-year)
+	(day 12 month 1 year 1969)
 
 (test #1969-is-not-a-leap-year)
 	~(1969 is a leap year)
@@ -417,6 +427,35 @@
 
 (test #dont-elapse-16383-days)
 	~(elapse 16383 days)
+
+(test #elapse-0-months)
+	(elapse 0 months)
+	(day 12 month 1 year 1969)
+
+(test #elapse-2-months)
+	(elapse 2 months)
+	(day 12 month 3 year 1969)
+
+(test #elapse-past-highest-date)
+	(elapse 19 days)  %% to January 31
+	(elapse 1 months) %% to February 31 => March 3
+	(day 3 month 3 year 1969)
+
+(test #elapse-8-months-overflow)
+	(set date 1 6 1970)
+	(elapse 8 months)
+	(day 1 month 2 year 1971)
+
+(test #elapse-18-months)
+	(elapse 18 months)
+	(day 12 month 7 year 1970)
+
+(test #elapse-16371-months)
+	(elapse 16371 months)
+	(current datetime [891 102 3333])
+
+(test #dont-elapse-16383-months)
+	~(elapse 16383 months)
 
 (test #elapse-0-years)
 	(elapse 0 years)

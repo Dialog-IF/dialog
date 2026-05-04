@@ -22,7 +22,11 @@
 
 (interface (set time $<Hour $<Minute))
 
+(interface ($>Hours hours $>Minutes minutes))
+
 (interface (set date $<Day $<Month $<Year))
+
+(interface (day $>Day month $>Month year $>Year))
 
 (interface (clock time))
 
@@ -79,6 +83,14 @@
 ($H hours $M minutes)
 	(current datetime [$Time $ $])
 	($H hours $M minutes for $Time)
+
+(day $Day month $Month year $Year for $Timestamp)
+	([$ $D $Year] = $Timestamp)
+	(day $D of $Year is $Month $Day)
+
+(day $Day month $Month year $Year)
+	(current datetime $Timestamp)
+	(day $Day month $Month year $Year for $Timestamp)
 
 ($Year is a leap year)
 	($Year modulo 4 into 0)
@@ -326,6 +338,17 @@
 	~($Y > $Max)
 	($Year plus $Y into $Future)
 	(set time [$Time $Day $Future])
+
+(elapse $M months)
+	($M < 16372) %% maximum before arithmetic overflow
+	(current datetime [$Time $Date $Year])
+	(day $Date of $Year is $Month $Day)
+	($Month plus $M into $Sum)
+	($Sum divided by 12 into $AddedYears)
+	($Sum modulo 12 into $NewMonth)
+	($Year plus $AddedYears into $NewYear)
+	($NewMonth $Day is day $NewDate of $NewYear)
+	(set time [$Time $NewDate $NewYear])
 
 (elapse $D days)
 	($D < 16018) %% maximum before arithmetic overflow
