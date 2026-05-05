@@ -1,14 +1,26 @@
 %% dgdebug -u utils-tests.dg utils.dg unit.dg stdlib.dg
 
 (list of tests [
-	#max-different
-	#max-same
-	#min-different
-	#min-same
 	#0-isnt-odd-or-even
 	#1-is-odd
 	#2-is-even
 	#3-is-odd
+	#max-different
+	#max-same
+	#min-different
+	#min-same
+	#round-0-0
+	#round-1-0
+	#round-2-0
+	#round-3-5
+	#round-4-5
+	#round-5-5
+	#round-7-5
+	#round-8-10
+	#round-4-0
+	#round-5-10
+	#round-14-10
+	#round-15-20
 	#delta-4-2
 	#delta-2-4
 	#delta-2-2
@@ -18,7 +30,6 @@
 	#range-3-3
 	#range-0-3
 	#range-0-0
-	#intentionally-fail-this-test
 	#3-div-3-rounding-up
 	#4-div-3-rounding-up
 	#5-div-3-rounding-up
@@ -26,6 +37,7 @@
 	#10-plus-20
 	#10-plus-20-max-25
 	#8192-plus-8191-max-16380
+	#intentionally-fail-this-test
 	#8192-plus-8192-max-16380
 	#16380-plus-3
 	#16380-plus-4
@@ -46,7 +58,6 @@
 	#take-last-n
 	#take-last-zero
 	#take-last-more-than-len
-	#also-intentionally-fail-this-one
 	#replace-element
 	#replace-element-zero
 	#replace-element-beyond-end
@@ -69,10 +80,10 @@
 	#match-not-one-of-the-key
 	#match-not-three-of-the-key
 	#match-not-zero-of-the-key
-	#adding-to-the-list-but-not-writing-a-test-makes-it-intentionally-fail
 	#12345-begins-with-12
 	#12345-begins-with-12345
 	#12345-doesnt-begin-with-22
+	#intentionally-fail-this-one-also
 	#12345-doesnt-begin-with-123456
 	#12345-doesnt-begin-with-scalar
 	#12345-doesnt-begin-with-nested
@@ -104,6 +115,7 @@
 	#remove-in-empty-filter
 	#remove-empty-list-in-filter
 	#remove-in-disjoint-filter
+	#intentionally-fail-this-test-as-well
 	])
 
 (global variable (list of lists [
@@ -114,20 +126,6 @@
 	[4 1 7 8 9]]))
 
 %%-----------------------------------------------------------------------------
-
-(test #max-different)
-	(max 2 and 3 into 3)
-	(max 3 and 2 into 3)
-
-(test #max-same)
-	(max 2 and 2 into 2)
-
-(test #min-different)
-	(min 2 and 3 into 2)
-	(min 3 and 2 into 2)
-
-(test #min-same)
-	(min 2 and 2 into 2)
 
 (test #0-isnt-odd-or-even)
     ~(0 is odd)
@@ -144,6 +142,56 @@
 (test #3-is-odd)
     (3 is odd)
 	~(3 is even)
+
+(test #max-different)
+	(max 2 and 3 into 3)
+	(max 3 and 2 into 3)
+
+(test #max-same)
+	(max 2 and 2 into 2)
+
+(test #min-different)
+	(min 2 and 3 into 2)
+	(min 3 and 2 into 2)
+
+(test #min-same)
+	(min 2 and 2 into 2)
+
+(test #round-0-0)
+	(round 0 to the nearest 5 into 0)
+
+(test #round-1-0)
+	(round 1 to the nearest 5 into 0)
+
+(test #round-2-0)
+	(round 2 to the nearest 5 into 0)
+
+(test #round-3-5)
+	(round 3 to the nearest 5 into 5)
+
+(test #round-4-5)
+	(round 4 to the nearest 5 into 5)
+
+(test #round-5-5)
+	(round 5 to the nearest 5 into 5)
+
+(test #round-7-5)
+	(round 7 to the nearest 5 into 5)
+
+(test #round-8-10)
+	(round 8 to the nearest 5 into 10)
+
+(test #round-4-0)
+	(round 4 to the nearest 10 into 0)
+
+(test #round-5-10)
+	(round 5 to the nearest 10 into 10)
+
+(test #round-14-10)
+	(round 14 to the nearest 10 into 10)
+
+(test #round-15-20)
+	(round 15 to the nearest 10 into 20)
 
 (test #delta-4-2)
 	(4 delta 2 into 2)
