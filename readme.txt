@@ -73,6 +73,9 @@ Release notes:
 		
 		Distribution: added unit.dg, a library for unit testing.
 		
+		Distribution: updated the license to more closely match Linus's
+		original intent.
+		
 		Documentation: the library reference now includes special syntax
 		like (elseif), (now), and (global variable $).
 		

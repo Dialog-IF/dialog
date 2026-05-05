@@ -3152,7 +3152,7 @@
 (command [undo])
 (perform [undo])
 	(if) ~(interpreter supports undo) (then)
-		(div @meta) { This interpreter doesn’t support undo. }
+		(div @meta) { This interpreter doesn't support undo. }
 	(elseif) (undo) (then)
 		(div @meta) { Failed to undo last turn. }
 	(else)
@@ -5924,7 +5924,7 @@
 			(now) (last command was $GoodCmd)
 			(rewrite $GoodCmd into $ActualWords)
 		(else)
-			(div @meta) { \( Sorry, I don’t know what to fix. \) }
+			(div @meta) { \( Sorry, I don't know what to fix. \) }
 			(stop)
 		(endif)
 	(else)
@@ -6680,3 +6680,48 @@
 (report fatal error 6)	Long-term heap space exhausted.
 (report fatal error 7)	Invalid output state.
 (report fatal error $)	Invalid error code!
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% License and copyright notice
+
+%% Copyright 2018-2026 Linus Åkesson and the Dialog Project contributors
+%% 
+%% Redistribution and use in source and binary forms, with or without
+%% modification, are permitted provided that the following conditions are met:
+%% 
+%%		1. Redistributions of source code must retain the above copyright
+%%		notice, this list of conditions and the following disclaimer.
+%% 
+%%		2. Redistributions in binary form must reproduce the above copyright
+%%		notice, this list of conditions and the following disclaimer in the
+%%		documentation and/or other materials provided with the distribution.
+%% 
+%%		THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+%%		IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+%%		TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+%%		PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+%%		HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+%%		SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+%%		LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+%%		DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+%%		THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+%%		(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+%%		OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+%% 
+%% This license is intended to apply to the Dialog compiler and debugger and
+%% the source code of the standard libraries. Any time those components are
+%% distributed, this copyright notice should be attached. But it is not meant
+%% to limit what the compiler's output can be used for, even for projects that
+%% include the standard libraries. To make this explicit, the project is ALSO
+%% released under a modified two-clause BSD license, which is exactly the same
+%% as the above but adds this exception:
+%% 
+%%		As an exception, if, as a result of you compiling your source code,
+%%		portions of this software are embedded into compiler output in binary
+%%		form, you may redistribute such embedded portions without complying
+%%		with condition 2 of the license.
+%% 
+%% In other words, you can distribute the Z-machine and Å-machine bytecode that
+%% the compiler produces in any way you like, without needing to include this
+%% license file or comply with the attribution requirements (for the library
+%% or for the Z-machine runtime routines).
