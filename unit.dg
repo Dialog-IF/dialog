@@ -165,7 +165,7 @@
 %% This license is intended to apply to the Dialog compiler and debugger and
 %% the source code of the standard libraries. Any time those components are
 %% distributed, this copyright notice should be attached. But it is not meant
-%% to limit what the compiler’s output can be used for, even for projects that
+%% to limit what the compiler's output can be used for, even for projects that
 %% include the standard libraries. To make this explicit, the project is ALSO
 %% released under a modified two-clause BSD license, which is exactly the same
 %% as the above but adds this exception:
