@@ -22,9 +22,31 @@ modification, are permitted provided that the following conditions are met:
 	(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 	OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+This license is intended to apply to the Dialog compiler and debugger and
+the source code of the standard libraries. Any time those components are
+distributed, this copyright notice should be attached. But it is not meant
+to limit what the compiler's output can be used for, even for projects that
+include the standard libraries. To make this explicit, the project is ALSO
+released under a modified two-clause BSD license, which is exactly the same
+as the above but adds this exception:
+
+	As an exception, if, as a result of you compiling your source code,
+	portions of this software are embedded into compiler output in binary
+	form, you may redistribute such embedded portions without complying
+	with condition 2 of the license.
+
+In other words, you can distribute the Z-machine and Å-machine bytecode that
+the compiler produces in any way you like, without needing to include this
+license file or comply with the attribution requirements (for the library
+or for the Z-machine runtime routines).
+
+---
+
 The test cases in the development repository (not included in the official
 releases) are released under the same license unless otherwise specified.
 See the LICENSE.txt files in the individual test directories for details.
+
+---
 
 The GUI version of the Dialog Interactive Debugger (dgdebug) uses Windows
 Glk by David Kinder. A header file and two precompiled libraries are

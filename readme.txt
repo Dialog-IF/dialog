@@ -55,8 +55,8 @@ Release notes:
 		
 		Language: added (body style $) and (reset body style).
 		
-		Language: added (quit $), to let unit.dg tests cause make
-		to fail when they fail.
+		Language: added (quit $), to let unit.dg tests cause make to
+		fail when they fail.
 		
 		Language: added (clear status bar).
 		
@@ -72,6 +72,9 @@ Release notes:
 		Windows, equivalent to the Mac and Linux versions.
 		
 		Distribution: added unit.dg, a library for unit testing.
+		
+		Distribution: updated the license to more closely match Linus's
+		original intent.
 		
 		Documentation: the library reference now includes special syntax
 		like (elseif), (now), and (global variable $).
