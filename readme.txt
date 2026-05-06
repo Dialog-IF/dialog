@@ -55,8 +55,8 @@ Release notes:
 		
 		Language: added (body style $) and (reset body style).
 		
-		Language: added (quit $), to let unit.dg tests cause make
-		to fail when they fail.
+		Language: added (quit $), to let unit.dg tests cause make to
+		fail when they fail.
 		
 		Language: added (clear status bar).
 		
