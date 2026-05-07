@@ -33,6 +33,7 @@ struct specialspec {
 	int nword;
 	char *word[8];
 } specialspec[] = {
+	{SP_FIRSTRESULT,	0,				3,	{"at", "most", "once"}},
 	{SP_RANDOM,		0,				2,	{"at", "random"}},
 	{SP_COLLECT,		0,				2,	{"collect", 0}},
 	{SP_COLLECT_WORDS,	0,				2,	{"collect", "words"}},

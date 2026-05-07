@@ -458,9 +458,9 @@ void pp_expr(struct astnode *an) {
 		pp_body(an->children[0]);
 		break;
 	case AN_FIRSTRESULT:
-		printf("(*first result*) {");
+		printf("(at most once) { ");
 		pp_body(an->children[0]);
-		printf("}");
+		printf(" }");
 		break;
 	default:
 		printf("?unknown?");
@@ -592,7 +592,7 @@ static void find_clause_vars(struct program *prg, struct clause *cl, struct astn
 		|| an->kind == AN_LINK_SELF
 		|| an->kind == AN_LINK
 		|| an->kind == AN_LINK_RES
-		|| an->kind == AN_LOG) {
+		|| an->kind == AN_LOG) { // These nodes may need a temporary variable (to store CHO in), so they get a unique name for that variable
 			an->word = fresh_word(prg);
 			(void) resolve_clause_var(prg, an->word);
 		} else if(an->kind == AN_VARIABLE) {
