@@ -40,7 +40,12 @@ Project website:
 
 Release notes:
 
-	1b/01, Lib 1.1.1:
+	1c/01, Lib 1.2.0:
+	
+		Language: added (at most once), which clears choice points once
+		its child succeeds.
+	
+	1b/01, Lib 1.2.0:
 	
 		Due to new built-in predicates in this release, all projects
 		compiled for Å-machine will need version 1.0.0 or later of the
