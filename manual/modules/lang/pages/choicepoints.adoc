@@ -426,6 +426,97 @@ is exactly equivalent to
 
 where `(fail)` is a built-in predicate that always fails.
 
+[#at-most-once]
+== Visiting fewer solutions
+
+`(exhaust)` is a powerful tool: it will explore _every_ branch from _every_ choice
+point, whether you want it to or not. For example:
+
+[source]
+----
+(fruit #apple)
+(fruit #tree)
+
+(red #apple)
+(red #rose)
+
+(leafy #rose)
+(leafy #tree)
+
+(portable #apple)
+(portable #rose)
+
+(program entry point)
+	(exhaust) *(explore the properties)
+
+(explore the properties)
+	*(fruit $Obj) (portable $Obj)
+	There is a portable fruit!
+
+(explore the properties)
+	*(leafy $Obj) (portable $Obj)
+	There is a portable leafy thing!
+
+(explore the properties)
+	*(red $Obj) (portable $Obj)
+	There is a portable red thing!
+----
+
+The output is:
+
+[.output.matches-previous]
+```
+There is a portable fruit!
+There is a portable leafy thing!
+There is a portable red thing!
+There is a portable red thing!
+```
+
+Since there are two portable red things, the `(exhaust)` explores both options,
+and prints the message for both.
+
+If we only want a single message here, we can prefix our search with
+`(at most once)`. As soon as the inner statement succeeds, all choice points
+created since the `(at most once)` will be discarded.
+
+[source]
+----
+(fruit #apple)
+
+(red #apple)
+(red #rose)
+
+(leafy #rose)
+(leafy #tree)
+
+(portable #apple)
+(portable #rose)
+
+(program entry point)
+	(exhaust) *(explore the properties)
+
+(explore the properties)
+	(at most once) { *(fruit $Obj) (portable $Obj) }
+	There is a portable fruit!
+
+(explore the properties)
+	(at most once) { *(leafy $Obj) (portable $Obj) }
+	There is a portable leafy thing!
+
+(explore the properties)
+	(at most once) { *(red $Obj) (portable $Obj) }
+	There is a portable red thing!
+----
+
+The output now becomes:
+
+[.output.matches-previous]
+```
+There is a portable fruit!
+There is a portable leafy thing!
+There is a portable red thing!
+```
+
 [#collect-values]
 == Collecting values
 
