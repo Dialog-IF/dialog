@@ -29,9 +29,6 @@
 %% negate to stop time from advancing on every tick
 (time is running)
 
-%% un-negate to not advance time on the next tick ("free" command)
-~(suspend this tick)
-
 %%-------------------------------- INTERFACES --------------------------------
 
 (interface (set time $<Time))
@@ -376,8 +373,7 @@
 	(set time [$Time $Day $Year])
 
 (late on every tick)
-	(if) (time is running) ~(suspend this tick) (then)
+	(if) (time is running) (then)
 		 (time rate $Rate)
 		 (elapse $Rate minutes)
 	(endif)
-	(now) ~(suspend this tick)
