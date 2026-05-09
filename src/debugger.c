@@ -1428,7 +1428,7 @@ int debugger(int argc, char **argv) {
 			case 'T':
 				io_tag_lines = 1;
 				break;
-			case 'u': // --no-warn-not-topic --quit --height=-1
+			case 'u': // --quit --no-header --height=-1
 				quitopt = 1;
 				force_height = -1;
 				suppress_header = 1;
