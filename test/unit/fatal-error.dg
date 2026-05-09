@@ -1,9 +1,8 @@
 %% dgdebug -u fatal-error.dg unit.dg stdlib.dg
 
-(list of tests [#bottles-of-beer])
-
 (bottles of beer $Bottles)
 	  (bottles of beer $Bottles) %% overflow the heap
 
-(test #bottles-of-beer)
-	  (bottles of beer 16383)
+#bottles-of-beer
+(test *)
+(run *)	(bottles of beer 16383)

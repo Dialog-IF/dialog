@@ -18,6 +18,22 @@
 
 (global variable (january starts on $)) %% day of week on New Year's day
 
+(global variable (time rate 1)) %% default number of minutes per move
+
+%% negate to get D-M-Y dates
+(using north american dates)
+
+%% override for a different time zone
+(timezone letter)	Z
+
+%% negate to stop time from advancing on every tick
+(time is running)
+
+%% un-negate to not advance time on the next tick ("free" command)
+~(suspend this tick)
+
+%%-------------------------------- INTERFACES --------------------------------
+
 (interface (set time $<Time))
 
 (interface (set time $<Hour $<Minute))
@@ -62,19 +78,7 @@
 
 (interface (elapse $<Num years))
 
-%% negate to get D-M-Y dates
-(using north american dates)
-
-%% override for a different time zone
-(timezone letter)	Z
-
-%% negate to stop time from advancing on every tick
-(time is running)
-
-%% un-negate to not advance time on the next tick ("free" command)
-~(suspend this tick)
-
-%%----------------------------------------------------------------------
+%%------------------------------ IMPLEMENTATION ------------------------------
 
 ($Hours hours $Minutes minutes for $Time)
 	($Time divided by 60 into $Hours)
@@ -293,7 +297,7 @@
 
 (normalize $Timestamp into $NewTimestamp)
 	([$Time $Date $Year] = $Timestamp)
-	(if) ($Time > 1440) (then)
+	(if) ($Time > 1439) (then)
 		($Time divided by 1440 into $Days)
 		($Time modulo 1440 into $NewTime)
 		($Date plus $Days into $NewDate)
@@ -364,30 +368,16 @@
 	(elapse $Minutes minutes)
 
 (elapse $Num minutes)
-	(current datetime [$T $D $Y])
+	(current datetime [$T $D $Year])
 	($Num divided by 1440 into $Days)
 	($Num modulo 1440 into $Minutes)
-	($D plus $Days into $Date)
-	($T plus $Minutes into $Ticks)
-	(if) ($Ticks > 1439) (then)
-		($Ticks minus 1440 into $Time)
-		($Date plus 1 into $ND)
-	(else)
-		($Time = $Ticks)
-		($ND = $Date)
-	(endif)
-	(length of year $Y into $Length)
-	(if) ($ND > $Length) (then)
-		($Y plus 1 into $Year)
-		($ND modulo $Length into $Day)
-	(else)
-		($Y = $Year)
-		($ND = $Day)
-	(endif)
+	($D plus $Days into $Day)
+	($T plus $Minutes into $Time)
 	(set time [$Time $Day $Year])
 
 (late on every tick)
 	(if) (time is running) ~(suspend this tick) (then)
-		 (elapse 1 minutes)
+		 (time rate $Rate)
+		 (elapse $Rate minutes)
 	(endif)
 	(now) ~(suspend this tick)
