@@ -68,7 +68,7 @@
 	(no space) . (roman) (line)
 	(stoppable) (exhaust) {
 		*(test $Test)
-		(run-test $Test)
+		(run test $Test)
 	}
 	(reset body style)
 	(list of failures $Failures)
@@ -106,7 +106,7 @@
 	(append $List [$Test] $ListPlusTest)
 	(now) (list of failures $ListPlusTest)
 
-(run-test $Test)
+(run test $Test)
 	(update body style)
 	Testing $Test :
 	(reset body style) %% display output from the test itself in default colours
