@@ -62,8 +62,7 @@
 (global variable (list of failures []))
 
 (program entry point)
-	(collect $T) *(test $T) (into $Tests)
-	(length of $Tests into $Number)
+	(accumulate 1) *(test $) (into $Number)
 	(bold) Attempting $Number test
 	(if) ~($Number = 1) (then) (no space) s (endif)
 	(no space) . (roman) (line)
