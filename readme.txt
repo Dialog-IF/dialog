@@ -42,6 +42,8 @@ Release notes:
 
 	1b/02:
 
+		Debugger: pressing Ctrl-D at a [more] prompt closes the program.
+		
 		Unit test runner: unit.dg has been redesigned. Unit tests written
 		against the version from 1b/01 will need to be rewritten along
 		the lines of time-tests.dg and utils-tests.dg in the test/unit
