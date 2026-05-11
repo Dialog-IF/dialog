@@ -676,7 +676,8 @@ static void comp_value_into(struct clause *cl, struct astnode *an, value_t dest,
 static void comp_param(struct clause *cl, struct astnode *an, value_t src, uint8_t *seen, struct astnode **known_args, int all_seen_are_bound) {
 	struct cinstr *ci;
 	int vnum, i, j, is_ref[2];
-	value_t sub[2];
+	value_t sub[2], holder;
+	struct astnode *iter;
 
 	for(i = 0; i < cl->predicate->arity; i++) {
 		if(known_args[i] && value_equals(known_args[i], an)) {
@@ -707,45 +708,61 @@ static void comp_param(struct clause *cl, struct astnode *an, value_t src, uint8
 			}
 		}
 	} else if(an->kind == AN_PAIR) {
-		for(i = 0; i < 2; i++) {
-			if(an->children[i]->kind == AN_PAIR) {
-				sub[i] = (value_t) {OPER_TEMP, ntemp++};
-				is_ref[i] = 1;
-			} else if(an->children[i]->kind == AN_VARIABLE) {
-				if(an->children[i]->word->name[0]) {
-					for(j = 0; j < cl->predicate->arity; j++) {
-						if(known_args[j]
-						&& known_args[j]->kind == AN_VARIABLE
-						&& known_args[j]->word == an->children[i]->word) {
-							break;
-						}
-					}
-					if(j < cl->predicate->arity) {
-						sub[i] = (value_t) {OPER_ARG, j};
-						is_ref[i] = 0;
-					} else {
-						vnum = findvar(cl, an->children[i]->word);
-						sub[i] = (value_t) {OPER_VAR, vnum};
-						is_ref[i] = !seen[vnum];
-						seen[vnum] = 1;
-					}
-				} else {
+		if(!all_seen_are_bound) {
+			i = 0; // Count how many elements are in this list
+			for(iter = an; iter->kind == AN_PAIR; iter = iter->children[1]) i++;
+	//		report(LVL_WARN, an->line, "List length: %d", i);
+		}
+		
+		if(all_seen_are_bound || i < 10) { // If this parameter will always be bound, or the list is "small", compile it the "old" (pre-1b/02) way, building the list from first to last with a whole lot of temporaries. This means unification will fail at the first non-matching element, without building the rest of the list, but it also needs one temporary for each list element, which can cause compilation to fail.
+	//		report(LVL_WARN, an->line, "Using old method");
+			for(i = 0; i < 2; i++) {
+				if(an->children[i]->kind == AN_PAIR) {
 					sub[i] = (value_t) {OPER_TEMP, ntemp++};
 					is_ref[i] = 1;
+				} else if(an->children[i]->kind == AN_VARIABLE) {
+					if(an->children[i]->word->name[0]) {
+						for(j = 0; j < cl->predicate->arity; j++) {
+							if(known_args[j]
+							&& known_args[j]->kind == AN_VARIABLE
+							&& known_args[j]->word == an->children[i]->word) {
+								break;
+							}
+						}
+						if(j < cl->predicate->arity) {
+							sub[i] = (value_t) {OPER_ARG, j};
+							is_ref[i] = 0;
+						} else {
+							vnum = findvar(cl, an->children[i]->word);
+							sub[i] = (value_t) {OPER_VAR, vnum};
+							is_ref[i] = !seen[vnum];
+							seen[vnum] = 1;
+						}
+					} else {
+						sub[i] = (value_t) {OPER_TEMP, ntemp++};
+						is_ref[i] = 1;
+					}
+				} else {
+					sub[i] = comp_tag_simple(an->children[i]);
+					is_ref[i] = 0;
 				}
-			} else {
-				sub[i] = comp_tag_simple(an->children[i]);
-				is_ref[i] = 0;
 			}
-		}
-		ci = add_instr(I_GET_PAIR_VV + 2 * is_ref[0] + is_ref[1]);
-		ci->oper[0] = src;
-		ci->oper[1] = sub[0];
-		ci->oper[2] = sub[1];
-		for(i = 0; i < 2; i++) {
-			if(an->children[i]->kind == AN_PAIR) {
-				comp_param(cl, an->children[i], sub[i], seen, known_args, all_seen_are_bound);
+			ci = add_instr(I_GET_PAIR_VV + 2 * is_ref[0] + is_ref[1]);
+			ci->oper[0] = src;
+			ci->oper[1] = sub[0];
+			ci->oper[2] = sub[1];
+			for(i = 0; i < 2; i++) {
+				if(an->children[i]->kind == AN_PAIR) {
+					comp_param(cl, an->children[i], sub[i], seen, known_args, all_seen_are_bound);
+				}
 			}
+		} else { // If it *won't* always be bound, and the list is "large", compile it the "new" (post-1b/02) way: build the whole list first, then unify. This only requires one temporary, but means comparison can't be short-circuited.
+	//		report(LVL_WARN, an->line, "Using NEW method");
+			holder = (value_t) {OPER_TEMP, ntemp++};
+			comp_value_into(cl, an, holder, seen, known_args);
+			ci = add_instr(I_UNIFY);
+			ci->oper[0] = src;
+			ci->oper[1] = holder;
 		}
 	} else {
 		if(all_seen_are_bound) {
@@ -2756,6 +2773,7 @@ static void comp_clause(struct program *prg, struct predicate *pred, struct inde
 		}
 		if(i || !ignore_arg0) {
 			if(cl->predicate->pred->unbound_in & (1 << i)) all_seen_are_bound = 0;
+	//		report(LVL_WARN, cl->line, "Argument %d: all_seen_are_bound %s", i, all_seen_are_bound ? "TRUE" : "false");
 			comp_param(
 				cl,
 				an,
