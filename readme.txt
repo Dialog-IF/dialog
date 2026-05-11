@@ -40,6 +40,13 @@ Project website:
 
 Release notes:
 
+	1b/02:
+
+		Unit test runner: unit.dg has been redesigned. Unit tests written
+		against the version from 1b/01 will need to be rewritten along
+		the lines of time-tests.dg and utils-tests.dg in the test/unit
+		directory.
+
 	1b/01, Lib 1.1.1:
 	
 		Due to new built-in predicates in this release, all projects
