@@ -1,6 +1,5 @@
-This repository contains the Dialog compiler and interactive
-debugger, bundled with documentation and the Dialog Standard
-Library.
+This repository contains the Dialog compiler and interactive debugger, bundled
+with documentation and the Dialog Standard Library.
 
 Directory structure:
 
@@ -21,7 +20,11 @@ Directory structure:
 
 	unit.dg		The Dialog unit testing library.
 
-Building the software under Linux (requires a C compiler and make):
+If you see a directory called "manual" instead of "docs", you're looking at
+the development repository itself rather than a bundled release. In this case,
+you'll have to build the binaries yourself.
+
+Building the software under Linux or Mac (requires a C compiler and make):
 
 	cd src
 	make
