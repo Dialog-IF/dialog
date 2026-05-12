@@ -44,9 +44,13 @@ Release notes:
 
 		Debugger: pressing Ctrl-D at a [more] prompt closes the program.
 		
-		Unit test runner: unit.dg has been redesigned. Unit tests written
-		against the version from 1b/01 will need to be rewritten along
-		the lines of time-tests.dg and utils-tests.dg in the test/unit
+		Compiler: predicates that are queried but not defined will now
+		include a line number in the compiler warning. This was always
+		supposed to be the case, but was bugged.
+		
+		Unit test runner: unit.dg has been redesigned. Unit tests 
+		written against the version from 1b/01 will need to be 
+		rewritten along	the lines of time-tests.dg in the test/unit
 		directory.
 
 	1b/01, Lib 1.1.1:
