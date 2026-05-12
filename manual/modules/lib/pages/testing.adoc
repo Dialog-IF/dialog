@@ -171,8 +171,7 @@ Now when we run the debugger, we get this:
 [source]
 ----
 $ dgdebug -u minmax-tests.dg minmax.dg unit.dg stdlib.dg
-Dialog Interactive Debugger (dgdebug) version 1b/02n.
-Attempting 3 tests.
+Attempting 6 tests.
 Testing #max-first-is-bigger: Passed!
 Testing #max-second-is-bigger: Passed!
 Testing #max-equal-values: Passed!
@@ -188,26 +187,20 @@ $
 
 When you're choosing what to test, it's important to not just test for
 the things that you want to go right, but to test all of the ways that
-you can think of your code going wrong. For example, if we were to add
-some more tests to our `minmax-tests.dg`, it might look like this:
+you can think of your code going wrong.
+
+Suppose that we add the following to `minmax.dg`:
 
 [source]
 ----
-%% dgdebug -u minmax-tests.dg minmax.dg unit.dg stdlib.dg
+(interface ($<X plus $<Y into $>Z max $<Max))
 
-#max-first-is-bigger
-(test *)
-(run *)
-      (max 3 and 2 into 2)
-
-#max-second-is-bigger
-(test *)
-(run *)
-      (max 2 and 3 into 3)
-
-#max-equal-values
-(test *)
-(run *)
-      (max 2 and 2 into 2)
+($X plus $Y into $Z max $Max)
+    ($X plus $Y into $Proposed)
+    (if) ($Proposed > $Max) (then)
+        ($Z = $Max)
+    (else)
+	($Z = $Proposed)
+    (endif)
 ----
 

@@ -12,11 +12,13 @@
 
 (interface ($<Number is even)) %% yagni?
 
-(interface (round $<Num to the nearest $<Increment into $>Result))
-
 (interface (max $<X $<Y $>Max))
 
 (interface (min $<X $<Y $>Min))
+
+(interface (sort $<X $<Y into $>Low $High))
+
+(interface (sort $<X $<Y $<Z into $>Low $>Mid $>High))
 
 (interface ($<Num1 delta $<Num2 into $>Result))
 
@@ -24,17 +26,15 @@
 
 (interface (add $<X to $<Y into $>Z))           %% safe, capped at maxint
 
-(interface (add $<X to $<Y into $>Z max $<Max)) %% safe, capped at maxint
+(interface (add $<X to $<Y into $>Z max $<Max)) %% safe, capped at $Max
 
 (interface (subtract $<X from $<Y into $>Z))    %% safe, capped at 0
 
 (interface ($<Num1 divided by $<Num2 into $>Result rounding up))
 
+(interface (round $<Num to the nearest $<Increment into $>Result))
+
 (interface (split $<Number into $>Thousands $>Hundreds $>Tens $>Ones))
-
-(interface (sort $<X $<Y into $>High $>Low))
-
-(interface (sort $<X $<Y $<Z into $>High $>Mid $>Low))
 
 (interface (take last $<N from $<List into $>Suffix))
 
@@ -99,22 +99,23 @@
 		($Result = $Y)
 	(endif)
 
-(round $Num to the nearest $Increment into $Result)
-	($Num modulo $Increment into $Mod)
-	($Increment divided by 2 into $Div rounding up)
-	(if) ($Div > $Mod) (then)
-		($Num divided by $Increment into $Multiplier)
+(sort $X $Y into $RX $RY)
+	(if) ($X > $Y) (then)
+		($RX = $Y)
+		($RY = $X)
 	(else)
-		($Num divided by $Increment into $Multiplier rounding up)
+		($RX = $X)
+		($RY = $Y)
 	(endif)
-	($Increment times $Multiplier into $Result)
+
+(sort $X $Y $Z into $RX $RY $RZ)
+    (sort $X $Y into $L1 $H1)
+	(sort $H1 $Z into $L2 $RZ)
+	(sort $L1 $L2 into $RX $RY)
 
 ($X delta $Y into $Result)
-	(if) ($X > $Y) (then)
-		($X minus $Y into $Result)
-	(else)
-		($Y minus $X into $Result)
-	(endif)
+	(sort $X $Y into $Low $High)
+	($High minus $Low into $Result)
 
 ($Num1 is within $Range of $Num2)
 	($Num1 delta $Num2 into $Delta)
@@ -129,11 +130,7 @@
 	(else)
 		($Proposed = 16383)
 	(endif)
-	(if) ($Proposed > $Max) (then)
-		($Z = $Max)
-	(else)
-		($Z = $Proposed)
-	(endif)
+	(sort $Proposed $Max into $Z $)
 
 (subtract $Y from $X into $Z)
     (if) ($Y > $X) (then)
@@ -147,6 +144,16 @@
 	($Num divided by $Num2 into $Div)
 	($Div plus 1 into $Result)
 
+(round $Num to the nearest $Increment into $Result)
+	($Num modulo $Increment into $Mod)
+	($Increment divided by 2 into $Div rounding up)
+	(if) ($Div > $Mod) (then)
+		($Num divided by $Increment into $Multiplier)
+	(else)
+		($Num divided by $Increment into $Multiplier rounding up)
+	(endif)
+	($Increment times $Multiplier into $Result)
+
 (split $Number into $Thousands $Hundreds $Tens $Ones)
 	($Number divided by 1000 into $Thousands)
 	($Number modulo 1000 into $Remaining1)
@@ -154,20 +161,6 @@
 	($Remaining1 modulo 100 into $Remaining2)
 	($Remaining2 divided by 10 into $Tens)
 	($Remaining2 modulo 10 into $Ones)
-
-(sort $X $Y into $RX $RY)
-	(if) ($X > $Y) (then)
-		($RX = $Y)
-		($RY = $X)
-	(else)
-		($RX = $X)
-		($RY = $Y)
-	(endif)
-
-(sort $X $Y $Z into $RX $RY $RZ)
-    (sort $X $Y into $L1 $H1)
-	(sort $H1 $Z into $L2 $RZ)
-	(sort $L1 $L2 into $RX $RY)
 
 (take last $N from $List into $Suffix)
 	(reverse $List $Reverse)
