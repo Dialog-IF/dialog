@@ -370,6 +370,8 @@ $
 [#fixtures]
 === Test Fixtures
 
+So far, all of the tests that we've written have been one-liners. 
+
 [#state]
 === Testing From Known State
 
