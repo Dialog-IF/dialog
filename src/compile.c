@@ -2768,7 +2768,6 @@ static void comp_clause(struct program *prg, struct predicate *pred, struct inde
 		}
 		if(i || !ignore_arg0) {
 			if(cl->predicate->pred->unbound_in & (1 << i)) all_seen_are_bound = 0;
-	//		report(LVL_WARN, cl->line, "Argument %d: all_seen_are_bound %s", i, all_seen_are_bound ? "TRUE" : "false");
 			comp_param(
 				cl,
 				an,
