@@ -1,4 +1,8 @@
 #!/usr/bin/python3
+
+# This script attempts to extract all Dialog snippets from the manual and run them
+# They must not crash (unless tagged as such), and if there's following output in the manual page, that must match too
+
 import os
 import argparse
 import re
@@ -9,7 +13,7 @@ from pathlib import Path
 from typing import List, Set, Optional
 
 
-DEFAULT_DGDEBUG = ['src/dgdebug', '--quit', '--width=1000']
+DEFAULT_DGDEBUG = ['src/dgdebug', '--quit', '--width=-1']
 LANG_DOCS = Path('manual/modules/lang')
 LIB_DOCS = Path('manual/modules/lib')
 
