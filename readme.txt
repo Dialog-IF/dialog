@@ -11,7 +11,7 @@ Directory structure:
 	src		Complete source code for the Dialog compiler and
 			interactive debugger.
 
-	prebuilt	Binaries for Linux (i386, x86_64) and Windows.
+	prebuilt	Binaries for Linux, Mac, and Windows.
 
 	docs		Documentation for the programming language and library.
 
@@ -40,7 +40,7 @@ Project website:
 
 Release notes:
 
-	1b/02:
+	1b/02, Lib 1.2.0:
 
 		Debugger: pressing Ctrl-D at a [more] prompt closes the program.
 		
@@ -50,11 +50,11 @@ Release notes:
 		
 		Unit test runner: unit.dg has been redesigned. Unit tests 
 		written against the version from 1b/01 will need to be 
-		rewritten along	the lines of time-tests.dg in the test/unit
+		rewritten along the lines of time-tests.dg in the test/unit
 		directory.
 
-	1b/01, Lib 1.1.1:
-	
+	1b/01, Lib 1.2.0:
+
 		Due to new built-in predicates in this release, all projects
 		compiled for Å-machine will need version 1.0.0 or later of the
 		Å-machine tools. Get them from github.com/Dialog-IF/aamachine/.
