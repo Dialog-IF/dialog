@@ -318,7 +318,13 @@ $
 ----
 
 You'll notice that the text colour of the output changed from green to
-red once the first test failed. That's 
+red once the first test failed. That's
+
+[#fixtures]
+=== Test Fixtures
+
+[#state]
+=== Testing From Known State
 
 [#regtest]
 == Integration Tests With `regtest.py`
@@ -336,6 +342,8 @@ Here's a summary of the advice from this chapter:
   code could possibly fail, and test for those.
 - Test a single concept or case per test.
 - Use fixtures to keep your actual test cases simple.
+- Start each test from a known state, and reset to that state with
+  `(set up $)` and `(clean up $)` before running the next test.
 - Test in depth, using both unit and integration tests.
 - Automate your testing process with `make` or `dgt`.
 - Test on all platforms for which you'll be releasing: Z-machine, web,
