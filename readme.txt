@@ -42,6 +42,8 @@ Release notes:
 
 	1b/02:
 
+		Debugger: pressing Ctrl-D at a [more] prompt closes the program.
+		
 		Compiler: predicates that are queried but not defined will now
 		include a line number in the compiler warning. This was always
 		supposed to be the case, but was bugged.
