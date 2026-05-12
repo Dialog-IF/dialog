@@ -18,7 +18,7 @@
 
 (global variable (january starts on $)) %% day of week on New Year's day
 
-(global variable (time rate 1)) %% default number of minutes per move
+(global variable (minutes per tick 1)) %% default number of minutes per move
 
 %% negate to get D-M-Y dates
 (using north american dates)
@@ -374,6 +374,6 @@
 
 (late on every tick)
 	(if) (time is running) (then)
-		 (time rate $Rate)
+		 (minutes per tick $Rate)
 		 (elapse $Rate minutes)
 	(endif)
