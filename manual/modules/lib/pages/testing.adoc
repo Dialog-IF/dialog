@@ -318,7 +318,54 @@ $
 ----
 
 You'll notice that the text colour of the output changed from green to
-red once the first test failed. That's
+red once the first test failed. That's a visual cue that something is
+wrong. Books about testing will sometimes refer to a "red bar" or
+"green bar," referring to a progress bar that's a feature of many
+integrated development environments, which stays green so long as the
+tests being run all pass, and which turns red as soon as one of them
+fails. The green and red text is Dialog's version of that feature.
+
+Why did the tests fail? Our predicate imposes a maximum value on the
+calculation, but it uses the `($ plus $ into $)` built-in predicate,
+which fails if the addition overflows 16383. We can guard against the
+overflow with an `(if)`:
+
+[source]
+----
+($X plus $Y into $Z max $Max)
+    (if) ($X plus $Y into $Sum) (then)
+    	($Proposed = $Sum)
+    (else)
+    	($Proposed = 16383)
+    (endif)
+    (if) ($Proposed > $Max) (then)
+        ($Z = $Max)
+    (else)
+	($Z = $Proposed)
+    (endif)
+----
+
+And now when we run the tests again, they pass, and the text stays green:
+
+[source]
+----
+$ dgdebug -u minmax-tests.dg minmax.dg unit.dg stdlib.dg
+Attempting 12 tests.
+Testing #max-first-is-bigger: Passed!
+Testing #max-second-is-bigger: Passed!
+Testing #max-equal-values: Passed!
+Testing #min-first-is-bigger: Passed!
+Testing #min-second-is-bigger: Passed!
+Testing #min-equal-values: Passed!
+Testing #10-plus-20-max-25: Passed!
+Testing #10-plus-20-max-35: Passed!
+Testing #10-plus-20-max-0: Passed!
+Testing #0-plus-0-max-25: Passed!
+Testing #8000-plus-9000-max-10000: Passed!
+Testing #16383-plus-16383-max-16383: Passed!
+12 tests passed successfully.
+$
+----
 
 [#fixtures]
 === Test Fixtures
@@ -351,3 +398,8 @@ Here's a summary of the advice from this chapter:
 - Listen to your tests. If one fails, it's telling you something
   important.
 - Don't release a game for which any of the tests have failed.
+
+Software testing is a much bigger topic than just the introduction to
+it presented here. More good advice about it can be found in books on
+the topic, particularly ones focused on modern automated testing, and
+on test-driven development.
