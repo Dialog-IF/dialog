@@ -1,5 +1,5 @@
 %% utils.dg
-%% Useful utility routines for Dialog projects.
+%% Grab bag of useful utility routines for Dialog projects.
 
 (extension version)	Arithmetic and list handling v0.2 by Susan Davis (line)
 
@@ -11,6 +11,8 @@
 (interface ($<Number is odd))  %% yagni?
 
 (interface ($<Number is even)) %% yagni?
+
+(interface (round $<Num to the nearest $<Increment into $>Result))
 
 (interface (max $<X and $<Y into $>Max))
 
@@ -100,6 +102,16 @@
 	(else)
 		($Result = $Y)
 	(endif)
+
+(round $Num to the nearest $Increment into $Result)
+	($Num modulo $Increment into $Mod)
+	($Increment divided by 2 into $Div rounding up)
+	(if) ($Div > $Mod) (then)
+		($Num divided by $Increment into $Multiplier)
+	(else)
+		($Num divided by $Increment into $Multiplier rounding up)
+	(endif)
+	($Increment times $Multiplier into $Result)
 
 ($X delta $Y into $Result)
 	(if) ($X > $Y) (then)

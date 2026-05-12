@@ -881,6 +881,9 @@ static struct astnode *parse_expr(int parsemode, struct lexer *lexer, struct are
 		}
 		an->subkind = RULE_MULTI;
 		an->predicate->pred->flags |= PREDF_MENTIONED_IN_QUERY;
+		if(!an->predicate->pred->invoked_at_line) {
+			an->predicate->pred->invoked_at_line = line;
+		}
 		break;
 	case TOK_NOSPACE:
 		an = mkast(AN_RULE, 0, arena, line);
@@ -1280,6 +1283,9 @@ static struct astnode *parse_expr(int parsemode, struct lexer *lexer, struct are
 			if(!an) return 0;
 		} else {
 			an->predicate->pred->flags |= PREDF_MENTIONED_IN_QUERY;
+			if(!an->predicate->pred->invoked_at_line) {
+				an->predicate->pred->invoked_at_line = line;
+			}
 		}
 		break;
 	case '{':
@@ -1399,6 +1405,9 @@ static struct astnode *parse_expr(int parsemode, struct lexer *lexer, struct are
 			}
 			an->kind = AN_NEG_RULE;
 			an->predicate->pred->flags |= PREDF_MENTIONED_IN_QUERY;
+			if(!an->predicate->pred->invoked_at_line) {
+				an->predicate->pred->invoked_at_line = line;
+			}
 		} else {
 			an = mkast(AN_NEG_BLOCK, 1, arena, line);
 			dest = &an->children[0];
@@ -1515,6 +1524,9 @@ static struct astnode *parse_expr_nested(
 		}
 		if(negated) an->kind = AN_NEG_RULE;
 		an->predicate->pred->flags |= PREDF_MENTIONED_IN_QUERY;
+		if(!an->predicate->pred->invoked_at_line) {
+			an->predicate->pred->invoked_at_line = line;
+		}
 		if(*nnested >= MAXNESTEDEXPR) {
 			report(LVL_ERR, an->line, "Too many nested expressions in rule head.");
 			lexer->errorflag = 1;
