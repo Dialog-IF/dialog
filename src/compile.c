@@ -708,14 +708,10 @@ static void comp_param(struct clause *cl, struct astnode *an, value_t src, uint8
 			}
 		}
 	} else if(an->kind == AN_PAIR) {
-		if(!all_seen_are_bound) {
-			i = 0; // Count how many elements are in this list
-			for(iter = an; iter->kind == AN_PAIR; iter = iter->children[1]) i++;
-	//		report(LVL_WARN, an->line, "List length: %d", i);
-		}
+		i = 0; // Count how many elements are in this list
+		for(iter = an; iter->kind == AN_PAIR; iter = iter->children[1]) i++;
 		
-		if(all_seen_are_bound || i < 10) { // If this parameter will always be bound, or the list is "small", compile it the "old" (pre-1b/02) way, building the list from first to last with a whole lot of temporaries. This means unification will fail at the first non-matching element, without building the rest of the list, but it also needs one temporary for each list element, which can cause compilation to fail.
-	//		report(LVL_WARN, an->line, "Using old method");
+		if(i < 10 + (all_seen_are_bound ? 10 : 0)) { // If this parameter will always be bound, or the list is "small", compile it the "old" (pre-1b/02) way, building the list from first to last with a whole lot of temporaries. This means unification will fail at the first non-matching element, without building the rest of the list, but it also needs one temporary for each list element, which can cause compilation to fail.
 			for(i = 0; i < 2; i++) {
 				if(an->children[i]->kind == AN_PAIR) {
 					sub[i] = (value_t) {OPER_TEMP, ntemp++};
@@ -756,8 +752,7 @@ static void comp_param(struct clause *cl, struct astnode *an, value_t src, uint8
 					comp_param(cl, an->children[i], sub[i], seen, known_args, all_seen_are_bound);
 				}
 			}
-		} else { // If it *won't* always be bound, and the list is "large", compile it the "new" (post-1b/02) way: build the whole list first, then unify. This only requires one temporary, but means comparison can't be short-circuited.
-	//		report(LVL_WARN, an->line, "Using NEW method");
+		} else { // If it *won't* always be bound, and the list is "large", compile it the "new" (post-1b/02) way: build the whole list first, then unify. This only requires one temporary, but means comparison can't be short-circuited and thus takes longer at runtime.
 			holder = (value_t) {OPER_TEMP, ntemp++};
 			comp_value_into(cl, an, holder, seen, known_args);
 			ci = add_instr(I_UNIFY);
