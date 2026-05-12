@@ -42,6 +42,10 @@ Release notes:
 
 	1b/02:
 
+		Compiler: predicates that are queried but not defined will now
+		include a line number in the compiler warning. This was always
+		supposed to be the case, but was bugged.
+		
 		Unit test runner: unit.dg has been redesigned. Unit tests 
 		written against the version from 1b/01 will need to be 
 		rewritten along	the lines of time-tests.dg in the test/unit
