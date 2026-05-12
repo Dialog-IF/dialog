@@ -6,7 +6,7 @@ facilites to help you test your code, and a full-featured debugger to
 work out why your code isn't behaving as expected.
 
 [#unittests]
-== Unit Tests
+== Unit Tests With `unit.dg`
 
 Included in the Dialog library is `unit.dg`, a library that allows you
 to write unit tests for your code in Dialog. See the
@@ -189,7 +189,8 @@ When you're choosing what to test, it's important to not just test for
 the things that you want to go right, but to test all of the ways that
 you can think of your code going wrong.
 
-Suppose that we add the following to `minmax.dg`:
+Suppose that we add a predicate to `minmax.dg` that puts a cap on the
+sum of two numbers:
 
 [source]
 ----
@@ -204,3 +205,141 @@ Suppose that we add the following to `minmax.dg`:
     (endif)
 ----
 
+The test for this is obvious:
+
+[source]
+----
+#10-plus-20-max-25
+(test *)
+(run *)
+    (10 plus 20 into 25 max 25)
+----
+
+When we run this, we get
+
+[source]
+----
+$ dgdebug -u minmax-tests.dg minmax.dg unit.dg stdlib.dg
+Attempting 7 tests.
+Testing #max-first-is-bigger: Passed!
+Testing #max-second-is-bigger: Passed!
+Testing #max-equal-values: Passed!
+Testing #min-first-is-bigger: Passed!
+Testing #min-second-is-bigger: Passed!
+Testing #min-equal-values: Passed!
+Testing #10-plus-20-max-25: Passed!
+7 tests passed successfully.
+$
+----
+
+Hooray, it works! So we're done, right?
+
+Well, no. There are lots of ways that the predicate can fail that we
+haven't tested for yet. For starters, there's a second code path that
+we might follow, if the sum doesn't overflow the maximum. Let's test
+that.
+
+[source]
+----
+#10-plus-20-max-35
+(test *)
+(run *)
+    (10 plus 20 into 30 max 35)
+----
+
+Which also works when we run it:
+
+[source]
+----
+$ dgdebug -u minmax-tests.dg minmax.dg unit.dg stdlib.dg
+Attempting 8 tests.
+Testing #max-first-is-bigger: Passed!
+Testing #max-second-is-bigger: Passed!
+Testing #max-equal-values: Passed!
+Testing #min-first-is-bigger: Passed!
+Testing #min-second-is-bigger: Passed!
+Testing #min-equal-values: Passed!
+Testing #10-plus-20-max-25: Passed!
+Testing #10-plus-20-max-35: Passed!
+8 tests passed successfully.
+$
+----
+
+So, we're done _now_, right? Not so fast. How else can this fail?
+
+Two common failure points for any arithmetic predicate are 0 and
+16383, the latter being the largest integer that Dialog can handle. In
+principle, having a guard against overflowing 16383 should let this
+predicate handle large numbers correctly. Let's give it a go:
+
+[source]
+----
+#10-plus-20-max-0
+(test *)
+(run *)
+    (10 plus 20 into 0 max 0)
+
+#0-plus-0-max-25
+(test *)
+(run *)
+    (0 plus 0 into 0 max 25)
+
+#8000-plus-9000-max-10000
+(test *)
+(run *)
+    (8000 plus 9000 into 10000 max 10000)
+
+#16383-plus-16383-max-16383
+(test *)
+(run *)
+    (16383 plus 16383 into 16383 max 16383)
+----
+
+But when we run this, we get the following:
+
+[source]
+----
+$ dgdebug -u minmax-tests.dg minmax.dg unit.dg stdlib.dg
+Attempting 12 tests.
+Testing #max-first-is-bigger: Passed!
+Testing #max-second-is-bigger: Passed!
+Testing #max-equal-values: Passed!
+Testing #min-first-is-bigger: Passed!
+Testing #min-second-is-bigger: Passed!
+Testing #min-equal-values: Passed!
+Testing #10-plus-20-max-25: Passed!
+Testing #10-plus-20-max-35: Passed!
+Testing #10-plus-20-max-0: Passed!
+Testing #0-plus-0-max-25: Passed!
+Testing #8000-plus-9000-max-10000: Failed. :-(
+Testing #16383-plus-16383-max-16383: Failed. :-(
+2 TESTS FAILED.
+$
+----
+
+You'll notice that the text colour of the output changed from green to
+red once the first test failed. That's 
+
+[#regtest]
+== Integration Tests With `regtest.py`
+
+[#make]
+== Pulling It All Together With `make`
+
+[#summary]
+== Summary
+
+Here's a summary of the advice from this chapter:
+
+- Test your code as thoroughly as possible, to save headaches later.
+- Don't just test the success cases -- think of all the ways that your
+  code could possibly fail, and test for those.
+- Test a single concept or case per test.
+- Use fixtures to keep your actual test cases simple.
+- Test in depth, using both unit and integration tests.
+- Automate your testing process with `make` or `dgt`.
+- Test on all platforms for which you'll be releasing: Z-machine, web,
+  and vintage computing hardware.
+- Listen to your tests. If one fails, it's telling you something
+  important.
+- Don't release a game for which any of the tests have failed.
