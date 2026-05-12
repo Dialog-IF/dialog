@@ -48,9 +48,10 @@ Release notes:
 		are compiled the same way as constant lists in rule bodies,
 		which is slower but has no limit on size.
 		
-		Unit test runner: unit.dg has been redesigned. Unit tests written
-		against the version from 1b/01 will need to be rewritten along
-		the lines of time-tests.dg and utils-tests.dg in the test/unit
+		Unit test runner: unit.dg has been redesigned. Unit tests 
+		written against the version from 1b/01 will need to be 
+		rewritten along	the lines of time-tests.dg in the test/unit
+
 		directory.
 
 	1b/01, Lib 1.1.1:
