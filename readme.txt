@@ -1,6 +1,5 @@
-This repository contains the Dialog compiler and interactive
-debugger, bundled with documentation and the Dialog Standard
-Library.
+This repository contains the Dialog compiler and interactive debugger, bundled
+with documentation and the Dialog Standard Library.
 
 Directory structure:
 
@@ -11,7 +10,7 @@ Directory structure:
 	src		Complete source code for the Dialog compiler and
 			interactive debugger.
 
-	prebuilt	Binaries for Linux (i386, x86_64) and Windows.
+	prebuilt	Binaries for Linux, Mac, and Windows.
 
 	docs		Documentation for the programming language and library.
 
@@ -21,7 +20,11 @@ Directory structure:
 
 	unit.dg		The Dialog unit testing library.
 
-Building the software under Linux (requires a C compiler and make):
+If you see a directory called "manual" instead of "docs", you're looking at
+the development repository itself rather than a bundled release. In this case,
+you'll have to build the binaries yourself.
+
+Building the software under Linux or Mac (requires a C compiler and make):
 
 	cd src
 	make
@@ -40,21 +43,32 @@ Project website:
 
 Release notes:
 
-	1b/02:
+	1b/02, Lib 1.2.0:
 
+		Compiler: previously, constant lists in rule heads were compiled
+		in a way that was very fast at runtime, but could crash if the
+		lists were too large. Now, large (> 10 entries) constant lists
+		are compiled the same way as constant lists in rule bodies,
+		which is slower but has no limit on size.
+		
 		Debugger: pressing Ctrl-D at a [more] prompt closes the program.
 		
 		Compiler: predicates that are queried but not defined will now
 		include a line number in the compiler warning. This was always
 		supposed to be the case, but was bugged.
 		
-		Unit test runner: unit.dg has been redesigned. Unit tests 
-		written against the version from 1b/01 will need to be 
-		rewritten along	the lines of time-tests.dg in the test/unit
+		Backend: (inline status bar $) will now produce a line break on
+		Z-machine. It's unclear whether this was Linus's intent, but it
+		matches both the Node and 6502 Å-machine interpreters, so the
+		Z-machine has been updated for consistency.
+		
+		Unit test runner: unit.dg has been redesigned. Unit tests
+		written against the version from 1b/01 will need to be
+		rewritten along the lines of time-tests.dg in the test/unit
 		directory.
 
-	1b/01, Lib 1.1.1:
-	
+	1b/01, Lib 1.2.0:
+
 		Due to new built-in predicates in this release, all projects
 		compiled for Å-machine will need version 1.0.0 or later of the
 		Å-machine tools. Get them from github.com/Dialog-IF/aamachine/.

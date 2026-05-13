@@ -3633,6 +3633,8 @@ struct rtroutine rtroutines[] = {
 
 			{OP_LABEL(1)},
 			{Z_JNZ, {VALUE(REG_NSPAN)}, 0, 2},
+			
+			{Z_CALL1N, {ROUTINE(R_LINE)}}, // Break lines around inline status bars. It's unclear if this is intended behavior, but both the 6502 and Node Å-machine terps do it, so it seems best to make the Z-machine align with that.
 
 			{Z_STORE, {SMALL(REG_STATUSBAR), SMALL(2)}},
 			{Z_RFALSE},
