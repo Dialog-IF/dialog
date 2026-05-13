@@ -14,10 +14,12 @@ xref:ROOT:software.adoc[Software Page] for more information on where
 to find `unit.dg`.
 
 Unit tests are short, simple tests that exercise small pieces of your
-code. They can save quite a bit of debugging, and even more helpully,
+code. They can save quite a bit of debugging, and even more helpfully,
 will let you know if you've accidentally broken something unrelated
-when you make a change to some other part of your game, if you run
-them whenever you recompile a new change.
+when you make a change to some other part of your game. They're
+especially helpful when you're writing libraries and extensions, but
+you can also use them to verify the state of your game after
+performing actions.
 
 Dialog's syntax and unification mechanism make the language particularly
 well-suited to writing succint and readable ("intention-revealing")
@@ -38,18 +40,18 @@ use in our game:
 (interface (min $<X $<Y $>Min))
 
 (max $X $Y $Result)
-     (if) ($X > $Y) (then)
-     	  ($Result = $X)
-     (else)
-	  ($Result = $Y)
-     (endif)
+    (if) ($X > $Y) (then)
+        ($Result = $X)
+    (else)
+        ($Result = $Y)
+    (endif)
 
 (min $X $Y $Result)
-     (if) ($X < $Y) (then)
-     	  ($Result = $X)
-     (else)
-	  ($Result = $Y)
-     (endif)
+    (if) ($X < $Y) (then)
+        ($Result = $X)
+    (else)
+        ($Result = $Y)
+    (endif)
 ----
 
 Assuming that we saved the above code into a file named `minmax.dg`, we
@@ -81,7 +83,7 @@ $
 
 Let's look at some of the details of our first draft of
 `minmax-tests.dg`. First of all, by convention, we put a comment in the
-first line of the file with the command line that we need to run to
+first line of the file with the command line that we need to enter to
 successfully run our tests under the debugger. We run unit tests with
 the debugger, rather than compiling them into Å-machine code or Z-code
 to run with an interpreter. (We'll get to another kind of test that
@@ -119,7 +121,7 @@ simply test like this:
 [source]
 ----
 (test #max-first-is-bigger)
-      (max 3 2 3)
+    (max 3 2 3)
 ----
 
 This works because unification lets you plug in a constant value into
@@ -137,33 +139,27 @@ wind up with something like this:
 
 #max-first-is-bigger
 (test *)
-(run *)
-      (max 3 2 3)
+(run *)    (max 3 2 3)
 
 #max-second-is-bigger
 (test *)
-(run *)
-      (max 2 3 3)
+(run *)    (max 2 3 3)
 
 #max-equal-values
 (test *)
-(run *)
-      (max 2 2 2)
+(run *)    (max 2 2 2)
 
 #min-first-is-bigger
 (test *)
-(run *)
-      (min 3 2 2)
+(run *)    (min 3 2 2)
 
 #min-second-is-bigger
 (test *)
-(run *)
-      (min 2 3 2)
+(run *)    (min 2 3 2)
 
 #min-equal-values
 (test *)
-(run *)
-      (min 2 2 2)
+(run *)    (min 2 2 2)
 ----
 
 Now when we run the debugger, we get this:
@@ -201,7 +197,7 @@ sum of two numbers:
     (if) ($Proposed > $Max) (then)
         ($Z = $Max)
     (else)
-	($Z = $Proposed)
+        ($Z = $Proposed)
     (endif)
 ----
 
@@ -211,8 +207,7 @@ The test for this is obvious:
 ----
 #10-plus-20-max-25
 (test *)
-(run *)
-    (10 plus 20 into 25 max 25)
+(run *)    (10 plus 20 into 25 max 25)
 ----
 
 When we run this, we get
@@ -243,8 +238,7 @@ that.
 ----
 #10-plus-20-max-35
 (test *)
-(run *)
-    (10 plus 20 into 30 max 35)
+(run *)    (10 plus 20 into 30 max 35)
 ----
 
 Which also works when we run it:
@@ -276,23 +270,19 @@ predicate handle large numbers correctly. Let's give it a go:
 ----
 #10-plus-20-max-0
 (test *)
-(run *)
-    (10 plus 20 into 0 max 0)
+(run *)    (10 plus 20 into 0 max 0)
 
 #0-plus-0-max-25
 (test *)
-(run *)
-    (0 plus 0 into 0 max 25)
+(run *)    (0 plus 0 into 0 max 25)
 
 #8000-plus-9000-max-10000
 (test *)
-(run *)
-    (8000 plus 9000 into 10000 max 10000)
+(run *)    (8000 plus 9000 into 10000 max 10000)
 
 #16383-plus-16383-max-16383
 (test *)
-(run *)
-    (16383 plus 16383 into 16383 max 16383)
+(run *)    (16383 plus 16383 into 16383 max 16383)
 ----
 
 But when we run this, we get the following:
@@ -334,14 +324,14 @@ overflow with an `(if)`:
 ----
 ($X plus $Y into $Z max $Max)
     (if) ($X plus $Y into $Sum) (then)
-    	($Proposed = $Sum)
+        ($Proposed = $Sum)
     (else)
-    	($Proposed = 16383)
+        ($Proposed = 16383)
     (endif)
     (if) ($Proposed > $Max) (then)
         ($Z = $Max)
     (else)
-	($Z = $Proposed)
+        ($Z = $Proposed)
     (endif)
 ----
 
