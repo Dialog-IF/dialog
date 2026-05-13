@@ -120,8 +120,9 @@ simply test like this:
 
 [source]
 ----
-(test #max-first-is-bigger)
-    (max 3 2 3)
+#max-first-is-bigger
+(test *)
+(run *)    (max 3 2 3)
 ----
 
 This works because unification lets you plug in a constant value into
