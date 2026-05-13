@@ -42,6 +42,11 @@ Release notes:
 
 	1b/02:
 
+		Compiler: previously, constant lists in rule heads were compiled
+		in a way that was very fast at runtime, but could crash if the
+		lists were too large. Now, large (> 10 entries) constant lists
+		are compiled the same way as constant lists in rule bodies,
+		which is slower but has no limit on size.
 		Debugger: pressing Ctrl-D at a [more] prompt closes the program.
 		
 		Compiler: predicates that are queried but not defined will now
@@ -56,6 +61,7 @@ Release notes:
 		Unit test runner: unit.dg has been redesigned. Unit tests 
 		written against the version from 1b/01 will need to be 
 		rewritten along	the lines of time-tests.dg in the test/unit
+
 		directory.
 
 	1b/01, Lib 1.1.1:
