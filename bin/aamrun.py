@@ -5,6 +5,7 @@
 from pathlib import Path
 from sys import argv, exit, stderr
 import subprocess as sp
+import shutil
 
 USAGE = f'''Usage: {argv[0]} [file.aastory]
 Attempts to play an .aastory file in the Node interpreter (with consistent random seed for testing), despite varying install locations.'''
@@ -12,6 +13,12 @@ Attempts to play an .aastory file in the Node interpreter (with consistent rando
 if len(argv) != 2 or argv[1] in {'--help', '-h'}:
 	print(USAGE, file=stderr)
 	exit(1)
+
+# The aamachine distribution now includes an aamrun binary
+# If that exists on the $PATH, then we can sidestep this whole mess
+if shutil.which('aamrun') is not None:
+	sp.run(['aamrun', '-s', '1234', argv[1]])
+	exit(0)
 
 BASE = Path(__file__).resolve().parent.parent # Root of the repository
 TOSEARCH = [
