@@ -12,8 +12,7 @@
 	   	  		(now) (january starts on 3)
 		  		(now) (using north american dates)
 				(now) (time is running)
-				(now) ~(suspend next tick)
-				(now) (time rate 1)
+				(now) (minutes per tick 1)
 
 #hours-minutes-assert
 (test *)
@@ -587,22 +586,20 @@
 (test *)
 (run *)
 	(time is running)
-	~(suspend this tick)
 	(tick)
 	(14 hours 52 minutes)
 	(tick)
 	(14 hours 53 minutes)
 
-#time-rate
+#minutes-per-tick
 (test *)
 (run *)
-	(now) (time rate 5)
+	(now) (minutes per tick 5)
 	(time is running)
-	~(suspend this tick)
 	(tick)
 	(14 hours 56 minutes)
 	(tick)
 	(15 hours 1 minutes)
-	(now) (time rate 2)
+	(now) (minutes per tick 2)
 	(tick)
 	(15 hours 3 minutes)
