@@ -45,14 +45,25 @@ Release notes:
 
 	1b/02, Lib 1.2.0:
 
+		Compiler: previously, constant lists in rule heads were compiled
+		in a way that was very fast at runtime, but could crash if the
+		lists were too large. Now, large (> 10 entries) constant lists
+		are compiled the same way as constant lists in rule bodies,
+		which is slower but has no limit on size.
+		
 		Debugger: pressing Ctrl-D at a [more] prompt closes the program.
 		
 		Compiler: predicates that are queried but not defined will now
 		include a line number in the compiler warning. This was always
 		supposed to be the case, but was bugged.
 		
-		Unit test runner: unit.dg has been redesigned. Unit tests 
-		written against the version from 1b/01 will need to be 
+		Backend: (inline status bar $) will now produce a line break on
+		Z-machine. It's unclear whether this was Linus's intent, but it
+		matches both the Node and 6502 Å-machine interpreters, so the
+		Z-machine has been updated for consistency.
+		
+		Unit test runner: unit.dg has been redesigned. Unit tests
+		written against the version from 1b/01 will need to be
 		rewritten along the lines of time-tests.dg in the test/unit
 		directory.
 
