@@ -53,6 +53,11 @@ Release notes:
 		include a line number in the compiler warning. This was always
 		supposed to be the case, but was bugged.
 		
+		Backend: (inline status bar $) will now produce a line break on
+		Z-machine. It's unclear whether this was Linus's intent, but it
+		matches both the Node and 6502 Å-machine interpreters, so the
+		Z-machine has been updated for consistency.
+		
 		Unit test runner: unit.dg has been redesigned. Unit tests 
 		written against the version from 1b/01 will need to be 
 		rewritten along	the lines of time-tests.dg in the test/unit
