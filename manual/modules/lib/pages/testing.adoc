@@ -1,0 +1,407 @@
+= Chapter 12: Testing and Debugging
+
+Interactive fiction games such as those that you'll write with Dialog
+require a lot of testing to get right. Dialog provides several
+facilites to help you test your code, and a full-featured debugger to
+work out why your code isn't behaving as expected.
+
+[#unittests]
+== Unit Tests With `unit.dg`
+
+Included in the Dialog library is `unit.dg`, a library that allows you
+to write unit tests for your code in Dialog. See the
+xref:ROOT:software.adoc[Software Page] for more information on where
+to find `unit.dg`.
+
+Unit tests are short, simple tests that exercise small pieces of your
+code. They can save quite a bit of debugging, and even more helpully,
+will let you know if you've accidentally broken something unrelated
+when you make a change to some other part of your game, if you run
+them whenever you recompile a new change.
+
+Dialog's syntax and unification mechanism make the language particularly
+well-suited to writing succint and readable ("intention-revealing")
+tests, as we'll see in the examples below.
+
+[#writing]
+=== Writing Unit Tests
+
+As an example, suppose that we've pulled together a small extension to
+use in our game:
+
+[source]
+----
+(extension version) Min and Max v0.1, by A.N. Author (line)
+
+(interface (max $<X $<Y $>Max))
+
+(interface (min $<X $<Y $>Min))
+
+(max $X $Y $Result)
+     (if) ($X > $Y) (then)
+     	  ($Result = $X)
+     (else)
+	  ($Result = $Y)
+     (endif)
+
+(min $X $Y $Result)
+     (if) ($X < $Y) (then)
+     	  ($Result = $X)
+     (else)
+	  ($Result = $Y)
+     (endif)
+----
+
+Assuming that we saved the above code into a file named `minmax.dg`, we
+can create a corresponding test file, `minmax-tests.dg`, like so:
+
+[source]
+----
+%% dgdebug -u minmax-tests.dg minmax.dg unit.dg stdlib.dg
+
+#max-first-is-bigger
+(test *)
+(run *)
+      (max 3 2 $Max)
+      (assert $Max = 3)
+----
+
+...and we have our first test! We're only testing one test case, so
+far, and we're definitely going to want more. When we run the test, we
+get the following:
+
+[source]
+----
+$ dgdebug -u minmax-tests.dg minmax.dg unit.dg stdlib.dg 
+Attempting 1 test.
+Testing #max-first-is-bigger: Passed!
+1 test passed successfully.
+$
+----
+
+Let's look at some of the details of our first draft of
+`minmax-tests.dg`. First of all, by convention, we put a comment in the
+first line of the file with the command line that we need to run to
+successfully run our tests under the debugger. We run unit tests with
+the debugger, rather than compiling them into Å-machine code or Z-code
+to run with an interpreter. (We'll get to another kind of test that
+does use the compiler and your interpreters later in this chapter.)
+The `-u` option is important, as it causes the debugger to exit when
+it finishes running our unit tests, and suppresses some warnings and
+the `[more]` prompt.
+
+For more elaborate project files or extensions that have multiple
+dependencies, the first-line comment might spill over multiple lines,
+like this:
+
+[source]
+----
+%% dgdebug -u damage-tests.dg damage.dg schema.dg sector.dg grid.dg \
+%%            unit.dg stdlib.dg
+----
+
+We need this comment because it isn't always obvious what files need
+to be included, nor in what order they need to be arranged. The last
+two files that you include will generally be `unit.dg` and
+`stdlib.dg`.
+
+We also have the test itself, which is an object, with a `(test $)`
+trait. Evaluating the `(run $)` predicate will run the test.
+
+Using `(assert $X = $Y)` does much the same thing that `($X = $Y)`
+does by itself, but it throws in a few extra checks to prove that the
+arguments are bound. You don't have to use it in your own tests, but
+it can reveal failures that a straight comparison wouldn't.
+
+While we're at it, we can eliminate that `assert` altogether, and
+simply test like this:
+
+[source]
+----
+(test #max-first-is-bigger)
+      (max 3 2 3)
+----
+
+This works because unification lets you plug in a constant value into
+what's supposed to be one of the outputs, and it will fail to unify
+(and thus fail the test) if the answer is wrong. That lets us write a
+lot of our tests as one-liners, combining the test and its assertions
+into one statement.
+
+We'll want more than one test case, of course, so we might eventually
+wind up with something like this:
+
+[source]
+----
+%% dgdebug -u minmax-tests.dg minmax.dg unit.dg stdlib.dg
+
+#max-first-is-bigger
+(test *)
+(run *)
+      (max 3 2 3)
+
+#max-second-is-bigger
+(test *)
+(run *)
+      (max 2 3 3)
+
+#max-equal-values
+(test *)
+(run *)
+      (max 2 2 2)
+
+#min-first-is-bigger
+(test *)
+(run *)
+      (min 3 2 2)
+
+#min-second-is-bigger
+(test *)
+(run *)
+      (min 2 3 2)
+
+#min-equal-values
+(test *)
+(run *)
+      (min 2 2 2)
+----
+
+Now when we run the debugger, we get this:
+
+[source]
+----
+$ dgdebug -u minmax-tests.dg minmax.dg unit.dg stdlib.dg
+Attempting 6 tests.
+Testing #max-first-is-bigger: Passed!
+Testing #max-second-is-bigger: Passed!
+Testing #max-equal-values: Passed!
+Testing #min-first-is-bigger: Passed!
+Testing #min-second-is-bigger: Passed!
+Testing #min-equal-values: Passed!
+6 tests passed successfully.
+$
+----
+
+[#choosing]
+=== Choosing the Right Test Cases
+
+When you're choosing what to test, it's important to not just test for
+the things that you want to go right, but to test all of the ways that
+you can think of your code going wrong.
+
+Suppose that we add a predicate to `minmax.dg` that puts a cap on the
+sum of two numbers:
+
+[source]
+----
+(interface ($<X plus $<Y into $>Z max $<Max))
+
+($X plus $Y into $Z max $Max)
+    ($X plus $Y into $Proposed)
+    (if) ($Proposed > $Max) (then)
+        ($Z = $Max)
+    (else)
+	($Z = $Proposed)
+    (endif)
+----
+
+The test for this is obvious:
+
+[source]
+----
+#10-plus-20-max-25
+(test *)
+(run *)
+    (10 plus 20 into 25 max 25)
+----
+
+When we run this, we get
+
+[source]
+----
+$ dgdebug -u minmax-tests.dg minmax.dg unit.dg stdlib.dg
+Attempting 7 tests.
+Testing #max-first-is-bigger: Passed!
+Testing #max-second-is-bigger: Passed!
+Testing #max-equal-values: Passed!
+Testing #min-first-is-bigger: Passed!
+Testing #min-second-is-bigger: Passed!
+Testing #min-equal-values: Passed!
+Testing #10-plus-20-max-25: Passed!
+7 tests passed successfully.
+$
+----
+
+Hooray, it works! So we're done, right?
+
+Well, no. There are lots of ways that the predicate can fail that we
+haven't tested for yet. For starters, there's a second code path that
+we might follow, if the sum doesn't overflow the maximum. Let's test
+that.
+
+[source]
+----
+#10-plus-20-max-35
+(test *)
+(run *)
+    (10 plus 20 into 30 max 35)
+----
+
+Which also works when we run it:
+
+[source]
+----
+$ dgdebug -u minmax-tests.dg minmax.dg unit.dg stdlib.dg
+Attempting 8 tests.
+Testing #max-first-is-bigger: Passed!
+Testing #max-second-is-bigger: Passed!
+Testing #max-equal-values: Passed!
+Testing #min-first-is-bigger: Passed!
+Testing #min-second-is-bigger: Passed!
+Testing #min-equal-values: Passed!
+Testing #10-plus-20-max-25: Passed!
+Testing #10-plus-20-max-35: Passed!
+8 tests passed successfully.
+$
+----
+
+So, we're done _now_, right? Not so fast. How else can this fail?
+
+Two common failure points for any arithmetic predicate are 0 and
+16383, the latter being the largest integer that Dialog can handle. In
+principle, having a guard against overflowing 16383 should let this
+predicate handle large numbers correctly. Let's give it a go:
+
+[source]
+----
+#10-plus-20-max-0
+(test *)
+(run *)
+    (10 plus 20 into 0 max 0)
+
+#0-plus-0-max-25
+(test *)
+(run *)
+    (0 plus 0 into 0 max 25)
+
+#8000-plus-9000-max-10000
+(test *)
+(run *)
+    (8000 plus 9000 into 10000 max 10000)
+
+#16383-plus-16383-max-16383
+(test *)
+(run *)
+    (16383 plus 16383 into 16383 max 16383)
+----
+
+But when we run this, we get the following:
+
+[source]
+----
+$ dgdebug -u minmax-tests.dg minmax.dg unit.dg stdlib.dg
+Attempting 12 tests.
+Testing #max-first-is-bigger: Passed!
+Testing #max-second-is-bigger: Passed!
+Testing #max-equal-values: Passed!
+Testing #min-first-is-bigger: Passed!
+Testing #min-second-is-bigger: Passed!
+Testing #min-equal-values: Passed!
+Testing #10-plus-20-max-25: Passed!
+Testing #10-plus-20-max-35: Passed!
+Testing #10-plus-20-max-0: Passed!
+Testing #0-plus-0-max-25: Passed!
+Testing #8000-plus-9000-max-10000: Failed. :-(
+Testing #16383-plus-16383-max-16383: Failed. :-(
+2 TESTS FAILED.
+$
+----
+
+You'll notice that the text colour of the output changed from green to
+red once the first test failed. That's a visual cue that something is
+wrong. Books about testing will sometimes refer to a "red bar" or
+"green bar," referring to a progress bar that's a feature of many
+integrated development environments, which stays green so long as the
+tests being run all pass, and which turns red as soon as one of them
+fails. The green and red text is Dialog's version of that feature.
+
+Why did the tests fail? Our predicate imposes a maximum value on the
+calculation, but it uses the `($ plus $ into $)` built-in predicate,
+which fails if the addition overflows 16383. We can guard against the
+overflow with an `(if)`:
+
+[source]
+----
+($X plus $Y into $Z max $Max)
+    (if) ($X plus $Y into $Sum) (then)
+    	($Proposed = $Sum)
+    (else)
+    	($Proposed = 16383)
+    (endif)
+    (if) ($Proposed > $Max) (then)
+        ($Z = $Max)
+    (else)
+	($Z = $Proposed)
+    (endif)
+----
+
+And now when we run the tests again, they pass, and the text stays green:
+
+[source]
+----
+$ dgdebug -u minmax-tests.dg minmax.dg unit.dg stdlib.dg
+Attempting 12 tests.
+Testing #max-first-is-bigger: Passed!
+Testing #max-second-is-bigger: Passed!
+Testing #max-equal-values: Passed!
+Testing #min-first-is-bigger: Passed!
+Testing #min-second-is-bigger: Passed!
+Testing #min-equal-values: Passed!
+Testing #10-plus-20-max-25: Passed!
+Testing #10-plus-20-max-35: Passed!
+Testing #10-plus-20-max-0: Passed!
+Testing #0-plus-0-max-25: Passed!
+Testing #8000-plus-9000-max-10000: Passed!
+Testing #16383-plus-16383-max-16383: Passed!
+12 tests passed successfully.
+$
+----
+
+[#fixtures]
+=== Test Fixtures
+
+So far, all of the tests that we've written have been one-liners. 
+
+[#state]
+=== Testing From Known State
+
+[#regtest]
+== Integration Tests With `regtest.py`
+
+[#make]
+== Pulling It All Together With `make`
+
+[#summary]
+== Summary
+
+Here's a summary of the advice from this chapter:
+
+- Test your code as thoroughly as possible, to save headaches later.
+- Don't just test the success cases -- think of all the ways that your
+  code could possibly fail, and test for those.
+- Test a single concept or case per test.
+- Use fixtures to keep your actual test cases simple.
+- Start each test from a known state, and reset to that state with
+  `(set up $)` and `(clean up $)` before running the next test.
+- Test in depth, using both unit and integration tests.
+- Automate your testing process with `make` or `dgt`.
+- Test on all platforms for which you'll be releasing: Z-machine, web,
+  and vintage computing hardware.
+- Listen to your tests. If one fails, it's telling you something
+  important.
+- Don't release a game for which any of the tests have failed.
+
+Software testing is a much bigger topic than just the introduction to
+it presented here. More good advice about it can be found in books on
+the topic, particularly ones focused on modern automated testing, and
+on test-driven development.
