@@ -12,11 +12,13 @@
 
 (interface ($<Number is even)) %% yagni?
 
-(interface (round $<Num to the nearest $<Increment into $>Result))
+(interface (max $<X $<Y $>Max))
 
-(interface (max $<X and $<Y into $>Max))
+(interface (min $<X $<Y $>Min))
 
-(interface (min $<X and $<Y into $>Min))
+(interface (sort $<X $<Y into $>Low $High))
+
+(interface (sort $<X $<Y $<Z into $>Low $>Mid $>High))
 
 (interface ($<Num1 delta $<Num2 into $>Result))
 
@@ -24,17 +26,15 @@
 
 (interface (add $<X to $<Y into $>Z))           %% safe, capped at maxint
 
-(interface (add $<X to $<Y into $>Z max $<Max)) %% safe, capped at maxint
+(interface (add $<X to $<Y into $>Z max $<Max)) %% safe, capped at $Max
 
 (interface (subtract $<X from $<Y into $>Z))    %% safe, capped at 0
 
 (interface ($<Num1 divided by $<Num2 into $>Result rounding up))
 
+(interface (round $<Num to the nearest $<Increment into $>Result))
+
 (interface (split $<Number into $>Thousands $>Hundreds $>Tens $>Ones))
-
-(interface (sort $<X $<Y into $>High $>Low))
-
-(interface (sort $<X $<Y $<Z into $>High $>Mid $>Low))
 
 (interface (take last $<N from $<List into $>Suffix))
 
@@ -66,16 +66,12 @@
 %% duplicates) sublist that begins with the specified sublist.
 (interface (find in $<List beginning with sublist $<Head into $>Match))
 
-%% Same, but construct a sublist to search for two elements
-(interface (find $<X $<Y in $<List into $>Match))
+%% Pick out the sublist with the highest value for the specified element.
+(interface (find in $<List with highest element $<Num into $>Match))
 
 (interface (set element $<Num in $<Head in $<List to $<Value into $>NewList))
 
 (interface (remove from $<List beginning with sublist $<Head into $>NewList))
-
-(interface (remove $<X $<Y from $<List into $>NewList))
-
-(interface (remove from $<List found in $<Filter into $>NewList))
 
 %%------------------------------ IMPLEMENTATION ------------------------------
 
@@ -89,75 +85,19 @@
 	($Num > 0)
 	~($Num is odd)
 
-(max $X and $Y into $Result)
+(max $X $Y $Result)
 	(if) ($X > $Y) (then)
 		($Result = $X)
 	(else)
 		($Result = $Y)
 	(endif)
 
-(min $X and $Y into $Result)
+(min $X $Y $Result)
 	(if) ($X < $Y) (then)
 		($Result = $X)
 	(else)
 		($Result = $Y)
 	(endif)
-
-(round $Num to the nearest $Increment into $Result)
-	($Num modulo $Increment into $Mod)
-	($Increment divided by 2 into $Div rounding up)
-	(if) ($Div > $Mod) (then)
-		($Num divided by $Increment into $Multiplier)
-	(else)
-		($Num divided by $Increment into $Multiplier rounding up)
-	(endif)
-	($Increment times $Multiplier into $Result)
-
-($X delta $Y into $Result)
-	(if) ($X > $Y) (then)
-		($X minus $Y into $Result)
-	(else)
-		($Y minus $X into $Result)
-	(endif)
-
-($Num1 is within $Range of $Num2)
-	($Num1 delta $Num2 into $Delta)
-	~($Delta > $Range)
-
-(add $X to $Y into $Z)
-    (add $X to $Y into $Z max 16383)
-
-(add $X to $Y into $Z max $Max)
-	(if) ($X plus $Y into $Sum) (then)
-		($Proposed = $Sum)
-	(else)
-		($Proposed = 16383)
-	(endif)
-	(if) ($Proposed > $Max) (then)
-		($Z = $Max)
-	(else)
-		($Z = $Proposed)
-	(endif)
-
-(subtract $Y from $X into $Z)
-    (if) ($Y > $X) (then)
-		($Z = 0)
-	(else)
-		($X minus $Y into $Z)
-	(endif)
-
-($Num1 divided by $Num2 into $Result rounding up)
-	(subtract 1 from $Num1 into $Num)
-	($Num divided by $Num2 into $Div)
-	($Div plus 1 into $Result)
-
-(split $Number into $Thousands $Hundreds $Tens $Ones)
-	($Number divided by 1000 into $Thousands)
-	($Number modulo 1000 into $Remaining1)
-	($Remaining1 divided by 100 into $Hundreds)
-	($Remaining1 modulo 100 into $Remaining2)
-	($Remaining2 divided by 10 into $Tens)
-	($Remaining2 modulo 10 into $Ones)
 
 (sort $X $Y into $RX $RY)
 	(if) ($X > $Y) (then)
@@ -172,6 +112,55 @@
     (sort $X $Y into $L1 $H1)
 	(sort $H1 $Z into $L2 $RZ)
 	(sort $L1 $L2 into $RX $RY)
+
+($X delta $Y into $Result)
+	(sort $X $Y into $Low $High)
+	($High minus $Low into $Result)
+
+($Num1 is within $Range of $Num2)
+	($Num1 delta $Num2 into $Delta)
+	~($Delta > $Range)
+
+(add $X to $Y into $Z)
+    (add $X to $Y into $Z max 16383)
+
+(add $X to $Y into $Z max $Max)
+	(if) ($X plus $Y into $Sum) (then)
+		($Proposed = $Sum)
+	(else)
+		($Proposed = 16383)
+	(endif)
+	(sort $Proposed $Max into $Z $)
+
+(subtract $Y from $X into $Z)
+    (if) ($Y > $X) (then)
+		($Z = 0)
+	(else)
+		($X minus $Y into $Z)
+	(endif)
+
+($Num1 divided by $Num2 into $Result rounding up)
+	(subtract 1 from $Num1 into $Num)
+	($Num divided by $Num2 into $Div)
+	($Div plus 1 into $Result)
+
+(round $Num to the nearest $Increment into $Result)
+	($Num modulo $Increment into $Mod)
+	($Increment divided by 2 into $Div rounding up)
+	(if) ($Div > $Mod) (then)
+		($Num divided by $Increment into $Multiplier)
+	(else)
+		($Num divided by $Increment into $Multiplier rounding up)
+	(endif)
+	($Increment times $Multiplier into $Result)
+
+(split $Number into $Thousands $Hundreds $Tens $Ones)
+	($Number divided by 1000 into $Thousands)
+	($Number modulo 1000 into $Remaining1)
+	($Remaining1 divided by 100 into $Hundreds)
+	($Remaining1 modulo 100 into $Remaining2)
+	($Remaining2 divided by 10 into $Tens)
+	($Remaining2 modulo 10 into $Ones)
 
 (take last $N from $List into $Suffix)
 	(reverse $List $Reverse)
@@ -190,7 +179,7 @@
 	(append $Front $Suffix $NewList)
 
 (replace element $N in $List with $New into $NewList with max $Max)
-	(min $New and $Max into $Value)
+	(min $New $Max $Value)
 	(replace element $N in $List with $Value into $NewList)
 
 (increase element $N in $List by $Num into $NewList)
@@ -244,9 +233,6 @@
 	    (find in $Tail beginning with sublist $Sublist into $Match)
 	(endif)
 
-(find $X $Y in $List into $Match)
-	(find in $List beginning with sublist [$X $Y] into $Match)
-
 (remove from [] beginning with sublist $ into [])
 
 (remove from $List beginning with sublist $Sublist into $NewList)
@@ -256,23 +242,6 @@
 	(else)
 		(remove from $Tail beginning with sublist $Sublist into $Remainder)
 		(append [$Head] $Remainder $NewList)
-	(endif)
-
-(remove $X $Y from $List into $NewList)
-	(remove from $List beginning with sublist [$X $Y] into $NewList)
-
-(remove from [] found in $ into [])
-
-(remove from $List found in [] into $List)
-
-(remove from $List found in $Filter into $Result)
-	([$Head | $Tail] = $Filter)
-	([$X $Y | $] = $Head)
-	(remove $X $Y from $List into $NewList)
-	(if) ($List = $NewList) (then)
-		(remove from $NewList found in $Tail into $Result)
-	(else)
-		(remove from $NewList found in $Filter into $Result)
 	(endif)
 
 (set element $ in $ in [] to $ into [])

@@ -25,6 +25,7 @@ tidy:
 
 clean: tidy
 	$(MAKE) -C src clean
+	$(MAKE) -C test clean
 
 install: src/dialogc src/dgdebug
 	$(MAKE) -C src install
