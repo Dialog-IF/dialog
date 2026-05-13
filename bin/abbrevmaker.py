@@ -12,7 +12,7 @@ MAX_ABBREVS = 96
 
 PATTERN = r'Abbreviate "([^"]+)";\s+\!.*'
 
-REPLACEMENTS = { '~':'\\"', '^':'\\n' } # Undo Inform string escaping (or rather replace it with C string escaping
+REPLACEMENTS = { '~':'\\"', '^':'\\n' } # Undo Inform string escaping (or rather replace it with C string escaping)
 
 abbrevs = []
 
@@ -29,7 +29,7 @@ num_found = len(abbrevs)
 print(f'Total: {num_found}/{MAX_ABBREVS}')
 
 # Step 2: build the index
-index = defaultdict(list) # first char : [longest ... shortest]
+index = defaultdict(list) # first char : [longest, ..., shortest]
 for abr in abbrevs:
 	c = abr[0]
 	index[c].append(abr)
