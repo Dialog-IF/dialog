@@ -97,7 +97,7 @@ void morefunc() {
 	fflush(stdout);
 	i = term_getkey("[more]");
 	printf("\r      \r");
-	if(i == -1) {
+	if(i == -1 || i == 4) { // EOF, Ctrl-D
 		exit(0);
 	} else if(i < 0) {
 		exit(1);
@@ -506,7 +506,7 @@ int term_getkey(const char *prompt) {
 	tty_restore();
 
 	unread_lines = 0;
-
+	
 	return ch;
 }
 

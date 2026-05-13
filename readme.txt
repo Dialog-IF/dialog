@@ -47,6 +47,11 @@ Release notes:
 		lists were too large. Now, large (> 10 entries) constant lists
 		are compiled the same way as constant lists in rule bodies,
 		which is slower but has no limit on size.
+		Debugger: pressing Ctrl-D at a [more] prompt closes the program.
+		
+		Compiler: predicates that are queried but not defined will now
+		include a line number in the compiler warning. This was always
+		supposed to be the case, but was bugged.
 		
 		Unit test runner: unit.dg has been redesigned. Unit tests 
 		written against the version from 1b/01 will need to be 
