@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# This script will ump the version in all the "authoritative" places.
-# You may also need to regenerate test output that embeds the version.
+# This script will bump the version in all the "authoritative" places.
+# Test output should no longer care about this, but run `make test` afterward to make sure
+# Usage: ./bump-version.sh 1a/01-dev 1.1.0
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
