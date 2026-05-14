@@ -43,7 +43,7 @@ Project website:
 
 Release notes:
 
-	1b/02, Lib 1.2.0:
+	1b/02, Lib 1.2.1:
 
 		Compiler: previously, constant lists in rule heads were compiled
 		in a way that was very fast at runtime, but could crash if the
@@ -65,7 +65,8 @@ Release notes:
 		Unit test runner: unit.dg has been redesigned. Unit tests
 		written against the version from 1b/01 will need to be
 		rewritten along the lines of time-tests.dg in the test/unit
-		directory.
+		directory. (It was just released, so we don't expect many --
+		or any -- tests to have been written against the old version.)
 
 	1b/01, Lib 1.2.0:
 
