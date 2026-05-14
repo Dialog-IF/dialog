@@ -34,23 +34,23 @@
 #max-different
 (test *)
 (run *)
-	(max 2 and 3 into 3)
-	(max 3 and 2 into 3)
+	(max 2 3 3)
+	(max 3 2 3)
 
 #max-same
 (test *)
 (run *)
-	(max 2 and 2 into 2)
+	(max 2 2 2)
 
 #min-different
 (test *)
 (run *)
-	(min 2 and 3 into 2)
-	(min 3 and 2 into 2)
+	(min 2 3 2)
+	(min 3 2 2)
 
 #min-same
 (test *)
-(run *)	(min 2 and 2 into 2)
+(run *)	(min 2 2 2)
 
 #round-0-0
 (test *)
@@ -489,23 +489,27 @@
 	(list of lists $List)
 	~(set element 0 in [1 2] in $List to 6 into $)
 
-#find-type-and-id
+#intentionally-fail-yet-another
 (test *)
-(run *)
-	  (list of lists $List)
-	  (find 2 2 in $List into [2 2 4 5 6])
+(run *)	(fail)
 
-#dont-find-type-and-id
+#find-2-2
 (test *)
 (run *)
 	  (list of lists $List)
-	  ~(find 9 9 in $List into $)
+	  (find in $List beginning with sublist [2 2] into [2 2 4 5 6])
+
+#dont-find-9-9
+(test *)
+(run *)
+	  (list of lists $List)
+	  ~(find in $List beginning with sublist [9 9] into $)
 
 #remove-1-2
 (test *)
 (run *)
 	  (list of lists $List)
-	  (remove 1 2 from $List into $NewList)
+	  (remove from $List beginning with sublist [1 2] into $NewList)
 	  (assert $NewList = [
 		[2 2 4 5 6]
 		[3 2 4 5 6]
@@ -516,8 +520,8 @@
 (test *)
 (run *)
 	  (list of lists $List)
-	  (remove 1 2 from $List into $NewList)
-	  (remove 1 2 from $NewList into $NewerList)
+	  (remove from $List beginning with sublist [1 2] into $NewList)
+	  (remove from $NewList beginning with sublist [1 2] into $NewerList)
 	  (assert $NewerList = [
 		[2 2 4 5 6]
 		[3 2 4 5 6]
@@ -528,7 +532,7 @@
 (test *)
 (run *)
 	  (list of lists $List)
-	  (remove 2 2 from $List into $NewList)
+	  (remove from $List beginning with sublist [2 2] into $NewList)
 	  (assert $NewList = [
 	  	[1 2 3 4 5]
 		[3 2 4 5 6]
@@ -539,7 +543,7 @@
 (test *)
 (run *)
 	  (list of lists $List)
-	  (remove 3 2 from $List into $NewList)
+	  (remove from $List beginning with sublist [3 2] into $NewList)
 	  (assert $NewList = [
 	  	[1 2 3 4 5]
 		[2 2 4 5 6]
@@ -550,8 +554,8 @@
 (test *)
 (run *)
 	  (list of lists $List)
-	  (remove 3 2 from $List into $NewList)
-	  (remove 3 2 from $NewList into $NewerList)
+	  (remove from $List beginning with sublist [3 2] into $NewList)
+	  (remove from $NewList beginning with sublist [3 2] into $NewerList)
 	  (assert $NewerList = [
 	  	[1 2 3 4 5]
 		[2 2 4 5 6]
@@ -561,7 +565,7 @@
 (test *)
 (run *)
 	  (list of lists $List)
-	  (remove 4 1 from $List into $NewList)
+	  (remove from $List beginning with sublist [4 1] into $NewList)
 	  (assert $NewList = [
 	  	[1 2 3 4 5]
 		[2 2 4 5 6]
@@ -572,42 +576,4 @@
 (test *)
 (run *)
 	  (list of lists $List)
-	  (remove 7 7 from $List into $List)
-
-#remove-in-filter
-(test *)
-(run *)
-	  (list of lists $List)
-	  (remove from $List found in [[1 2] [4 1]] into [
-		[2 2 4 5 6]
-		[3 2 4 5 6]
-		[3 2 4 6 7]])
-
-#remove-multiple-match
-(test *)
-(run *)
-	  (list of lists $List)
-	  (remove from $List found in [[3 2] [4 1]] into [
-		[1 2 3 4 5]
-		[2 2 4 5 6]])
-
-#remove-in-empty-filter
-(test *)
-(run *)
-	  (list of lists $List)
-	  (remove from $List found in [] into $List)
-
-#remove-empty-list-in-filter
-(test *)
-(run *)
-	  (remove from [] found in [[1 2] [4 1]] into [])
-
-#remove-in-disjoint-filter
-(test *)
-(run *)
-	  (list of lists $List)
-	  (remove from $List found in [[7 8] [9 9]] into $List)
-
-#intentionally-fail-yet-another
-(test *)
-(run *)	(fail)
+	  (remove from $List beginning with sublist [7 7] into $List)
