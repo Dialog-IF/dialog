@@ -1,7 +1,8 @@
 %% unit.dg
-(extension version)	Unit test runner 1.2.1 by Susan Davis (line)
+(extension version)	Unit test runner 1.2.1 by Susan Davis.
 
-%% See example(s) in test/unit in Dialog source distribution.
+%% See example(s) in test/unit in Dialog source distribution, and chapter 12 of
+%% the library manual.
 
 %% Copyright © 2021-2026, Susan Davis. All rights reserved. Licensed under the
 %% same license as the rest of Dialog; see license.txt or LICENSE for details.
