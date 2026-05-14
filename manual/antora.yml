@@ -1,14 +1,14 @@
 name: dialog
 title: Dialog
-version: 1b02
+version: 1c01-dev
 nav:
   - modules/ROOT/nav.adoc
   - modules/lang/nav.adoc
   - modules/lib/nav.adoc
 asciidoc:
   attributes:
-    lang-ver: 1b
-    lib-ver: 1.2.1
+    lang-ver: 1c
+    lib-ver: 1.3.0-dev
     old-home-page: https://linusakesson.net/dialog/
     home-page: https://github.com/Dialog-IF/dialog/
     aa-old-home-page: https://linusakesson.net/dialog/aamachine/
