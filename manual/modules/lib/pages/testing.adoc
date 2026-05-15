@@ -437,11 +437,17 @@ So far, all of the tests that we've written have been one-liners.
 [#state]
 === Testing From Known State
 
+TODO
+
 [#model]
 === Testing the Object Model
 
+TODO
+
 [#regtest]
 == Integration Tests With `regtest.py`
+
+TODO
 
 [#skein]
 === `dgt` and the Skein
@@ -459,6 +465,12 @@ xref:ROOT:software.adoc[Software Page].
 
 [#make]
 == Pulling It All Together With `make`
+
+TODO
+
+=== Testing For Multiple Platforms
+
+TODO
 
 [#dgt]
 === Building With `dgt` Instead
