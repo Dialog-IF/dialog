@@ -443,8 +443,29 @@ So far, all of the tests that we've written have been one-liners.
 [#regtest]
 == Integration Tests With `regtest.py`
 
+[#skein]
+=== `dgt` and the Skein
+
+An exciting alternative to `regtest.py` is Howard Ship's `dgt` tool,
+which includes a feature called the *Skein*. The Skein allows you to
+interactively walk through your game through multiple branching paths,
+and "bless" your game's output when it's correct. You can then re-run
+the Skein after making changes to your game, and confirm that you
+didn't break anything.
+
+For details on `dgt` and the Skein, see the `dgt` documentation. Details
+on where to find the `dgt` software can be found on the
+xref:ROOT:software.adoc[Software Page].
+
 [#make]
 == Pulling It All Together With `make`
+
+[#dgt]
+=== Building with `dgt` instead
+
+If you're using the `dgt` tool to test with the Skein, `dgt` can also
+be used to build your project and run its unit tests. See the `dgt`
+documentation for details.
 
 [#summary]
 == Summary
