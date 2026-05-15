@@ -425,7 +425,7 @@ Testing #16383-plus-16383-max-16383: Passed!
 We didn't.
 
 Simplifying your code without changing its behaviour is called
-*refactoring*. Code tends to get more complex and error-prone, the
+_refactoring_. Code tends to get more complex and error-prone, the
 more you write of it. Refactoring helps you prevent that complexity
 from creeping in to your project.
 
@@ -447,7 +447,7 @@ So far, all of the tests that we've written have been one-liners.
 === `dgt` and the Skein
 
 An exciting alternative to `regtest.py` is Howard Ship's `dgt` tool,
-which includes a feature called the *Skein*. The Skein allows you to
+which includes a feature called the _Skein_. The Skein allows you to
 interactively walk through your game through multiple branching paths,
 and "bless" your game's output when it's correct. You can then re-run
 the Skein after making changes to your game, and confirm that you
