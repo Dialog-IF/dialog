@@ -468,10 +468,12 @@ xref:ROOT:software.adoc[Software Page].
 
 TODO
 
+[#makefile]
 === `Makefile` Basics
 
 TODO
 
+[#multiplatform]
 === Testing For Multiple Platforms
 
 TODO
