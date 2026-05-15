@@ -33,7 +33,7 @@ use in our game:
 
 [source]
 ----
-(extension version) Min and Max v0.1, by A.N. Author (line)
+(extension version) Min and Max v0.1, by A. N. Author.
 
 (interface (max $<X $<Y $>Max))
 
@@ -78,7 +78,6 @@ $ dgdebug -u minmax-tests.dg minmax.dg unit.dg stdlib.dg
 Attempting 1 test.
 Testing #max-first-is-bigger: Passed!
 1 test passed successfully.
-$
 ----
 
 Let's look at some of the details of our first draft of
@@ -176,7 +175,6 @@ Testing #min-first-is-bigger: Passed!
 Testing #min-second-is-bigger: Passed!
 Testing #min-equal-values: Passed!
 6 tests passed successfully.
-$
 ----
 
 [#choosing]
@@ -225,7 +223,6 @@ Testing #min-second-is-bigger: Passed!
 Testing #min-equal-values: Passed!
 Testing #10-plus-20-max-25: Passed!
 7 tests passed successfully.
-$
 ----
 
 Hooray, it works! So we're done, right?
@@ -242,7 +239,7 @@ that.
 (run *)    (10 plus 20 into 30 max 35)
 ----
 
-Which also works when we run it:
+Our new test also works when we run it:
 
 [source]
 ----
@@ -257,7 +254,6 @@ Testing #min-equal-values: Passed!
 Testing #10-plus-20-max-25: Passed!
 Testing #10-plus-20-max-35: Passed!
 8 tests passed successfully.
-$
 ----
 
 So, we're done _now_, right? Not so fast. How else can this fail?
@@ -305,7 +301,6 @@ Testing #0-plus-0-max-25: Passed!
 Testing #8000-plus-9000-max-10000: Failed. :-(
 Testing #16383-plus-16383-max-16383: Failed. :-(
 2 TESTS FAILED.
-$
 ----
 
 You'll notice that the text colour of the output changed from green to
@@ -355,8 +350,84 @@ Testing #0-plus-0-max-25: Passed!
 Testing #8000-plus-9000-max-10000: Passed!
 Testing #16383-plus-16383-max-16383: Passed!
 12 tests passed successfully.
-$
 ----
+
+[#refactoring]
+=== Refactoring
+
+Now that all of our tests are passing, we can take a look at the code
+that we've just written. One thing that jumps out is that we've
+written code that finds the maximum of two values twice:
+
+[source]
+----
+(max $X $Y $Result)
+    (if) ($X > $Y) (then)
+        ($Result = $X)
+    (else)
+        ($Result = $Y)
+    (endif)
+
+($X plus $Y into $Z max $Max)
+    (if) ($X plus $Y into $Sum) (then)
+        ($Proposed = $Sum)
+    (else)
+        ($Proposed = 16383)
+    (endif)
+    (if) ($Proposed > $Max) (then)
+        ($Z = $Max)
+    (else)
+        ($Z = $Proposed)
+    (endif)
+----
+
+Writing the same code more than once can be error-prone if you change
+it in one place, but not the other. It also bloats your program. Don't
+repeat yourself. Also, don't repeat yourself.
+
+Since we've already written `(max $ $ $)`, we can use it in `($ plus $
+into $ max $)`:
+
+[source]
+----
+($X plus $Y into $Z max $Max)
+    (if) ($X plus $Y into $Sum) (then)
+        ($Proposed = $Sum)
+    (else)
+        ($Proposed = 16383)
+    (endif)
+    (max $Proposed $Max $Z)
+----
+
+...and now our code is smaller and easier to understand. Because we
+have a good set of unit tests, we can safely make changes like this,
+because the tests will tell us if we broke anything.
+
+[source]
+----
+$ dgdebug -u minmax-tests.dg minmax.dg unit.dg stdlib.dg
+Attempting 12 tests.
+Testing #max-first-is-bigger: Passed!
+Testing #max-second-is-bigger: Passed!
+Testing #max-equal-values: Passed!
+Testing #min-first-is-bigger: Passed!
+Testing #min-second-is-bigger: Passed!
+Testing #min-equal-values: Passed!
+Testing #10-plus-20-max-25: Passed!
+Testing #10-plus-20-max-35: Passed!
+Testing #10-plus-20-max-0: Passed!
+Testing #0-plus-0-max-25: Passed!
+Testing #8000-plus-9000-max-10000: Passed!
+Testing #16383-plus-16383-max-16383: Passed!
+12 tests passed successfully.
+----
+
+We didn't.
+
+Simplifying your code without changing its behaviour is called
+*refactoring*. Code tends to get more complex and error-prone, the
+more you write of it. Refactoring helps you prevent that complexity
+from creeping in to your project.
 
 [#fixtures]
 === Test Fixtures
