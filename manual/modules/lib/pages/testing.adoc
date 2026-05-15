@@ -485,6 +485,21 @@ If you're using the `dgt` tool to test with the Skein, `dgt` can also
 be used to build your project and run its unit tests. See the `dgt`
 documentation for details.
 
+[#debugging]
+== Troubleshooting Broken Tests
+
+TODO
+
+[#output]
+=== Diagnostic Output
+
+TODO
+
+[#dgdebug]
+=== Using `dgdebug` and its Predicates
+
+TODO
+
 [#summary]
 == Summary
 
