@@ -193,10 +193,10 @@ sum of two numbers:
 
 ($X plus $Y into $Z max $Max)
     ($X plus $Y into $Proposed)
-    (if) ($Proposed > $Max) (then)
-        ($Z = $Max)
-    (else)
+    (if) ($Proposed < $Max) (then)
         ($Z = $Proposed)
+    (else)
+        ($Z = $Max)
     (endif)
 ----
 
@@ -324,10 +324,10 @@ overflow with an `(if)`:
     (else)
         ($Proposed = 16383)
     (endif)
-    (if) ($Proposed > $Max) (then)
-        ($Z = $Max)
-    (else)
+    (if) ($Proposed < $Max) (then)
         ($Z = $Proposed)
+    (else)
+        ($Z = $Max)
     (endif)
 ----
 
@@ -357,12 +357,12 @@ Testing #16383-plus-16383-max-16383: Passed!
 
 Now that all of our tests are passing, we can take a look at the code
 that we've just written. One thing that jumps out is that we've
-written code that finds the maximum of two values twice:
+written code that finds the minimum of two values twice:
 
 [source]
 ----
-(max $X $Y $Result)
-    (if) ($X > $Y) (then)
+(min $X $Y $Result)
+    (if) ($X < $Y) (then)
         ($Result = $X)
     (else)
         ($Result = $Y)
@@ -374,10 +374,10 @@ written code that finds the maximum of two values twice:
     (else)
         ($Proposed = 16383)
     (endif)
-    (if) ($Proposed > $Max) (then)
-        ($Z = $Max)
-    (else)
+    (if) ($Proposed < $Max) (then)
         ($Z = $Proposed)
+    (else)
+        ($Z = $Max)
     (endif)
 ----
 
@@ -385,7 +385,7 @@ Writing the same code more than once can be error-prone if you change
 it in one place, but not the other. It also bloats your program. Don't
 repeat yourself. Also, don't repeat yourself.
 
-Since we've already written `(max $ $ $)`, we can use it in `($ plus $
+Since we've already written `(min $ $ $)`, we can use it in `($ plus $
 into $ max $)`:
 
 [source]
@@ -396,7 +396,7 @@ into $ max $)`:
     (else)
         ($Proposed = 16383)
     (endif)
-    (max $Proposed $Max $Z)
+    (min $Proposed $Max $Z)
 ----
 
 ...and now our code is smaller and easier to understand. Because we
