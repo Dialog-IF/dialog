@@ -429,6 +429,11 @@ _refactoring_. Code tends to get more complex and error-prone, the
 more you write of it. Refactoring helps you prevent that complexity
 from creeping in to your project.
 
+[#tdd]
+=== Test-Driven Development
+
+
+
 [#fixtures]
 === Test Fixtures
 
@@ -444,8 +449,13 @@ TODO
 
 TODO
 
-[#regtest]
+[#integ]
 == Integration Tests With `regtest.py`
+
+TODO
+
+[#regtest]
+=== Using `regtest.py`
 
 TODO
 
@@ -482,8 +492,8 @@ TODO
 === Building With `dgt` Instead
 
 If you're using the `dgt` tool to test with the Skein, `dgt` can also
-be used to build your project and run its unit tests. See the `dgt`
-documentation for details.
+be used to build your project and run its unit tests, in addition to
+Skein testing. See the `dgt` documentation for details.
 
 [#debugging]
 == Troubleshooting Broken Tests
