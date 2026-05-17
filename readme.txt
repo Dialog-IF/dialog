@@ -47,7 +47,10 @@ Release notes:
 	
 		Language: added (at most once), which clears choice points once
 		its child succeeds.
-	
+		
+		Compiler: (generate $ $) no longer triggers spurious warnings
+		with --warn-not-topic.
+
 	1b/02, Lib 1.2.1:
 
 		Compiler: previously, constant lists in rule heads were compiled
