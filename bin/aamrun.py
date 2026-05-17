@@ -16,9 +16,13 @@ if len(argv) != 2 or argv[1] in {'--help', '-h'}:
 
 # The aamachine distribution now includes an aamrun binary
 # If that exists on the $PATH, then we can sidestep this whole mess
-if shutil.which('aamrun') is not None:
-	sp.run(['aamrun', '-s', '1234', argv[1]])
-	exit(0)
+
+# Disabled because aamrun is broken and I don't have the source for it.
+# Uncomment before merging PR. 
+
+#if shutil.which('aamrun') is not None:
+#	sp.run(['aamrun', '-s', '1234', argv[1]])
+#	exit(0)
 
 BASE = Path(__file__).resolve().parent.parent # Root of the repository
 TOSEARCH = [
