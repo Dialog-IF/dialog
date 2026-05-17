@@ -43,6 +43,11 @@ Project website:
 
 Release notes:
 
+	1c/01, Lib 1.2.1:
+	
+		Compiler: (generate $ $) no longer triggers spurious warnings
+		with --warn-not-topic.
+
 	1b/02, Lib 1.2.1:
 
 		Compiler: previously, constant lists in rule heads were compiled
