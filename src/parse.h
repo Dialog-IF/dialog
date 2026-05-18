@@ -47,6 +47,7 @@ enum {
 	SP_LINK,
 	SP_LINK_RES,
 	SP_LOG,
+	SP_FIRSTRESULT,
 
 	SP_OR,
 
