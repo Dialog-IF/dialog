@@ -944,6 +944,17 @@ static struct astnode *parse_expr(int parsemode, struct lexer *lexer, struct are
 			}
 			an->children[0] = parse_expr(PMODE_BODY, lexer, arena);
 			if(!an->children[0]) return 0;
+		} else if(an->predicate->special == SP_FIRSTRESULT) {
+			an = mkast(AN_FIRSTRESULT, 1, arena, line);
+			status = next_token(lexer, PMODE_BODY);
+			if(lexer->errorflag) return 0;
+			if(status != 1) {
+				report(LVL_ERR, line, "Expected expression after (at most once).");
+				lexer->errorflag = 1;
+				return 0;
+			}
+			an->children[0] = parse_expr(PMODE_BODY, lexer, arena);
+			if(!an->children[0]) return 0;
 		} else if(an->predicate->special == SP_JUST) {
 			an = mkast(AN_JUST, 0, arena, line);
 		} else if(an->predicate->special == SP_SELECT) {

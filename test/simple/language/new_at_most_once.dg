@@ -1,0 +1,30 @@
+#alpha
+(cond *)
+
+#beta
+(cond *)
+
+(program entry point)
+	(exhaust) { *(test case) (line) }
+
+(test case)
+	*(object $Obj) (cond $Obj)
+	Inline
+
+(test case)
+	(access)
+	Access
+
+@(access)
+	*(object $Obj) (cond $Obj)
+
+(test case)
+	(predicate)
+	Predicate
+
+(predicate)
+	*(object $Obj) (cond $Obj)
+
+(test case)
+	(at most once) { *(object $Obj) (cond $Obj) }
+	At most once

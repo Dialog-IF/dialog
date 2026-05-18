@@ -45,6 +45,9 @@ Release notes:
 
 	1c/01, Lib 1.2.1:
 	
+		Language: added (at most once), which clears choice points once
+		the inner statement succeeds.
+		
 		Compiler: (generate $ $) no longer triggers spurious warnings
 		with --warn-not-topic.
 
@@ -74,7 +77,7 @@ Release notes:
 		or any -- tests to have been written against the old version.)
 
 	1b/01, Lib 1.2.0:
-
+	
 		Due to new built-in predicates in this release, all projects
 		compiled for Å-machine will need version 1.0.0 or later of the
 		Å-machine tools. Get them from github.com/Dialog-IF/aamachine/.
