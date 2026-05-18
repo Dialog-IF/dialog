@@ -477,7 +477,7 @@ and prints the message for both.
 
 If we only want a single message here, we can prefix our search with
 `(at most once)`. As soon as the inner statement succeeds, all choice points
-created since the `(at most once)` will be discarded.
+created during it will be discarded.
 
 [source]
 ----

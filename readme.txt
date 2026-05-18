@@ -46,7 +46,7 @@ Release notes:
 	1c/01, Lib 1.2.1:
 	
 		Language: added (at most once), which clears choice points once
-		its child succeeds.
+		the inner statement succeeds.
 		
 		Compiler: (generate $ $) no longer triggers spurious warnings
 		with --warn-not-topic.
