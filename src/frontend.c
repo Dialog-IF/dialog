@@ -33,6 +33,7 @@ struct specialspec {
 	int nword;
 	char *word[8];
 } specialspec[] = {
+	{SP_FIRSTRESULT,	0,				3,	{"at", "most", "once"}},
 	{SP_RANDOM,		0,				2,	{"at", "random"}},
 	{SP_COLLECT,		0,				2,	{"collect", 0}},
 	{SP_COLLECT_WORDS,	0,				2,	{"collect", "words"}},
@@ -1986,6 +1987,7 @@ int frontend_visit_clauses(struct program *prg, struct arena *temp_arena, struct
 					sub->params[0] = mkast(AN_TAG, 0, sub->arena, cl->line);
 					snprintf(buf, sizeof(buf), "%d", prg->nworldobj + 1);
 					sub->params[0]->word = find_word(prg, buf);
+					sub->params[0]->word->flags |= WORDF_TOPIC; // Don't give "not declared as topic" warnings for objects not created by the author
 					create_worldobj(prg, sub->params[0]->word);
 					for(j = 1; j < cl->body->predicate->arity; j++) {
 						sub->params[j] = deepcopy_astnode(cl->body->children[j], sub->arena, cl->line);

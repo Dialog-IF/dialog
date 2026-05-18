@@ -42,6 +42,7 @@ xref:items.adoc#appearance[`(appearance $ $ $)`] +
 xref:lang:builtins.adoc#listbuiltins[`(append $ $ $)`] +
 xref:understanding.adoc#newactions[`(asking for direction in $)`] +
 xref:understanding.adoc#newactions[`(asking for object in $)`] +
+xref:lang:choicepoints.adoc#at-most-once[(at most once)] (special syntax) +
 xref:lang:control.adoc#select-var[`(at random)`] (special syntax) +
 xref:moving.adoc#floating[`($ attracts $)`] +
 xref:timeprogress.adoc#theintro[`(banner)`] +

@@ -135,6 +135,11 @@ xref:choicepoints.adoc#exhaust[(exhaust) _statement_] ::
 
 Backtracks over all solutions to the statement (typically a block).
 
+xref:choicepoints.adoc#at-most-once[(at most once) _statement_] ::
+
+Once the inner statement succeeds, all choice points created during it
+are discarded.
+
 xref:choicepoints.adoc#collect-values[(collect $Element) ... (into $List)]::
 
 Backtracks over all solutions to the inner expression. Values bound to
