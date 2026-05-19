@@ -5380,7 +5380,7 @@
 	*(parse $Words as single object $Output $Closure [])
 
 (understand $Words as object $Output preferably child of $Parent)
-	*(parse $Words as object $Output $Parent [] 1)
+	*(parse $Words as object $Output {($_ has parent $Parent)} [] 1)
 
 (understand $Words as object $Output preferably takable)
 	*(parse $Words as object $Output {(takable $_)} [] 1)
@@ -5433,11 +5433,11 @@
 	~($Obj is nested #wornby $)
 	~($Obj is nested #heldby $)
 
+%% This predicate used to do something different if $Policy was an object
+%% Now it doesn't, because object policies caused obscure bugs for not much gain
+%% Instead, it just tests that the policy is bound to a list, because $ is used for the null policy
+%% (bound $) isn't enough to satisfy the compiler's checks, and (fully bound $) is too much, closures can have non-fully-bound inputs
 (interface (verify object policy $Policy $<Obj))
-
-(verify object policy (object $Policy) $Obj)
-	($Obj has parent $Policy)
-
 (verify object policy (nonempty $Policy) $Obj)
 	(query $Policy $Obj)
 
