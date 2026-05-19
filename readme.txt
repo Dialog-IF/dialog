@@ -43,8 +43,11 @@ Project website:
 
 Release notes:
 
-	1c/01, Lib 1.2.1:
-	
+	1c/01, Lib 1.2.2:
+
+		Library: fixed a bug where ASK FOR SOMETHING queried a random
+		closure before printing the error message.
+		
 		Language: added (at most once), which clears choice points once
 		the inner statement succeeds.
 		
