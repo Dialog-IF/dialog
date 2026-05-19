@@ -1,12 +1,5 @@
 %% dgdebug -u utils-tests.dg utils.dg unit.dg stdlib.dg
 
-(global variable (list of lists [
-	[1 2 3 4 5]
-	[2 2 4 5 6]
-	[3 2 4 5 6]
-	[3 2 4 6 7]
-	[4 1 7 8 9]]))
-
 #0-isnt-odd-or-even
 (test *)
 (run *)
@@ -106,7 +99,7 @@
 
 #delta-2-4
 (test *)
-(run *)p	(2 delta 4 into 2)
+(run *)	(2 delta 4 into 2)
 
 #delta-2-2
 (test *)
@@ -236,6 +229,30 @@
 (test *)
 (run *)	(split 1 into 0 0 0 1)
 
+#index-not-found
+(test *)
+(run *)	~(index 7 [2 3 4 6 5] $)
+
+#index-1
+(test *)
+(run *)	(index 2 [2 3 4 6 5] 1)
+
+#index-2
+(test *)
+(run *)	(index 3 [2 3 4 6 5] 2)
+
+#index-3
+(test *)
+(run *)	(index 4 [2 3 4 6 5] 3)
+
+#index-4
+(test *)
+(run *)	(index 6 [2 3 4 6 5] 4)
+
+#index-5
+(test *)
+(run *)	(index 5 [2 3 4 6 5] 5)
+
 #take-last-n
 (test *)
 (run *)	(take last 3 from [1 2 3 4 5 6] into [4 5 6])
@@ -314,6 +331,13 @@
 (test *)
 (run *)
 	~(decrease element 3 in [1 2 3 4 5] by 4 into $)
+
+(global variable (list of lists [
+	[1 2 3 4 5]
+	[2 2 4 5 6]
+	[3 2 4 5 6]
+	[3 2 4 6 7]
+	[4 1 7 8 9]]))
 
 #match-one-of-the-key
 (test *)
@@ -496,21 +520,20 @@
 #find-2-2
 (test *)
 (run *)
-	  (list of lists $List)
-	  (find in $List beginning with sublist [2 2] into [2 2 4 5 6])
+	(list of lists $List)
+	(find in $List beginning with sublist [2 2] into [2 2 4 5 6])
 
 #dont-find-9-9
 (test *)
 (run *)
-	  (list of lists $List)
-	  ~(find in $List beginning with sublist [9 9] into $)
+	(list of lists $List)
+	~(find in $List beginning with sublist [9 9] into $)
 
 #remove-1-2
 (test *)
 (run *)
-	  (list of lists $List)
-	  (remove from $List beginning with sublist [1 2] into $NewList)
-	  (assert $NewList = [
+	(list of lists $List)
+	(remove from $List beginning with sublist [1 2] into [
 		[2 2 4 5 6]
 		[3 2 4 5 6]
 		[3 2 4 6 7]
@@ -519,10 +542,9 @@
 #remove-1-2-twice
 (test *)
 (run *)
-	  (list of lists $List)
-	  (remove from $List beginning with sublist [1 2] into $NewList)
-	  (remove from $NewList beginning with sublist [1 2] into $NewerList)
-	  (assert $NewerList = [
+	(list of lists $List)
+	(remove from $List beginning with sublist [1 2] into $NewList)
+	(remove from $NewList beginning with sublist [1 2] into [
 		[2 2 4 5 6]
 		[3 2 4 5 6]
 		[3 2 4 6 7]
@@ -531,9 +553,8 @@
 #remove-2-2
 (test *)
 (run *)
-	  (list of lists $List)
-	  (remove from $List beginning with sublist [2 2] into $NewList)
-	  (assert $NewList = [
+	(list of lists $List)
+	(remove from $List beginning with sublist [2 2] into [
 	  	[1 2 3 4 5]
 		[3 2 4 5 6]
 		[3 2 4 6 7]
@@ -542,9 +563,8 @@
 #remove-3-2
 (test *)
 (run *)
-	  (list of lists $List)
-	  (remove from $List beginning with sublist [3 2] into $NewList)
-	  (assert $NewList = [
+	(list of lists $List)
+	(remove from $List beginning with sublist [3 2] into [
 	  	[1 2 3 4 5]
 		[2 2 4 5 6]
 		[3 2 4 6 7]
@@ -553,10 +573,9 @@
 #remove-3-2-twice
 (test *)
 (run *)
-	  (list of lists $List)
-	  (remove from $List beginning with sublist [3 2] into $NewList)
-	  (remove from $NewList beginning with sublist [3 2] into $NewerList)
-	  (assert $NewerList = [
+	(list of lists $List)
+	(remove from $List beginning with sublist [3 2] into $NewList)
+	(remove from $NewList beginning with sublist [3 2] into [
 	  	[1 2 3 4 5]
 		[2 2 4 5 6]
 		[4 1 7 8 9]])
@@ -564,9 +583,8 @@
 #remove-4-1
 (test *)
 (run *)
-	  (list of lists $List)
-	  (remove from $List beginning with sublist [4 1] into $NewList)
-	  (assert $NewList = [
+	(list of lists $List)
+	(remove from $List beginning with sublist [4 1] into [
 	  	[1 2 3 4 5]
 		[2 2 4 5 6]
 		[3 2 4 5 6]
@@ -575,5 +593,35 @@
 #remove-7-7
 (test *)
 (run *)
-	  (list of lists $List)
-	  (remove from $List beginning with sublist [7 7] into $List)
+	(list of lists $List)
+	(remove from $List beginning with sublist [7 7] into $List)
+
+#highest-element-1
+(test *)
+(run *)
+    (list of lists $List)
+	(find in $List with highest element 1 into [4 1 7 8 9])
+
+#highest-element-2
+(test *)
+(run *)
+    (list of lists $List)
+	(find in $List with highest element 2 into [1 2 3 4 5])
+
+#highest-element-3
+(test *)
+(run *)
+    (list of lists $List)
+	(find in $List with highest element 3 into [4 1 7 8 9])
+
+#lowest-element-1
+(test *)
+(run *)
+    (list of lists $List)
+	(find in $List with lowest element 1 into [1 2 3 4 5])
+
+#lowest-element-2
+(test *)
+(run *)
+    (list of lists $List)
+	(find in $List with lowest element 2 into [4 1 7 8 9])

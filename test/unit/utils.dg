@@ -36,6 +36,8 @@
 
 (interface (split $<Number into $>Thousands $>Hundreds $>Tens $>Ones))
 
+(interface (index $<Element $<List $>Index)) %% opposite of (nth $ $ $)
+
 (interface (take last $<N from $<List into $>Suffix))
 
 (interface (replace element $<N in $<List with $<Element into $>NewList))
@@ -66,8 +68,9 @@
 %% duplicates) sublist that begins with the specified sublist.
 (interface (find in $<List beginning with sublist $<Head into $>Match))
 
-%% Pick out the sublist with the highest value for the specified element.
 (interface (find in $<List with highest element $<Num into $>Match))
+
+(interface (find in $<List with lowest element $<Num into $>Match))
 
 (interface (set element $<Num in $<Head in $<List to $<Value into $>NewList))
 
@@ -162,6 +165,23 @@
 	($Remaining2 divided by 10 into $Tens)
 	($Remaining2 modulo 10 into $Ones)
 
+(find-index $ [] 0 $)
+
+(find-index $Element $List $Index $Count)
+    ([$Head | $Tail] = $List)
+	(if) ($Head = $Element) (then)
+	    ($Index = $Count)
+	(else)
+	    (add 1 to $Count into $Next)
+		(find-index $Element $Tail $Index $Next)
+	(endif)
+
+(index $Element $List $Index) %% opposite of (nth $ $ $)
+    (find-index $Element $List $Index 1)
+	(if) ($Index = 0) (then)
+	    (fail)
+	(endif)
+
 (take last $N from $List into $Suffix)
 	(reverse $List $Reverse)
 	(take $N from $Reverse into $After)
@@ -231,6 +251,38 @@
 		($Match = $Head)
 	(else)
 	    (find in $Tail beginning with sublist $Sublist into $Match)
+	(endif)
+
+(find in [] with highest element $ into [])
+
+(find in $List with highest element $Num into $Match)
+	($List = [$Head | $Tail])
+	(nth $Head $Num $First)
+	(find in $Tail with highest element $Num into $HighTail)
+	(if) (nth $HighTail $Num $Second) (then)
+		(if) ($First < $Second) (then)
+			($Match = $HighTail)
+		(else)
+			($Match = $Head)
+		(endif)
+	(else)
+		($Match = $Head)
+	(endif)
+
+(find in [] with lowest element $ into [])
+
+(find in $List with lowest element $Num into $Match)
+	($List = [$Head | $Tail])
+	(nth $Head $Num $First)
+	(find in $Tail with lowest element $Num into $HighTail)
+	(if) (nth $HighTail $Num $Second) (then)
+		(if) ($First > $Second) (then)
+			($Match = $HighTail)
+		(else)
+			($Match = $Head)
+		(endif)
+	(else)
+		($Match = $Head)
 	(endif)
 
 (remove from [] beginning with sublist $ into [])
