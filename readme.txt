@@ -48,6 +48,8 @@ Release notes:
 		Library: fixed a bug where ASK FOR SOMETHING queried a random
 		closure before printing the error message.
 		
+		Library: (heads $) is now consulted for topic objects.
+		
 		Language: added (at most once), which clears choice points once
 		the inner statement succeeds.
 		
