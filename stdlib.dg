@@ -2070,6 +2070,7 @@
 %% DRINK <obj>
 
 (grammar [drink/sip/quaff [object]] for [drink $])
+(grammar [drink/sip from [object]] for [drink $])
 
 (unlikely [drink $Obj])
 	~(potable $Obj)
