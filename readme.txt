@@ -53,6 +53,9 @@ Release notes:
 		
 		Compiler: (generate $ $) no longer triggers spurious warnings
 		with --warn-not-topic.
+		
+		Compiler: fixed an obscure bug (#291) with divs and spans inside
+		closures.
 
 	1b/02, Lib 1.2.1:
 
