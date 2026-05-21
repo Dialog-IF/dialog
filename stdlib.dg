@@ -2070,6 +2070,7 @@
 %% DRINK <obj>
 
 (grammar [drink/sip/quaff [object]] for [drink $])
+(grammar [drink/sip from [object]] for [drink $])
 
 (unlikely [drink $Obj])
 	~(potable $Obj)
@@ -6684,7 +6685,7 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% License and copyright notice
-%% Copyright 2018-2026 the Dialog Project contributors
+%% Copyright 2018-2026 Linus Åkesson and the Dialog Project contributors
 %%
 %% Redistribution and use in source and binary forms, with or without
 %% modification, are permitted provided that the following conditions are met:
