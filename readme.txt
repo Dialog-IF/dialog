@@ -48,11 +48,16 @@ Release notes:
 		Library: fixed a bug where ASK FOR SOMETHING queried a random
 		closure before printing the error message.
 		
+		Library: added DRINK FROM OBJ as a synonym of DRINK OBJ.
+		
 		Language: added (at most once), which clears choice points once
 		the inner statement succeeds.
 		
 		Compiler: (generate $ $) no longer triggers spurious warnings
 		with --warn-not-topic.
+		
+		Compiler: fixed an obscure bug (#291) with divs and spans inside
+		closures.
 
 	1b/02, Lib 1.2.1:
 

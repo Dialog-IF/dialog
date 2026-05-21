@@ -2220,6 +2220,9 @@ static void frontend_reset_program(struct program *prg) {
 		for(j = 0; j < cl->nvar; j++) {
 			if(!strcmp(cl->varnames[j]->name, "_")) {
 				cl->params[2]->word = find_word(prg, "_");
+			} else if(cl->varnames[j]->name[0] == '*') {
+				// Internal variables (created via fresh_word) cannot be accessed outside the closure, so they should not be considered parameters
+				// We don't want them to interfere with the optimizer's analysis of whether parameters to ( invoke-closure $ $ $) are bound
 			} else {
 				sub = cl->params[1];
 				cl->params[1] = mkast(AN_PAIR, 2, cl->arena, 0);
