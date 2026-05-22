@@ -7,33 +7,30 @@ from sys import argv, exit, stderr
 import subprocess as sp
 import shutil
 
-USAGE = f'''Usage: {argv[0]} [file.aastory]
+USAGE = f'''Usage: {argv[0]} file.aastory
 Attempts to play an .aastory file in the Node interpreter (with consistent random seed for testing), despite varying install locations.'''
 
 if len(argv) != 2 or argv[1] in {'--help', '-h'}:
 	print(USAGE, file=stderr)
 	exit(1)
 
-# The aamachine distribution now includes an aamrun binary
-# If that exists on the $PATH, then we can sidestep this whole mess
-
-# Disabled because aamrun is broken and I don't have the source for it.
-# Uncomment before merging PR. 
-
-#if shutil.which('aamrun') is not None:
-#	sp.run(['aamrun', '-s', '1234', argv[1]])
-#	exit(0)
-
 BASE = Path(__file__).resolve().parent.parent # Root of the repository
 TOSEARCH = [
 	BASE / 'aamachine' / 'src' / 'js' / 'nodefrontend.js', # Cloned into the repo for automated builds
-	BASE.parent / 'Aamachine' / 'src' / 'js' / 'nodefrontend.js', # On my local machine
+	BASE.parent / 'Aamachine' / 'src' / 'js' / 'nodefrontend.js', # On my (DMS) local machine
 ]
 
 for path in TOSEARCH:
 	if path.exists():
 		sp.run(['node', path, '-s', '1234', argv[1]])
 		exit(0)
+
+# The aamachine distribution now includes an aamrun binary
+# If that exists on the $PATH, then use it as a last resort
+if shutil.which('aamrun') is not None:
+	sp.run(['aamrun', '-s', '1234', argv[1]])
+	exit(0)
+
 print('ERROR: Could not find nodefrontend.js!', file=stderr)
 # And because the problem is likely something with paths
 print(f'\tCurrent: {__file__}', file=stderr)

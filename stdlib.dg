@@ -5749,6 +5749,7 @@
 	(filter $Words into $Filtered)
 	(determine object $Obj)
 		*(topic $Obj)
+		(words $Filtered sufficiently specify $Obj)
 	(from words)
 		*(dict $Obj)
 	(matching all of $Filtered)

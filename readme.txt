@@ -48,6 +48,8 @@ Release notes:
 		Library: fixed a bug where ASK FOR SOMETHING queried a random
 		closure before printing the error message.
 		
+		Library: (heads $) is now consulted for topic objects.
+		
 		Library: added DRINK FROM OBJ as a synonym of DRINK OBJ.
 		
 		Language: added (at most once), which clears choice points once
