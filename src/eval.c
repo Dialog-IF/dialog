@@ -16,8 +16,7 @@
 
 static volatile int interrupted = 0;
 
-int use_numbered_levels = 0;
-int return_value = 0; // XXX: move this out of a global
+extern struct output_config output_config;
 
 void eval_interrupt() {
 	interrupted = 1;
@@ -845,7 +844,7 @@ void trace(struct eval_state *es, int kind, struct predname *predname, value_t *
 		assert(es->env >= 0);
 		if(kind != TR_REPORT) {
 			level = es->envstack[es->env].level;
-			if(use_numbered_levels) {
+			if(output_config.numbered_levels) {
 				snprintf(buf, sizeof(buf), "|%2d ", level);
 				o_print_word(buf);
 			} else {
@@ -2584,8 +2583,7 @@ static int eval_run(struct eval_state *es) {
 		case I_QUIT_N:
 			v0 = value_of(ci->oper[0], es);
 			if(v0.tag == VAL_NUM) {
-				return_value = v0.value;
-			//	printf("setting return value to %d\n", return_value);
+				output_config.return_value = v0.value;
 			} else {
 				o_begin_box("debugger");
 				o_print_opaque_word("Warning: tried to quit with non-numeric status");

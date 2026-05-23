@@ -18,6 +18,7 @@
 
 #include "common.h"
 #include "terminal.h"
+#include "output.h"
 
 enum {
 	STATE_BARE,
@@ -31,7 +32,7 @@ struct histentry {
 	uint16_t		*content;
 };
 
-extern int io_tag_lines; // debugger.c
+extern struct output_config output_config;
 
 static struct histentry *tophist;
 static term_int_callback_t term_int_callback;
@@ -39,7 +40,6 @@ static int unread_lines;
 static int termstyle;
 static int termfg = OCOLOR_INITIAL, termbg = OCOLOR_INITIAL;
 static int term_height;
-static int force_height;
 static uint16_t last_filename[256];
 #ifdef _WIN32
 static volatile int interrupt_flag; // Since Windows puts signal handlers in a separate thread
@@ -106,7 +106,7 @@ void morefunc() {
 	}
 }
 
-void term_get_size(int *width, int *height, int force_w, int force_h) {
+void term_get_size(int *width, int *height) {
 	char *envvar;
 #ifdef _WIN32
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -114,20 +114,19 @@ void term_get_size(int *width, int *height, int force_w, int force_h) {
 	struct winsize ws;
 #endif
 	
-	force_height = force_h;
 	*width = 0; *height = 0;
 	
 #ifdef _WIN32
 	// https://stackoverflow.com/a/12642749/3233017
 	if(GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi)) {
 		*width = csbi.srWindow.Right - csbi.srWindow.Left + 1;
-		if(io_tag_lines) *width -= 2; // For the tags
+		if(output_config.tag_lines) *width -= 2; // For the tags
 		*height = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
 	}
 #else
 	if(!ioctl(0, TIOCGWINSZ, &ws)) {
 		*width = (ws.ws_col >= 1)? ws.ws_col - 1 : 0;
-		if(io_tag_lines) *width -= 2; // For the tags
+		if(output_config.tag_lines) *width -= 2; // For the tags
 		*height = ws.ws_row;
 	}
 #endif
@@ -142,7 +141,7 @@ void term_get_size(int *width, int *height, int force_w, int force_h) {
 		// Default to 0
 	}
 	
-	term_height = force_height ? force_height : *height;
+	term_height = output_config.force_height ? output_config.force_height : *height;
 }
 
 int term_is_interactive() {
@@ -211,7 +210,7 @@ int term_sendlf() {
 	int savedbg = termbg;
 	term_colors(termfg, OCOLOR_INITIAL); // Set the background color to INITIAL before anything that might scroll the screen, so that the next line is filled with INITIAL instead of anything else
 	fputc('\n', stdout);
-	if(io_tag_lines) printf("  ");
+	if(output_config.tag_lines) printf("  ");
 	term_colors(termfg, savedbg);
 	unread_lines++;
 	if(term_height > 0 && isatty(1)) {
@@ -229,7 +228,7 @@ int term_sendlf() {
 }
 
 int term_sendfakelf() {
-	if(io_tag_lines) printf("  ");
+	if(output_config.tag_lines) printf("  ");
 	return 0;
 }
 
@@ -465,7 +464,7 @@ int term_getkey(const char *prompt) {
 	int ch;
 	int i;
 
-	if(io_tag_lines) printf("\n) ");
+	if(output_config.tag_lines) printf("\n) ");
 	fflush(stdout);
 
 	if(NEVER_A_TTY || !isatty(0)) {
@@ -489,9 +488,9 @@ int term_getkey(const char *prompt) {
 			suspend();
 			charout('\r');
 			charout('\n');
-			if(io_tag_lines) printf("  ");
+			if(output_config.tag_lines) printf("  ");
 			(void) write(1, prompt, strlen(prompt));
-			if(io_tag_lines) printf("\n) ");
+			if(output_config.tag_lines) printf("\n) ");
 		} else {
 			suspend();
 		}
@@ -517,7 +516,7 @@ int term_getline(const char *prompt, uint8_t *buffer, int bufsize, int is_filena
 	uint16_t *buf;
 	struct histentry *currhist = 0;
 	
-	if(io_tag_lines) printf("\n> ");
+	if(output_config.tag_lines) printf("\n> ");
 	fflush(stdout);
 
 	if(NEVER_A_TTY || !isatty(0)) {
@@ -678,7 +677,7 @@ int term_getline(const char *prompt, uint8_t *buffer, int bufsize, int is_filena
 
 	charout('\r');
 	charout('\n');
-	if(io_tag_lines) printf("  ");
+	if(output_config.tag_lines) printf("  ");
 
 	tty_restore();
 

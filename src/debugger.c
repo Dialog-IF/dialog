@@ -28,6 +28,8 @@
 
 #define DEBUGGERNAME "Dialog Interactive Debugger (dgdebug) version " VERSION
 
+extern struct output_config output_config;
+
 struct debugger {
 	int			nfilename;
 	char			**filenames;
@@ -42,13 +44,6 @@ struct debugger {
 	int			pending_rpos;
 	int			nalloc_pend;
 };
-
-static int force_width;
-static int force_height;
-extern int use_numbered_levels; // Defined in eval.c
-extern int return_value; // Defined in eval.c
-int io_tag_lines; // Used in term_tty.c, output.c
-static int dfrotz_quirks;
 
 char *STOPCHARS; // Declared in common.h, defined here and in backend.c
 
@@ -1146,16 +1141,16 @@ static void cmd_restore(struct debugger *dbg) {
 }
 
 static void cmd_more(struct debugger *dbg) {
-	force_height = 0;
+	output_config.force_height = 0;
 	o_end_box();
-	o_reset(force_width, force_height, dfrotz_quirks);
+	o_reset();
 	o_begin_box("debugger"); // Because the debugger will attempt to end it again after this
 }
 
 static void cmd_nomore(struct debugger *dbg) {
-	force_height = -1;
+	output_config.force_height = -1;
 	o_end_box();
-	o_reset(force_width, force_height, dfrotz_quirks);
+	o_reset();
 	o_begin_box("debugger"); // Because the debugger will attempt to end it again after this
 }
 
@@ -1335,10 +1330,11 @@ void usage(char *prgname) {
 	fprintf(stderr, "--unit-test -u      Same as --quit --height=-1 --no-header.\n");
 }
 
-static int suppress_header = 0; // Easier to make it global and static rather than local
+struct output_config output_config;
 
 int debugger(int argc, char **argv) {
 	int topic_warning_level = WARN_DEFAULT;
+	int suppress_header = 0;
 	
 	struct option longopts[] = {
 		{"help", 0, 0, 'h'},
@@ -1406,10 +1402,10 @@ int debugger(int argc, char **argv) {
 				quitopt = 1;
 				break;
 			case 'w':
-				force_width = strtol(optarg, 0, 10);
+				output_config.force_width = strtol(optarg, 0, 10);
 				break;
 			case 'H':
-				force_height = strtol(optarg, 0, 10);
+				output_config.force_height = strtol(optarg, 0, 10);
 				break;
 			case 's':
 				dbg.randomseed = strtol(optarg, 0, 10);
@@ -1421,17 +1417,17 @@ int debugger(int argc, char **argv) {
 				hide_links = 1;
 				break;
 			case 'D':
-				dfrotz_quirks = 1;
+				output_config.dfrotz_quirks = 1;
 				break;
 			case 'N':
-				use_numbered_levels = 1;
+				output_config.numbered_levels = 1;
 				break;
 			case 'T':
-				io_tag_lines = 1;
+				output_config.tag_lines = 1;
 				break;
 			case 'u': // --quit --no-header --height=-1
 				quitopt = 1;
-				force_height = -1;
+				output_config.force_height = -1;
 				suppress_header = 1;
 				break;
 			default:
@@ -1447,10 +1443,10 @@ int debugger(int argc, char **argv) {
 	dbg.filenames = argv + optind;
 
 	term_init(eval_interrupt);
-	o_reset(force_width, force_height, dfrotz_quirks);
+	o_reset();
 	comp_init();
 
-	if(io_tag_lines) o_line(); // Avoid special cases
+	if(output_config.tag_lines) o_line(); // Avoid special cases
 	if(!suppress_header) {
 		o_begin_box("intdebugger");
 		o_set_style(STYLE_BOLD);
@@ -1461,7 +1457,7 @@ int debugger(int argc, char **argv) {
 		o_end_box();
 	}
 
-	if(dfrotz_quirks) {
+	if(output_config.dfrotz_quirks) {
 		o_sync();
 		o_post_input(1);
 	}
@@ -1545,13 +1541,13 @@ int debugger(int argc, char **argv) {
 			dbg.status = ESTATUS_DEBUGGER;
 			break;
 		case ESTATUS_RESTART:
-			return_value = 0;
-			o_reset(force_width, force_height, dfrotz_quirks);
+			output_config.return_value = 0;
+			o_reset();
 			if(!restart(&dbg)) {
 				running = 0;
 				break;
 			}
-			if(dfrotz_quirks) {
+			if(output_config.dfrotz_quirks) {
 				o_sync();
 				o_post_input(1);
 			}
@@ -1570,7 +1566,7 @@ int debugger(int argc, char **argv) {
 			o_print_str("entry point)");
 			o_end_box();
 			eval_reinitialize(&dbg.es);
-			o_reset(force_width, force_height, dfrotz_quirks);
+			o_reset();
 			v = (value_t) {VAL_NUM, dbg.status};
 			dbg.status = eval_program_entry(&dbg.es, find_builtin(dbg.prg, BI_ERROR_ENTRY), &v);
 			break;
@@ -1775,7 +1771,7 @@ int debugger(int argc, char **argv) {
 		}
 	}
 
-	if(dfrotz_quirks) {
+	if(output_config.dfrotz_quirks) {
 		o_par();
 	}
 	o_sync();
@@ -1790,5 +1786,5 @@ int debugger(int argc, char **argv) {
 	free(dbg.timestamps);
 	o_cleanup();
 	term_cleanup();
-	return return_value;
+	return output_config.return_value;
 }

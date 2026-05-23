@@ -14,6 +14,7 @@
 #include "compile.h"
 #include "report.h"
 #include "ifid.h"
+#include "output.h"
 
 static struct arena backend_arena;
 
@@ -98,6 +99,8 @@ void usage(char *prgname) {
 
 extern int zmachine_optimize_alphabet; // Defined in backend_z.c
 extern int zmachine_preserve_zscii; // Defined in backend_z.c
+
+struct output_config output_config; // Never changed from default
 
 int main(int argc, char **argv) {
 	
