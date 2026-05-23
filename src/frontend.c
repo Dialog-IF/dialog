@@ -2423,8 +2423,6 @@ char *decode_metadata_str(int builtin, struct word *param, struct program *prg, 
 	return 0;
 }
 
-int topic_warning_level = 0; // Set in backend.c: 0 = default, 1 = always, 2 = never
-
 int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t dictmap_callback) {
 	struct clause **clause_dest, *first_clause, *cl;
 	struct predname *predname;
@@ -2488,10 +2486,10 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 	}
 	
 	// Warn about objects never used as topics, depending on topic_warning_level
-	if(topic_warning_level == 0 && lexer.lib_file >= 0) { // Default: warn only if library file found
-		topic_warning_level = 1;
+	if(prg->topic_warning_level == WARN_DEFAULT && lexer.lib_file >= 0) { // Default: warn only if library file found
+		prg->topic_warning_level = WARN_ALWAYS;
 	}
-	if(topic_warning_level == 1) {
+	if(prg->topic_warning_level == WARN_ALWAYS) {
 		for(i = 0; i < prg->nworldobj; i++) {
 			w = prg->worldobjnames[i];
 			if(! (w->flags & WORDF_TOPIC) ) {

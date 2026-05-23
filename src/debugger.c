@@ -1335,10 +1335,11 @@ void usage(char *prgname) {
 	fprintf(stderr, "--unit-test -u      Same as --quit --height=-1 --no-header.\n");
 }
 
-extern int topic_warning_level; // Defined in frontend.c
 static int suppress_header = 0; // Easier to make it global and static rather than local
 
 int debugger(int argc, char **argv) {
+	int topic_warning_level = WARN_DEFAULT;
+	
 	struct option longopts[] = {
 		{"help", 0, 0, 'h'},
 		{"version", 0, 0, 'V'},
@@ -1353,8 +1354,8 @@ int debugger(int argc, char **argv) {
 		{"dfquirks", 0, 0, 'D'},
 		{"numbered", 0, 0, 'N'},
 		{"word-seps", 1, 0, 'W'},
-		{"warn-not-topic", 0, &topic_warning_level, 1},
-		{"no-warn-not-topic", 0, &topic_warning_level, 2},
+		{"warn-not-topic", 0, &topic_warning_level, WARN_ALWAYS},
+		{"no-warn-not-topic", 0, &topic_warning_level, WARN_NEVER},
 		{"tag-lines", 0, 0, 'T'},
 		{"no-header", 0, &suppress_header, 1},
 		{"unit-test", 0, 0, 'u'},
@@ -1477,6 +1478,7 @@ int debugger(int argc, char **argv) {
 	}
 
 	dbg.prg = new_program();
+	dbg.prg->topic_warning_level = topic_warning_level;
 	dbg.prg->eval_ticker = term_ticker;
 	frontend_add_builtins(dbg.prg);
 	(void) check_modification_times(&dbg);

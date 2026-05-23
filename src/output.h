@@ -27,3 +27,14 @@ void o_cleanup(void);
 int o_get_width(void);
 int o_get_height(void);
 int o_is_pretty(void);
+
+#define FORMAT_DEFAULT 0
+#define FORMAT_ALWAYS 1
+#define FORMAT_NEVER 2
+
+struct output_config {
+	int return_value; // for (quit $)
+	int dfrotz_quirks;
+	int numbered_levels;
+	int formatting; // FORMAT_*
+};
