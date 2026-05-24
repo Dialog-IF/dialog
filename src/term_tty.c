@@ -48,6 +48,11 @@ static int did_tcsetattr;
 static struct termios tio_orig;
 #endif
 
+static inline int should_format() {
+	return (output_config.formatting == FORMAT_ALWAYS) ||
+		   (output_config.formatting == FORMAT_DEFAULT && isatty(1));
+}
+
 void tty_setup() {
 #ifdef _WIN32
 #else
@@ -145,7 +150,7 @@ void term_get_size(int *width, int *height) {
 }
 
 int term_is_interactive() {
-	return isatty(1);
+	return should_format();
 }
 
 void term_sendbytes(uint8_t *utf8, int nbyte) {
@@ -153,7 +158,7 @@ void term_sendbytes(uint8_t *utf8, int nbyte) {
 }
 
 void term_effectstyle(int style) {
-	if(termstyle != style && isatty(1)) {
+	if(termstyle != style && should_format()) {
 		printf("\033[0m");
 		if(style & STYLE_BOLD) printf("\033[1m");
 		if(style & STYLE_ITALIC) printf("\033[4m");
@@ -182,7 +187,8 @@ static int32_t ansi_to_24bit_color[] = {
 
 void term_colors(int fg, int bg) { // OCOLOR_* = ANSI escape color (0-7 or 9)
 	int32_t color;
-	if(fg != termfg && isatty(1)) {
+	if(!should_format()) return;
+	if(fg != termfg) {
 		assert(fg != OCOLOR_INHERIT); // INHERIT should never get this far - we should only be sent actual colors at this stage
 		printf("\033[3");
 		if(fg == OCOLOR_INITIAL) {
@@ -193,7 +199,7 @@ void term_colors(int fg, int bg) { // OCOLOR_* = ANSI escape color (0-7 or 9)
 		}
 		termfg = fg;
 	}
-	if(bg != termbg && isatty(1)) {
+	if(bg != termbg) {
 		assert(bg != OCOLOR_INHERIT);
 		printf("\033[4");
 		if(bg == OCOLOR_INITIAL) {

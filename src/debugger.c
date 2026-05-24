@@ -1308,26 +1308,28 @@ void usage(char *prgname) {
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Options:\n");
 	fprintf(stderr, "\n");
-	fprintf(stderr, "--version   -V      Display the program version.\n");
-	fprintf(stderr, "--help      -h      Display this information.\n");
-	fprintf(stderr, "--verbose   -v      Increase verbosity (may be used multiple times).\n");
-	fprintf(stderr, "--word-seps -W      Set word separator characters (default .,;\"()* ).\n");
+	fprintf(stderr, "--version    -V     Display the program version.\n");
+	fprintf(stderr, "--help       -h     Display this information.\n");
+	fprintf(stderr, "--verbose    -v     Increase verbosity (may be used multiple times).\n");
+	fprintf(stderr, "--word-seps  -W     Set word separator characters (default .,;\"()* ).\n");
 	fprintf(stderr, "--warn-not-topic    Always warn about objects not used as topics.\n");
 	fprintf(stderr, "--no-warn-not-topic Never warn about objects not used as topics.\n");
 	fprintf(stderr, "\n");
-	fprintf(stderr, "--trace     -t      Enable tracing from the beginning.\n");
-	fprintf(stderr, "--no-entry  -n      Don't query '(program entry point)'.\n");
-	fprintf(stderr, "--quit      -q      Quit the debugger when the program terminates.\n");
+	fprintf(stderr, "--trace      -t     Enable tracing from the beginning.\n");
+	fprintf(stderr, "--no-entry   -n     Don't query '(program entry point)'.\n");
+	fprintf(stderr, "--quit       -q     Quit the debugger when the program terminates.\n");
 	fprintf(stderr, "\n");
-	fprintf(stderr, "--width     -w      Specify output width, in characters (-1 = infinite).\n");
-	fprintf(stderr, "--height    -H      Specify output height, in lines (-1 = infinite).\n");
-	fprintf(stderr, "--seed      -s      Specify random seed.\n");
-	fprintf(stderr, "--no-links  -L      Don't show hyperlinks in the output.\n");
-	fprintf(stderr, "--dfquirks  -D      Activate the dumbfrotz-compatible quirks mode.\n");
-	fprintf(stderr, "--numbered  -N      Show call depth with numbers during tracing.\n");
-	fprintf(stderr, "--tag-lines -T      Prepend output with \"  \", input with \"> \" or \") \".\n");
+	fprintf(stderr, "--width      -w     Specify output width, in characters (-1 = infinite).\n");
+	fprintf(stderr, "--height     -H     Specify output height, in lines (-1 = infinite).\n");
+	fprintf(stderr, "--seed       -s     Specify random seed.\n");
+	fprintf(stderr, "--no-links   -L     Don't show hyperlinks in the output.\n");
+	fprintf(stderr, "--dfquirks   -D     Activate the dumbfrotz-compatible quirks mode.\n");
+	fprintf(stderr, "--numbered   -N     Show call depth with numbers during tracing.\n");
+	fprintf(stderr, "--tag-lines  -T     Prepend output with \"  \", input with \"> \" or \") \".\n");
 	fprintf(stderr, "--no-header         Don't show version information at startup.\n");
-	fprintf(stderr, "--unit-test -u      Same as --quit --height=-1 --no-header.\n");
+	fprintf(stderr, "--unit-test  -u     Same as --quit --height=-1 --no-header.\n");
+	fprintf(stderr, "--formatting -f     Choose formatting style: \"default\", \"ansi\", \"none\".\n");
+	fprintf(stderr, "--transcripting     Make (transcript active) succeed.\n");
 }
 
 struct output_config output_config;
@@ -1335,6 +1337,7 @@ struct output_config output_config;
 int debugger(int argc, char **argv) {
 	int topic_warning_level = WARN_DEFAULT;
 	int suppress_header = 0;
+	int transcripting = 0;
 	
 	struct option longopts[] = {
 		{"help", 0, 0, 'h'},
@@ -1355,6 +1358,8 @@ int debugger(int argc, char **argv) {
 		{"tag-lines", 0, 0, 'T'},
 		{"no-header", 0, &suppress_header, 1},
 		{"unit-test", 0, 0, 'u'},
+		{"format", 1, 0, 'f'},
+		{"transcripting", 0, &transcripting, 1},
 		{0, 0, 0, 0}
 	};
 
@@ -1378,7 +1383,7 @@ int debugger(int argc, char **argv) {
 	dbg.timestamps = calloc(argc, sizeof(struct timespec));
 
 	do {
-		opt = getopt_long(argc, argv, "?hVvtnqw:H:s:W:LDNTu", longopts, 0);
+		opt = getopt_long(argc, argv, "?hVvtnqw:H:s:W:LDNTuf:", longopts, 0);
 		switch(opt) {
 			case 0:
 				break; // Changed DMS to allow long-only options
@@ -1430,6 +1435,18 @@ int debugger(int argc, char **argv) {
 				output_config.force_height = -1;
 				suppress_header = 1;
 				break;
+			case 'f':
+				if(!strcmp(optarg, "default")) {
+					output_config.formatting = FORMAT_DEFAULT;
+				} else if(!strcmp(optarg, "ansi")) {
+					output_config.formatting = FORMAT_ALWAYS;
+				} else if(!strcmp(optarg, "none")) {
+					output_config.formatting = FORMAT_NEVER;
+				} else {
+					fprintf(stderr, "Unrecognized formatting style \"%s\"; valid styles are \"default\", \"ansi\", or \"none\"\n", optarg);
+					return 1;
+				}
+				break;
 			default:
 				if(opt >= 0) {
 					fprintf(stderr, "Unimplemented option '%c'\n", opt);
@@ -1438,6 +1455,8 @@ int debugger(int argc, char **argv) {
 				break;
 		}
 	} while(opt >= 0);
+	
+	output_config.transcripting = transcripting;
 
 	dbg.nfilename = argc - optind;
 	dbg.filenames = argv + optind;

@@ -33,11 +33,12 @@ int o_is_pretty(void);
 #define FORMAT_NEVER 2
 
 struct output_config {
-	int return_value; // for (quit $)
-	int dfrotz_quirks;
-	int numbered_levels;
-	int formatting; // FORMAT_*
-	int tag_lines;
-	int force_width;
-	int force_height;
+	int return_value; // Return value set by (quit $)
+	int dfrotz_quirks; // Emulate dfrotz as perfectly as possible, including quirks
+	int numbered_levels; // Show trace depth with numbers instead of bars
+	int formatting; // Should debugger use ANSI formatting? (FORMAT_*)
+	int tag_lines; // Put two chars in front of every line to mark input requests
+	int force_width; // Force output width
+	int force_height; // Force output height
+	int transcripting; // Make (transcript active) succeed
 };
