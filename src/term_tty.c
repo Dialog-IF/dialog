@@ -150,7 +150,7 @@ void term_get_size(int *width, int *height) {
 }
 
 int term_is_interactive() {
-	return should_format();
+	return isatty(1);
 }
 
 void term_sendbytes(uint8_t *utf8, int nbyte) {
