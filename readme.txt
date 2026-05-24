@@ -60,6 +60,12 @@ Release notes:
 		
 		Compiler: fixed an obscure bug (#291) with divs and spans inside
 		closures.
+		
+		Debugger: --transcripting option makes the (transcript active)
+		builtin succeed.
+		
+		Debugger: --formatting option selects "default", "ansi", or
+		"none" formatting style.
 
 	1b/02, Lib 1.2.1:
 
