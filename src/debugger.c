@@ -1358,7 +1358,7 @@ int debugger(int argc, char **argv) {
 		{"tag-lines", 0, 0, 'T'},
 		{"no-header", 0, &suppress_header, 1},
 		{"unit-test", 0, 0, 'u'},
-		{"format", 1, 0, 'f'},
+		{"formatting", 1, 0, 'f'},
 		{"transcripting", 0, &transcripting, 1},
 		{0, 0, 0, 0}
 	};
