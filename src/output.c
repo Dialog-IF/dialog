@@ -52,13 +52,11 @@ static int wrappos;
 static int wrapstyle;
 static int wrapfg = OCOLOR_INITIAL, wrapbg = OCOLOR_INITIAL;
 static int column;
+static int force_width, force_height;
 static int width = 79, height = 0;
-static int dfrotz_quirks;
-static int force_width;
-static int force_height;
 static int nowrap;
 
-extern int io_tag_lines; // debugger.c
+extern struct output_config output_config;
 
 // These routines correspond to part of what the Z-machine is doing.
 
@@ -67,7 +65,7 @@ static void syncwrap();
 static void update_size() {
 	int w, h;
 
-	term_get_size(&w, &h, force_width, force_height);
+	term_get_size(&w, &h);
 	if(force_width) w = force_width;
 	if(force_height) h = force_height;
 	if(w < 1) w = 79; // Can happen if the terminal is unable to supply an answer (in particular, the pseudo-tty in emacs can't provide a size immediately on startup)
@@ -425,19 +423,19 @@ void o_clear(int all) {
 	o_sync();
 	term_clear(all);
 	update_size();
-	space = SP_DONELINE + (dfrotz_quirks? 999 : 0);
+	space = SP_DONELINE + (output_config.dfrotz_quirks? 999 : 0);
 	column = 0;
 	delayed_spaces = 0;
-	if(io_tag_lines) term_sendfakelf();
+	if(output_config.tag_lines) term_sendfakelf();
 }
 
 void o_post_input(int external_lf) {
 	update_size();
 	if(external_lf) {
-		space = SP_DONELINE + (dfrotz_quirks? 999 : 0);
+		space = SP_DONELINE + (output_config.dfrotz_quirks? 999 : 0);
 		column = 0;
 		delayed_spaces = 0;
-		if(io_tag_lines) term_sendfakelf();
+		if(output_config.tag_lines) term_sendfakelf();
 	}
 	// Reset the style to 0, then set it back to what it should be
 	// This helps external tools parse the output
@@ -445,17 +443,17 @@ void o_post_input(int external_lf) {
 	term_effectstyle(wrapstyle);
 }
 
-void o_reset(int force_w, int force_h, int quirks) {
-	force_width = force_w;
+void o_reset() {
+	force_width = output_config.force_width;
 	if(force_width < 0) { // Negative means disable wrapping
 		force_width = 79; // Needed to size the buffer
 		nowrap = 1;
 	}
 	if(force_width) width = force_width;
-	force_height = force_h;
+	force_height = output_config.force_height;
 	if(force_height) height = force_height;
 	update_size();
-	space = SP_DONELINE + (quirks? 999 : 0);
+	space = SP_DONELINE + (output_config.dfrotz_quirks? 999 : 0);
 	wrapbuf = realloc(wrapbuf, (width + 1) * sizeof(uint16_t));
 	wrappos = 0;
 	boxsp = 0;
@@ -470,7 +468,6 @@ void o_reset(int force_w, int force_h, int quirks) {
 	boxstack[boxsp].upper = 0;
 	boxstack[boxsp].visible = 1;
 	boxstack[boxsp].wrap = !(term_handles_wrapping() || nowrap);
-	dfrotz_quirks = quirks;
 }
 
 void o_leave_all() {

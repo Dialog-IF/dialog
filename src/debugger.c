@@ -28,6 +28,8 @@
 
 #define DEBUGGERNAME "Dialog Interactive Debugger (dgdebug) version " VERSION
 
+extern struct output_config output_config;
+
 struct debugger {
 	int			nfilename;
 	char			**filenames;
@@ -42,13 +44,6 @@ struct debugger {
 	int			pending_rpos;
 	int			nalloc_pend;
 };
-
-static int force_width;
-static int force_height;
-extern int use_numbered_levels; // Defined in eval.c
-extern int return_value; // Defined in eval.c
-int io_tag_lines; // Used in term_tty.c, output.c
-static int dfrotz_quirks;
 
 char *STOPCHARS; // Declared in common.h, defined here and in backend.c
 
@@ -1146,16 +1141,16 @@ static void cmd_restore(struct debugger *dbg) {
 }
 
 static void cmd_more(struct debugger *dbg) {
-	force_height = 0;
+	output_config.force_height = 0;
 	o_end_box();
-	o_reset(force_width, force_height, dfrotz_quirks);
+	o_reset();
 	o_begin_box("debugger"); // Because the debugger will attempt to end it again after this
 }
 
 static void cmd_nomore(struct debugger *dbg) {
-	force_height = -1;
+	output_config.force_height = -1;
 	o_end_box();
-	o_reset(force_width, force_height, dfrotz_quirks);
+	o_reset();
 	o_begin_box("debugger"); // Because the debugger will attempt to end it again after this
 }
 
@@ -1313,32 +1308,37 @@ void usage(char *prgname) {
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Options:\n");
 	fprintf(stderr, "\n");
-	fprintf(stderr, "--version   -V      Display the program version.\n");
-	fprintf(stderr, "--help      -h      Display this information.\n");
-	fprintf(stderr, "--verbose   -v      Increase verbosity (may be used multiple times).\n");
-	fprintf(stderr, "--word-seps -W      Set word separator characters (default .,;\"()* ).\n");
-	fprintf(stderr, "--warn-not-topic    Always warn about objects not used as topics.\n");
-	fprintf(stderr, "--no-warn-not-topic Never warn about objects not used as topics.\n");
+	fprintf(stderr, "--version         -V    Display the program version.\n");
+	fprintf(stderr, "--help            -h    Display this information.\n");
+	fprintf(stderr, "--verbose         -v    Increase verbosity (may be used multiple times).\n");
+	fprintf(stderr, "--word-seps       -W    Set word separator characters (default .,;\"()* ).\n");
+	fprintf(stderr, "--warn-not-topic        Always warn about objects not used as topics.\n");
+	fprintf(stderr, "--no-warn-not-topic     Never warn about objects not used as topics.\n");
 	fprintf(stderr, "\n");
-	fprintf(stderr, "--trace     -t      Enable tracing from the beginning.\n");
-	fprintf(stderr, "--no-entry  -n      Don't query '(program entry point)'.\n");
-	fprintf(stderr, "--quit      -q      Quit the debugger when the program terminates.\n");
+	fprintf(stderr, "--trace           -t    Enable tracing from the beginning.\n");
+	fprintf(stderr, "--no-entry        -n    Don't query '(program entry point)'.\n");
+	fprintf(stderr, "--quit            -q    Quit the debugger when the program terminates.\n");
 	fprintf(stderr, "\n");
-	fprintf(stderr, "--width     -w      Specify output width, in characters (-1 = infinite).\n");
-	fprintf(stderr, "--height    -H      Specify output height, in lines (-1 = infinite).\n");
-	fprintf(stderr, "--seed      -s      Specify random seed.\n");
-	fprintf(stderr, "--no-links  -L      Don't show hyperlinks in the output.\n");
-	fprintf(stderr, "--dfquirks  -D      Activate the dumbfrotz-compatible quirks mode.\n");
-	fprintf(stderr, "--numbered  -N      Show call depth with numbers during tracing.\n");
-	fprintf(stderr, "--tag-lines -T      Prepend output with \"  \", input with \"> \" or \") \".\n");
-	fprintf(stderr, "--no-header         Don't show version information at startup.\n");
-	fprintf(stderr, "--unit-test -u      Same as --quit --height=-1 --no-header.\n");
+	fprintf(stderr, "--width           -w    Specify output width, in characters (-1 = infinite).\n");
+	fprintf(stderr, "--height          -H    Specify output height, in lines (-1 = infinite).\n");
+	fprintf(stderr, "--seed            -s    Specify random seed.\n");
+	fprintf(stderr, "--no-links        -L    Don't show hyperlinks in the output.\n");
+	fprintf(stderr, "--dfquirks        -D    Activate the dumbfrotz-compatible quirks mode.\n");
+	fprintf(stderr, "--numbered        -N    Show call depth with numbers during tracing.\n");
+	fprintf(stderr, "--tag-lines       -T    Prepend output with \"  \", input with \"> \" or \") \".\n");
+	fprintf(stderr, "--no-header             Don't show version information at startup.\n");
+	fprintf(stderr, "--unit-test       -u    Same as --quit --height=-1 --no-header.\n");
+	fprintf(stderr, "--formatting      -f    Choose formatting style: \"default\", \"ansi\", or \"none\".\n");
+	fprintf(stderr, "--transcripting         Make '(transcript active)' succeed.\n");
 }
 
-extern int topic_warning_level; // Defined in frontend.c
-static int suppress_header = 0; // Easier to make it global and static rather than local
+struct output_config output_config;
 
 int debugger(int argc, char **argv) {
+	int topic_warning_level = WARN_DEFAULT;
+	int suppress_header = 0;
+	int transcripting = 0;
+	
 	struct option longopts[] = {
 		{"help", 0, 0, 'h'},
 		{"version", 0, 0, 'V'},
@@ -1353,11 +1353,13 @@ int debugger(int argc, char **argv) {
 		{"dfquirks", 0, 0, 'D'},
 		{"numbered", 0, 0, 'N'},
 		{"word-seps", 1, 0, 'W'},
-		{"warn-not-topic", 0, &topic_warning_level, 1},
-		{"no-warn-not-topic", 0, &topic_warning_level, 2},
+		{"warn-not-topic", 0, &topic_warning_level, WARN_ALWAYS},
+		{"no-warn-not-topic", 0, &topic_warning_level, WARN_NEVER},
 		{"tag-lines", 0, 0, 'T'},
 		{"no-header", 0, &suppress_header, 1},
 		{"unit-test", 0, 0, 'u'},
+		{"formatting", 1, 0, 'f'},
+		{"transcripting", 0, &transcripting, 1},
 		{0, 0, 0, 0}
 	};
 
@@ -1381,7 +1383,7 @@ int debugger(int argc, char **argv) {
 	dbg.timestamps = calloc(argc, sizeof(struct timespec));
 
 	do {
-		opt = getopt_long(argc, argv, "?hVvtnqw:H:s:W:LDNTu", longopts, 0);
+		opt = getopt_long(argc, argv, "?hVvtnqw:H:s:W:LDNTuf:", longopts, 0);
 		switch(opt) {
 			case 0:
 				break; // Changed DMS to allow long-only options
@@ -1405,10 +1407,10 @@ int debugger(int argc, char **argv) {
 				quitopt = 1;
 				break;
 			case 'w':
-				force_width = strtol(optarg, 0, 10);
+				output_config.force_width = strtol(optarg, 0, 10);
 				break;
 			case 'H':
-				force_height = strtol(optarg, 0, 10);
+				output_config.force_height = strtol(optarg, 0, 10);
 				break;
 			case 's':
 				dbg.randomseed = strtol(optarg, 0, 10);
@@ -1420,18 +1422,30 @@ int debugger(int argc, char **argv) {
 				hide_links = 1;
 				break;
 			case 'D':
-				dfrotz_quirks = 1;
+				output_config.dfrotz_quirks = 1;
 				break;
 			case 'N':
-				use_numbered_levels = 1;
+				output_config.numbered_levels = 1;
 				break;
 			case 'T':
-				io_tag_lines = 1;
+				output_config.tag_lines = 1;
 				break;
 			case 'u': // --quit --no-header --height=-1
 				quitopt = 1;
-				force_height = -1;
+				output_config.force_height = -1;
 				suppress_header = 1;
+				break;
+			case 'f':
+				if(!strcmp(optarg, "default")) {
+					output_config.formatting = FORMAT_DEFAULT;
+				} else if(!strcmp(optarg, "ansi")) {
+					output_config.formatting = FORMAT_ALWAYS;
+				} else if(!strcmp(optarg, "none")) {
+					output_config.formatting = FORMAT_NEVER;
+				} else {
+					fprintf(stderr, "Unrecognized formatting style \"%s\"; valid styles are \"default\", \"ansi\", or \"none\"\n", optarg);
+					return 1;
+				}
 				break;
 			default:
 				if(opt >= 0) {
@@ -1441,15 +1455,17 @@ int debugger(int argc, char **argv) {
 				break;
 		}
 	} while(opt >= 0);
+	
+	output_config.transcripting = transcripting;
 
 	dbg.nfilename = argc - optind;
 	dbg.filenames = argv + optind;
 
 	term_init(eval_interrupt);
-	o_reset(force_width, force_height, dfrotz_quirks);
+	o_reset();
 	comp_init();
 
-	if(io_tag_lines) o_line(); // Avoid special cases
+	if(output_config.tag_lines) o_line(); // Avoid special cases
 	if(!suppress_header) {
 		o_begin_box("intdebugger");
 		o_set_style(STYLE_BOLD);
@@ -1460,7 +1476,7 @@ int debugger(int argc, char **argv) {
 		o_end_box();
 	}
 
-	if(dfrotz_quirks) {
+	if(output_config.dfrotz_quirks) {
 		o_sync();
 		o_post_input(1);
 	}
@@ -1477,6 +1493,7 @@ int debugger(int argc, char **argv) {
 	}
 
 	dbg.prg = new_program();
+	dbg.prg->topic_warning_level = topic_warning_level;
 	dbg.prg->eval_ticker = term_ticker;
 	frontend_add_builtins(dbg.prg);
 	(void) check_modification_times(&dbg);
@@ -1543,13 +1560,13 @@ int debugger(int argc, char **argv) {
 			dbg.status = ESTATUS_DEBUGGER;
 			break;
 		case ESTATUS_RESTART:
-			return_value = 0;
-			o_reset(force_width, force_height, dfrotz_quirks);
+			output_config.return_value = 0;
+			o_reset();
 			if(!restart(&dbg)) {
 				running = 0;
 				break;
 			}
-			if(dfrotz_quirks) {
+			if(output_config.dfrotz_quirks) {
 				o_sync();
 				o_post_input(1);
 			}
@@ -1568,7 +1585,7 @@ int debugger(int argc, char **argv) {
 			o_print_str("entry point)");
 			o_end_box();
 			eval_reinitialize(&dbg.es);
-			o_reset(force_width, force_height, dfrotz_quirks);
+			o_reset();
 			v = (value_t) {VAL_NUM, dbg.status};
 			dbg.status = eval_program_entry(&dbg.es, find_builtin(dbg.prg, BI_ERROR_ENTRY), &v);
 			break;
@@ -1773,7 +1790,7 @@ int debugger(int argc, char **argv) {
 		}
 	}
 
-	if(dfrotz_quirks) {
+	if(output_config.dfrotz_quirks) {
 		o_par();
 	}
 	o_sync();
@@ -1788,5 +1805,5 @@ int debugger(int argc, char **argv) {
 	free(dbg.timestamps);
 	o_cleanup();
 	term_cleanup();
-	return return_value;
+	return output_config.return_value;
 }

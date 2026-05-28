@@ -56,7 +56,7 @@ frontend.o:		frontend.c compile.h arena.h ast.h frontend.h parse.h report.h eval
 ast.o:			ast.c ast.h arena.h report.h common.h Makefile
 			${CC} -c ${CFLAGS} -o $@ $<
 
-backend.o:		backend.c backend_z.h backend_aa.h common.h arena.h ast.h frontend.h compile.h report.h unicode.h ifid.h Makefile
+backend.o:		backend.c backend_z.h backend_aa.h common.h arena.h ast.h frontend.h compile.h report.h unicode.h ifid.h output.h Makefile
 			${CC} -c ${CFLAGS} -o $@ $<
 
 backend_z.o:		backend_z.c ast.h frontend.h zcode.h blorb.h report.h common.h compile.h eval.h Makefile
@@ -98,7 +98,7 @@ debugger.o:		debugger.c arena.h ast.h frontend.h report.h compile.h eval.h termi
 eval.o:			eval.c arena.h ast.h compile.h eval.h report.h output.h terminal.h common.h Makefile
 			${CC} -c ${CFLAGS} -o $@ $<
 
-term_tty.o:		term_tty.c terminal.h Makefile
+term_tty.o:		term_tty.c terminal.h output.h Makefile
 			${CC} -c ${CFLAGS} -o $@ $<
 
 fs_tty.o:		fs_tty.c fs.h terminal.h output.h report.h common.h Makefile
