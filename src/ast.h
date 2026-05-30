@@ -451,7 +451,12 @@ struct program {
 	int			meta_release;
 	uint16_t		max_temp;
 	uint8_t			reported_violations;
+	int				topic_warning_level; // WARN_*
 };
+
+#define WARN_DEFAULT	0
+#define WARN_ALWAYS		1
+#define WARN_NEVER		2
 
 #define OPTF_BOUND_PARAMS	0x00000001
 #define OPTF_TAIL_CALLS		0x00000002

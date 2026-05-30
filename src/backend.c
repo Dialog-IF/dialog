@@ -14,6 +14,7 @@
 #include "compile.h"
 #include "report.h"
 #include "ifid.h"
+#include "output.h"
 
 static struct arena backend_arena;
 
@@ -96,12 +97,15 @@ void usage(char *prgname) {
 	exit(1);
 }
 
-extern int topic_warning_level; // Defined in frontend.c
 extern int zmachine_optimize_alphabet; // Defined in backend_z.c
 extern int zmachine_preserve_zscii; // Defined in backend_z.c
-static int serial_overridden;
+
+struct output_config output_config; // Never changed from default
 
 int main(int argc, char **argv) {
+	
+	int topic_warning_level = WARN_DEFAULT;
+	int serial_overridden = 0;
 	
 	struct option longopts[] = {
 		{"help", 0, 0, 'h'},
@@ -119,8 +123,8 @@ int main(int argc, char **argv) {
 		{"strip", 0, 0, 's'},
 		{"no-default-uni", 0, &zmachine_preserve_zscii, 0},
 		{"no-default-unicode", 0, &zmachine_preserve_zscii, 0},
-		{"warn-not-topic", 0, &topic_warning_level, 1},
-		{"no-warn-not-topic", 0, &topic_warning_level, 2},
+		{"warn-not-topic", 0, &topic_warning_level, WARN_ALWAYS},
+		{"no-warn-not-topic", 0, &topic_warning_level, WARN_NEVER},
 		{"optimize-alphabet", 0, &zmachine_optimize_alphabet, 1},
 		{"override-serial", 1, &serial_overridden, 2},
 		{0, 0, 0, 0}
@@ -259,6 +263,7 @@ int main(int argc, char **argv) {
 	}
 
 	prg = new_program();
+	prg->topic_warning_level = topic_warning_level;
 	frontend_add_builtins(prg);
 	prg->optflags |= OPTF_BOUND_PARAMS | OPTF_TAIL_CALLS | OPTF_ENV_FRAMES;
 	prg->optflags |= OPTF_SIMPLE_SELECT | OPTF_NO_LOG | OPTF_INLINE;
