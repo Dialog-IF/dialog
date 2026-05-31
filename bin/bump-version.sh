@@ -10,10 +10,12 @@ cd "$(dirname "$0")/.."
 COMPILER_VERSION="$1"
 LANGUAGE_VERSION=$(echo "$COMPILER_VERSION" | cut -f1 -d/)
 LIBRARY_VERSION="$2"
+ANTORA_VERSION=$(echo "$COMPILER_VERSION" | tr -d /)
 
 sed -Ei "s|DIALOG_VERSION=.+|DIALOG_VERSION=$COMPILER_VERSION|" src/Makefile
 sed -Ei "s|\(library version\) Library version .+|(library version) Library version $LIBRARY_VERSION.|" stdlib.dg
-sed -Ei "s|\(extension version\) Unit test runner .+|(extension version) Unit test runner $LIBRARY_VERSION by Susan Davis|" stdlib.dg
+sed -Ei "s|\(extension version\) Unit test runner .+|(extension version) Unit test runner $LIBRARY_VERSION by Susan Davis|" stdlib.dg # TODO: should be unit.dg, but do we want unit.dg and stdlib.dg to always be in sync?
 
+sed -Ei "s|version: .+|version: $ANTORA_VERSION|" manual/antora.yml
 sed -Ei "s|    lang-ver: .+|    lang-ver: $LANGUAGE_VERSION|" manual/antora.yml
 sed -Ei "s|    lib-ver: .+|    lib-ver: $LIBRARY_VERSION|" manual/antora.yml
