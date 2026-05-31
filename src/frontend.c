@@ -1909,7 +1909,6 @@ int frontend_visit_clauses(struct program *prg, struct arena *temp_arena, struct
 	struct clause *cl, *sub, **clause_dest, **cld, *def;
 	struct astnode *an;
 	int i, j;
-	char buf[32];
 	struct predicate *pred;
 
 	prg->errorflag = 0;
@@ -1985,8 +1984,7 @@ int frontend_visit_clauses(struct program *prg, struct arena *temp_arena, struct
 					sub->arena = &cl->body->predicate->pred->arena;
 					sub->params = malloc(sub->predicate->arity * sizeof(struct astnode *));
 					sub->params[0] = mkast(AN_TAG, 0, sub->arena, cl->line);
-					snprintf(buf, sizeof(buf), "%d", prg->nworldobj + 1);
-					sub->params[0]->word = find_word(prg, buf);
+					sub->params[0]->word = fresh_word(prg);
 					sub->params[0]->word->flags |= WORDF_TOPIC; // Don't give "not declared as topic" warnings for objects not created by the author
 					create_worldobj(prg, sub->params[0]->word);
 					for(j = 1; j < cl->body->predicate->arity; j++) {
