@@ -43,6 +43,11 @@ Project website:
 
 Release notes:
 
+	1c/02, Lib 1.2.2:
+
+		Compiler: objects produced by (generate $ $) no longer have
+		author-accessible names, which could confuse the compiler.
+
 	1c/01, Lib 1.2.2:
 
 		Library: fixed a bug where ASK FOR SOMETHING queried a random
