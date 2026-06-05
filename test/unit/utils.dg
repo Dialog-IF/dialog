@@ -14,7 +14,11 @@
 
 (interface (max $<X $<Y $>Max))
 
+(interface (max $<X $<Y $<Z $>Max))
+
 (interface (min $<X $<Y $>Min))
+
+(interface (min $<X $<Y $<Z $>Min))
 
 (interface (sort $<X $<Y into $>Low $High))
 
@@ -101,12 +105,20 @@
 		($Result = $Y)
 	(endif)
 
+(max $X $Y $Z $Result)
+    (max $X $Y $Max)
+	(max $Z $Max $Result)
+
 (min $X $Y $Result)
 	(if) ($X < $Y) (then)
 		($Result = $X)
 	(else)
 		($Result = $Y)
 	(endif)
+
+(min $X $Y $Z $Result)
+    (min $X $Y $Min)
+	(min $Z $Min $Result)
 
 (sort $X $Y into $RX $RY)
 	(if) ($X > $Y) (then)
