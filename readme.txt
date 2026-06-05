@@ -47,6 +47,8 @@ Release notes:
 
 		Compiler: objects produced by (generate $ $) no longer have
 		author-accessible names, which could confuse the compiler.
+		
+		Debugger: fixed spurious spaces after input with --tag-lines.
 
 	1c/01, Lib 1.2.2:
 
