@@ -435,6 +435,7 @@ void o_post_input(int external_lf) {
 		space = SP_DONELINE + (output_config.dfrotz_quirks? 999 : 0);
 		column = 0;
 		delayed_spaces = 0;
+		if(!term_is_interactive()) term_sendfakelf();
 	}
 	// Reset the style to 0, then set it back to what it should be
 	// This helps external tools parse the output
