@@ -129,7 +129,8 @@
 	(if) (using color) (then)
 		 (body style @red-bar)
     (endif)
-	(bold) FAILED TEST -- FATAL ERROR $Code. (roman) (par)
+	(bold) FAILED TEST -- FATAL ERROR $Code: (roman)
+	(report fatal error $Code) (par)
 	(quit 2)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
