@@ -125,6 +125,15 @@
 		(if) ~(keep running on failure) (then) (stop) (endif)
 	(endif)
 
+(report fatal error 1)	Heap space exhausted.
+(report fatal error 2)	Auxiliary heap space exhausted.
+(report fatal error 3)	Type error: Expected object.
+(report fatal error 4)	Type error: Expected bound value.
+(report fatal error 5)	Invalid dynamic operation.
+(report fatal error 6)	Long-term heap space exhausted.
+(report fatal error 7)	Invalid output state.
+(report fatal error $)	Invalid error code!
+
 (error $Code entry point)
 	(if) (using color) (then)
 		 (body style @red-bar)
