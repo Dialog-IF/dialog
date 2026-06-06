@@ -1465,7 +1465,9 @@ int debugger(int argc, char **argv) {
 	o_reset();
 	comp_init();
 
-	if(output_config.tag_lines) o_line(); // Avoid special cases
+	if(output_config.tag_lines && !(output_config.dfrotz_quirks && !term_is_interactive())) { // Avoid a weird interaction with quirks mode
+		printf("  ");
+	}
 	if(!suppress_header) {
 		o_begin_box("intdebugger");
 		o_set_style(STYLE_BOLD);
