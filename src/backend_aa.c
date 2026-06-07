@@ -1001,7 +1001,7 @@ static void binary_search(struct index_slot *table, int n, uint32_t endlab) {
 			ai->op |= 0x80;
 			ai->oper[0] = (aaoper_t) {AAO_VBYTE, table[pos].key};
 		} else {
-			ai->oper[0] = (aaoper_t) {AAO_WORD, table[pos].key};
+			ai->oper[0] = (aaoper_t) {AAO_VWORD, table[pos].key};
 		}
 		ai->oper[1] = (aaoper_t) {AAO_CODE, ll};
 		ai->oper[2] = (aaoper_t) {AAO_CODE, table[pos].label};
@@ -1025,8 +1025,8 @@ static void binary_search(struct index_slot *table, int n, uint32_t endlab) {
 						ai->oper[1] = (aaoper_t) {AAO_VBYTE, table[j].key};
 					} else {
 						ai = add_instr(AA_CHECK_EQ_2A);
-						ai->oper[0] = (aaoper_t) {AAO_WORD, table[i].key};
-						ai->oper[1] = (aaoper_t) {AAO_WORD, table[j].key};
+						ai->oper[0] = (aaoper_t) {AAO_VWORD, table[i].key};
+						ai->oper[1] = (aaoper_t) {AAO_VWORD, table[j].key};
 					}
 					ai->oper[2] = (aaoper_t) {AAO_CODE, table[i].label};
 					handled[j] = 1;
@@ -1036,7 +1036,7 @@ static void binary_search(struct index_slot *table, int n, uint32_t endlab) {
 						ai->op |= 0x80;
 						ai->oper[0] = (aaoper_t) {AAO_VBYTE, table[i].key};
 					} else {
-						ai->oper[0] = (aaoper_t) {AAO_WORD, table[i].key};
+						ai->oper[0] = (aaoper_t) {AAO_VWORD, table[i].key};
 					}
 					ai->oper[1] = (aaoper_t) {AAO_CODE, table[i].label};
 				}
@@ -1618,11 +1618,11 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 						ai->op |= 0x80;
 						ai->oper[0] = (aaoper_t) {AAO_VBYTE, 1 + ci->oper[0].value};
 					} else {
-						ai->oper[0] = (aaoper_t) {AAO_WORD, 1 + ci->oper[0].value};
+						ai->oper[0] = (aaoper_t) {AAO_VWORD, 1 + ci->oper[0].value};
 					}
 				} else if(ci->oper[0].tag == VAL_DICT) {
 					ai = add_instr(AA_AUX_PUSH_RAW);
-					ai->oper[0] = (aaoper_t) {AAO_WORD, tag_eval_value(ci->oper[0], prg)};
+					ai->oper[0] = (aaoper_t) {AAO_VWORD, tag_eval_value(ci->oper[0], prg)};
 				} else {
 					ai = add_instr(AA_AUX_PUSH_VAL);
 					ai->oper[0] = encode_value(ci->oper[0], prg);
@@ -1654,7 +1654,7 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 					}
 					ai->oper[1] = aao;
 					ai = add_instr(AA_IF_EQ);
-					ai->oper[0] = (aaoper_t) {AAO_WORD, 0x4000}; // number 0
+					ai->oper[0] = (aaoper_t) {AAO_VWORD, 0x4000}; // number 0
 					if(ll) { // Constant stored in REG_TMP from above
 						ai->oper[1] = aao;
 					} else {
@@ -1817,7 +1817,7 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 						ai->op |= 0x80;
 						ai->oper[0] = (aaoper_t) {AAO_VBYTE, 1 + ci->oper[1].value};
 					} else {
-						ai->oper[0] = (aaoper_t) {AAO_WORD, tag_eval_value(ci->oper[1], prg)};
+						ai->oper[0] = (aaoper_t) {AAO_VWORD, tag_eval_value(ci->oper[1], prg)};
 					}
 				}
 				ai->oper[1] = encode_dest(ci->oper[2], prg, 0);
@@ -1837,7 +1837,7 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 						ai->op |= 0x80;
 						ai->oper[0] = (aaoper_t) {AAO_VBYTE, 1 + ci->oper[1].value};
 					} else {
-						ai->oper[0] = (aaoper_t) {AAO_WORD, tag_eval_value(ci->oper[1], prg)};
+						ai->oper[0] = (aaoper_t) {AAO_VWORD, tag_eval_value(ci->oper[1], prg)};
 					}
 				}
 				ai->oper[1] = encode_dest(ci->oper[2], prg, 1);
@@ -1980,7 +1980,7 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				} else {
 					ai = add_instr(AA_IF_EQ);
 					if(ci->subop) ai->op ^= AA_NEG_FLIP;
-					ai->oper[0] = (aaoper_t) {AAO_WORD, tag_eval_value(ci->oper[1], prg)};
+					ai->oper[0] = (aaoper_t) {AAO_VWORD, tag_eval_value(ci->oper[1], prg)};
 					if(ai->oper[0].value < 0x100) {
 						ai->op |= 0x80;
 						ai->oper[0].type = AAO_VBYTE;
@@ -2168,7 +2168,7 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 					ai->oper[1] = (aaoper_t) {AAO_STORE_REG, REG_A + 1};
 				}
 				ai = add_instr(AA_IF_EQ);
-				ai->oper[0] = (aaoper_t) {AAO_WORD, prg->nworldobj + 1};
+				ai->oper[0] = (aaoper_t) {AAO_VWORD, prg->nworldobj + 1};
 				ai->oper[1] = (aaoper_t) {AAO_REG, REG_A + 1};
 				ai->oper[2] = (aaoper_t) {AAO_CODE, ll};
 				ai = add_instr(AA_PUSH_CHOICE);
@@ -2303,7 +2303,7 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 											w = prg->allwords[cr->instr[i + j].oper[k].value];
 											assert(w->flags & WORDF_DICT);
 											ai = add_instr(AA_AUX_PUSH_RAW);
-											ai->oper[0] = (aaoper_t) {AAO_WORD, prg->dictmap[w->dict_id]};
+											ai->oper[0] = (aaoper_t) {AAO_VWORD, prg->dictmap[w->dict_id]};
 										}
 									}
 								}
@@ -2318,7 +2318,7 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 										w = prg->allwords[cr->instr[i + j].oper[k].value];
 										assert(w->flags & WORDF_DICT);
 										ai = add_instr(AA_AUX_PUSH_RAW);
-										ai->oper[0] = (aaoper_t) {AAO_WORD, prg->dictmap[w->dict_id]};
+										ai->oper[0] = (aaoper_t) {AAO_VWORD, prg->dictmap[w->dict_id]};
 									}
 								}
 							}
@@ -3577,6 +3577,7 @@ static uint32_t opersize(aaoper_t aao) {
 		assert(aao.value <= 0xff);
 		return 1;
 	case AAO_WORD:
+	case AAO_VWORD:
 		assert(aao.value <= 0xffff);
 		return 2;
 	case AAO_INDEX:
@@ -3631,6 +3632,7 @@ static void putoper(aaoper_t aao, FILE *f, uint8_t op, uint32_t *org, struct pro
 		(*org)++;
 		break;
 	case AAO_WORD:
+	case AAO_VWORD:
 		putword_crc(aao.value, f, crc);
 		(*org) += 2;
 		break;
@@ -3743,7 +3745,7 @@ static void analyze_code() {
 					actual = ai->oper[j].type;
 					expected = aaopinfo[ai->op].oper[j];
 					if(actual != expected
-					&& !(expected == AAO_VALUE &&
+					&& !((expected == AAO_VALUE || expected == AAO_RAW) &&
 						(actual == AAO_CONST ||
 						actual == AAO_REG ||
 						actual == AAO_VAR))
