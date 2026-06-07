@@ -1,6 +1,3 @@
-[Z]Alpha
-[ZA]
-[A]
 An Interactive Fiction
 An interactive fiction by Anonymous.
 Release 1. Serial number <SERIAL>.
@@ -10,8 +7,6 @@ Alpha
 This is room alpha.
 
 > zeta
-[Z] Zeta
-[Z]
 (north)
 
 Beta
@@ -22,8 +17,6 @@ Zeta
 This is room zeta.
 
 > epsilon
-[Z] Epsilon
-[Z]
 (south)
 
 Beta

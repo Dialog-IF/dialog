@@ -1,6 +1,3 @@
-[Z] Location
-[ZA]
-[A]
 An Interactive Fiction
 An interactive fiction by Anonymous.
 Release 1. Serial number <SERIAL>.
@@ -10,29 +7,19 @@ Location
 There's a small safe here.
 
 > open safe
-[Z] Location
-[Z]
 You open the small safe, revealing a pearl necklace.
 
 > take it
-[Z] Location
-[Z]
 You take the pearl necklace out of the small safe.
 
 > undo
-[Z] Location
-[Z]
 Undoing the last turn (take it).
 Location
 
 > close it
-[Z] Location
-[Z]
 You close the small safe.
 
 > undo
-[Z] Location
-[Z]
 Undoing the last turn (close it).
 Location
 

@@ -77,13 +77,13 @@ origin: $(origin)
 	fi
 
 %.z.out: %.z5 %.z.in
-	$(BASEPATH)/bin/echofrotz.py -w 80 -s 1234 -h 999 -mq $*.z5 <$*.z.in >$*.z.out
+	$(BASEPATH)/bin/echofrotz.py -r ch1 -w 80 -s 1234 -h 999 -mq $*.z5 <$*.z.in >$*.z.out
 ## Remove trailing spaces from lines for easier diffing
 	perl -i -pe 's/ $$//' $*.z.out
 	echo >>$*.z.out
 
 %.aa.out: %.aastory %.aa.in
-	$(BASEPATH)/bin/aamrun.py $*.aastory <$*.aa.in >$*.aa.out
+	$(BASEPATH)/bin/aamrun.py -D $*.aastory <$*.aa.in >$*.aa.out
 ## Remove trailing spaces from lines for easier diffing
 	perl -i -pe 's/ $$//' $*.aa.out
 ## When getting character input, Node interpreter inexplicably sometimes produces CRLF instead of LF, so we need to account for that
