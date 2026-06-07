@@ -84,7 +84,7 @@ new_stopchars2.d.out: $(BASEPATH)/src/dgdebug new_stopchars2.debug new_stopchars
 	fi
 
 %.z.out: %.z5 %.z.in
-	$(BASEPATH)/bin/echoing.py dfrotz -w 80 -s 1234 -h 999 -mq $*.z5 <$*.z.in >$*.z.out
+	$(BASEPATH)/bin/echofrotz.py -w 80 -s 1234 -h 999 -m $*.z5 <$*.z.in >$*.z.out
 ## Remove trailing spaces from lines for easier diffing
 	perl -i -pe 's/ $$//' $*.z.out
 
