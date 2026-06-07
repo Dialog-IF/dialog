@@ -120,11 +120,14 @@ The Z-machine and debugger also support two additional properties that the
 color::
 Supported values are `initial`, `inherit`, `black`, `red`, `green`, `yellow`,
 `blue`, `magenta`, `cyan`, `white`, or a pound sign `#` followed by six
-hexadecimal digits. Interpreters are more likely to support the named colours
-than the hexadecimal ones. The value `initial` specifies the interpreter's
-original choice of colour, before receiving any instructions from the program;
-there is no way to know if this is a light or dark colour, so best practice is
-to set both `color` and `background-color` to `initial`, or neither of them.
+hexadecimal digits. (As usual in Dialog, the pound sign needs to be escaped
+with a backslash `\#` to make it text instead of an object name.) Interpreters
+are more likely to support the named colours than the hexadecimal ones.
+
+The value `initial` specifies the interpreter's original choice of colour,
+before receiving any instructions from the program; there is no way to know
+if this is a light or dark colour, so best practice is to set both `color`
+and `background-color` to `initial`, or neither of them.
 
 CAUTION: Note the spelling! It must be "color", not "colour".
 

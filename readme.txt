@@ -50,6 +50,9 @@ Release notes:
 		
 		Debugger: fixed spurious spaces after input with --tag-lines.
 
+		Unit test runner: unit.dg now tells the author what the
+		fatal error was when it exits on a fatal error.
+
 	1c/01, Lib 1.2.2:
 
 		Library: fixed a bug where ASK FOR SOMETHING queried a random
