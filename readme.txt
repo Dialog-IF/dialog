@@ -47,6 +47,8 @@ Release notes:
 
 		Compiler: objects produced by (generate $ $) no longer have
 		author-accessible names, which could confuse the compiler.
+		
+		Debugger: fixed spurious spaces after input with --tag-lines.
 
 		Unit test runner: unit.dg now tells the author what the
 		fatal error was when it exits on a fatal error.
