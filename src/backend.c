@@ -98,15 +98,14 @@ void usage(char *prgname) {
 	exit(1);
 }
 
-extern int zmachine_optimize_alphabet; // Defined in backend_z.c
-extern int zmachine_preserve_zscii; // Defined in backend_z.c
-
 struct output_config output_config; // Never changed from default
 
 int main(int argc, char **argv) {
 	
 	int topic_warning_level = WARN_DEFAULT;
 	int serial_overridden = 0;
+	int zmachine_optimize_alphabet = 0;
+	int zmachine_preserve_zscii = ZSCII_EXTEND;
 	
 	struct option longopts[] = {
 		{"help", 0, 0, 'h'},
@@ -277,14 +276,15 @@ int main(int argc, char **argv) {
 		prg->max_temp = aa_get_max_temp();
 	}
 	
-	if(wordseps) {
-		if(aamachine) {
-			prepare_wordseps_aa(wordseps);
-		} else {
-			prepare_wordseps_z(wordseps);
-		}
-		free(wordseps);
+	if(aamachine) {
+		configure_aa(wordseps);
 	} else {
+		configure_z(wordseps, zmachine_optimize_alphabet, zmachine_preserve_zscii);
+	}
+	
+	if(wordseps) { // If we allocated space for this, free it
+		free(wordseps);
+	} else { // Otherwise use the default (which is in static memory)
 		STOPCHARS = DEFAULT_STOPCHARS;
 	}
 

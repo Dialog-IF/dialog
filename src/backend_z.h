@@ -1,6 +1,6 @@
 
+void configure_z(const uint8_t *wordseps, int optimize_alphabet, int preserve_zscii);
 void prepare_dictionary_z(struct program *prg);
-void prepare_wordseps_z(const uint8_t *wordseps);
 
 void backend_z(
 	char *filename,
