@@ -13,3 +13,7 @@ void backend_z(
 	int strip,
 	struct program *prg,
 	struct arena *arena);
+
+#define ZSCII_EXTEND 0 // Default: add new characters, don't replace any existing ones
+#define ZSCII_DONT_EXTEND 1 // Don't add any new characters
+#define ZSCII_REPLACE 2 // Purge the existing stock and replace them all

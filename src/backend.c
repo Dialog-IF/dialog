@@ -88,6 +88,7 @@ void usage(char *prgname) {
 	fprintf(stderr, "Only for z5, z8, or zblorb format:\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "--no-default-unicode    Don't preserve the default Unicode translation table.\n");
+	fprintf(stderr, "--basic-zscii           Restrict the parser to default ZSCII for compatibility.\n");
 	fprintf(stderr, "--optimize-alphabet     Increase dictionary resolution for non-English letters.\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "Only for zblorb format:\n");
@@ -121,8 +122,9 @@ int main(int argc, char **argv) {
 		{"long-term", 1, 0, 'L'},
 		{"word-seps", 1, 0, 'W'},
 		{"strip", 0, 0, 's'},
-		{"no-default-uni", 0, &zmachine_preserve_zscii, 0},
-		{"no-default-unicode", 0, &zmachine_preserve_zscii, 0},
+		{"no-default-uni", 0, &zmachine_preserve_zscii, ZSCII_REPLACE},
+		{"no-default-unicode", 0, &zmachine_preserve_zscii, ZSCII_REPLACE},
+		{"basic-zscii", 0, &zmachine_preserve_zscii, ZSCII_DONT_EXTEND},
 		{"warn-not-topic", 0, &topic_warning_level, WARN_ALWAYS},
 		{"no-warn-not-topic", 0, &topic_warning_level, WARN_NEVER},
 		{"optimize-alphabet", 0, &zmachine_optimize_alphabet, 1},
@@ -233,8 +235,8 @@ int main(int argc, char **argv) {
 		aamachine = 1;
 	}
 	
-	if(aamachine && !zmachine_preserve_zscii) {
-		report(LVL_WARN, 0, "The --no-default-unicode option has no effect on the aa output format");
+	if(aamachine && zmachine_preserve_zscii != ZSCII_EXTEND) {
+		report(LVL_WARN, 0, "The --no-default-unicode and --basic-zscii options have no effect on the aa output format");
 	}
 	if(aamachine && zmachine_optimize_alphabet) {
 		report(LVL_WARN, 0, "The --optimize-alphabet option has no effect on the aa output format");
