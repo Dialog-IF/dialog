@@ -47,6 +47,9 @@ def send_to_subprocess(inline):
 	# Then return
 	
 	if inline is not None:
+		if (st := proc.poll()) is not None: # Subprocess died
+			exit(st)
+		
 		print(inline, end='', flush=True)
 		proc.stdin.write(inline.encode('utf8'))
 		proc.stdin.flush()
@@ -83,5 +86,4 @@ def send_to_subprocess(inline):
 send_to_subprocess(None)
 for inline in stdin:
 	send_to_subprocess(inline)
-send_to_subprocess(None)
 proc.terminate() # dfrotz doesn't exit on EOF
