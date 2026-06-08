@@ -120,7 +120,7 @@ static struct segment *segment;
 static int nsegment, nalloc_segment;
 
 static uint8_t resolve_aachar(uint32_t);
-void prepare_wordseps_aa(const uint8_t *wordseps) {
+static void prepare_wordseps(const uint8_t *wordseps) {
 	int i, len = strlen((char*)wordseps); // Overestimate
 	uint16_t unichars[len+1]; // Terminator
 	utf8_to_unicode(unichars, len+1, wordseps);
@@ -131,6 +131,10 @@ void prepare_wordseps_aa(const uint8_t *wordseps) {
 		STOPCHARS[i] = resolve_aachar(unichars[i]);
 	}
 	STOPCHARS[i] = 0;
+}
+
+void configure_aa(const uint8_t *wordseps) {
+	if(wordseps) prepare_wordseps(wordseps);
 }
 
 static int cmp_aadict(const void *a, const void *b) {

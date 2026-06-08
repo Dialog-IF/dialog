@@ -85,7 +85,7 @@ struct wordtable {
 
 static int warned_about_invisible_spans = 0; // To avoid a flood of warnings
 
-int zmachine_preserve_zscii = 1; // Whether to keep the default mapping (and add to the end), or empty it out (allowing more space) - this flag starts at 1 and is cleared by frontend.c if necessary
+static int preserve_zscii = ZSCII_EXTEND; // See backend_z.h for meanings: EXTEND, DONT_EXTEND, or REPLACE
 
 static uint16_t default_extended_zscii[69] = { // The default mapping, assumed by interpreters that don't support a Unicode translation table (like Ozmoo)
 	// These Unicode chars map to zscii characters 155..223 in order.
@@ -157,8 +157,8 @@ static int nwordtable;
 
 static struct backend_wobj *backendwobj;
 
-static uint8_t unicode_to_zscii(uint16_t);
-void prepare_wordseps_z(const uint8_t *wordseps) {
+static uint8_t unicode_to_zscii(uint16_t, const char*);
+static void prepare_wordseps(const uint8_t *wordseps) {
 	int i, len = strlen((char*)wordseps); // Overestimate
 	uint16_t unichars[len+1];
 	utf8_to_unicode(unichars, len+1, wordseps);
@@ -166,9 +166,17 @@ void prepare_wordseps_z(const uint8_t *wordseps) {
 	while(unichars[len]) len++; // utf8_to_unicode leaves a null terminator
 	STOPCHARS = malloc((len+1) * sizeof(uint8_t));
 	for(i = 0; i < len; i++) {
-		STOPCHARS[i] = unicode_to_zscii(unichars[i]);
+		STOPCHARS[i] = unicode_to_zscii(unichars[i], "word separators");
 	}
 	STOPCHARS[i] = 0;
+}
+
+static int optimize_alphabet = 0; // see configure_z
+
+void configure_z(const uint8_t *wordseps, int opt_alpha, int pres_zscii) {
+	optimize_alphabet = opt_alpha;
+	preserve_zscii = pres_zscii;
+	if(wordseps) prepare_wordseps(wordseps);
 }
 
 void set_global_label(uint16_t lab, uint16_t val) {
@@ -286,16 +294,22 @@ uint16_t resolve_rnum(uint16_t num) {
 	return r->actual_routine;
 }
 
-uint8_t add_extended_zscii(uint16_t uchar) {
+uint8_t add_extended_zscii(uint16_t uchar, const char *reason) {
 	uint8_t i = n_extended;
 	uint8_t utf8[5]; // To hold the UTF-16 character converted to UTF-8: up to four bytes plus terminator
 	// Since Z-machine only supports the BMP, really we only need *three* bytes plus terminator, but it's good to think about the future
 	
+	if(preserve_zscii == ZSCII_DONT_EXTEND) {
+		unicode_to_utf8_n(utf8, 5, &uchar, 1); // Convert to UTF-8 sequence for error reporting
+		report(LVL_WARN, 0, "Unicode character U+%04x (%s) appeared in %s context, but could not be added due to --basic-zscii. This character will not be recognized by the parser.", uchar, utf8, reason);
+		return ' '; // Will make a word unparseable
+	}
+	
 	if(n_extended+1 >= EXTENDED_ZSCII_MAX) { // But we can't!
 		unicode_to_utf8_n(utf8, 5, &uchar, 1); // Convert to UTF-8 sequence for error reporting
-		if(zmachine_preserve_zscii) {
+		if(preserve_zscii == ZSCII_EXTEND) {
 			report(LVL_ERR, 0, "Tried to add Unicode character U+%04x (%s) to the encoding, but all codepoints have already been allocated! Use the --no-default-unicode command line option to save space.", uchar, utf8);
-		} else {
+		} else { // ZSCII_REPLACE
 			report(LVL_ERR, 0, "Tried to add Unicode character U+%04x (%s) to the encoding, but all codepoints have already been allocated! Z-machine only supports %d non-ASCII characters in dictionary words.", uchar, utf8, EXTENDED_ZSCII_MAX);
 		}
 		exit(1);
@@ -310,7 +324,7 @@ uint8_t add_extended_zscii(uint16_t uchar) {
 	return EXTENDED_ZSCII_BASE + i;
 }
 
-static uint8_t unicode_to_zscii(uint16_t uchar) {
+static uint8_t unicode_to_zscii(uint16_t uchar, const char *reason) {
 	int i;
 
 	if(uchar < 128) {
@@ -323,7 +337,7 @@ static uint8_t unicode_to_zscii(uint16_t uchar) {
 			if(extended_zscii[i] == uchar) break;
 		}
 		if(i >= n_extended) { // Not in the encoding yet, so we add it
-			return add_extended_zscii(uchar);
+			return add_extended_zscii(uchar, reason);
 		} else {
 			return EXTENDED_ZSCII_BASE + i;
 		}
@@ -390,7 +404,7 @@ static int utf8_to_zscii(uint8_t *dest, int ndest, char *src, uint32_t *special,
 			}
 			if(i >= n_extended) { // Not found in the extended ZSCII
 				if(for_dictionary) { // Add a new character to the encoding
-					dest[outpos++] = add_extended_zscii(uchar);
+					dest[outpos++] = add_extended_zscii(uchar, "dictionary word");
 				} else { // This is in a string context instead of a dictionary context, so we don't add anything to the encoding - just return, and use @print_unicode to handle it
 					dest[outpos] = 0;
 					if(special) *special = uchar;
@@ -405,8 +419,7 @@ static int utf8_to_zscii(uint8_t *dest, int ndest, char *src, uint32_t *special,
 }
 
 // Alphabets used for encoding and decoding
-// Default one is used unless zmachine_optimize_alphabet is set
-int zmachine_optimize_alphabet = 0; // Set in frontend.c
+// Default one is used unless optimize_alphabet is set
 #define ALPHABET_LEN (26+26+24)
 #define ALPHABET_OFFSET 6 // first char of each alphabet is actually value 6
 static const uint8_t default_alphabet[] = "abcdefghijklmnopqrstuvwxyz" "ABCDEFGHIJKLMNOPQRSTUVWXYZ" "0123456789.,!?_#'\"/\\-:()";
@@ -443,7 +456,7 @@ static void prepare_alphabet() {
 	int i, j, best;
 	memset(alphabet, 0, sizeof(alphabet));
 	
-	if(zmachine_optimize_alphabet) {
+	if(optimize_alphabet) {
 		dict_frequencies[0] = 0; // ZSCII 0 is illegal, but just to be safe
 		for(i = 0; i < ALPHABET_LEN; i++) {
 			// Choose the best character to put in slot i
@@ -967,11 +980,11 @@ void prepare_dictionary_z(struct program *prg) {
 		exit(1);
 	}
 	
-	if(zmachine_preserve_zscii) { // Use the existing table as much as possible, putting our new characters at the end of it
+	if(preserve_zscii == ZSCII_REPLACE) { // Discard the existing table, giving us the maximum space possible
+		n_extended = 0;
+	} else { // Use the existing table as much as possible, either putting our new characters at the end of it or allowing no new characters at all
 		memcpy(extended_zscii, default_extended_zscii, sizeof(default_extended_zscii));
 		n_extended = sizeof(default_extended_zscii) / sizeof(default_extended_zscii[0]);
-	} else { // Discard the existing table, giving us the maximum space possible
-		n_extended = 0;
 	}
 
 	prg->dictmap = arena_calloc(&prg->arena, prg->ndictword * sizeof(uint16_t));
@@ -4212,7 +4225,7 @@ void compile_endings_check(struct routine *r, struct endings_point *pt, int leve
 		} else {
 			ll = r->next_label++;
 		}
-		zscii = unicode_to_zscii(pt->ways[i]->letter);
+		zscii = unicode_to_zscii(pt->ways[i]->letter, "removable word endings");
 		if(verbose >= 2) {
 			for(j = 0; j < level; j++) printf("    ");
 			if(zscii >= 'a' && zscii <= 'z') {
@@ -4890,7 +4903,7 @@ void backend_z(
 	addr_static = org;
 //	report(LVL_DEBUG, 0, "RAM done:       $%06x", org);
 	
-	if(zmachine_optimize_alphabet) {
+	if(optimize_alphabet) {
 		addr_alphabet = org;
 		org += 3 * 26; // 3 alphabets, 26 chars each
 		used_abbrevs += 3 * 26;
@@ -5054,7 +5067,7 @@ void backend_z(
 	zcore[0x1b] = (filesize / packfactor) & 0xff;
 	//zcore[0x2e] = addr_termchar >> 8;
 	//zcore[0x2f] = addr_termchar & 0xff;
-	if(zmachine_optimize_alphabet) {
+	if(optimize_alphabet) {
 		zcore[0x34] = addr_alphabet >> 8;
 		zcore[0x35] = addr_alphabet & 0xff;
 	}
@@ -5127,7 +5140,7 @@ void backend_z(
 		zcore[addr++] = value & 0xff;
 	}
 	
-	if(zmachine_optimize_alphabet) {
+	if(optimize_alphabet) {
 		// Alphabet table
 		for(i = 0; i < 26; i++) {
 			zcore[addr_alphabet + 0*26 + i] = A0[i];
