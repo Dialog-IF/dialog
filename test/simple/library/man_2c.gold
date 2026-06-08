@@ -1,6 +1,3 @@
-[Z] Location
-[ZA]
-[A] 
 An Interactive Fiction
 An interactive fiction by Anonymous.
 Release 1. Serial number <SERIAL>.
@@ -13,13 +10,9 @@ You are here.
 Did you want to examine the red bottle or the red bottle cap?
 [ZD]
 > x red bottle
-[Z] Location
-[Z] 
 It seems to be harmless.
 
 > x red bottle cap
-[Z] Location
-[Z] 
 It seems to be harmless.
 
 >

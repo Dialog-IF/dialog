@@ -48,8 +48,12 @@ Release notes:
 		Compiler: objects produced by (generate $ $) no longer have
 		author-accessible names, which could confuse the compiler.
 		
+		Backend: --basic-zscii option disables extended ZSCII. This
+		leads to larger files and worse parsing, but may be needed for
+		older interpreters that don't support Unicode.
+		
 		Debugger: fixed spurious spaces after input with --tag-lines.
-
+		
 		Unit test runner: unit.dg now tells the author what the
 		fatal error was when it exits on a fatal error.
 

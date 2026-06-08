@@ -14,7 +14,7 @@ impossible.z8: ../../src/dialogc ImpossibleStairs.dg stdlib.dg
 	../../src/dialogc -t z8 --no-warn-not-topic ImpossibleStairs.dg stdlib.dg -o impossible.z8
 
 zmachine.out: impossible.z8 impossible.in
-	../../bin/echoing.py dfrotz -m -s 1234 -q impossible.z8 <impossible.in >zmachine.out
+	../../bin/echofrotz.py -m -s 1234 -q impossible.z8 <impossible.in >zmachine.out
 
 zmachine: zmachine.out
 	$(DIFF) zmachine.out zmachine.gold

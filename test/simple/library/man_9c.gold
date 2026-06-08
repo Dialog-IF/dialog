@@ -1,6 +1,3 @@
-[Z] Repair shop
-[ZA]
-[A]
 The Mechanic
 An interactive fiction by Linus Åkesson.
 Release 1. Serial number <SERIAL>.
@@ -12,8 +9,6 @@ You're in a noisy workshop.
 A busy-looking mechanic is here, looking busy.
 
 > talk to mechanic
-[Z] Repair shop
-[Z]
 “Um, excuse me?”
 
 “Can I help you?” The busy-looking mechanic wipes her hands on a dirty cloth and
@@ -24,8 +19,6 @@ turns to face you.
 3. “What's your name?”
 4. “It was nice talking to you!”
 > 3
-[Z] Repair shop
-[Z]
 “What's your name?”
 
 “I'm Lisa. Pleasure to meet you.”
@@ -34,16 +27,12 @@ turns to face you.
 2. “There's something wrong with my car.”
 3. “It was nice talking to you!”
 > look
-[Z] Repair shop
-[Z]
 (That action is currently disabled.)
 
 1. “This looks like a nice establishment. Very authentic-looking.”
 2. “There's something wrong with my car.”
 3. “It was nice talking to you!”
 > 3
-[Z] Repair shop
-[Z]
 “It was nice talking to you!”
 
 “Any time!” Lisa returns to her work.
@@ -56,20 +45,14 @@ Lisa is here, looking busy.
 Lisa rifles through a box of parts.
 
 > x mechanic
-[Z] Repair shop
-[Z]
 (I only understood you as far as wanting to examine something.)
 [ZD]
 > x lisa
-[Z] Repair shop
-[Z]
 She seems to be harmless.
 
 Lisa checks the oil pressure of a clunker.
 
 > ask lisa about car
-[Z] Repair shop
-[Z]
 “There's something wrong with my car.”
 
 “Yee-es?”
@@ -77,8 +60,6 @@ Lisa checks the oil pressure of a clunker.
 1. “It doesn't start anymore, is the thing.”
 2. “Never mind.”
 > 1
-[Z] Repair shop
-[Z]
 “It doesn't start anymore, is the thing.”
 
 “I see. Have you checked the battery?”
@@ -87,8 +68,6 @@ Lisa checks the oil pressure of a clunker.
 2. “The battery is brand new. Could it be something else, do you think?”
 3. “Never mind.”
 > 2
-[Z] Repair shop
-[Z]
 “The battery is brand new. Could it be something else, do you think?”
 
 “And you're sure that there's gas in the tank?”
@@ -97,8 +76,6 @@ Lisa checks the oil pressure of a clunker.
 gas in the tank.”
 2. “I should certainly think not! That sounds positively dangerous.”
 > 2
-[Z] Repair shop
-[Z]
 “I should certainly think not! That sounds positively dangerous.”
 
 “I see. Well, I could have a look at it next Thursday.”
@@ -107,8 +84,6 @@ gas in the tank.”
 2. “Next Thursday is fine.”
 3. “Never mind.”
 > 1
-[Z] Repair shop
-[Z]
 “How do I check the battery?”
 
 “Under the hood. Voltmeter on the plus and minus terminals.”
@@ -117,8 +92,6 @@ gas in the tank.”
 2. “Next Thursday is fine.”
 3. “Never mind.”
 > 1
-[Z] Repair shop
-[Z]
 “Uh, what's a voltmeter?”
 
 “Or a multimeter. I could have a look at it, I guess. I have some time next
@@ -127,8 +100,6 @@ Thursday.”
 1. “Next Thursday is fine.”
 2. “Never mind.”
 > 1
-[Z] Game Over
-[Z]
 “Next Thursday is fine.”
 
 “All right then. You can leave the car out front.” Lisa returns to her work.

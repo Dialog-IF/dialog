@@ -9,7 +9,7 @@ gosling.z8: ../../src/dialogc gosling_complete_unicode.dg
 	../../src/dialogc -t z8 gosling_complete_unicode.dg -o gosling.z8 --no-warn-not-topic
 
 zmachine.out: gosling.z8 gosling.in
-	dfrotz -m -s 1234 gosling.z8 <gosling.in >zmachine.out
+	../../bin/echofrotz.py -m -s 1234 gosling.z8 <gosling.in >zmachine.out
 	echo "" >> zmachine.out
 
 zmachine: zmachine.out

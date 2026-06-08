@@ -23,5 +23,3 @@
 
 %% Make sure the author can control it
 (verbosity level 0)
-
-(redraw status bar) %% Annoying while testing
