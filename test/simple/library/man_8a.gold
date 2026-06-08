@@ -1,6 +1,3 @@
-[Z] Location
-[ZA]
-[A]
 An Interactive Fiction
 An interactive fiction by Anonymous.
 Release 1. Serial number <SERIAL>.
@@ -10,8 +7,6 @@ Location
 You are here.
 
 > eat apple
-[Z] Game Over
-[Z]
 (first attempting to take the apple)
 You take the apple.
 
@@ -28,7 +23,6 @@ Would you like to:
      QUIT the program,
      or RESTART from the beginning?
 > amusing
-[A]
 Have you tried...
 
           ...eating the transmogrifier?
@@ -41,7 +35,6 @@ Would you like to:
      QUIT the program,
      or RESTART from the beginning?
 > note
-[A]
 Thanks for playing!
 -- The Author
 

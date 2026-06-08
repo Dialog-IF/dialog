@@ -1,6 +1,3 @@
-[Z] Location
-[ZA]
-[A]
 An Interactive Fiction
 An interactive fiction by Anonymous.
 Release 1. Serial number <SERIAL>.
@@ -10,8 +7,6 @@ Location
 You are here.
 
 > eat ham and cheese
-[Z] Location
-[Z]
 (first attempting to take the ham)
 You take the ham.
 
@@ -21,14 +16,10 @@ You take the cheese.
 You savour the combination of ham and cheese.
 
 > undo
-[Z] Location
-[Z]
 Undoing the last turn (eat ham and cheese).
 Location
 
 > eat oyster and cheese
-[Z] Location
-[Z]
 The oyster:
 (first attempting to take the oyster)
 You take the oyster.
@@ -42,14 +33,10 @@ You take the cheese.
 You eat the cheese.
 
 > undo
-[Z] Location
-[Z]
 Undoing the last turn (eat oyster and cheese).
 Location
 
 > eat cheese and ham
-[Z] Location
-[Z]
 (first attempting to take the cheese)
 You take the cheese.
 
@@ -59,14 +46,10 @@ You take the ham.
 You savour the combination of ham and cheese.
 
 > undo
-[Z] Location
-[Z]
 Undoing the last turn (eat cheese and ham).
 Location
 
 > eat ham, oyster and cheese
-[Z] Location
-[Z]
 The ham and the cheese:
 (first attempting to take the ham)
 You take the ham.
@@ -83,8 +66,6 @@ You take the oyster.
 You eat the oyster.
 
 > drink water, juice and soda
-[Z] Location
-[Z]
 (first attempting to take the water)
 You take the water.
 
@@ -97,14 +78,10 @@ You take the soda.
 You savour the combination of the water, the juice, and the soda.
 
 > undo
-[Z] Location
-[Z]
 Undoing the last turn (drink water, juice and soda).
 Location
 
 > drink soda, water and juice
-[Z] Location
-[Z]
 (first attempting to take the soda)
 You take the soda.
 

@@ -1,6 +1,3 @@
-[Z] Location
-[ZA]
-[A]
 An Interactive Fiction
 An interactive fiction by Anonymous.
 Release 1. Serial number <SERIAL>.
@@ -12,18 +9,12 @@ You are here.
 A poster is tacked to the wall.
 
 > take poster
-[Z] Location
-[Z]
 You take the poster.
 
 > drop it
-[Z] Location
-[Z]
 The poster falls to the ground.
 
 > look
-[Z] Location
-[Z]
 Location
 You are here.
 

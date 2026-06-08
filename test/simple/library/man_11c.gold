@@ -1,6 +1,3 @@
-[Z] Tutorial room
-[ZA]
-[A]
 An Interactive Fiction
 An interactive fiction by Anonymous.
 Release 1. Serial number <SERIAL>.
@@ -10,13 +7,9 @@ Tutorial room
 This is a very nondescript room, dominated by a wooden table.
 
 > take two marbles
-[Z] Tutorial room
-[Z]
 (I only understood you as far as wanting to take something.)
 [ZD]
 > open boxes
-[Z] Tutorial room
-[Z]
 The closed box on the wooden table: You open the box, revealing a marble and a
 marble.
 
@@ -26,8 +19,6 @@ marble, and a marble.
 The closed box on the wooden table: You open the box.
 
 > take two marbles
-[Z] Tutorial room
-[Z]
 The marble that's in the open box on the wooden table: You take the marble out
 of the box.
 
@@ -35,19 +26,13 @@ The marble that's in the open box on the wooden table: You take the marble out
 of the box.
 
 > look
-[Z] Tutorial room
-[Z]
 Tutorial room
 This is a very nondescript room, dominated by a wooden table.
 
 > inventory
-[Z] Tutorial room
-[Z]
 You have a marble and a marble.
 
 > drop them
-[Z] Tutorial room
-[Z]
 The marble that's held by yourself: The marble falls to the ground.
 
 The marble that's held by yourself: The marble falls to the ground.
@@ -58,8 +43,6 @@ table, the marble that's in the open box on the wooden table, the marble that's
 in the open box on the wooden table, or the marble?
 [ZD]
 > eat a marble
-[Z] Tutorial room
-[Z]
 (first attempting to take the marble)
 You take the marble.
 
