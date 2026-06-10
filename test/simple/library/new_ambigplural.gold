@@ -13,7 +13,7 @@ It seems to be harmless.
 "Me" refers to yourself.
 "It" refers to the deck of cards.
 "Them" refers to the deck of cards.
-[ZD]
+
 > x box
 It seems to be harmless.
 
@@ -21,7 +21,7 @@ It seems to be harmless.
 "Me" refers to yourself.
 "It" refers to the box.
 "Them" refers to the deck of cards.
-[ZD]
+
 > x candy
 They seem to be harmless.
 
@@ -29,5 +29,5 @@ They seem to be harmless.
 "Me" refers to yourself.
 "It" refers to the candy.
 "Them" refers to the candy.
-[ZD]
+
 >
