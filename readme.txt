@@ -43,8 +43,12 @@ Project website:
 
 Release notes:
 
-	1c/02, Lib 1.2.2:
+	1c/02, Lib 1.2.3:
 
+		Library: incredibly trivial changes to make it easier to get
+		identical output across backends. Users are unlikely to ever
+		notice the difference.
+		
 		Compiler: objects produced by (generate $ $) no longer have
 		author-accessible names, which could confuse the compiler.
 		
