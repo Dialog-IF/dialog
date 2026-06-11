@@ -13,7 +13,7 @@ minute ticks by.
 
 > yodel a folk tune
 (I'm sorry, I didn't understand what you wanted to do.)
-[ZD]
+
 > play
 Play what?
 
@@ -40,13 +40,13 @@ You set the bow to the violin and begin to play. Another minute ticks by.
 
 > play spiccato with bow
 (I only understood you as far as wanting to play something with the bow.)
-[ZD]
+
 > hint
 Try yodeling a lot.
 
 > play bugs
 (I only understood you as far as wanting to play something.)
-[ZD]
+
 > complain about violin
 You can't complain about the violin. Another minute ticks by.
 
@@ -61,7 +61,7 @@ You can't complain about your childhood on planet Zyx. Another minute ticks by.
 
 > complain
 (I'm sorry, I didn't understand what you wanted to do.)
-[ZD]
+
 > cast xyzzy
 With great gravitas, you intone the mystic word " xyzzy ". Another minute ticks
 by.
@@ -72,5 +72,5 @@ by.
 
 > cast violin
 (I'm sorry, I didn't understand what you wanted to do.)
-[ZD]
+
 >

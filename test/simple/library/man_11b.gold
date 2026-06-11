@@ -8,7 +8,7 @@ This is a very nondescript room, dominated by a wooden table.
 
 > take two marbles
 (I only understood you as far as wanting to take something.)
-[ZD]
+
 > open boxes
 The closed box on the wooden table: You open the box, revealing two marbles.
 
@@ -40,7 +40,7 @@ Did you want to:
 1. eat a marble, or
 2. eat a marble that's in the open box on the wooden table?
 (Type the corresponding number)
-[ZD]
+
 > eat a marble
 (first attempting to take the marble)
 You take the marble.
@@ -52,5 +52,5 @@ Did you want to:
 1. put the marble on the wooden table, or
 2. put a marble that's in the open box on the wooden table on the wooden table?
 (Type the corresponding number)
-[ZD]
+
 >
