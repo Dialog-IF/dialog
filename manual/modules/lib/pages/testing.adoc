@@ -22,7 +22,7 @@ you can also use them to verify the state of your game after
 performing actions.
 
 Dialog's syntax and unification mechanism make the language particularly
-well-suited to writing succint and readable ("intention-revealing")
+well-suited to writing succinct and readable ("intention-revealing")
 tests, as we'll see in the examples below.
 
 [#writing]
