@@ -62,11 +62,11 @@
 
 %% From a list of lists, select the sublists where a specific element matches
 %% the key, and return a list of them.
-(interface (take from $<List where element $<Num is $<Key into $>Sublist))
+(interface (take from $<List where element $<Num is $<Key into $>Results))
 
 %% From a list of lists, select the sublists where a specific element does
-%% NOT matche the key, and return a list of them.
-(interface (take from $<List where element $<Num is not $<Key into $>Sublist))
+%% NOT match the key, and return a list of them.
+(interface (take from $<List where element $<Num is not $<Key into $>Results))
 
 %% From a list of lists, find the first (and only, if we know there are no
 %% duplicates) sublist where the key matches a specific element.
