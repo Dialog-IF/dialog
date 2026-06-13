@@ -1,5 +1,5 @@
 
-(library version) Library version 1.2.2.
+(library version) Library version 1.2.3.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -5185,8 +5185,10 @@
 	(div @gameover) {
 		(space 5)
 		\*\*\* (query $Message) \*\*\*
-		(space 5)
-		%% Why the second (space 5)? So that if someone sets text-align: center for the Å-machine web interpreter, the initial (space 5) won't put it off-center again.
+		(if) (interpreter supports text alignment) (then)
+			(space 5)
+			%% Why the second (space 5)? So that if someone sets text-align: center for the Å-machine web interpreter, the initial (space 5) won't put it off-center again.
+		(endif)
 	}
 	(now) (game has ended)
 	(stop) %% This breaks out of the main game loop to free memory; the fact that (game has ended) then makes the main loop call (game over) to end things properly

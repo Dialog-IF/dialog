@@ -12,8 +12,7 @@ You take the apple.
 
 The apple is yummy. You feel that your mission has come to an end.
 
-[Z]      *** You are no longer hungry. ***
-[DA]      *** You are no longer hungry. ***    
+     *** You are no longer hungry. ***
 
 Would you like to:
      UNDO the last move,
@@ -47,4 +46,4 @@ Would you like to:
      or RESTART from the beginning?
 > quit
 Thanks for playing!
-[ZD]
+

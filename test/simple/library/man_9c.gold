@@ -46,7 +46,7 @@ Lisa rifles through a box of parts.
 
 > x mechanic
 (I only understood you as far as wanting to examine something.)
-[ZD]
+
 > x lisa
 She seems to be harmless.
 
@@ -108,8 +108,7 @@ Thursday.”
 
 Lisa nods, and you walk out into the rain.
 
-[Z]      *** You have no car. ***
-[DA]      *** You have no car. ***    
+     *** You have no car. ***
 
 Would you like to:
      UNDO the last move,
@@ -118,4 +117,4 @@ Would you like to:
      or RESTART from the beginning?
 > quit
 Thanks for playing!
-[ZD]
+
