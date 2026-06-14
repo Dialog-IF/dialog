@@ -630,7 +630,198 @@ just now, we can say "YAGNI", and move on. We can always add it later.
 
 So far, all of the tests that we've written have for simple functions
 that don't change the state of the game world. Now let's look at some
-more complex examples that make changes to your simulation. 
+more complex examples that make changes to your game world. For this
+example, suppose that we're making a game that riffs of the 1971
+mainframe `STARTREK` game, with a starship flying from planet to
+planet, battling hostile aliens, and boldly going where angels fear to
+tread. Something like that takes quite a bit of code behind the scenes
+to make the ship go, some of which looks like this: 
+
+[source]
+----
+(interface ($<Ship position $>Position))
+
+(interface ($<Ship helm setting $>Helm))
+
+(interface ($<Ship throttle warp factor $>Warp))
+
+%% mutators
+
+(interface (set helm for $<Ship to $<Setting))
+
+(interface (set throttle for $<Ship to warp factor $<Warp))
+
+(interface (move ship for $<Num minutes))
+----
+
+These predicates can be wired up to the bridge consoles on our fictional
+starship:
+
+[source]
+----
+Bridge (at the helm station)
+
+The bridge is much smaller than is typical for a Stellar Union
+starship. Aside from the usual captain's chair behind the helm and
+navigation stations, there are only two other workstations: one for
+engineering and one for the science officer. A pair of double doors
+leads aft.
+
+Captain Kaur is sitting in her command chair.
+
+The captain turns to you. "Helm, set course three-one-five; ahead warp
+factor six. Engage!"
+
+> LOOK AT THE HELM STATION
+
+You are sitting at the helm station. On the console, you see readouts
+telling you that the ship's heading is currently 270, and that the
+ship is moving at half speed in normal space. The panel also has a
+knob for setting the helm, a slider with settings labeled "STOP",
+"HALF", "FULL", and warp factors 1 through 9, and a button labeled
+"ENGAGE." 
+
+The helm is currently set to 270.
+The throttle is currently set to HALF.
+
+> TURN THE KNOB TO 315
+
+Set.
+
+The "ENGAGE" button lights up in green.
+
+> SET THE SLIDER TO WARP FACTOR 6
+
+Set.
+
+> PRESS THE BUTTON
+
+The ambient sounds of the ship's power systems increase in pitch and
+intensity as the ship begins to accelerate.
+
+There is a flash of pale blue light through the forward windows as the
+ship exceeds the speed of light. You can see the stars outside shift
+from right to left as the ship turns.
+
+> LOOK AT THE CONSOLE
+
+You are sitting at the helm station. On the console, you see readouts
+telling you that the ship's heading is currently 315, and that the
+ship is moving at warp factor 3. The panel also has a knob for setting
+the helm, a slider with settings labeled "STOP", "HALF", "FULL", and
+warp factors 1 through 9, and a button labeled "ENGAGE." 
+
+The helm is currently set to 315.
+The throttle is currently set to warp factor 6.
+
+The ambient sounds of the ship's power systems increase in pitch and
+intensity as the ship continues to accelerate.
+
+Through the forward windows, you can see the stars gently streaking
+toward you as the ship moves at faster-than-light speed.
+----
+
+...and so forth.
+
+We might test the above (or, at least, the plumbing underneath) like
+this:
+
+[source]
+----
+#move-1-at-7
+(test *)
+(run *)
+    (set helm for #test-ship to 315)
+    (set throttle for #test-ship to warp factor 7)
+    (move #test-ship for 1 minutes)
+    (#test-ship position [3414 4514 315 13])
+----
+
+And when we run it, success!
+
+[source]
+----
+$ dgdebug -u test-ships.dg maneuver-tests.dg maneuver.dg time.dg
+schema.dg sector.dg bearing.dg grid.dg utils.dg unit.dg stdlib.dg
+Attempting 102 tests.
+. . .
+Testing #move-1-at-7: Passed!
+102 tests passed successfully.
+----
+
+Now let's add a second test:
+
+[source]
+----
+#move-2-at-7
+(test *)
+(run *)
+    (set helm for #test-ship to 315)
+    (set throttle for #test-ship to warp factor 7)
+    (move #test-ship for 2 minutes)
+    (#test-ship position [3384 4484 315 108])
+----
+
+But when we run it, it fails! Why?
+
+[source]
+----
+$ dgdebug -u test-ships.dg maneuver-tests.dg maneuver.dg time.dg
+schema.dg sector.dg bearing.dg grid.dg utils.dg unit.dg stdlib.dg
+Attempting 103 tests.
+. . .
+Testing #move-1-at-7: Passed!
+Testing #move-2-at-7: Failed. :-(
+1 TEST FAILED.
+----
+
+It fails because we just moved the ship in the previous test! We're
+assuming that our test ship starts from a specific starting point, but
+we just sent it speeding away from that starting point at warp speed.
+We could recalculate each test to account for where the ship went in
+its previous tests, but that's awkward and error-prone, and if you
+change anything in a test, you'll break all of the tests that come
+after it.
+
+This is why `unit.dg` includes `(set up $)` and `(clean up $)`
+predicates, which run before and after each test, respectively. They
+take a test object as their argument, so you could write a version for
+a particular test to do extra setup or cleanup for just that test, but
+it's simplest to write one predicate that resets your simulated world
+to what you expect:
+
+[source]
+----
+#test-ship
+(ship *)
+(current ship *)
+(* initial position [3444 4544 315 32])
+
+(set up $)
+    (exhaust) {
+        *(ship $Ship)
+        ($Ship initial position $Position)
+        (now) ($Ship position $Position)
+    }
+----
+
+Now when we run our tests, `(set up $)` will move our test ship back
+to its starting position before every test, and we succeed:
+
+[source]
+----
+$ dgdebug -u test-ships.dg maneuver-tests.dg maneuver.dg time.dg
+schema.dg sector.dg bearing.dg grid.dg utils.dg unit.dg stdlib.dg
+Attempting 103 tests.
+. . .
+Testing #move-1-at-7: Passed!
+Testing #move-2-at-7: Passed!
+103 tests passed successfully.
+----
+
+The moral of the story: except in specific limited circumstances,
+reset the state of the world after every test, and don't let one test
+leave side effects that can affect others.
 
 [#fixtures]
 === Test Fixtures
@@ -677,6 +868,22 @@ TODO
 #move-5-toward-corner
 (test *)
 (run *)    (5 minutes toward [8999 8999] at warp 6 goes to 3574 4534)
+----
+
+[source]
+----
+$ dgdebug -u test-ships.dg maneuver-tests.dg maneuver.dg time.dg
+schema.dg sector.dg bearing.dg grid.dg utils.dg unit.dg stdlib.dg
+Attempting 108 tests.
+. . .
+Testing #move-1-at-7: Passed!
+Testing #move-2-at-7: Passed!
+Testing #move-5-at-7: Passed!
+Testing #move-8-at-4: Passed!
+Testing #move-1-toward-corner: Passed!
+Testing #move-2-toward-corner: Passed!
+Testing #move-5-toward-corner: Passed!
+108 tests passed successfully.
 ----
 
 [#model]
