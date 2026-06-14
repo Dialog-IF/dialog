@@ -2,7 +2,13 @@
 
 (set up $)
     (move player to #in #foyer)
-	(
+	(now) (#cloak is #wornby #player)
+	(now) ~(hook point awarded)
+	(now) ~(message has been trampled)
+	(current score $Score)
+	(decrease score by $Score)
+	(clear all pronouns)
+	(update environment around player)
 
 #dont-go-north
 

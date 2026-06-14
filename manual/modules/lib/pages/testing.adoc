@@ -940,7 +940,14 @@ item), the behaviours in the game that need to go right are
 
 ...all of which are perfectly testable.
 
+First of all, we need to make sure to reset to a known state before
+each test:
 
+[source]
+----
+(set up $)
+    (move #player to #in #foyer)
+----
 
 [#integ]
 == Integration Tests With `regtest.py`
