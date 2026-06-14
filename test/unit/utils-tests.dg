@@ -1,5 +1,389 @@
 %% dgdebug -u utils-tests.dg utils.dg unit.dg stdlib.dg
 
+#0-isnt-odd-or-even
+(test *)
+(run *)		~(0 is odd)
+	 		~(0 is even)
+
+#1-is-odd
+(test *)
+(run *)		(1 is odd)
+	 		~(1 is even)
+
+#2-is-even
+(test *)
+(run *)		~(2 is odd)
+	 		(2 is even)
+
+#3-is-odd
+(test *)
+(run *)		(3 is odd)
+	 		~(3 is even)
+
+#max-different
+(test *)
+(run *)		(max 2 3 3)
+	 		(max 3 2 3)
+
+#max-same
+(test *)
+(run *)		(max 2 2 2)
+
+#min-different
+(test *)
+(run *)		(min 2 3 2)
+	 		(min 3 2 2)
+
+#min-same
+(test *)
+(run *)		(min 2 2 2)
+
+#max-123
+(test *)
+(run *)		(max 1 2 3 3)
+
+#max-231
+(test *)
+(run *)		(max 2 3 1 3)
+
+#max-312
+(test *)
+(run *)		(max 3 1 2 3)
+
+#min-123
+(test *)
+(run *)		(min 1 2 3 1)
+
+#min-213
+(test *)
+(run *)		(min 2 1 3 1)
+
+#min-321
+(test *)
+(run *)		(min 3 2 1 1)
+
+#round-0-0
+(test *)
+(run *)		(round 0 to the nearest 5 into 0)
+
+#round-1-0
+(test *)
+(run *)		(round 1 to the nearest 5 into 0)
+
+#round-2-0
+(test *)
+(run *)		(round 2 to the nearest 5 into 0)
+
+#round-3-5
+(test *)
+(run *)		(round 3 to the nearest 5 into 5)
+
+#round-4-5
+(test *)
+(run *)		(round 4 to the nearest 5 into 5)
+
+#round-5-5
+(test *)
+(run *)		(round 5 to the nearest 5 into 5)
+
+#round-7-5
+(test *)
+(run *)		(round 7 to the nearest 5 into 5)
+
+#round-8-10
+(test *)
+(run *)		(round 8 to the nearest 5 into 10)
+
+#round-4-0
+(test *)
+(run *)		(round 4 to the nearest 10 into 0)
+
+#round-5-10
+(test *)
+(run *)		(round 5 to the nearest 10 into 10)
+
+#round-14-10
+(test *)
+(run *)		(round 14 to the nearest 10 into 10)
+
+#round-15-20
+(test *)
+(run *)		(round 15 to the nearest 10 into 20)
+
+#delta-4-2
+(test *)
+(run *)		(4 delta 2 into 2)
+
+#delta-2-4
+(test *)
+(run *)		(2 delta 4 into 2)
+
+#delta-2-2
+(test *)
+(run *)		(2 delta 2 into 0)
+
+#delta-0-0
+(test *)
+(run *)		(0 delta 0 into 0)
+
+#range-5-3
+(test *)
+(run *)		(5 is within 2 of 3)
+
+#range-3-5
+(test *)
+(run *)		(3 is within 2 of 5)
+
+#range-3-3
+(test *)
+(run *)		(3 is within 0 of 3)
+
+#range-0-3
+(test *)
+(run *)		(0 is within 3 of 3)
+
+#range-0-0
+(test *)
+(run *)		(0 is within 0 of 0)
+
+#3-div-3-rounding-up
+(test *)
+(run *)		(3 divided by 3 into 1 rounding up)
+
+#4-div-3-rounding-up
+(test *)
+(run *)		(4 divided by 3 into 2 rounding up)
+
+#5-div-3-rounding-up
+(test *)
+(run *)		(5 divided by 3 into 2 rounding up)
+
+#6-div-3-rounding-up
+(test *)
+(run *)		(6 divided by 3 into 2 rounding up)
+
+#3-div-3-rounding-evenly
+(test *)
+(run *)		(3 divided by 3 into 1 rounding evenly)
+
+#4-div-3-rounding-evenly
+(test *)
+(run *)		(4 divided by 3 into 1 rounding evenly)
+
+#4-div-2-rounding-evenly
+(test *)
+(run *)		(4 divided by 2 into 2 rounding evenly)
+
+#5-div-3-rounding-evenly
+(test *)
+(run *)		(5 divided by 3 into 2 rounding evenly)
+
+#6-div-3-rounding-evenly
+(test *)
+(run *)		(6 divided by 3 into 2 rounding evenly)
+
+#5-div-2-rounding-evenly
+(test *)
+(run *)		(5 divided by 2 into 3 rounding evenly)
+
+#intentionally-fail-this-test
+(test *)
+(run *)		(fail)
+
+#sort-4-2
+(test *)
+(run *)		(sort 4 2 into 2 4)
+
+#sort-2-4
+(test *)
+(run *)		(sort 2 4 into 2 4)
+
+#sort-0-0
+(test *)
+(run *)		(sort 0 0 into 0 0)
+
+#sort-1-2-3
+(test *)
+(run *)		(sort 1 2 3 into 1 2 3)
+
+#sort-1-3-2
+(test *)
+(run *)		(sort 1 3 2 into 1 2 3)
+
+#sort-2-3-1
+(test *)
+(run *)		(sort 2 3 1 into 1 2 3)
+
+#sort-2-1-3
+(test *)
+(run *)		(sort 2 1 3 into 1 2 3)
+
+#sort-3-2-1
+(test *)
+(run *)		(sort 3 2 1 into 1 2 3)
+
+#sort-3-1-2
+(test *)
+(run *)		(sort 3 1 2 into 1 2 3)
+
+#10-plus-20
+(test *)
+(run *)		(add 10 to 20 into 30)
+
+#10-plus-20-max-25
+(test *)
+(run *)		(add 10 to 20 into 25 max 25)
+
+#8192-plus-8191-max-16380
+(test *)
+(run *)		(add 8192 to 8191 into 16380 max 16380)
+
+#8192-plus-8192-max-16380
+(test *)
+(run *)		(add 8192 to 8192 into 16380 max 16380)
+
+#16380-plus-3
+(test *)
+(run *)		(add 3 to 16380 into 16383)
+
+#16380-plus-4
+(test *)
+(run *)		(add 4 to 16380 into 16383)
+
+#30-minus-20
+(test *)
+(run *)		(subtract 20 from 30 into 10)
+
+#30-minus-40
+(test *)
+(run *)		(subtract 40 from 30 into 0)
+
+#split-number
+(test *)
+(run *)		(split 1789 into 1 7 8 9)
+
+#split-smaller
+(test *)
+(run *)		(split 789 into 0 7 8 9)
+
+#split-smallest
+(test *)
+(run *)		(split 1 into 0 0 0 1)
+
+#index-not-found
+(test *)
+(run *)		~(index 7 [2 3 4 6 5] $)
+
+#index-1
+(test *)
+(run *)		(index 2 [2 3 4 6 5] 1)
+
+#index-2
+(test *)
+(run *)		(index 3 [2 3 4 6 5] 2)
+
+#index-3
+(test *)
+(run *)		(index 4 [2 3 4 6 5] 3)
+
+#index-4
+(test *)
+(run *)		(index 6 [2 3 4 6 5] 4)
+
+#index-5
+(test *)
+(run *)		(index 5 [2 3 4 6 5] 5)
+
+#take-last-n
+(test *)
+(run *)		(take last 3 from [1 2 3 4 5 6] into [4 5 6])
+
+#take-last-zero
+(test *)
+(run *)		(take last 0 from [1 2 3 4 5 6] into [])
+
+#take-last-more-than-len
+(test *)
+(run *)		~(take last 7 from [1 2 3 5 6 7] into $)
+
+#take-after-0
+(test *)
+(run *)		(take after 0 from [1 2 3 4 5 6] into [1 2 3 4 5 6])
+
+#take-after-4
+(test *)
+(run *)		(take after 4 from [1 2 3 4 5 6] into [5 6])
+
+#take-after-6
+(test *)
+(run *)		~(take after 4 from [1 2 3 4 5 6] into [])
+
+#take-after-16383
+(test *)
+(run *)		~(take after 16383 from [1 2 3 4 5 6] into $)
+
+#take-after-1-from-1
+(test *)
+(run *)		(take after 1 from [1] into [])
+
+#replace-element
+(test *)
+(run *)		(replace element 3 in [1 2 3 4 5] with 6 into [1 2 6 4 5])
+
+#replace-element-zero
+(test *)
+(run *)		~(replace element 0 in [1 2 3 4 5] with 6 into $)
+
+#replace-element-beyond-end
+(test *)
+(run *)		~(replace element 6 in [1 2 3 4 5] with 6 into $)
+
+#replace-element-with-max
+(test *)
+(run *)		(replace element 3 in [1 2 3 4 5] with 6 into [1 2 6 4 5]
+	 				 with max 7)
+
+#replace-element-beyond-max
+(test *)
+(run *)		(replace element 3 in [1 2 3 4 5] with 8 into [1 2 7 4 5]
+	 				 with max 7)
+
+#increase-element
+(test *)
+(run *)		(increase element 3 in [1 2 3 4 5] by 3 into [1 2 6 4 5])
+
+#increase-element-zero
+(test *)
+(run *)		~(increase element 0 in [1 2 3 4 5] by 3 into $)
+
+#increase-element-beyond-end
+(test *)
+(run *)		~(increase element 6 in [1 2 3 4 5] by 3 into $)
+
+#increase-element-with-max
+(test *)
+(run *)		(increase element 3 in [1 2 3 4 5] by 3 into [1 2 6 4 5] with max 7)
+
+#increase-element-beyond-max
+(test *)
+(run *)		(increase element 3 in [1 2 3 4 5] by 5 into [1 2 7 4 5] with max 7)
+
+#decrease-element
+(test *)
+(run *)		(decrease element 3 in [1 2 3 4 5] by 2 into [1 2 1 4 5])
+
+#decrease-element-zero
+(test *)
+(run *)		~(decrease element 0 in [1 2 3 4 5] by 2 into $)
+
+#decrease-element-beyond-end
+(test *)
+(run *)		~(decrease element 6 in [1 2 3 4 5] by 2 into $)
+
+#decrease-element-below-zero
+(test *)
+(run *)		~(decrease element 3 in [1 2 3 4 5] by 4 into $)
+
 (global variable (list of lists [
 	[1 2 3 4 5]
 	[2 2 4 5 6]
@@ -7,573 +391,290 @@
 	[3 2 4 6 7]
 	[4 1 7 8 9]]))
 
-#0-isnt-odd-or-even
-(test *)
-(run *)
-    ~(0 is odd)
-	~(0 is even)
-
-#1-is-odd
-(test *)
-(run *)
-    (1 is odd)
-	~(1 is even)
-
-#2-is-even
-(test *)
-(run *)
-    ~(2 is odd)
-	(2 is even)
-
-#3-is-odd
-(test *)
-(run *)
-    (3 is odd)
-	~(3 is even)
-
-#max-different
-(test *)
-(run *)
-	(max 2 3 3)
-	(max 3 2 3)
-
-#max-same
-(test *)
-(run *)
-	(max 2 2 2)
-
-#min-different
-(test *)
-(run *)
-	(min 2 3 2)
-	(min 3 2 2)
-
-#min-same
-(test *)
-(run *)	(min 2 2 2)
-
-#round-0-0
-(test *)
-(run *)	(round 0 to the nearest 5 into 0)
-
-#round-1-0
-(test *)
-(run *)	(round 1 to the nearest 5 into 0)
-
-#round-2-0
-(test *)
-(run *)	(round 2 to the nearest 5 into 0)
-
-#round-3-5
-(test *)
-(run *)	(round 3 to the nearest 5 into 5)
-
-#round-4-5
-(test *)
-(run *)	(round 4 to the nearest 5 into 5)
-
-#round-5-5
-(test *)
-(run *)	(round 5 to the nearest 5 into 5)
-
-#round-7-5
-(test *)
-(run *)	(round 7 to the nearest 5 into 5)
-
-#round-8-10
-(test *)
-(run *)	(round 8 to the nearest 5 into 10)
-
-#round-4-0
-(test *)
-(run *)	(round 4 to the nearest 10 into 0)
-
-#round-5-10
-(test *)
-(run *)	(round 5 to the nearest 10 into 10)
-
-#round-14-10
-(test *)
-(run *)	(round 14 to the nearest 10 into 10)
-
-#round-15-20
-(test *)
-(run *)	(round 15 to the nearest 10 into 20)
-
-#delta-4-2
-(test *)
-(run *)	(4 delta 2 into 2)
-
-#delta-2-4
-(test *)
-(run *)p	(2 delta 4 into 2)
-
-#delta-2-2
-(test *)
-(run *)	(2 delta 2 into 0)
-
-#delta-0-0
-(test *)
-(run *)	(0 delta 0 into 0)
-
-#range-5-3
-(test *)
-(run *)	(5 is within 2 of 3)
-
-#range-3-5
-(test *)
-(run *)	(3 is within 2 of 5)
-
-#range-3-3
-(test *)
-(run *)	(3 is within 0 of 3)
-
-#range-0-3
-(test *)
-(run *)	(0 is within 3 of 3)
-
-#range-0-0
-(test *)
-(run *)	(0 is within 0 of 0)
-
-#3-div-3-rounding-up
-(test *)
-(run *)	(3 divided by 3 into 1 rounding up)
-
-#4-div-3-rounding-up
-(test *)
-(run *)	(4 divided by 3 into 2 rounding up)
-
-#5-div-3-rounding-up
-(test *)
-(run *)	(5 divided by 3 into 2 rounding up)
-
-#6-div-3-rounding-up
-(test *)
-(run *)	(6 divided by 3 into 2 rounding up)
-
-#intentionally-fail-this-test
-(test *)
-(run *)	(fail)
-
-#sort-4-2
-(test *)
-(run *)	(sort 4 2 into 2 4)
-
-#sort-2-4
-(test *)
-(run *)	(sort 2 4 into 2 4)
-
-#sort-0-0
-(test *)
-(run *)	(sort 0 0 into 0 0)
-
-#sort-1-2-3
-(test *)
-(run *)	(sort 1 2 3 into 1 2 3)
-
-#sort-1-3-2
-(test *)
-(run *)	(sort 1 3 2 into 1 2 3)
-
-#sort-2-3-1
-(test *)
-(run *)	(sort 2 3 1 into 1 2 3)
-
-#sort-2-1-3
-(test *)
-(run *)	(sort 2 1 3 into 1 2 3)
-
-#sort-3-2-1
-(test *)
-(run *)	(sort 3 2 1 into 1 2 3)
-
-#sort-3-1-2
-(test *)
-(run *)	(sort 3 1 2 into 1 2 3)
-
-#10-plus-20
-(test *)
-(run *)	(add 10 to 20 into 30)
-
-#10-plus-20-max-25
-(test *)
-(run *)    (add 10 to 20 into 25 max 25)
-
-#8192-plus-8191-max-16380
-(test *)
-(run *)    (add 8192 to 8191 into 16380 max 16380)
-
-#8192-plus-8192-max-16380
-(test *)
-(run *)    (add 8192 to 8192 into 16380 max 16380)
-
-#16380-plus-3
-(test *)
-(run *)	(add 3 to 16380 into 16383)
-
-#16380-plus-4
-(test *)
-(run *)	(add 4 to 16380 into 16383)
-
-#30-minus-20
-(test *)
-(run *)    (subtract 20 from 30 into 10)
-
-#30-minus-40
-(test *)
-(run *)    (subtract 40 from 30 into 0)
-
-#split-number
-(test *)
-(run *)	(split 1789 into 1 7 8 9)
-
-#split-smaller
-(test *)
-(run *)	(split 789 into 0 7 8 9)
-
-#split-smallest
-(test *)
-(run *)	(split 1 into 0 0 0 1)
-
-#take-last-n
-(test *)
-(run *)	(take last 3 from [1 2 3 4 5 6] into [4 5 6])
-
-#take-last-zero
-(test *)
-(run *)	(take last 0 from [1 2 3 4 5 6] into [])
-
-#take-last-more-than-len
-(test *)
-(run *)	~(take last 7 from [1 2 3 5 6 7] into $)
-
-#replace-element
-(test *)
-(run *)	(replace element 3 in [1 2 3 4 5] with 6 into [1 2 6 4 5])
-
-#replace-element-zero
-(test *)
-(run *)	~(replace element 0 in [1 2 3 4 5] with 6 into $)
-
-#replace-element-beyond-end
-(test *)
-(run *)	~(replace element 6 in [1 2 3 4 5] with 6 into $)
-
-#replace-element-with-max
-(test *)
-(run *)
-	 (replace element 3 in [1 2 3 4 5] with 6 into [1 2 6 4 5] with max 7)
-
-#replace-element-beyond-max
-(test *)
-(run *)
-	 (replace element 3 in [1 2 3 4 5] with 8 into [1 2 7 4 5] with max 7)
-
-#increase-element
-(test *)
-(run *)
-	 (increase element 3 in [1 2 3 4 5] by 3 into [1 2 6 4 5])
-
-#increase-element-zero
-(test *)
-(run *)
-	 ~(increase element 0 in [1 2 3 4 5] by 3 into $)
-
-#increase-element-beyond-end
-(test *)
-(run *)
-	 ~(increase element 6 in [1 2 3 4 5] by 3 into $)
-
-#increase-element-with-max
-(test *)
-(run *)
-	 (increase element 3 in [1 2 3 4 5] by 3 into [1 2 6 4 5] with max 7)
-
-#increase-element-beyond-max
-(test *)
-(run *)
-	(increase element 3 in [1 2 3 4 5] by 5 into [1 2 7 4 5] with max 7)
-
-#decrease-element
-(test *)
-(run *)
-	(decrease element 3 in [1 2 3 4 5] by 2 into [1 2 1 4 5])
-
-#decrease-element-zero
-(test *)
-(run *)
-	~(decrease element 0 in [1 2 3 4 5] by 2 into $)
-
-#decrease-element-beyond-end
-(test *)
-(run *)
-	~(decrease element 6 in [1 2 3 4 5] by 2 into $)
-
-#decrease-element-below-zero
-(test *)
-(run *)
-	~(decrease element 3 in [1 2 3 4 5] by 4 into $)
-
 #match-one-of-the-key
 (test *)
-(run *)
-	(list of lists $List)
-	(take from $List where element 1 is 1 into [[1 2 3 4 5]])
+(run *)		(list of lists $List)
+	 		(take from $List where element 1 is 1 into [[1 2 3 4 5]])
 
 #match-three-of-the-key
 (test *)
-(run *)
-	(list of lists $List)
-	(take from $List where element 3 is 4 into [
-	    [2 2 4 5 6]
-	    [3 2 4 5 6]
-	    [3 2 4 6 7]])
+(run *)		(list of lists $List)
+	 		(take from $List where element 3 is 4 into [
+	    		  [2 2 4 5 6]
+				  [3 2 4 5 6]
+				  [3 2 4 6 7]])
 
 #match-zero-of-the-key
 (test *)
-(run *)
-	(list of lists $List)
-	(take from $List where element 5 is 8 into [])
+(run *)		(list of lists $List)
+	 		(take from $List where element 5 is 8 into [])
 
 #match-not-one-of-the-key
 (test *)
-(run *)
-	(list of lists $List)
-	(take from $List where element 1 is not 1 into [
-		[2 2 4 5 6]
-		[3 2 4 5 6]
-		[3 2 4 6 7]
-		[4 1 7 8 9]])
+(run *)		(list of lists $List)
+	 		(take from $List where element 1 is not 1 into [
+				  [2 2 4 5 6]
+				  [3 2 4 5 6]
+				  [3 2 4 6 7]
+				  [4 1 7 8 9]])
 
 #match-not-three-of-the-key
 (test *)
-(run *)
-	(list of lists $List)
-	(take from $List where element 3 is not 4 into [
-	    [1 2 3 4 5]
-	    [4 1 7 8 9]])
+(run *)		(list of lists $List)
+	 		(take from $List where element 3 is not 4 into [
+				  [1 2 3 4 5]
+				  [4 1 7 8 9]])
 
 #match-not-zero-of-the-key
 (test *)
-(run *)
-	(list of lists $List)
-	(take from $List where element 5 is not 8 into $List)
+(run *)		(list of lists $List)
+	 		(take from $List where element 5 is not 8 into $List)
 
 #dont-match-element-0
 (test *)
-(run *)
-	(list of lists $List)
-	~(take from $List where element 0 is 8 into $)
+(run *)		(list of lists $List)
+	 		~(take from $List where element 0 is 8 into $)
 
 #dont-match-element-beyond-end
 (test *)
-(run *)
-	(list of lists $List)
-	~(take from $List where element 6 is 8 into $)
+(run *)		(list of lists $List)
+	 		~(take from $List where element 6 is 8 into $)
 
 #12345-begins-with-12
 (test *)
-(run *)
-	([1 2 3 4 5] begins with sublist [1 2])
+(run *)		([1 2 3 4 5] begins with sublist [1 2])
 
 #12345-begins-with-12345
 (test *)
-(run *)
-	([1 2 3 4 5] begins with sublist [1 2 3 4 5])
+(run *)		([1 2 3 4 5] begins with sublist [1 2 3 4 5])
 
 #intentionally-fail-this-one-also
 (test *)
-(run *)	(fail)
+(run *)		(fail)
 
 #12345-doesnt-begin-with-22
 (test *)
-(run *)
-	~([1 2 3 4 5] begins with sublist [2 2])
+(run *)		~([1 2 3 4 5] begins with sublist [2 2])
 
 #12345-doesnt-begin-with-123456
 (test *)
-(run *)
-	~([1 2 3 4 5] begins with sublist [1 2 3 4 5 6])
+(run *)		~([1 2 3 4 5] begins with sublist [1 2 3 4 5 6])
 
 #12345-doesnt-begin-with-scalar
 (test *)
-(run *)
-	~([1 2 3 4 5] begins with sublist 1)
+(run *)		~([1 2 3 4 5] begins with sublist 1)
 
 #12345-doesnt-begin-with-nested
 (test *)
-(run *)
-	~([1 2 3 4 5] begins with sublist [[1] [2]])
+(run *)		~([1 2 3 4 5] begins with sublist [[1] [2]])
 
 #find-12
 (test *)
-(run *)
-    (list of lists $List)
-	(find in $List beginning with sublist [1 2] into [1 2 3 4 5])
+(run *)		(list of lists $List)
+	 		(find in $List beginning with sublist [1 2] into [1 2 3 4 5])
 
 #find-22
 (test *)
-(run *)
-    (list of lists $List)
-	(find in $List beginning with sublist [2 2] into [2 2 4 5 6])
+(run *)		(list of lists $List)
+	 		(find in $List beginning with sublist [2 2] into [2 2 4 5 6])
 
 #dont-find-99
 (test *)
-(run *)
-    (list of lists $List)
-	~(find in $List beginning with sublist [9 9] into $)
+(run *)		(list of lists $List)
+	 		~(find in $List beginning with sublist [9 9] into $)
 
 #dont-find-123456
 (test *)
-(run *)
-    (list of lists $List)
-	~(find in $List beginning with sublist [1 2 3 4 5 6] into $)
+(run *)		(list of lists $List)
+	 		~(find in $List beginning with sublist [1 2 3 4 5 6] into $)
 
 #dont-find-scalar
 (test *)
-(run *)
-    (list of lists $List)
-	~(find in $List beginning with sublist 1 into $)
+(run *)     (list of lists $List)
+	 	    ~(find in $List beginning with sublist 1 into $)
 
 #dont-find-in-empty-list
 (test *)
-(run *)
-	~(find in [] beginning with sublist [1 2] into $)
+(run *)		~(find in [] beginning with sublist [1 2] into $)
 
 #set-1-in-1-to-2
 (test *)
-(run *)
-    (set element 1 in [1] in [[1]] to 2 into [[2]])
+(run *)		(set element 1 in [1] in [[1]] to 2 into [[2]])
 
 #set-1-in-2-to-2
 (test *)
-(run *)
-    (set element 1 in [2] in [[1]] to 2 into [[1]])
+(run *)		(set element 1 in [2] in [[1]] to 2 into [[1]])
 
 #set-2-in-22-to-3
 (test *)
-(run *)
-    (set element 2 in [2] in [[1 2] [2 2]] to 3 into [[1 2] [2 3]])
+(run *)		(set element 2 in [2] in [[1 2] [2 2]] to 3 into [[1 2] [2 3]])
 
 #set-2-in-22-to-4
 (test *)
-(run *)
-    (set element 2 in [2] in [[1 2] [2 2] [3 2]] to 4 into [[1 2] [2 4] [3 2]])
+(run *)		(set element 2 in [2] in [[1 2] [2 2] [3 2]] to 4
+	 	   		 into [[1 2] [2 4] [3 2]])
 
 #set-4-in-12345-to-6
 (test *)
-(run *)
-	(list of lists $List)
-	(set element 4 in [1 2] in $List to 6 into $NewList)
-	(length of $NewList into 5)
-	(find in $NewList beginning with sublist [1 2] into [1 2 3 6 5])
+(run *)		(list of lists $List)
+	 		(set element 4 in [1 2] in $List to 6 into $NewList)
+			(length of $NewList into 5)
+			(find in $NewList beginning with sublist [1 2] into [1 2 3 6 5])
 
 #set-4-in-32456-to-7
 (test *)
-(run *)
-	(list of lists $List)
-	(set element 4 in [3 2] in $List to 7 into $NewList)
-	(length of $NewList into 5)
-	(find in $NewList beginning with sublist [3 2] into [3 2 4 7 6])
+(run *)		(list of lists $List)
+	 		(set element 4 in [3 2] in $List to 7 into $NewList)
+			(length of $NewList into 5)
+			(find in $NewList beginning with sublist [3 2] into [3 2 4 7 6])
 
 #dont-set-6-in-12345
 (test *)
-(run *)
-	(list of lists $List)
-	~(set element 6 in [1 2] in $List to 6 into $)
+(run *)		(list of lists $List)
+	 		~(set element 6 in [1 2] in $List to 6 into $)
 
 #dont-set-0-in-12345
 (test *)
-(run *)
-	(list of lists $List)
-	~(set element 0 in [1 2] in $List to 6 into $)
+(run *)		(list of lists $List)
+	 		~(set element 0 in [1 2] in $List to 6 into $)
 
 #intentionally-fail-yet-another
 (test *)
-(run *)	(fail)
+(run *)		(fail)
 
 #find-2-2
 (test *)
-(run *)
-	  (list of lists $List)
-	  (find in $List beginning with sublist [2 2] into [2 2 4 5 6])
+(run *)		(list of lists $List)
+	 		(find in $List beginning with sublist [2 2] into [2 2 4 5 6])
 
 #dont-find-9-9
 (test *)
-(run *)
-	  (list of lists $List)
-	  ~(find in $List beginning with sublist [9 9] into $)
+(run *)		(list of lists $List)
+	 		~(find in $List beginning with sublist [9 9] into $)
 
 #remove-1-2
 (test *)
-(run *)
-	  (list of lists $List)
-	  (remove from $List beginning with sublist [1 2] into $NewList)
-	  (assert $NewList = [
-		[2 2 4 5 6]
-		[3 2 4 5 6]
-		[3 2 4 6 7]
-		[4 1 7 8 9]])
+(run *)		(list of lists $List)
+	 		(remove from $List beginning with sublist [1 2] into [
+					[2 2 4 5 6]
+					[3 2 4 5 6]
+					[3 2 4 6 7]
+					[4 1 7 8 9]])
 
 #remove-1-2-twice
 (test *)
-(run *)
-	  (list of lists $List)
-	  (remove from $List beginning with sublist [1 2] into $NewList)
-	  (remove from $NewList beginning with sublist [1 2] into $NewerList)
-	  (assert $NewerList = [
-		[2 2 4 5 6]
-		[3 2 4 5 6]
-		[3 2 4 6 7]
-		[4 1 7 8 9]])
+(run *)		(list of lists $List)
+	 		(remove from $List beginning with sublist [1 2] into $NewList)
+			(remove from $NewList beginning with sublist [1 2] into [
+					[2 2 4 5 6]
+					[3 2 4 5 6]
+					[3 2 4 6 7]
+					[4 1 7 8 9]])
 
 #remove-2-2
 (test *)
-(run *)
-	  (list of lists $List)
-	  (remove from $List beginning with sublist [2 2] into $NewList)
-	  (assert $NewList = [
-	  	[1 2 3 4 5]
-		[3 2 4 5 6]
-		[3 2 4 6 7]
-		[4 1 7 8 9]])
+(run *)		(list of lists $List)
+	 		(remove from $List beginning with sublist [2 2] into [
+				  	[1 2 3 4 5]
+					[3 2 4 5 6]
+					[3 2 4 6 7]
+					[4 1 7 8 9]])
 
 #remove-3-2
 (test *)
-(run *)
-	  (list of lists $List)
-	  (remove from $List beginning with sublist [3 2] into $NewList)
-	  (assert $NewList = [
-	  	[1 2 3 4 5]
-		[2 2 4 5 6]
-		[3 2 4 6 7]
-		[4 1 7 8 9]])
+(run *)		(list of lists $List)
+	 		(remove from $List beginning with sublist [3 2] into [
+				  	[1 2 3 4 5]
+					[2 2 4 5 6]
+					[3 2 4 6 7]
+					[4 1 7 8 9]])
 
 #remove-3-2-twice
 (test *)
-(run *)
-	  (list of lists $List)
-	  (remove from $List beginning with sublist [3 2] into $NewList)
-	  (remove from $NewList beginning with sublist [3 2] into $NewerList)
-	  (assert $NewerList = [
-	  	[1 2 3 4 5]
-		[2 2 4 5 6]
-		[4 1 7 8 9]])
+(run *)		(list of lists $List)
+	 		(remove from $List beginning with sublist [3 2] into $NewList)
+			(remove from $NewList beginning with sublist [3 2] into [
+				  	[1 2 3 4 5]
+					[2 2 4 5 6]
+					[4 1 7 8 9]])
 
 #remove-4-1
 (test *)
-(run *)
-	  (list of lists $List)
-	  (remove from $List beginning with sublist [4 1] into $NewList)
-	  (assert $NewList = [
-	  	[1 2 3 4 5]
-		[2 2 4 5 6]
-		[3 2 4 5 6]
-		[3 2 4 6 7]])
+(run *)		(list of lists $List)
+	 		(remove from $List beginning with sublist [4 1] into [
+				  	[1 2 3 4 5]
+					[2 2 4 5 6]
+					[3 2 4 5 6]
+					[3 2 4 6 7]])
 
 #remove-7-7
 (test *)
-(run *)
-	  (list of lists $List)
-	  (remove from $List beginning with sublist [7 7] into $List)
+(run *)		(list of lists $List)
+	 		(remove from $List beginning with sublist [7 7] into $List)
+
+#highest-element-1
+(test *)
+(run *)		(list of lists $List)
+	 		(find in $List with highest element 1 into [4 1 7 8 9])
+
+#highest-element-2
+(test *)
+(run *)		(list of lists $List)
+	 		(find in $List with highest element 2 into [1 2 3 4 5])
+
+#highest-element-3
+(test *)
+(run *)		(list of lists $List)
+	 		(find in $List with highest element 3 into [4 1 7 8 9])
+
+#lowest-element-1
+(test *)
+(run *)    (list of lists $List)
+	 	   (find in $List with lowest element 1 into [1 2 3 4 5])
+
+#lowest-element-2
+(test *)
+(run *)    (list of lists $List)
+	 	   (find in $List with lowest element 2 into [4 1 7 8 9])
+
+#find-3-is-3
+(test *)
+(run *)    (list of lists $List)
+	 	   (find in $List where element 3 is 3 into [1 2 3 4 5])
+
+#find-3-is-4
+(test *)
+(run *)    (list of lists $List)
+	 	   (find in $List where element 3 is 4 into [2 2 4 5 6])
+
+#find-3-is-7
+(test *)
+(run *)    (list of lists $List)
+	 	   (find in $List where element 3 is 7 into [4 1 7 8 9])
+
+#remove-3-is-3
+(test *)
+(run *)    (list of lists $List)
+	 	   (remove from $List where element 3 is 3 into [
+		   		   [2 2 4 5 6]
+				   [3 2 4 5 6]
+				   [3 2 4 6 7]
+				   [4 1 7 8 9]])
+
+#remove-3-is-4
+(test *)
+(run *)    (list of lists $List)
+	 	   (remove from $List where element 3 is 4 into [
+		           [1 2 3 4 5]
+				   [3 2 4 5 6]
+				   [3 2 4 6 7]
+				   [4 1 7 8 9]])
+
+#remove-3-is-7
+(test *)
+(run *)		(list of lists $List)
+	 		(remove from $List where element 3 is 7 into [
+			        [1 2 3 4 5]
+					[2 2 4 5 6]
+					[3 2 4 5 6]
+					[3 2 4 6 7]])

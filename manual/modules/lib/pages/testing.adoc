@@ -22,7 +22,7 @@ you can also use them to verify the state of your game after
 performing actions.
 
 Dialog's syntax and unification mechanism make the language particularly
-well-suited to writing succint and readable ("intention-revealing")
+well-suited to writing succinct and readable ("intention-revealing")
 tests, as we'll see in the examples below.
 
 [#writing]
@@ -33,7 +33,7 @@ use in our game:
 
 [source]
 ----
-(extension version) Min and Max v0.1, by A.N. Author (line)
+(extension version) Min and Max v0.1, by A. N. Author.
 
 (interface (max $<X $<Y $>Max))
 
@@ -78,7 +78,6 @@ $ dgdebug -u minmax-tests.dg minmax.dg unit.dg stdlib.dg
 Attempting 1 test.
 Testing #max-first-is-bigger: Passed!
 1 test passed successfully.
-$
 ----
 
 Let's look at some of the details of our first draft of
@@ -176,7 +175,6 @@ Testing #min-first-is-bigger: Passed!
 Testing #min-second-is-bigger: Passed!
 Testing #min-equal-values: Passed!
 6 tests passed successfully.
-$
 ----
 
 [#choosing]
@@ -195,10 +193,10 @@ sum of two numbers:
 
 ($X plus $Y into $Z max $Max)
     ($X plus $Y into $Proposed)
-    (if) ($Proposed > $Max) (then)
-        ($Z = $Max)
-    (else)
+    (if) ($Proposed < $Max) (then)
         ($Z = $Proposed)
+    (else)
+        ($Z = $Max)
     (endif)
 ----
 
@@ -225,7 +223,6 @@ Testing #min-second-is-bigger: Passed!
 Testing #min-equal-values: Passed!
 Testing #10-plus-20-max-25: Passed!
 7 tests passed successfully.
-$
 ----
 
 Hooray, it works! So we're done, right?
@@ -242,7 +239,7 @@ that.
 (run *)    (10 plus 20 into 30 max 35)
 ----
 
-Which also works when we run it:
+Our new test also works when we run it:
 
 [source]
 ----
@@ -257,7 +254,6 @@ Testing #min-equal-values: Passed!
 Testing #10-plus-20-max-25: Passed!
 Testing #10-plus-20-max-35: Passed!
 8 tests passed successfully.
-$
 ----
 
 So, we're done _now_, right? Not so fast. How else can this fail?
@@ -305,7 +301,6 @@ Testing #0-plus-0-max-25: Passed!
 Testing #8000-plus-9000-max-10000: Failed. :-(
 Testing #16383-plus-16383-max-16383: Failed. :-(
 2 TESTS FAILED.
-$
 ----
 
 You'll notice that the text colour of the output changed from green to
@@ -329,10 +324,10 @@ overflow with an `(if)`:
     (else)
         ($Proposed = 16383)
     (endif)
-    (if) ($Proposed > $Max) (then)
-        ($Z = $Max)
-    (else)
+    (if) ($Proposed < $Max) (then)
         ($Z = $Proposed)
+    (else)
+        ($Z = $Max)
     (endif)
 ----
 
@@ -355,5 +350,584 @@ Testing #0-plus-0-max-25: Passed!
 Testing #8000-plus-9000-max-10000: Passed!
 Testing #16383-plus-16383-max-16383: Passed!
 12 tests passed successfully.
-$
 ----
+
+[#refactoring]
+=== Refactoring
+
+Now that all of our tests are passing, we can take a look at the code
+that we've just written. One thing that jumps out is that we've
+written code that finds the minimum of two values twice:
+
+[source]
+----
+(min $X $Y $Result)
+    (if) ($X < $Y) (then)
+        ($Result = $X)
+    (else)
+        ($Result = $Y)
+    (endif)
+
+($X plus $Y into $Z max $Max)
+    (if) ($X plus $Y into $Sum) (then)
+        ($Proposed = $Sum)
+    (else)
+        ($Proposed = 16383)
+    (endif)
+    (if) ($Proposed < $Max) (then)
+        ($Z = $Proposed)
+    (else)
+        ($Z = $Max)
+    (endif)
+----
+
+Writing the same code more than once can be error-prone if you change
+it in one place, but not the other. It also bloats your program. Don't
+repeat yourself. Also, don't repeat yourself.
+
+Since we've already written `(min $ $ $)`, we can use it in `($ plus $
+into $ max $)`:
+
+[source]
+----
+($X plus $Y into $Z max $Max)
+    (if) ($X plus $Y into $Sum) (then)
+        ($Proposed = $Sum)
+    (else)
+        ($Proposed = 16383)
+    (endif)
+    (min $Proposed $Max $Z)
+----
+
+...and now our code is smaller and easier to understand. Because we
+have a good set of unit tests, we can safely make changes like this,
+because the tests will tell us if we broke anything.
+
+[source]
+----
+$ dgdebug -u minmax-tests.dg minmax.dg unit.dg stdlib.dg
+Attempting 12 tests.
+Testing #max-first-is-bigger: Passed!
+Testing #max-second-is-bigger: Passed!
+Testing #max-equal-values: Passed!
+Testing #min-first-is-bigger: Passed!
+Testing #min-second-is-bigger: Passed!
+Testing #min-equal-values: Passed!
+Testing #10-plus-20-max-25: Passed!
+Testing #10-plus-20-max-35: Passed!
+Testing #10-plus-20-max-0: Passed!
+Testing #0-plus-0-max-25: Passed!
+Testing #8000-plus-9000-max-10000: Passed!
+Testing #16383-plus-16383-max-16383: Passed!
+12 tests passed successfully.
+----
+
+We didn't.
+
+Simplifying your code without changing its behaviour is called
+_refactoring_. Code tends to get more complex and error-prone, the
+more you write of it. Refactoring helps you prevent that complexity
+from creeping in to your project.
+
+[#tdd]
+=== Test-Driven Development
+
+Unit tests and refactoring enable a style of development known as
+_Test-Driven Development_ (TDD). In TDD, you start with your tests,
+rather than writing them after the fact. Suppose we wanted to add a
+predicate to tell us whether one number was within a certain range of
+another. With TDD, we might start in our `-tests.dg` file, and add
+something like this:
+
+[source]
+----
+#range-5-3
+(test *)
+(run *)		(5 is within 2 of 3)
+
+#range-3-5
+(test *)
+(run *)		(3 is within 2 of 5)
+
+#range-3-3
+(test *)
+(run *)		(3 is within 0 of 3)
+
+#range-0-3
+(test *)
+(run *)		(0 is within 3 of 3)
+
+#range-0-0
+(test *)
+(run *)		(0 is within 0 of 0)
+
+#range-16383-16383
+(test *)
+(run *)		(16383 is within 0 of 16383)
+
+#range-0-16383
+(test *)
+(run *)		(0 is within 16383 of 16383)
+----
+
+That covers some of the positive cases; let's cover negative ones too:
+
+[source]
+----
+#range-5-2
+(test *)
+(run *)		~(5 is within 2 of 2)
+
+#range-2-5
+(test *)
+(run *)		~(2 is within 2 of 5)
+----
+
+Now when we run the file, we get this:
+
+[source]
+----
+$ dgdebug -u minmax-tests.dg minmax.dg unit.dg stdlib.dg
+Warning: minmax-tests.dg: Possible typo: a query is made to '($ is
+within $ of $), but there is no matching rule or interface definition.
+Attempting 25 tests.
+Testing #max-first-is-bigger: Passed!
+Testing #max-second-is-bigger: Passed!
+Testing #max-equal-values: Passed!
+Testing #min-first-is-bigger: Passed!
+Testing #min-second-is-bigger: Passed!
+Testing #min-equal-values: Passed!
+Testing #10-plus-20-max-25: Passed!
+Testing #10-plus-20-max-35: Passed!
+Testing #10-plus-20-max-0: Passed!
+Testing #0-plus-0-max-25: Passed!
+Testing #8000-plus-9000-max-10000: Passed!
+Testing #16383-plus-16383-max-16383: Passed!
+Testing #sort-2-4: Passed!
+Testing #sort-4-2: Passed!
+Testing #sort-0-0: Passed!
+Testing #sort-0-16383: Passed!
+Testing #range-5-3: Failed. :-(
+Testing #range-3-5: Failed. :-(
+Testing #range-3-3: Failed. :-(
+Testing #range-0-3: Failed. :-(
+Testing #range-0-0: Failed. :-(
+Testing #range-16383-16383: Failed. :-(
+Testing #range-0-16383: Failed. :-(
+Testing #range-5-2: Failed. :-(
+Testing #range-2-5: Failed. :-(
+9 TESTS FAILED.
+----
+
+Of course they failed! We haven't written the code yet. Let's write
+it:
+
+[source]
+----
+(interface ($<Num1 is within $<Range of $<Num2))
+
+($Num1 is within $Range of $Num2)
+    (if) ($Num1 > $Num2) (then)
+        ($Num1 minus $Num2 into $Delta)
+    (else)
+        ($Num2 minus $Num1 into $Delta)
+    (endif)
+    ~($Delta > $Range)
+----
+
+Running this produces success!
+
+[source]
+----
+$ dgdebug -u minmax-tests.dg minmax.dg unit.dg stdlib.dg
+Warning: minmax-tests.dg: Possible typo: a query is made to '($ is
+within $ of $), but there is no matching rule or interface definition.
+Attempting 25 tests.
+Testing #max-first-is-bigger: Passed!
+Testing #max-second-is-bigger: Passed!
+Testing #max-equal-values: Passed!
+Testing #min-first-is-bigger: Passed!
+Testing #min-second-is-bigger: Passed!
+Testing #min-equal-values: Passed!
+Testing #10-plus-20-max-25: Passed!
+Testing #10-plus-20-max-35: Passed!
+Testing #10-plus-20-max-0: Passed!
+Testing #0-plus-0-max-25: Passed!
+Testing #8000-plus-9000-max-10000: Passed!
+Testing #16383-plus-16383-max-16383: Passed!
+Testing #sort-2-4: Passed!
+Testing #sort-4-2: Passed!
+Testing #sort-0-0: Passed!
+Testing #sort-0-16383: Passed!
+Testing #range-5-3: Passed!
+Testing #range-3-5: Passed!
+Testing #range-3-3: Passed!
+Testing #range-0-3: Passed!
+Testing #range-0-0: Passed!
+Testing #range-16383-16383: Passed!
+Testing #range-0-16383: Passed!
+Testing #range-5-2: Passed!
+Testing #range-2-5: Passed!
+21 tests passed successfully.
+----
+
+So we've gone from a red bar, from not having written the code that we
+wrote our tests against, to a green bar, from having them pass. There's
+one more step. Let's take another look at the code, and see if we've
+introduced any duplication or unnecessary complexity.
+
+Suppose that we look at the file, and notice that we had previously
+written the following, along with its associated tests:
+
+[source]
+----
+(interface (sort $<X $<Y into $>Low $>High))
+
+(sort $X $Y into $Low $High)
+    (if) ($X > $Y) (then)
+        ($Low = $Y)
+        ($High = $X)
+    (else)
+        ($Low = $X)
+        ($High = $Y)
+    (endif)
+----
+
+Why, that looks remarkably similar to the code that we just wrote!
+Let's have it in just one place:
+
+[source]
+----
+($Num1 is within $Range of $Num2)
+    (sort $Num1 $Num2 into $Low $High)
+    ($High minus $Low into $Delta)
+    ~($Delta > $Range)
+----
+
+When we run that again, we get success, just like before! And our code
+is a little shorter, and without duplication. This is a very small
+example, and the payoff will be more obvious with more complex code,
+but not having to maintain the same feature in two places, and
+potentially fix it in both places, or have it go out of sync and cause
+hard-to-track-down bugs, is a win in itself.
+
+That's the TDD loop in a nutshell: red-green-refactor, and then move
+on to the next feature. With enough tests, and enough refactoring, you
+should be able to keep moving forward without bogging yourself down.
+
+We might also notice that calculating the absolute value of the difference
+of two numbers, and think of adding `($ delta $ into $)` as another
+predicate. That might, in fact, be quite useful. Do we need it right
+now? If so, we can go right ahead and introduce it (and its tests). If
+we don't have an immediate use for it, though, spending more time on
+code that doesn't have a use doesn't actually get you any closer to
+releasing your game. There's a saying: "You Ain't Gonna Need It," or
+YAGNI. If we don't have other code that wants `($ delta $ into $)`
+just now, we can say "YAGNI", and move on. We can always add it later.
+
+[#state]
+=== Testing From Known State
+
+So far, all of the tests that we've written have for simple functions
+that don't change the state of the game world. Now let's look at some
+more complex examples that make changes to your game world. For this
+example, suppose that we're making a game that riffs off the 1971
+mainframe `STARTREK` game, with a starship flying from planet to
+planet, battling hostile aliens, and boldly going where angels fear to
+tread. Something like that takes quite a bit of code behind the scenes
+to make the ship go, some of which looks like this: 
+
+[source]
+----
+(interface ($<Ship position $>Position))
+
+(interface ($<Ship helm setting $>Helm))
+
+(interface ($<Ship throttle warp factor $>Warp))
+
+%% mutators
+
+(interface (set helm for $<Ship to $<Setting))
+
+(interface (set throttle for $<Ship to warp factor $<Warp))
+
+(interface (move ship for $<Num minutes))
+----
+
+These predicates can be wired up to the bridge consoles on our fictional
+starship:
+
+----
+Bridge (at the helm station)
+
+The bridge is much smaller than is typical for a Stellar Union
+starship. Aside from the usual captain's chair behind the helm and
+navigation stations, there are only two other workstations: one for
+engineering and one for the science officer. A pair of double doors
+leads aft. 
+
+Captain Kaur is sitting in her command chair.
+
+The captain turns to you. "Helm, set course three-one-five; ahead warp
+factor six. Engage!" 
+
+> LOOK AT THE HELM STATION
+
+You are sitting at the helm station. On the console, you see readouts
+telling you that the ship's heading is currently 270, and that the
+ship is moving at half speed in normal space. The panel also has a
+knob for setting the helm, a slider with settings labeled "STOP",
+"HALF", "FULL", and warp factors 1 through 9, and a button labeled
+"ENGAGE." 
+
+The helm is currently set to 270.
+The throttle is currently set to HALF.
+
+> TURN THE KNOB TO 315
+
+Set.
+
+The "ENGAGE" button lights up in green.
+
+> SET THE SLIDER TO WARP FACTOR 6
+
+Set.
+
+> PRESS THE BUTTON
+
+The ambient sounds of the ship's power systems increase in pitch and
+intensity as the ship begins to accelerate.
+
+There is a flash of pale blue light through the forward windows as the
+ship exceeds the speed of light. You can see the stars outside shift
+from right to left as the ship turns.
+
+> LOOK AT THE CONSOLE
+
+You are sitting at the helm station. On the console, you see readouts
+telling you that the ship's heading is currently 315, and that the
+ship is moving at warp factor 3. The panel also has a knob for setting
+the helm, a slider with settings labeled "STOP", "HALF", "FULL", and
+warp factors 1 through 9, and a button labeled "ENGAGE." 
+
+The helm is currently set to 315.
+The throttle is currently set to warp factor 6.
+
+The ambient sounds of the ship's power systems increase in pitch and
+intensity as the ship continues to accelerate.
+
+Through the forward windows, you can see the stars gently streaking
+toward you as the ship moves at faster-than-light speed.
+----
+
+...and so forth.
+
+We might test the above (or, at least, the plumbing underneath) like
+this:
+
+[source]
+----
+#move-1-at-7
+(test *)
+(run *)
+    (set helm for #test-ship to 315)
+    (set throttle for #test-ship to warp factor 7)
+    (move #test-ship for 1 minutes)
+    (#test-ship position [3414 4514 315 13])
+----
+
+And when we run it, success!
+
+[source]
+----
+$ dgdebug -u test-ships.dg maneuver-tests.dg maneuver.dg time.dg
+schema.dg sector.dg bearing.dg grid.dg utils.dg unit.dg stdlib.dg
+Attempting 102 tests.
+. . .
+Testing #move-1-at-7: Passed!
+102 tests passed successfully.
+----
+
+Now let's add a second test:
+
+[source]
+----
+#move-2-at-7
+(test *)
+(run *)
+    (set helm for #test-ship to 315)
+    (set throttle for #test-ship to warp factor 7)
+    (move #test-ship for 2 minutes)
+    (#test-ship position [3384 4484 315 108])
+----
+
+But when we run it, it fails! Why?
+
+[source]
+----
+$ dgdebug -u test-ships.dg maneuver-tests.dg maneuver.dg time.dg
+schema.dg sector.dg bearing.dg grid.dg utils.dg unit.dg stdlib.dg
+Attempting 103 tests.
+. . .
+Testing #move-1-at-7: Passed!
+Testing #move-2-at-7: Failed. :-(
+1 TEST FAILED.
+----
+
+It fails because we just moved the ship in the previous test! We're
+assuming that our test ship starts from a specific starting point, but
+we just sent it speeding away from that starting point at warp speed.
+We could recalculate each test to account for where the ship went in
+its previous tests, but that's awkward and error-prone, and if you
+change anything in a test, you'll break all of the tests that come
+after it.
+
+This is why `unit.dg` includes `(set up $)` and `(clean up $)`
+predicates, which run before and after each test, respectively. They
+take a test object as their argument, so you could write a version for
+a particular test to do extra setup or cleanup for just that test, but
+it's simplest to write one predicate that resets your simulated world
+to what you expect:
+
+[source]
+----
+#test-ship
+(ship *)
+(current ship *)
+(* initial position [3444 4544 315 32])
+
+(set up $)
+    (exhaust) {
+        *(ship $Ship)
+        ($Ship initial position $Position)
+        (now) ($Ship position $Position)
+    }
+----
+
+Now when we run our tests, `(set up $)` will move our test ship back
+to its starting position before every test, and we succeed:
+
+[source]
+----
+$ dgdebug -u test-ships.dg maneuver-tests.dg maneuver.dg time.dg \
+schema.dg sector.dg bearing.dg grid.dg utils.dg unit.dg stdlib.dg
+Attempting 103 tests.
+. . .
+Testing #move-1-at-7: Passed!
+Testing #move-2-at-7: Passed!
+103 tests passed successfully.
+----
+
+The moral of the story: except in specific limited circumstances,
+reset the state of the world after every test, and don't let one test
+leave side effects that can affect others.
+
+[#fixtures]
+=== Test Fixtures
+
+Now let's turn our attention to the navigator's console, which needs a
+control to plot a destination for the ship, and have the ship's
+computer work out the heading and fly there on autopilot. We could
+write something like this, assuming that we added `(set destination
+for $ to $)` and `(clear destination for $)` predicates:
+
+[source]
+----
+#move-1-toward-corner
+(test *)
+(run *)
+    (set destination for #test-ship to [8999 8999])
+    (set throttle for #test-ship to warp factor 6)
+    (move #test-ship for 1 minutes)
+    (#test-ship position [3444 4504])
+----
+
+...which looks an awful lot like the code that we just wrote for the
+helm station. We can extract the common bits into a _test fixture_, a
+predicate that does all of the actual execution, and lets us just
+concentrate on supplying the right cases:
+
+[source]
+----
+($Num minutes toward $Destination at warp $Throttle goes to $X $Y)
+    (if) (number $Destination) (then)
+        (clear destination for #test-ship)
+        (set helm for #test-ship to $Destination)
+    (else)
+        (set destination for #test-ship to $Destination)
+    (endif)
+    (set throttle for #test-ship to warp factor $Throttle)
+    (move #test-ship for $Num minutes)
+    (#test-ship position [$X $Y | $])
+
+#move-1-at-7
+(test *)
+(run *)    (1 minutes toward 315 at warp 7 goes to 3414 4514)
+
+#move-2-at-7
+(test *)
+(run *)    (2 minutes toward 315 at warp 7 goes to 3384 4484)
+
+#move-5-at-7
+(test *)
+(run *)    (5 minutes toward 315 at warp 7 goes to 3294 4394)
+
+#move-8-at-4
+(test *)
+(run *)    (8 minutes toward 315 at warp 4 goes to 3284 4384)
+
+#move-0-at-7
+(test *)
+(run *)    (0 minutes toward 315 at warp 4 goes to 3444 4544)
+
+#move-1-toward-corner
+(test *)
+(run *)    (1 minutes toward [8999 8999] at warp 6 goes to 3444 4504)
+
+#move-2-toward-corner
+(test *)
+(run *)    (2 minutes toward [8999 8999] at warp 6 goes to 3474 4474)
+
+#move-5-toward-corner
+(test *)
+(run *)    (5 minutes toward [8999 8999] at warp 6 goes to 3574 4534)
+
+#move-16383-toward-corner
+(test *)
+(run *)    (16383 minutes toward [8999 8999] at warp 6 goes to 8999 8999)
+----
+
+Now we have a single helper method that lets us iterate over as many
+test cases as we can think of, add more quickly, and see at a glance
+how thorough or not we've been. The resulting cases look more like the
+easy-to-understant ones from the simple test code that we first wrote,
+despite having a lot of computation happening under the surface.
+
+The moral of the story: test code is code, and refactoring it helps, too. 
+
+[#summary]
+== Summary
+
+Here's a summary of the advice from this chapter:
+
+- Test your code as thoroughly as possible, to save headaches later.
+- Don't just test the success cases -- think of all the ways that your
+  code could possibly fail, and test for those.
+- Use your tests to make it safe to refactor your code, and keep it as
+  simple as possible.
+- Test a single concept or case per test.
+- Start each test from a known state, and reset to that state with
+  `(set up $)` and `(clean up $)` before running the next test.
+- Use fixtures to keep your actual test cases simple.
+- Test in depth, using both unit and integration tests.
+- Automate your testing process with `make` or `dgt`.
+- Test on all platforms for which you'll be releasing: Z-machine, web,
+  and vintage computing hardware.
+- Listen to your tests. If one fails, it's telling you something
+  important.
+- Don't release a game for which any of the tests have failed.
+
+Software testing is a much bigger topic than just the introduction to
+it presented here. More good advice about it can be found in books on
+the topic, particularly ones focused on modern automated testing, and
+on test-driven development.

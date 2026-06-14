@@ -6,7 +6,7 @@
 
 (current datetime [891 12 1969])
 
-(january starts on 3) %% Wednesday
+(january starts on 3) %% Wednesday; Sunday is 0
 
 (clean up $)	(set time [891 12 1969])
 	   	  		(now) (january starts on 3)
@@ -25,484 +25,397 @@
 %% Here's a more succinct formulation of the above.
 #hours-minutes
 (test *)
-(run *)
-	(14 hours 51 minutes)
+(run *)		(14 hours 51 minutes)
 
 #day-month-year
 (test *)
-(run *)
-	(day 12 month 1 year 1969)
+(run *)		(day 12 month 1 year 1969)
 
 #1969-is-not-a-leap-year
 (test *)
-(run *)
-	~(1969 is a leap year)
+(run *)		~(1969 is a leap year)
 
 #1980-is-a-leap-year
 (test *)
-(run *)
-	(1980 is a leap year)
+(run *)		(1980 is a leap year)
 
 #2000-is-a-leap-year
 (test *)
-(run *)
-	(2000 is a leap year)
+(run *)		(2000 is a leap year)
 
 #2100-is-not-a-leap-year
 (test *)
-(run *)
-	~(2100 is a leap year)
+(run *)		~(2100 is a leap year)
 
 #2400-is-a-leap-year
 (test *)
-(run *)
-	(2400 is a leap year)
+(run *)		(2400 is a leap year)
 
 #jan-1969-has-31
 (test *)
-(run *)
-	(days in 1 into 31 for 1969)
+(run *)		(days in 1 into 31 for 1969)
 
 #feb-1969-has-28
 (test *)
-(run *)
-	(days in 2 into 28 for 1969)
+(run *)		(days in 2 into 28 for 1969)
 
 #feb-1980-has-29
 (test *)
-(run *)
-	(days in 2 into 29 for 1980)
+(run *)		(days in 2 into 29 for 1980)
 
 #feb-2000-has-29
 (test *)
-(run *)
-	(days in 2 into 29 for 2000)
+(run *)		(days in 2 into 29 for 2000)
 
 #feb-2100-has-28
 (test *)
-(run *)
-	(days in 2 into 28 for 2100)
+(run *)		(days in 2 into 28 for 2100)
 
 #feb-2400-has-29
 (test *)
-(run *)
-	(days in 2 into 29 for 2400)
+(run *)		(days in 2 into 29 for 2400)
 
 #length-of-1969-is-365
 (test *)
-(run *)
-	(length of year 1969 into 365)
+(run *)		(length of year 1969 into 365)
 
 #length-of-1980-is-366
 (test *)
-(run *)
-	(length of year 1980 into 366)
+(run *)		(length of year 1980 into 366)
 
 #length-of-2000-is-366
 (test *)
-(run *)
-	(length of year 2000 into 366)
+(run *)		(length of year 2000 into 366)
 
 #length-of-2100-is-365
 (test *)
-(run *)
-	(length of year 2100 into 365)
+(run *)		(length of year 2100 into 365)
 
 #length-of-2400-is-366
 (test *)
-(run *)
-	(length of year 2400 into 366)
+(run *)		(length of year 2400 into 366)
 
 #12-is-jan-12-1969
 (test *)
-(run *)
-	(day 12 of 1969 is 1 12)
+(run *)		(day 12 of 1969 is 1 12)
 
 #55-is-feb-24-1966
 (test *)
-(run *)
-	(day 55 of 1966 is 2 24)
+(run *)		(day 55 of 1966 is 2 24)
 
 #83-is-mar-24-1999
 (test *)
-(run *)
-	(day 83 of 1999 is 3 24)
+(run *)		(day 83 of 1999 is 3 24)
 
 #84-is-mar-24-2000
 (test *)
-(run *)
-	(day 84 of 2000 is 3 24)
+(run *)		(day 84 of 2000 is 3 24)
 
 #365-is-dec-31-1999
 (test *)
-(run *)
-	(day 365 of 1999 is 12 31)
+(run *)		(day 365 of 1999 is 12 31)
 
 #366-is-dec-31-2000
 (test *)
-(run *)
-	(day 366 of 2000 is 12 31)
+(run *)		(day 366 of 2000 is 12 31)
 
 #367-is-invalid
 (test *)
-(run *)
-	~(day 367 of 2028 is $ $)
+(run *)		~(day 367 of 2028 is $ $)
 
 #366-of-non-leap-year-is-invalid
 (test *)
-(run *)
-	~(day 366 of 1999 is $ $)
+(run *)		~(day 366 of 1999 is $ $)
 
 #jan-12-1969-is-12
 (test *)
-(run *)
-	(1 12 is day 12 of 1969)
+(run *)		(1 12 is day 12 of 1969)
 
 #feb-24-1966-is-55
 (test *)
-(run *)
-	(2 24 is day 55 of 1966)
+(run *)		(2 24 is day 55 of 1966)
 
 #mar-24-1999-is-83
 (test *)
-(run *)
-	(3 24 is day 83 of 1999)
+(run *)		(3 24 is day 83 of 1999)
 
 #mar-24-2000-is-84
 (test *)
-(run *)
-	(3 24 is day 84 of 2000)
+(run *)		(3 24 is day 84 of 2000)
 
 #dec-31-1999-is-365
 (test *)
-(run *)
-	(12 31 is day 365 of 1999)
+(run *)		(12 31 is day 365 of 1999)
 
 #dec-31-2000-is-366
 (test *)
-(run *)
-	(12 31 is day 366 of 2000)
+(run *)		(12 31 is day 366 of 2000)
 
 #january-1801-starts-with-thursday
 (test *)
-(run *)
-	(january 1801 starts on 4)
+(run *)		(january 1801 starts on 4)
 
 #january-1901-starts-with-tuesday
 (test *)
-(run *)
-	(january 1901 starts on 2)
+(run *)		(january 1901 starts on 2)
 
 #january-2001-starts-with-monday
 (test *)
-(run *)
-	(january 2001 starts on 1)
+(run *)		(january 2001 starts on 1)
 
 #january-2101-starts-with-saturday
 (test *)
-(run *)
-	(january 2101 starts on 6)
+(run *)		(january 2101 starts on 6)
 
 #january-2201-starts-with-thursday
 (test *)
-(run *)
-	(january 2201 starts on 4)
+(run *)		(january 2201 starts on 4)
 
 #january-2301-starts-with-tuesday
 (test *)
-(run *)
-	(january 2301 starts on 2)
+(run *)		(january 2301 starts on 2)
 
 #january-1969-starts-with-wednesday
 (test *)
-(run *)
-	(january 1969 starts on 3)
+(run *)		(january 1969 starts on 3)
 
 #january-1999-starts-with-friday
 (test *)
-(run *)
-	(january 1999 starts on 5)
+(run *)		(january 1999 starts on 5)
 
 #january-1753-starts-with-monday
 (test *)
-(run *)
-	(january 1753 starts on 1)
+(run *)		(january 1753 starts on 1)
 
 #leading-zero-zero
 (test *)
-(run *)
-	(collect words) (leading zero 0) (into [0 0])
+(run *)		(collect words) (leading zero 0) (into [0 0])
 
 #leading-zero-one
 (test *)
-(run *)
-	(collect words) (leading zero 1) (into [0 1])
+(run *)		(collect words) (leading zero 1) (into [0 1])
 
 #leading-zero-nine
 (test *)
-(run *)
-	(collect words) (leading zero 9) (into [0 9])
+(run *)		(collect words) (leading zero 9) (into [0 9])
 
 #leading-zero-ten
 (test *)
-(run *)
-	(collect words) (leading zero 10) (into [10])
+(run *)		(collect words) (leading zero 10) (into [10])
 
 #clock-time
 (test *)
-(run *)
-	(collect words) (clock time) (into [2 : 51 pm])
+(run *)		(collect words) (clock time) (into [2 : 51 pm])
 
 #clock-time-midnight
 (test *)
-(run *)
-	(collect words) (clock time for 0) (into [12 : 0 0 am])
+(run *)		(collect words) (clock time for 0) (into [12 : 0 0 am])
 
 #clock-time-noon
 (test *)
-(run *)
-	(collect words) (clock time for 720) (into [12 : 0 0 pm])
+(run *)		(collect words) (clock time for 720) (into [12 : 0 0 pm])
 
 #clock-time-morning
 (test *)
-(run *)
-	(collect words) (clock time for 390) (into [6 : 30 am])
+(run *)		(collect words) (clock time for 390) (into [6 : 30 am])
 
 #clock-time-afternoon
 (test *)
-(run *)
-	(collect words) (clock time for 980) (into [4 : 20 pm])
+(run *)		(collect words) (clock time for 980) (into [4 : 20 pm])
 
 #military-time
 (test *)
-(run *)
-	(collect words) (military time) (into [14 : 51])
+(run *)		(collect words) (military time) (into [14 : 51])
 
 #military-time-midnight
 (test *)
-(run *)
-	(collect words) (military time for 0) (into [0 0 : 0 0])
+(run *)		(collect words) (military time for 0) (into [0 0 : 0 0])
 
 #military-time-noon
 (test *)
-(run *)
-	(collect words) (military time for 720) (into [12 : 0 0])
+(run *)		(collect words) (military time for 720) (into [12 : 0 0])
 
 #military-time-morning
 (test *)
-(run *)
-	(collect words) (military time for 390) (into [0 6 : 30])
+(run *)		(collect words) (military time for 390) (into [0 6 : 30])
 
 #military-time-afternoon
 (test *)
-(run *)
-	(collect words) (military time for 980) (into [16 : 20])
+(run *)		(collect words) (military time for 980) (into [16 : 20])
 
 #nato-time
 (test *)
-(run *)
-	(collect words) (nato time) (into [12 14 51 Z jan 69])
+(run *)		(collect words) (nato time) (into [12 14 51 Z jan 69])
 
 #nato-time-union
 (test *)
-(run *)
-	(set time [750 64 2273])
-	(collect words) (nato time) (into [0 5 12 30 Z mar 73])
+(run *)		(set time [750 64 2273])
+	 		(collect words) (nato time) (into [0 5 12 30 Z mar 73])
 
 #short-date
 (test *)
-(run *)
-	(collect words) (short date) (into [1 \/ 12 \/ 1969])
+(run *)		(collect words) (short date) (into [1 \/ 12 \/ 1969])
 
 #short-date-eu
 (test *)
-(run *)
-	(now) ~(using north american dates)
-	(collect words) (short date) (into [12 - 1 - 1969])
+(run *)		(now) ~(using north american dates)
+	 		(collect words) (short date) (into [12 - 1 - 1969])
 
 #full-date
 (test *)
-(run *)
-	(collect words) (full date) (into [January 12 , 1969])
+(run *)		(collect words) (full date) (into [January 12 , 1969])
 
 #full-date-eu
 (test *)
-(run *)
-	(now) ~(using north american dates)
-	(collect words) (full date) (into [12 January , 1969])
+(run *)		(now) ~(using north american dates)
+	 		(collect words) (full date) (into [12 January , 1969])
 
 #full-date-weekday
 (test *)
-(run *)
-	(collect words) (full date with weekday) (into [Sunday , January 12 , 1969])
+(run *)		(collect words) (full date with weekday)
+	 				 		(into [Sunday , January 12 , 1969])
 
 #full-date-weekday-eu
 (test *)
-(run *)
-	(now) ~(using north american dates)
-	(collect words) (full date with weekday) (into [Sunday , 12 January , 1969])
+(run *)		(now) ~(using north american dates)
+	 		(collect words) (full date with weekday)
+					 		(into [Sunday , 12 January , 1969])
 
 #full-date-union
 (test *)
-(run *)
-	(set time [750 64 2273])
-	(collect words) (full date with weekday) (into [Wednesday , March 5 , 2273])
+(run *)		(set time [750 64 2273])
+	 		(collect words) (full date with weekday)
+					 		(into [Wednesday , March 5 , 2273])
 
 #normalize-pathological
 (test *)
-(run *)
-	(set time [16383 16372 2026])
-	(current datetime [543 312 2070])
+(run *)		(set time [16383 16372 2026])
+	 		(current datetime [543 312 2070])
 
 #set-time
 (test *)
-(run *)
-	(set time [430 12 1969])
-	(7 hours 10 minutes)
+(run *)		(set time [430 12 1969])
+	 		(7 hours 10 minutes)
 
 #set-time-only
 (test *)
-(run *)
-	(set time 7 10)
-	(7 hours 10 minutes)
-	(current datetime [430 12 1969])
+(run *)		(set time 7 10)
+	 		(7 hours 10 minutes)
+			(current datetime [430 12 1969])
 
 #set-date
 (test *)
-(run *)
-	(set date 24 3 2000)
-	(current datetime [891 84 2000])
+(run *)		(set date 24 3 2000)
+	 		(current datetime [891 84 2000])
 
 #elapse-0-minutes
 (test *)
-(run *)
-	(elapse 0 minutes)
-	(14 hours 51 minutes)
+(run *)		(elapse 0 minutes)
+	 		(14 hours 51 minutes)
 
 #elapse-8-minutes
 (test *)
-(run *)
-	(elapse 8 minutes)
-	(14 hours 59 minutes)
+(run *)		(elapse 8 minutes)
+	 		(14 hours 59 minutes)
 
 #elapse-9-minutes
 (test *)
-(run *)
-	(elapse 9 minutes)
-	(15 hours 0 minutes)
+(run *)		(elapse 9 minutes)
+	 		(15 hours 0 minutes)
 
 #elapse-60-minutes
 (test *)
-(run *)
-	(elapse 60 minutes)
-	(15 hours 51 minutes)
+(run *)		(elapse 60 minutes)
+	 		(15 hours 51 minutes)
 
 #elapse-360-minutes
 (test *)
-(run *)
-	(elapse 360 minutes)
-	(20 hours 51 minutes)
+(run *)		(elapse 360 minutes)
+	 		(20 hours 51 minutes)
 
 #elapse-past-midnight
 (test *)
-(run *)
-	(elapse 1339 minutes)
-	(13 hours 10 minutes)
+(run *)		(elapse 1339 minutes)
+	 		(13 hours 10 minutes)
 
 #elapse-multiple-days
 (test *)
-(run *)
-	(elapse 4320 minutes)
-	(14 hours 51 minutes)
+(run *)		(elapse 4320 minutes)
+	 		(14 hours 51 minutes)
 
 #elapse-16383-minutes
 (test *)
-(run *)
-	(elapse 16383 minutes)
-	(current datetime [1434 23 1969])
+(run *)		(elapse 16383 minutes)
+	 		(current datetime [1434 23 1969])
 
 #elapse-0-hours
 (test *)
-(run *)
-	(elapse 0 hours)
-	(14 hours 51 minutes)
+(run *)		(elapse 0 hours)
+	 		(14 hours 51 minutes)
 
 #elapse-4-hours
 (test *)
-(run *)
-	(elapse 4 hours)
-	(18 hours 51 minutes)
+(run *)		(elapse 4 hours)
+	 		(18 hours 51 minutes)
 
 #elapse-23-hours
 (test *)
-(run *)
-	(elapse 23 hours)
-	(current datetime [831 13 1969])
+(run *)		(elapse 23 hours)
+	 		(current datetime [831 13 1969])
 
 #elapse-25-hours
 (test *)
-(run *)
-	(elapse 25 hours)
-	(current datetime [951 13 1969])
+(run *)		(elapse 25 hours)
+	 		(current datetime [951 13 1969])
 
 #elapse-16383-hours
 (test *)
-(run *)
-	(elapse 16383 hours)
-	(current datetime [351 330 1970])
+(run *)		(elapse 16383 hours)
+	 		(current datetime [351 330 1970])
 
 #elapse-0-days
 (test *)
-(run *)
-	(elapse 0 days)
-	(current datetime [891 12 1969])
+(run *)		(elapse 0 days)
+	 		(current datetime [891 12 1969])
 
 #elapse-3-days
 (test *)
-(run *)
-	(elapse 3 days)
-	(current datetime [891 15 1969])
+(run *)		(elapse 3 days)
+	 		(current datetime [891 15 1969])
 
 #elapse-11-days
 (test *)
-(run *)
-	(elapse 11 days)
-	(current datetime [891 23 1969])
+(run *)		(elapse 11 days)
+	 		(current datetime [891 23 1969])
 
 #elapse-12-days
 (test *)
-(run *)
-	(elapse 12 days)
-	(current datetime [891 24 1969])
+(run *)		(elapse 12 days)
+	 		(current datetime [891 24 1969])
 
 #elapse-23-days
 (test *)
-(run *)
-	(elapse 23 days)
-	(current datetime [891 35 1969])
+(run *)		(elapse 23 days)
+	 		(current datetime [891 35 1969])
 
 #elapse-365-days
 (test *)
-(run *)
-	(elapse 365 days)
-	(current datetime [891 12 1970])
+(run *)		(elapse 365 days)
+	 		(current datetime [891 12 1970])
 
 #elapse-16017-days
 (test *)
-(run *)
-	(elapse 16017 days)
-	(current datetime [891 324 2012])
+(run *)		(elapse 16017 days)
+	 		(current datetime [891 324 2012])
 
 #dont-elapse-16383-days
 (test *)
-(run *)
-	~(elapse 16383 days)
+(run *)		~(elapse 16383 days)
 
 #elapse-0-months
 (test *)
-(run *)
-	(elapse 0 months)
-	(day 12 month 1 year 1969)
+(run *)		(elapse 0 months)
+	 		(day 12 month 1 year 1969)
 
 #elapse-2-months
 (test *)
@@ -512,75 +425,63 @@
 
 #elapse-past-highest-date
 (test *)
-(run *)
-	(elapse 19 days)  %% to January 31
-	(elapse 1 months) %% to February 31 => March 3
-	(day 3 month 3 year 1969)
+(run *)		(elapse 19 days)  %% to January 31
+	 		(elapse 1 months) %% to February 31 => March 3
+			(day 3 month 3 year 1969)
 
 #elapse-8-months-overflow
 (test *)
-(run *)
-	(set date 1 6 1970)
-	(elapse 8 months)
-	(day 1 month 2 year 1971)
+(run *)		(set date 1 6 1970)
+	 		(elapse 8 months)
+			(day 1 month 2 year 1971)
 
 #elapse-18-months
 (test *)
-(run *)
-	(elapse 18 months)
-	(day 12 month 7 year 1970)
+(run *)		(elapse 18 months)
+	 		(day 12 month 7 year 1970)
 
 #elapse-16371-months
 (test *)
-(run *)
-	(elapse 16371 months)
-	(current datetime [891 102 3333])
+(run *)		(elapse 16371 months)
+	 		(current datetime [891 102 3333])
 
 #dont-elapse-16383-months
 (test *)
-(run *)
-	~(elapse 16383 months)
+(run *)		~(elapse 16383 months)
 
 #elapse-0-years
 (test *)
-(run *)
-	(elapse 0 years)
-	(current datetime [891 12 1969])
+(run *)		(elapse 0 years)
+	 		(current datetime [891 12 1969])
 
 #elapse-2-years
 (test *)
-(run *)
-	(elapse 2 years)
-	(current datetime [891 12 1971])
+(run *)		(elapse 2 years)
+	 		(current datetime [891 12 1971])
 
 #elapse-57-years
 (test *)
-(run *)
-	(elapse 57 years)
-	(current datetime [891 12 2026])
+(run *)		(elapse 57 years)
+	 		(current datetime [891 12 2026])
 
 #elapse-200-years
 (test *)
-(run *)
-	(elapse 200 years)
-	(current datetime [891 12 2169])
+(run *)		(elapse 200 years)
+	 		(current datetime [891 12 2169])
 
 #elapse-2000-years
 (test *)
-(run *)
-	(elapse 2000 years)
-	(current datetime [891 12 3969])
+(run *)		(elapse 2000 years)
+	 		(current datetime [891 12 3969])
 
 #elapse-14414-years
 (test *)
-(run *)
-	(elapse 14414 years)
-	(current datetime [891 12 16383])
+(run *)		(elapse 14414 years)
+	 		(current datetime [891 12 16383])
 
 #dont-elapse-16383-years
 (test *)
-(run *)
-	~(elapse 16383 years)
+(run *)		~(elapse 16383 years)
 
 #tick-tock
 (test *)
