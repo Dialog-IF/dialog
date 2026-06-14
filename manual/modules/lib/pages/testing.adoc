@@ -432,7 +432,184 @@ from creeping in to your project.
 [#tdd]
 === Test-Driven Development
 
+Unit tests and refactoring enable a style of development known as
+_Test-Driven Development_ (TDD). In TDD, you start with your tests,
+rather than writing them after the fact. Suppose we wanted to add a
+predicate to tell us whether one number was within a certain range of
+another. With TDD, we might start in our `-tests.dg` file, and add
+something like this:
 
+[source]
+----
+#range-5-3
+(test *)
+(run *)		(5 is within 2 of 3)
+
+#range-3-5
+(test *)
+(run *)		(3 is within 2 of 5)
+
+#range-3-3
+(test *)
+(run *)		(3 is within 0 of 3)
+
+#range-0-3
+(test *)
+(run *)		(0 is within 3 of 3)
+
+#range-0-0
+(test *)
+(run *)		(0 is within 0 of 0)
+
+#range-16383-16383
+(test *)
+(run *)		(16383 is within 0 of 16383)
+
+#range-0-16383
+(test *)
+(run *)		(0 is within 16383 of 16383)
+----
+
+That covers some of the positive cases; let's cover negative ones too:
+
+[source]
+----
+#range-5-2
+(test *)
+(run *)		~(5 is within 2 of 2)
+
+#range-2-5
+(test *)
+(run *)		~(2 is within 2 of 5)
+----
+
+Now when we run the file, we get this:
+
+[source]
+----
+$ dgdebug -u minmax-tests.dg minmax.dg unit.dg stdlib.dg
+Warning: minmax-tests.dg: Possible typo: a query is made to '($ is
+within $ of $), but there is no matching rule or interface definition.
+Attempting 25 tests.
+Testing #max-first-is-bigger: Passed!
+Testing #max-second-is-bigger: Passed!
+Testing #max-equal-values: Passed!
+Testing #min-first-is-bigger: Passed!
+Testing #min-second-is-bigger: Passed!
+Testing #min-equal-values: Passed!
+Testing #10-plus-20-max-25: Passed!
+Testing #10-plus-20-max-35: Passed!
+Testing #10-plus-20-max-0: Passed!
+Testing #0-plus-0-max-25: Passed!
+Testing #8000-plus-9000-max-10000: Passed!
+Testing #16383-plus-16383-max-16383: Passed!
+Testing #sort-2-4: Passed!
+Testing #sort-4-2: Passed!
+Testing #sort-0-0: Passed!
+Testing #sort-0-16383: Passed!
+Testing #range-5-3: Failed. :-(
+Testing #range-3-5: Failed. :-(
+Testing #range-3-3: Failed. :-(
+Testing #range-0-3: Failed. :-(
+Testing #range-0-0: Failed. :-(
+Testing #range-16383-16383: Failed. :-(
+Testing #range-0-16383: Failed. :-(
+Testing #range-5-2: Failed. :-(
+Testing #range-2-5: Failed. :-(
+9 TESTS FAILED.
+----
+
+Of course they failed! We haven't written the code yet. Let's write
+it:
+
+[source]
+----
+(interface ($<Num1 is within $<Range of $<Num2))
+
+($Num1 is within $Range of $Num2)
+    (if) ($Num1 > $Num2) (then)
+        ($Num1 minus $Num2 into $Delta)
+    (else)
+        ($Num2 minus $Num1 into $Delta)
+    (endif)
+    ~($Delta > $Range)
+----
+
+Running this produces success!
+
+[source]
+----
+$ dgdebug -u minmax-tests.dg minmax.dg unit.dg stdlib.dg
+Warning: minmax-tests.dg: Possible typo: a query is made to '($ is
+within $ of $), but there is no matching rule or interface definition.
+Attempting 25 tests.
+Testing #max-first-is-bigger: Passed!
+Testing #max-second-is-bigger: Passed!
+Testing #max-equal-values: Passed!
+Testing #min-first-is-bigger: Passed!
+Testing #min-second-is-bigger: Passed!
+Testing #min-equal-values: Passed!
+Testing #10-plus-20-max-25: Passed!
+Testing #10-plus-20-max-35: Passed!
+Testing #10-plus-20-max-0: Passed!
+Testing #0-plus-0-max-25: Passed!
+Testing #8000-plus-9000-max-10000: Passed!
+Testing #16383-plus-16383-max-16383: Passed!
+Testing #sort-2-4: Passed!
+Testing #sort-4-2: Passed!
+Testing #sort-0-0: Passed!
+Testing #sort-0-16383: Passed!
+Testing #range-5-3: Passed!
+Testing #range-3-5: Passed!
+Testing #range-3-3: Passed!
+Testing #range-0-3: Passed!
+Testing #range-0-0: Passed!
+Testing #range-16383-16383: Passed!
+Testing #range-0-16383: Passed!
+Testing #range-5-2: Passed!
+Testing #range-2-5: Passed!
+21 tests passed successfully.
+----
+
+So we've gone from a red bar, from not having written the code that we
+wrote our tests against, to a green bar, from having them pass. There's
+one more step. Let's take another look at the code, and see if we've
+introduced any duplication or unnecessary complexity.
+
+Suppose that we look at the file, and notice that we had previously
+written the following, along with its associated tests:
+
+[source]
+----
+(interface (sort $<X $<Y into $>Low $>High))
+
+(sort $X $Y into $Low $High)
+    (if) ($X > $Y) (then)
+        ($Low = $Y)
+        ($High = $X)
+    (else)
+        ($Low = $X)
+        ($High = $Y)
+    (endif)
+----
+
+Why, that looks remarkably similar to the code that we just wrote!
+Let's have it in just one place:
+
+[source]
+----
+($Num1 is within $Range of $Num2)
+    (sort $Num1 $Num2 into $Low $High)
+    ($High minus $Low into $Delta)
+    ~($Delta > $Range)
+----
+
+When we run that again, we get success, just like before! And our code
+is a little shorter, and without duplication.
+
+That's the TDD loop in a nutshell: red-green-refactor, and then move
+on to the next feature. With enough tests, and enough refactoring, you
+should be able to keep moving forward without bogging yourself down.
 
 [#fixtures]
 === Test Fixtures
