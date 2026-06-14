@@ -605,21 +605,79 @@ Let's have it in just one place:
 ----
 
 When we run that again, we get success, just like before! And our code
-is a little shorter, and without duplication.
+is a little shorter, and without duplication. This is a very small
+example, and the payoff will be more obvious with more complex code,
+but not having to maintain the same feature in two places, and
+potentially fix it in both places, or have it go out of sync and cause
+hard-to-track-down bugs, is a win in itself.
 
 That's the TDD loop in a nutshell: red-green-refactor, and then move
 on to the next feature. With enough tests, and enough refactoring, you
 should be able to keep moving forward without bogging yourself down.
 
-[#fixtures]
-=== Test Fixtures
-
-So far, all of the tests that we've written have been one-liners. 
+We might also notice that calculating the absolute value of the difference
+of two numbers, and think of adding `($ delta $ into $)` as another
+predicate. That might, in fact, be quite useful. Do we need it right
+now? If so, we can go right ahead and introduce it (and its tests). If
+we don't have an immediate use for it, though, spending more time on
+code that doesn't have a use doesn't actually get you any closer to
+releasing your game. There's a saying: "You Ain't Gonna Need It," or
+YAGNI. If we don't have other code that wants `($ delta $ into $)`
+just now, we can say "YAGNI", and move on. We can always add it later.
 
 [#state]
 === Testing From Known State
 
+So far, all of the tests that we've written have for simple functions
+that don't change the state of the game world. Now let's look at some
+more complex examples that make changes to your simulation. 
+
+[#fixtures]
+=== Test Fixtures
+
 TODO
+
+[source]
+----
+($Num minutes toward $Destination at warp $Throttle goes to $X $Y)
+    (if) (number $Destination) (then)
+        (clear destination for #test-ship)
+        (set helm for #test-ship to $Destination)
+    (else)
+        (set destination for #test-ship to $Destination)
+    (endif)
+    (set throttle for #test-ship to warp factor $Throttle)
+    (move #test-ship for $Num minutes)
+    (#test-ship position [$X $Y | $])
+
+#move-1-at-7
+(test *)
+(run *)    (1 minutes toward 315 at warp 7 goes to 3414 4514)
+
+#move-2-at-7
+(test *)
+(run *)    (2 minutes toward 315 at warp 7 goes to 3384 4484)
+
+#move-5-at-7
+(test *)
+(run *)    (5 minutes toward 315 at warp 7 goes to 3294 4394)
+
+#move-8-at-4
+(test *)
+(run *)    (8 minutes toward 315 at warp 4 goes to 3284 4384)
+
+#move-1-toward-corner
+(test *)
+(run *)    (1 minutes toward [8999 8999] at warp 6 goes to 3444 4504)
+
+#move-2-toward-corner
+(test *)
+(run *)    (2 minutes toward [8999 8999] at warp 6 goes to 3474 4474)
+
+#move-5-toward-corner
+(test *)
+(run *)    (5 minutes toward [8999 8999] at warp 6 goes to 3574 4534)
+----
 
 [#model]
 === Testing the Object Model
