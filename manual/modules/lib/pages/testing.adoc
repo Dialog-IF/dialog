@@ -631,7 +631,7 @@ just now, we can say "YAGNI", and move on. We can always add it later.
 So far, all of the tests that we've written have for simple functions
 that don't change the state of the game world. Now let's look at some
 more complex examples that make changes to your game world. For this
-example, suppose that we're making a game that riffs of the 1971
+example, suppose that we're making a game that riffs off the 1971
 mainframe `STARTREK` game, with a starship flying from planet to
 planet, battling hostile aliens, and boldly going where angels fear to
 tread. Something like that takes quite a bit of code behind the scenes
@@ -826,7 +826,27 @@ leave side effects that can affect others.
 [#fixtures]
 === Test Fixtures
 
-TODO
+Now let's turn our attention to the navigator's console, which needs a
+control to plot a destination for the ship, and have the ship's
+computer work out the heading and fly there on autopilot. We could
+write something like this, assuming that we added `(set destination
+for $ to $)` and `(clear destination for $)` predicates:
+
+[source]
+----
+#move-1-toward-corner
+(test *)
+(run *)
+    (set destination for #test-ship to [8999 8999])
+    (set throttle for #test-ship to warp factor 6)
+    (move #test-ship for 1 minutes)
+    (#test-ship position [3444 4504])
+----
+
+...which looks an awful lot like the code that we just wrote for the
+helm station. We can extract the common bits into a _test fixture_, a
+predicate that does all of the actual execution, and lets us just
+concentrate on supplying the right cases:
 
 [source]
 ----
@@ -857,6 +877,10 @@ TODO
 (test *)
 (run *)    (8 minutes toward 315 at warp 4 goes to 3284 4384)
 
+#move-0-at-7
+(test *)
+(run *)    (0 minutes toward 315 at warp 4 goes to 3444 4544)
+
 #move-1-toward-corner
 (test *)
 (run *)    (1 minutes toward [8999 8999] at warp 6 goes to 3444 4504)
@@ -868,23 +892,19 @@ TODO
 #move-5-toward-corner
 (test *)
 (run *)    (5 minutes toward [8999 8999] at warp 6 goes to 3574 4534)
+
+#move-16383-toward-corner
+(test *)
+(run *)    (16383 minutes toward [8999 8999] at warp 6 goes to 8999 8999)
 ----
 
-[source]
-----
-$ dgdebug -u test-ships.dg maneuver-tests.dg maneuver.dg time.dg
-schema.dg sector.dg bearing.dg grid.dg utils.dg unit.dg stdlib.dg
-Attempting 108 tests.
-. . .
-Testing #move-1-at-7: Passed!
-Testing #move-2-at-7: Passed!
-Testing #move-5-at-7: Passed!
-Testing #move-8-at-4: Passed!
-Testing #move-1-toward-corner: Passed!
-Testing #move-2-toward-corner: Passed!
-Testing #move-5-toward-corner: Passed!
-108 tests passed successfully.
-----
+Now we have a single helper method that lets us iterate over as many
+test cases as we can think of, add more quickly, and see at a glance
+how thorough or not we've been. The resulting cases look more like the
+easy-to-understant ones from the simple test code that we first wrote,
+despite having a lot of computation happening under the surface.
+
+The moral of the story: test code is code, and refactoring it helps, too. 
 
 [#model]
 === Testing the Object Model
