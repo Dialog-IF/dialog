@@ -952,6 +952,11 @@ For details on `dgt` and the Skein, see the `dgt` documentation. Details
 on where to find the `dgt` software can be found on the
 xref:ROOT:software.adoc[Software Page].
 
+[#diff]
+=== Using `dfrotz`, `aamrun`, and `diff`
+
+TODO
+
 [#make]
 == Pulling It All Together With `make`
 
@@ -1000,9 +1005,9 @@ Here's a summary of the advice from this chapter:
 - Use your tests to make it safe to refactor your code, and keep it as
   simple as possible.
 - Test a single concept or case per test.
-- Use fixtures to keep your actual test cases simple.
 - Start each test from a known state, and reset to that state with
   `(set up $)` and `(clean up $)` before running the next test.
+- Use fixtures to keep your actual test cases simple.
 - Test in depth, using both unit and integration tests.
 - Automate your testing process with `make` or `dgt`.
 - Test on all platforms for which you'll be releasing: Z-machine, web,
