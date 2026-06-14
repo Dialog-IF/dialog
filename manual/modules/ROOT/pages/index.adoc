@@ -59,6 +59,8 @@ xref:lib:understanding.adoc[]
 
 xref:lib:miscfeat.adoc[]
 
+xref:lib:testing.adoc[]
+
 xref:lib:libref.adoc[]
 
 '''

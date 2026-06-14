@@ -14,7 +14,11 @@
 
 (interface (max $<X $<Y $>Max))
 
+(interface (max $<X $<Y $<Z $>Max))
+
 (interface (min $<X $<Y $>Min))
+
+(interface (min $<X $<Y $<Z $>Min))
 
 (interface (sort $<X $<Y into $>Low $High))
 
@@ -32,11 +36,17 @@
 
 (interface ($<Num1 divided by $<Num2 into $>Result rounding up))
 
+(interface ($<Num1 divided by $<Num2 into $>Result rounding evenly))
+
 (interface (round $<Num to the nearest $<Increment into $>Result))
 
 (interface (split $<Number into $>Thousands $>Hundreds $>Tens $>Ones))
 
+(interface (index $<Element $<List $>Index)) %% opposite of (nth $ $ $)
+
 (interface (take last $<N from $<List into $>Suffix))
+
+(interface (take after $<N from $<List into $>Suffix))
 
 (interface (replace element $<N in $<List with $<Element into $>NewList))
 
@@ -52,24 +62,27 @@
 
 %% From a list of lists, select the sublists where a specific element matches
 %% the key, and return a list of them.
-(interface (take from $<List where element $<Num is $<Key into $>Sublist))
+(interface (take from $<List where element $<Num is $<Key into $>Results))
 
 %% From a list of lists, select the sublists where a specific element does
-%% NOT matche the key, and return a list of them.
-(interface (take from $<List where element $<Num is not $<Key into $>Sublist))
+%% NOT match the key, and return a list of them.
+(interface (take from $<List where element $<Num is not $<Key into $>Results))
 
 %% From a list of lists, find the first (and only, if we know there are no
 %% duplicates) sublist where the key matches a specific element.
-(interface (find in $<List element $<Num is $<Key into $>Match))
+(interface (find in $<List where element $<Num is $<Key into $>Match))
 
 %% From a list of lists, find the first (and only, if we know there are no
 %% duplicates) sublist that begins with the specified sublist.
 (interface (find in $<List beginning with sublist $<Head into $>Match))
 
-%% Pick out the sublist with the highest value for the specified element.
 (interface (find in $<List with highest element $<Num into $>Match))
 
+(interface (find in $<List with lowest element $<Num into $>Match))
+
 (interface (set element $<Num in $<Head in $<List to $<Value into $>NewList))
+
+(interface (remove from $<List where element $<Num is $<Key into $>NewList))
 
 (interface (remove from $<List beginning with sublist $<Head into $>NewList))
 
@@ -92,12 +105,20 @@
 		($Result = $Y)
 	(endif)
 
+(max $X $Y $Z $Result)
+    (max $X $Y $Max)
+	(max $Z $Max $Result)
+
 (min $X $Y $Result)
 	(if) ($X < $Y) (then)
 		($Result = $X)
 	(else)
 		($Result = $Y)
 	(endif)
+
+(min $X $Y $Z $Result)
+    (min $X $Y $Min)
+	(min $Z $Min $Result)
 
 (sort $X $Y into $RX $RY)
 	(if) ($X > $Y) (then)
@@ -144,6 +165,16 @@
 	($Num divided by $Num2 into $Div)
 	($Div plus 1 into $Result)
 
+($Num1 divided by $Num2 into $Result rounding evenly)
+	($Num1 divided by $Num2 into $Div)
+	($Num1 modulo $Num2 into $Mod)
+	($Mod times 2 into $Double)
+	(if) ($Double < $Num2) (then)
+	    ($Result = $Div)
+	(else)
+	    ($Div plus 1 into $Result)
+	(endif)
+
 (round $Num to the nearest $Increment into $Result)
 	($Num modulo $Increment into $Mod)
 	($Increment divided by 2 into $Div rounding up)
@@ -162,15 +193,46 @@
 	($Remaining2 divided by 10 into $Tens)
 	($Remaining2 modulo 10 into $Ones)
 
+(find-index $ [] 0 $)
+
+(find-index $Element $List $Index $Count)
+    ([$Head | $Tail] = $List)
+	(if) ($Head = $Element) (then)
+	    ($Index = $Count)
+	(else)
+	    (add 1 to $Count into $Next)
+		(find-index $Element $Tail $Index $Next)
+	(endif)
+
+(index $Element $List $Index) %% opposite of (nth $ $ $)
+    (find-index $Element $List $Index 1)
+	(if) ($Index = 0) (then)
+	    (fail)
+	(endif)
+
 (take last $N from $List into $Suffix)
 	(reverse $List $Reverse)
 	(take $N from $Reverse into $After)
 	(reverse $After $Suffix)
 
+(take after 0 from $List into $List)
+
+(take after $ from [] into [])
+
+(take after 1 from $List into $Suffix)
+    ([$ | $Suffix] = $List)
+
+(take after $N from $List into $Suffix)
+    (length of $List into $Len)
+	~($Len < $N)
+    ([$ | $Tail] = $List)
+	($N minus 1 into $M)
+	(take after $M from $Tail into $Suffix)
+
 (replace element $N in $List with $Element into $NewList)
 	($N > 0)
 	(length of $List into $Len)
-	~($Len < $N) %% fail fast if trying to replace past end of list
+	~($Len < $N)
 	($N minus 1 into $PrefixLen)
 	($Len minus $N into $SuffixLen)
 	(take $PrefixLen from $List into $Prefix)
@@ -225,12 +287,65 @@
 	($Sublist = $Prefix)
 
 (find in $List beginning with sublist $Sublist into $Match)
-  	~(empty $List) %% fail if we don't find it
+    ~(empty $List)
 	($List = [$Head | $Tail])
 	(if) ($Head begins with sublist $Sublist) (then)
 		($Match = $Head)
 	(else)
 	    (find in $Tail beginning with sublist $Sublist into $Match)
+	(endif)
+
+(find in [] where element $ is $ into [])
+
+(find in $List where element $Num is $Key into $Match)
+    ($List = [$Head | $Tail])
+	(if) (nth $Head $Num $Key) (then)
+	    ($Match = $Head)
+	(else)
+	    (find in $Tail where element $Num is $Key into $Match)
+	(endif)
+
+(find in [] with highest element $ into [])
+
+(find in $List with highest element $Num into $Match)
+	($List = [$Head | $Tail])
+	(nth $Head $Num $First)
+	(find in $Tail with highest element $Num into $HighTail)
+	(if) (nth $HighTail $Num $Second) (then)
+		(if) ($First < $Second) (then)
+			($Match = $HighTail)
+		(else)
+			($Match = $Head)
+		(endif)
+	(else)
+		($Match = $Head)
+	(endif)
+
+(find in [] with lowest element $ into [])
+
+(find in $List with lowest element $Num into $Match)
+	($List = [$Head | $Tail])
+	(nth $Head $Num $First)
+	(find in $Tail with lowest element $Num into $HighTail)
+	(if) (nth $HighTail $Num $Second) (then)
+		(if) ($First > $Second) (then)
+			($Match = $HighTail)
+		(else)
+			($Match = $Head)
+		(endif)
+	(else)
+		($Match = $Head)
+	(endif)
+
+(remove from [] where element $ is $ into [])
+
+(remove from $List where element $Num is $Key into $NewList)
+    ($List = [$Head | $Tail])
+	(if) (nth $Head $Num $Key) (then)
+	    ($NewList = $Tail)
+	(else)
+	    (remove from $Tail where element $Num is $Key into $Remainder)
+		(append [$Head] $Remainder $NewList)
 	(endif)
 
 (remove from [] beginning with sublist $ into [])
