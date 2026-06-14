@@ -657,7 +657,6 @@ to make the ship go, some of which looks like this:
 These predicates can be wired up to the bridge consoles on our fictional
 starship:
 
-[source]
 ----
 Bridge (at the helm station)
 
@@ -665,12 +664,12 @@ The bridge is much smaller than is typical for a Stellar Union
 starship. Aside from the usual captain's chair behind the helm and
 navigation stations, there are only two other workstations: one for
 engineering and one for the science officer. A pair of double doors
-leads aft.
+leads aft. 
 
 Captain Kaur is sitting in her command chair.
 
 The captain turns to you. "Helm, set course three-one-five; ahead warp
-factor six. Engage!"
+factor six. Engage!" 
 
 > LOOK AT THE HELM STATION
 
@@ -810,7 +809,7 @@ to its starting position before every test, and we succeed:
 
 [source]
 ----
-$ dgdebug -u test-ships.dg maneuver-tests.dg maneuver.dg time.dg
+$ dgdebug -u test-ships.dg maneuver-tests.dg maneuver.dg time.dg \
 schema.dg sector.dg bearing.dg grid.dg utils.dg unit.dg stdlib.dg
 Attempting 103 tests.
 . . .
@@ -909,7 +908,25 @@ The moral of the story: test code is code, and refactoring it helps, too.
 [#model]
 === Testing the Object Model
 
-TODO
+So far, we've been testing extension code and helper methods, and not
+the game object model itself. While extension code particularly lends
+itself to being unit tested, you can use `unit.dg` tests to test
+the main `stdlib.dg` object model, too.
+
+One caveat is that `unit.dg` depends on its implementation of
+`(program entry point)` and `(error $ entry point)` to function
+properly. If you've overridden those predicates in your game,  you'll
+need to isolate them in a separate file that doesn't get included in
+your unit tests. If there's any interesting code in your `(program
+entry point)` you'll want to extract it into another predicate that
+`(program entry point)` calls, so that it can be tested.
+
+We'll use the Dialog adaptation of Roger Firth's _Cloak of Darkness_
+as our example. _Cloak of Darkness_ is intentionally a minimalist
+game, designed to exercise the basic functions of different
+interactive fiction systems. Other than the very basics of movement
+and inventory management (for which there is only a single takeable
+item), 
 
 [#integ]
 == Integration Tests With `regtest.py`

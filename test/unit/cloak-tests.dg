@@ -1,0 +1,3 @@
+%% dgdebug -u cloak-tests.dg cloak.dg unit.dg stdlib.dg
+
+(set up $)
