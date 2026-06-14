@@ -946,8 +946,22 @@ each test:
 [source]
 ----
 (set up $)
-    (move #player to #in #foyer)
+    (move player to #in #foyer)
+	(now) (#cloak is #wornby #player)
+	(now) ~(hook point awarded)
+	(now) ~(message has been trampled)
+	(current score $Score)
+	(decrease score by $Score)
+	(clear all pronouns)
+	(update environment around player)
 ----
+
+_Cloak of Darkness_ is a tiny game, so that much state is sufficient
+to reset everything. For a longer work, you may want to move to a
+style where you have a bespoke `(set up $)` for each test, setting the
+stage for what you're going to be testing, and a bespoke `(clean up
+$)` at the end, undoing any changes of state from your `(set up $)` or
+your
 
 [#integ]
 == Integration Tests With `regtest.py`
