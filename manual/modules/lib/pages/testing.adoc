@@ -926,7 +926,21 @@ as our example. _Cloak of Darkness_ is intentionally a minimalist
 game, designed to exercise the basic functions of different
 interactive fiction systems. Other than the very basics of movement
 and inventory management (for which there is only a single takeable
-item), 
+item), the behaviours in the game that need to go right are
+
+- preventing the player from leaving the Foyer to the north
+- extinguishing the light in the Foyer Bar if the player wears the cloak
+- preventing the player from dropping the cloak anywhere
+- being warned about blundering around in the dark
+- destroying the message if the player blunders around in the dark
+- correctly displaying the cloak hanging on the hook
+- scoring a point for hanging the cloak on the hook
+- scoring a point for seeing the victory message
+- seeing the defeat message if the message is destroyed
+
+...all of which are perfectly testable.
+
+
 
 [#integ]
 == Integration Tests With `regtest.py`
