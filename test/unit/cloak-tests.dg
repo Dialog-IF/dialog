@@ -1,0 +1,25 @@
+%% dgdebug -u cloak-tests.dg cloak.dg unit.dg stdlib.dg
+
+(set up $)
+    (move player to #in #foyer)
+	(
+
+#dont-go-north
+
+#dark-if-wearing-cloak
+
+#light-if-not-wearing-cloak
+
+#dont-drop-cloak
+
+#warn-about-blundering
+
+#destroy-message
+
+#hang-on-hook
+
+#score-for-hanging-cloak
+
+#score-for-seeing-message
+
+#defeat-message
