@@ -142,6 +142,9 @@
 			(now) (message has been trampled)
 		(stopping)
 
+(perform [read *])
+		(descr *)
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 #player
