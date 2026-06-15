@@ -1,5 +1,5 @@
 %% unit.dg
-(extension version)	Unit test runner 1.2.2-dev by Susan Davis.
+(extension version)	Unit test runner 1.2.1 by Susan Davis.
 
 %% See example(s) in test/unit in Dialog source distribution, and chapter 12 of
 %% the library manual.
