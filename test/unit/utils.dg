@@ -216,7 +216,7 @@
 
 (take after $ from [] into [])
 
-(take after 1 from $List into [$ | $Suffix])
+(take after 1 from [$ | $Suffix] into $Suffix)
 
 (take after $N from $List into $Suffix)
     (length of $List into $Len)
