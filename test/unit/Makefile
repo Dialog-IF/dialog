@@ -3,7 +3,7 @@ all: test
 DEBUG=../../src/dgdebug -u
 STDLIB=../../unit.dg ../../stdlib.dg
 
-test: time utils pass-1 fail-1 zero-tests fatal-error
+test: time utils pass-1 fail-1 zero-tests fatal-error cloak
 
 time:
 	$(DEBUG) time-tests.dg time.dg $(STDLIB)
@@ -28,7 +28,10 @@ fatal-error:
 	$(DEBUG) fatal-error.dg $(STDLIB) \
 		 | grep "FATAL ERROR" > /dev/null
 
+cloak:
+	$(DEBUG) cloak-tests.dg ../regtest/cloak.dg $(STDLIB)
+
 clean:
 	rm -f *~ \#*\#
 
-.PHONY: test all clean time utils pass-1 fail-1 fatal-error
+.PHONY: test all clean time utils pass-1 fail-1 fatal-error cloak

@@ -9,23 +9,84 @@
 	(decrease score by $Score)
 	(clear all pronouns)
 	(update environment around player)
+	(fail)
 
 #dont-go-north
+(test *)
+(run *)
+	(current player $Player)
+	($Player is #in #foyer)
+	(perform [go #north])
+	($Player is #in #foyer)
 
 #dark-if-wearing-cloak
+(test *)
+(set up *)
+
+(run *)
+
+(clean up *)
 
 #light-if-not-wearing-cloak
+(test *)
+(set up *)
+
+(run *)
+
+(clean up *)
 
 #dont-drop-cloak
+(test *)
+(set up *)
+
+(run *)
+
+(clean up *)
 
 #warn-about-blundering
+(test *)
+(set up *)
+
+(run *)
+
+(clean up *)
 
 #destroy-message
+(test *)
+(set up *)
+
+(run *)
+
+(clean up *)
 
 #hang-on-hook
+(test *)
+(set up *)
+
+(run *)
+
+(clean up *)
 
 #score-for-hanging-cloak
+(test *)
+(set up *)
+
+(run *)
+
+(clean up *)
 
 #score-for-seeing-message
+(test *)
+(set up *)
+
+(run *)
+
+(clean up *)
 
 #defeat-message
+(test *)
+(set up *)
+
+(run *)
+
+(clean up *)
