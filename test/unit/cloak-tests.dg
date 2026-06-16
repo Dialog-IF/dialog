@@ -20,7 +20,7 @@
 	(current player $Player)
 	($Player is #in #foyer)
 %%	(collect words)
-	    (stoppable) (perform [go #north])
+	    (stoppable) (try [go #north])
 %%	(into [you've only just arrived | $])
 	($Player is #in #foyer)
 
@@ -64,8 +64,10 @@
 	(stoppable) (enter #bar)
 
 (run *)
-	~(player can see)
-    (stoppable) (try [dance])
+    ~(player can see)
+%%    (collect words)
+        (stoppable) (try [dance])
+%%    (into [in the dark | $])
 
 #light-if-not-wearing-cloak
 (test *)
@@ -81,10 +83,12 @@
 (test *)
 (set up *)
     (stoppable) (enter #bar)
+    (stoppable) (try [dance])
 
 (run *)
-    (stoppable) (try [dance])
-	(stoppable) (try [dance])
+%%    (collect words)
+        (stoppable) (try [dance])
+%%    (into [blundering | $])
 	(message has been trampled)
 
 #score-for-seeing-message
@@ -98,7 +102,6 @@
 	(player can see)
     (current score 1)
 	~(message has been trampled)
-%%    (collect words) (stoppable) (perform [examine #message]) (into [$ | won])
     (stoppable) (perform [examine #message])
 	(game has ended)
 	(game over message { You have won })
@@ -115,7 +118,6 @@
 	(player can see)
     (current score 1)
 	~(message has been trampled)
-%%    (collect words) (stoppable) (perform [examine #message]) (into [$ | won])
     (stoppable) (perform [examine #message])
 	(game has ended)
 	(game over message { You have won })
@@ -135,7 +137,6 @@
 	(player can see)
 	(current score 1)
 	(message has been trampled)
-%%    (collect words) (stoppable) (perform [examine #message]) (into [$ | lost])
     (stoppable) (perform [examine #message])
 	(game has ended)
 	(game over message { You have lost })
