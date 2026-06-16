@@ -1180,17 +1180,42 @@ Finally, let's test the defeat condition:
     (current score 1)
 ----
 
-...and with that, we've written, in Dialog, a full set of tests for our game.
+...and with that, we've written, in Dialog, a full set of unit tests
+for our game.
+
+You'll notice that we didn't actually look at much of the game text in
+any of those tests -- just enough to validate that our program code is
+correct, and preferring to test programatically rather than to look at
+the output. We can look at a little bit of the code with `(collect
+words)`, but it's awkward to examine long stretches of text, or to
+concern ourselves overmuch with how the output is presented to the
+user. For tests like that, it's better to use all-up testing, with a
+real interpreter.
 
 [#integ]
 == All-Up Tests in the Interpreter
 
-TODO
+Unit testing tests small units of your code, and validates that it's
+doing what you expected it to do, and that you didn't break anything
+by making changes. Unit tests are small, quick to write, and lightning
+fast to execute. On modern hardware, you can execute hundreds or
+thousands of them in a second (up to 16383 per test file), and get
+answers very quickly.
+
+End-to-end, or all-up, tests, sometimes called _integration tests_,
+test your final game code in a real environment that simulates real
+player input. Strictly speaking, integration tests concern themselves
+with whether you've hooked together all of the modules of your game
+correctly, but the name frequently sticks to any testing of your full
+program. They take longer to write, they're more fragile, and they
+take longer to compile and execute than unit tests do. Having both
+kinds of tests is important, as each style can find problems that are
+difficult for the other kind to turn up.
 
 [#diff]
-=== Simple Tests with `dfrotz`, `aamrun`, and `diff`
+=== Simple Tests with `aamrun`, `dfrotz`, and `diff`
 
-TODO
+There are several ways to do interpreter-based testing in Dialog
 
 [#multiplatform]
 ==== Testing For Multiple Platforms
