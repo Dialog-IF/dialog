@@ -905,6 +905,302 @@ despite having a lot of computation happening under the surface.
 
 The moral of the story: test code is code, and refactoring it helps, too. 
 
+[#model]
+=== Testing the Object Model
+
+So far, we've been testing extension code and helper methods, and not
+the game object model itself. While extension code particularly lends
+itself to being unit tested, you can use `unit.dg` tests to test
+the main `stdlib.dg` object model, too.
+
+One caveat is that `unit.dg` depends on its implementation of
+`(program entry point)` and `(error $ entry point)` to function
+properly. If you've overridden those predicates in your game,  you'll
+need to isolate them in a separate file that doesn't get included in
+your unit tests. If there's any interesting code in your `(program
+entry point)` you'll want to extract it into another predicate that
+`(program entry point)` calls, so that it can be tested.
+
+We'll use the Dialog adaptation of Roger Firth's _Cloak of Darkness_
+as our example. _Cloak of Darkness_ is intentionally a minimalist
+game, designed to exercise the basic functions of different
+interactive fiction systems. Other than the very basics of movement
+and inventory management (for which there is only a single takeable
+item), the behaviours in the game that need to go right are
+
+- preventing the player from leaving the Foyer to the north
+- extinguishing the light in the Foyer Bar if the player wears the cloak
+- preventing the player from dropping the cloak anywhere
+- being warned about blundering around in the dark
+- destroying the message if the player blunders around in the dark
+- correctly displaying the cloak hanging on the hook
+- scoring a point for hanging the cloak on the hook
+- scoring a point for seeing the victory message
+- seeing the defeat message if the message is destroyed
+
+...all of which are perfectly testable.
+
+First of all, we need to make sure to reset to a known state after
+each test:
+
+[source]
+----
+(clean up $)
+    (move player to #in #foyer)
+    (now) (#cloak is #wornby #player)
+    (now) ~(hook point awarded)
+    (now) ~(message has been trampled)
+    (now) ~(game has ended)
+    (current score $Score)
+    (decrease score by $Score)
+    (exhaust) {
+        *(room $Room)
+        (now) ~($Room is visited)
+    }
+    (rebuild scope)
+----
+
+_Cloak of Darkness_ is a tiny game, so that much state is sufficient
+to reset everything. For a longer work, you may want to move to a
+style where you have a bespoke `(set up $)` for each test, setting the
+stage for what you're going to be testing, and a bespoke `(clean up
+$)` at the end, undoing any changes of state from your `(set up $)` or
+your test itself.
+
+For _Cloak of Darkness_, we can reset the scope with the above. At a
+bare minimum, you'll want to move the player back to their starting
+position (unless you explicitly move to somewhere in every test),
+reset the score (unless there isn't any), reset the visited state of
+all the rooms, and call `(rebuild scope)` to let `stdlib.dg` catch up
+with the changes that you've just made. Note that if your game starts
+with some of its rooms marked as visited, you'll need a more detailed
+solution than just marking everything unvisited.
+
+Let's go through the behaviours that we identified, and test them one
+by one. Checking that we can't leave the Opera House is easy:
+
+[source]
+----
+#dont-go-north
+(test *)
+(run *)
+    (#player is #in #foyer)
+    (stoppable) (try [go #north])
+    (#player is #in #foyer)
+----
+
+This is 
+
+[source]
+----
+#dark-if-wearing-cloak
+(test *)
+(run *)
+    (stoppable) (enter #bar)
+    ~(player can see)
+----
+
+[source]
+----
+#dont-drop-cloak
+(test *)
+(run *)
+    (stoppable) (try [drop #cloak])
+    (#cloak is #heldby #player)
+----
+
+[source]
+----
+#hang-on-hook
+(test *)
+(set up *)
+    (stoppable) (enter #cloakroom)
+
+(run *)
+    (stoppable) (perform [put #cloak #on #hook])
+    (#cloak is #on #hook)
+    ~(#cloak is #wornby #player)
+----
+
+[source]
+----
+#score-for-hanging-cloak
+(test *)
+(set up *)
+    (stoppable) (enter #cloakroom)
+
+(run *)
+    (current score 0)
+    (stoppable) (perform [put #cloak #on #hook])
+    (current score 1)
+----
+
+[source]
+----
+#light-if-not-wearing-cloak
+(test *)
+(set up *)
+    (stoppable) (enter #cloakroom)
+    (stoppable) (perform [put #cloak #on #hook])
+
+(run *)
+    (stoppable) (enter #bar)
+    (player can see)
+----
+
+[source]
+----
+#destroy-message
+(test *)
+(set up *)
+    (stoppable) (enter #bar)
+    (stoppable) (try [dance])
+
+(run *)
+    (stoppable) (try [dance])
+    (message has been trampled)
+----
+
+[source]
+----
+#score-for-seeing-message
+(test *)
+(set up *)
+    (stoppable) (enter #cloakroom)
+    (stoppable) (perform [put #cloak #on #hook])
+    (stoppable) (enter #bar)
+
+(run *)
+    (player can see)
+    (current score 1)
+    ~(message has been trampled)
+    (stoppable) (perform [examine #message])
+    (game has ended)
+    (game over message { You have won })
+    (current score 2)
+----
+
+[source]
+----
+#message
+(instead of [read *])
+    (try [examine *])
+----
+
+[source]
+----
+#score-for-examining-message
+(test *)
+(set up *)
+    (stoppable) (enter #cloakroom)
+    (stoppable) (perform [put #cloak #on #hook])
+    (stoppable) (enter #bar)
+
+(run *)
+    (player can see)
+    (current score 1)
+    ~(message has been trampled)
+    (stoppable) (perform [examine #message])
+    (game has ended)
+    (game over message { You have won })
+    (current score 2)
+----
+
+[source]
+----
+#defeat-message
+(test *)
+(set up *)
+    (stoppable) (enter #bar)
+    (stoppable) (try [dance])
+    (stoppable) (try [dance])
+    (stoppable) (enter #cloakroom)
+    (stoppable) (perform [put #cloak #on #hook])
+    (stoppable) (enter #bar)
+
+(run *)
+    (player can see)
+    (current score 1)
+    (message has been trampled)
+    (stoppable) (perform [examine #message])
+    (game has ended)
+    (game over message { You have lost })
+    (current score 1)
+----
+
+...and with that, we've written, in Dialog, a full set of tests for our game.
+
+[#integ]
+== All-Up Tests in the Browser
+
+TODO
+
+[#diff]
+=== Simple Tests with `diff`
+
+TODO
+
+[#multiplatform]
+==== Testing For Multiple Platforms
+
+TODO
+
+[#regtest]
+=== Using `regtest.py`
+
+TODO
+
+[#skein]
+=== `dgt` and the Skein
+
+An exciting alternative to `regtest.py` or `diff` is Howard Ship's
+`dgt` tool, which includes a feature called the _Skein_. The Skein
+allows you to interactively walk through your game through multiple
+branching paths, and "bless" your game's output when it's correct. You
+can then re-run the Skein after making changes to your game, and
+confirm that you didn't break anything.
+
+For details on `dgt` and the Skein, see the `dgt` documentation. Details
+on where to find the `dgt` software can be found on the
+xref:ROOT:software.adoc[Software Page].
+
+[#make]
+== Pulling It All Together With `make`
+
+TODO
+
+[#makefile]
+=== `Makefile` Basics
+
+TODO
+
+[#dgt]
+=== Building With `dgt` Instead
+
+If you're using the `dgt` tool to test with the Skein, `dgt` can also
+be used to build your project and run its unit tests, in addition to
+Skein testing. See the `dgt` documentation for details.
+
+[#debugging]
+== Troubleshooting Broken Tests
+
+TODO
+
+[#output]
+=== Diagnostic Output
+
+TODO
+
+[#dgdebug]
+=== Using `dgdebug` and its Predicates
+
+TODO
+
+[#pitfalls]
+=== Frequently Encountered Pitfalls
+
+TODO
+
 [#summary]
 == Summary
 
@@ -919,7 +1215,7 @@ Here's a summary of the advice from this chapter:
 - Start each test from a known state, and reset to that state with
   `(set up $)` and `(clean up $)` before running the next test.
 - Use fixtures to keep your actual test cases simple.
-- Test in depth, using both unit and integration tests.
+- Test in depth, using both unit and all-up tests.
 - Automate your testing process with `make` or `dgt`.
 - Test on all platforms for which you'll be releasing: Z-machine, web,
   and vintage computing hardware.
