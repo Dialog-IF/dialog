@@ -1222,7 +1222,7 @@ this, we use the built-in `diff` tool that's present on Mac and Linux
 systems. (For Windows users, see the xref:ROOT:software.adoc[Software
 Page].
 
-
+For _Cloak of Darkness_, we can 
 
 [#multiplatform]
 ==== Testing For Multiple Platforms
