@@ -45,8 +45,8 @@ Release notes:
 
 	1c/02, Lib 1.2.3:
 
-                Documentation: more has been added to chapter 12.
-
+		Documentation: more has been added to chapter 12.
+		
 		Library: incredibly trivial changes to make it easier to get
 		identical output across backends. Users are unlikely to ever
 		notice the difference.
