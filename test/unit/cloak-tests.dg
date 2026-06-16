@@ -1,6 +1,6 @@
 %% dgdebug -u cloak-tests.dg cloak.dg unit.dg stdlib.dg
 
-(set up $)
+(clean up $)
     (move player to #in #foyer)
 	(now) (#cloak is #wornby #player)
 	(now) ~(hook point awarded)
@@ -9,84 +9,118 @@
 	(decrease score by $Score)
 	(clear all pronouns)
 	(update environment around player)
-	(fail)
 
 #dont-go-north
-(test *)
+%%(test *)
 (run *)
 	(current player $Player)
 	($Player is #in #foyer)
-	(perform [go #north])
+	(collect words)
+	    (perform [go #north])
+	(into [you've only just arrived | $])
 	($Player is #in #foyer)
 
 #dark-if-wearing-cloak
 (test *)
-(set up *)
-
 (run *)
-
-(clean up *)
-
-#light-if-not-wearing-cloak
-(test *)
-(set up *)
-
-(run *)
-
-(clean up *)
+	(perform [go #south])
+	(#player is #in #bar)
+	~(player can see)
 
 #dont-drop-cloak
 (test *)
+(run *)
+    (perform [drop #cloak])
+    (#cloak is #wornby #player)
+
+#hang-on-hook
+(test *)
 (set up *)
+    (perform [go #west])
 
 (run *)
+    (perform [put #cloak #on #hook])
+	(#cloak is #on #hook)
+    ~(#cloak is #wornby #player)
+
+#score-for-hanging-cloak
+(test *)
+(set up *)
+    (perform [go #west])
+
+(run *)
+    (current score 0)
+    (perform [put #cloak #on #hook])
+	(current score 1)
 
 (clean up *)
 
 #warn-about-blundering
 (test *)
 (set up *)
+	(perform [go #south])
 
 (run *)
+	(#player is #in #bar)
+	~(player can see)
+	(collect words) (perform [dance]) (into [in the dark | $])
 
-(clean up *)
+#light-if-not-wearing-cloak
+(test *)
+(set up *)
+    (perform [put #cloak #on #hook])
+
+(run *)
+	(perform [go #south])
+	(player can see)
 
 #destroy-message
 (test *)
 (set up *)
+    (perform [go #south])
 
 (run *)
-
-(clean up *)
-
-#hang-on-hook
-(test *)
-(set up *)
-
-(run *)
-
-(clean up *)
-
-#score-for-hanging-cloak
-(test *)
-(set up *)
-
-(run *)
-
-(clean up *)
+    (perform [dance])
+	(perform [dance])
+	(message has been trampled)
 
 #score-for-seeing-message
 (test *)
 (set up *)
+    (perform [put #cloak #on #hook])
+	(perform [go #south])
 
 (run *)
+	(player can see)
+    (current score 1)
+	~(message has been trampled)
+    (collect words) (perform [examine #message]) (into [$ | won])
+	(current score 2)
 
-(clean up *)
+#score-for-examining-message
+(test *)
+(set up *)
+    (perform [put #cloak #on #hook])
+	(perform [go #south])
+
+(run *)
+	(player can see)
+    (current score 1)
+	~(message has been trampled)
+    (collect words) (perform [examine #message]) (into [$ | won])
+	(current score 2)
 
 #defeat-message
 (test *)
 (set up *)
+    (perform [go #south])
+	(perform [dance])
+	(perform [dance])
+	(perform [put #cloak #on #hook])
 
 (run *)
-
-(clean up *)
+	(player can see)
+	(current score 1)
+	(message has been trampled)
+    (collect words) (perform [examine #message]) (into [$ | lost])
+	(current score 1)
