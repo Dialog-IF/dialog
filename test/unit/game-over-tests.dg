@@ -12,7 +12,6 @@
     ~(game has ended)
     (stoppable) (enter #cloakroom)
 	(stoppable) (perform [put #cloak #on #hook])
-	(stoppable) (enter #foyer)
 	(stoppable) (enter #bar)
 	(player can see)
 	(stoppable) (perform [examine #message])
