@@ -8,49 +8,52 @@
 	(now) ~(game has ended)
 	(current score $Score)
 	(decrease score by $Score)
-	(clear all pronouns)
-	(update environment around player)
+	(exhaust) {
+	    *(room $Room)
+		(now) ~($Room is visited)
+	}
+	(rebuild scope)
 
 #dont-go-north
-%%(test *)
+(test *)
 (run *)
 	(current player $Player)
 	($Player is #in #foyer)
-	(collect words)
-	    (perform [go #north])
-	(into [you've only just arrived | $])
+%%	(collect words)
+	    (stoppable) (perform [go #north])
+%%	(into [you've only just arrived | $])
 	($Player is #in #foyer)
 
 #dark-if-wearing-cloak
 (test *)
 (run *)
-	(move player to #in #bar)
+	(stoppable) (enter #bar)
 	~(player can see)
 
 #dont-drop-cloak
 (test *)
 (run *)
-    (perform [drop #cloak])
+    (stoppable) (perform [drop #cloak])
     (#cloak is #wornby #player)
 
 #hang-on-hook
 (test *)
 (set up *)
-    (move player to #in #cloakroom)
+    (stoppable) (enter #cloakroom)
 
 (run *)
-    (perform [put #cloak #on #hook])
+    (stoppable) (perform [put #cloak #on #hook])
 	(#cloak is #on #hook)
     ~(#cloak is #wornby #player)
 
 #score-for-hanging-cloak
 (test *)
 (set up *)
-    (move player to #in #cloakroom)
+    (stoppable) (enter #cloakroom)
 
 (run *)
     (current score 0)
-    (perform [put #cloak #on #hook])
+    (stoppable) (perform [put #cloak #on #hook])
 	(current score 1)
 
 (clean up *)
@@ -58,73 +61,82 @@
 #warn-about-blundering
 (test *)
 (set up *)
-	(move player to #in #bar)
+	(stoppable) (enter #bar)
 
 (run *)
 	~(player can see)
-	(collect words) (perform [dance]) (into [in the dark | $])
+	(collect words) (stoppable) (perform [dance]) (into [in the dark | $])
 
 #light-if-not-wearing-cloak
 (test *)
 (set up *)
-    (move player to #in #cloakroom)
-    (perform [put #cloak #on #hook])
+    (stoppable) (enter #cloakroom)
+    (stoppable) (perform [put #cloak #on #hook])
 
 (run *)
-	(move player to #in #bar)
+	(stoppable) (enter #bar)
 	(player can see)
 
 #destroy-message
 (test *)
 (set up *)
-    (move player to #in #bar)
+    (stoppable) (enter #bar)
 
 (run *)
-    (perform [dance])
-	(perform [dance])
+    (stoppable) (perform [dance])
+	(stoppable) (perform [dance])
 	(message has been trampled)
 
 #score-for-seeing-message
 (test *)
 (set up *)
-    (move player to #in #cloakroom)
-    (perform [put #cloak #on #hook])
-	(move player to #bar)
+    (stoppable) (enter #cloakroom)
+    (stoppable) (perform [put #cloak #on #hook])
+	(stoppable) (enter #bar)
 
 (run *)
 	(player can see)
     (current score 1)
 	~(message has been trampled)
-    (collect words) (perform [examine #message]) (into [$ | won])
+%%    (collect words) (stoppable) (perform [examine #message]) (into [$ | won])
+    (stoppable) (perform [examine #message])
+	(game has ended)
+	(game over message { You have won })
 	(current score 2)
 
 #score-for-examining-message
 (test *)
 (set up *)
-    (move player to #in #cloakroom)
-    (perform [put #cloak #on #hook])
-	(move player to #bar)
+    (stoppable) (enter #cloakroom)
+    (stoppable) (perform [put #cloak #on #hook])
+	(stoppable) (enter #bar)
 
 (run *)
 	(player can see)
     (current score 1)
 	~(message has been trampled)
-    (collect words) (perform [examine #message]) (into [$ | won])
+%%    (collect words) (stoppable) (perform [examine #message]) (into [$ | won])
+    (stoppable) (perform [examine #message])
+	(game has ended)
+	(game over message { You have won })
 	(current score 2)
 
 #defeat-message
 (test *)
 (set up *)
-	(move player to #in #bar)
-	(perform [dance])
-	(perform [dance])
-    (move player to #in #cloakroom)
-    (perform [put #cloak #on #hook])
-	(move player to #bar)
+	(stoppable) (enter #bar)
+	(stoppable) (perform [dance])
+	(stoppable) (perform [dance])
+    (stoppable) (enter #cloakroom)
+    (stoppable) (perform [put #cloak #on #hook])
+	(stoppable) (enter #bar)
 
 (run *)
 	(player can see)
 	(current score 1)
 	(message has been trampled)
-    (collect words) (perform [examine #message]) (into [$ | lost])
+%%    (collect words) (stoppable) (perform [examine #message]) (into [$ | lost])
+    (stoppable) (perform [examine #message])
+	(game has ended)
+	(game over message { You have lost })
 	(current score 1)
