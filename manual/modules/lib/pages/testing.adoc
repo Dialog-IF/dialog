@@ -1213,9 +1213,16 @@ kinds of tests is important, as each style can find problems that are
 difficult for the other kind to turn up.
 
 [#diff]
-=== Simple Tests with `aamrun`, `dfrotz`, and `diff`
+=== Simple Tests with `diff`
 
-There are several ways to do interpreter-based testing in Dialog
+The simplest way to test in the interpreter is simply to feed a
+predefined input file to it, capture the output in a text file, and
+compare it with a known good file from a good run of the game. For
+this, we use the built-in `diff` tool that's present on Mac and Linux
+systems. (For Windows users, see the xref:ROOT:software.adoc[Software
+Page].
+
+
 
 [#multiplatform]
 ==== Testing For Multiple Platforms
@@ -1230,12 +1237,18 @@ TODO
 [#skein]
 === `dgt` and the Skein
 
-An exciting alternative to `regtest.py` or `diff` is Howard Ship's
-`dgt` tool, which includes a feature called the _Skein_. The Skein
-allows you to interactively walk through your game through multiple
-branching paths, and "bless" your game's output when it's correct. You
-can then re-run the Skein after making changes to your game, and
-confirm that you didn't break anything.
+A drawback of both `diff` and `regtest.py` is that they're designed to
+walk through a game in one single path, and show the output from only
+that path. But many games have multiple incompatible alternatives,
+multiple endings, and so forth. You can write additional tests to test
+the additional paths, but manually managing those can be awkward.
+
+A solution to that problem is Howard Ship's `dgt` tool, which includes
+a feature called the _Skein_. The Skein allows you to interactively
+walk through your game through multiple branching paths, and "bless"
+each branch's output when it's correct. You can then re-run the Skein
+after making changes to your game, and confirm that you didn't break
+anything. 
 
 For details on `dgt` and the Skein, see the `dgt` documentation. Details
 on where to find the `dgt` software can be found on the
@@ -1254,9 +1267,10 @@ TODO
 [#dgt]
 === Building With `dgt` Instead
 
-If you're using the `dgt` tool to test with the Skein, `dgt` can also
-be used to build your project and run its unit tests, in addition to
-Skein testing. See the `dgt` documentation for details.
+If you're using the `dgt` tool to test with the Skein (or even if
+you're not), `dgt` can also be used to build your project and run its
+unit tests, in addition to Skein testing. See the `dgt` documentation
+for details. 
 
 [#debugging]
 == Troubleshooting Broken Tests
