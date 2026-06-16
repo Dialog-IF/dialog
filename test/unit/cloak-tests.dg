@@ -46,6 +46,7 @@
     (stoppable) (try [put #cloak #on #hook])
 	(#cloak is #on #hook)
     ~(#cloak is worn by #player)
+    ~(#cloak has ancestor #player)
 
 #score-for-hanging-cloak
 (test *)

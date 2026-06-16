@@ -928,11 +928,11 @@ interactive fiction systems. Other than the very basics of movement
 and inventory management (for which there is only a single takeable
 item), the behaviours in the game that need to go right are
 
-- preventing the player from leaving the Foyer to the north
 - extinguishing the light in the Foyer Bar if the player wears the cloak
 - preventing the player from dropping the cloak anywhere
 - being warned about blundering around in the dark
 - destroying the message if the player blunders around in the dark
+  once warned
 - correctly displaying the cloak hanging on the hook
 - scoring a point for hanging the cloak on the hook
 - scoring a point for seeing the victory message
@@ -976,17 +976,7 @@ with the changes that you've just made. Note that if your game starts
 with some of its rooms marked as visited, you'll need a more detailed
 solution than just marking everything unvisited.
 
-Also, note that you don't need to 
-
-[source]
-----
-#dont-go-north
-(test *)
-(run *)
-    (#player is #in #foyer)
-    (stoppable) (try [go #north])
-    (#player is #in #foyer)
-----
+Let's go through the points that we identified above, and test them:
 
 [source]
 ----
@@ -994,8 +984,17 @@ Also, note that you don't need to
 (test *)
 (run *)
     (stoppable) (enter #bar)
+    (#cloak is worn by #player)
     ~(player can see)
 ----
+
+Note that we have to wrap `(enter $)` (and, indeed, any other attempt
+to have the player perform an action in the `stdlib.dg` object model)
+because actions tend to `(stop)` if anything goes wrong, and we need
+to handle that gracefully. We could have used `(try [go #south])` or
+even `(perform [go #south])` if we tested `(#player is #in #foyer)`
+first, but for purposes of the test, it's not important where we came
+from, only that we get to the right place.
 
 [source]
 ----
@@ -1003,8 +1002,20 @@ Also, note that you don't need to
 (test *)
 (run *)
     (stoppable) (try [drop #cloak])
-    (#cloak is #heldby #player)
+    (#cloak has ancestor #player)
 ----
+
+Here, we test `($ has ancestor $)` rather than `($ is worn by $)` or
+`($ is #wornby $)`, because attempting to drop the cloak will cause
+the player to remove it first, leaving it in the inventory, but not
+worn.
+
+In principle, we could wrap our attempt to drop the cloak in `(collect
+words) . . . (into $)`, to capture the specific message that is
+printed when we fail to drop it, but that sort of thing is better left
+for all-up testing in the interpreter. Unit testing is about verifying
+that the program behaviour is correct, not that you wrote the text
+that you wrote.
 
 [source]
 ----
@@ -1014,10 +1025,15 @@ Also, note that you don't need to
     (stoppable) (enter #cloakroom)
 
 (run *)
-    (stoppable) (perform [put #cloak #on #hook])
+    (stoppable) (try [put #cloak #on #hook])
     (#cloak is #on #hook)
-    ~(#cloak is #wornby #player)
+    ~(#cloak is worn by #player)
+    ~(#cloak has ancestor #player)
 ----
+
+Here, we put `(enter #cloakroom)` in `(set up $)` rather than in `(run 
+$)` because it's part of the preconditions for the test, rather than
+the test itself.
 
 [source]
 ----
@@ -1028,9 +1044,17 @@ Also, note that you don't need to
 
 (run *)
     (current score 0)
-    (stoppable) (perform [put #cloak #on #hook])
+    (stoppable) (try [put #cloak #on #hook])
     (current score 1)
 ----
+
+We write `#hang-on-hook` and `#score-for-hanging-cloak` as two
+separate tests because they're two separate concerns: one deals with
+our ability to hang the cloak, which gets it out of our inventory (a
+feat that's otherwise difficult), and the other is about the scoring
+system. Two different things could break, so we write a separate test
+for each of them. That way, we know exactly where to look if one of
+them fails, rather than having to investigate further.
 
 [source]
 ----
@@ -1045,6 +1069,14 @@ Also, note that you don't need to
     (player can see)
 ----
 
+Likewise, here, going to the cloakroom to hang the cloak is set up,
+rather than part of the test itself. Not cluttering up `(run *)` with
+things that aren't actually the thing that you're testing for makes
+your test easier to understand.
+
+Also note that we don't need to bother walking to the Foyer and then
+south to the Foyer Bar; just arriving there suffices for the test.
+
 [source]
 ----
 #destroy-message
@@ -1054,9 +1086,15 @@ Also, note that you don't need to
     (stoppable) (try [dance])
 
 (run *)
+    ~(message has been trampled)
     (stoppable) (try [dance])
     (message has been trampled)
 ----
+
+This one illustrates even better why we put things in `(set up $)`
+rather than leaving them in `(run *)`: the test is testing that it's
+the _second_ time that you do something foolish in the dark that wipes
+out the message, not the first time when you're warned.
 
 [source]
 ----
@@ -1077,12 +1115,22 @@ Also, note that you don't need to
     (current score 2)
 ----
 
+And now we finally get to win!
+
+...except that we don't. Release 2 of _Cloak of Darkness_ doesn't
+actually let you read the message. To fix that, we need to bump up
+`cloak.dg` to `(story release 3)`, and add the following:
+
 [source]
 ----
 #message
 (instead of [read *])
     (try [examine *])
 ----
+
+...and _now_ we get to win.
+
+Let's test the verb that Release 2 was expecting, to be safe:
 
 [source]
 ----
@@ -1102,6 +1150,13 @@ Also, note that you don't need to
     (game over message { You have won })
     (current score 2)
 ----
+
+`unit.dg` overrides `(game over)` and `(game over $)` so that we can
+test ending conditions like this without being stuck forever in a
+`(game over menu)` loop. There's a global variable, `(game over
+message $)`, where we can find the game over message that was printed.
+
+Finally, let's test the defeat condition: 
 
 [source]
 ----
@@ -1126,72 +1181,6 @@ Also, note that you don't need to
 ----
 
 ...and with that, we've written, in Dialog, a full set of tests for our game.
-
-[#integ]
-== All-Up Tests in the Browser
-
-TODO
-
-[#diff]
-=== Simple Tests with `dfrotz`, `aamrun`, and `diff`
-
-TODO
-
-[#multiplatform]
-==== Testing For Multiple Platforms
-
-TODO
-
-[#regtest]
-=== Using `regtest.py`
-
-TODO
-
-[#skein]
-=== `dgt` and the Skein
-
-An exciting alternative to `regtest.py` or `diff` is Howard Ship's
-`dgt` tool, which includes a feature called the _Skein_. The Skein
-allows you to interactively walk through your game through multiple
-branching paths, and "bless" your game's output when it's correct. You
-can then re-run the Skein after making changes to your game, and
-confirm that you didn't break anything.
-
-For details on `dgt` and the Skein, see the `dgt` documentation. Details
-on where to find the `dgt` software can be found on the
-xref:ROOT:software.adoc[Software Page].
-
-[#make]
-== Pulling It All Together With `make`
-
-TODO
-
-[#makefile]
-=== `Makefile` Basics
-
-TODO
-
-[#dgt]
-=== Building With `dgt` Instead
-
-If you're using the `dgt` tool to test with the Skein, `dgt` can also
-be used to build your project and run its unit tests, in addition to
-Skein testing. See the `dgt` documentation for details.
-
-[#debugging]
-== Troubleshooting Broken Tests
-
-TODO
-
-[#output]
-=== Diagnostic Output
-
-TODO
-
-[#dgdebug]
-=== Using `dgdebug` and its Predicates
-
-TODO
 
 [#summary]
 == Summary
