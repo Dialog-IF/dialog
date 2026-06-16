@@ -1,4 +1,4 @@
-DIALOG_VERSION=1c/02-dev
+DIALOG_VERSION=1c/02
 
 CC		= gcc
 CFLAGS		+= -O3 -Wall -Wno-unused-result -Wno-format-truncation -DVERSION=\"${DIALOG_VERSION}\"
