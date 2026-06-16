@@ -1346,9 +1346,9 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 					ai->oper[0] = (aaoper_t) {AAO_INDEX, ci->oper[0].value};
 					break;
 				case BI_GLOBAL_UNSTYLE:
-					int box = find_boxclass(prg, find_word(prg, "*empty")); // Created empty in compile.c
+					n = find_boxclass(prg, find_word(prg, "*empty")); // Created empty in compile.c
 					ai = add_instr(AA_SET_BODY);
-					ai->oper[0] = (aaoper_t) {AAO_INDEX, box};
+					ai->oper[0] = (aaoper_t) {AAO_INDEX, n};
 					break;
 				case BI_ITALIC:
 					ai = add_instr(AA_SET_STYLE);
