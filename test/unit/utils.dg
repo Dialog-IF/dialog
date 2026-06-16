@@ -195,8 +195,7 @@
 
 (find-index $ [] 0 $)
 
-(find-index $Element $List $Index $Count)
-    ([$Head | $Tail] = $List)
+(find-index $Element [$Head | $Tail] $Index $Count)
 	(if) ($Head = $Element) (then)
 	    ($Index = $Count)
 	(else)
@@ -206,9 +205,7 @@
 
 (index $Element $List $Index) %% opposite of (nth $ $ $)
     (find-index $Element $List $Index 1)
-	(if) ($Index = 0) (then)
-	    (fail)
-	(endif)
+	~($Index = 0)
 
 (take last $N from $List into $Suffix)
 	(reverse $List $Reverse)
@@ -219,8 +216,7 @@
 
 (take after $ from [] into [])
 
-(take after 1 from $List into $Suffix)
-    ([$ | $Suffix] = $List)
+(take after 1 from [$ | $Suffix] into $Suffix)
 
 (take after $N from $List into $Suffix)
     (length of $List into $Len)
@@ -259,8 +255,7 @@
 
 (take from [] where element $ is $ into [])
 
-(take from $List where element $Num is $Key into $Sublist)
-	($List = [$Head | $Tail])
+(take from [$Head | $Tail] where element $Num is $Key into $Sublist)
     (nth $Head $Num $Value)
     (if) ($Value = $Key) (then)
         (take from $Tail where element $Num is $Key into $Remainder)
@@ -271,8 +266,7 @@
 
 (take from [] where element $ is not $ into [])
 
-(take from $List where element $Num is not $Key into $Sublist)
-	($List = [$Head | $Tail])
+(take from [$Head | $Tail] where element $Num is not $Key into $Sublist)
     (nth $Head $Num $Value)
     (if) ~($Value = $Key) (then)
         (take from $Tail where element $Num is not $Key into $Remainder)
@@ -286,9 +280,9 @@
 	(take $Length from $List into $Prefix)
 	($Sublist = $Prefix)
 
-(find in $List beginning with sublist $Sublist into $Match)
-    ~(empty $List)
-	($List = [$Head | $Tail])
+(find in [] beginning with sublist $ into $) (fail)
+
+(find in [$Head | $Tail] beginning with sublist $Sublist into $Match)
 	(if) ($Head begins with sublist $Sublist) (then)
 		($Match = $Head)
 	(else)
@@ -297,8 +291,7 @@
 
 (find in [] where element $ is $ into [])
 
-(find in $List where element $Num is $Key into $Match)
-    ($List = [$Head | $Tail])
+(find in [$Head | $Tail] where element $Num is $Key into $Match)
 	(if) (nth $Head $Num $Key) (then)
 	    ($Match = $Head)
 	(else)
@@ -307,8 +300,7 @@
 
 (find in [] with highest element $ into [])
 
-(find in $List with highest element $Num into $Match)
-	($List = [$Head | $Tail])
+(find in [$Head | $Tail] with highest element $Num into $Match)
 	(nth $Head $Num $First)
 	(find in $Tail with highest element $Num into $HighTail)
 	(if) (nth $HighTail $Num $Second) (then)
@@ -323,8 +315,7 @@
 
 (find in [] with lowest element $ into [])
 
-(find in $List with lowest element $Num into $Match)
-	($List = [$Head | $Tail])
+(find in [$Head | $Tail] with lowest element $Num into $Match)
 	(nth $Head $Num $First)
 	(find in $Tail with lowest element $Num into $HighTail)
 	(if) (nth $HighTail $Num $Second) (then)
@@ -339,8 +330,7 @@
 
 (remove from [] where element $ is $ into [])
 
-(remove from $List where element $Num is $Key into $NewList)
-    ($List = [$Head | $Tail])
+(remove from [$Head | $Tail] where element $Num is $Key into $NewList)
 	(if) (nth $Head $Num $Key) (then)
 	    ($NewList = $Tail)
 	(else)
@@ -350,8 +340,7 @@
 
 (remove from [] beginning with sublist $ into [])
 
-(remove from $List beginning with sublist $Sublist into $NewList)
-	($List = [$Head | $Tail])
+(remove from [$Head | $Tail]  beginning with sublist $Sublist into $NewList)
 	(if) ($Head begins with sublist $Sublist) (then)
 		($NewList = $Tail)
 	(else)
@@ -361,8 +350,7 @@
 
 (set element $ in $ in [] to $ into [])
 
-(set element $Num in $Sublist in $List to $Value into $NewList)
-	($List = [$Head | $Tail])
+(set element $Num in $Sublist in [$Head | $Tail] to $Value into $NewList)
 	(if) ($Head begins with sublist $Sublist) (then)
 		 (replace element $Num in $Head with $Value into $NewHead)
 		 ($NewList = [$NewHead | $Tail])
