@@ -29,7 +29,7 @@ fatal-error:
 		 | grep "FATAL ERROR" > /dev/null
 
 cloak:
-	$(DEBUG) cloak-tests.dg ../regtest/cloak.dg $(STDLIB)
+	$(DEBUG) cloak-tests.dg cloak.dg $(STDLIB)
 
 clean:
 	rm -f *~ \#*\#
