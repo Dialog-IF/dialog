@@ -1,0 +1,28 @@
+%% dgdebug -u game-over-tests.dg cloak.dg unit.dg stdlib.dg
+
+(clean up $)
+    (now) ~(game has ended)
+	(now) (move player to #foyer)
+	(now) (#cloak is #wornby #player)
+	(rebuild scope)
+
+#win
+(test *)
+(run *)
+    ~(game has ended)
+    (stoppable) (enter #cloakroom)
+	(stoppable) (perform [put #cloak #on #hook])
+	(stoppable) (enter #foyer)
+	(stoppable) (enter #bar)
+	(player can see)
+	(stoppable) (perform [examine #message])
+	(game has ended)
+	(game over message { You have won })
+
+#darkness
+(test *)
+(run *)
+    ~(game has ended)
+	(#cloak is #wornby #player)
+	(stoppable) (enter #bar)
+	~(player can see)
