@@ -905,6 +905,283 @@ despite having a lot of computation happening under the surface.
 
 The moral of the story: test code is code, and refactoring it helps, too. 
 
+[#model]
+=== Testing the Object Model
+
+So far, we've been testing extension code and helper methods, and not
+the game object model itself. While extension code particularly lends
+itself to being unit tested, you can use `unit.dg` tests to test
+the main `stdlib.dg` object model, too.
+
+One caveat is that `unit.dg` depends on its implementation of
+`(program entry point)` and `(error $ entry point)` to function
+properly. If you've overridden those predicates in your game,  you'll
+need to isolate them in a separate file that doesn't get included in
+your unit tests. If there's any interesting code in your `(program
+entry point)` you'll want to extract it into another predicate that
+`(program entry point)` calls, so that it can be tested.
+
+We'll use the Dialog adaptation of Roger Firth's _Cloak of Darkness_
+as our example. _Cloak of Darkness_ is intentionally a minimalist
+game, designed to exercise the basic functions of different
+interactive fiction systems. Other than the very basics of movement
+and inventory management (for which there is only a single takeable
+item), the behaviours in the game that need to go right are
+
+- extinguishing the light in the Foyer Bar if the player wears the cloak
+- preventing the player from dropping the cloak anywhere
+- being warned about blundering around in the dark
+- destroying the message if the player blunders around in the dark
+  once warned
+- correctly displaying the cloak hanging on the hook
+- scoring a point for hanging the cloak on the hook
+- scoring a point for seeing the victory message
+- seeing the defeat message if the message is destroyed
+
+...all of which are perfectly testable.
+
+First of all, we need to make sure to reset to a known state after
+each test:
+
+[source]
+----
+(clean up $)
+    (move player to #in #foyer)
+    (now) (#cloak is #wornby #player)
+    (now) ~(hook point awarded)
+    (now) ~(message has been trampled)
+    (now) ~(game has ended)
+    (current score $Score)
+    (decrease score by $Score)
+    (exhaust) {
+        *(room $Room)
+        (now) ~($Room is visited)
+    }
+    (rebuild scope)
+----
+
+_Cloak of Darkness_ is a tiny game, so that much state is sufficient
+to reset everything. For a longer work, you may want to move to a
+style where you have a bespoke `(set up $)` for each test, setting the
+stage for what you're going to be testing, and a bespoke `(clean up
+$)` at the end, undoing any changes of state from your `(set up $)` or
+your test itself.
+
+For _Cloak of Darkness_, we can reset the scope with the above. At a
+bare minimum, you'll want to move the player back to their starting
+position (unless you explicitly move to somewhere in every test),
+reset the score (unless there isn't any), reset the visited state of
+all the rooms, and call `(rebuild scope)` to let `stdlib.dg` catch up
+with the changes that you've just made. Note that if your game starts
+with some of its rooms marked as visited, you'll need a more detailed
+solution than just marking everything unvisited.
+
+Let's go through the points that we identified above, and test them:
+
+[source]
+----
+#dark-if-wearing-cloak
+(test *)
+(run *)
+    (stoppable) (enter #bar)
+    (#cloak is worn by #player)
+    ~(player can see)
+----
+
+Note that we have to wrap `(enter $)` (and, indeed, any other attempt
+to have the player perform an action in the `stdlib.dg` object model)
+because actions tend to `(stop)` if anything goes wrong, and we need
+to handle that gracefully. We could have used `(try [go #south])` or
+even `(perform [go #south])` if we tested `(#player is #in #foyer)`
+first, but for purposes of the test, it's not important where we came
+from, only that we get to the right place.
+
+[source]
+----
+#dont-drop-cloak
+(test *)
+(run *)
+    (stoppable) (try [drop #cloak])
+    (#cloak has ancestor #player)
+----
+
+Here, we test `($ has ancestor $)` rather than `($ is worn by $)` or
+`($ is #wornby $)`, because attempting to drop the cloak will cause
+the player to remove it first, leaving it in the inventory, but not
+worn.
+
+In principle, we could wrap our attempt to drop the cloak in `(collect
+words) . . . (into $)`, to capture the specific message that is
+printed when we fail to drop it, but that sort of thing is better left
+for all-up testing in the interpreter. Unit testing is about verifying
+that the program behaviour is correct, not that you wrote the text
+that you wrote.
+
+[source]
+----
+#hang-on-hook
+(test *)
+(set up *)
+    (stoppable) (enter #cloakroom)
+
+(run *)
+    (stoppable) (try [put #cloak #on #hook])
+    (#cloak is #on #hook)
+    ~(#cloak is worn by #player)
+    ~(#cloak has ancestor #player)
+----
+
+Here, we put `(enter #cloakroom)` in `(set up $)` rather than in `(run 
+$)` because it's part of the preconditions for the test, rather than
+the test itself.
+
+[source]
+----
+#score-for-hanging-cloak
+(test *)
+(set up *)
+    (stoppable) (enter #cloakroom)
+
+(run *)
+    (current score 0)
+    (stoppable) (try [put #cloak #on #hook])
+    (current score 1)
+----
+
+We write `#hang-on-hook` and `#score-for-hanging-cloak` as two
+separate tests because they're two separate concerns: one deals with
+our ability to hang the cloak, which gets it out of our inventory (a
+feat that's otherwise difficult), and the other is about the scoring
+system. Two different things could break, so we write a separate test
+for each of them. That way, we know exactly where to look if one of
+them fails, rather than having to investigate further.
+
+[source]
+----
+#light-if-not-wearing-cloak
+(test *)
+(set up *)
+    (stoppable) (enter #cloakroom)
+    (stoppable) (perform [put #cloak #on #hook])
+
+(run *)
+    (stoppable) (enter #bar)
+    (player can see)
+----
+
+Likewise, here, going to the cloakroom to hang the cloak is set up,
+rather than part of the test itself. Not cluttering up `(run *)` with
+things that aren't actually the thing that you're testing for makes
+your test easier to understand.
+
+Also note that we don't need to bother walking to the Foyer and then
+south to the Foyer Bar; just arriving there suffices for the test.
+
+[source]
+----
+#destroy-message
+(test *)
+(set up *)
+    (stoppable) (enter #bar)
+    (stoppable) (try [dance])
+
+(run *)
+    ~(message has been trampled)
+    (stoppable) (try [dance])
+    (message has been trampled)
+----
+
+This one illustrates even better why we put things in `(set up $)`
+rather than leaving them in `(run *)`: the test is testing that it's
+the _second_ time that you do something foolish in the dark that wipes
+out the message, not the first time when you're warned.
+
+[source]
+----
+#score-for-seeing-message
+(test *)
+(set up *)
+    (stoppable) (enter #cloakroom)
+    (stoppable) (perform [put #cloak #on #hook])
+    (stoppable) (enter #bar)
+
+(run *)
+    (player can see)
+    (current score 1)
+    ~(message has been trampled)
+    (stoppable) (perform [examine #message])
+    (game has ended)
+    (game over message { You have won })
+    (current score 2)
+----
+
+And now we finally get to win!
+
+...except that we don't. Release 2 of _Cloak of Darkness_ doesn't
+actually let you read the message. To fix that, we need to bump up
+`cloak.dg` to `(story release 3)`, and add the following:
+
+[source]
+----
+#message
+(instead of [read *])
+    (try [examine *])
+----
+
+...and _now_ we get to win.
+
+Let's test the verb that Release 2 was expecting, to be safe:
+
+[source]
+----
+#score-for-examining-message
+(test *)
+(set up *)
+    (stoppable) (enter #cloakroom)
+    (stoppable) (perform [put #cloak #on #hook])
+    (stoppable) (enter #bar)
+
+(run *)
+    (player can see)
+    (current score 1)
+    ~(message has been trampled)
+    (stoppable) (perform [examine #message])
+    (game has ended)
+    (game over message { You have won })
+    (current score 2)
+----
+
+`unit.dg` overrides `(game over)` and `(game over $)` so that we can
+test ending conditions like this without being stuck forever in a
+`(game over menu)` loop. There's a global variable, `(game over
+message $)`, where we can find the game over message that was printed.
+
+Finally, let's test the defeat condition: 
+
+[source]
+----
+#defeat-message
+(test *)
+(set up *)
+    (stoppable) (enter #bar)
+    (stoppable) (try [dance])
+    (stoppable) (try [dance])
+    (stoppable) (enter #cloakroom)
+    (stoppable) (perform [put #cloak #on #hook])
+    (stoppable) (enter #bar)
+
+(run *)
+    (player can see)
+    (current score 1)
+    (message has been trampled)
+    (stoppable) (perform [examine #message])
+    (game has ended)
+    (game over message { You have lost })
+    (current score 1)
+----
+
+...and with that, we've written, in Dialog, a full set of tests for our game.
+
 [#summary]
 == Summary
 

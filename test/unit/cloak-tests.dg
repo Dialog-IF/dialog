@@ -1,0 +1,146 @@
+%% dgdebug -u cloak-tests.dg cloak.dg unit.dg stdlib.dg
+
+(clean up $)
+    (move player to #in #foyer)
+	(now) (#cloak is #wornby #player)
+	(now) ~(hook point awarded)
+	(now) ~(message has been trampled)
+	(now) ~(game has ended)
+	(current score $Score)
+	(decrease score by $Score)
+	(exhaust) {
+	    *(room $Room)
+		(now) ~($Room is visited)
+	}
+	(rebuild scope)
+
+#dont-go-north
+(test *)
+(run *)
+	(current player $Player)
+	($Player is #in #foyer)
+%%	(collect words)
+	    (stoppable) (try [go #north])
+%%	(into [you've only just arrived | $])
+	($Player is #in #foyer)
+
+#dark-if-wearing-cloak
+(test *)
+(run *)
+	(stoppable) (enter #bar)
+	(#cloak is worn by #player)
+	~(player can see)
+
+#dont-drop-cloak
+(test *)
+(run *)
+    (stoppable) (try [drop #cloak])
+    (#cloak has ancestor #player)
+
+#hang-on-hook
+(test *)
+(set up *)
+    (stoppable) (enter #cloakroom)
+
+(run *)
+    (stoppable) (try [put #cloak #on #hook])
+	(#cloak is #on #hook)
+    ~(#cloak is worn by #player)
+    ~(#cloak has ancestor #player)
+
+#score-for-hanging-cloak
+(test *)
+(set up *)
+    (stoppable) (enter #cloakroom)
+
+(run *)
+    (current score 0)
+    (stoppable) (try [put #cloak #on #hook])
+	(current score 1)
+
+(clean up *)
+
+#warn-about-blundering
+(test *)
+(set up *)
+	(stoppable) (enter #bar)
+
+(run *)
+    ~(player can see)
+%%    (collect words)
+        (stoppable) (try [dance])
+%%    (into [in the dark | $])
+
+#light-if-not-wearing-cloak
+(test *)
+(set up *)
+    (stoppable) (enter #cloakroom)
+    (stoppable) (perform [put #cloak #on #hook])
+
+(run *)
+	(stoppable) (enter #bar)
+	(player can see)
+
+#destroy-message
+(test *)
+(set up *)
+    (stoppable) (enter #bar)
+    (stoppable) (try [dance]) %% need a way to reset (select) ... (stopping)
+
+(run *)
+%%    ~(message has been trampled)
+%%    (collect words)
+        (stoppable) (try [dance])
+%%    (into [blundering | $])
+	(message has been trampled)
+
+#score-for-seeing-message
+(test *)
+(set up *)
+    (stoppable) (enter #cloakroom)
+    (stoppable) (perform [put #cloak #on #hook])
+	(stoppable) (enter #bar)
+
+(run *)
+	(player can see)
+    (current score 1)
+	~(message has been trampled)
+    (stoppable) (perform [examine #message])
+	(game has ended)
+	(game over message { You have won })
+	(current score 2)
+
+#score-for-examining-message
+(test *)
+(set up *)
+    (stoppable) (enter #cloakroom)
+    (stoppable) (perform [put #cloak #on #hook])
+	(stoppable) (enter #bar)
+
+(run *)
+	(player can see)
+    (current score 1)
+	~(message has been trampled)
+    (stoppable) (perform [examine #message])
+	(game has ended)
+	(game over message { You have won })
+	(current score 2)
+
+#defeat-message
+(test *)
+(set up *)
+	(stoppable) (enter #bar)
+	(stoppable) (try [dance])
+	(stoppable) (try [dance])
+    (stoppable) (enter #cloakroom)
+    (stoppable) (perform [put #cloak #on #hook])
+	(stoppable) (enter #bar)
+
+(run *)
+	(player can see)
+	(current score 1)
+	(message has been trampled)
+    (stoppable) (perform [examine #message])
+	(game has ended)
+	(game over message { You have lost })
+	(current score 1)
