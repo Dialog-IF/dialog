@@ -5,6 +5,7 @@
 	(now) (#cloak is #wornby #player)
 	(now) ~(hook point awarded)
 	(now) ~(message has been trampled)
+	(now) ~(game has ended)
 	(current score $Score)
 	(decrease score by $Score)
 	(clear all pronouns)
@@ -23,8 +24,7 @@
 #dark-if-wearing-cloak
 (test *)
 (run *)
-	(perform [go #south])
-	(#player is #in #bar)
+	(move player to #in #bar)
 	~(player can see)
 
 #dont-drop-cloak
@@ -36,7 +36,7 @@
 #hang-on-hook
 (test *)
 (set up *)
-    (perform [go #west])
+    (move player to #in #cloakroom)
 
 (run *)
     (perform [put #cloak #on #hook])
@@ -46,7 +46,7 @@
 #score-for-hanging-cloak
 (test *)
 (set up *)
-    (perform [go #west])
+    (move player to #in #cloakroom)
 
 (run *)
     (current score 0)
@@ -58,26 +58,26 @@
 #warn-about-blundering
 (test *)
 (set up *)
-	(perform [go #south])
+	(move player to #in #bar)
 
 (run *)
-	(#player is #in #bar)
 	~(player can see)
 	(collect words) (perform [dance]) (into [in the dark | $])
 
 #light-if-not-wearing-cloak
 (test *)
 (set up *)
+    (move player to #in #cloakroom)
     (perform [put #cloak #on #hook])
 
 (run *)
-	(perform [go #south])
+	(move player to #in #bar)
 	(player can see)
 
 #destroy-message
 (test *)
 (set up *)
-    (perform [go #south])
+    (move player to #in #bar)
 
 (run *)
     (perform [dance])
@@ -87,8 +87,9 @@
 #score-for-seeing-message
 (test *)
 (set up *)
+    (move player to #in #cloakroom)
     (perform [put #cloak #on #hook])
-	(perform [go #south])
+	(move player to #bar)
 
 (run *)
 	(player can see)
@@ -100,8 +101,9 @@
 #score-for-examining-message
 (test *)
 (set up *)
+    (move player to #in #cloakroom)
     (perform [put #cloak #on #hook])
-	(perform [go #south])
+	(move player to #bar)
 
 (run *)
 	(player can see)
@@ -113,10 +115,12 @@
 #defeat-message
 (test *)
 (set up *)
-    (perform [go #south])
+	(move player to #in #bar)
 	(perform [dance])
 	(perform [dance])
-	(perform [put #cloak #on #hook])
+    (move player to #in #cloakroom)
+    (perform [put #cloak #on #hook])
+	(move player to #bar)
 
 (run *)
 	(player can see)
