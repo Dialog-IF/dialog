@@ -28,13 +28,14 @@
 (test *)
 (run *)
 	(stoppable) (enter #bar)
+	(#cloak is worn by #player)
 	~(player can see)
 
 #dont-drop-cloak
 (test *)
 (run *)
     (stoppable) (try [drop #cloak])
-    (#cloak is #heldby #player)
+    (#cloak has ancestor #player)
 
 #hang-on-hook
 (test *)
@@ -42,9 +43,9 @@
     (stoppable) (enter #cloakroom)
 
 (run *)
-    (stoppable) (perform [put #cloak #on #hook])
+    (stoppable) (try [put #cloak #on #hook])
 	(#cloak is #on #hook)
-    ~(#cloak is #wornby #player)
+    ~(#cloak is worn by #player)
 
 #score-for-hanging-cloak
 (test *)
@@ -53,7 +54,7 @@
 
 (run *)
     (current score 0)
-    (stoppable) (perform [put #cloak #on #hook])
+    (stoppable) (try [put #cloak #on #hook])
 	(current score 1)
 
 (clean up *)
@@ -83,9 +84,10 @@
 (test *)
 (set up *)
     (stoppable) (enter #bar)
-    (stoppable) (try [dance])
+    (stoppable) (try [dance]) %% need a way to reset (select) ... (stopping)
 
 (run *)
+%%    ~(message has been trampled)
 %%    (collect words)
         (stoppable) (try [dance])
 %%    (into [blundering | $])
