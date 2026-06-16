@@ -47,7 +47,9 @@ Release notes:
 
 		Unit test runner: (game over) and (game over $) are
 		now overridden in unit.dg, to enable testing of win
-		conditions. 
+		conditions.
+
+		Documentation: even more has been added to chapter 12.
 
 	1c/02, Lib 1.2.3:
 
