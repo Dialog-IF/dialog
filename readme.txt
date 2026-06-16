@@ -43,6 +43,12 @@ Project website:
 
 Release notes:
 
+	1c/03, Lib 1.2.4:
+
+		Unit test runner: (game over) and (game over $) are
+		now overridden in unit.dg, to enable testing of win
+		conditions. 
+
 	1c/02, Lib 1.2.3:
 
 		Documentation: more has been added to chapter 12.
