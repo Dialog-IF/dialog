@@ -142,8 +142,8 @@
 			(now) (message has been trampled)
 		(stopping)
 
-(perform [read *])
-		(descr *)
+(instead of [read *])
+		(try [examine *])
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
