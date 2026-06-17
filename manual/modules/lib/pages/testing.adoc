@@ -1079,6 +1079,25 @@ south to the Foyer Bar; just arriving there suffices for the test.
 
 [source]
 ----
+#warn-about-blunderinga
+(test *)
+(set up *)
+    (stoppable) (enter #bar)
+
+(run *)
+    ~(player can see)
+    (collect words)
+        (stoppable) (try [dance])
+    (into [in the dark | $])
+    ~(message has been trampled)
+----
+
+We get one warning about not screwing around in the darkness before
+there are any consequences; it's only on the second action in the dark
+that things get screwed up. So let's test that case as well:
+
+[source]
+----
 #destroy-message
 (test *)
 (set up *)
@@ -1087,7 +1106,9 @@ south to the Foyer Bar; just arriving there suffices for the test.
 
 (run *)
     ~(message has been trampled)
-    (stoppable) (try [dance])
+    (collect words)
+        (stoppable) (try [dance])
+    (into [blundering | $])
     (message has been trampled)
 ----
 
@@ -1095,6 +1116,60 @@ This one illustrates even better why we put things in `(set up $)`
 rather than leaving them in `(run *)`: the test is testing that it's
 the _second_ time that you do something foolish in the dark that wipes
 out the message, not the first time when you're warned.
+
+However, when we run this, it fails! The release 2 version of _Cloak
+of Darkness_ implements the "don't screw around in the darkness"
+warnings using `(select) . . . (or) . . . (stopping)`, which doesn't
+reset between tests. (Dialog does not have a mechanism for resetting a
+`(select)`.) _Cloak of Darkness_ wasn't written with unit tests in
+mind, and not designing for testability has left us with some
+"de-testable" code.
+
+To fix it, we'll need to edit `cloak.dg`, bump it up to `(story
+release 3)`, and rewrite the offending code, which is the `(prevent
+$Action)` predicate in `#bar`. The `(select)` only has two states, 
+so it's easy to replace it with a global flag, like this:
+
+[source]
+----
+(prevent $Action)
+    (current room #bar)
+    ~(player can see)
+    ~(command $Action)
+    ($Action = [$Verb | $])
+    ~($Verb is one of [go leave enter look])
+    (if) (warned the player about darkness) (then)
+        Blundering around in the dark isn't a good idea!
+        (now) (message has been trampled)
+    (else)
+        In the dark? You could easily disturb something.
+        (now) (warned the player about darkness)
+    (endif)
+----
+
+...and once we add `(now) ~(warned the player about darkness)` to
+`(clean up $)`, the test works. While we're at it, we should have
+`#warn-about-blundering` check the status of our new flag:
+
+[source]
+----
+#warn-about-blunderinga
+(test *)
+(set up *)
+    (stoppable) (enter #bar)
+
+(run *)
+    ~(player can see)
+    (collect words)
+        (stoppable) (try [dance])
+    (into [in the dark | $])
+    ~(message has been trampled)
+    (warned the player about darkness)
+----
+
+This doesn't mean that you can't use `(select)` in your game if you
+want to test it, just that you limit its use to displaying text to the
+player, and not hang important side effects on any of the choices.
 
 [source]
 ----
@@ -1115,11 +1190,11 @@ out the message, not the first time when you're warned.
     (current score 2)
 ----
 
-And now we finally get to win!
+Now we finally get to win!
 
 ...except that we don't. Release 2 of _Cloak of Darkness_ doesn't
-actually let you read the message. To fix that, we need to bump up
-`cloak.dg` to `(story release 3)`, and add the following:
+actually let you read the message! To fix that, we need to edit our
+release 3 version of `cloak.dg` to add the following:
 
 [source]
 ----
@@ -1130,7 +1205,7 @@ actually let you read the message. To fix that, we need to bump up
 
 ...and _now_ we get to win.
 
-Let's test the verb that Release 2 was expecting, to be safe:
+Let's test the verb that release 2 was expecting, to be safe:
 
 [source]
 ----
@@ -1306,6 +1381,8 @@ Here's a summary of the advice from this chapter:
 - Start each test from a known state, and reset to that state with
   `(set up $)` and `(clean up $)` before running the next test.
 - Use fixtures to keep your actual test cases simple.
+- Design for testability, and don't write "de-testable" code that
+  can't easily be tested. 
 - Test in depth, using both unit and all-up tests.
 - Automate your testing process with `make` or `dgt`.
 - Test on all platforms for which you'll be releasing: Z-machine, web,
@@ -1316,5 +1393,5 @@ Here's a summary of the advice from this chapter:
 
 Software testing is a much bigger topic than just the introduction to
 it presented here. More good advice about it can be found in books on
-the topic, particularly ones focused on modern automated testing, and
+the topic, particularly those focused on modern automated testing, and
 on test-driven development.
