@@ -29,7 +29,7 @@ fatal-error:
 		 | grep "FATAL ERROR" > /dev/null
 
 game-over:
-	$(DEBUG) game-over-tests.dg cloak.dg $(STDLIB)
+	$(DEBUG) game-over-tests.dg ../cloak/cloak.dg $(STDLIB)
 
 clean:
 	rm -f *~ \#*\#
