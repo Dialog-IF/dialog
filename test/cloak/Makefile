@@ -1,15 +1,22 @@
 # Call `make DIFF=meld`, for example, to get a fancy diff
 DIFF = diff
 DGDEBUG = ../../src/dgdebug -u --no-header
-DIALOGC = ../../src/dialogc --no-header
+DIALOGC = ../../src/dialogc 
 DFROTZ = ../../bin/echofrotz.py -m
 AAMRUN = ../../bin/aamrun.py
-STDLIB = ../../stdlib.dg
+STDLIB = stdlib.dg
 UNIT = ../../unit.dg $(STDLIB)
 
 all: test clean
 
-unit: ../../src/dgdebug cloak-tests.dg cloak.dg ../../stdlib.dg ../../unit.dg
+# Ensure we don't have to worry about (serial number) changing by date
+stdlib.dg: ../../stdlib.dg
+	cp ../../stdlib.dg stdlib.dg
+	perl -i -pe 's/\(serial number\)/<SERIAL>/g' stdlib.dg
+	perl -i -pe 's/\(compiler version\)/<COMPILER>/g' stdlib.dg
+	perl -i -pe 's/\s\(library version\)/\t<LIBRARY>/g' stdlib.dg
+
+unit: ../../src/dgdebug cloak-tests.dg cloak.dg stdlib.dg ../../unit.dg
 	$(DGDEBUG) cloak-tests.dg cloak.dg $(UNIT)
 
 cloak.z8: ../../src/dialogc cloak.dg unit
@@ -39,6 +46,6 @@ aamachine: aamachine.out
 test: unit debugger zmachine aamachine
 
 clean:
-	rm -f *.z8 *.aastory *.out
+	rm -f *.z8 *.aastory *.out stdlib.dg
 
 .PHONY:	all test clean unit bless debugger zmachine aamachine
