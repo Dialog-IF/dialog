@@ -1,38 +1,37 @@
 # Call `make DIFF=meld`, for example, to get a fancy diff
 DIFF = diff
+DGDEBUG = ../../src/dgdebug -u --no-header
+DIALOGC = ../../src/dialogc --no-header
+DFROTZ = ../../bin/echofrotz.py -m
+AAMRUN = ../../bin/aamrun.py
+STDLIB = ../../stdlib.dg
+UNIT = ../../unit.dg $(STDLIB)
 
 all: test clean
 
-# Ensure we don't have to worry about (serial number) changing by date
-stdlib.dg: ../../stdlib.dg
-	cp ../../stdlib.dg stdlib.dg
-	perl -i -pe 's/\(serial number\)/<SERIAL>/g' stdlib.dg
-	perl -i -pe 's/\(compiler version\)/<COMPILER>/g' stdlib.dg
-	perl -i -pe 's/\s\(library version\)/\t<LIBRARY>/g' stdlib.dg
+unit: ../../src/dgdebug cloak-tests.dg cloak.dg ../../stdlib.dg ../../unit.dg
+	$(DGDEBUG) cloak-tests.dg cloak.dg $(UNIT)
 
-unit: ../../src/dgdebug cloak-tests.dg cloak.dg stdlib.dg ../../unit.dg
-	../../src/dgdebug -u cloak-tests.dg cloak.dg ../../unit.dg stdlib.dg
-
-cloak.z8: ../../src/dialogc cloak.dg stdlib.dg unit
-	../../src/dialogc -t z8 cloak.dg stdlib.dg -o cloak.z8
+cloak.z8: ../../src/dialogc cloak.dg unit
+	$(DIALOGC) -t z8 cloak.dg $(STDLIB) -o cloak.z8
 
 zmachine.out: cloak.z8 cloak.in
-	../../bin/echofrotz.py -m -s 1234 -q cloak.z8 <cloak.in >zmachine.out
+	$(DFROTZ) -s 1234 -q cloak.z8 <cloak.in >zmachine.out
 
 zmachine: zmachine.out
 	$(DIFF) zmachine.out zmachine.gold
 
-debugger.out: ../../src/dgdebug cloak.dg stdlib.dg cloak.in unit
-	../../src/dgdebug -s 1234 cloak.dg stdlib.dg <cloak.in >debugger.out
+debugger.out: ../../src/dgdebug cloak.dg  cloak.in unit
+	$(DGDEBUG) -s 1234 cloak.dg $(STDLIB) <cloak.in >debugger.out
 
 debugger: debugger.out
 	$(DIFF) debugger.out debugger.gold
 
 cloak.aastory: ../../src/dialogc cloak.dg stdlib.dg unit
-	../../src/dialogc -t aa cloak.dg stdlib.dg -o cloak.aastory
+	$(DIALOGC) -t aa cloak.dg $(STDLIB) -o cloak.aastory
 
 aamachine.out: cloak.aastory cloak.in
-	../../bin/aamrun.py cloak.aastory <cloak.in >aamachine.out
+	$(AAMRUN) cloak.aastory <cloak.in >aamachine.out
 
 aamachine: aamachine.out
 	$(DIFF) aamachine.out aamachine.gold
@@ -40,6 +39,6 @@ aamachine: aamachine.out
 test: unit debugger zmachine aamachine
 
 clean:
-	rm -f *.z8 *.aastory *.out stdlib.dg
+	rm -f *.z8 *.aastory *.out
 
 .PHONY:	all test clean unit bless debugger zmachine aamachine
