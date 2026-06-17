@@ -1,10 +1,10 @@
 # Call `make DIFF=meld`, for example, to get a fancy diff
 DIFF = diff
-DGDEBUG = ../../src/dgdebug -u --no-header
+DGDEBUG = ../../src/dgdebug -u
 DIALOGC = ../../src/dialogc 
 DFROTZ = ../../bin/echofrotz.py -m
 AAMRUN = ../../bin/aamrun.py
-STDLIB = no-banner.dg ../../stdlib.dg
+STDLIB = ../../stdlib.dg
 UNIT = ../../unit.dg $(STDLIB)
 
 all: test clean
@@ -13,18 +13,18 @@ unit: cloak-tests.dg cloak.dg
 	$(DGDEBUG) $^ $(UNIT)
 
 %.z8: %.dg ../../src/dialogc unit
-	$(DIALOGC) -t z8 $< $(STDLIB) -o $@
+	$(DIALOGC) -t z8 $< no-banner.dg $(STDLIB) -o $@
 
 %.aastory: %.dg ../../src/dialogc unit
-	$(DIALOGC) -t aa $< $(STDLIB) -o $@
+	$(DIALOGC) -t aa $< no-banner.dg $(STDLIB) -o $@
 
 debugger: win-debugger lose-debugger
 
 win-debugger.out: cloak.dg win.in ../../src/dgdebug 
-	$(DGDEBUG) $< $(STDLIB) <win.in >win-debugger.out
+	$(DGDEBUG) $< no-banner.dg $(STDLIB) <win.in >win-debugger.out
 
 lose-debugger.out: cloak.dg lose.in ../../src/dgdebug 
-	$(DGDEBUG) $< $(STDLIB) <lose.in >lose-debugger.out
+	$(DGDEBUG) $< no-banner.dg $(STDLIB) <lose.in >lose-debugger.out
 
 win-debugger: win-debugger.out 
 	$(DIFF) win-debugger.out win-debugger.gold
