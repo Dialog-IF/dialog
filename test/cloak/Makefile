@@ -21,10 +21,10 @@ unit: ../../src/dgdebug cloak-tests.dg cloak.dg ../../unit.dg
 debugger: win-debugger lose-debugger
 
 win-debugger.out: ../../src/dgdebug cloak.dg win.in 
-	$(DGDEBUG) -s 1234 cloak.dg $(STDLIB) <win.in >win-debugger.out
+	$(DGDEBUG) cloak.dg $(STDLIB) <win.in >win-debugger.out
 
 lose-debugger.out: ../../src/dgdebug cloak.dg lose.in 
-	$(DGDEBUG) -s 1234 cloak.dg $(STDLIB) <lose.in >lose-debugger.out
+	$(DGDEBUG) cloak.dg $(STDLIB) <lose.in >lose-debugger.out
 
 win-debugger: win-debugger.out 
 	$(DIFF) win-debugger.out win-debugger.gold
@@ -35,10 +35,10 @@ lose-debugger: lose-debugger.out
 zmachine: win-zmachine lose-zmachine
 
 win-zmachine.out: cloak.z8 win.in
-	$(DFROTZ) -s 1234 -q cloak.z8 <win.in >win-zmachine.out
+	$(DFROTZ) -q cloak.z8 <win.in >win-zmachine.out
 
 lose-zmachine.out: cloak.z8 lose.in 
-	$(DFROTZ) -s 1234 -q cloak.z8 <lose.in >lose-zmachine.out
+	$(DFROTZ) -q cloak.z8 <lose.in >lose-zmachine.out
 
 win-zmachine: win-zmachine.out
 	$(DIFF) win-zmachine.out win-zmachine.gold
