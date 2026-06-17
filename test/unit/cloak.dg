@@ -129,18 +129,21 @@
 			(game over { You have won })
 		(endif)
 
+~(warned the player about darkness)
+
 (prevent $Action)
 		(current room #bar)
 		~(player can see)
 		~(command $Action)
 		($Action = [$Verb | $])
 		~($Verb is one of [go leave enter look])
-		(select)
-			In the dark? You could easily disturb something.
-		(or)
+		(if) (warned the player about darkness) (then)
 			Blundering around in the dark isn't a good idea!
 			(now) (message has been trampled)
-		(stopping)
+		(else)
+			In the dark? You could easily disturb something.
+			(now) (warned the player about darkness)
+		(endif)
 
 (instead of [read *])
 		(try [examine *])
