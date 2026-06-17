@@ -1283,21 +1283,43 @@ player input. Strictly speaking, integration tests concern themselves
 with whether you've hooked together all of the modules of your game
 correctly, but the name frequently sticks to any testing of your full
 program. They take longer to write, they're more fragile, and they
-take longer to compile and execute than unit tests do. Having both
-kinds of tests is important, as each style can find problems that are
-difficult for the other kind to turn up.
+take longer to compile and execute than unit tests do, but the payoff
+is that what you're testing is exactly what the player will see, and
+it's easier to test chunks of text in the interpreter than it is in a
+unit test. 
+
+Having both kinds of tests is important, as each style can find
+problems that are difficult for the other kind to turn up.
 
 [#diff]
-=== Simple Tests with `diff`
+=== Simple Tests With `diff`
 
 The simplest way to test in the interpreter is simply to feed a
 predefined input file to it, capture the output in a text file, and
 compare it with a known good file from a good run of the game. For
 this, we use the built-in `diff` tool that's present on Mac and Linux
 systems. (For Windows users, see the xref:ROOT:software.adoc[Software
-Page].
+Page].)
 
-For _Cloak of Darkness_, we can 
+For _Cloak of Darkness_, we can
+
+[source]
+----
+w
+hang cloak on hook
+e
+s
+read message
+----
+
+[#branches]
+==== Testing Multiple Branches
+
+Remarkably, for such a small game, _Cloak of Darkness_ is a game with
+multiple endings: you can preserve the message in the sawdust and win,
+or you can accidentally destroy it, and lose. The two endings are
+mutually exclusive, so there's no single walkthrough that can cover
+them both.
 
 [#multiplatform]
 ==== Testing For Multiple Platforms
@@ -1314,16 +1336,16 @@ TODO
 
 A drawback of both `diff` and `regtest.py` is that they're designed to
 walk through a game in one single path, and show the output from only
-that path. But many games have multiple incompatible alternatives,
-multiple endings, and so forth. You can write additional tests to test
-the additional paths, but manually managing those can be awkward.
+that path. As we saw earier, testing multiple paths involves setting
+up a separate test with separate input and "blessed" output files, and
+if you make a change to part of your game, you'll have to update all
+of your different test files to reflect it.
 
-A solution to that problem is Howard Ship's `dgt` tool, which includes
-a feature called the _Skein_. The Skein allows you to interactively
-walk through your game through multiple branching paths, and "bless"
-each branch's output when it's correct. You can then re-run the Skein
-after making changes to your game, and confirm that you didn't break
-anything. 
+A solution to that is Howard Ship's `dgt` tool, which includes a
+feature called the _Skein_. The Skein allows you to interactively walk
+through your game through multiple branching paths, and "bless" each
+branch's output when it's correct. You can then re-run the Skein after
+making changes to your game, and confirm that you didn't break anything.  
 
 For details on `dgt` and the Skein, see the `dgt` documentation. Details
 on where to find the `dgt` software can be found on the
@@ -1352,6 +1374,11 @@ for details.
 
 TODO
 
+[#pitfalls]
+=== Simple Pitfalls
+
+TODO
+
 [#output]
 === Diagnostic Output
 
@@ -1359,11 +1386,6 @@ TODO
 
 [#dgdebug]
 === Using `dgdebug` and its Predicates
-
-TODO
-
-[#pitfalls]
-=== Frequently Encountered Pitfalls
 
 TODO
 
