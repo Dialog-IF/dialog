@@ -9,8 +9,8 @@ UNIT = ../../unit.dg $(STDLIB)
 
 all: test clean
 
-unit: ../../src/dgdebug cloak-tests.dg cloak.dg ../../unit.dg
-	$(DGDEBUG) cloak-tests.dg cloak.dg $(UNIT)
+unit: cloak-tests.dg cloak.dg 
+	$(DGDEBUG) $^ $(UNIT)
 
 %.z8: %.dg ../../src/dialogc unit
 	$(DIALOGC) -t z8 $< $(STDLIB) -o $@
