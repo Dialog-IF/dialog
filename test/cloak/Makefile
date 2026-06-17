@@ -4,48 +4,66 @@ DGDEBUG = ../../src/dgdebug -u --no-header
 DIALOGC = ../../src/dialogc 
 DFROTZ = ../../bin/echofrotz.py -m
 AAMRUN = ../../bin/aamrun.py
-STDLIB = stdlib.dg
+STDLIB = no-banner.dg ../../stdlib.dg
 UNIT = ../../unit.dg $(STDLIB)
 
 all: test clean
 
-# Ensure we don't have to worry about (serial number) changing by date
-stdlib.dg: ../../stdlib.dg
-	cp ../../stdlib.dg stdlib.dg
-	perl -i -pe 's/\(serial number\)/<SERIAL>/g' stdlib.dg
-	perl -i -pe 's/\(compiler version\)/<COMPILER>/g' stdlib.dg
-	perl -i -pe 's/\s\(library version\)/\t<LIBRARY>/g' stdlib.dg
-
-unit: ../../src/dgdebug cloak-tests.dg cloak.dg stdlib.dg ../../unit.dg
+unit: ../../src/dgdebug cloak-tests.dg cloak.dg ../../unit.dg
 	$(DGDEBUG) cloak-tests.dg cloak.dg $(UNIT)
 
-cloak.z8: ../../src/dialogc cloak.dg unit
-	$(DIALOGC) -t z8 cloak.dg $(STDLIB) -o cloak.z8
+%.z8: %.dg ../../src/dialogc unit
+	$(DIALOGC) -t z8 $< $(STDLIB) -o $@
 
-zmachine.out: cloak.z8 cloak.in
-	$(DFROTZ) -s 1234 -q cloak.z8 <cloak.in >zmachine.out
+%.aastory: %.dg ../../src/dialogc unit
+	$(DIALOGC) -t aa $< $(STDLIB) -o $@
 
-zmachine: zmachine.out
-	$(DIFF) zmachine.out zmachine.gold
+debugger: win-debugger lose-debugger
 
-debugger.out: ../../src/dgdebug cloak.dg  cloak.in unit
-	$(DGDEBUG) -s 1234 cloak.dg $(STDLIB) <cloak.in >debugger.out
+win-debugger.out: ../../src/dgdebug cloak.dg win.in 
+	$(DGDEBUG) -s 1234 cloak.dg $(STDLIB) <win.in >win-debugger.out
 
-debugger: debugger.out
-	$(DIFF) debugger.out debugger.gold
+lose-debugger.out: ../../src/dgdebug cloak.dg lose.in 
+	$(DGDEBUG) -s 1234 cloak.dg $(STDLIB) <lose.in >lose-debugger.out
 
-cloak.aastory: ../../src/dialogc cloak.dg stdlib.dg unit
-	$(DIALOGC) -t aa cloak.dg $(STDLIB) -o cloak.aastory
+win-debugger: win-debugger.out 
+	$(DIFF) win-debugger.out win-debugger.gold
 
-aamachine.out: cloak.aastory cloak.in
-	$(AAMRUN) cloak.aastory <cloak.in >aamachine.out
+lose-debugger: lose-debugger.out 
+	$(DIFF) lose-debugger.out lose-debugger.gold
 
-aamachine: aamachine.out
-	$(DIFF) aamachine.out aamachine.gold
+zmachine: win-zmachine lose-zmachine
+
+win-zmachine.out: cloak.z8 win.in
+	$(DFROTZ) -s 1234 -q cloak.z8 <win.in >win-zmachine.out
+
+lose-zmachine.out: cloak.z8 lose.in 
+	$(DFROTZ) -s 1234 -q cloak.z8 <lose.in >lose-zmachine.out
+
+win-zmachine: win-zmachine.out
+	$(DIFF) win-zmachine.out win-zmachine.gold
+
+lose-zmachine: lose-zmachine.out
+	$(DIFF) lose-zmachine.out lose-zmachine.gold
+
+aamachine: win-aamachine lose-aamachine
+
+win-aamachine.out: cloak.aastory win.in
+	$(AAMRUN) cloak.aastory <win.in >win-aamachine.out
+
+lose-aamachine.out: cloak.aastory lose.in
+	$(AAMRUN) cloak.aastory <lose.in >lose-aamachine.out
+
+win-aamachine: win-aamachine.out
+	$(DIFF) win-aamachine.out win-aamachine.gold
+
+lose-aamachine: lose-aamachine.out
+	$(DIFF) lose-aamachine.out lose-aamachine.gold
 
 test: unit debugger zmachine aamachine
 
 clean:
-	rm -f *.z8 *.aastory *.out stdlib.dg
+	rm -f *.z8 *.aastory *.out
 
-.PHONY:	all test clean unit bless debugger zmachine aamachine
+.PHONY:	all test clean unit debugger zmachine aamachine win-debugger 
+.PHONY: lose-debugger win-zmachine lose-zmachine win-aamachine lose-aamachine
