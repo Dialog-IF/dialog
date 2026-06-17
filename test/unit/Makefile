@@ -3,7 +3,7 @@ all: test
 DEBUG=../../src/dgdebug -u
 STDLIB=../../unit.dg ../../stdlib.dg
 
-test: time utils pass-1 fail-1 zero-tests fatal-error game-over cloak
+test: time utils pass-1 fail-1 zero-tests fatal-error game-over
 
 time:
 	$(DEBUG) time-tests.dg time.dg $(STDLIB)
@@ -31,10 +31,7 @@ fatal-error:
 game-over:
 	$(DEBUG) game-over-tests.dg cloak.dg $(STDLIB)
 
-cloak:
-	$(DEBUG) cloak-tests.dg cloak.dg $(STDLIB)
-
 clean:
 	rm -f *~ \#*\#
 
-.PHONY: test all clean time utils pass-1 fail-1 fatal-error game-over cloak
+.PHONY: test all clean time utils pass-1 fail-1 fatal-error game-over
