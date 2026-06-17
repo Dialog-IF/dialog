@@ -46,24 +46,24 @@ win-zmachine: win-zmachine.out
 lose-zmachine: lose-zmachine.out
 	$(DIFF) lose-zmachine.out lose-zmachine.gold
 
-aamachine: win-aamachine lose-aamachine
+web: win-web lose-web
 
-win-aamachine.out: cloak.aastory win.in
-	$(AAMRUN) $< <win.in >win-aamachine.out
+win-web.out: cloak.aastory win.in
+	$(AAMRUN) $< <win.in >win-web.out
 
-lose-aamachine.out: cloak.aastory lose.in
-	$(AAMRUN) $< <lose.in >lose-aamachine.out
+lose-web.out: cloak.aastory lose.in
+	$(AAMRUN) $< <lose.in >lose-web.out
 
-win-aamachine: win-aamachine.out
-	$(DIFF) win-aamachine.out win-aamachine.gold
+win-web: win-web.out
+	$(DIFF) win-web.out win-web.gold
 
-lose-aamachine: lose-aamachine.out
-	$(DIFF) lose-aamachine.out lose-aamachine.gold
+lose-web: lose-web.out
+	$(DIFF) lose-web.out lose-web.gold
 
-test: unit debugger zmachine aamachine
+test: unit debugger zmachine web
 
 clean:
 	rm -f *.z8 *.aastory *.out
 
-.PHONY:	all test clean unit debugger zmachine aamachine win-debugger 
-.PHONY: lose-debugger win-zmachine lose-zmachine win-aamachine lose-aamachine
+.PHONY:	all test clean unit debugger zmachine web win-debugger lose-debugger
+.PHONY: win-zmachine lose-zmachine win-web lose-web win-c64 lose-c64
