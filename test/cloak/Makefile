@@ -55,6 +55,7 @@ lose-zmachine: lose-zmachine.out
 	$(DIFF) lose-zmachine.out lose-zmachine.gold
 
 web: cloak.aastory web-test
+	rm -rf $@
 	$(AAMBUNDLE) -t web $< -o $@
 
 web-test: win-web lose-web
@@ -72,6 +73,7 @@ lose-web: lose-web.out
 	$(DIFF) lose-web.out lose-web.gold
 
 c64: cloak.aastory c64-test
+	rm -rf $@
 	$(AAMBUNDLE) -t c64 $< -o $@
 
 c64-test: win-c64 lose-c64
@@ -90,7 +92,7 @@ lose-c64: lose-c64.out
 
 test: unit debugger web-test c64-test
 
-release: clean test cloak.z5 web c64
+release: test cloak.z5 web c64
 
 tidy:
 	rm -f *-test.z5 *.aastory *.out
