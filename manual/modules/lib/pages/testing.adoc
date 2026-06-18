@@ -1553,7 +1553,9 @@ limitations of the Z-machine or the Commodore 64. In practice, testing
 on each of the platforms on which you intend to release your game is a
 good practice.
 
-
+Up till now, we've been using the debugger to test; adding three more
+platforms to that, times two plot branches, will give us eight
+different tests to run in total. We'll need 
 
 [#regtest]
 === Using `regtest.py`
