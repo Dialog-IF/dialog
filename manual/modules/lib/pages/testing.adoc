@@ -1301,7 +1301,9 @@ this, we use the built-in `diff` tool that's present on Mac and Linux
 systems. (For Windows users, see the xref:ROOT:software.adoc[Software
 Page].)
 
-For _Cloak of Darkness_, we can
+The first thing that we need to do is to create the input file that
+we're going to feed to the interpreter, containing the commands that
+a winning player would type in the course of their playthrough:
 
 [source]
 ----
@@ -1312,6 +1314,158 @@ s
 read message
 ----
 
+(Yes, _Cloak of Darkness_ really is just five moves long if you know
+the solution.)
+
+Now we can run the game, taking the input from our walkthrough file:
+
+----
+$ dgdebug -u cloak.dg stdlib.dg < cloak.in
+Hurrying through the rainswept November night, you're glad to see the bright
+lights of the Opera House. It's surprising that there aren't more people about
+but, hey, what do you expect in a cheap demo game...?
+
+Cloak of Darkness
+A port of Roger Firth's reference game by Linus Åkesson.
+Release 3. Serial number DEBUG.
+Dialog Interactive Debugger (dgdebug) version 1c/02. Library version 1.2.3.
+
+Foyer of the Opera House
+<[me] You> are standing in a spacious hall, splendidly decorated in red and
+gold, with glittering chandeliers overhead. The entrance from the street is to
+the <north>, and there are doorways <south> and <west>.
+
+> w
+You walk west.
+
+Cloakroom
+The walls of this small room were clearly once lined with hooks, though now
+<[small brass hook] only one> remains. The exit is a door to the <east>.
+
+> hang cloak on hook
+(first attempting to remove the velvet cloak)
+You take off the velvet cloak.
+
+You put the velvet cloak on the small brass hook.
+
+(Your score has gone up by one point.)
+
+> e
+You walk east.
+
+Foyer of the Opera House
+<[me] You> are standing in a spacious hall, splendidly decorated in red and
+gold, with glittering chandeliers overhead. The entrance from the street is to
+the <north>, and there are doorways <south> and <west>.
+
+> s
+You walk south.
+
+Foyer Bar
+The bar, much rougher than you'd have guessed after the opulence of the foyer
+to the north, is completely empty. There seems to be some sort of <[scrawled
+message] message> scrawled in the sawdust on the floor.
+
+> read message
+The message, neatly marked in the sawdust, reads...
+
+     *** You have won ***
+
+Game over. You scored 2 points out of 2.
+
+Would you like to:
+     <UNDO> the last move,
+     <RESTORE> a saved position,
+     <QUIT> the program,
+     or <RESTART> from the beginning?
+>
+----
+
+The `<` character on the command line tells the interpreter to get its
+input from the file you mention next, `cloak.in`, rather than from the
+keyboard. There's a corresponding `>` character that diverts the
+output from the screen into a file, so `dgdebug -u cloak.dg stdlib.dg
+< cloak.in > cloak.out` would dump all of that output into a file
+named `cloak.out`. (In fact, we're going to do precisely that in a
+moment.)
+
+One thing that jumps out at us, though, is that the banner printed at
+the start of the game specifies the game release, serial number,
+compiler version, and library version. That's fine if you're running
+the game as a one-off, but for an automated test, you really don't
+want your test to fail every time you update the game, the Dialog
+software, or the standard library. We can make that header go away by
+adding a file, `no-banner.dg`, as follows:
+
+[source]
+----
+%% no-banner.dg
+(banner)
+----
+
+Now if you include that before `stdlib.dg`, it will override the
+`(banner)` predicate that prints the banner with all of that
+changeable information, and your tests won't fail just because you
+upgraded something.
+
+If your game overrides `(program entry point)` or `(banner)`, and you
+want to specifically test your opening text, you can leave out
+`no-banner` and get your input from `/dev/null`, which will cause the
+game to exit immediately:
+
+----
+$ dgdebug -u su-101.dg delphinus-crew.dg crew.dg eridanus.dg controls.dg \
+ship-damage.dg eva.dg mtd.dg shuttle.dg scanner.dg probe.dg hyperspace.dg \
+sensor-display.dg sensor.dg arc.dg no-weapons.dg damage.dg d6.dg maneuver.dg \
+schema.dg sector.dg bearing.dg grid.dg time.dg utils.dg stdlib.dg < /dev/null
+
+Our galaxy is an endless ocean of stars. Plying that ocean are the
+ships of the Stellar Union. Their mandate:
+
+    * Keep the peace among the stars.
+    * Explore the galaxy and its many planets.
+    * Follow knowledge like a sinking star,
+      beyond the utmost bound of intelligent thought.
+
+Upholding that mandate is the starship Eridanus, on a three-year mission of
+discovery.
+
+That Untravelled World, Whose Margin Fades
+Stellar Union episode 101 (release 1), by Susan Davis.
+Type CREDITS for a full list of credits.
+
+"Captain's log, Earth date March 5, 2273. The Eridanus has been sent 
+to reestablish contact with SUS Delphinus, which has been out of
+contact with Stellar Command for over three weeks. In her last
+communication with Starbase 37, she reported that she was
+investigating a spatial anomaly in Quadrant IV:103-37. We are
+proceeding to that quadrant to search for our missing sister ship, and
+to render assistance if necessary."
+
+You press the "End Recording" button on the arm of your captain's chair,
+and the recording light goes out.
+
+Bridge (in the captain's chair)
+The bridge is much smaller than is typical for a Stellar Union
+starship. Aside from the usual captain's chair behind the helm and
+navigation stations, there are only two other workstations: one for
+engineering and one for the science officer. A pair of double doors
+leads aft. 
+
+Chief Tesfaye is sitting at the helm station. Ensign Washington is
+sitting at the navigation station. Senior Lieutenant V'ronek is
+sitting at the science station.
+
+Through the forward windows, you can see the stars gently streaking
+toward you as the ship moves at faster-than-light speed.
+
+"Now entering quadrant IV:103-37," Ensign Washington says.
+
+>
+----
+
+
+
 [#branches]
 ==== Testing Multiple Branches
 
@@ -1320,6 +1474,23 @@ multiple endings: you can preserve the message in the sawdust and win,
 or you can accidentally destroy it, and lose. The two endings are
 mutually exclusive, so there's no single walkthrough that can cover
 them both.
+
+We'll need to set up a second input file to handle the other (losing)
+ending. We'll rename our original walkthrough from `cloak.in` to
+`win.in`, and create a new walkthrough, `lose.in` as follows:
+
+[source]
+----
+s
+dance
+dance
+n
+w
+hang cloak on hook
+e
+s
+read message
+----
 
 [#multiplatform]
 ==== Testing For Multiple Platforms
