@@ -12,8 +12,8 @@ all: test clean
 unit: cloak-tests.dg cloak.dg 
 	$(DGDEBUG) $^ $(UNIT)
 
-%.z8: %.dg ../../src/dialogc unit
-	$(DIALOGC) -t z8 $< no-banner.dg $(STDLIB) -o $@
+%.z5: %.dg ../../src/dialogc unit
+	$(DIALOGC) -t z5 $< no-banner.dg $(STDLIB) -o $@
 
 %.aastory: %.dg ../../src/dialogc unit
 	$(DIALOGC) -t aa $< no-banner.dg $(STDLIB) -o $@
@@ -34,10 +34,10 @@ lose-debugger: lose-debugger.out
 
 zmachine: win-zmachine lose-zmachine
 
-win-zmachine.out: cloak.z8 win.in
+win-zmachine.out: cloak.z5 win.in
 	$(DFROTZ) -q $< <win.in >win-zmachine.out
 
-lose-zmachine.out: cloak.z8 lose.in 
+lose-zmachine.out: cloak.z5 lose.in 
 	$(DFROTZ) -q $< <lose.in >lose-zmachine.out
 
 win-zmachine: win-zmachine.out
@@ -63,7 +63,7 @@ lose-web: lose-web.out
 test: unit debugger zmachine web
 
 clean:
-	rm -f *.z8 *.aastory *.out
+	rm -f *.z5 *.aastory *.out
 
 .PHONY:	all test clean unit debugger zmachine web win-debugger lose-debugger
-.PHONY: win-zmachine lose-zmachine win-web lose-web win-c64 lose-c64
+.PHONY: win-zmachine lose-zmachine win-web lose-web win-c64 lose-c64 c64
