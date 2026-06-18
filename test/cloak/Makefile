@@ -15,9 +15,15 @@ unit: cloak-tests.dg cloak.dg
 	$(DGDEBUG) $^ $(UNIT)
 
 %.z5: %.dg ../../src/dialogc unit
+	$(DIALOGC) -t z5 $< $(STDLIB) -o $@
+
+%-test.z5: %.dg ../../src/dialogc unit
 	$(DIALOGC) -t z5 $< no-banner.dg $(STDLIB) -o $@
 
 %.aastory: %.dg ../../src/dialogc unit
+	$(DIALOGC) -t aa $< $(STDLIB) -o $@
+
+%-test.aastory: %.dg ../../src/dialogc unit
 	$(DIALOGC) -t aa $< no-banner.dg $(STDLIB) -o $@
 
 debugger: win-debugger lose-debugger
@@ -34,12 +40,12 @@ win-debugger: win-debugger.out
 lose-debugger: lose-debugger.out 
 	$(DIFF) lose-debugger.out lose-debugger.gold
 
-zmachine: win-zmachine lose-zmachine
+zmachine: win-zmachine lose-zmachine cloak.z5
 
-win-zmachine.out: cloak.z5 win.in
+win-zmachine.out: cloak-test.z5 win.in
 	$(DFROTZ) -q $< <win.in >$@
 
-lose-zmachine.out: cloak.z5 lose.in 
+lose-zmachine.out: cloak-test.z5 lose.in 
 	$(DFROTZ) -q $< <lose.in >$@
 
 win-zmachine: win-zmachine.out
@@ -48,12 +54,13 @@ win-zmachine: win-zmachine.out
 lose-zmachine: lose-zmachine.out
 	$(DIFF) lose-zmachine.out lose-zmachine.gold
 
-web: win-web lose-web
+web: cloak.aastory win-web lose-web
+	$(AAMBUNDLE) -t web $< -o $@
 
-win-web.out: cloak.aastory win.in
+win-web.out: cloak-test.aastory win.in
 	$(AAMRUN) $< <win.in >$@
 
-lose-web.out: cloak.aastory lose.in
+lose-web.out: cloak-test.aastory lose.in
 	$(AAMRUN) $< <lose.in >$@
 
 win-web: win-web.out
@@ -62,12 +69,13 @@ win-web: win-web.out
 lose-web: lose-web.out
 	$(DIFF) lose-web.out lose-web.gold
 
-c64: win-c64 lose-c64
+c64: cloak.aastory win-c64 lose-c64
+	$(AAMBUNDLE) -t c64 $< -o $@
 
-win-c64.out: cloak.aastory win.in
+win-c64.out: cloak-test.aastory win.in
 	$(6502RUN) $< <win.in >$@
 
-lose-c64.out: cloak.aastory lose.in
+lose-c64.out: cloak-test.aastory lose.in
 	$(6502RUN) $< <lose.in >$@
 
 win-c64: win-c64.out
@@ -76,10 +84,13 @@ win-c64: win-c64.out
 lose-c64: lose-c64.out
 	$(DIFF) lose-c64.out lose-c64.gold
 
-test: unit debugger zmachine web c64
+test: unit debugger cloak.z5 web c64
 
 clean:
-	rm -f *.z5 *.aastory *.d64 *.out
+	rm -f *-test.z5 *.aastory *.out
 
-.PHONY:	all test clean unit debugger zmachine web win-debugger lose-debugger
-.PHONY: win-zmachine lose-zmachine win-web lose-web win-c64 lose-c64 c64
+distclean:
+	rm -rf c64 web *.z5
+
+.PHONY:	all test clean distclean unit debugger zmachine win-c64 lose-c64
+.PHONY: win-debugger lose-debugger win-zmachine lose-zmachine win-web lose-web
