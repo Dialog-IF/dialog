@@ -9,7 +9,7 @@ AAMRUN = ../../bin/aamrun.py
 STDLIB = ../../stdlib.dg
 UNIT = ../../unit.dg $(STDLIB)
 
-all: test clean distclean
+all: test tidy
 
 unit: cloak-tests.dg cloak.dg 
 	$(DGDEBUG) $^ $(UNIT)
@@ -54,8 +54,10 @@ win-zmachine: win-zmachine.out
 lose-zmachine: lose-zmachine.out
 	$(DIFF) lose-zmachine.out lose-zmachine.gold
 
-web: cloak.aastory win-web lose-web
+web: cloak.aastory 
 	$(AAMBUNDLE) -t web $< -o $@
+
+web-test: win-web lose-web
 
 win-web.out: cloak-test.aastory win.in
 	$(AAMRUN) $< <win.in >$@
@@ -69,8 +71,10 @@ win-web: win-web.out
 lose-web: lose-web.out
 	$(DIFF) lose-web.out lose-web.gold
 
-c64: cloak.aastory win-c64 lose-c64
+c64: cloak.aastory 
 	$(AAMBUNDLE) -t c64 $< -o $@
+
+c64-test: win-c64 lose-c64
 
 win-c64.out: cloak-test.aastory win.in
 	$(6502RUN) $< <win.in >$@
@@ -84,12 +88,14 @@ win-c64: win-c64.out
 lose-c64: lose-c64.out
 	$(DIFF) lose-c64.out lose-c64.gold
 
-test: unit debugger cloak.z5 web c64
+test: unit debugger web-test c64-test
 
-clean:
+release: cloak.z5 web c64
+
+tidy:
 	rm -f *-test.z5 *.aastory *.out
 
-distclean:
+clean: tidy
 	rm -rf c64 web *.z5
 
 .PHONY:	all test clean distclean unit debugger zmachine win-c64 lose-c64
