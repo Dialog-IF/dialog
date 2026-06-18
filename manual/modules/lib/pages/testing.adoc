@@ -1513,6 +1513,7 @@ ending. We'll rename our original walkthrough from `cloak.in` to
 
 [source]
 ----
+n
 s
 dance
 dance
