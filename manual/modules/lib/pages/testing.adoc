@@ -1415,9 +1415,10 @@ game to exit immediately:
 
 ----
 $ dgdebug -u su-101.dg delphinus-crew.dg crew.dg eridanus.dg controls.dg \
-ship-damage.dg eva.dg mtd.dg shuttle.dg scanner.dg probe.dg hyperspace.dg \
-sensor-display.dg sensor.dg arc.dg no-weapons.dg damage.dg d6.dg maneuver.dg \
-schema.dg sector.dg bearing.dg grid.dg time.dg utils.dg stdlib.dg < /dev/null
+anomaly.dg hyperspace.dg ship-damage.dg eva.dg mtd.dg shuttle.dg \
+scanner.dg probe.dg systems.dg no-weapons.dg no-damage.dg \
+sensor-display.dg sensor.dg arc.dg maneuver.dg schema.dg sector.dg \
+bearing.dg grid.dg d6.dg time.dg utils.dg stdlib.dg < /dev/null 
 
 Our galaxy is an endless ocean of stars. Plying that ocean are the
 ships of the Stellar Union. Their mandate:
@@ -1427,8 +1428,8 @@ ships of the Stellar Union. Their mandate:
     * Follow knowledge like a sinking star,
       beyond the utmost bound of intelligent thought.
 
-Upholding that mandate is the starship Eridanus, on a three-year mission of
-discovery.
+Upholding that mandate is the starship Eridanus, on a three-year
+mission of discovery.
 
 That Untravelled World, Whose Margin Fades
 Stellar Union episode 101 (release 1), by Susan Davis.
