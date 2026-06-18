@@ -9,7 +9,7 @@ AAMRUN = ../../bin/aamrun.py
 STDLIB = ../../stdlib.dg
 UNIT = ../../unit.dg $(STDLIB)
 
-all: test clean
+all: test clean distclean
 
 unit: cloak-tests.dg cloak.dg 
 	$(DGDEBUG) $^ $(UNIT)
