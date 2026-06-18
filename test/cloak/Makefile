@@ -93,7 +93,7 @@ win-c64: win-c64.out
 lose-c64: lose-c64.out
 	$(DIFF) lose-c64.out lose-c64.gold
 
-test: unit debugger web-test c64-test
+test: unit debugger zmachine web-test c64-test
 
 release: test cloak.z5 web c64
 
@@ -103,5 +103,6 @@ tidy:
 clean: tidy
 	rm -rf c64 web *.z5
 
-.PHONY:	all test clean distclean unit debugger zmachine win-c64 lose-c64
+.PHONY:	all test clean tidy unit debugger zmachine web-test c64-test
 .PHONY: win-debugger lose-debugger win-zmachine lose-zmachine win-web lose-web
+.PHONY: win-c64 lose-c64
