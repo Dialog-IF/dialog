@@ -1,3 +1,6 @@
+# Cloak of Darkness build -- unit tests the game, tests both walkthrough
+# branches on all platforms, and builds playable files for all platforms.
+
 # Call `make DIFF=meld`, for example, to get a fancy diff
 DIFF = diff
 DGDEBUG = ../../src/dgdebug -u
