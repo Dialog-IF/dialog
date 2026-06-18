@@ -1,0 +1,80 @@
+
+
+Hurrying through the rainswept November night, you're glad to see the bright
+lights of the Opera House. It's surprising that there aren't more people about
+but, hey, what do you expect in a cheap demo game...?
+
+Foyer of the Opera House
+You are standing in a spacious hall, splendidly decorated in red and gold, with
+glittering chandeliers overhead. The entrance from the street is to the north,
+and there are doorways south and west.
+
+> n
+You've only just arrived, and besides, the weather outside seems to be getting
+worse.
+
+> s
+You walk south.
+
+In the dark
+You are surrounded by darkness.
+
+> dance
+In the dark? You could easily disturb something.
+
+> dance
+Blundering around in the dark isn't a good idea!
+
+> n
+You feel your way north.
+
+Foyer of the Opera House
+You are standing in a spacious hall, splendidly decorated in red and gold, with
+glittering chandeliers overhead. The entrance from the street is to the north,
+and there are doorways south and west.
+
+> w
+You walk west.
+
+Cloakroom
+The walls of this small room were clearly once lined with hooks, though now only
+one remains. The exit is a door to the east.
+
+> hang cloak on hook
+(first attempting to remove the velvet cloak)
+You take off the velvet cloak.
+
+You put the velvet cloak on the small brass hook.
+
+(Your score has gone up by one point.)
+
+> e
+You walk east.
+
+Foyer of the Opera House
+You are standing in a spacious hall, splendidly decorated in red and gold, with
+glittering chandeliers overhead. The entrance from the street is to the north,
+and there are doorways south and west.
+
+> s
+You walk south.
+
+Foyer Bar
+The bar, much rougher than you'd have guessed after the opulence of the foyer to
+the north, is completely empty. There seems to be some sort of message scrawled
+in the sawdust on the floor.
+
+> read message
+The message has been carelessly trampled, making it difficult to read. You can
+just distinguish the words...
+
+     *** You have lost ***
+
+Game over. You scored 1 point out of 2.
+
+Would you like to:
+     UNDO the last move,
+     RESTORE a saved position,
+     QUIT the program,
+     or RESTART from the beginning?
+> 
