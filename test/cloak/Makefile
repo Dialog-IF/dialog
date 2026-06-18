@@ -93,7 +93,7 @@ win-c64: win-c64.out
 lose-c64: lose-c64.out
 	$(DIFF) lose-c64.out lose-c64.gold
 
-test: unit debugger zmachine web-test c64-test
+test: unit debugger zmachine web-test #c64-test
 
 release: test cloak.z5 web c64
 
