@@ -40,7 +40,7 @@ win-debugger: win-debugger.out
 lose-debugger: lose-debugger.out 
 	$(DIFF) lose-debugger.out lose-debugger.gold
 
-zmachine: win-zmachine lose-zmachine cloak.z5
+zmachine: win-zmachine lose-zmachine
 
 win-zmachine.out: cloak-test.z5 win.in
 	$(DFROTZ) -q $< <win.in >$@
