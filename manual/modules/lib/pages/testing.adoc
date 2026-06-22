@@ -1640,7 +1640,7 @@ Another alternative for doing all-up tests is the `regtest.py` script,
 by Andrew Plotkin. Like the other Python scripts that we've been
 using, it can be found in the `bin` directory in the Dialog source
 distribution, or from
-link:https://eblong.com/zarf/plotex/regtest.py[https://eblong.com/zarf/plotex/regtest.py].
+link:https://github.com/erkyrath/plotex/blob/master/regtest.py[https://github.com/erkyrath/plotex/blob/master/regtest.py].
 `regtest.py` mashes together the `.in` and `.out` files
 that we used in our simple `diff` tests into a single `.regtest` file,
 and lets you run multiple tests out of the same file.
