@@ -1619,7 +1619,7 @@ We'll need a copy of the Å-machine distribution in order to test the
 Å-machine version of our game on both the web and the Commodore 64.
 See the xref:ROOT:software.adoc[Software Page] for where you can find it.
 Specifically, you'll need the `aamrun` and `aambox` utilities from it,
-installed somewhere in your path.
+installed somewhere in your path. (You'll need to build them from source.)
 
 We have two scripts to actually run the games: `aamrun.py`, which runs
 the web interpreter, and `6502run.py`, which runs the Commodore 64
