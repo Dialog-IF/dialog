@@ -1827,12 +1827,15 @@ several examples.
 [#skein]
 === `dgt` and the Skein
 
-A drawback of both `diff` and `regtest.py` is that they're designed to
-walk through a game in one single path, and show the output from only
-that path. As we saw earier, testing multiple paths involves setting
-up a separate test for each path, with input and "blessed" output
-files, and if you make a change to part of your game, you'll have to
-update all of your different test files to reflect it.
+A drawback of using `diff` is that it only really walks through a game
+in one single path, and shows the output from only that path. As we
+saw earier, testing multiple paths involves setting up a separate test
+for each path, with input and "blessed" output files, and if you make
+a change to part of your game, you'll have to update all of your
+different test files to reflect it. `regtest.py` lets you run multiple
+test cases that can account for multiple branches, but you're still
+doing a lot of manual management, and still potentially need to fix
+the same change in multiple places.
 
 A solution to that is Howard Ship's `dgt` tool, which includes a
 feature called the _Skein_. The Skein allows you to interactively walk
@@ -1859,7 +1862,14 @@ all of your platforms and plot branches with a single command.
 [#makefile]
 === `Makefile` Basics
 
-TODO
+`make` is the standard build utility on Linux, the Macintosh, and other
+systems. At the time of writing, it is fifty years old, and Dialog
+itself is built using `make`. There are a lot of features and concepts
+in `make`; here, we'll cover only the bare minimum needed to test and
+build a Dialog game.
+
+`make` is controlled by a `Makefile`, which it'll expect to find in
+the current directory. (
 
 === Testing With `make`
 
