@@ -1062,7 +1062,7 @@ them fails, rather than having to investigate further.
 (test *)
 (set up *)
     (stoppable) (enter #cloakroom)
-    (stoppable) (perform [put #cloak #on #hook])
+    (stoppable) (try [put #cloak #on #hook])
 
 (run *)
     (stoppable) (enter #bar)
@@ -1120,7 +1120,7 @@ out the message, not the first time when you're warned.
 However, when we run this, it fails! The release 2 version of _Cloak
 of Darkness_ implements the "don't screw around in the darkness"
 warnings using `(select) . . . (or) . . . (stopping)`, which doesn't
-reset between tests. (Dialog does not have a mechanism for resetting a
+reset between tests. (As of lDialog does not have a mechanism for resetting a
 `(select)`.) _Cloak of Darkness_ wasn't written with unit tests in
 mind, and not designing for testability has left us with some
 "de-testable" code.
@@ -1132,6 +1132,8 @@ so it's easy to replace it with a global flag, like this:
 
 [source]
 ----
+~(warned the player about darkness)
+
 (prevent $Action)
     (current room #bar)
     ~(player can see)
@@ -1555,7 +1557,91 @@ good practice.
 
 Up till now, we've been using the debugger to test; adding three more
 platforms to that, times two plot branches, will give us eight
-different tests to run in total. We'll need 
+different tests to run in total: win-debugger, win-zmachine, win-web,
+win-c64, lose-debugger, lose-zmachine, lose-web, and lose-c64. We're
+using the same input for each platform in each branch, so we only need
+`win.in` and `lose.in` and not eight different input files.
+
+We've already worked out how to test with the debugger, so all we have
+to do is rename the relevant files:
+
+[source]
+----
+$ dgdebug -u cloak.dg no-banner.dg stdlib.dg < win.in > win-debugger.out
+$ diff win-debugger.out win-debugger.gold
+$ dgdebug -u cloak.dg no-banner.dg stdlib.dg < lose.in > lose-debugger.out
+$ diff lose-debugger.out lose-debugger.gold
+----
+
+For the Z-machine, we'll need to run the compiler to compile our game
+into Z-machine code. _Cloak of Darkness_ is small enough to fit in a
+version 5 Z-machine file (`z5`); larger games might go in a `z8` or a
+`zblorb`. Again, for testing purposes, we'll also need to pull in
+`no-banner.dg`.
+
+[source]
+----
+$ dialogc -t z5 cloak.dg no-banner.dg stdlib.dg -o cloak.z5
+----
+
+...and that will give us `cloak.z5` which will run in any Z-machine
+interpreter.
+
+To actually test our code in the interpreter, we'll need two other
+pieces of software: the `frotz` interpreter (specifically, its
+`dfrotz` variant), and `echofrotz.py` from the Dialog source
+distribution. You'll find `echofrotz.py` in the `bin` directory when
+you unpack the Dialog source. See the xref:ROOT:software.adoc[Software Page]
+for information about where to find the Dialog source code, and `frotz`.
+
+Now we can run `echofrotz` to test our Z-machine test cases:
+
+[source]
+----
+$ echofrotz.py -m -q cloak-test.z5 <win.in >win-zmachine.out
+$ diff win-zmachine.out win-zmachine.gold
+$ echofrotz.py -m -q cloak-test.z5 <lose.in >lose-zmachine.out
+$ diff lose-zmachine.out lose-zmachine.gold
+----
+
+The `.aastory` files require an extra step to test, because there
+aren't interpreters out there that run on native `.aastory` files --
+we have to convert them into executables for your web browser or for
+the Commodore 64 for them to be playable. You'll need a copy of the
+Å-machine distribution for this -- again, see the
+xref:ROOT:software.adoc[Software Page] for where you can find it.
+
+The utility that converts `.aastory` files to executables that we can
+use is `aambundle`. It can produce either web or Commodore 64 output,
+which it puts in a subdirectory. We also have two scripts to actually
+run the games: `aamrun.py`, which runs the web interpreter, and
+`6502run.py`, which runs the Commodore 64 executable in an
+emulator. They're found in the `bin` directory in the Dialog source
+distribution.
+
+Because `aambundle` puts its output into a directory, we'll need to
+clean out that directory before running it, or `aambundle` will refuse
+to overwrite what's there. After that, we're free to run our tests. We
+only need to run the compiler once, because the `.aastory` file is the
+same for both platforms:
+
+[source]
+----
+$ dialogc -t aa cloak.dg no-banner.dg stdlib.dg -o cloak.aastory
+$ rm -rf web
+$ aambundle -t web cloak.aastory -o web
+$ aamrun.py cloak.aastory <win.in >win-web.out
+$ diff win-web.out win-web.gold
+$ aamrun.py cloak.aastory <lose.in >lose-web.out
+$ diff lose-web.out lose-web.gold
+----
+
+Finally, we can reuse `cloak.aastory` for the Commodore 64 version:
+
+[source]
+----
+
+----
 
 [#regtest]
 === Using `regtest.py`
@@ -1568,9 +1654,9 @@ TODO
 A drawback of both `diff` and `regtest.py` is that they're designed to
 walk through a game in one single path, and show the output from only
 that path. As we saw earier, testing multiple paths involves setting
-up a separate test with separate input and "blessed" output files, and
-if you make a change to part of your game, you'll have to update all
-of your different test files to reflect it.
+up a separate test for each path, with input and "blessed" output
+files, and if you make a change to part of your game, you'll have to
+update all of your different test files to reflect it.
 
 A solution to that is Howard Ship's `dgt` tool, which includes a
 feature called the _Skein_. The Skein allows you to interactively walk
@@ -1585,10 +1671,21 @@ xref:ROOT:software.adoc[Software Page].
 [#make]
 == Pulling It All Together With `make`
 
-TODO
+In our previous examples, we typed lots of commands to build and test
+our games. But having to remember a long sequence of commands is
+error-prone -- it's easy to forget one, or to leave out an option 
+somewhere -- and having to type them all in every time that you change
+something is time-consuming, and can tempt you to skip testing steps.
+A better solution is to automate your project build, so that you can
+run the unit tests, compile your code, and run your all-up tests for
+all of your platforms and plot branches with a single command.
 
 [#makefile]
 === `Makefile` Basics
+
+TODO
+
+=== Testing With `make`
 
 TODO
 
@@ -1600,9 +1697,13 @@ TODO
 === Building With `dgt` Instead
 
 If you're using the `dgt` tool to test with the Skein (or even if
-you're not), `dgt` can also be used to build your project and run its
-unit tests, in addition to Skein testing. See the `dgt` documentation
-for details. 
+you're not), you can use `dgt` as your build tool, instead of `make`.
+`dgt`'s build facilities are simpler to use than `make`'s, but less
+powerful. If you're making a typical game that's implemented in a
+single `.dg` file, then `dgt` might be a more convenient option. If
+you're using lots of extensions, need to customize your build, or want
+a different project layout than `dgt` requires, you might need to
+stick with `make`. See the `dgt` documentation for details. 
 
 [#debugging]
 == Troubleshooting Broken Tests
