@@ -1827,12 +1827,15 @@ several examples.
 [#skein]
 === `dgt` and the Skein
 
-A drawback of both `diff` and `regtest.py` is that they're designed to
-walk through a game in one single path, and show the output from only
-that path. As we saw earier, testing multiple paths involves setting
-up a separate test for each path, with input and "blessed" output
-files, and if you make a change to part of your game, you'll have to
-update all of your different test files to reflect it.
+A drawback of using `diff` is that it only really walks through a game
+in one single path, and shows the output from only that path. As we
+saw earier, testing multiple paths involves setting up a separate test
+for each path, with input and "blessed" output files, and if you make
+a change to part of your game, you'll have to update all of your
+different test files to reflect it. `regtest.py` lets you run multiple
+test cases that can account for multiple branches, but you're still
+doing a lot of manual management, and still potentially need to fix
+the same change in multiple places.
 
 A solution to that is Howard Ship's `dgt` tool, which includes a
 feature called the _Skein_. The Skein allows you to interactively walk
