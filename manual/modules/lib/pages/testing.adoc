@@ -1869,7 +1869,7 @@ in `make`; here, we'll cover only the bare minimum needed to test and
 build a Dialog game.
 
 `make` is controlled by a `Makefile`, which it'll expect to find in
-the current directory. (
+the current directory. 
 
 === Testing With `make`
 
