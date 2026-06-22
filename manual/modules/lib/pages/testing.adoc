@@ -1604,44 +1604,32 @@ $ echofrotz.py -m -q cloak-test.z5 <lose.in >lose-zmachine.out
 $ diff lose-zmachine.out lose-zmachine.gold
 ----
 
-The `.aastory` files require an extra step to test, because there
-aren't interpreters out there that run on native `.aastory` files --
-we have to convert them into executables for your web browser or for
-the Commodore 64 for them to be playable. You'll need a copy of the
-Å-machine distribution for this -- again, see the
-xref:ROOT:software.adoc[Software Page] for where you can find it.
+We'll need a copy of the Å-machine distribution in order to test the
+Å-machine version of our game on both the web and the Commodore 64.
+See the xref:ROOT:software.adoc[Software Page] for where you can find it.
+Specifically, you'll need the `aamrun` and `aambox` utilities from it,
+installed somewhere in your path.
 
-The utility that converts `.aastory` files to executables that we can
-use is `aambundle`. It can produce either web or Commodore 64 output,
-which it puts in a subdirectory. We also have two scripts to actually
-run the games: `aamrun.py`, which runs the web interpreter, and
-`6502run.py`, which runs the Commodore 64 executable in an
-emulator. They're found in the `bin` directory in the Dialog source
-distribution.
-
-Because `aambundle` puts its output into a directory, we'll need to
-clean out that directory before running it, or `aambundle` will refuse
-to overwrite what's there. After that, we're free to run our tests. We
-only need to run the compiler once, because the `.aastory` file is the
-same for both platforms:
+We have two scripts to actually run the games: `aamrun.py`, which runs
+the web interpreter, and `6502run.py`, which runs the Commodore 64
+executable in an emulator. They're found in the `bin` directory in the
+Dialog source distribution. 
 
 [source]
 ----
 $ dialogc -t aa cloak.dg no-banner.dg stdlib.dg -o cloak.aastory
-$ rm -rf web
-$ aambundle -t web cloak.aastory -o web
 $ aamrun.py cloak.aastory <win.in >win-web.out
 $ diff win-web.out win-web.gold
 $ aamrun.py cloak.aastory <lose.in >lose-web.out
 $ diff lose-web.out lose-web.gold
+$ 6502run.py cloak.aastory <win.in >win-c64.out
+$ diff win-c64.out win-c64.gold
+$ 6502run.py cloak.aastory <lose.in >lose-c64.out
+$ diff lose-c64.out lose-c64.gold
 ----
 
-Finally, we can reuse `cloak.aastory` for the Commodore 64 version:
-
-[source]
-----
-
-----
+...and with that, we've thoroughly tested our game, with both unit and
+in-browser tests.
 
 [#regtest]
 === Using `regtest.py`
