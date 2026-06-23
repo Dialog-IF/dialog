@@ -9,10 +9,10 @@ all: test clean
 test: test-zmachine test-web test-c64
 
 %.zblorb: %.dg
-	$(DIALOGC) -t zblorb $< $(STDLIB)
+	$(DIALOGC) -t zblorb $< $(STDLIB) -o $@
 
 %.aastory: %.dg
-	$(DIALOGC) -t aa $< $(STDLIB)
+	$(DIALOGC) -t aa $< $(STDLIB) -o $@
 
 test-zmachine: cloak.zblorb cloak.regtest
 	$(REGTEST) --interpreter dfrotz --game $^
