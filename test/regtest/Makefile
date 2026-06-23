@@ -26,4 +26,4 @@ test-c64: cloak.aastory cloak.regtest
 clean:
 	rm -f *.z5 *.aastory
 
-.PHONY: all test clean test-zmachine test-web test-c64
+.PHONY: all test clean
