@@ -8,13 +8,13 @@ all: test clean
 
 test: test-zmachine test-web test-c64
 
-%.zblorb: %.dg
-	$(DIALOGC) -t zblorb $< $(STDLIB) -o $@
+%.z5: %.dg
+	$(DIALOGC) -t z5 $< $(STDLIB) -o $@
 
 %.aastory: %.dg
 	$(DIALOGC) -t aa $< $(STDLIB) -o $@
 
-test-zmachine: cloak.zblorb cloak.regtest
+test-zmachine: cloak.z5 cloak.regtest
 	$(REGTEST) --interpreter dfrotz --game $^
 
 test-web: cloak.aastory cloak.regtest
@@ -24,6 +24,6 @@ test-c64: cloak.aastory cloak.regtest
 	$(REGTEST) --interpreter $(AAMBOX) --game $^
 
 clean:
-	rm -f *.zblorb *.aastory
+	rm -f *.z5 *.aastory
 
 .PHONY: all test clean test-zmachine test-web test-c64
