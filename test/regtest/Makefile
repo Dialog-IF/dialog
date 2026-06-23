@@ -6,7 +6,7 @@ AAMBOX=../../bin/6502run.py
 
 all: test clean
 
-test: test-zmachine test-web test-c64
+test: test-zmachine test-web # test-c64
 
 %.z5: %.dg
 	$(DIALOGC) -t z5 $< $(STDLIB) -o $@

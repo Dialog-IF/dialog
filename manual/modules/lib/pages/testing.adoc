@@ -2011,7 +2011,16 @@ powerful. If you're making a typical game that's implemented in a
 single `.dg` file, then `dgt` might be a more convenient option. If
 you're using lots of extensions, need to customize your build, or want
 a different project layout than `dgt` requires, you might need to
-stick with `make`. See the `dgt` documentation for details. 
+stick with `make`. See the `dgt` documentation for details.
+
+[#beta]
+== Exploratory Testing
+
+TODO
+
+=== Finding Beta Testers
+
+TODO
 
 [#debugging]
 == Troubleshooting Broken Tests
@@ -2049,7 +2058,8 @@ Here's a summary of the advice from this chapter:
 - Use fixtures to keep your actual test cases simple.
 - Design for testability, and don't write "de-testable" code that
   can't easily be tested. 
-- Test in depth, using both unit and all-up tests.
+- Test in depth, using both unit and all-up tests, and supplementing
+  your automated tests with exploratory (beta) testing.
 - Automate your testing process with `make` or `dgt`.
 - Test on all platforms for which you'll be releasing: Z-machine, web,
   and vintage computing hardware.
