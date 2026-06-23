@@ -4,6 +4,7 @@
     (move player to #in #foyer)
 	(now) (#cloak is #wornby #player)
 	(now) ~(hook point awarded)
+	(now) ~(warned the player about darkness)
 	(now) ~(message has been trampled)
 	(now) ~(game has ended)
 	(current score $Score)
@@ -60,17 +61,6 @@
 
 (clean up *)
 
-#warn-about-blundering
-(test *)
-(set up *)
-	(stoppable) (enter #bar)
-
-(run *)
-    ~(player can see)
-%%    (collect words)
-        (stoppable) (try [dance])
-%%    (into [in the dark | $])
-
 #light-if-not-wearing-cloak
 (test *)
 (set up *)
@@ -81,14 +71,28 @@
 	(stoppable) (enter #bar)
 	(player can see)
 
+#warn-about-blundering
+(test *)
+(set up *)
+	(stoppable) (enter #bar)
+
+(run *)
+    ~(player can see)
+%%    (collect words)
+        (stoppable) (try [dance])
+%%    (into [in the dark | $])
+    ~(message has been trampled)
+    (warned the player about darkness)
+
 #destroy-message
 (test *)
 (set up *)
     (stoppable) (enter #bar)
-    (stoppable) (try [dance]) %% need a way to reset (select) ... (stopping)
+    (stoppable) (try [dance])
 
 (run *)
-%%    ~(message has been trampled)
+    ~(message has been trampled)
+	(warned the player about darkness)
 %%    (collect words)
         (stoppable) (try [dance])
 %%    (into [blundering | $])
