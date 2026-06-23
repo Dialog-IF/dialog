@@ -1869,7 +1869,120 @@ in `make`; here, we'll cover only the bare minimum needed to test and
 build a Dialog game.
 
 `make` is controlled by a `Makefile`, which it'll expect to find in
-the current directory. 
+the current directory. A `Makefile` is a list of _rules_, each of which
+can have one or more _commands_ associated with it; it can also define
+_variables_ for its own use.
+
+A rule consists of a _target_ and a list of _prerequisites_, separated
+by a colon. Here's a simple rule, with target `test` and three prerequisites:
+
+[source]
+----
+test: test-zmachine test-web test-c64
+----
+
+If we were to put that in a `Makefile` and run `make test`, `make`
+would try to build `test-zmachine`, `test-web`, and `test-c64` in
+response. If `make` can't find a rule to build one of the prerequisites,
+and can't find a file of that name, it will fail and complain about
+that. If we don't specify anything when you run `make`, it'll try
+to build a target named `all`.
+
+Targets can be phony, like `all` and `test`, or they can be the names
+of actual files. Here's an example of a rule for making `cloak.z5`:
+
+[source]
+----
+cloak.zblorb: cloak.dg
+        ../../src/dialogc -t zblorb cloak.dg ../../stdlib.dg -o cloak.zblorb
+----
+
+Now if we try `make cloak.z5`, it will run the compiler with those
+arguments, which will produce `cloak.z5` as its output. If we run
+`make cloak.z5` again, it will see that `cloak.z5` is already there,
+and do nothing. But since `cloak.dg` is a prerequisite, if we edit
+`cloak.dg` to make changes, and run `make cloak.z5` again, now `make`
+will run the compiler again, because the time stamp on the
+prerequisite `cloak.dg` is now newer than the target file. You can
+have multiple prerequisites for a target; `make` will run the commands
+again if any of them are newer than the target.
+
+You'll note that the command is indented. You must indent every
+command in a rule *with a tab*, and not with spaces. `make` won't
+recognize a command as a command if it the line doesn't start with a
+tab character.
+
+For a phony target, such as `test`, `make` will always run. You can
+declare a target to be phony by making it a prerequisite of the phony
+target `.PHONY`, like this:
+
+[source]
+----
+all: test clean
+
+test: test-unit test-zmachine test-web test-c64
+
+clean:
+    rm -rf *.zblorb *.aastory
+
+.PHONY: all test clean test-unit
+----
+
+`make` also lets you define variables. This is handy when you're
+dealing with files in other directories, or if you have a command or
+library that appears in many rules, which you might want to change in
+only one place if its location or arguments need to change. Variables
+are declared using an `=` sign, and they're referenced in parentheses
+after a `$` sign, like this:
+
+[source]
+----
+REGTEST=../../bin/regtest.py -v
+DIALOGC=../../src/dialogc
+STDLIB=../../stdlib.dg
+
+cloak.z5: cloak.dg
+        $(DIALOGC) -t zblorb cloak.dg $(STDLIB) -o cloak.zblorb
+
+test-zmachine: cloak.zblorb cloak.regtest
+        $(REGTEST) --interpreter dfrotz --game cloak.zblorb cloak.regtest
+----
+
+`make` defines a number of special variables for use in commands:
+
+- `$@` refers to the current target.
+
+- `$<` refers to the first (leftmost) prerequisite in the list.
+
+- `$^` refers to all of the prerequisites, however many there are.
+
+So we could rewrite the above as
+
+[source]
+----
+cloak.zblorb: cloak.dg
+        $(DIALOGC) -t zblorb $< $(STDLIB) -o $@
+
+test-zmachine: cloak.zblorb cloak.regtest
+        $(REGTEST) --interpreter dfrotz --game $^
+----
+
+Finally, `make` has a special pattern for making one file out of
+another, when they only differ by their extensions. We could write a
+general rule for compiling _any_ file into an identically named
+`.zblorb`, for example, and use it to test multiple games at once:
+
+[source]
+----
+%.zblorb: $.dg
+        $(DIALOGC) -t zblorb $< $(STDLIB) -o $@
+
+test-cloak-zmachine: cloak.zblorb cloak.regtest
+        $(REGTEST) --interpreter dfrotz --game $^
+
+test-impossible-zmachine: impossible.zblorb impossible.regtest
+        $(REGTEST) --interpreter dfrotz --game $^
+----
 
 === Testing With `make`
 

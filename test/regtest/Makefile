@@ -3,16 +3,21 @@ DIALOGC=../../src/dialogc
 STDLIB=../../stdlib.dg
 AAMRUN=../../bin/aamrun.py
 AAMBOX=../../bin/6502run.py
+DGDEBUG=../../src/dgdebug -u
+UNIT=../../unit.dg
 
 all: test clean
 
-test: test-zmachine test-web test-c64
+test: test-unit test-zmachine test-web test-c64
 
 %.z5: %.dg
 	$(DIALOGC) -t z5 $< $(STDLIB) -o $@
 
 %.aastory: %.dg
 	$(DIALOGC) -t aa $< $(STDLIB) -o $@
+
+test-unit: cloak-tests.dg cloak.dg 
+	$(DGDEBUG) $^ $(UNIT)
 
 test-zmachine: cloak.z5 cloak.regtest
 	$(REGTEST) --interpreter dfrotz --game $^
