@@ -2083,7 +2083,7 @@ all: test
 %.aastory: %.dg $(STDLIB) test-unit
         $(DIALOGC) -t aa $< $(STDLIB) -o $@
 
-test: test-unit test-zmachine test-web test-6502
+test: test-unit test-zmachine test-web test-c64
 
 test-unit: cloak-tests.dg cloak.dg
         $(DGDEBUG) $^ $(UNIT) $(STDLIB)
@@ -2094,7 +2094,7 @@ test-zmachine: cloak.z5 cloak.regtest
 test-web: cloak.aastory cloak.regtest
         $(REGTEST) --interpreter $(AAMRUN) --game $^
 
-test-6502: cloak.aastory cloak.regtest
+test-c64: cloak.aastory cloak.regtest
         $(REGTEST) --interpreter $(AAMBOX) --game $^
 
 clean:
@@ -2106,7 +2106,62 @@ clean:
 === Building Releases
 
 Finally, the main point of using `make` is to build your game so that
-your players can play it. We've already built the Z-machine version
+your players can play it. We've already built the Z-machine version,
+but we'll need to use `aambundle` to turn our `.aastory` file into web
+and/or Commodore 64 executables:
+
+[source]
+----
+DGDEBUG = dgdebug -u
+UNIT = unit.dg
+STDLIB = stdlib.dg
+DIALOGC = dialogc
+REGTEST = regtest.py -v
+DFROTZ = dfrotz
+AAMRUN = aamrun.py
+AAMBOX = 6502run.py
+AAMBUNDLE = aambundle
+
+all: cloak.z5 web c64
+
+%.z5: %.dg $(STDLIB) test-unit
+        $(DIALOGC) -t z5 $< $(STDLIB) -o $@
+
+%.aastory: %.dg $(STDLIB) test-unit
+        $(DIALOGC) -t aa $< $(STDLIB) -o $@
+
+test: test-unit test-zmachine test-web test-c64
+
+test-unit: cloak-tests.dg cloak.dg
+        $(DGDEBUG) $^ $(UNIT) $(STDLIB)
+
+test-zmachine: cloak.z5 cloak.regtest
+        $(REGTEST) --interpreter $(DFROTZ) --game $^
+
+test-web: cloak.aastory cloak.regtest
+        $(REGTEST) --interpreter $(AAMRUN) --game $^
+
+test-c64: cloak.aastory cloak.regtest
+        $(REGTEST) --interpreter $(AAMBOX) --game $^
+
+web: cloak.aastory test-web
+        rm -rf $@
+        $(AAMBUNDLE) -t web $< -o $@
+
+c64: cloak.aastory test-c64
+        rm -rf $@
+        $(AAMBUNDLE) -t c64 $< -o $@
+
+clean:
+        rm -rf *.z5 *.aastory web c64
+
+.PHONY: all test clean
+----
+
+And we're done! We can run `make` to build our release, `make test` to
+just run the tests, or `make clean` to clean everything up. Note that
+our chain of prerequisites will cause the tests to be run whenever we
+try to build our release.
 
 [#dgt]
 === Building With `dgt` Instead
