@@ -1856,6 +1856,325 @@ For details on `dgt` and the Skein, see the `dgt` documentation. Details
 on where to find the `dgt` software can be found on the
 xref:ROOT:software.adoc[Software Page].
 
+[#make]
+== Pulling It All Together With `make`
+
+In our previous examples, we typed lots of commands to build and test
+our games. But having to remember a long sequence of commands is
+error-prone -- it's easy to forget one, or to leave out an option 
+somewhere -- and having to type them all in every time that you change
+something is time-consuming, and can tempt you to skip testing steps.
+A better solution is to automate your project build, so that you can
+run the unit tests, compile your code, and run your all-up tests for
+all of your platforms and plot branches with a single command.
+
+[#makefile]
+=== `Makefile` Basics
+
+`make` is the standard build utility on Linux, the Macintosh, and other
+systems. At the time of writing, it is fifty years old, and Dialog
+itself is built using `make`. There are a lot of features and concepts
+in `make`; here, we'll cover only the bare minimum needed to test and
+build a Dialog game.
+
+`make` is controlled by a `Makefile`, which it'll expect to find in
+the current directory. A `Makefile` is a list of _rules_, each of which
+can have one or more _commands_ associated with it; it can also define
+_variables_ for its own use.
+
+A rule consists of a _target_ and a list of _prerequisites_, separated
+by a colon. Here's a simple rule, with target `test` and three prerequisites:
+
+[source]
+----
+test: test-zmachine test-web test-c64
+----
+
+If we were to put that in a `Makefile` and run `make test`, `make`
+would try to build `test-zmachine`, `test-web`, and `test-c64` in
+response. If `make` can't find a rule to build one of the prerequisites,
+and can't find a file of that name, it will fail and complain about
+that. If we don't specify anything when you run `make`, it'll try
+to build a target named `all`.
+
+Targets can be phony, like `all` and `test`, or they can be the names
+of actual files. Here's an example of a rule for making `cloak.z5`:
+
+[source]
+----
+cloak.zblorb: cloak.dg
+        ../../src/dialogc -t zblorb cloak.dg ../../stdlib.dg -o cloak.zblorb
+----
+
+Now if we try `make cloak.z5`, it will run the compiler with those
+arguments, which will produce `cloak.z5` as its output. If we run
+`make cloak.z5` again, it will see that `cloak.z5` is already there,
+and do nothing. But since `cloak.dg` is a prerequisite, if we edit
+`cloak.dg` to make changes, and run `make cloak.z5` again, now `make`
+will run the compiler again, because the time stamp on the
+prerequisite `cloak.dg` is now newer than the target file. You can
+have multiple prerequisites for a target; `make` will run the commands
+again if any of them are newer than the target.
+
+You'll note that the command is indented. You must indent every
+command in a rule *with a tab*, and not with spaces. `make` won't
+recognize a command as a command if it the line doesn't start with a
+tab character.
+
+For a phony target, such as `test`, `make` will always run. You can
+declare a target to be phony by making it a prerequisite of the phony
+target `.PHONY`, like this:
+
+[source]
+----
+all: test clean
+
+test: test-unit test-zmachine test-web test-c64
+
+clean:
+    rm -rf *.zblorb *.aastory
+
+.PHONY: all test clean test-unit
+----
+
+`make` also lets you define variables. This is handy when you're
+dealing with files in other directories, or if you have a command or
+library that appears in many rules, which you might want to change in
+only one place if its location or arguments need to change. Variables
+are declared using an `=` sign, and they're referenced in parentheses
+after a `$` sign, like this:
+
+[source]
+----
+REGTEST=../../bin/regtest.py -v
+DIALOGC=../../src/dialogc
+STDLIB=../../stdlib.dg
+
+cloak.z5: cloak.dg
+        $(DIALOGC) -t zblorb cloak.dg $(STDLIB) -o cloak.zblorb
+
+test-zmachine: cloak.zblorb cloak.regtest
+        $(REGTEST) --interpreter dfrotz --game cloak.zblorb cloak.regtest
+----
+
+`make` defines a number of special variables for use in commands:
+
+- `$@` refers to the current target.
+
+- `$<` refers to the first (leftmost) prerequisite in the list.
+
+- `$^` refers to all of the prerequisites, however many there are.
+
+So we could rewrite the above as
+
+[source]
+----
+cloak.zblorb: cloak.dg
+        $(DIALOGC) -t zblorb $< $(STDLIB) -o $@
+
+test-zmachine: cloak.zblorb cloak.regtest
+        $(REGTEST) --interpreter dfrotz --game $^
+----
+
+Finally, `make` has a special pattern for making one file out of
+another, when they only differ by their extensions. We could write a
+general rule for compiling _any_ file into an identically named
+`.zblorb`, for example, and use it to test multiple games at once:
+
+[source]
+----
+%.zblorb: $.dg
+        $(DIALOGC) -t zblorb $< $(STDLIB) -o $@
+
+test-cloak-zmachine: cloak.zblorb cloak.regtest
+        $(REGTEST) --interpreter dfrotz --game $^
+
+test-impossible-zmachine: impossible.zblorb impossible.regtest
+        $(REGTEST) --interpreter dfrotz --game $^
+----
+
+=== Testing With `make`
+
+Using `make` to automate your testing is fairly straightforward. First
+of all, you'll want to run your unit tests. Because they run quickly,
+in the debugger, you can actually run them _before_ compiling your
+code, which a change from most other compiled languages.
+
+For this example, we'll use `regtest.py`, but `make` could equally be
+used to manage testing with `diff`.
+
+[source]
+----
+DGDEBUG = dgdebug -u
+UNIT = unit.dg
+STDLIB = stdlib.dg
+
+all: test
+
+test: test-unit
+
+test-unit: cloak-tests.dg cloak.dg
+         $(DGDEBUG) $^ $(UNIT) $(STDLIB)
+
+.PHONY: all test
+----
+
+Next, we'll test with the Z-machine. We'll need to compile into either
+a `.z5` or a `.zblorb`. Compared to a `.z5` or `.z8`, a `.zblorb`
+allows you to store some metadata such as a cover image. We don't have
+one of those for _Cloak of Darkness_, so we'll just make a `.z5`.
+
+Because we're producing a new file, we'll also want another target to
+get rid of it once we're done with it. By convention, `clean` is the
+usual name for a target that cleans out files that the compiler
+builds. Some projects also have a `distclean`, which also gets rid of
+the final product, or a `tidy`, which gets rid of only intermediate
+files, but we don't need either.
+
+Adding targets for building and testing on Z-machine, and a `clean`,
+gives us this:
+
+[source]
+----
+DGDEBUG = dgdebug -u
+UNIT = unit.dg
+STDLIB = stdlib.dg
+DIALOGC = dialogc
+REGTEST = regtest.py -v
+DFROTZ = dfrotz
+
+all: test
+
+%.z5: %.dg $(STDLIB) test-unit
+        $(DIALOGC) -t z5 $< $(STDLIB) -o $@
+
+test: test-unit test-zmachine
+
+test-unit: cloak-tests.dg cloak.dg
+        $(DGDEBUG) $^ $(UNIT) $(STDLIB)
+
+test-zmachine: cloak.z5 cloak.regtest
+        $(REGTEST) --interpreter $(DFROTZ) --game $^
+
+clean:
+        rm -f *.z5
+
+.PHONY: all test clean
+----
+
+Extending the above to also test the Å-machine is equally straightforward:
+
+[source]
+----
+DGDEBUG = dgdebug -u
+UNIT = unit.dg
+STDLIB = stdlib.dg
+DIALOGC = dialogc
+REGTEST = regtest.py -v
+DFROTZ = dfrotz
+AAMRUN = aamrun.py
+AAMBOX = 6502run.py
+
+all: test
+
+%.z5: %.dg $(STDLIB) test-unit
+        $(DIALOGC) -t z5 $< $(STDLIB) -o $@
+
+%.aastory: %.dg $(STDLIB) test-unit
+        $(DIALOGC) -t aa $< $(STDLIB) -o $@
+
+test: test-unit test-zmachine test-web test-c64
+
+test-unit: cloak-tests.dg cloak.dg
+        $(DGDEBUG) $^ $(UNIT) $(STDLIB)
+
+test-zmachine: cloak.z5 cloak.regtest
+        $(REGTEST) --interpreter $(DFROTZ) --game $^
+
+test-web: cloak.aastory cloak.regtest
+        $(REGTEST) --interpreter $(AAMRUN) --game $^
+
+test-c64: cloak.aastory cloak.regtest
+        $(REGTEST) --interpreter $(AAMBOX) --game $^
+
+clean:
+        rm -f *.z5 *.aastory
+
+.PHONY: all test clean
+----
+
+=== Building Releases
+
+Finally, the main point of using `make` is to build your game so that
+your players can play it. We've already built the Z-machine version,
+but we'll need to use `aambundle` to turn our `.aastory` file into web
+and/or Commodore 64 executables:
+
+[source]
+----
+DGDEBUG = dgdebug -u
+UNIT = unit.dg
+STDLIB = stdlib.dg
+DIALOGC = dialogc
+REGTEST = regtest.py -v
+DFROTZ = dfrotz
+AAMRUN = aamrun.py
+AAMBOX = 6502run.py
+AAMBUNDLE = aambundle
+
+all: cloak.z5 web c64
+
+%.z5: %.dg $(STDLIB) test-unit
+        $(DIALOGC) -t z5 $< $(STDLIB) -o $@
+
+%.aastory: %.dg $(STDLIB) test-unit
+        $(DIALOGC) -t aa $< $(STDLIB) -o $@
+
+test: test-unit test-zmachine test-web test-c64
+
+test-unit: cloak-tests.dg cloak.dg
+        $(DGDEBUG) $^ $(UNIT) $(STDLIB)
+
+test-zmachine: cloak.z5 cloak.regtest
+        $(REGTEST) --interpreter $(DFROTZ) --game $^
+
+test-web: cloak.aastory cloak.regtest
+        $(REGTEST) --interpreter $(AAMRUN) --game $^
+
+test-c64: cloak.aastory cloak.regtest
+        $(REGTEST) --interpreter $(AAMBOX) --game $^
+
+web: cloak.aastory test-web
+        rm -rf $@
+        $(AAMBUNDLE) -t web $< -o $@
+
+c64: cloak.aastory test-c64
+        rm -rf $@
+        $(AAMBUNDLE) -t c64 $< -o $@
+
+clean:
+        rm -rf *.z5 *.aastory web c64
+
+.PHONY: all test clean
+----
+
+And we're done! We can run `make` to build our release, `make test` to
+just run the tests, or `make clean` to clean everything up. Note that
+our chain of prerequisites will cause the tests to be run whenever we
+try to build our release.
+
+[#dgt]
+=== Building With `dgt` Instead
+
+If you're using the `dgt` tool to test with the Skein (or even if
+you're not), you can use `dgt` as your build tool, instead of `make`.
+`dgt`'s build facilities are simpler to use than `make`'s, but less
+powerful. If you're making a typical game that's implemented in a
+single `.dg` file, then `dgt` might be a more convenient option. If
+you're using lots of extensions, need to customize your build, or want
+a different project layout than `dgt` requires, you might need to
+stick with `make`. See the `dgt` documentation for details.
+
 [#summary]
 == Summary
 
@@ -1872,7 +2191,8 @@ Here's a summary of the advice from this chapter:
 - Use fixtures to keep your actual test cases simple.
 - Design for testability, and don't write "de-testable" code that
   can't easily be tested. 
-- Test in depth, using both unit and all-up tests.
+- Test in depth, using both unit and all-up tests, and supplementing
+  your automated tests with exploratory (beta) testing.
 - Automate your testing process with `make` or `dgt`.
 - Test on all platforms for which you'll be releasing: Z-machine, web,
   and vintage computing hardware.

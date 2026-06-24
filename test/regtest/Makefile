@@ -1,15 +1,29 @@
 REGTEST=../../bin/regtest.py -v
-DIALOGC=../../src/dialogc -t zblorb
+DIALOGC=../../src/dialogc 
+STDLIB=../../stdlib.dg
+AAMRUN=../../bin/aamrun.py
+AAMBOX=../../bin/6502run.py
 
-all: test
+all: test clean
 
-cloak.zblorb: cloak.dg
-	$(DIALOGC) cloak.dg ../../stdlib.dg
+test: test-zmachine test-web # test-c64
 
-test: cloak.zblorb
-	$(REGTEST) --game cloak.zblorb --interpreter dfrotz cloak.regtest
+%.z5: %.dg
+	$(DIALOGC) -t z5 $< $(STDLIB) -o $@
+
+%.aastory: %.dg
+	$(DIALOGC) -t aa $< $(STDLIB) -o $@
+
+test-zmachine: cloak.z5 cloak.regtest
+	$(REGTEST) --interpreter dfrotz --game $^
+
+test-web: cloak.aastory cloak.regtest
+	$(REGTEST) --interpreter $(AAMRUN) --game $^
+
+test-c64: cloak.aastory cloak.regtest
+	$(REGTEST) --interpreter $(AAMBOX) --game $^
 
 clean:
-	rm -f *.zblorb
+	rm -f *.z5 *.aastory
 
 .PHONY: all test clean
