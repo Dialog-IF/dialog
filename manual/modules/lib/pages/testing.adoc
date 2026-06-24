@@ -2175,35 +2175,6 @@ you're using lots of extensions, need to customize your build, or want
 a different project layout than `dgt` requires, you might need to
 stick with `make`. See the `dgt` documentation for details.
 
-[#beta]
-== Exploratory Testing
-
-TODO
-
-=== Finding Beta Testers
-
-TODO
-
-[#debugging]
-== Troubleshooting Broken Tests
-
-TODO
-
-[#pitfalls]
-=== Simple Pitfalls
-
-TODO
-
-[#output]
-=== Diagnostic Output
-
-TODO
-
-[#dgdebug]
-=== Using `dgdebug` and its Predicates
-
-TODO
-
 [#summary]
 == Summary
 
