@@ -1995,11 +1995,118 @@ test-impossible-zmachine: impossible.zblorb impossible.regtest
 
 === Testing With `make`
 
+Using `make` to automate your testing is fairly straightforward. First
+of all, you'll want to run your unit tests. Because they run quickly,
+in the debugger, you can actually run them _before_ compiling your
+code, which a change from most other compiled languages.
 
+For this example, we'll use `regtest.py`, but `make` could equally be
+used to manage testing with `diff`.
+
+[source]
+----
+DGDEBUG = dgdebug -u
+UNIT = unit.dg
+STDLIB = stdlib.dg
+
+all: test
+
+test: test-unit
+
+test-unit: cloak-tests.dg cloak.dg
+         $(DGDEBUG) $^ $(UNIT) $(STDLIB)
+
+.PHONY: all test
+----
+
+Next, we'll test with the Z-machine. We'll need to compile into either
+a `.z5` or a `.zblorb`. Compared to a `.z5` or `.z8`, a `.zblorb`
+allows you to store some metadata such as a cover image. We don't have
+one of those for _Cloak of Darkness_, so we'll just make a `.z5`.
+
+Because we're producing a new file, we'll also want another target to
+get rid of it once we're done with it. By convention, `clean` is the
+usual name for a target that cleans out files that the compiler
+builds. Some projects also have a `distclean`, which also gets rid of
+the final product, or a `tidy`, which gets rid of only intermediate
+files, but we don't need either.
+
+Adding targets for building and testing on Z-machine, and a `clean`,
+gives us this:
+
+[source]
+----
+DGDEBUG = dgdebug -u
+UNIT = unit.dg
+STDLIB = stdlib.dg
+DIALOGC = dialogc
+REGTEST = regtest.py -v
+DFROTZ = dfrotz
+
+all: test
+
+%.z5: %.dg $(STDLIB) test-unit
+        $(DIALOGC) -t z5 $< $(STDLIB) -o $@
+
+test: test-unit test-zmachine
+
+test-unit: cloak-tests.dg cloak.dg
+        $(DGDEBUG) $^ $(UNIT) $(STDLIB)
+
+test-zmachine: cloak.z5 cloak.regtest
+        $(REGTEST) --interpreter $(DFROTZ) --game $^
+
+clean:
+        rm -f *.z5
+
+.PHONY: all test clean
+----
+
+Extending the above to also test the Å-machine is equally straightforward:
+
+[source]
+----
+DGDEBUG = dgdebug -u
+UNIT = unit.dg
+STDLIB = stdlib.dg
+DIALOGC = dialogc
+REGTEST = regtest.py -v
+DFROTZ = dfrotz
+AAMRUN = aamrun.py
+AAMBOX = 6502run.py
+
+all: test
+
+%.z5: %.dg $(STDLIB) test-unit
+        $(DIALOGC) -t z5 $< $(STDLIB) -o $@
+
+%.aastory: %.dg $(STDLIB) test-unit
+        $(DIALOGC) -t aa $< $(STDLIB) -o $@
+
+test: test-unit test-zmachine test-web test-6502
+
+test-unit: cloak-tests.dg cloak.dg
+        $(DGDEBUG) $^ $(UNIT) $(STDLIB)
+
+test-zmachine: cloak.z5 cloak.regtest
+        $(REGTEST) --interpreter $(DFROTZ) --game $^
+
+test-web: cloak.aastory cloak.regtest
+        $(REGTEST) --interpreter $(AAMRUN) --game $^
+
+test-6502: cloak.aastory cloak.regtest
+        $(REGTEST) --interpreter $(AAMBOX) --game $^
+
+clean:
+        rm -f *.z5 *.aastory
+
+.PHONY: all test clean
+----
 
 === Building Releases
 
-TODO
+Finally, the main point of using `make` is to build your game so that
+your players can play it. We've already built the Z-machine version
 
 [#dgt]
 === Building With `dgt` Instead
