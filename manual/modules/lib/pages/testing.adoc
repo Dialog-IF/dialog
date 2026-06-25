@@ -1993,6 +1993,7 @@ test-impossible-zmachine: impossible.zblorb impossible.regtest
         $(REGTEST) --interpreter dfrotz --game $^
 ----
 
+[#make-test]
 === Testing With `make`
 
 Using `make` to automate your testing is fairly straightforward. First
@@ -2103,6 +2104,7 @@ clean:
 .PHONY: all test clean
 ----
 
+[#releases]
 === Building Releases
 
 Finally, the main point of using `make` is to build your game so that
@@ -2178,8 +2180,98 @@ stick with `make`. See the `dgt` documentation for details.
 [#beta]
 == Exploratory Testing
 
-TODO
+Thus far, we have covered _regression testing_: testing that verifies
+that our game is working the way that we intended, and that we didn't
+break anything with our most recent changes. Unit tests and
+integration tests are both types of regression tests.
 
+There's another kind of testing that's equally important in
+interactive fiction: _exploratory testing_. When we write unit tests
+or `regtest.py` cases, we're testing things that we've thought
+about in advance, and which have expected answers that we already know
+and can test for. But interactive fiction is about creating a simulated
+world in which the player is given the illusion of a lot of freedom to
+navigate, and to try lots of different, possibly unlikely, things.
+
+As anyone who has ever been the game master for a tabletop role-playing
+game will tell you, players will inevitably find ways to attempt wild
+ideas that stray far from anything you thought up. If a player tries
+something that makes sense, and the game doesn't respond accordingly,
+it's going to look like a bug. Conversely, players may fail to find
+solutions that we intended for them to find, because they phrase what
+they want to do in a synonym of what we programmed, which we never
+added to the parser's grammar. To take an example from this chapter,
+release 2 of _Cloak of Darkness_ failing to understand `READ MESSAGE`
+at the end of the game is a perfect example of both of these phenomena.
+
+The traditional way to see into these blind spots, and to anticipate
+the things that players -- especially stuck players -- might try, is
+to recruit some friendly players to play your game, and to try to
+break it. When those players are our friends or family, that's called
+_alpha testing_, and when they're complete strangers from over the
+Internet, it's called _beta testing_. "Alpha" and "beta" are terms
+that date back to before the rise of modern software engineering
+methods with automated tests, when manual testing, done after
+completion of all of the code, was the only way that software was
+tested. Alpha testing happened "in house", performed by the QA 
+department of the company writing the software; beta testing took
+place externally, with potential customers being given a free copy of
+nearly-ready software in exchange for submitting bug reports when
+something broke. The process was as rickety as it sounds, and was a
+big part of the reason why so much technical literature from the 1990s
+refers to a "software crisis."
+
+If you've been using the facilities described in this chapter to build
+an effective suite of unit and integration and skein tests, your code
+should be of much better quality than commercial IF games back in
+their heyday were when they went out for beta testing. But it's still
+worthwhile to engage beta testers, specifically to find things that
+you didn't think of.
+
+Once you've recruited your testers, expect them to need some time to
+play through your game, solve it, and spend some time banging on it to
+try to elicit unusual behaviours. For a "competition-length" game
+that's aimed at being solvable, or at least ready for review, after
+two hours, four to six weeks is a reasonable time frame; a "full
+length" game comparable to commercial IF will take longer. Literature
+about software engineering from back in the manual testing days refers
+to the testing and debugging phase of a project taking _five times_ as
+long as writing the code did. Writing good automated tests, and fixing
+the problems that they reveal, will do much of that work much faster
+than it would have taken in past decades. In particular, you're much
+less likely to break something else when fixing a problem, and then
+fail to notice until a manual tester catches the new problem. But beta
+testers are volunteer hobbyists, not full-time professionals, and they
+need enough time to get through all of your game, to try unlikely
+things in all phases of it, and to retest new versions that
+incorporate changes that the beta testing turns up.
+
+Above all, make sure that you track all of the feedback that you get
+from your testers, and prioritize it for action. Your exploratory
+testing program is only as good as the improvements to your code that
+come out of it. If you host your code base on a site like Github
+(which hosts public repositories for free), it has a built-in issue
+tracker that you can use, and even point your testers at to file
+issues. But something as simple as a spreadsheet or even a text file
+can help you keep track of what needs to be done.
+
+Not everything that your testers file is necessarily a bug, or even
+undesired behaviour. If you have enough testers, you might find that
+they disagree with each other about the right thing in a number of
+cases. Some issues will be actual bugs, or critically missing features
+that should be added, and for those, you'll want to also write
+automated tests to ensure that other changes that you make later don't
+bring back the problems that you just fixed.
+
+At some point, the rate at which your testers file issues against your
+code will drop off, you'll have fixed all of the issues that you've
+deemed to need fixes (and which are worth fixing), and your game will
+be ready for release. Congratulations! You've made a fully tested
+game, which you can submit to a competition or release to the general
+public. Getting good games into the hands of players is the whole
+reason why Dialog exists.
+
+[#finding-testers]
 === Finding Beta Testers
 
 TODO
@@ -2224,7 +2316,8 @@ Here's a summary of the advice from this chapter:
   your automated tests with exploratory (beta) testing.
 - Automate your testing process with `make` or `dgt`.
 - Test on all platforms for which you'll be releasing: Z-machine, web,
-  and vintage computing hardware.
+  and vintage computing hardware (the Commodore 64, and any other old
+  computers that later versions of Dialog may support).
 - Listen to your tests. If one fails, it's telling you something
   important.
 - Don't release a game for which any of the tests have failed.
