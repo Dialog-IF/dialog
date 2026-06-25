@@ -2233,18 +2233,21 @@ play through your game, solve it, and spend some time banging on it to
 try to elicit unusual behaviours. For a "competition-length" game
 that's aimed at being solvable, or at least ready for review, after
 two hours, four to six weeks is a reasonable time frame; a "full
-length" game comparable to commercial IF will take longer. Literature
-about software engineering from back in the manual testing days refers
-to the testing and debugging phase of a project taking _five times_ as
-long as writing the code did. Writing good automated tests, and fixing
-the problems that they reveal, will do much of that work much faster
-than it would have taken in past decades. In particular, you're much
-less likely to break something else when fixing a problem, and then
-fail to notice until a manual tester catches the new problem. But beta
-testers are volunteer hobbyists, not full-time professionals, and they
-need enough time to get through all of your game, to try unlikely
-things in all phases of it, and to retest new versions that
-incorporate changes that the beta testing turns up.
+length" game comparable to commercial IF will take longer. This means
+that you need to be otherwise done with your game at least a month
+before the deadline, if you're writing to a deadline such as a
+competition submission window. Literature about software engineering
+from back in the manual testing days refers to the testing and
+debugging phase of a project taking _five times_ as long as writing
+the code did. Writing good automated tests, and fixing the problems
+that they reveal, will do much of that work much faster than it would
+have taken in past decades, but it can still take as long or longer to
+get through your beta test as it did to write your game. Beta testers
+are volunteer hobbyists, not full-time professionals, and they need
+enough time to get through all of your game, to try unlikely things in
+all phases of it, and to retest new versions that incorporate changes
+that the beta testing turns up. Don't try to rush your beta testing --
+the longer it goes, the better your game will be.
 
 Above all, make sure that you track all of the feedback that you get
 from your testers, and prioritize it for action. Your exploratory
@@ -2254,6 +2257,13 @@ come out of it. If you host your code base on a site like Github
 tracker that you can use, and even point your testers at to file
 issues. But something as simple as a spreadsheet or even a text file
 can help you keep track of what needs to be done.
+
+Remember, also, that some interpreters support transcripts.
+Transcripts are a relic from the days when _Colossal Cave_ and _Zork_
+were played on mainframe line printers, but they're handy for tracking
+exploratory testing. Encouraging your testers to play with
+transcripting on, and to send you the transcript files, can reveal a
+lot about how players who don't think like you will approach your game.
 
 Not everything that your testers file is necessarily a bug, or even
 undesired behaviour. If you have enough testers, you might find that
@@ -2274,7 +2284,23 @@ reason why Dialog exists.
 [#finding-testers]
 === Finding Beta Testers
 
-TODO
+Where do you find beta testers? One common place is on
+link:https://intfiction.org/[the Interactive Fiction Community Forum],
+which has a whole category for
+link:https://intfiction.org/c/playing/beta-testing/24[beta testing
+requests]. Once you've implemented all of your game, and it passes all
+of your tests, you can put out a call there, and elsewhere, for
+players to beta test your game. If you look at some of the other
+discussion threads in that forum, you'll see the kind of detail that's
+typical to attract players to want to be the first to try your game.
+
+Do be sure to treat your testers well! At a minimum,
+
+- give them enough time to do a good job of testing, and for testing
+  subsequent versions,
+- remember that they're volunteers who are helping you, and avoid
+  getting angry or impatient with them, and
+- be sure to publicly thank them in your game's credits.
 
 [#debugging]
 == Troubleshooting Broken Tests
