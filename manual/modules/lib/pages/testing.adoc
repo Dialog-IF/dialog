@@ -2302,26 +2302,6 @@ Do be sure to treat your testers well! At a minimum,
   getting angry or impatient with them, and
 - be sure to publicly thank them in your game's credits.
 
-[#debugging]
-== Troubleshooting Broken Tests
-
-TODO
-
-[#pitfalls]
-=== Simple Pitfalls
-
-TODO
-
-[#output]
-=== Diagnostic Output
-
-TODO
-
-[#dgdebug]
-=== Using `dgdebug` and its Predicates
-
-TODO
-
 [#summary]
 == Summary
 
