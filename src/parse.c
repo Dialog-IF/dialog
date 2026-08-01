@@ -368,7 +368,7 @@ static int next_token(struct lexer *lexer, int parsemode) {
 					return 0;
 				}
 			}
-			if(strchr(STOPCHARS, ch)) {
+			if(ch < 0x80 && strchr(STOPCHARS, ch)) { // TODO - need to recognize high stopchars here ideally
 				buf[0] = ch;
 				buf[1] = 0;
 				lexer->kind = TOK_BAREWORD;
@@ -431,7 +431,7 @@ static int next_token(struct lexer *lexer, int parsemode) {
 						lexer->errorflag = 1;
 						return 0;
 					}
-					if(strchr(STOPCHARS, ch)) {
+					if(ch < 0x80 && strchr(STOPCHARS, ch)) { // TODO - and here (see above)
 						if(parsemode == PMODE_VALUE) {
 							report(LVL_ERR, line,
 								"Stop-character \"%c\" cannot appear inside a multi-character dictionary word.",
@@ -448,7 +448,7 @@ static int next_token(struct lexer *lexer, int parsemode) {
 						break;
 					}
 				}
-				if(strchr(STOPCHARS, ch)) {
+				if(ch > 0x80 && strchr(STOPCHARS, ch)) {
 					if(parsemode == PMODE_VALUE) {
 						report(LVL_ERR, line,
 							"Stop-character \"%c\" cannot appear inside a multi-character dictionary word.",
