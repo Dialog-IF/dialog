@@ -448,7 +448,7 @@ static int next_token(struct lexer *lexer, int parsemode) {
 						break;
 					}
 				}
-				if(ch > 0x80 && strchr(STOPCHARS, ch)) {
+				if(ch < 0x80 && strchr(STOPCHARS, ch)) { // TODO - and here
 					if(parsemode == PMODE_VALUE) {
 						report(LVL_ERR, line,
 							"Stop-character \"%c\" cannot appear inside a multi-character dictionary word.",
