@@ -710,7 +710,7 @@ static void comp_param(struct clause *cl, struct astnode *an, value_t src, uint8
 	} else if(an->kind == AN_PAIR) {
 		i = 0; // Count how many elements are in this list
 		for(iter = an; iter->kind == AN_PAIR; iter = iter->children[1]) i++;
-		
+
 		if(i < 10 + (all_seen_are_bound ? 10 : 0)) { // If this parameter will always be bound, or the list is "small", compile it the "old" (pre-1b/02) way, building the list from first to last with a whole lot of temporaries. This means unification will fail at the first non-matching element, without building the rest of the list, but it also needs one temporary for each list element, which can cause compilation to fail.
 			for(i = 0; i < 2; i++) {
 				if(an->children[i]->kind == AN_PAIR) {
@@ -1215,7 +1215,7 @@ static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an,
 		post_rule_trace(prg, cl, an, seen);
 		return 0;
 	}
-	
+
 	if(an->predicate->builtin == BI_DIV_WIDTH
 	|| an->predicate->builtin == BI_DIV_HEIGHT) { // Like above, but without arguments; we assemble the same IR opcode, but pass nil instead of any actual arguments
 		if(do_trace) {
@@ -1383,21 +1383,21 @@ static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an,
 		post_rule_trace(prg, cl, an, seen);
 		return 0;
 	}
-	
+
 	if(an->predicate->builtin == BI_HAVE_STYLE) {
 		ci = add_instr(I_IF_HAVE_STYLE);
 		ci->subop = 1;
 		post_rule_trace(prg, cl, an, seen);
 		return 0;
 	}
-	
+
 	if(an->predicate->builtin == BI_HAVE_COLOR) {
 		ci = add_instr(I_IF_HAVE_COLOR);
 		ci->subop = 1;
 		post_rule_trace(prg, cl, an, seen);
 		return 0;
 	}
-	
+
 	if(an->predicate->builtin == BI_HAVE_ALIGN) {
 		ci = add_instr(I_IF_HAVE_ALIGN);
 		ci->subop = 1;
@@ -1482,7 +1482,7 @@ static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an,
 		post_rule_trace(prg, cl, an, seen);
 		return 0;
 	}
-	
+
 	if(an->predicate->builtin == BI_GLOBAL_STYLE) {
 		int box;
 		if(an->children[0]->kind == AN_DICTWORD) {
@@ -1502,7 +1502,7 @@ static int comp_rule(struct program *prg, struct clause *cl, struct astnode *an,
 		post_rule_trace(prg, cl, an, seen);
 		return 0;
 	}
-	
+
 	if(an->predicate->builtin == BI_GLOBAL_UNSTYLE) {
 		// If this predicate is called, we make a special empty boxclass to use
 		find_boxclass(prg, find_word(prg, "*empty"));
@@ -2306,7 +2306,7 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 			}
 			endlab = make_routine_id();
 			vnum = findvar(cl, an->word);
-			
+
 			if(an->children[0]->kind == AN_DICTWORD) {
 				box = find_boxclass(prg, an->children[0]->word);
 			} else {
@@ -2321,7 +2321,7 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 				prg->errorflag = 1;
 				box = -1;
 			}
-			
+
 			if(an->kind == AN_STATUSAREA_OVERRIDE) { // This one gets a separate instruction, since it takes an additional parameter
 				v1 = comp_value(cl, an->children[2], seen, known_args); // The extra argument isn't necessarily a literal, just a value, so compile it however is best
 				ci = add_instr(I_BEGIN_AREA_OVERRIDE);
@@ -3258,7 +3258,7 @@ static int can_eliminate_push_choice(
 			shared_path = 1;
 		}
 	}
-	
+
 	for(i = inum; i < r->ninstr; i++) {
 		if(r->instr[i].op == I_POP_CHOICE) {
 			retval = (*pop_instr == &r->instr[i]);
@@ -4510,7 +4510,11 @@ static int cmp_routine_size(const void *a, const void *b) {
 	const int *aa = a;
 	const int *bb = b;
 
-	return routines[*bb].ninstr - routines[*aa].ninstr;
+	if(routines[*aa].ninstr != routines[*bb].ninstr) {
+		return routines[*bb].ninstr - routines[*aa].ninstr;
+	}
+	// Break ties by index to make qsort deterministic across platforms
+	return *aa - *bb;
 }
 
 static void anonymize_routines(struct predicate *pred) {

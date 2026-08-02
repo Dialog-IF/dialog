@@ -3168,7 +3168,11 @@ static int cmp_stringref(const void *a, const void *b) {
 	const uint16_t *bb = b;
 	int cost_a = (textstrings[*aa].bitlength + 7) / 8 - textstrings[*aa].occurrences;
 	int cost_b = (textstrings[*bb].bitlength + 7) / 8 - textstrings[*bb].occurrences;
-	return cost_a - cost_b;
+	if(cost_a != cost_b) {
+		return cost_a - cost_b;
+	}
+        // Break ties by index to make qsort deterministic across platforms
+	return (int) *aa - (int) *bb;
 }
 
 static void analyze_strings() {

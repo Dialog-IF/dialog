@@ -50,6 +50,15 @@ static int fill_randomness() {
 	return 0;
 }
 
+#elif defined(__wasi__)
+
+#include <unistd.h>
+
+static int fill_randomness() {
+	// WASI preview1 exposes random_get, which wasi-libc surfaces as getentropy.
+	return getentropy(randomness, sizeof(randomness)) ? 1 : 0;
+}
+
 #elif defined(_WIN32)
 
 #include <windows.h>
