@@ -45,6 +45,10 @@ Release notes:
 
 	1c/03, Lib 1.2.4:
 
+		Compiler: Patched over a bug with non-ASCII word separators.
+		The problem isn't really fixed, but it will no longer corrupt
+		your game text.
+
 		Unit test runner: (game over) and (game over $) are
 		now overridden in unit.dg, to enable testing of win
 		conditions.
