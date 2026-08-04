@@ -43,6 +43,12 @@ Project website:
 
 Release notes:
 
+	1c/03, Lib 1.2.3:
+
+		Compiler: Patched over a bug with non-ASCII word separators.
+		The problem isn't really fixed, but it will no longer corrupt
+		your game text.
+
 	1c/02, Lib 1.2.3:
 
 		Documentation: more has been added to chapter 12.
