@@ -146,6 +146,22 @@
 (test *)
 (run *)		(0 is within 0 of 0)
 
+#range-16383-16383
+(test *)
+(run *)		(16383 is within 0 of 16383)
+
+#range-0-16383
+(test *)
+(run *)		(0 is within 16383 of 16383)
+
+#range-5-2
+(test *)
+(run *)		~(5 is within 2 of 2)
+
+#range-2-5
+(test *)
+(run *)		~(2 is within 2 of 5)
+
 #3-div-3-rounding-up
 (test *)
 (run *)		(3 divided by 3 into 1 rounding up)
@@ -306,9 +322,21 @@
 (test *)
 (run *)		~(take last 7 from [1 2 3 5 6 7] into $)
 
+#take-after-2-empty
+(test *)
+(run *)		(take after 2 from [] into [])
+
 #take-after-0
 (test *)
 (run *)		(take after 0 from [1 2 3 4 5 6] into [1 2 3 4 5 6])
+
+#take-after-1
+(test *)
+(run *)		(take after 1 from [1 2 3 4 5 6] into [2 3 4 5 6])
+
+#take-after-2
+(test *)
+(run *)		(take after 2 from [1 2 3 4 5 6] into [3 4 5 6])
 
 #take-after-4
 (test *)
