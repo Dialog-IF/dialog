@@ -1177,6 +1177,3 @@ There is also, at present, no `[room]` or `[any room]` token. Since `GO TO` is t
 
 '''
 
-TODO:
-
-- Indentation for `(understand ...)` predicates using closures
