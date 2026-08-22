@@ -24,6 +24,62 @@ of basic blocks per predicate. This is the exact same instruction stream that
 only ever produces it once, and it's `backend_z.c` (or the Å-machine backend,
 below) that decides how to turn it into a specific machine's native code.
 
+Concretely, one instruction is:
+
+[source,c]
+----
+struct cinstr {
+	uint8_t			op;		// I_* -- which operation
+	uint8_t			subop;		// a per-opcode mode flag
+	uint16_t		implicit;	// usually a branch target
+	value_t			oper[3];	// up to three tagged operands
+};
+----
+
+and one routine (a basic block) is:
+
+[source,c]
+----
+struct comp_routine {
+	struct cinstr		*instr;
+	uint16_t		ninstr;
+	uint16_t		clause_id;	// so the debugger can print variable names
+	uint16_t		diverted;
+	uint16_t		reftrack;	// used by a later reference-counting pass
+	uint16_t		n_edge_in;
+};
+----
+
+Every operand — and every value on `eval.c`'s heap, for that matter — is
+one `value_t`, a tag plus a 24-bit payload:
+
+[source,c]
+----
+typedef struct value {
+	int			tag:8;
+	int			value:24;
+} value_t;
+
+enum {
+	// run-time value tags
+	VAL_NUM, VAL_OBJ, VAL_DICT, VAL_DICTEXT, VAL_NIL, VAL_PAIR, VAL_REF,
+	// compile-time-only operand kinds, sharing the same tag space
+	OPER_ARG, OPER_TEMP, OPER_VAR, OPER_RLAB, OPER_GFLAG, OPER_GVAR,
+	OPER_OFLAG, OPER_OVAR, OPER_PRED,
+	// ...
+};
+----
+
+Reusing one tagged-value type for both "a value on the heap at run time" and
+"an operand of a compiled instruction" is deliberate: a `VAL_NUM`/`VAL_OBJ`/
+`VAL_PAIR`/`VAL_REF` operand is a constant baked directly into the
+instruction stream, while an `OPER_ARG`/`OPER_TEMP`/`OPER_VAR` operand tells
+a backend *where to find* a value at run time (an argument register, a
+scratch temporary, or a local variable slot) rather than what the value is.
+`compile.c` never needs to know or care which physical register or memory
+cell a backend will eventually use for `OPER_VAR` number 3, say — that
+decision is entirely `backend_z.c`'s (or `backend_aa.c`'s) to make.
+
 The instruction set is deliberately WAM-flavoured. Unification of a clause
 head against the values passed at a call site is compiled into explicit
 "construct" and "deconstruct" instructions on pairs and constants, rather
@@ -67,10 +123,20 @@ which range it falls in:
 * *Objects* are ordinary Z-machine objects, acted on with the Z-machine's own
   object-and-attribute instructions.
 * *Dictionary words* are ordinary Z-machine dictionary entries.
-* *Lists* are boxed references into a heap of pair cells, living in a region
-  of dynamic memory set aside for exactly this purpose.
-* *Unbound variables* are heap cells that (as in the reference engine) refer
-  to themselves until something binds them.
+* *Lists* are boxed references into a heap of pair cells: constructing a
+  pair writes two words (head, tail) into the next free heap slot and
+  returns a tagged reference to it, with the tag bits set by `OR`-ing in a
+  constant that's kept in its own dedicated global variable (so the constant
+  never has to be re-encoded inline every time it's needed).
+* *Unbound variables* are heap cells holding a plain `0`. Dereferencing a
+  reference means following it to its heap cell and, if that cell holds `0`,
+  stopping there — the cell is unbound. Otherwise the cell holds either
+  another reference (keep following it) or a tagged, final value (a pair, an
+  object, a number, ...), at which point dereferencing stops. This is
+  slightly different from the reference engine's encoding on the previous
+  page (there, an unbound cell refers to *itself* rather than holding `0`),
+  but it plays exactly the same role: an unmistakable, cheap-to-test sentinel
+  for "nothing bound here yet."
 
 === Where the choice-point machinery lives
 
@@ -101,7 +167,26 @@ that failed happened to be.
 
 A predicate you change with `(now)` is compiled to different physical storage
 depending on its arity and how it's used — the compiler picks whichever
-representation is cheapest for that particular predicate:
+representation is cheapest for that particular predicate. Every predicate
+compiled for the Z-machine carries one small record recording which choice
+was made for it:
+
+[source,c]
+----
+struct backend_pred {
+	int		global_label;		// address of this predicate's compiled routine
+	int		trace_output_label;
+	uint16_t	user_global;		// dedicated global variable, for a flag or a variable
+	uint16_t	user_flag_mask;		// which bit, if this is one flag among several sharing a global
+	int		object_flag;		// Z-machine attribute number, if it got one
+	int		propbase_label;		// base address of the per-object array, for a two-argument variable
+};
+----
+
+Which of `user_global`/`user_flag_mask`, `object_flag`, or `propbase_label`
+actually gets used (and whether `object_flag` refers to a real Z-machine
+attribute or an index into the runtime-managed fallback table mentioned
+below) depends on the storage strategy chosen for that particular predicate:
 
 * A flag-like predicate with no arguments becomes a single bit inside a
   shared Z-machine global variable.
