@@ -63,5 +63,15 @@ xref:lib:testing.adoc[]
 
 xref:lib:libref.adoc[]
 
+== Part III: Under the Hood
+
+xref:internals:overview.adoc[]
+
+xref:internals:parsing.adoc[]
+
+xref:internals:rulesengine.adoc[]
+
+xref:internals:zcode.adoc[]
+
 '''
 

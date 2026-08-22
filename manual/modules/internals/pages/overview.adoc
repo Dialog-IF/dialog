@@ -1,0 +1,96 @@
+= Overview
+
+This part of the manual is different from the rest. Part I and Part II describe
+the Dialog language and standard library from the point of view of someone
+writing a game. This part instead describes how the Dialog tools themselves are
+built: how `dialogc` and `dgdebug` turn a handful of `.dg` source files into
+either a running game or a story file. It's aimed at anyone curious about the
+implementation, and at contributors working on the C source in `src/`.
+
+Nothing here changes how you write Dialog code, and none of it is required
+reading in order to use the language. Read on if you'd like to know what
+happens after you type `dialogc story.dg stdlib.dg`.
+
+== The shape of the pipeline
+
+Every Dialog source file passes through the same front end, regardless of
+whether you're compiling a story or running it under the debugger. Only the
+very last step differs:
+
+[source]
+----
+ source files (.dg)
+        |
+        v
+   lexer + parser  ------------------  one shared abstract syntax tree
+        |                              (terms and goals are the same
+        v                               node type; see xref:parsing.adoc[])
+  frontend passes
+  (macro expansion, dynamic-predicate
+   discovery, dataflow analysis,
+   dictionary construction, ...)
+        |
+        v
+  compile.c: lowering to a flat,
+  backend-neutral bytecode IR
+  (WAM-flavoured: choice points,
+   environments, unification
+   instructions; see xref:zcode.adoc[])
+        |
+        +-------------------+-------------------+
+        v                   v                   v
+    eval.c              backend_z.c         backend_aa.c
+  (dgdebug: runs      (dialogc -t z5/z8/  (dialogc -t aa:
+   the IR directly     zblorb: emits       emits Å-machine
+   as a bytecode VM;    Z-machine code;     bytecode; see
+   see                  see                 xref:zcode.adoc[])
+   xref:rulesengine.adoc[])  xref:zcode.adoc[])
+----
+
+The key idea that ties the rest of this part together is that **the debugger
+and the compiler are not two separate implementations of Dialog** — they are
+two different consumers of one shared intermediate representation. `compile.c`
+lowers your program into a flat array of instructions once; `eval.c` executes
+that array directly (with a Prolog-style choice-point stack living in ordinary
+C data structures), while `backend_z.c` and `backend_aa.c` each translate the
+very same array into a different target machine's native code. This is why the
+debugger's behaviour (aside from performance, and a few explicitly documented
+differences noted in xref:ROOT:software.adoc#dgdebug[the user-facing debugger
+section]) tracks the compiled game so closely: it's running the same compiled
+logic, just on a more forgiving virtual machine.
+
+== What each page covers
+
+xref:parsing.adoc[]::
+How source text becomes a program: the lexer's handling of Dialog's sigils
+(`$`, `#`, `@`, `~`, `*`, and bracket types), how every distinct word is
+interned once, and how the parser builds a single unified syntax tree in which
+terms and goals are just different tags on the same node type. Also covers how
+a predicate's identity is its whole head word-pattern (not just a name and
+arity), why there's no textual `#include` mechanism, and how the `@(...)`
+access-predicate facility implements Dialog's macro system as a structural,
+compile-time AST rewrite.
+
+xref:rulesengine.adoc[]::
+The reference interpreter's execution engine: a small stack-based bytecode
+machine directly descended from the WAM
+(https://en.wikipedia.org/wiki/Warren_Abstract_Machine[Warren Abstract Machine])
+used to implement Prolog. Covers the tagged-value heap, unification, the trail-based
+undo mechanism that makes backtracking possible, choice points and
+environments, how cut and Dialog's default "query succeeds at most once"
+semantics are compiled, and the `(collect)` aggregate mechanism. Also covers
+how `dgdebug` is built on top of this engine — in particular, how the very
+same engine is reused, without any dynamic game state attached, purely to
+compute the default values of dynamic predicates at compile time.
+
+xref:zcode.adoc[]::
+How the same compiled program becomes a Z-machine story file. Covers the
+shape of the intermediate bytecode itself, how clause unification and
+first-argument indexing are compiled into explicit instructions, how
+Prolog-style backtracking is realized using nothing but the Z-machine's own
+global variables, dynamic memory, and `catch`/`throw`, and how Dialog's
+dynamic predicates (the things you change with `(now)`) end up as Z-machine
+object attributes, property-like arrays, or the native object tree, depending
+on their shape. Closes with a look at the Å-machine backend, which targets a
+completely different virtual machine from the exact same intermediate
+representation.

@@ -1,0 +1,150 @@
+= Compiling to Z-machine code
+
+This page describes what `dialogc` does differently from `dgdebug`: instead
+of executing the compiled intermediate representation directly (as described
+in xref:rulesengine.adoc[the previous page]), it translates that same
+representation into the native instruction set of a target virtual machine
+— by default, the Z-machine, the format used by Infocom's original games and
+supported by essentially every interactive fiction interpreter in existence.
+
+The relevant source is `src/compile.c`/`src/compile.h` (lowering the analyzed
+program into an intermediate bytecode) and `src/backend_z.c`/`src/backend_z.h`
+plus `src/zcode.h`/`src/runtime_z.c` (turning that bytecode into an actual
+Z-machine story file). The closing section covers `src/backend_aa.c`, a
+second, independent backend targeting a different machine entirely.
+
+== A shared, backend-neutral bytecode
+
+`compile.c` walks the fully analyzed program (see xref:parsing.adoc[]) and
+lowers every clause into a flat array of small, fixed-shape instructions:
+an operation code, a couple of mode bits, and up to three tagged operands.
+Runs of these instructions are grouped into routines, forming a small graph
+of basic blocks per predicate. This is the exact same instruction stream that
+`eval.c` executes directly, as described on the previous page — `compile.c`
+only ever produces it once, and it's `backend_z.c` (or the Å-machine backend,
+below) that decides how to turn it into a specific machine's native code.
+
+The instruction set is deliberately WAM-flavoured. Unification of a clause
+head against the values passed at a call site is compiled into explicit
+"construct" and "deconstruct" instructions on pairs and constants, rather
+than being handled by some generic runtime unify routine. Backtracking is
+compiled into a small, generic set of choice-point instructions: push a
+choice point naming an alternative to try later, pop one that's no longer
+needed, cut away the innermost one outright, or save and later restore back
+to a particular point — the same push/pop/cut/save/restore vocabulary
+described for the reference engine on the previous page. Because these are
+ordinary instructions in the same array as everything else, the compiler can
+run backend-independent optimization passes over them before any target-machine
+code exists at all — most importantly, recognizing when a choice point or an
+environment frame is never actually needed (because there's provably only one
+matching clause left, for instance) and removing it, which is what gives
+tail-recursive Dialog predicates roughly constant memory use.
+
+First-argument indexing — letting a call with a known, bound first argument
+jump straight to the one clause that could possibly match, instead of trying
+every clause in order — is likewise compiled directly into this bytecode, as
+a sorted chain of comparisons against the possible key values.
+
+== Turning bytecode into Z-machine code
+
+`backend_z.c` walks the routine graph produced above and, instruction by
+instruction, emits real Z-machine instructions. Simple instructions (moving a
+value, testing a tag) become one or two native instructions directly. More
+involved ones — pushing a choice point, looking up a dynamic predicate's
+current value — are compiled as a call into a fixed library of small support
+routines that's copied, unchanged, into every single story file the compiler
+produces. That shared support library plays a role very similar to what
+Inform calls a "veneer": a handful of hand-written low-level routines, in
+this case implementing the trickier parts of Prolog-style execution directly
+in Z-machine code, so that `backend_z.c` itself only has to emit a call to
+the right one.
+
+=== Where terms live at run time
+
+A Dialog value inside a compiled story is a single Z-machine word, tagged by
+which range it falls in:
+
+* *Objects* are ordinary Z-machine objects, acted on with the Z-machine's own
+  object-and-attribute instructions.
+* *Dictionary words* are ordinary Z-machine dictionary entries.
+* *Lists* are boxed references into a heap of pair cells, living in a region
+  of dynamic memory set aside for exactly this purpose.
+* *Unbound variables* are heap cells that (as in the reference engine) refer
+  to themselves until something binds them.
+
+=== Where the choice-point machinery lives
+
+Because the Z-machine has no native concept of backtracking, the entire
+mechanism described on the previous page — the heap, the trail, choice
+points, and environments — is built out of ordinary dynamic memory, addressed
+through a handful of global variables that the compiler reserves for its own
+use and never exposes to your Dialog code. One points at the current
+environment (an in-progress clause's local variables and where to resume);
+one points at the current choice point; one tracks how much of the trail is
+currently in use; one tracks the high-water mark of the heap. A choice point
+is a small fixed-layout record — a link back to the previous choice point,
+the address of the routine to retry, saved copies of the environment/trail/
+heap pointers at the time it was pushed, and the argument values live at that
+moment — so that choice points naturally form a linked list of "things to
+try if everything after this point fails."
+
+Failure itself uses the Z-machine's own `throw`/`catch` instructions. Rather
+than every routine explicitly checking "did that call fail?" and returning a
+failure code up through however many levels of nested calls happen to be
+active, a failing instruction simply throws, unwinding the entire Z-machine
+call stack in one step, straight back to a single trampoline routine that
+reads the current choice point's saved "retry here" address and jumps to it.
+This is what keeps failure cheap regardless of how deeply nested the call
+that failed happened to be.
+
+=== Dynamic predicates: several storage strategies, chosen per predicate
+
+A predicate you change with `(now)` is compiled to different physical storage
+depending on its arity and how it's used — the compiler picks whichever
+representation is cheapest for that particular predicate:
+
+* A flag-like predicate with no arguments becomes a single bit inside a
+  shared Z-machine global variable.
+* A single-argument "variable" predicate (something with one value at a
+  time, not tied to any object) becomes its own dedicated global variable.
+* A single-argument, per-object flag becomes a genuine Z-machine object
+  *attribute* whenever a free attribute slot is available (there's a limited
+  supply). Once those run out, additional per-object flags fall back to a
+  runtime-managed table instead; and per-object flags that are never changed
+  after startup can instead be baked down into a compact, static bit array,
+  avoiding attribute slots entirely.
+* A two-argument, per-object variable becomes an entry in a flat array
+  indexed directly by object number — not the Z-machine's native
+  variable-length property tables, which aren't a good fit for values that
+  change at run time.
+* The one built-in relation every Dialog program has — an object's parent
+  — is the sole exception: it's compiled straight onto the Z-machine's own
+  native object tree, rather than into any of the storage schemes above.
+  Dialog's object hierarchy *is* the Z-machine's object tree.
+
+Because a value written by `(now)` has to survive both ordinary backtracking
+*and* the player-visible `(undo)` command — both of which routinely roll the
+transient heap and trail back to an earlier state — setting such a value
+doesn't just write onto that transient heap. It's deep-copied into a
+separate, append-only "long-term" storage area first, and only a small,
+stable reference to that copy is stored in the flag/variable/array slot
+described above. Rolling back a choice point can safely erase anything on the
+transient heap without ever endangering a fact your game has already
+committed to.
+
+== A second backend, from the same bytecode
+
+`src/backend_aa.c` (together with `src/aavm.c`/`src/aavm.h`) is a completely
+independent code generator, targeting the Å-machine
+(pronounced "awe machine") instead of the Z-machine — see
+xref:ROOT:software.adoc#compiler[the compiler section of Part I] for what the
+Å-machine is for. Its instruction set is a near one-to-one mirror of the
+bytecode described above, and it implements the same choice-point/environment
+model against its own, simpler virtual machine. Concretely, this means the
+exact same compiled routine graph coming out of `compile.c` — unification,
+indexing, choice points, dynamic-predicate accesses, all of it — is fed to
+whichever backend the `-t` command-line option selects, without the frontend
+or the middle-end lowering step needing to know or care which one that will
+be. `src/backend.c`, the compiler's entry point, reflects this: after running
+the shared frontend and lowering pass, it makes exactly one choice of backend
+and hands the whole program off.

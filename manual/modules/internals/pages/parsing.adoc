@@ -1,0 +1,186 @@
+= Parsing and the AST
+
+This page describes how the files you list on the `dialogc`/`dgdebug` command
+line become a single in-memory program, ready for the analysis and compilation
+passes described in the rest of xref:overview.adoc[Under the Hood].
+
+The relevant source files are `src/parse.c`/`src/parse.h` (the lexer and
+recursive-descent reader), `src/ast.c`/`src/ast.h` (the syntax tree and the
+program-wide tables it feeds into), and `src/accesspred.c`/`src/accesspred.h`
+(the `@`-macro expansion facility).
+
+== Tokens and sigils
+
+The lexer recognizes Dialog's small set of prefix sigils directly, stripping
+them and classifying the rest of the word:
+
+* `$Name` becomes a *variable* token.
+* `#name` becomes a *tag* token, and also immediately registers a fresh world
+  object — object identity is handed out at lex time, not later.
+* `@name` becomes a *dictionary word* token (a value the parser can match
+  against player input).
+* A bare word becomes either a printed *bareword* or, inside a value context
+  such as a list, a dictionary word.
+* `(`, `)`, `[`, `]`, `{`, `}`, `~`, and `*(` are returned as their own token
+  kinds and drive the recursive-descent grammar described below.
+* `%%` starts a line comment.
+
+Every distinct piece of source text — every variable name, tag, dictionary
+word, and bareword — is interned exactly once into a single hash table shared
+by the whole program. From then on, that piece of text is represented by a
+pointer to one `struct word`, not by repeated string comparisons. This is what
+lets later passes attach flags (is this word ever used as a dictionary word?
+as an output word? as the current "topic"?) and small dense integer IDs
+directly to the word itself.
+
+== One node type for both terms and goals
+
+Unlike compilers that keep a separate "term" representation for data and a
+"goal" representation for things that get executed, Dialog's parser builds
+everything — variables, tags, integers, lists, predicate calls, negation,
+`if`/`then`, `select`, `collect`, and so on — out of a single node type. What
+distinguishes a term from a goal is purely which *kind* tag the node carries:
+
+* *Terms* (things that appear as arguments): variables, tags, integers,
+  barewords, dictionary words, and list cells (built as a chain of pair nodes,
+  exactly like a Prolog list, terminated by an empty-list node).
+* *Goals* (things that appear in a rule body): predicate calls (positive and
+  negated), blocks (`{...}`), disjunction (`(or)`), and the various special
+  forms described elsewhere in this manual, such as xref:lang:control.adoc[]'s
+  `(if)` and `(select)`, and xref:lang:choicepoints.adoc[]'s `(collect)`.
+
+A conjunction — a straight-line sequence of goals in a rule body — is simply
+a linked chain of goal nodes. A disjunction is represented explicitly, as a
+node with two such chains as its two children. Because terms and goals share
+one node type, the same generic tree-walking code (copying a node, comparing
+two nodes for structural equality, substituting a variable) works uniformly
+across both, which turns out to be essential for the macro-expansion mechanism
+described below.
+
+`{...}` is a good example of how much a Dialog node's meaning depends on
+context: written where a goal is expected, it's just a scoping block. Written
+where a value is expected, the very same braces instead introduce a *closure
+literal* — its body is parsed once, and (after being deduplicated against any
+structurally identical closure already seen) it's turned into a value that,
+later, can be invoked through a single hidden predicate shared by every
+closure in the program.
+
+== Predicates are identified by their whole word pattern
+
+A Dialog predicate's identity isn't a name-plus-arity pair the way it would be
+in most other languages. It's the *entire* fixed sequence of literal words in
+the rule head, with parameter positions marked out. `(the $ is in the $)` and
+`(the $ is on the $)` are two completely different predicates, each with their
+own clause list, even though a name-and-arity scheme would conflate them. This
+is also why Dialog rule heads read like natural-language sentences with blanks
+in them: the literal words aren't just for readability, they *are* the
+predicate's name.
+
+Every predicate that's ever mentioned, in a rule head or in a query, is
+resolved to one shared, permanent record the first time it's seen, and every
+subsequent mention (in any source file) finds that same record. This is also
+how a predicate can be safely redefined while `dgdebug` is running with edited
+source: the old implementation is kept around just long enough to let
+persistent state (such as `(select)` counters) carry over to the new one.
+
+== Files, not includes
+
+There is no textual `#include` directive in Dialog. Instead, every filename
+given on the command line is parsed in turn, and every file's clauses are
+appended to one single, shared, program-wide clause list. Predicate lookup,
+the word table, and the object registry are all shared across every file from
+the very first line of the very first file onward — there's no per-file
+scoping to think about. The only file-order rule the compiler enforces is a
+sanity check: it expects to find a `(library version ...)` declaration, and
+warns if that file isn't listed last, since that's almost always a sign the
+standard library was accidentally passed before the story that depends on it.
+
+== Macros: access predicates
+
+Dialog's macro facility, written `@name(...)`, is not a token-level
+text-substitution preprocessor. It works entirely on the syntax tree that's
+already been built, which is why it can do things a text preprocessor
+couldn't, such as making sure a macro expansion never accidentally captures a
+variable from its call site.
+
+An access-predicate definition looks like an ordinary rule, but is introduced
+with `@` instead of a bare `(`. Defining one this way, rather than as an
+ordinary predicate, tells the compiler two things: first, that calls to it
+should be expanded away entirely rather than compiled as a real predicate
+call, and second, that its head arguments are *patterns* to be matched
+structurally against the actual argument syntax at each call site, not
+run-time values to be unified. A predicate can have several such definitions;
+the first one whose pattern structurally matches the call site's arguments is
+used.
+
+Expanding a use of an access predicate means:
+
+. Finding the first definition whose argument patterns match the call site.
+. Binding each pattern variable to the actual syntax tree passed at the call
+  site.
+. Copying the macro's body, substituting each bound variable with (a fresh
+  copy of) what it's bound to.
+. Renaming every *other* variable in the body — the macro's own local
+  helper variables — to a fresh name, so that using the same macro twice
+  in one clause can never make its internal variables collide.
+
+This expansion happens as one of the first steps of the frontend's analysis
+pipeline, described next, well before any dataflow analysis or compilation
+takes place, so from that point onward the rest of the compiler never needs to
+know that access predicates exist at all — it only ever sees ordinary rule
+calls.
+
+== From syntax tree to annotated program
+
+Building the syntax tree is only the first half of what happens before a
+program is ready to compile. The bulk of `src/frontend.c` is a long, ordered
+sequence of whole-program passes over that tree, each adding information that
+later passes (and, eventually, `compile.c`) depend on. A few of the more
+consequential ones:
+
+Macro and directive expansion::
+Besides expanding `@(...)` access predicates (above), this pass also expands
+a handful of other clause-level directives into ordinary clauses: `(global
+variable ...)` declarations, `(generate N of ...)` object generation, resource
+declarations, and `(interface ...)` mode declarations.
+
+Dynamic-predicate discovery::
+Every use of `(now) (...)` in the program is scanned to find out which
+predicates are ever the target of a state change. A predicate that's never
+targeted by `(now)` is an ordinary set of logical rules; one that is becomes a
+*dynamic predicate* — a piece of mutable state — and is assigned a slot
+among the program's global flags, global variables, per-object flags, or
+per-object variables, depending on its arity. This distinction matters a
+great deal to the backends: see xref:zcode.adoc[] for how each kind of
+dynamic predicate ends up represented in a compiled story.
+
+Boundness and determinism analysis::
+A whole-program, fixed-point dataflow pass figures out, for every argument of
+every predicate, whether it can be unbound (an output) or is always bound (an
+input) at every place the predicate is called, and whether the predicate is
+ever called as a backtracking multi-query as opposed to a plain query. This is
+also where the compiler checks any `(interface ...)` declarations you've
+written against how a predicate is actually used, and where several "did you
+mean to do that?" warnings come from — a predicate that's defined but never
+queried, or queried but never defined, and so on.
+
+Dictionary construction::
+Every literal word that could plausibly appear as player input — every
+`@word` and, in the right context, every plain word — is collected into the
+program's dictionary, ready for the parser (the in-game parser, not the
+compiler!) to match against typed commands.
+
+Fixed-flag and success/failure propagation::
+Several smaller passes look for predicates whose behaviour can be pinned down
+statically: a one-argument dynamic predicate whose rules only ever test a
+fixed, known set of objects can be compiled down to a compact per-object bit
+instead of a general dynamic-predicate lookup; a predicate that's provably
+guaranteed to succeed, or provably guaranteed to fail, lets later dead-code
+elimination remove clauses that can never be reached.
+
+Only once every clause has passed through all of these passes does the
+compiler hand the fully annotated program over to `compile.c`, which is where
+xref:zcode.adoc[the next page but one] picks up the story. In between, the
+program is executable in one more sense first: it can be run directly, one
+compiled instruction at a time, which is what xref:rulesengine.adoc[the rules
+engine] does.

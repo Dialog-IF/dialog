@@ -5,6 +5,7 @@ nav:
   - modules/ROOT/nav.adoc
   - modules/lang/nav.adoc
   - modules/lib/nav.adoc
+  - modules/internals/nav.adoc
 asciidoc:
   attributes:
     lang-ver: 1c

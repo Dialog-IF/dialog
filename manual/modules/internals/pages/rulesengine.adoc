@@ -1,0 +1,171 @@
+= The rules engine and the debugger
+
+Once your program has been through the analysis passes described in
+xref:parsing.adoc[], it can be run directly, without ever being compiled to a
+Z-machine or Å-machine story. That's what `dgdebug` does. This page describes
+the engine that makes that possible (`src/eval.c`), and how `dgdebug`
+(`src/debugger.c`) is built on top of it.
+
+For how to actually *use* the interactive debugger — command-line options,
+`@`-commands, hot code reload from a user's point of view — see
+xref:ROOT:software.adoc#dgdebug[the debugger section of Part I]. This page
+covers how it's implemented.
+
+== Not a tree-walker
+
+It might seem natural for an interpreter to walk the syntax tree directly,
+recursively trying each goal in a clause body. Dialog's reference interpreter
+doesn't do that. Instead, `compile.c` first lowers every clause into a flat
+array of simple instructions — the same lowering step used to produce a
+compiled story, described in xref:zcode.adoc[] — and `eval.c` is a small
+virtual machine that executes that instruction array directly. The debugger
+and the Z-machine/Å-machine compiler are two different consumers of one
+shared intermediate representation, not two independent implementations of
+Dialog.
+
+This design is closely modelled on the WAM (the Warren Abstract Machine),
+the classic technique for compiling Prolog rather than interpreting it: terms
+live on a tagged heap, unification binds heap cells and records the bindings
+on a trail so they can be undone, and backtracking is driven by an explicit
+stack of choice points rather than by the language runtime's own call stack.
+
+== Terms: a tagged heap
+
+Every value in a running Dialog program — a number, an object, a dictionary
+word, a list cell, or an unbound variable — is a small tagged cell on a
+single, flat, growable heap. An unbound variable is represented as a cell
+that points to itself; binding it means overwriting that cell to point
+somewhere else. Following a chain of such references until you reach a cell
+that isn't a reference to something else (dereferencing) is the basic
+operation almost everything else builds on.
+
+*Unification* compares two values, following references on both sides first:
+binding an unbound variable to whatever the other side turns out to be,
+recursively matching the two parts of a pair against each other, and
+otherwise requiring an exact match. Every binding made this way is recorded
+on a *trail* — a simple list of "this cell used to be unbound" entries. To
+undo a set of bindings (because a goal failed and the engine needs to
+backtrack), the engine walks the trail back to a previously saved mark,
+resetting each recorded cell back to an unbound, self-referencing state. It
+also throws away anything allocated to the heap after that point. Nothing is
+copied; undoing a binding is as cheap as writing one word back.
+
+This trail-based undo is deliberately a different mechanism from the game-level
+`(undo)` command available to players. Trail-based undo only ever rewinds
+within a single query's backtracking search. `(undo)` (and the equivalent
+`(undo)`-adjacent commands in `dgdebug`, described below) instead take a full
+snapshot of the entire machine — every stack, the whole heap, all of it —
+and restore it wholesale later. The two mechanisms coexist because they solve
+different problems: one is about *exploring alternatives within a query*, the
+other is about *rewinding a whole turn of gameplay*.
+
+== Choice points, environments, and cut
+
+Two explicit stacks carry the engine's control state:
+
+* An *environment* holds the local variables belonging to one in-progress
+  clause activation, plus where to resume once that clause's body finishes.
+* A *choice point* records everything needed to retry a different
+  alternative later: which clause (or which branch of a disjunction) to try
+  next, together with saved marks for the heap, the trail, and the
+  environment stack, so that retrying can cleanly undo everything that
+  happened since.
+
+Compiling a predicate with several matching clauses means, in the simple
+case, pushing a choice point before trying the first clause (naming the next
+clause as what to retry on failure), and popping it once a later clause
+commits with nothing left to try. This is exactly the WAM's classic
+try/retry/trust pattern for clause selection, and the same instructions are
+reused for the language's other backtracking constructs — disjunction
+(`(or)`), and the "did the condition succeed" test in `(if)/(then)/(else)`.
+
+*Cut* — the underlying operation behind `(just)`, among other things —
+simply discards the innermost choice point outright, closing off any
+remaining alternatives for the goal it appears in. If-then constructs use a
+softer variant: save a mark before trying the condition, and if it succeeds,
+cut back to that mark afterwards, discarding only whatever choice points the
+*condition* created, while keeping the condition's variable bindings intact.
+
+[#simple-vs-multi]
+== Why a plain query only ever gives one answer
+
+A distinctive property of Dialog is that an ordinary query, written
+`(some predicate)`, can only ever succeed once, even if several of its clauses
+would have matched — you have to write the {multi-query} form,
+`*(some predicate)`, to backtrack into further alternatives. This isn't a
+special case bolted onto the engine; it falls directly out of how plain
+queries are compiled. Making a plain call records where the choice-point
+stack stood right before the call; once the call succeeds, everything pushed
+onto that stack while proving it is immediately cut away. A multi-query
+simply skips that automatic cut, leaving those choice points live so that a
+surrounding backtracking search can return to them later.
+
+== Aggregates: `(collect ... into ...)`
+
+Building up a list of every solution to a goal — what `(collect $X into $Xs)
+... $X ...` does — uses a third stack, separate from the heap and the trail.
+Entering a collect block marks the current position on this auxiliary stack;
+each time the inner goal succeeds (found by ordinary backtracking, exactly as
+above), the current value is pushed onto it; and once the inner goal is
+exhausted, everything pushed since the mark is folded back into a proper
+Dialog list and bound to the destination variable. The accumulating form of
+`(collect)` works the same way, except it keeps a running total instead of a
+growing list.
+
+== Object trees and dynamic predicates: a pluggable back end
+
+`eval.c` itself has no idea what a "room" or an "inventory" is, and no
+built-in notion of persistent game state. Everything to do with dynamic
+predicates — reading or setting a global flag, a global variable, an
+object's flag, or an object's variable, and walking the object containment
+tree — is reached through a small table of callback functions supplied by
+whoever is driving the engine. Iterating over "every child of this object" or
+"every object that currently has this flag" is compiled the same way ordinary
+clause backtracking is: each candidate becomes its own choice point, produced
+one at a time by asking the callback table for the next one.
+
+This indirection means the very same engine can run in two quite different
+modes. With a real callback table attached (backed by the live game state
+kept by `dgdebug`, described below), it plays the game. With *no* callback
+table attached at all, it's used by the compiler itself, to work out the
+default value of a dynamic predicate directly from its Dialog source rules
+before any game state exists — the value a fresh, unstarted game should see.
+A predicate compiled for that second purpose is checked to make sure it
+never actually tries to depend on live dynamic state, since none exists yet
+to answer it.
+
+== `dgdebug`: the engine, plus persistent state and developer tooling
+
+`src/debugger.c` is the `dgdebug` executable. Its central job is supplying the
+callback table described above: it owns the actual in-memory representation
+of every global flag and variable, every object's flags and variables, and
+the object containment tree, and implements each callback against that
+storage. On top of that live-state layer, it adds the developer-facing
+features described from a user's perspective in
+xref:ROOT:software.adoc#dgdebug[Part I]:
+
+* *Live source reload.* Before reading each new line of input, `dgdebug`
+  checks whether any source file has changed on disk, and if so, reruns the
+  entire frontend pipeline from xref:parsing.adoc[the previous page] on the
+  new source. Any dynamic predicate the player hasn't touched yet has its
+  default value recomputed from the new rules (using the compiler's
+  no-callbacks evaluation mode described above); anything already changed by
+  gameplay is left alone.
+* *Full-state undo.* Both the reference engine and the debugger's own game
+  state maintain a stack of complete snapshots, which is what backs the
+  player-visible `(undo)` command as well as `@again` in `dgdebug` (undo, then
+  replay the last line of input).
+* A handful of `@`-prefixed developer commands for inspecting that live
+  state directly — dumping every dynamic predicate's current value, or the
+  current shape of the object tree — and for recording and replaying a
+  whole session's worth of input.
+
+Structurally, the main loop in `dgdebug` never reaches into the engine's internal
+stacks directly. It only ever calls one of a handful of public entry points
+into `eval.c` (run the program, resume after supplying requested input, inject
+an ad hoc query typed at the prompt) and reacts to the status code each one
+returns — *waiting for input*, *suspended*, *hit a breakpoint*, and so on.
+Breakpoints and query tracing are themselves just two more kinds of compiled
+instruction, carrying the source file and line number they came from, so that
+messages printed while running under `dgdebug` can always point back at a
+specific place in your source code.
