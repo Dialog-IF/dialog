@@ -71,6 +71,36 @@ Two explicit stacks carry the engine's control state:
   environment stack, so that retrying can cleanly undo everything that
   happened since.
 
+In `eval.c` these are ordinary C structs, held in two growable arrays
+(`es->envstack` and `es->choicestack`):
+
+[source,c]
+----
+struct env {
+	value_t			*vars;		// this clause activation's local variables
+	value_t			*tracevars;	// a copy of the head args, kept only for readable traces
+	prgpoint_t		cont;		// where to resume once the clause body succeeds
+	uint16_t		env;		// index of the enclosing environment
+	uint16_t		simple;
+};
+
+struct choice {
+	uint16_t		env;		// environment-stack watermark to restore
+	uint16_t		trail;		// trail watermark to undo back to
+	uint16_t		top;		// heap watermark to reclaim back to
+	uint16_t		simple;
+	value_t			arg[MAXPARAM + 1];	// the call's arguments, as they were at this point
+	prgpoint_t		cont;		// where to resume on success
+	prgpoint_t		nextcase;	// where to resume on failure -- the next clause to try
+};
+----
+
+Every field earns its keep at the moment of backtracking: retrying an
+alternative means resetting the trail down to `trail`, the heap down to
+`top`, and the environment stack down to `env`, then jumping to whatever
+`nextcase` says is the next thing to try. There's no search or bookkeeping
+beyond restoring these four numbers and jumping.
+
 Compiling a predicate with several matching clauses means, in the simple
 case, pushing a choice point before trying the first clause (naming the next
 clause as what to retry on failure), and popping it once a later clause
@@ -169,3 +199,108 @@ Breakpoints and query tracing are themselves just two more kinds of compiled
 instruction, carrying the source file and line number they came from, so that
 messages printed while running under `dgdebug` can always point back at a
 specific place in your source code.
+
+== The same machine, compiled: `eval.c` versus the Z-machine
+
+Everything on this page so far — the tagged heap, the trail, environments,
+choice points, cut, the simple/multi distinction — is described here in
+terms of `eval.c`'s own C structs, because that's the easiest place to see the
+mechanism laid bare. But none of it is specific to being interpreted. When
+`dialogc` compiles the very same program for the Z-machine
+(xref:zcode.adoc[]), it builds *exactly the same machine* again, field for
+field, entirely out of Z-machine primitives: ordinary global variables and a
+region of dynamic memory, with no interpreter and no C structs anywhere in
+sight.
+
+The correspondence is close enough to lay out side by side. `eval.c` keeps a
+current environment and a current choice point as C struct pointers; the
+compiled Z-machine story keeps the same two things as *addresses stored in
+two reserved global variables*, `REG_ENV` and `REG_CHOICE`, pointing into a
+region of dynamic memory instead of the process heap:
+
+[cols="1,1,3"]
+|===
+| `eval.c` (`struct env`) | Compiled Z-machine (`ENV_*` record) | Meaning
+
+| `env` (index of enclosing frame)
+| `ENV_ENV`
+| the environment to restore control to once this one is deallocated
+
+| `cont`
+| `ENV_CONT`
+| where to resume once this clause's body succeeds
+
+| `simple`
+| `ENV_SIMPLE`
+| whether this call was made as a plain (at-most-one-answer) query
+|===
+
+[cols="1,1,3"]
+|===
+| `eval.c` (`struct choice`) | Compiled Z-machine (`CHOICE_*` record) | Meaning
+
+| (the array itself)
+| `CHOICE_CHOICE`
+| link to the previous, older choice point — the compiled form has to store
+  this explicitly, since it's a linked list in memory rather than a C array
+  with an implicit "previous element"
+
+| `nextcase`
+| `CHOICE_NEXTPC`
+| the routine to jump to on failure — the next clause, or the next branch
+  of a disjunction
+
+| `env`
+| `CHOICE_ENV`
+| environment-stack watermark to restore
+
+| `cont`
+| `CHOICE_CONT`
+| where to resume on success
+
+| `trail`
+| `CHOICE_TRAIL`
+| trail watermark: undo bindings back to here
+
+| `top`
+| `CHOICE_TOP`
+| heap watermark: reclaim memory back to here
+
+| `simple`
+| `CHOICE_SIMPLE`
+| whether the enclosing query context is a plain call or a {multi-query}
+
+| `arg[MAXPARAM + 1]`
+| (saved argument registers, following the fields above)
+| the call's argument values, as they were when this choice point was pushed
+|===
+
+Pushing a choice point (`I_PUSH_CHOICE` in the shared bytecode, described in
+xref:zcode.adoc[]) means, in the compiled story, allocating one such record
+in dynamic memory, filling in every one of those fields — including a copy
+of every current argument register — and linking it in by pointing
+`REG_CHOICE` at it, with the new record's `CHOICE_CHOICE` field preserving
+the address that was in `REG_CHOICE` a moment before. Backtracking into it
+later means the reverse: read `CHOICE_NEXTPC`, restore `REG_ENV`/the trail/
+the heap from the saved watermarks, restore the argument registers from the
+tail of the record, and jump. This is the same restore-four-numbers-and-jump
+operation described above for `eval.c`, just implemented directly in
+Z-machine memory instead of in a C struct.
+
+Failure works differently in the two implementations, though, for a very
+Z-machine-specific reason. In `eval.c`, a failing instruction can simply
+return a status code up the (C) call stack, because `eval_run()` is one big
+loop around a single dispatch `switch`, not a deep chain of nested C function
+calls. The compiled Z-machine story has no such luxury — a failure can occur
+many real Z-machine `call`s deep — so it uses the Z-machine's own
+`throw`/`catch` instructions to unwind however many stack frames are active
+in a single step, straight back to a small trampoline routine that reads
+`REG_CHOICE`'s `CHOICE_NEXTPC` and jumps there. `eval.c` doesn't need this
+trick, because its instruction dispatch loop is already flat.
+
+The upshot is that stepping through a Dialog predicate in `dgdebug` and
+disassembling the same predicate out of a compiled `z8` file will show you
+the same sequence of choice-point pushes, cuts, and unifications either way
+— just spelled differently, once as operations on `struct env`/`struct
+choice` and once as reads and writes into a hand-rolled slab of Z-machine
+dynamic memory.

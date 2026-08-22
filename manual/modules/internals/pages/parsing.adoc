@@ -31,7 +31,81 @@ by the whole program. From then on, that piece of text is represented by a
 pointer to one `struct word`, not by repeated string comparisons. This is what
 lets later passes attach flags (is this word ever used as a dictionary word?
 as an output word? as the current "topic"?) and small dense integer IDs
-directly to the word itself.
+directly to the word itself:
+
+[source,c]
+----
+struct word {
+	struct word		*next_in_hash;
+	char			*name;
+	unsigned int		flags:4;	// WORDF_DICT, WORDF_TAG, WORDF_OUTPUT, WORDF_TOPIC
+	unsigned int		word_id:28;
+	uint16_t		obj_id;		// nonzero if this word also names a #tag object
+	uint16_t		dict_id;	// nonzero if this word is also a @dictionary word
+};
+----
+
+There's exactly one of these per distinct spelling, program-wide, ever. A
+variable named `$Foo` in one clause and `$Foo` in a completely different
+clause in a different file are two unrelated variables at the language level,
+of course, but the *word* `Foo` — the three-letter spelling — is the same
+interned `struct word` in both places; it's the surrounding `AN_VARIABLE`
+node (one per occurrence, see below) that gives each mention its own
+identity. The same interned word can simultaneously be a `#tag` (carrying a
+nonzero `obj_id`) and a `@dictionary` word (carrying a nonzero `dict_id`),
+since nothing stops a story from using the same spelling for both.
+
+=== The lexer's own state
+
+The lexer itself is a single `struct lexer`, threaded through every call to
+the tokenizer and the recursive-descent parser built on top of it:
+
+[source,c]
+----
+struct lexer {
+	struct program		*program;
+	FILE			*file;		// the source file being read, or...
+	const uint8_t		*string;	// ...a string, for an interactively injected query
+	uint8_t			kind;		// TOK_* -- the current token's kind
+	struct word		*word;		// the current token's interned word, if any
+	int			value;		// the current token's integer value, if any
+	struct arena		temp_arena;	// transient, per-file AST allocation
+	uint32_t		wordcount;
+	uint32_t		totallines;
+	uint32_t		totalwords;
+	int			errorflag;
+	int			lib_file;	// did this file declare (library version ...)?
+	// ...
+};
+----
+
+The `kind` field is one of a small, flat enum of token kinds. Values below
+128 are just the ASCII code of a single-character token (`(`, `)`, `[`, `]`,
+`{`, `}`, `~`, `*`); values from 128 up name the multi-character kinds:
+
+[source,c]
+----
+enum {
+	TOK_BAREWORD = 128,
+	TOK_DICTWORD,
+	TOK_TAG,
+	TOK_VARIABLE,
+	TOK_INTEGER,
+	TOK_STARPAREN,	// the two-character token "*("
+	TOK_NOSPACE
+};
+----
+
+Two things are worth noticing about this design. First, there's no separate
+token *string* buffer to manage: by the time a token has a `kind` of
+`TOK_VARIABLE`, `TOK_TAG`, `TOK_DICTWORD`, or `TOK_BAREWORD`, its text has
+already been interned, and `lexer->word` already points at the shared
+`struct word` described above — tokenizing and interning happen in the same
+step. Second, `struct lexer` doubles as the parser's only piece of mutable
+state; the recursive-descent functions described below don't thread a
+separate "current position" cursor around, they just keep calling the
+tokenizer and inspecting `lexer->kind`/`lexer->word`/`lexer->value` as they
+go.
 
 == One node type for both terms and goals
 
@@ -48,6 +122,39 @@ distinguishes a term from a goal is purely which *kind* tag the node carries:
   negated), blocks (`{...}`), disjunction (`(or)`), and the various special
   forms described elsewhere in this manual, such as xref:lang:control.adoc[]'s
   `(if)` and `(select)`, and xref:lang:choicepoints.adoc[]'s `(collect)`.
+
+Concretely, every one of those is a `struct astnode`:
+
+[source,c]
+----
+struct astnode {
+	uint8_t			kind;		// AN_* -- what this node is
+	uint8_t			subkind;	// e.g. a plain vs. multi-query rule call
+	uint16_t		nchild;
+	line_t			line;
+	struct astnode		**children;
+	struct astnode		*next_in_body;	// the next goal in a conjunction
+
+	struct word		*word;		// for AN_VARIABLE / AN_TAG / AN_BAREWORD / AN_DICTWORD
+	int			value;		// for AN_INTEGER
+	struct predname		*predicate;	// for AN_RULE / AN_NEG_RULE
+
+	uint8_t			unbound;	// filled in by later dataflow analysis
+};
+----
+
+The `kind` field is one value from a single flat enum shared by every kind of
+node, terms and goals alike — `AN_VARIABLE`, `AN_TAG`, `AN_INTEGER`,
+`AN_BAREWORD`, `AN_DICTWORD`, `AN_PAIR`, `AN_EMPTY_LIST` for terms;
+`AN_RULE`, `AN_NEG_RULE`, `AN_BLOCK`, `AN_NEG_BLOCK`, `AN_OR`, `AN_IF`,
+`AN_SELECT`, `AN_COLLECT`, and so on for goals. `children` holds a node's
+sub-terms (a variable or tag has none; a pair has a head and a tail; a rule
+call has one entry per parameter), while `next_in_body` is a completely
+separate link, used only by goal nodes, threading them together into the
+straight-line sequence that makes up a clause body or a block. A predicate
+call's identity isn't stored as a word or a name at all — it's a direct
+pointer, `predicate`, at the shared `struct predname` record described below,
+found once during parsing and never looked up by name again afterwards.
 
 A conjunction — a straight-line sequence of goals in a rule body — is simply
 a linked chain of goal nodes. A disjunction is represented explicitly, as a
@@ -78,10 +185,37 @@ predicate's name.
 
 Every predicate that's ever mentioned, in a rule head or in a query, is
 resolved to one shared, permanent record the first time it's seen, and every
-subsequent mention (in any source file) finds that same record. This is also
-how a predicate can be safely redefined while `dgdebug` is running with edited
-source: the old implementation is kept around just long enough to let
-persistent state (such as `(select)` counters) carry over to the new one.
+subsequent mention (in any source file) finds that same record:
+
+[source,c]
+----
+struct predname {
+	uint16_t		pred_id;
+	uint16_t		arity;
+	uint16_t		nword;
+	struct word		**words;	// a null entry marks a parameter position
+	char			*printed_name;	// for diagnostics
+	struct predicate	*pred;		// the current implementation
+	struct predicate	*old_pred;	// the previous one, kept for (select) recovery
+	uint16_t		special;	// nonzero for SP_* forms like (if) or (select)
+	uint16_t		builtin;	// nonzero for BI_* builtins like (now) or (fail)
+	uint16_t		dyn_id;		// slot among global/per-object flags, if dynamic
+	// ...
+};
+----
+
+The `words` array *is* the predicate's identity: it's the rule head's literal
+words in order, with a null entry standing in for each parameter position, so
+that matching a call site against this array is exactly how the parser (and
+later, the compiler) decides which predicate a given piece of syntax refers
+to. `pred` points at the predicate's actual, current list of clauses (a
+`struct predicate`, holding `clauses[]` plus a large flags word recording
+everything later passes discover about it: whether it's dynamic, whether it's
+ever invoked as a {multi-query}, whether it always succeeds, and so on); when
+`dgdebug` reloads edited source and rebuilds a predicate from scratch, the
+*previous* `struct predicate` is kept around, unreferenced, just long enough
+for state like `(select)` counters to be carried over into the new one before
+being discarded.
 
 == Files, not includes
 

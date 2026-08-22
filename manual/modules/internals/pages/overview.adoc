@@ -17,35 +17,22 @@ Every Dialog source file passes through the same front end, regardless of
 whether you're compiling a story or running it under the debugger. Only the
 very last step differs:
 
-[source]
-----
- source files (.dg)
-        |
-        v
-   lexer + parser  ------------------  one shared abstract syntax tree
-        |                              (terms and goals are the same
-        v                               node type; see xref:parsing.adoc[])
-  frontend passes
-  (macro expansion, dynamic-predicate
-   discovery, dataflow analysis,
-   dictionary construction, ...)
-        |
-        v
-  compile.c: lowering to a flat,
-  backend-neutral bytecode IR
-  (WAM-flavoured: choice points,
-   environments, unification
-   instructions; see xref:zcode.adoc[])
-        |
-        +-------------------+-------------------+
-        v                   v                   v
-    eval.c              backend_z.c         backend_aa.c
-  (dgdebug: runs      (dialogc -t z5/z8/  (dialogc -t aa:
-   the IR directly     zblorb: emits       emits Å-machine
-   as a bytecode VM;    Z-machine code;     bytecode; see
-   see                  see                 xref:zcode.adoc[])
-   xref:rulesengine.adoc[])  xref:zcode.adoc[])
-----
+. *Source files* (`.dg`) are read by the lexer and parser into *one shared
+  abstract syntax tree*, in which terms and goals are just different tags on
+  the same node type. See xref:parsing.adoc[].
+. A long sequence of *frontend passes* walks that tree: macro expansion,
+  dynamic-predicate discovery, boundness/determinism dataflow analysis,
+  dictionary construction, and more. See xref:parsing.adoc[].
+. `compile.c` *lowers the analyzed program* into a flat, backend-neutral
+  bytecode IR — WAM-flavoured, with explicit choice-point, environment, and
+  unification instructions. See xref:zcode.adoc[].
+. That one bytecode IR is then handed to exactly one of three consumers:
+  ** `eval.c`, used by `dgdebug`, executes the IR directly as a bytecode VM.
+     See xref:rulesengine.adoc[].
+  ** `backend_z.c`, used by `dialogc -t z5`/`z8`/`zblorb`, translates the IR
+     into Z-machine code. See xref:zcode.adoc[].
+  ** `backend_aa.c`, used by `dialogc -t aa`, translates the same IR into
+     Å-machine bytecode instead. See xref:zcode.adoc[].
 
 The key idea that ties the rest of this part together is that **the debugger
 and the compiler are not two separate implementations of Dialog** — they are
