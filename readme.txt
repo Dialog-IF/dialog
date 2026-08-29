@@ -49,6 +49,9 @@ Release notes:
 		The problem isn't really fixed, but it will no longer corrupt
 		your game text.
 
+		Backend: colored spans inside (collect words) no longer corrupt
+		the stack on Z-machine.
+
 		Unit test runner: (game over) and (game over $) are
 		now overridden in unit.dg, to enable testing of win
 		conditions.
