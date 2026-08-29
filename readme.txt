@@ -45,9 +45,12 @@ Release notes:
 
 	1c/03, Lib 1.2.4:
 
-		Compiler: Patched over a bug with non-ASCII word separators.
+		Compiler: patched over a bug with non-ASCII word separators.
 		The problem isn't really fixed, but it will no longer corrupt
 		your game text.
+
+		Compiler: better messages when adding resource files to an
+		.aastory file, on both success and failure
 
 		Unit test runner: (game over) and (game over $) are
 		now overridden in unit.dg, to enable testing of win
