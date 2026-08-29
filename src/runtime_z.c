@@ -767,6 +767,8 @@ struct rtroutine rtroutines[] = {
 			// 0 (param): styles to set for this box class
 			// 1 (param): styles to unset for this box class
 		(struct zinstr []) {
+			{Z_JNZ, {VALUE(REG_FORWORDS)}, 0, RFALSE},
+			
 			{Z_CALL2N, {ROUTINE(R_AUX_PUSH1), VALUE(REG_STYLE)}}, // Save the previous value of REG_STYLE
 			{Z_JE, {VALUE(REG_STYLE), SMALL(STYLE_INVISIBLE)}, 0, RFALSE}, // Then if we're currently in an invisible box, don't save anything, the style should remain invisible until we exit the original invisible box
 			
@@ -794,6 +796,8 @@ struct rtroutine rtroutines[] = {
 		1,
 			// 0: previous value of REG_STYLE for checking things
 		(struct zinstr []) {
+			{Z_JNZ, {VALUE(REG_FORWORDS)}, 0, RFALSE},
+			
 			{Z_STORE, {SMALL(REG_LOCAL+0), VALUE(REG_STYLE)}}, // Save the current value of REG_STYLE to check something
 			{Z_DEC, {SMALL(REG_COLL)}}, // Pull the previous value of REG_STYLE back off the stack
 			{Z_LOADW, {VALUE(REG_AUXBASE), VALUE(REG_COLL)}, REG_STYLE},
@@ -813,6 +817,8 @@ struct rtroutine rtroutines[] = {
 			// 0 (param): foreground color to use
 			// 1 (param): background color to use
 		(struct zinstr []) {
+			{Z_JNZ, {VALUE(REG_FORWORDS)}, 0, RFALSE},
+			
 			// Push BGCOLOR, then FGCOLOR
 			{Z_CALL2N, {ROUTINE(R_AUX_PUSH1), VALUE(REG_BGCOLOR)}},
 			{Z_CALL2N, {ROUTINE(R_AUX_PUSH1), VALUE(REG_FGCOLOR)}},
@@ -837,6 +843,7 @@ struct rtroutine rtroutines[] = {
 						// We don't have to do this for styles because that's handled within BEGIN_ and END_ for the boxes and spans, but the Dialog assembler can't pass more than three arguments to a routine (it doesn't support Z_CALLVN2), so we just assemble a separate routine call instead
 		0,
 		(struct zinstr []) {
+			{Z_JNZ, {VALUE(REG_FORWORDS)}, 0, RFALSE},
 			// Pull FGCOLOR, then BGCOLOR
 			{Z_DEC, {SMALL(REG_COLL)}},
 			{Z_LOADW, {VALUE(REG_AUXBASE), VALUE(REG_COLL)}, REG_FGCOLOR},
