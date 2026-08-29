@@ -3995,6 +3995,7 @@ struct rtroutine rtroutines[] = {
 			// not inside status box
 			{Z_BUFFER_MODE, {SMALL(1)}},
 			{Z_TEXTSTYLE, {SMALL(0)}},
+			{Z_CALL1N, {ROUTINE(R_RESET_STYLE)}}, // Reset to the div's style
 			{Z_RFALSE},
 			{Z_END},
 		}
