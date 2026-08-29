@@ -49,9 +49,12 @@ Release notes:
 		The problem isn't really fixed, but it will no longer corrupt
 		your game text.
 
-		Unit test runner: (game over) and (game over $) are
-		now overridden in unit.dg, to enable testing of win
-		conditions.
+		Compiler: re-fixed the obscure bug with divs and spans inside
+		closures, which was previously only fixed for the debugger, not
+		for the compiler. Oops!
+
+		Unit test runner: (game over) and (game over $) are now
+		overridden in unit.dg, to enable testing of win conditions.
 
 		Documentation: even more has been added to chapter 12.
 
