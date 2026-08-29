@@ -45,7 +45,10 @@ Release notes:
 
 	1c/03, Lib 1.2.4:
 
-		Compiler: Patched over a bug with non-ASCII word separators.
+		Language: CSS text-decoration: reverse has been replaced with
+		-iftf-reverse-video: reverse for compatibility reasons.
+
+		Compiler: patched over a bug with non-ASCII word separators.
 		The problem isn't really fixed, but it will no longer corrupt
 		your game text.
 
