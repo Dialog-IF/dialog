@@ -1366,6 +1366,9 @@ static struct astnode *parse_expr(int parsemode, struct lexer *lexer, struct are
 			for(i = 0; i < cl->nvar; i++) {
 				if(!strcmp(cl->varnames[i]->name, "_")) {
 					have_arg = 1;
+				} else if(cl->varnames[i]->name[0] == '*') {
+					// Internal variables (created via fresh_word) cannot be accessed outside the closure, so they should not be considered parameters
+					// We don't want them to interfere with the optimizer's analysis of whether parameters to ( invoke-closure $ $ $) are bound
 				} else {
 					sub = an->children[1];
 					an->children[1] = mkast(AN_PAIR, 2, cl->arena, orig_line);
