@@ -73,8 +73,10 @@ fails.
 
 `A` and `B` must be bound to numbers; `C` is unified with
 their product. If the product is outside the valid range of numbers, the query
-succeeds, but the numeric result is unpredictable (i.e. it depends on the
-interpreter).
+fails.
+
+NOTE: Before version 1c/03, this predicate would return an incorrect value
+instead of failing.
 
 ($A divided by $B into $C)::
 

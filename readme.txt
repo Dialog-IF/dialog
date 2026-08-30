@@ -45,6 +45,9 @@ Release notes:
 
 	1c/03, Lib 1.2.4:
 
+		Language: ($ times $ into $) now fails if the product is too
+		large, rather than succeeding with the wrong result.
+
 		Compiler: Patched over a bug with non-ASCII word separators.
 		The problem isn't really fixed, but it will no longer corrupt
 		your game text.

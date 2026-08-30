@@ -2281,6 +2281,53 @@ struct rtroutine rtroutines[] = {
 		}
 	},
 	{
+		R_MULT_WOULD_OVERFLOW,
+		5,
+			// 0 (param): L (first factor) and L0 (lower part)
+			// 1 (param): R (second factor) and R0 (lower part)
+			// 2: L1 (higher part)
+			// 3: R1 (higher part)
+			// 4: constant -7
+			// Fails on overflow, returns otherwise
+		(struct zinstr []) {
+			// We're using Hanna's algorithm from https://intfiction.org/t/an-odd-bit-of-undefined-behavior/80914/5
+			// Basically, we do the skeleton of a base-128 long multiplication, only enough to determine if things would overflow or not
+			// Unlike the "divide by one factor and see if you get another" strategy I originally used, this one is guaranteed to always work
+			{Z_STORE, {SMALL(REG_LOCAL+4), LARGE(-7 & 0xffff)}}, // Keeping this in a register since we need it several times
+			{Z_ASHIFT, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+4)}, REG_LOCAL+2}, // l1 = l >> 7
+			{Z_ASHIFT, {VALUE(REG_LOCAL+1), VALUE(REG_LOCAL+4)}, REG_LOCAL+3}, // r1 = r >> 7
+			{Z_JNZ, {VALUE(REG_LOCAL+2)}, 0, 1},
+			// l1 == 0
+			{Z_JZ, {VALUE(REG_LOCAL+3)}, 0, RFALSE}, // if r1 == 0, no overflow
+			{Z_AND, {VALUE(REG_LOCAL+1), SMALL(0x7f)}, REG_LOCAL+1}, // r0 = r & $7f
+			// now we overflow iff (l0 * r1) + ((l0 * r0) >> 7) >= 128
+			// we repurpose r0 and r1 as intermediates here because we only need each one once
+			{Z_MUL, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+3)}, REG_LOCAL+3},
+			{Z_MUL, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+1)}, REG_LOCAL+1},
+			{Z_ASHIFT, {VALUE(REG_LOCAL+1), VALUE(REG_LOCAL+4)}, REG_LOCAL+1},
+			{Z_ADD, {VALUE(REG_LOCAL+1), VALUE(REG_LOCAL+3)}, REG_LOCAL+1},
+			{Z_JL, {VALUE(REG_LOCAL+1), SMALL(128)}, 0, RFALSE},
+			{Z_JUMP, {REL_LABEL(2)}},
+			
+			{OP_LABEL(1)},
+			// l1 != 0
+			{Z_JNZ, {VALUE(REG_LOCAL+3)}, 0, 2}, // if r1 != 0, yes overflow
+			{Z_AND, {VALUE(REG_LOCAL+0), SMALL(0x7f)}, REG_LOCAL+0}, // l0 = l & $7f
+			// now we overflow iff (l1 * r0) + ((l0 * r0) >> 7) >= 128
+			// this time we repurpose l0 and l1 as our intermediates
+			{Z_MUL, {VALUE(REG_LOCAL+1), VALUE(REG_LOCAL+2)}, REG_LOCAL+2},
+			{Z_MUL, {VALUE(REG_LOCAL+1), VALUE(REG_LOCAL+0)}, REG_LOCAL+0},
+			{Z_ASHIFT, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+4)}, REG_LOCAL+0},
+			{Z_ADD, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+2)}, REG_LOCAL+0},
+			{Z_JL, {VALUE(REG_LOCAL+0), SMALL(128)}, 0, RFALSE},
+			
+			{OP_LABEL(2)}, // fail
+			{Z_THROW, {SMALL(0), VALUE(REG_FAILJMP)}},
+			
+			{Z_END}
+		}
+	},
+	{
 		R_TIMES,
 		2,
 			// 0 (param): first parameter (and temp)
@@ -2298,8 +2345,13 @@ struct rtroutine rtroutines[] = {
 			{OP_LABEL(2)},
 			{Z_AND, {VALUE(REG_LOCAL+0), VALUE(REG_3FFF)}, REG_LOCAL+0},
 			{Z_AND, {VALUE(REG_LOCAL+1), VALUE(REG_3FFF)}, REG_LOCAL+1},
+			
+			// New: we check for overflow, and fail if it happens
+			// R_MULT_WOULD_OVERFLOW throws to FAILJMP on overflow, so if it returns at all, then it means we're fine to continue
+			{Z_CALLVN, {ROUTINE(R_MULT_WOULD_OVERFLOW), VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+1)}},
+			
 			{Z_MUL, {VALUE(REG_LOCAL+0), VALUE(REG_LOCAL+1)}, REG_LOCAL+0},
-			{Z_AND, {VALUE(REG_LOCAL+0), VALUE(REG_3FFF)}, REG_LOCAL+0},
+		//	{Z_AND, {VALUE(REG_LOCAL+0), VALUE(REG_3FFF)}, REG_LOCAL+0}, // No longer necessary since we've guaranteed no overflow
 			{Z_OR, {VALUE(REG_LOCAL+0), VALUE(REG_4000)}, REG_LOCAL+0},
 			{Z_RET, {VALUE(REG_LOCAL+0)}},
 			{Z_END},
