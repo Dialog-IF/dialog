@@ -52,6 +52,10 @@ Release notes:
 		The problem isn't really fixed, but it will no longer corrupt
 		your game text.
 
+		Compiler: re-fixed the obscure bug with divs and spans inside
+		closures, which was previously only fixed for the debugger, not
+		for the compiler. Oops!
+
 		Compiler: better messages when adding resource files to an
 		.aastory file, on both success and failure
 
