@@ -49,6 +49,10 @@ Release notes:
 		The problem isn't really fixed, but it will no longer corrupt
 		your game text.
 
+		Backend: styles are now properly reset after printing a progress
+		bar inside a div on Z-machine. (Previously it would reset to
+		unstyled text, even if the div was bold or italic.)
+
 		Backend: fixed bug with hex colors (#ff8800) on Z-machine
 		causing problems for older interpreters.
 
