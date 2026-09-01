@@ -716,9 +716,9 @@ struct rtroutine rtroutines[] = {
 			
 			// We also need to make sure the Standard revision is 1.1 or higher
 			// Otherwise, the Z_TRUECOLOR opcode won't exist! And might crash
-			{Z_LOADW, {SMALL(32), SMALL(0)}, REG_LOCAL+1},
+			{Z_LOADW, {SMALL(0x32), SMALL(0)}, REG_LOCAL+1},
 			// Upper byte = major version, lower byte = minor version
-			// So this needs to be at least 0x0101
+			// So this needs to be at least $0101
 			
 			{Z_JL, {VALUE(REG_FGCOLOR), SMALL(0)}, 0, 1}, // Is the foreground color negative? If so, we should do a "standard" setting instead of a "true" setting
 			{Z_JL, {VALUE(REG_LOCAL+1), LARGE(0x0101)}, 0, 2}, // And if this interpreter doesn't support the Z_TRUECOLOR opcode, we should skip this entirely
@@ -4002,6 +4002,7 @@ struct rtroutine rtroutines[] = {
 			// not inside status box
 			{Z_BUFFER_MODE, {SMALL(1)}},
 			{Z_TEXTSTYLE, {SMALL(0)}},
+			{Z_CALL1N, {ROUTINE(R_RESET_STYLE)}}, // Reset to the div's style
 			{Z_RFALSE},
 			{Z_END},
 		}

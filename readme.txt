@@ -45,9 +45,22 @@ Release notes:
 
 	1c/03, Lib 1.2.4:
 
-		Compiler: Patched over a bug with non-ASCII word separators.
+		Language: CSS text-decoration: reverse has been replaced with
+		-iftf-reverse-video: reverse for compatibility reasons.
+
+		Compiler: patched over a bug with non-ASCII word separators.
 		The problem isn't really fixed, but it will no longer corrupt
 		your game text.
+
+		Compiler: better messages when adding resource files to an
+		.aastory file, on both success and failure
+
+		Backend: styles are now properly reset after printing a progress
+		bar inside a div on Z-machine. (Previously it would reset to
+		unstyled text, even if the div was bold or italic.)
+
+		Backend: fixed bug with hex colors (#ff8800) on Z-machine
+		causing problems for older interpreters.
 
 		Backend: colored spans inside (collect words) no longer corrupt
 		the stack on Z-machine.
