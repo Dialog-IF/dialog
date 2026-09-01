@@ -49,6 +49,9 @@ Release notes:
 		The problem isn't really fixed, but it will no longer corrupt
 		your game text.
 
+		Compiler: better messages when adding resource files to an
+		.aastory file, on both success and failure
+
 		Backend: styles are now properly reset after printing a progress
 		bar inside a div on Z-machine. (Previously it would reset to
 		unstyled text, even if the div was bold or italic.)
