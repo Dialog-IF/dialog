@@ -62,6 +62,9 @@ Release notes:
 		Backend: fixed bug with hex colors (#ff8800) on Z-machine
 		causing problems for older interpreters.
 
+		Backend: colored spans inside (collect words) no longer corrupt
+		the stack on Z-machine.
+
 		Unit test runner: (game over) and (game over $) are
 		now overridden in unit.dg, to enable testing of win
 		conditions.
