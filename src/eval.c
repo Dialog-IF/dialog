@@ -2530,6 +2530,9 @@ static int eval_run(struct eval_state *es) {
 				if(ci->oper[i].tag == OPER_WORD) {
 					w = es->program->allwords[ci->oper[i].value];
 					if(es->forwords) {
+						if(!(w->flags & WORDF_DICT)) {
+							report(LVL_ERR, 0, "Word '%s' does not have the dictionary flag set, but it was produced by a (collect words)", w->name);
+						}
 						assert(w->flags & WORDF_DICT);
 						if(!push_aux(es, (value_t) {VAL_DICT, w->dict_id})) {
 							pred_release(pp.pred);
