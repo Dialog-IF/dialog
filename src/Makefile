@@ -8,6 +8,12 @@ WINLIB		= ../prebuilt/win32
 MINGW32		= i686-w64-mingw32-gcc
 WINDRES		= i686-w64-mingw32-windres
 
+UNAME_S		:= $(shell uname -s)
+ifeq (${UNAME_S},Darwin)
+CFLAGS		+= -arch arm64 -arch x86_64
+LDFLAGS		+= -arch arm64 -arch x86_64
+endif
+
 INSTALLDIR	= /usr/local/bin
 
 all:			dialogc dgdebug
