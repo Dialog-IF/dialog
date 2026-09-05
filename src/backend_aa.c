@@ -176,7 +176,7 @@ static uint8_t resolve_aachar(uint32_t uchar) {
 		}
 
 		if(i >= 128) {
-			report(LVL_ERR, 0, "Too many distinct unicode characters in the text.");
+			report(LVL_ERR, 0, "Too many distinct Unicode characters in the text.");
 			exit(1);
 		}
 
@@ -3547,6 +3547,14 @@ static void chunks_file(FILE *f, struct program *prg, char *resdir) {
 				exit(1);
 			}
 			size = (uint32_t) st.st_size;
+			if(size == 0) {
+				report(
+					LVL_ERR,
+					prg->resources[i].line,
+					"Resource file \"%s\" is empty",
+					path);
+				exit(1);
+			}
 			buf = malloc(size);
 			if(1 != fread(buf, size, 1, datafile)) {
 				report(
@@ -3565,6 +3573,8 @@ static void chunks_file(FILE *f, struct program *prg, char *resdir) {
 			if(pad) fputc(0, f);
 			free(buf);
 			free(pathbuf);
+			
+			report(LVL_DEBUG, 0, "Added resource file %s (%d bytes)", prg->resources[i].stem, size);
 		}
 	}
 }

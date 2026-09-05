@@ -2975,14 +2975,24 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 					} else if(strcmp(param, "inherit")) { // Something that's not monospace was specified, and it was *not* inherit
 						bc->unstyle |= STYLE_FIXED;
 					}
-				} else if(1 == sscanf(str, "text-decoration : %s", param)) {
-					if(strstr(str, "reverse")) { // This is not a standard CSS property, but there is no standard CSS property for reverse video, and unrecognized property values are explicitly not an error in CSS
+				} else if(1 == sscanf(str, "-iftf-reverse-video : %s", param)) {
+					// The new, modern replacement for text-decoration: reverse
+					// See discussion at https://intfiction.org/t/should-we-standardize-a-pseudo-css-property-for-reverse-video/81692 for rationale
+					if(!strcmp(param, "reverse")) {
 						bc->style |= STYLE_REVERSE;
-					} else if(strcmp(param, "inherit")) { // As above, something that's not reverse was specified, and it's *not* inherit
+					} else if(!strcmp(param, "none")) {
 						bc->unstyle |= STYLE_REVERSE;
 					}
-					if(strstr(str, "debug")) { // It's sometimes useful to set the STYLE_DEBUG flag manually. This is deliberately not documented.
+				} else if(1 == sscanf(str, "-dialog-debug : %s", param)) {
+					// This is deliberately undocumented, but occasionally useful
+					if(!strcmp(param, "debug")) {
 						bc->style |= STYLE_DEBUG;
+					} else if(!strcmp(param, "none")) {
+						bc->unstyle |= STYLE_DEBUG;
+					}
+				} else if(1 == sscanf(str, "text-decoration : %s", param)) {
+					if(strstr(str, "reverse")) { // This used to be Dialog's way of specifying reverse-video style, but it caused problems: "text-decoration: underline reverse" would produce nothing in web browsers, rather than only an underline. So it's been replaced. (We use strstr and str here because sscanf breaks on the first whitespace, so param will have only the first word.)
+						report(LVL_WARN, 0, "'text-decoration: reverse' is no longer supported; use '-iftf-reverse-video: reverse' instead (in style class @%s)", bc->class->name);
 					}
 				} else if(1 == sscanf(str, "display : %s", param)) {
 					if(!strcmp(param, "none")) { // display:none indicates that a span/div should be sent to the transcript but not to the screen, like the quote boxes in Trinity
