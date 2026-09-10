@@ -37,6 +37,11 @@ mingw32):
 	cd src
 	make dialogc.exe dgdebug.exe dgdebug_gui.exe
 
+Building the WASM version (requires https://github.com/webassembly/wasi-sdk):
+
+	make -C src dialogc.wasm dgdebug.wasm WASI_SDK=/path/to/wasi-sdk
+	wasmtime run --dir=. src/dialogc.wasm story.dg stdlib.dg
+
 Project website:
 
 	https://github.com/Dialog-IF/dialog/
@@ -74,6 +79,9 @@ Release notes:
 		conditions.
 
 		Documentation: even more has been added to chapter 12.
+
+		Distribution: Added WebAssembly targets (WASI Preview 1)
+		for dialogc and dgdebug. Requires WASI SDK to build.
 
 	1c/02, Lib 1.2.3:
 
