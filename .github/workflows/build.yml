@@ -93,9 +93,29 @@ jobs:
             src/dgdebug
             src/dialogc
 
+  build-wasi:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: install WASI SDK
+        run: |
+          cd ~
+          curl -fsSLO https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-34/wasi-sdk-34.0-x86_64-linux.tar.gz
+          tar xf wasi-sdk-34.0-x86_64-linux.tar.gz
+          rm -f wasi-sdk-34.0-x86_64-linux.tar.gz
+          mv wasi-sdk-34.0* wasi-sdk
+      - name: make dialogc.wasm and dgdebug.wasm
+        run: make --directory=./src dialogc.wasm dgdebug.wasm
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wasi
+          path: |
+            src/dialogc.wasm
+            src/dgdebug.wasm
+
   build-release:
     runs-on: ubuntu-latest
-    needs: ['build-linux', 'build-macos', 'build-manual']
+    needs: ['build-linux', 'build-macos', 'build-wasi', 'build-manual']
     permissions:
       contents: write
       packages: read
@@ -120,6 +140,7 @@ jobs:
           mkdir -p "$BUNDLE/prebuilt"
           mv artifacts/linux-x86_64 "$BUNDLE/prebuilt/"
           mv artifacts/macos-universal "$BUNDLE/prebuilt/"
+          mv artifacts/wasi "$BUNDLE/prebuilt/"
           mv artifacts/win32 "$BUNDLE/prebuilt/"
           chmod +x "$BUNDLE"/prebuilt/*/*
           # Include all the other relevant files from the release
