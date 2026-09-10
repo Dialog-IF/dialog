@@ -80,6 +80,9 @@ Release notes:
 
 		Documentation: even more has been added to chapter 12.
 
+		Distribution: Added WebAssembly targets (WASI Preview 1)
+		for dialogc and dgdebug. Requires WASI SDK to build.
+
 	1c/02, Lib 1.2.3:
 
 		Documentation: more has been added to chapter 12.
