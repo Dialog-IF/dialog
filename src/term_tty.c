@@ -1,6 +1,8 @@
 #include <assert.h>
 #include <errno.h>
-#include <signal.h>
+#ifndef __wasi__
+	#include <signal.h>
+#endif
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,6 +12,9 @@
 #ifdef _WIN32
 	#include <windows.h>
 	#define NEVER_A_TTY 1 // Windows doesn't support messing with line echoing, so we let the terminal handle history and line editing by telling dgdebug that it's not a TTY
+#elif defined(__wasi__)
+	// WASI preview1 has no termios, no signals, and no window-size query, so do like on Windows: let the host terminal handle history and line editing by telling dgdebug that it's not a TTY
+	#define NEVER_A_TTY 1
 #else
 	#include <sys/ioctl.h>
 	#include <termios.h>
@@ -41,7 +46,7 @@ static int termstyle;
 static int termfg = OCOLOR_INITIAL, termbg = OCOLOR_INITIAL;
 static int term_height;
 static uint16_t last_filename[256];
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__wasi__)
 static volatile int interrupt_flag; // Since Windows puts signal handlers in a separate thread
 #else
 static int did_tcsetattr;
@@ -54,7 +59,7 @@ static inline int should_format() {
 }
 
 void tty_setup() {
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__wasi__)
 #else
 	struct termios tio;
 
@@ -75,7 +80,7 @@ void tty_setup() {
 }
 
 void tty_restore() {
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__wasi__)
 #else
 	if(did_tcsetattr) {
 		tcsetattr(0, TCSANOW, &tio_orig);
@@ -86,7 +91,7 @@ void tty_restore() {
 
 // This function is called periodically during processing. It's part of the API specifically for the Glk version, where control has to be handed over to Glk to update the graphics and such. But it turns out to be convenient for us here too now: this function will be called in the main thread, while interrupt handlers (on Windows specifically) will not be.
 void term_ticker() {
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__wasi__)
 	if(interrupt_flag) {
 		term_int_callback();
 		interrupt_flag = 0;
@@ -115,7 +120,7 @@ void term_get_size(int *width, int *height) {
 	char *envvar;
 #ifdef _WIN32
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
-#else
+#elif !defined(__wasi__)
 	struct winsize ws;
 #endif
 	
@@ -128,7 +133,7 @@ void term_get_size(int *width, int *height) {
 		if(output_config.tag_lines) *width -= 2; // For the tags
 		*height = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
 	}
-#else
+#elif !defined(__wasi__)
 	if(!ioctl(0, TIOCGWINSZ, &ws)) {
 		*width = (ws.ws_col >= 1)? ws.ws_col - 1 : 0;
 		if(output_config.tag_lines) *width -= 2; // For the tags
@@ -401,7 +406,7 @@ static BOOL WINAPI sighandler(DWORD sig) {
 	}
 	return FALSE;
 }
-#else
+#elif !defined(__wasi__)
 static void sighandler(int sig) {
 	if(sig == SIGINT) {
 		term_int_callback();
@@ -418,7 +423,7 @@ void term_init(term_int_callback_t callback) {
 			fprintf(stderr, "Failed to install signal handler for ^C.\n");
 			exit(1);
 		}
-#else
+#elif !defined(__wasi__)
 		if(signal(SIGINT, sighandler) == SIG_ERR) {
 			fprintf(stderr, "Failed to install signal handler for ^C.\n");
 			exit(1);
@@ -459,8 +464,7 @@ int term_handles_wrapping() {
 
 static void suspend() {
 	tty_restore();
-#ifdef _WIN32
-#else
+#if !defined(_WIN32) && !defined(__wasi__)
 	kill(0, SIGSTOP);
 #endif
 	tty_setup();

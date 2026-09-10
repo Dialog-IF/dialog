@@ -27,7 +27,7 @@ tidy:
 			rm -f *.o *~ \#*\#
 
 clean: 			tidy
-			rm -f dialogc dgdebug dialogc.exe dgdebug.exe dialogc.wasm
+			rm -f dialogc dgdebug dialogc.exe dgdebug.exe dialogc.wasm dgdebug.wasm
 
 install:		dialogc dgdebug
 			cp dialogc $(INSTALLDIR)
@@ -43,20 +43,25 @@ distclean: 		clean uninstall
 
 DIALOGC_OBJS =	frontend.o backend_z.o runtime_z.o blorb.o dumb_output.o dumb_report.o arena.o ast.o parse.o compile.o eval.o accesspred.o unicode.o backend.o aavm.o backend_aa.o crc32.o ifid.o
 
+DGDEBUG_OBJS =	debugger.o frontend.o report.o arena.o ast.o parse.o compile.o eval.o term_tty.o accesspred.o output.o unicode.o fs_tty.o
+
 dialogc:		${DIALOGC_OBJS}
 			${CC} ${LDFLAGS} -o $@ $^ ${LDLIBS}
 
 dialogc.wasm:		${DIALOGC_OBJS:.o=.c}
 			${WASI_CC} ${WASI_CFLAGS} ${WASI_LDFLAGS} -o $@ $^
 
-dgdebug:		debugger.o frontend.o report.o arena.o ast.o parse.o compile.o eval.o term_tty.o accesspred.o output.o unicode.o fs_tty.o
+dgdebug.wasm:		${DGDEBUG_OBJS:.o=.c}
+			${WASI_CC} ${WASI_CFLAGS} ${WASI_LDFLAGS} -o $@ $^
+
+dgdebug:		${DGDEBUG_OBJS}
 			${CC} ${LDFLAGS} -o $@ $^ ${LDLIBS}
 
-dialogc.exe:		frontend.c backend_z.c runtime_z.c blorb.c dumb_output.c dumb_report.c arena.c ast.c parse.c compile.c eval.c accesspred.c unicode.c backend.c aavm.c backend_aa.c crc32.c ifid.c
+dialogc.exe:		${DIALOGC_OBJS:.o=.c}
 			${MINGW32} ${CFLAGS} -o $@ $^
 
 # Terminal version
-dgdebug.exe:	debugger.c frontend.c report.c arena.c ast.c parse.c compile.c eval.c term_tty.c accesspred.c output.c unicode.c fs_tty.c
+dgdebug.exe:	${DGDEBUG_OBJS:.o=.c}
 			${MINGW32} ${CFLAGS} -o $@ $^
 
 # Windows Glk version

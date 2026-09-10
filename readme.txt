@@ -39,7 +39,7 @@ mingw32):
 
 Building the WASM version (requires https://github.com/webassembly/wasi-sdk):
 
-	make -C src dialogc.wasm WASI_SDK=/path/to/wasi-sdk
+	make -C src dialogc.wasm dgdebug.wasm WASI_SDK=/path/to/wasi-sdk
 	wasmtime run --dir=. src/dialogc.wasm story.dg stdlib.dg
 
 Project website:
