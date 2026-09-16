@@ -189,8 +189,9 @@
 		
 %%===================================================Status Lines===================================================
 
-(style class @status)
-	height: 1em;
+%% CHANGED DMS - Dialog now warns about duplicate definitions, and this one is unnecessary (stdlib contains exactly the same thing)
+%% (style class @status)
+%%	height: 1em;
 
 (style class @timename)
 	height: 1em;
