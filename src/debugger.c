@@ -1418,12 +1418,6 @@ int debugger(int argc, char **argv) {
 				dbg.randomseed = strtol(optarg, 0, 10);
 				break;
 			case 'W':
-				for(i = 0; optarg[i]; i++) { // We can't handle them yet, but we can at least fail gracefully
-					if(optarg[i] > 0x7f) {
-						report(LVL_ERR, 0, "The debugger does not currently support non-ASCII --word-seps");
-						exit(1);
-					}
-				}
 				wordseps = (uint8_t*)strdup(optarg);
 				break;
 			case 'L':
@@ -1451,13 +1445,13 @@ int debugger(int argc, char **argv) {
 				} else if(!strcmp(optarg, "none")) {
 					output_config.formatting = FORMAT_NEVER;
 				} else {
-					fprintf(stderr, "Unrecognized formatting style \"%s\"; valid styles are \"default\", \"ansi\", or \"none\"\n", optarg);
+					fprintf(stderr, "Error: Unrecognized formatting style \"%s\"; valid styles are \"default\", \"ansi\", or \"none\"\n", optarg);
 					return 1;
 				}
 				break;
 			default:
 				if(opt >= 0) {
-					fprintf(stderr, "Unimplemented option '%c'\n", opt);
+					fprintf(stderr, "Error: Unimplemented option '%c'\n", opt);
 					return 1;
 				}
 				break;
@@ -1494,6 +1488,12 @@ int debugger(int argc, char **argv) {
 	}
 	
 	if(wordseps) {
+		for(i = 0; wordseps[i]; i++) { // We can't handle them yet, but we can at least fail gracefully
+			if(wordseps[i] > 0x7f) {
+				report(LVL_ERR, 0, "The debugger does not currently support non-ASCII --word-seps");
+				exit(1);
+			}
+		}
 		prepare_wordseps(wordseps);
 		free(wordseps);
 	} else {
