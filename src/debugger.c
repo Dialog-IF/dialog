@@ -1418,6 +1418,12 @@ int debugger(int argc, char **argv) {
 				dbg.randomseed = strtol(optarg, 0, 10);
 				break;
 			case 'W':
+				for(i = 0; optarg[i]; i++) { // We can't handle them yet, but we can at least fail gracefully
+					if(optarg[i] > 0x7f) {
+						report(LVL_ERR, 0, "The debugger does not currently support non-ASCII --word-seps");
+						exit(1);
+					}
+				}
 				wordseps = (uint8_t*)strdup(optarg);
 				break;
 			case 'L':
