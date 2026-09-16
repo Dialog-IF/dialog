@@ -10,8 +10,8 @@ Versions from 2025 onward can be found here:
 
 The archive contains the full source code for the Dialog compiler and
 interactive debugger, as well as pre-built executable files for Linux
-(x86_64) and Windows. The compiler is called `dialogc`, and the debugger
-is called `dgdebug`.
+(x86_64), OS X (single binaries for both Intel and ARM), and Windows.
+The compiler is called `dialogc`, and the debugger is called `dgdebug`.
 
 Alternately, if you are on OS X, you can install the
 [Homebrew package manager](https://brew.sh/),
@@ -272,7 +272,7 @@ of a code change.
 
 Performs an undo operation, and then re-enters the most recent line of input.
 This command offers more fine-grained control than `@replay`, and generally
-works better for games with randomized behaviour. It lets you focus on the local
+works better for games with randomized behavior. It lets you focus on the local
 effects of a code change.
 
 @g::

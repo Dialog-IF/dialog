@@ -1,7 +1,9 @@
 #include <assert.h>
 #include <errno.h>
 #include <getopt.h>
-#include <signal.h>
+#ifndef __wasi__
+#include <signal.h> // Not used under WASI, since wasm lacks signal support
+#endif
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
