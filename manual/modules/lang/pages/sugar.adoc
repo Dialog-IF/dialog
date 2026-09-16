@@ -403,8 +403,8 @@ Slash-expressions may only appear in rule heads, never inside rule bodies.
 Dialog can support just about any characters in source code, whether that's A, Ÿ,
 Σ, 五, or ✨. However, these characters are not always easy to type. Sometimes it's
 more convenient to refer to characters by Unicode codepoint; when this happens,
-you can instead refer to those characters as `\x{41}`, `\x{178}`, `\x{3A3}`,
-`\x{4e94}`, and `\x{2728}`. The two are exactly equivalent to the compiler, which
+you can instead refer to those characters as ``\x{41}``, ``\x{178}``, ``\x{3A3}``,
+``\x{4e94}``, and ``\x{2728}``. The two are exactly equivalent to the compiler, which
 allows for some truly awful source code:
 
 [source]
@@ -413,8 +413,8 @@ allows for some truly awful source code:
 ----
 
 But this is far less readable than `(program entry point)` and should be avoided
-at any cost. Still, `\x{200D}` is much clearer than a literal zero-width joiner,
-and `\x{301}` much clearer than a literal combining acute accent. Sometimes the
+at any cost. Still, ``\x{200D}`` is much clearer than a literal zero-width joiner,
+and ``\x{301}`` much clearer than a literal combining acute accent. Sometimes the
 difference between codepoints can be easier to read than the difference between
 the actual characters.
 

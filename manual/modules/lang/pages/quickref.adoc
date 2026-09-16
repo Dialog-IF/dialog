@@ -14,7 +14,7 @@ print.
 
 xref:sugar.adoc#unicode[Unicode escapes]: ::
 
-`\x{3C4}` is exactly equivalent to character U+03C4.
+``\x{3C4}`` is exactly equivalent to character U+03C4.
 
 xref:execution.adoc#predicates[Rule definitions]: ::
 
