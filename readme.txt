@@ -50,6 +50,9 @@ Release notes:
 
 	1c/04, Lib 1.2.4:
 
+		Language: ($ times $ into $) now fails if the product is too
+		large, rather than succeeding with the wrong result.
+
 		Compiler: improved dictionary word matching accuracy.
 
 		Compiler: Improved ordering of strings in WRIT chunk, which

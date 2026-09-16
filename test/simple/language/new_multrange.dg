@@ -1,0 +1,15 @@
+(program entry point)
+	100 times 100 is
+	(if) (100 times 100 into $X) (then)
+		$X
+	(else)
+		not computable
+	(endif)
+	.
+	150 times 150 is
+	(if) (150 times 150 into $Y) (then)
+		$Y
+	(else)
+		not computable
+	(endif)
+	.
