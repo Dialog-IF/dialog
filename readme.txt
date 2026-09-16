@@ -52,6 +52,9 @@ Release notes:
 
 		Compiler: improved dictionary word matching accuracy.
 
+		Compiler: Improved ordering of strings in WRIT chunk, which
+		improves performance on slow platforms like 6502.
+
 	1c/03, Lib 1.2.4:
 
 		Language: CSS text-decoration: reverse has been replaced with
