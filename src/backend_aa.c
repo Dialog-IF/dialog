@@ -75,6 +75,7 @@ static int n_decodetable;
 
 static struct dictentry *dictionary;
 static int ndict;
+static int dict_maxlen;		// length of the longest dictionary word
 
 static int first_sel_byte;
 static int first_gvar;
@@ -294,6 +295,12 @@ void prepare_dictionary_aa(struct program *prg) {
 				i++;
 			}
 		}
+	}
+
+	dict_maxlen = 0;
+	for(i = 0; i < ndict; i++) {
+		n = strlen((char *) dictionary[i].chars);
+		if(n > dict_maxlen) dict_maxlen = n;
 	}
 }
 
@@ -3039,32 +3046,48 @@ static void build_decoder_tree(struct decodernode *node, int i, uint32_t prefix,
 	}
 }
 
-static int find_dict_prefix(uint8_t *aastr) {
-	int i, best = 2, argbest = -1;
-	int begin, end, mid;
-	struct dictentry *de;
+// Compare the first len characters of chars (which must be at least that
+// long) to a complete, nul-terminated dictionary word.
+static int cmp_dict_word(const uint8_t *chars, int len, const uint8_t *word) {
+	int i;
 
-	if(*aastr++ != ' ') return -1;
-	begin = 0;
-	end = ndict;
-	while(begin < end) {
-		mid = (begin + end) / 2;
-		de = &dictionary[mid];
-		for(i = 0; de->chars[i] && aastr[i] == de->chars[i]; i++);
-		if(!de->chars[i]) {
-			if(i > best) {
-				best = i;
-				argbest = mid;
-			}
-			begin = mid + 1;
-		} else if(de->chars[i] > aastr[i]) {
-			end = mid - 1;
-		} else {
-			begin = mid + 1;
-		}
+	for(i = 0; i < len; i++) {
+		if(!word[i]) return 1;
+		if(chars[i] != word[i]) return (int) chars[i] - (int) word[i];
 	}
 
-	return argbest;
+	return word[len] ? -1 : 0;
+}
+
+// Find the longest dictionary word (longer than two characters) that appears
+// right after a space at the beginning of aastr. Such a word can be encoded
+// as a single escape, replacing the space and the word itself.
+static int find_dict_prefix(uint8_t *aastr) {
+	int len, begin, end, mid, diff;
+
+	if(*aastr++ != ' ') return -1;
+
+	for(len = 0; len < dict_maxlen && aastr[len]; len++);
+
+	// do the binary search on strings of the same length
+	// starting with the longest
+	while(len > 2) {
+		begin = 0;
+		end = ndict - 1;
+		while(begin <= end) {
+			mid = (begin + end) / 2;
+			diff = cmp_dict_word(aastr, len, dictionary[mid].chars);
+			if(!diff) return mid;
+			if(diff < 0) {
+				end = mid - 1;
+			} else {
+				begin = mid + 1;
+			}
+		}
+		len--;
+	}
+
+	return -1;
 }
 
 static void analyze_chars() {

@@ -50,6 +50,8 @@ Release notes:
 
 	1c/04, Lib 1.2.4:
 
+		Compiler: improved dictionary word matching accuracy.
+
 		Compiler: Improved ordering of strings in WRIT chunk, which
 		improves performance on slow platforms like 6502.
 
