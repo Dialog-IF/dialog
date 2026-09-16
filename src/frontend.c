@@ -2399,26 +2399,38 @@ static void assign_select_statements(struct program *prg) {
 	selectforms = 0;
 }
 
-char *decode_metadata_str(int builtin, struct word *param, struct program *prg, struct arena *arena) {
+char *decode_metadata_str(int builtin, struct word *param, struct program *prg, struct arena *arena, const char *report_as) {
 	struct predname *predname;
 	struct predicate *pred;
-	char *buf;
+	char *buf = 0;
 	int i;
+	int nfound = 0;
+	line_t whichline = 0;
 
 	predname = find_builtin(prg, builtin);
 	pred = predname->pred;
 	for(i = 0; i < pred->nclause; i++) {
 		if(!param
 		|| (pred->clauses[i]->params[0]->kind == AN_DICTWORD && pred->clauses[i]->params[0]->word == param)) {
-			if(decode_output(&buf, pred->clauses[i]->body, 0, 0, arena, "Story metadata")) {
-				return buf;
-			} else {
-				return 0;
+			if(!nfound) { // First one found
+				if(!decode_output(&buf, pred->clauses[i]->body, 0, 0, arena, "Story metadata")) {
+					buf = 0; // Failed to decode into buf
+				}
+				whichline = pred->clauses[i]->line;
 			}
+			nfound ++;
 		}
 	}
 
-	return 0;
+	if(nfound > 1) {
+		if(param) {
+			report(LVL_WARN, whichline, "%d separate definitions found for (%s @%s). Only the first (at this line) will be used.", nfound, report_as, param->name);
+		} else {
+			report(LVL_WARN, whichline, "%d separate definitions found for (%s). Only the first (at this line) will be used.", nfound, report_as);
+		}
+	}
+
+	return buf;
 }
 
 int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t dictmap_callback) {
@@ -2896,7 +2908,7 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 
 	for(i = 0; i < prg->nboxclass; i++) {
 		struct boxclass *bc = &prg->boxclasses[i];
-		char *css = decode_metadata_str(BI_STYLEDEF, bc->class, prg, &lexer.temp_arena);
+		char *css = decode_metadata_str(BI_STYLEDEF, bc->class, prg, &lexer.temp_arena, "style class");
 		char *param, *str;
 		struct boxclassline *bcl, **bclptr;
 
