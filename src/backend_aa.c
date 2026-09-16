@@ -1277,7 +1277,7 @@ static void compile_routines(struct program *prg, struct predicate *pred, int fi
 				if(ci->subop == BOX_SPAN) {
 					ai = add_instr(AA_ENTER_SPAN);
 					ai->oper[0] = (aaoper_t) {AAO_INDEX, ci->oper[0].value};
-					
+
 					if(prg->boxclasses[ci->oper[0].value].style & STYLE_INVISIBLE
 						&& !warned_about_invisible_spans) {
 						report(LVL_WARN, 0, "(span @%s) makes an invisible span. This is legal, but can produce strange spacing.", prg->boxclasses[ci->oper[0].value].class->name);
@@ -3175,14 +3175,36 @@ static int cmp_stringref(const void *a, const void *b) {
 	return (int) *aa - (int) *bb;
 }
 
+static int string_is_short(uint32_t addr) {
+	return addr <= 0xfe && !(addr & 1);
+}
+
+static int cmp_stringindex(const void *a, const void *b) {
+	return (int) *(const uint16_t *) a - (int) *(const uint16_t *) b;
+}
+
+// Lay the strings out in the given order. Strings in the one-byte operand
+// range have to start at an even address.
+static void place_strings(uint16_t *refs) {
+	uint32_t org = 0;
+	int i;
+
+	for(i = 0; i < n_textstr; i++) {
+		textstrings[refs[i]].address = org;
+		org += (textstrings[refs[i]].bitlength + 7) / 8;
+		if(org <= 253) {
+			org = (org + 1) & ~1;
+		}
+	}
+	writ_size = org;
+}
+
 static void analyze_strings() {
 	int i, j, n, dnum, len;
 	uint32_t bits;
 	uint8_t charcost[129];
 	uint8_t ch;
 	uint16_t refs[n_textstr];
-	struct textstring *ts;
-	uint32_t org;
 
 	for(i = 0; i < 129; i++) {
 		bits = charbits[i];
@@ -3215,19 +3237,37 @@ static void analyze_strings() {
 		refs[i] = i;
 	}
 
+	// Sort all strings by cost.
 	qsort(refs, n_textstr, sizeof(uint16_t), cmp_stringref);
+	// Initial string placement, deciding tiers and computing writ_size.
+	place_strings(refs);
 
-	org = 0;
-	for(i = 0; i < n_textstr; i++) {
-		ts = &textstrings[refs[i]];
-		ts->address = org;
-		//printf("%06x %4d %4d \"%s\"\n", org, (ts->bitlength + 7) / 8, ts->occurrences, ts->chars);
-		org += (ts->bitlength + 7) / 8;
-		if(org <= 253) {
-			org = (org + 1) & ~1;
-		}
+	// Now that we've decided the tiers, sort the medium and long tiers
+	// back into reference order to improve locality on antique backends.
+	for(n = 0; n < n_textstr; n++) {
+		if(!string_is_short(textstrings[refs[n]].address)) break;
 	}
-	writ_size = org;
+	for(i = n; i < n_textstr; i++) {
+		if(textstrings[refs[i]].address > 0x3fff) break;
+	}
+	qsort(refs + n, i - n, sizeof(uint16_t), cmp_stringindex);
+	qsort(refs + i, n_textstr - i, sizeof(uint16_t), cmp_stringindex);
+
+	if(i > n) {
+		// Move the longest string to the end, because it is the last
+		// string that starts below 0x4000 and crosses that boundary.
+		uint16_t longest;
+
+		for(j = n, len = n; j < i; j++) {
+			if(textstrings[refs[j]].bitlength > textstrings[refs[len]].bitlength) len = j;
+		}
+		longest = refs[len];
+		memmove(refs + len, refs + len + 1, (i - len - 1) * sizeof(uint16_t));
+		refs[i - 1] = longest;
+	}
+
+	// Final string placement.
+	place_strings(refs);
 }
 
 static int compile_endings_check(uint8_t *dest, int org, struct endings_point *pt) {
@@ -3577,7 +3617,7 @@ static void chunks_file(FILE *f, struct program *prg, char *resdir) {
 			if(pad) fputc(0, f);
 			free(buf);
 			free(pathbuf);
-			
+
 			report(LVL_DEBUG, 0, "Added resource file %s (%d bytes)", prg->resources[i].stem, size);
 		}
 	}
@@ -3858,12 +3898,12 @@ static void chunk_look(FILE *f, struct program *prg, uint32_t *crc) {
 		for(bcl = prg->boxclasses[i].css_lines; bcl; bcl = bcl->next) {
 			org += strlen(bcl->data) + 1;
 		}
-		
+
 		// Add space for the extra line
 		org += strlen(extraline);
 		org += strlen(prg->boxclasses[i].class->name);
 		org++;
-		
+
 		org++;
 	}
 
@@ -3893,7 +3933,7 @@ static void chunk_look(FILE *f, struct program *prg, uint32_t *crc) {
 			putbyte_crc(prg->boxclasses[i].class->name[j], f, crc);
 		}
 		putbyte_crc(0, f, crc);
-		
+
 		putbyte_crc(0, f, crc); // Terminator for the whole thing
 	}
 
@@ -4001,7 +4041,7 @@ void backend_aa(
 	fputc((crc >> 0) & 0xff, f);
 
 	fclose(f);
-	
+
 	report(LVL_DEBUG, 0, "Objects used: %d of %d (%d%%)", prg->nworldobj, 0x1ffe, (prg->nworldobj)*100/0x1ffe);
 	report(LVL_DEBUG, 0, "Dictionary words used: %d of %d (%d%%)", prg->ndictword, 0x1dff, (prg->ndictword)*100/0x1dff);
 	report(LVL_DEBUG, 0, "Non-ASCII characters used: %d of %d (%d%%)", ncharmap, 128, ncharmap*100/128);
