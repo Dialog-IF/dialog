@@ -50,12 +50,15 @@ Release notes:
 
 	1c/04, Lib 1.2.4:
 
+		Compiler: multiple definitions for the same style class or
+		metadata predicate now produce a warning.
+
 		Compiler: improved dictionary word matching accuracy.
 
-		Compiler: Improved ordering of strings in WRIT chunk, which
+		Compiler: improved ordering of strings in WRIT chunk, which
 		improves performance on slow platforms like 6502.
 
-	1c/03, Lib 1.2.4:
+	1c/03, Lib 1.2.3:
 
 		Language: CSS text-decoration: reverse has been replaced with
 		-iftf-reverse-video: reverse for compatibility reasons.

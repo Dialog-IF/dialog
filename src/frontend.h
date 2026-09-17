@@ -16,7 +16,7 @@ int body_succeeds(struct astnode *an);
 int body_might_stop(struct astnode *an);
 int body_succeeds_at_most_once(struct astnode *an);
 void frontend_add_builtins(struct program *prg);
-char *decode_metadata_str(int builtin, struct word *param, struct program *prg, struct arena *arena);
+char *decode_metadata_str(int builtin, struct word *param, struct program *prg, struct arena *arena, const char *report_as, int lib_file);
 int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t dictmap_callback);
 int frontend_inject_query(struct program *prg, struct predname *predname, struct predname *tailpred, struct word *prompt, const uint8_t *str);
 

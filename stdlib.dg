@@ -1,5 +1,5 @@
 
-(library version) Library version 1.2.3.
+(library version) Library version 1.2.4.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -5148,18 +5148,20 @@
 (story author or default)	(story author)
 (story author or default)	Anonymous
 
-%% Don't warn about querying these; however, this does not disable the warning
-%% about them not being defined (for a sufficiently large story):
-
-(story title)		(fail)
-(story author)		(fail)
-
 %% We can safely supply defaults for the following:
 
 (story release 1)
 
 (story noun)
 	An interactive fiction
+
+%% Don't warn about querying these; however, this does not disable the warning
+%% about them not being defined (for a sufficiently large story):
+
+(story title)		(fail)
+(story author)		(fail)
+(story noun)		(fail)
+(story release $)	(fail)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Game over
