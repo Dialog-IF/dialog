@@ -300,7 +300,7 @@ int main(int argc, char **argv) {
 
 	need_meta = prg->totallines > 100;
 
-	prg->meta_ifid = decode_metadata_str(BI_STORY_IFID, 0, prg, &prg->arena, "story ifid");
+	prg->meta_ifid = decode_metadata_str(BI_STORY_IFID, 0, prg, &prg->arena, "story ifid", -1);
 	if(!prg->meta_ifid) {
 		if(!strcmp(format, "zblorb")) { // Mandatory for zblorb, make it an error
 			report(LVL_ERR, 0, "An IFID is mandatory for the blorb output format.");
@@ -315,25 +315,25 @@ int main(int argc, char **argv) {
 		prg->meta_ifid = 0;
 	}
 
-	prg->meta_author = decode_metadata_str(BI_STORY_AUTHOR, 0, prg, &prg->arena, "story author");
+	prg->meta_author = decode_metadata_str(BI_STORY_AUTHOR, 0, prg, &prg->arena, "story author", -1);
 	if(!prg->meta_author) {
 		if(need_meta) {
 			report(LVL_WARN, 0, "No author declared.");
 		}
 		prg->meta_author = "Anonymous";
 	}
-	prg->meta_title = decode_metadata_str(BI_STORY_TITLE, 0, prg, &prg->arena, "story title");
+	prg->meta_title = decode_metadata_str(BI_STORY_TITLE, 0, prg, &prg->arena, "story title", -1);
 	if(!prg->meta_title) {
 		if(need_meta) {
 			report(LVL_WARN, 0, "No title declared.");
 		}
 		prg->meta_title = "An Interactive Fiction";
 	}
-	prg->meta_noun = decode_metadata_str(BI_STORY_NOUN, 0, prg, &prg->arena, "story noun");
+	prg->meta_noun = decode_metadata_str(BI_STORY_NOUN, 0, prg, &prg->arena, "story noun", -1);
 	if(!prg->meta_noun) {
 		prg->meta_noun = "An Interactive Fiction";
 	}
-	prg->meta_blurb = decode_metadata_str(BI_STORY_BLURB, 0, prg, &prg->arena, "story blurb");
+	prg->meta_blurb = decode_metadata_str(BI_STORY_BLURB, 0, prg, &prg->arena, "story blurb", -1);
 
 	predname = find_builtin(prg, BI_STORY_RELEASE);
 	if(predname && (pred = predname->pred)->nclause) {

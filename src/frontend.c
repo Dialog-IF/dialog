@@ -2399,12 +2399,13 @@ static void assign_select_statements(struct program *prg) {
 	selectforms = 0;
 }
 
-char *decode_metadata_str(int builtin, struct word *param, struct program *prg, struct arena *arena, const char *report_as) {
+char *decode_metadata_str(int builtin, struct word *param, struct program *prg, struct arena *arena, const char *report_as, int lib_file) {
 	struct predname *predname;
 	struct predicate *pred;
 	char *buf = 0;
 	int i;
 	int nfound = 0;
+	int nlib = 0;
 	line_t whichline = 0;
 
 	predname = find_builtin(prg, builtin);
@@ -2419,12 +2420,15 @@ char *decode_metadata_str(int builtin, struct word *param, struct program *prg, 
 				whichline = pred->clauses[i]->line;
 			}
 			nfound ++;
+			if(FILENUMPART(pred->clauses[i]->line) == lib_file) { // This one was in a library file
+				nlib ++;
+			}
 		}
 	}
 
-	if(nfound > 1) {
+	if(nfound - nlib > 1) {
 		if(param) {
-			report(LVL_WARN, whichline, "%d separate definitions found for (%s @%s). Only the first (at this line) will be used.", nfound, report_as, param->name);
+			report(LVL_WARN, whichline, "%d separate definitions found for (%s @%s) outside of the library. Only the first (at this line) will be used.", nfound, report_as, param->name);
 		} else {
 			// Disabling the warnings for meta predicates, which can usefully have defaults given in the library. Now they will only exist for style classes.
 	//		report(LVL_WARN, whichline, "%d separate definitions found for (%s). Only the first (at this line) will be used.", nfound, report_as);
@@ -2909,7 +2913,7 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 
 	for(i = 0; i < prg->nboxclass; i++) {
 		struct boxclass *bc = &prg->boxclasses[i];
-		char *css = decode_metadata_str(BI_STYLEDEF, bc->class, prg, &lexer.temp_arena, "style class");
+		char *css = decode_metadata_str(BI_STYLEDEF, bc->class, prg, &lexer.temp_arena, "style class", lexer.lib_file);
 		char *param, *str;
 		struct boxclassline *bcl, **bclptr;
 
