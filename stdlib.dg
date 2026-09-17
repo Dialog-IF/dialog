@@ -5117,11 +5117,11 @@
 (banner)
 	(par)
 	(div @title) (story title or default)
-	(story noun or default) by (story author or default).
+	(story noun) by (story author or default).
 	(line)
 	(additional banner text)
 	(line)
-	(story release or default $RelNum)
+	(story release $RelNum)
 	Release $RelNum.
 	Serial number (serial number).
 	(line)
@@ -5148,11 +5148,12 @@
 (story author or default)	(story author)
 (story author or default)	Anonymous
 
-(story noun or default)	(story noun)
-(story noun or default)	An interactive fiction
+%% We can safely supply defaults for the following:
 
-(story release or default $N) (story release $N)
-(story release or default 1)
+(story release 1)
+
+(story noun)
+	An interactive fiction
 
 %% Don't warn about querying these; however, this does not disable the warning
 %% about them not being defined (for a sufficiently large story):
