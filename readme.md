@@ -52,7 +52,7 @@ wasmtime run --dir=. src/dialogc.wasm story.dg stdlib.dg
 
 <https://github.com/Dialog-IF/dialog/>
 
-## Release notes:
+## Release notes
 
 ### 1c/04, Lib 1.2.4:
 
@@ -60,6 +60,8 @@ wasmtime run --dir=. src/dialogc.wasm story.dg stdlib.dg
 
 		Compiler: Improved ordering of strings in WRIT chunk, which
 		improves performance on slow platforms like 6502.
+
+		Documentation: Convert the repository readme to markdown.
 
 ### 1c/03, Lib 1.2.4:
 
