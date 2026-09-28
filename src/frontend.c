@@ -2498,6 +2498,7 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 	} else if(lexer.lib_file != nfile - 1) {
 		report(LVL_WARN, 0, "The library (in this case %s) should normally appear last on the commandline.", sourcefile[lexer.lib_file]);
 	}
+	prg->lib_file = lexer.lib_file;
 	
 	// Warn about objects never used as topics, depending on topic_warning_level
 	if(prg->topic_warning_level == WARN_DEFAULT && lexer.lib_file >= 0) { // Default: warn only if library file found
