@@ -467,6 +467,7 @@ xref:miscfeat.adoc#commoncomplaints[`(when $ is part of something)`] +
 xref:miscfeat.adoc#commoncomplaints[`(when $ is worn by someone)`] +
 xref:miscfeat.adoc#commoncomplaints[`(when $ won't accept $)`] +
 xref:miscfeat.adoc#commoncomplaints[`(when $ won't accept actor $)`] +
+xref:miscfeat.adoc#commoncomplaints[`(when $ would object to that)`] +
 xref:lang:builtins.adoc#typechecks[`(word $)`] +
 xref:miscfeat.adoc#questions[`(yesno)`] +
 xref:traits.adoc#linguistictraits[`(your $)`] +

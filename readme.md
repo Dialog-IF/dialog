@@ -54,7 +54,11 @@ wasmtime run --dir=. src/dialogc.wasm story.dg stdlib.dg
 
 ## Release notes
 
-### 1c/04, Lib 1.2.3:
+### 1c/04, Lib 1.2.4:
+
+		Library: many actions on NPCs are now blocked by a new
+		(when $ would object to that) predicate. You can no longer
+		SQUEEZE, CLEAN, or TURN other people, among others.
 
 		Compiler: multiple definitions for the same style class or
 		metadata predicate (outside the library) now produce a warning.

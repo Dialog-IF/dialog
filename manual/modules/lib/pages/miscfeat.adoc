@@ -364,6 +364,10 @@ relation.
 
 “You will have to get off the chair first.”
 
+(when $Person would object to that)::
+
+Prevents actions like turning and squeezing from being applied to living people other than the player. The library places this one in a `(perform $)` rule so that it can be more easily overridden.
+
 Note that it is possible to override these common complaint messages on a
 per-object basis, without editing the standard library code. Just remember that
 the when-rule needs to check the appropriate condition before printing the
