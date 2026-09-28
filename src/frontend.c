@@ -2430,8 +2430,7 @@ char *decode_metadata_str(int builtin, struct word *param, struct program *prg, 
 		if(param) {
 			report(LVL_WARN, whichline, "%d separate definitions found for (%s @%s) outside of the library. Only the first (at this line) will be used.", nfound, report_as, param->name);
 		} else {
-			// Disabling the warnings for meta predicates, which can usefully have defaults given in the library. Now they will only exist for style classes.
-	//		report(LVL_WARN, whichline, "%d separate definitions found for (%s). Only the first (at this line) will be used.", nfound, report_as);
+			report(LVL_WARN, whichline, "%d separate definitions found for (%s) outside of the library. Only the first (at this line) will be used.", nfound, report_as);
 		}
 	}
 
