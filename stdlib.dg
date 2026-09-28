@@ -1108,6 +1108,7 @@
 
 (perform [feel $Obj])
 	(when $Obj would object to that)
+	(tick) (stop)
 
 (perform [feel $Obj])
 	(feel $Obj)
@@ -1325,6 +1326,7 @@
 
 (perform [take $Obj])
 	(when $Obj would object to that)
+	(tick) (stop)
 
 (narrate taking $Obj)
 	(current player $Actor)
@@ -1516,9 +1518,12 @@
 	(when $Dest is closed)
 
 (perform [put $A $ $B])
-	(when $A would object to that)
+	{
+		(when $A would object to that)
 	(or)
-	(when $B would object to that)
+		(when $B would object to that)
+	}
+	(tick) (stop)
 
 (narrate putting $Obj $Rel $Dest)
 	You put (the $Obj) (name $Rel) (the $Dest).
@@ -1985,6 +1990,7 @@
 
 (perform [squeeze $Obj])
 	(when $Obj would object to that)
+	(tick) (stop)
 
 (perform [squeeze $Obj])
 	You give (the $Obj) a bit of a squeeze.
@@ -1998,6 +2004,7 @@
 
 (perform [fix $Obj])
 	(when $Obj would object to that)
+	(tick) (stop)
 
 (prevent [fix $Obj])
 	($Obj is in order)
@@ -2078,6 +2085,7 @@
 
 (perform [eat $Obj])
 	(when $Obj would object to that)
+	(tick) (stop)
 
 (narrate eating $Obj)
 	You eat (the $Obj).
@@ -2110,6 +2118,7 @@
 
 (perform [drink $Obj])
 	(when $Obj would object to that)
+	(tick) (stop)
 
 (perform [drink $Obj])
 	You take a sip from (the $Obj).
@@ -2135,6 +2144,7 @@
 
 (perform [cut $Obj with $])
 	(when $Obj would object to that)
+	(tick) (stop)
 
 (perform [cut $Obj with $])
 	You consider cutting
@@ -2856,6 +2866,7 @@
 
 (perform [push $Obj])
 	(when $Obj would object to that)
+	(tick) (stop)
 
 (perform [push (room $)])
 	Pushing on your surroundings has no effect.
@@ -2873,6 +2884,7 @@
 
 (perform [pull $Obj])
 	(when $Obj would object to that)
+	(tick) (stop)
 
 (perform [pull $Obj])
 	You yank at (the $Obj), but
@@ -2891,6 +2903,7 @@
 
 (perform [turn $Obj])
 	(when $Obj would object to that)
+	(tick) (stop)
 
 (perform [turn $Obj])
 	Turning (the $Obj) has no apparent effect.
@@ -2936,6 +2949,7 @@
 
 (perform [clean $Obj])
 	(when $Obj would object to that)
+	(tick) (stop)
 
 (perform [clean $Obj])
 	You make a half-hearted attempt at cleaning (the $Obj).
@@ -2962,9 +2976,12 @@
 	(asking for object in [tie $Obj to []])
 
 (perform [tie $A to $B])
-	(when $A would object to that)
+	{
+		(when $A would object to that)
 	(or)
-	(when $B would object to that)
+		(when $B would object to that)
+	}
+	(tick) (stop)
 
 (perform [tie $A to $B])
 	There's no obvious way to tie (the $A) to (the $B).
@@ -4949,7 +4966,6 @@
 	(animate $Person)
 	~(current player $Person)
 	(The $Person) might object to that.
-	(tick) (stop) %% Since this is placed in (perform $) rules
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Program entry, main loop, status bar, score
