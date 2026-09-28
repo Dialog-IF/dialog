@@ -54,7 +54,10 @@ wasmtime run --dir=. src/dialogc.wasm story.dg stdlib.dg
 
 ## Release notes
 
-### 1c/04, Lib 1.2.4:
+### 1c/04, Lib 1.2.3:
+
+		Compiler: multiple definitions for the same style class or
+		metadata predicate (outside the library) now produce a warning.
 
 		Compiler: improved dictionary word matching accuracy.
 
@@ -63,7 +66,7 @@ wasmtime run --dir=. src/dialogc.wasm story.dg stdlib.dg
 
 		Documentation: Convert the repository readme to markdown.
 
-### 1c/03, Lib 1.2.4:
+### 1c/03, Lib 1.2.3:
 
 		Language: CSS text-decoration: reverse has been replaced with
 		-iftf-reverse-video: reverse for compatibility reasons.
