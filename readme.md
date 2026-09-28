@@ -54,7 +54,11 @@ wasmtime run --dir=. src/dialogc.wasm story.dg stdlib.dg
 
 ## Release notes
 
-### 1c/04, Lib 1.2.3:
+### 1c/04, Lib 1.2.4:
+
+		Library: LOOK OUT in a room without an #out exit now lists the
+		possible exits. The previous message, "There's no obvious way
+		out of here", was often misleading.
 
 		Compiler: multiple definitions for the same style class or
 		metadata predicate (outside the library) now produce a warning.
@@ -67,7 +71,7 @@ wasmtime run --dir=. src/dialogc.wasm story.dg stdlib.dg
 		Debugger: fails more gracefully when given non-ASCII word
 		separators.
 
-		Documentation: Convert the repository readme to markdown.
+		Distribution: Convert the repository readme to markdown.
 
 ### 1c/03, Lib 1.2.3:
 

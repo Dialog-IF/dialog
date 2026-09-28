@@ -1,5 +1,5 @@
 
-(library version) Library version 1.2.3.
+(library version) Library version 1.2.4.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -803,7 +803,7 @@
 	Your introspection reveals nothing.
 
 (narrate failing to look #out)
-	There's no obvious way out of here.
+	(try [exits])
 
 (narrate failing to look $)
 	You see nothing unexpected in that direction.
