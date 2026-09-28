@@ -64,6 +64,9 @@ wasmtime run --dir=. src/dialogc.wasm story.dg stdlib.dg
 		Compiler: Improved ordering of strings in WRIT chunk, which
 		improves performance on slow platforms like 6502.
 
+		Debugger: fails more gracefully when given non-ASCII word
+		separators.
+
 		Documentation: Convert the repository readme to markdown.
 
 ### 1c/03, Lib 1.2.3:
