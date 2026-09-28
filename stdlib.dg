@@ -1,5 +1,5 @@
 
-(library version) Library version 1.2.3.
+(library version) Library version 1.2.4.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Global variables
@@ -1107,6 +1107,9 @@
 (grammar [feel/touch/finger/rub/prod [object]] for [feel $])
 
 (perform [feel $Obj])
+	(when $Obj would object to that)
+
+(perform [feel $Obj])
 	(feel $Obj)
 
 %% LISTEN TO <obj>
@@ -1320,6 +1323,9 @@
 	(or) (when $Obj is worn by someone)
 	(or) (when $Obj can't be taken)
 
+(perform [take $Obj])
+	(when $Obj would object to that)
+
 (narrate taking $Obj)
 	(current player $Actor)
 	You take (the $Obj)
@@ -1508,6 +1514,11 @@
 
 (prevent [put $ #in $Dest])
 	(when $Dest is closed)
+
+(perform [put $A $ $B])
+	(when $A would object to that)
+	(or)
+	(when $B would object to that)
 
 (narrate putting $Obj $Rel $Dest)
 	You put (the $Obj) (name $Rel) (the $Dest).
@@ -1973,6 +1984,9 @@
 (grammar [squeeze/squash [object]] for [squeeze $])
 
 (perform [squeeze $Obj])
+	(when $Obj would object to that)
+
+(perform [squeeze $Obj])
 	You give (the $Obj) a bit of a squeeze.
 
 %% FIX <obj>
@@ -1981,6 +1995,9 @@
 
 (unlikely [fix $Obj])
 	($Obj is in order)
+
+(perform [fix $Obj])
+	(when $Obj would object to that)
 
 (prevent [fix $Obj])
 	($Obj is in order)
@@ -2059,6 +2076,9 @@
 	(item $Obj)
 	(when $Obj isn't directly held)
 
+(perform [eat $Obj])
+	(when $Obj would object to that)
+
 (narrate eating $Obj)
 	You eat (the $Obj).
 
@@ -2089,6 +2109,9 @@
 	(when $Obj isn't directly held)
 
 (perform [drink $Obj])
+	(when $Obj would object to that)
+
+(perform [drink $Obj])
 	You take a sip from (the $Obj).
 
 %% CUT <obj> WITH <obj>
@@ -2109,6 +2132,9 @@
 (prevent [cut $ with $Obj])
 	~(sharp $Obj)
 	(The $Obj is) too blunt for that. %% Funny when Obj is the player.
+
+(perform [cut $Obj with $])
+	(when $Obj would object to that)
 
 (perform [cut $Obj with $])
 	You consider cutting
@@ -2828,6 +2854,9 @@
 	In what direction?
 	(asking for direction in [push $Obj []])
 
+(perform [push $Obj])
+	(when $Obj would object to that)
+
 (perform [push (room $)])
 	Pushing on your surroundings has no effect.
 
@@ -2843,6 +2872,9 @@
 (grammar [pull/yank/drag/tug/tow on [object]] for [pull $])
 
 (perform [pull $Obj])
+	(when $Obj would object to that)
+
+(perform [pull $Obj])
 	You yank at (the $Obj), but
 	(if) (item $Obj) (then)
 		nothing noteworthy happens.
@@ -2856,6 +2888,9 @@
 
 (prevent [turn (room $Obj)])
 	You can't turn (the $Obj).
+
+(perform [turn $Obj])
+	(when $Obj would object to that)
 
 (perform [turn $Obj])
 	Turning (the $Obj) has no apparent effect.
@@ -2900,6 +2935,9 @@
 (grammar [clean/brush/shine/polish/sweep/dust/wipe/scrub [object]] for [clean $])
 
 (perform [clean $Obj])
+	(when $Obj would object to that)
+
+(perform [clean $Obj])
 	You make a half-hearted attempt at cleaning (the $Obj).
 
 %% TIE <obj> TO <obj>
@@ -2922,6 +2960,11 @@
 (perform [tie $Obj])
 	To what?
 	(asking for object in [tie $Obj to []])
+
+(perform [tie $A to $B])
+	(when $A would object to that)
+	(or)
+	(when $B would object to that)
 
 (perform [tie $A to $B])
 	There's no obvious way to tie (the $A) to (the $B).
@@ -4901,6 +4944,12 @@
 	(else)
 		(The $Obj) (doesn't $Obj) allow you to pass.
 	(endif)
+
+(when $Person would object to that)
+	(animate $Person)
+	~(current player $Person)
+	(The $Person) might object to that.
+	(tick) (stop) %% Since this is placed in (perform $) rules
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Program entry, main loop, status bar, score
