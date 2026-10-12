@@ -24,6 +24,10 @@ jobs:
           install -c -m 755 dfrotz /usr/local/bin
       - name: get the Å-machine interpreter
         run: git clone https://github.com/Dialog-IF/aamachine.git
+      - name: set up Å-machine tools
+        run: |
+          cd aamachine
+          make tools
       - name: set up the 6502 emulator
         run: |
           sudo apt install xa65
