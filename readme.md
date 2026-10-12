@@ -60,6 +60,10 @@ wasmtime run --dir=. src/dialogc.wasm story.dg stdlib.dg
 		possible exits. The previous message, "There's no obvious way
 		out of here", was often misleading.
 
+		Library: many actions on NPCs are now blocked by a new
+		(when $ would object to that) predicate. You can no longer
+		SQUEEZE, CLEAN, or TURN other people, among others.
+
 		Compiler: multiple definitions for the same style class or
 		metadata predicate (outside the library) now produce a warning.
 
