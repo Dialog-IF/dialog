@@ -56,6 +56,10 @@ wasmtime run --dir=. src/dialogc.wasm story.dg stdlib.dg
 
 ### 1c/04, Lib 1.2.4:
 
+		Library: LOOK OUT in a room without an #out exit now lists the
+		possible exits. The previous message, "There's no obvious way
+		out of here", was often misleading.
+
 		Library: many actions on NPCs are now blocked by a new
 		(when $ would object to that) predicate. You can no longer
 		SQUEEZE, CLEAN, or TURN other people, among others.
@@ -71,7 +75,7 @@ wasmtime run --dir=. src/dialogc.wasm story.dg stdlib.dg
 		Debugger: fails more gracefully when given non-ASCII word
 		separators.
 
-		Documentation: Convert the repository readme to markdown.
+		Distribution: Convert the repository readme to markdown.
 
 ### 1c/03, Lib 1.2.3:
 
