@@ -3,6 +3,13 @@ DIFF = diff
 
 all: test
 
+ifeq (, $(shell which aambundle))
+# Github environment
+AAMBUNDLE = ../../aamachine/src/aambundle
+else
+AAMBUNDLE = aambundle
+endif
+
 # Ensure we don't have to worry about (serial number) changing by date
 stdlib.dg: ../../stdlib.dg
 	cp ../../stdlib.dg stdlib.dg
@@ -13,8 +20,11 @@ stdlib.dg: ../../stdlib.dg
 impossible.aastory: ../../src/dialogc ImpossibleStairs.dg stdlib.dg
 	../../src/dialogc -t aa --no-warn-not-topic ImpossibleStairs.dg stdlib.dg -o impossible.aastory
 
-6502.out: impossible.aastory impossible.in
-	../../bin/6502run.py impossible.aastory <impossible.in >6502.out
+impossible.ustory: impossible.aastory
+	$(AAMBUNDLE) -t aambox impossible.aastory -o impossible.ustory
+
+6502.out: impossible.ustory impossible.in
+	../../bin/6502run.py impossible.ustory <impossible.in >6502.out
 
 6502: 6502.out
 	$(DIFF) 6502.out 6502.gold
