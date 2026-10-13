@@ -905,6 +905,1403 @@ despite having a lot of computation happening under the surface.
 
 The moral of the story: test code is code, and refactoring it helps, too. 
 
+[#model]
+=== Testing the Object Model
+
+So far, we've been testing extension code and helper methods, and not
+the game object model itself. While extension code particularly lends
+itself to being unit tested, you can use `unit.dg` tests to test
+the main `stdlib.dg` object model, too.
+
+One caveat is that `unit.dg` depends on its implementation of
+`(program entry point)` and `(error $ entry point)` to function
+properly. If you've overridden those predicates in your game,  you'll
+need to isolate them in a separate file that doesn't get included in
+your unit tests. If there's any interesting code in your `(program
+entry point)` you'll want to extract it into another predicate that
+`(program entry point)` calls, so that it can be tested.
+
+We'll use the Dialog adaptation of Roger Firth's _Cloak of Darkness_
+as our example. _Cloak of Darkness_ is intentionally a minimalist
+game, designed to exercise the basic functions of different
+interactive fiction systems. Other than the very basics of movement
+and inventory management (for which there is only a single takeable
+item), the behaviours in the game that need to go right are
+
+- extinguishing the light in the Foyer Bar if the player wears the cloak
+- preventing the player from dropping the cloak anywhere
+- being warned about blundering around in the dark
+- destroying the message if the player blunders around in the dark
+  once warned
+- correctly displaying the cloak hanging on the hook
+- scoring a point for hanging the cloak on the hook
+- scoring a point for seeing the victory message
+- seeing the defeat message if the message is destroyed
+
+...all of which are perfectly testable.
+
+First of all, we need to make sure to reset to a known state after
+each test:
+
+[source]
+----
+(clean up $)
+    (move player to #in #foyer)
+    (now) (#cloak is #wornby #player)
+    (now) ~(hook point awarded)
+    (now) ~(message has been trampled)
+    (now) ~(game has ended)
+    (current score $Score)
+    (decrease score by $Score)
+    (exhaust) {
+        *(room $Room)
+        (now) ~($Room is visited)
+    }
+    (rebuild scope)
+----
+
+_Cloak of Darkness_ is a tiny game, so that much state is sufficient
+to reset everything. For a longer work, you may want to move to a
+style where you have a bespoke `(set up $)` for each test, setting the
+stage for what you're going to be testing, and a bespoke `(clean up
+$)` at the end, undoing any changes of state from your `(set up $)` or
+your test itself.
+
+For _Cloak of Darkness_, we can reset the scope with the above. At a
+bare minimum, you'll want to move the player back to their starting
+position (unless you explicitly move to somewhere in every test),
+reset the score (unless there isn't any), reset the visited state of
+all the rooms, and call `(rebuild scope)` to let `stdlib.dg` catch up
+with the changes that you've just made. Note that if your game starts
+with some of its rooms marked as visited, you'll need a more detailed
+solution than just marking everything unvisited.
+
+Let's go through the points that we identified above, and test them:
+
+[source]
+----
+#dark-if-wearing-cloak
+(test *)
+(run *)
+    (stoppable) (enter #bar)
+    (#cloak is worn by #player)
+    ~(player can see)
+----
+
+Note that we have to wrap `(enter $)` (and, indeed, any other attempt
+to have the player perform an action in the `stdlib.dg` object model)
+because actions tend to `(stop)` if anything goes wrong, and we need
+to handle that gracefully. We could have used `(try [go #south])` or
+even `(perform [go #south])` if we tested `(#player is #in #foyer)`
+first, but for purposes of the test, it's not important where we came
+from, only that we get to the right place.
+
+[source]
+----
+#dont-drop-cloak
+(test *)
+(run *)
+    (stoppable) (try [drop #cloak])
+    (#cloak has ancestor #player)
+----
+
+Here, we test `($ has ancestor $)` rather than `($ is worn by $)` or
+`($ is #wornby $)`, because attempting to drop the cloak will cause
+the player to remove it first, leaving it in the inventory, but not
+worn.
+
+In principle, we could wrap our attempt to drop the cloak in `(collect
+words) . . . (into $)`, to capture the specific message that is
+printed when we fail to drop it, but that sort of thing is better left
+for all-up testing in the interpreter. Unit testing is about verifying
+that the program behaviour is correct, not that you wrote the text
+that you wrote.
+
+[source]
+----
+#hang-on-hook
+(test *)
+(set up *)
+    (stoppable) (enter #cloakroom)
+
+(run *)
+    (stoppable) (try [put #cloak #on #hook])
+    (#cloak is #on #hook)
+    ~(#cloak is worn by #player)
+    ~(#cloak has ancestor #player)
+----
+
+Here, we put `(enter #cloakroom)` in `(set up $)` rather than in `(run 
+$)` because it's part of the preconditions for the test, rather than
+the test itself.
+
+[source]
+----
+#score-for-hanging-cloak
+(test *)
+(set up *)
+    (stoppable) (enter #cloakroom)
+
+(run *)
+    (current score 0)
+    (stoppable) (try [put #cloak #on #hook])
+    (current score 1)
+----
+
+We write `#hang-on-hook` and `#score-for-hanging-cloak` as two
+separate tests because they're two separate concerns: one deals with
+our ability to hang the cloak, which gets it out of our inventory (a
+feat that's otherwise difficult), and the other is about the scoring
+system. Two different things could break, so we write a separate test
+for each of them. That way, we know exactly where to look if one of
+them fails, rather than having to investigate further.
+
+[source]
+----
+#light-if-not-wearing-cloak
+(test *)
+(set up *)
+    (stoppable) (enter #cloakroom)
+    (stoppable) (try [put #cloak #on #hook])
+
+(run *)
+    (stoppable) (enter #bar)
+    (player can see)
+----
+
+Likewise, here, going to the cloakroom to hang the cloak is set up,
+rather than part of the test itself. Not cluttering up `(run *)` with
+things that aren't actually the thing that you're testing for makes
+your test easier to understand.
+
+Also note that we don't need to bother walking to the Foyer and then
+south to the Foyer Bar; just arriving there suffices for the test.
+
+[source]
+----
+#warn-about-blunderinga
+(test *)
+(set up *)
+    (stoppable) (enter #bar)
+
+(run *)
+    ~(player can see)
+    (collect words)
+        (stoppable) (try [dance])
+    (into [in the dark | $])
+    ~(message has been trampled)
+----
+
+We get one warning about not screwing around in the darkness before
+there are any consequences; it's only on the second action in the dark
+that things get screwed up. So let's test that case as well:
+
+[source]
+----
+#destroy-message
+(test *)
+(set up *)
+    (stoppable) (enter #bar)
+    (stoppable) (try [dance])
+
+(run *)
+    ~(message has been trampled)
+    (collect words)
+        (stoppable) (try [dance])
+    (into [blundering | $])
+    (message has been trampled)
+----
+
+This one illustrates even better why we put things in `(set up $)`
+rather than leaving them in `(run *)`: the test is testing that it's
+the _second_ time that you do something foolish in the dark that wipes
+out the message, not the first time when you're warned.
+
+However, when we run this, it fails! The release 2 version of _Cloak
+of Darkness_ implements the "don't screw around in the darkness"
+warnings using `(select) . . . (or) . . . (stopping)`, which doesn't
+reset between tests. (As of version 1c/02, Dialog does not have a
+mechanism for resetting a `(select)`.) _Cloak of Darkness_ wasn't
+written with unit tests in mind, and not designing for testability has
+left us with some "de-testable" code.
+
+To fix it, we'll need to edit `cloak.dg`, bump it up to `(story
+release 3)`, and rewrite the offending code, which is the `(prevent
+$Action)` predicate in `#bar`. The `(select)` only has two states, 
+so it's easy to replace it with a global flag, like this:
+
+[source]
+----
+~(warned the player about darkness)
+
+(prevent $Action)
+    (current room #bar)
+    ~(player can see)
+    ~(command $Action)
+    ($Action = [$Verb | $])
+    ~($Verb is one of [go leave enter look])
+    (if) (warned the player about darkness) (then)
+        Blundering around in the dark isn't a good idea!
+        (now) (message has been trampled)
+    (else)
+        In the dark? You could easily disturb something.
+        (now) (warned the player about darkness)
+    (endif)
+----
+
+...and once we add `(now) ~(warned the player about darkness)` to
+`(clean up $)`, the test works. While we're at it, we should have
+`#warn-about-blundering` check the status of our new flag:
+
+[source]
+----
+#warn-about-blunderinga
+(test *)
+(set up *)
+    (stoppable) (enter #bar)
+
+(run *)
+    ~(player can see)
+    (collect words)
+        (stoppable) (try [dance])
+    (into [in the dark | $])
+    ~(message has been trampled)
+    (warned the player about darkness)
+----
+
+This doesn't mean that you can't use `(select)` in your game if you
+want to test it, just that you limit its use to displaying text to the
+player, and not hang important side effects on any of the choices.
+
+[source]
+----
+#score-for-seeing-message
+(test *)
+(set up *)
+    (stoppable) (enter #cloakroom)
+    (stoppable) (perform [put #cloak #on #hook])
+    (stoppable) (enter #bar)
+
+(run *)
+    (player can see)
+    (current score 1)
+    ~(message has been trampled)
+    (stoppable) (perform [examine #message])
+    (game has ended)
+    (game over message { You have won })
+    (current score 2)
+----
+
+Now we finally get to win!
+
+...except that we don't. Release 2 of _Cloak of Darkness_ doesn't
+actually let you read the message! To fix that, we need to edit our
+release 3 version of `cloak.dg` to add the following:
+
+[source]
+----
+#message
+(instead of [read *])
+    (try [examine *])
+----
+
+...and _now_ we get to win.
+
+Let's test the verb that release 2 was expecting, to be safe:
+
+[source]
+----
+#score-for-examining-message
+(test *)
+(set up *)
+    (stoppable) (enter #cloakroom)
+    (stoppable) (perform [put #cloak #on #hook])
+    (stoppable) (enter #bar)
+
+(run *)
+    (player can see)
+    (current score 1)
+    ~(message has been trampled)
+    (stoppable) (perform [examine #message])
+    (game has ended)
+    (game over message { You have won })
+    (current score 2)
+----
+
+`unit.dg` overrides `(game over)` and `(game over $)` so that we can
+test ending conditions like this without being stuck forever in a
+`(game over menu)` loop. There's a global variable, `(game over
+message $)`, where we can find the game over message that was printed.
+
+Finally, let's test the defeat condition: 
+
+[source]
+----
+#defeat-message
+(test *)
+(set up *)
+    (stoppable) (enter #bar)
+    (stoppable) (try [dance])
+    (stoppable) (try [dance])
+    (stoppable) (enter #cloakroom)
+    (stoppable) (perform [put #cloak #on #hook])
+    (stoppable) (enter #bar)
+
+(run *)
+    (player can see)
+    (current score 1)
+    (message has been trampled)
+    (stoppable) (perform [examine #message])
+    (game has ended)
+    (game over message { You have lost })
+    (current score 1)
+----
+
+...and with that, we've written, in Dialog, a full set of unit tests
+for our game.
+
+You'll notice that we didn't actually look at much of the game text in
+any of those tests -- just enough to validate that our program code is
+correct, and preferring to test programatically rather than to look at
+the output. We can look at a little bit of the code with `(collect
+words)`, but it's awkward to examine long stretches of text, or to
+concern ourselves overmuch with how the output is presented to the
+user. For tests like that, it's better to use all-up testing, with a
+real interpreter.
+
+[#integ]
+== All-Up Tests in the Interpreter
+
+Unit testing tests small units of your code, and validates that it's
+doing what you expected it to do, and that you didn't break anything
+by making changes. Unit tests are small, quick to write, and lightning
+fast to execute. On modern hardware, you can execute hundreds or
+thousands of them in a second (up to 16383 per test file), and get
+answers very quickly.
+
+End-to-end, all-up, or _integration tests_ test your final game code
+in a real environment that simulates real player input. Strictly
+speaking, integration tests concern themselves with whether you've
+hooked together all of the modules of your game correctly, but the
+name frequently sticks to any testing of your full program. They take
+longer to write, they're more fragile, and they take longer to compile
+and execute than unit tests do, but the payoff is that what you're
+testing is exactly what the player will see, and it's easier to test
+chunks of text in the interpreter than it is in a unit test. 
+
+Having both kinds of tests is important, as each style can find
+problems that are difficult for the other kind to turn up.
+
+[#diff]
+=== Simple Tests With `diff`
+
+The simplest way to test in the interpreter is simply to feed a
+predefined input file to it, capture the output in a text file, and
+compare it with a known good file from a good run of the game. For
+this, we use the built-in `diff` tool that's present on Mac and Linux
+systems. (For Windows users, see the xref:ROOT:software.adoc[Software
+Page].)
+
+The first thing that we need to do is to create the input file that
+we're going to feed to the interpreter, containing the commands that
+a winning player would type in the course of their playthrough:
+
+[source]
+----
+w
+hang cloak on hook
+e
+s
+read message
+----
+
+(Yes, _Cloak of Darkness_ really is just five moves long if you know
+the solution.)
+
+Now we can run the game, taking the input from our walkthrough file:
+
+----
+$ dgdebug -u cloak.dg stdlib.dg < cloak.in
+Hurrying through the rainswept November night, you're glad to see the bright
+lights of the Opera House. It's surprising that there aren't more people about
+but, hey, what do you expect in a cheap demo game...?
+
+Cloak of Darkness
+A port of Roger Firth's reference game by Linus Åkesson.
+Release 3. Serial number DEBUG.
+Dialog Interactive Debugger (dgdebug) version 1c/02. Library version 1.2.3.
+
+Foyer of the Opera House
+<[me] You> are standing in a spacious hall, splendidly decorated in red and
+gold, with glittering chandeliers overhead. The entrance from the street is to
+the <north>, and there are doorways <south> and <west>.
+
+> w
+You walk west.
+
+Cloakroom
+The walls of this small room were clearly once lined with hooks, though now
+<[small brass hook] only one> remains. The exit is a door to the <east>.
+
+> hang cloak on hook
+(first attempting to remove the velvet cloak)
+You take off the velvet cloak.
+
+You put the velvet cloak on the small brass hook.
+
+(Your score has gone up by one point.)
+
+> e
+You walk east.
+
+Foyer of the Opera House
+<[me] You> are standing in a spacious hall, splendidly decorated in red and
+gold, with glittering chandeliers overhead. The entrance from the street is to
+the <north>, and there are doorways <south> and <west>.
+
+> s
+You walk south.
+
+Foyer Bar
+The bar, much rougher than you'd have guessed after the opulence of the foyer
+to the north, is completely empty. There seems to be some sort of <[scrawled
+message] message> scrawled in the sawdust on the floor.
+
+> read message
+The message, neatly marked in the sawdust, reads...
+
+     *** You have won ***
+
+Game over. You scored 2 points out of 2.
+
+Would you like to:
+     <UNDO> the last move,
+     <RESTORE> a saved position,
+     <QUIT> the program,
+     or <RESTART> from the beginning?
+>
+----
+
+The `<` character on the command line tells the interpreter to get its
+input from the file you mention next, `cloak.in`, rather than from the
+keyboard. There's a corresponding `>` character that diverts the
+output from the screen into a file, so `dgdebug -u cloak.dg stdlib.dg
+< cloak.in > cloak.out` would dump all of that output into a file
+named `cloak.out`. (In fact, we're going to do precisely that in a
+moment.)
+
+One thing that jumps out at us, though, is that the banner printed at
+the start of the game specifies the game release, serial number,
+compiler version, and library version. That's fine if you're running
+the game as a one-off, but for an automated test, you really don't
+want your test to fail every time you update the game, the Dialog
+software, or the standard library. We can make that header go away by
+adding a file, `no-banner.dg`, as follows:
+
+[source]
+----
+%% no-banner.dg
+(banner)
+----
+
+Now if you include that before `stdlib.dg`, it will override the
+`(banner)` predicate that prints the banner with all of that
+changeable information, and your tests won't fail just because you
+upgraded something.
+
+If your game overrides `(program entry point)` or `(banner)`, and you
+want to specifically test your opening text, you can leave out
+`no-banner` and get your input from `/dev/null`, which will cause the
+game to exit immediately:
+
+----
+$ dgdebug -u su-101.dg delphinus-crew.dg crew.dg eridanus.dg controls.dg \
+anomaly.dg hyperspace.dg ship-damage.dg eva.dg mtd.dg shuttle.dg \
+scanner.dg probe.dg systems.dg no-weapons.dg no-damage.dg \
+sensor-display.dg sensor.dg arc.dg maneuver.dg schema.dg sector.dg \
+bearing.dg grid.dg d6.dg time.dg utils.dg stdlib.dg < /dev/null 
+
+Our galaxy is an endless ocean of stars. Plying that ocean are the
+ships of the Stellar Union. Their mandate:
+
+    * Keep the peace among the stars.
+    * Explore the galaxy and its many planets.
+    * Follow knowledge like a sinking star,
+      beyond the utmost bound of intelligent thought.
+
+Upholding that mandate is the starship Eridanus, on a three-year
+mission of discovery.
+
+That Untravelled World, Whose Margin Fades
+Stellar Union episode 101 (release 1), by Susan Davis.
+Type CREDITS for a full list of credits.
+
+"Captain's log, Earth date March 5, 2273. The Eridanus has been sent 
+to reestablish contact with SUS Delphinus, which has been out of
+contact with Stellar Command for over three weeks. In her last
+communication with Starbase 37, she reported that she was
+investigating a spatial anomaly in Quadrant IV/103-37. We are
+proceeding to that quadrant to search for our missing sister ship, and
+to render assistance if necessary."
+
+You press the "End Recording" button on the arm of your captain's chair,
+and the recording light goes out.
+
+Bridge (in the captain's chair)
+The bridge is much smaller than is typical for a Stellar Union
+starship. Aside from the usual captain's chair behind the helm and
+navigation stations, there are only two other workstations: one for
+engineering and one for the science officer. A pair of double doors
+leads aft. 
+
+Chief Tesfaye is sitting at the helm station. Ensign Washington is
+sitting at the navigation station. Senior Lieutenant V'ronek is
+sitting at the science station.
+
+Through the forward windows, you can see the stars gently streaking
+toward you as the ship moves at faster-than-light speed.
+
+"Now entering quadrant IV/103-37," Ensign Washington says.
+
+>
+----
+
+Having suppressed the banner, we can create an output file with
+`dgdebug -u cloak.dg no-banner.dg stdlib.dg < cloak.dg >
+cloak.out`. That will give us the output we saw earlier, minus the
+banner, in a file that we can later test against. Since we've reviewed
+it and seen that the output is exactly what we expect, we can "bless"
+it as being the correct output that we expect by copying it to another
+file -- we'll call it `cloak.gold` -- which we can compare against any
+other versions of `cloak.out` that are generated by future versions of
+our game. (It's "`cloak.gold`" because it's the gold standard against
+which future changes will be measured.)
+
+The basic tool to compare files is `diff`, which will succeed silently
+if the files are the same, or fail noisily, showing just how the two
+files differ. (There's another tool, `meld`, which does the same
+thing, but gives more elaborate output. For testing purposes, the two
+are interchangeable.) `diff cloak.out cloak.gold` will tell you
+whether your game is producing the output that you expect.
+
+In summary, you can test a game such as _Cloak of Darkness_ through
+the debugger like this: 
+
+[source]
+----
+$ dgdebug -u cloak.dg no-banner.dg stdlib.dg < cloak.in > cloak.out
+$ diff cloak.out cloak.gold
+----
+
+If you get no output back from that, then your game passed its test.
+
+One final caveat: all of the above assumes that you're on a Linux or
+Macintosh system. Windows users will either use a slightly different
+set of tools and syntax, or will need to run a tool such as `cygwin`
+that emulates a Linux shell and its associated commands.
+
+[#branches]
+==== Testing Multiple Branches
+
+Remarkably, for such a small game, _Cloak of Darkness_ is a game with
+multiple endings: you can preserve the message in the sawdust and win,
+or you can accidentally destroy it, and lose. The two endings are
+mutually exclusive, so there's no single walkthrough that can cover
+them both. We could use `UNDO` to undo an irreversible change, but
+getting all the way to a losing position in many games (including
+_Cloak of Darkness_) involves multiple steps, more than `UNDO` can
+handle. 
+
+We'll need to set up a second input file to handle the other (losing)
+ending. We'll rename our original walkthrough from `cloak.in` to
+`win.in`, and create a new walkthrough, `lose.in` as follows:
+
+[source]
+----
+n
+s
+dance
+dance
+n
+w
+hang cloak on hook
+e
+s
+read message
+----
+
+When we run it once, we'll get a `lose.out` file that we can inspect,
+and copy to `lose.gold` if everything is as we expect. Then our
+sequence for testing both paths will be:
+
+[source]
+----
+$ dgdebug -u cloak.dg no-banner.dg stdlib.dg < win.in > win.out
+$ diff win.out win.gold
+$ dgdebug -u cloak.dg no-banner.dg stdlib.dg < lose.in > lose.out
+$ diff lose.out lose.gold
+----
+
+Empty output from running all of the above means that the game has
+succeeded on both branches of its walkthrough.
+
+[#multiplatform]
+==== Testing For Multiple Platforms
+
+One of Dialog's strengths is that it can produce games playable on
+multiple platforms: on a Z-machine interpreter, in a web browser, or
+on vintage computers such as the Commodore 64. (The C64 is the only
+supported vintage platform as of Dialog 1c/02 and Å-machine 1.0.2, but
+others may be added later.) In principle, a Dialog game should run
+equally well on all platforms, so long as it fits within the resource
+limitations of the Z-machine or the Commodore 64. In practice, testing
+on each of the platforms on which you intend to release your game is a
+good habit to develop.
+
+Up till now, we've been using the debugger to test; adding three more
+platforms to that, times two plot branches, will give us eight
+different tests to run in total: win-debugger, win-zmachine, win-web,
+win-c64, lose-debugger, lose-zmachine, lose-web, and lose-c64. We're
+using the same input for each platform in each branch, so we only need
+`win.in` and `lose.in` and not eight different input files.
+
+We do, however, need different _output_ files for each platform. Some
+platforms support links, others don't, and some produce inline status
+bars that others don't. Printing or not printing those things can
+change what goes in the output, and `diff` is sensitive to minor
+changes. (We'll introduce a tool that's less sensitive below.)
+
+We've already worked out how to test with the debugger, so all we have
+to do is rename the relevant files:
+
+[source]
+----
+$ dgdebug -u cloak.dg no-banner.dg stdlib.dg < win.in > win-debugger.out
+$ diff win-debugger.out win-debugger.gold
+$ dgdebug -u cloak.dg no-banner.dg stdlib.dg < lose.in > lose-debugger.out
+$ diff lose-debugger.out lose-debugger.gold
+----
+
+For the Z-machine, we'll need to run the compiler to compile our game
+into Z-machine code. _Cloak of Darkness_ is small enough to fit in a
+version 5 Z-machine file (`z5`); larger games might go in a `z8` or a
+`zblorb`. Again, for testing purposes, we'll also need to pull in
+`no-banner.dg`.
+
+[source]
+----
+$ dialogc -t z5 cloak.dg no-banner.dg stdlib.dg -o cloak.z5
+----
+
+...and that will give us `cloak.z5` which will run in any Z-machine
+interpreter.
+
+To actually test our code in the interpreter, we'll need two other
+pieces of software: the `frotz` interpreter (specifically, its
+`dfrotz` variant), and `echofrotz.py` from the Dialog source
+repository. You'll find `echofrotz.py` in the `bin` directory when
+you unpack the Dialog source. See the xref:ROOT:software.adoc[Software Page]
+for information about where to find the Dialog source code, and
+`frotz`. You'll also need to have a Python interpreter installed; see
+youru system documentation about how to do that.
+
+Now we can run `echofrotz` to test our Z-machine test cases:
+
+[source]
+----
+$ echofrotz.py -m -q cloak-test.z5 <win.in >win-zmachine.out
+$ diff win-zmachine.out win-zmachine.gold
+$ echofrotz.py -m -q cloak-test.z5 <lose.in >lose-zmachine.out
+$ diff lose-zmachine.out lose-zmachine.gold
+----
+
+We'll need a copy of the Å-machine distribution in order to test the
+Å-machine version of our game on both the web and the Commodore 64.
+See the xref:ROOT:software.adoc[Software Page] for where you can find it.
+Specifically, you'll need the `aamrun` and `aambox` utilities from it,
+installed somewhere in your path. (You'll need to build them from source.)
+
+We have two scripts to actually run the games: `aamrun.py`, which runs
+the web interpreter, and `6502run.py`, which runs the Commodore 64
+executable in an emulator. They're found in the `bin` directory in the
+Dialog source distribution. 
+
+[source]
+----
+$ dialogc -t aa cloak.dg no-banner.dg stdlib.dg -o cloak.aastory
+$ aamrun.py cloak.aastory <win.in >win-web.out
+$ diff win-web.out win-web.gold
+$ aamrun.py cloak.aastory <lose.in >lose-web.out
+$ diff lose-web.out lose-web.gold
+$ 6502run.py cloak.aastory <win.in >win-c64.out
+$ diff win-c64.out win-c64.gold
+$ 6502run.py cloak.aastory <lose.in >lose-c64.out
+$ diff lose-c64.out lose-c64.gold
+----
+
+...and with that, we've thoroughly tested our game, with both unit and
+in-browser tests.
+
+[#regtest]
+=== Using `regtest.py`
+
+Another alternative for doing all-up tests is the `regtest.py` script,
+by Andrew Plotkin. Like the other Python scripts that we've been
+using, it can be found in the `bin` directory in the Dialog source
+distribution, or from
+link:https://github.com/erkyrath/plotex/blob/master/regtest.py[https://github.com/erkyrath/plotex/blob/master/regtest.py].
+`regtest.py` mashes together the `.in` and `.out` files
+that we used in our simple `diff` tests into a single `.regtest` file,
+and lets you run multiple tests out of the same file.
+
+For example, if we wanted to test both the win and lose conditions
+from _Cloak of Darkness_, we could write something like this:
+
+----
+* win
+
+Hurrying through the rainswept November night, you're glad to see the bright
+lights of the Opera House. It's surprising that there aren't more people about
+but, hey, what do you expect in a cheap demo game...?
+
+You are standing in a spacious hall, splendidly decorated in red and gold, with
+glittering chandeliers overhead. The entrance from the street is to the north,
+and there are doorways south and west.
+
+> w
+
+You walk west.
+
+The walls of this small room were clearly once lined with hooks, though now only
+one remains. The exit is a door to the east.
+
+> x me
+
+You have no possessions. You're wearing a velvet cloak.
+
+> remove cloak
+
+You take off the velvet cloak.
+
+> put cloak on hook
+
+You put the velvet cloak on the small brass hook.
+
+(Your score has gone up by one point.)
+
+> e
+
+You walk east.
+
+You are standing in a spacious hall, splendidly decorated in red and gold, with
+glittering chandeliers overhead. The entrance from the street is to the north,
+and there are doorways south and west.
+
+> x gold
+
+(I only understood you as far as wanting to examine something.)
+
+> s
+
+You walk south.
+
+The bar, much rougher than you'd have guessed after the opulence of the foyer to
+the north, is completely empty. There seems to be some sort of message scrawled
+in the sawdust on the floor.
+
+> x message
+
+The message, neatly marked in the sawdust, reads...
+
+Game over. You scored 2 points out of 2.
+
+Would you like to:
+     UNDO the last move,
+     RESTORE a saved position,
+     QUIT the program,
+     or RESTART from the beginning?
+> quit
+Thanks for playing!
+
+* lose
+
+Hurrying through the rainswept November night, you're glad to see the bright
+lights of the Opera House. It's surprising that there aren't more people about
+but, hey, what do you expect in a cheap demo game...?
+
+You are standing in a spacious hall, splendidly decorated in red and gold, with
+glittering chandeliers overhead. The entrance from the street is to the north,
+and there are doorways south and west.
+
+> n
+
+You've only just arrived, and besides, the weather outside seems to be getting
+worse.
+
+> s
+
+You walk south.
+
+In the dark
+You are surrounded by darkness.
+
+> dance
+
+In the dark? You could easily disturb something.
+
+> dance
+
+Blundering around in the dark isn't a good idea!
+
+> n
+
+You feel your way north.
+
+You are standing in a spacious hall, splendidly decorated in red and gold, with
+glittering chandeliers overhead. The entrance from the street is to the north,
+and there are doorways south and west.
+
+> w
+
+You walk west.
+
+The walls of this small room were clearly once lined with hooks, though now only
+one remains. The exit is a door to the east.
+
+> put cloak on hook
+
+(first attempting to remove the velvet cloak)
+You put the velvet cloak on the small brass hook.
+
+(Your score has gone up by one point.)
+
+> e
+
+You walk east.
+
+You are standing in a spacious hall, splendidly decorated in red and gold, with
+glittering chandeliers overhead. The entrance from the street is to the north,
+and there are doorways south and west.
+
+> s
+
+You walk south.
+
+The bar, much rougher than you'd have guessed after the opulence of the foyer to
+the north, is completely empty. There seems to be some sort of message scrawled
+in the sawdust on the floor.
+
+> x message
+
+The message has been carelessly trampled, making it difficult to read. You can
+just distinguish the words...
+
+Game over. You scored 1 point out of 2.
+
+Would you like to:
+     UNDO the last move,
+     RESTORE a saved position,
+     QUIT the program,
+     or RESTART from the beginning?
+----
+
+You'll notice that we've skipped a couple of lines of output. Unlike
+`diff`, which doesn't understand what it has been asked to compare,
+and which needs to see every single character be the same,
+`regtest.py` lets you skip over lines of output that are less
+important. In this case, the victory and defeat messages begin with
+asterisks, and `regtest.py` uses asterisks to identify different test
+cases, and to set up other options, so we have to leave them out.
+
+When we run the above, with
+
+[source]
+----
+$ regtest.py --game cloak.z5 --interpreter dfrotz cloak.regtest
+----
+
+we'll get success. If anything failed, we'd get a list of failures,
+and a total count of the number of things that failed.
+
+`regtest.py` runs the same game file in the same interpreter for all
+of the tests in a given `.regtest` file, so we can't write four
+separate sets of `win` and `lose` in the same file. But we can make
+the `.regtest` file match the output from all four of our platforms,
+and run the same `.regtest` multiple times.
+
+You can find the full documentation for `regtest.py`
+link:https://eblong.com/zarf/plotex/regtest.html[here], including
+several examples.
+
+[#skein]
+=== `dgt` and the Skein
+
+A drawback of using `diff` is that it only really walks through a game
+in one single path, and shows the output from only that path. As we
+saw earier, testing multiple paths involves setting up a separate test
+for each path, with input and "blessed" output files, and if you make
+a change to part of your game, you'll have to update all of your
+different test files to reflect it. `regtest.py` lets you run multiple
+test cases that can account for multiple branches, but you're still
+doing a lot of manual management, and still potentially need to fix
+the same change in multiple places.
+
+A solution to that is Howard Ship's `dgt` tool, which includes a
+feature called the _Skein_. The Skein allows you to interactively walk
+through your game through multiple branching paths, and "bless" each
+branch's output when it's correct. You can then re-run the Skein after
+making changes to your game, and confirm that you didn't break anything.  
+
+For details on `dgt` and the Skein, see the `dgt` documentation. Details
+on where to find the `dgt` software can be found on the
+xref:ROOT:software.adoc[Software Page].
+
+[#make]
+== Pulling It All Together With `make`
+
+In our previous examples, we typed lots of commands to build and test
+our games. But having to remember a long sequence of commands is
+error-prone -- it's easy to forget one, or to leave out an option 
+somewhere -- and having to type them all in every time that you change
+something is time-consuming, and can tempt you to skip testing steps.
+A better solution is to automate your project build, so that you can
+run the unit tests, compile your code, and run your all-up tests for
+all of your platforms and plot branches with a single command.
+
+[#makefile]
+=== `Makefile` Basics
+
+`make` is the standard build utility on Linux, the Macintosh, and other
+systems. At the time of writing, it is fifty years old, and Dialog
+itself is built using `make`. There are a lot of features and concepts
+in `make`; here, we'll cover only the bare minimum needed to test and
+build a Dialog game.
+
+`make` is controlled by a `Makefile`, which it'll expect to find in
+the current directory. A `Makefile` is a list of _rules_, each of which
+can have one or more _commands_ associated with it; it can also define
+_variables_ for its own use.
+
+A rule consists of a _target_ and a list of _prerequisites_, separated
+by a colon. Here's a simple rule, with target `test` and three prerequisites:
+
+[source]
+----
+test: test-zmachine test-web test-c64
+----
+
+If we were to put that in a `Makefile` and run `make test`, `make`
+would try to build `test-zmachine`, `test-web`, and `test-c64` in
+response. If `make` can't find a rule to build one of the prerequisites,
+and can't find a file of that name, it will fail and complain about
+that. If we don't specify anything when you run `make`, it'll try
+to build a target named `all`.
+
+Targets can be phony, like `all` and `test`, or they can be the names
+of actual files. Here's an example of a rule for making `cloak.z5`:
+
+[source]
+----
+cloak.zblorb: cloak.dg
+        ../../src/dialogc -t zblorb cloak.dg ../../stdlib.dg -o cloak.zblorb
+----
+
+Now if we try `make cloak.z5`, it will run the compiler with those
+arguments, which will produce `cloak.z5` as its output. If we run
+`make cloak.z5` again, it will see that `cloak.z5` is already there,
+and do nothing. But since `cloak.dg` is a prerequisite, if we edit
+`cloak.dg` to make changes, and run `make cloak.z5` again, now `make`
+will run the compiler again, because the time stamp on the
+prerequisite `cloak.dg` is now newer than the target file. You can
+have multiple prerequisites for a target; `make` will run the commands
+again if any of them are newer than the target.
+
+You'll note that the command is indented. You must indent every
+command in a rule *with a tab*, and not with spaces. `make` won't
+recognize a command as a command if it the line doesn't start with a
+tab character.
+
+For a phony target, such as `test`, `make` will always run. You can
+declare a target to be phony by making it a prerequisite of the phony
+target `.PHONY`, like this:
+
+[source]
+----
+all: test clean
+
+test: test-unit test-zmachine test-web test-c64
+
+clean:
+    rm -rf *.zblorb *.aastory
+
+.PHONY: all test clean test-unit
+----
+
+`make` also lets you define variables. This is handy when you're
+dealing with files in other directories, or if you have a command or
+library that appears in many rules, which you might want to change in
+only one place if its location or arguments need to change. Variables
+are declared using an `=` sign, and they're referenced in parentheses
+after a `$` sign, like this:
+
+[source]
+----
+REGTEST=../../bin/regtest.py -v
+DIALOGC=../../src/dialogc
+STDLIB=../../stdlib.dg
+
+cloak.z5: cloak.dg
+        $(DIALOGC) -t zblorb cloak.dg $(STDLIB) -o cloak.zblorb
+
+test-zmachine: cloak.zblorb cloak.regtest
+        $(REGTEST) --interpreter dfrotz --game cloak.zblorb cloak.regtest
+----
+
+`make` defines a number of special variables for use in commands:
+
+- `$@` refers to the current target.
+
+- `$<` refers to the first (leftmost) prerequisite in the list.
+
+- `$^` refers to all of the prerequisites, however many there are.
+
+So we could rewrite the above as
+
+[source]
+----
+cloak.zblorb: cloak.dg
+        $(DIALOGC) -t zblorb $< $(STDLIB) -o $@
+
+test-zmachine: cloak.zblorb cloak.regtest
+        $(REGTEST) --interpreter dfrotz --game $^
+----
+
+Finally, `make` has a special pattern for making one file out of
+another, when they only differ by their extensions. We could write a
+general rule for compiling _any_ file into an identically named
+`.zblorb`, for example, and use it to test multiple games at once:
+
+[source]
+----
+%.zblorb: $.dg
+        $(DIALOGC) -t zblorb $< $(STDLIB) -o $@
+
+test-cloak-zmachine: cloak.zblorb cloak.regtest
+        $(REGTEST) --interpreter dfrotz --game $^
+
+test-impossible-zmachine: impossible.zblorb impossible.regtest
+        $(REGTEST) --interpreter dfrotz --game $^
+----
+
+[#make-test]
+=== Testing With `make`
+
+Using `make` to automate your testing is fairly straightforward. First
+of all, you'll want to run your unit tests. Because they run quickly,
+in the debugger, you can actually run them _before_ compiling your
+code, which a change from most other compiled languages.
+
+For this example, we'll use `regtest.py`, but `make` could equally be
+used to manage testing with `diff`.
+
+[source]
+----
+DGDEBUG = dgdebug -u
+UNIT = unit.dg
+STDLIB = stdlib.dg
+
+all: test
+
+test: test-unit
+
+test-unit: cloak-tests.dg cloak.dg
+         $(DGDEBUG) $^ $(UNIT) $(STDLIB)
+
+.PHONY: all test
+----
+
+Next, we'll test with the Z-machine. We'll need to compile into either
+a `.z5` or a `.zblorb`. Compared to a `.z5` or `.z8`, a `.zblorb`
+allows you to store some metadata such as a cover image. We don't have
+one of those for _Cloak of Darkness_, so we'll just make a `.z5`.
+
+Because we're producing a new file, we'll also want another target to
+get rid of it once we're done with it. By convention, `clean` is the
+usual name for a target that cleans out files that the compiler
+builds. Some projects also have a `distclean`, which also gets rid of
+the final product, or a `tidy`, which gets rid of only intermediate
+files, but we don't need either.
+
+Adding targets for building and testing on Z-machine, and a `clean`,
+gives us this:
+
+[source]
+----
+DGDEBUG = dgdebug -u
+UNIT = unit.dg
+STDLIB = stdlib.dg
+DIALOGC = dialogc
+REGTEST = regtest.py -v
+DFROTZ = dfrotz
+
+all: test
+
+%.z5: %.dg $(STDLIB) test-unit
+        $(DIALOGC) -t z5 $< $(STDLIB) -o $@
+
+test: test-unit test-zmachine
+
+test-unit: cloak-tests.dg cloak.dg
+        $(DGDEBUG) $^ $(UNIT) $(STDLIB)
+
+test-zmachine: cloak.z5 cloak.regtest
+        $(REGTEST) --interpreter $(DFROTZ) --game $^
+
+clean:
+        rm -f *.z5
+
+.PHONY: all test clean
+----
+
+Extending the above to also test the Å-machine is equally straightforward:
+
+[source]
+----
+DGDEBUG = dgdebug -u
+UNIT = unit.dg
+STDLIB = stdlib.dg
+DIALOGC = dialogc
+REGTEST = regtest.py -v
+DFROTZ = dfrotz
+AAMRUN = aamrun.py
+AAMBOX = 6502run.py
+
+all: test
+
+%.z5: %.dg $(STDLIB) test-unit
+        $(DIALOGC) -t z5 $< $(STDLIB) -o $@
+
+%.aastory: %.dg $(STDLIB) test-unit
+        $(DIALOGC) -t aa $< $(STDLIB) -o $@
+
+test: test-unit test-zmachine test-web test-c64
+
+test-unit: cloak-tests.dg cloak.dg
+        $(DGDEBUG) $^ $(UNIT) $(STDLIB)
+
+test-zmachine: cloak.z5 cloak.regtest
+        $(REGTEST) --interpreter $(DFROTZ) --game $^
+
+test-web: cloak.aastory cloak.regtest
+        $(REGTEST) --interpreter $(AAMRUN) --game $^
+
+test-c64: cloak.aastory cloak.regtest
+        $(REGTEST) --interpreter $(AAMBOX) --game $^
+
+clean:
+        rm -f *.z5 *.aastory
+
+.PHONY: all test clean
+----
+
+[#releases]
+=== Building Releases
+
+Finally, the main point of using `make` is to build your game so that
+your players can play it. We've already built the Z-machine version,
+but we'll need to use `aambundle` to turn our `.aastory` file into web
+and/or Commodore 64 executables:
+
+[source]
+----
+DGDEBUG = dgdebug -u
+UNIT = unit.dg
+STDLIB = stdlib.dg
+DIALOGC = dialogc
+REGTEST = regtest.py -v
+DFROTZ = dfrotz
+AAMRUN = aamrun.py
+AAMBOX = 6502run.py
+AAMBUNDLE = aambundle
+
+all: cloak.z5 web c64
+
+%.z5: %.dg $(STDLIB) test-unit
+        $(DIALOGC) -t z5 $< $(STDLIB) -o $@
+
+%.aastory: %.dg $(STDLIB) test-unit
+        $(DIALOGC) -t aa $< $(STDLIB) -o $@
+
+test: test-unit test-zmachine test-web test-c64
+
+test-unit: cloak-tests.dg cloak.dg
+        $(DGDEBUG) $^ $(UNIT) $(STDLIB)
+
+test-zmachine: cloak.z5 cloak.regtest
+        $(REGTEST) --interpreter $(DFROTZ) --game $^
+
+test-web: cloak.aastory cloak.regtest
+        $(REGTEST) --interpreter $(AAMRUN) --game $^
+
+test-c64: cloak.aastory cloak.regtest
+        $(REGTEST) --interpreter $(AAMBOX) --game $^
+
+web: cloak.aastory test-web
+        rm -rf $@
+        $(AAMBUNDLE) -t web $< -o $@
+
+c64: cloak.aastory test-c64
+        rm -rf $@
+        $(AAMBUNDLE) -t c64 $< -o $@
+
+clean:
+        rm -rf *.z5 *.aastory web c64
+
+.PHONY: all test clean
+----
+
+And we're done! We can run `make` to build our release, `make test` to
+just run the tests, or `make clean` to clean everything up. Note that
+our chain of prerequisites will cause the tests to be run whenever we
+try to build our release.
+
+[#dgt]
+=== Building With `dgt` Instead
+
+If you're using the `dgt` tool to test with the Skein (or even if
+you're not), you can use `dgt` as your build tool, instead of `make`.
+`dgt`'s build facilities are simpler to use than `make`'s, but less
+powerful. If you're making a typical game that's implemented in a
+single `.dg` file, then `dgt` might be a more convenient option. If
+you're using lots of extensions, need to customize your build, or want
+a different project layout than `dgt` requires, you might need to
+stick with `make`. See the `dgt` documentation for details.
+
+[#beta]
+== Exploratory Testing
+
+Thus far, we have covered _regression testing_: testing that verifies
+that our game is working the way that we intended, and that we didn't
+break anything with our most recent changes. Unit tests and
+integration tests are both types of regression tests.
+
+There's another kind of testing that's equally important in
+interactive fiction: _exploratory testing_. When we write unit tests
+or `regtest.py` cases, we're testing things that we've thought
+about in advance, and which have expected answers that we already know
+and can test for. But interactive fiction is about creating a simulated
+world in which the player is given the illusion of a lot of freedom to
+navigate, and to try lots of different, possibly unlikely, things.
+
+As anyone who has ever been the game master for a tabletop role-playing
+game will tell you, players will inevitably find ways to attempt wild
+ideas that stray far from anything you thought up. If a player tries
+something that makes sense, and the game doesn't respond accordingly,
+it's going to look like a bug. Conversely, players may fail to find
+solutions that we intended for them to find, because they phrase what
+they want to do in a synonym of what we programmed, which we never
+added to the parser's grammar. To take an example from this chapter,
+release 2 of _Cloak of Darkness_ failing to understand `READ MESSAGE`
+at the end of the game is a perfect example of both of these phenomena.
+
+The traditional way to see into these blind spots, and to anticipate
+the things that players -- especially stuck players -- might try, is
+to recruit some friendly players to play your game, and to try to
+break it. When those players are our friends or family, that's called
+_alpha testing_, and when they're complete strangers from over the
+Internet, it's called _beta testing_. "Alpha" and "beta" are terms
+that date back to before the rise of modern software engineering
+methods with automated tests, when manual testing, done after
+completion of all of the code, was the only way that software was
+tested. Alpha testing happened "in house", performed by the QA 
+department of the company writing the software; beta testing took
+place externally, with potential customers being given a free copy of
+nearly-ready software in exchange for submitting bug reports when
+something broke. The process was as rickety as it sounds, and was a
+big part of the reason why so much technical literature from the 1990s
+refers to a "software crisis."
+
+If you've been using the facilities described in this chapter to build
+an effective suite of unit and integration and skein tests, your code
+should be of much better quality than commercial IF games back in
+their heyday were when they went out for beta testing. But it's still
+worthwhile to engage beta testers, specifically to find things that
+you didn't think of.
+
+Once you've recruited your testers, expect them to need some time to
+play through your game, solve it, and spend some time banging on it to
+try to elicit unusual behaviours. For a "competition-length" game
+that's aimed at being solvable, or at least ready for review, after
+two hours, four to six weeks is a reasonable time frame; a "full
+length" game comparable to commercial IF will take longer. This means
+that you need to be otherwise done with your game at least a month
+before the deadline, if you're writing to a deadline such as a
+competition submission window. Literature about software engineering
+from back in the manual testing days refers to the testing and
+debugging phase of a project taking _five times_ as long as writing
+the code did. Writing good automated tests, and fixing the problems
+that they reveal, will do much of that work much faster than it would
+have taken in past decades, but it can still take as long or longer to
+get through your beta test as it did to write your game. Beta testers
+are volunteer hobbyists, not full-time professionals, and they need
+enough time to get through all of your game, to try unlikely things in
+all phases of it, and to retest new versions that incorporate changes
+that the beta testing turns up. Don't try to rush your beta testing --
+the longer it goes, the better your game will be.
+
+Above all, make sure that you track all of the feedback that you get
+from your testers, and prioritize it for action. Your exploratory
+testing program is only as good as the improvements to your code that
+come out of it. If you host your code base on a site like Github
+(which hosts public repositories for free), it has a built-in issue
+tracker that you can use, and even point your testers at to file
+issues. But something as simple as a spreadsheet or even a text file
+can help you keep track of what needs to be done.
+
+Remember, also, that some interpreters support transcripts.
+Transcripts are a relic from the days when _Colossal Cave_ and _Zork_
+were played on mainframe line printers, but they're handy for tracking
+exploratory testing. Encouraging your testers to play with
+transcripting on, and to send you the transcript files, can reveal a
+lot about how players who don't think like you will approach your game.
+
+Not everything that your testers file is necessarily a bug, or even
+undesired behaviour. If you have enough testers, you might find that
+they disagree with each other about the right thing in a number of
+cases. Some issues will be actual bugs, or critically missing features
+that should be added, and for those, you'll want to also write
+automated tests to ensure that other changes that you make later don't
+bring back the problems that you just fixed.
+
+At some point, the rate at which your testers file issues against your
+code will drop off, you'll have fixed all of the issues that you've
+deemed to need fixes (and which are worth fixing), and your game will
+be ready for release. Congratulations! You've made a fully tested
+game, which you can submit to a competition or release to the general
+public. Getting good games into the hands of players is the whole
+reason why Dialog exists.
+
+[#finding-testers]
+=== Finding Beta Testers
+
+Where do you find beta testers? One common place is on
+link:https://intfiction.org/[the Interactive Fiction Community Forum],
+which has a whole category for
+link:https://intfiction.org/c/playing/beta-testing/24[beta testing
+requests]. Once you've implemented all of your game, and it passes all
+of your tests, you can put out a call there, and elsewhere, for
+players to beta test your game. If you look at some of the other
+discussion threads in that forum, you'll see the kind of detail that's
+typical to attract players to want to be the first to try your game.
+
+Do be sure to treat your testers well! At a minimum,
+
+- give them enough time to do a good job of testing, and for testing
+  subsequent versions,
+- remember that they're volunteers who are helping you, and avoid
+  getting angry or impatient with them, and
+- be sure to publicly thank them in your game's credits.
+
 [#summary]
 == Summary
 
@@ -919,15 +2316,19 @@ Here's a summary of the advice from this chapter:
 - Start each test from a known state, and reset to that state with
   `(set up $)` and `(clean up $)` before running the next test.
 - Use fixtures to keep your actual test cases simple.
-- Test in depth, using both unit and integration tests.
+- Design for testability, and don't write "de-testable" code that
+  can't easily be tested. 
+- Test in depth, using both unit and all-up tests, and supplementing
+  your automated tests with exploratory (beta) testing.
 - Automate your testing process with `make` or `dgt`.
 - Test on all platforms for which you'll be releasing: Z-machine, web,
-  and vintage computing hardware.
+  and vintage computing hardware (the Commodore 64, and any other old
+  computers that later versions of Dialog may support).
 - Listen to your tests. If one fails, it's telling you something
   important.
 - Don't release a game for which any of the tests have failed.
 
 Software testing is a much bigger topic than just the introduction to
 it presented here. More good advice about it can be found in books on
-the topic, particularly ones focused on modern automated testing, and
+the topic, particularly those focused on modern automated testing, and
 on test-driven development.

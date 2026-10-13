@@ -6,8 +6,8 @@ from pathlib import Path
 from sys import argv, exit, stderr
 import subprocess as sp
 
-USAGE = f'''Usage: {argv[0]} [file.aastory]
-Attempts to play an .aastory file in the 6502 interpreter (with consistent random seed for testing), despite varying install locations.'''
+USAGE = f'''Usage: {argv[0]} [file.ustory]
+Attempts to play a .ustory file in the 6502 interpreter (with consistent random seed for testing), despite varying install locations.'''
 
 if len(argv) != 2 or argv[1] in {'--help', '-h'}:
 	print(USAGE, file=stderr)

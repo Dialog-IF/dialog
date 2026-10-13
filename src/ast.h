@@ -452,6 +452,7 @@ struct program {
 	uint16_t		max_temp;
 	uint8_t			reported_violations;
 	int				topic_warning_level; // WARN_*
+	int				lib_file; // Which file has (library version)
 };
 
 #define WARN_DEFAULT	0

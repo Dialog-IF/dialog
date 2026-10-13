@@ -1,52 +1,121 @@
+# Dialog Language Compiler and Debugger
+
 This repository contains the Dialog compiler and interactive debugger, bundled
 with documentation and the Dialog Standard Library.
 
-Directory structure:
+## Directory structure:
 
-	readme.txt	This file.
-
-	license.txt	License and disclaimer.
-
-	src		Complete source code for the Dialog compiler and
-			interactive debugger.
-
-	prebuilt	Binaries for Linux, Mac, and Windows.
-
-	docs		Documentation for the programming language and library.
-
-	stdlib.dg	The Dialog standard library.
-
-	stddebug.dg	The Dialog standard debugging extension.
-
-	unit.dg		The Dialog unit testing library.
+| Item | Desc |
+|------|------|
+| *Readme.md* | This file |
+| *license.txt* | License and disclaimer |
+| *src* | Complete source code for the Dialog compiler and interactive debugger |
+| *prebuilt* | Binaries for Linux, Mac, and Windows |
+| *docs* | Documentation for the programming language and library |
+| *stdlib.dg* | The Dialog standard library |
+| *stddebug.dg* | The Dialog standard debugging extension |
+| *unit.dg* | The Dialog unit testing library |
 
 If you see a directory called "manual" instead of "docs", you're looking at
 the development repository itself rather than a bundled release. In this case,
 you'll have to build the binaries yourself.
 
-Building the software under Linux or Mac (requires a C compiler and make):
+## Building
 
-	cd src
-	make
+### Building the software under Linux or Mac
+(requires a C compiler and make):
 
-	(this will produce two executable files called dialogc and dgdebug)
+```
+cd src
+make
+```
 
-Cross-compiling the Windows version of the software under Linux (requires
-mingw32):
+(this will produce two executable files called *dialogc* and *dgdebug*)
 
-	cd src
-	make dialogc.exe dgdebug.exe dgdebug_gui.exe
+### Cross-compiling the Windows version of the software under Linux
+(requires mingw32):
 
-Project website:
+```
+cd src
+make dialogc.exe dgdebug.exe dgdebug_gui.exe
+```
 
-	https://github.com/Dialog-IF/dialog/
+### Building the WASM version
+(requires <https://github.com/webassembly/wasi-sdk>):
 
-Release notes:
+```
+make -C src dialogc.wasm dgdebug.wasm WASI_SDK=/path/to/wasi-sdk
+wasmtime run --dir=. src/dialogc.wasm story.dg stdlib.dg
+```
 
-	1c/02, Lib 1.2.3:
+## Project website:
 
-                Documentation: more has been added to chapter 12.
+<https://github.com/Dialog-IF/dialog/>
 
+## Release notes
+
+### 1c/04, Lib 1.2.4:
+
+		Library: LOOK OUT in a room without an #out exit now lists the
+		possible exits. The previous message, "There's no obvious way
+		out of here", was often misleading.
+
+		Library: many actions on NPCs are now blocked by a new
+		(when $ would object to that) predicate. You can no longer
+		SQUEEZE, CLEAN, or TURN other people, among others.
+
+		Compiler: multiple definitions for the same style class or
+		metadata predicate (outside the library) now produce a warning.
+
+		Compiler: improved dictionary word matching accuracy.
+
+		Compiler: Improved ordering of strings in WRIT chunk, which
+		improves performance on slow platforms like 6502.
+
+		Debugger: fails more gracefully when given non-ASCII word
+		separators.
+
+		Distribution: Convert the repository readme to markdown.
+
+### 1c/03, Lib 1.2.3:
+
+		Language: CSS text-decoration: reverse has been replaced with
+		-iftf-reverse-video: reverse for compatibility reasons.
+
+		Compiler: patched over a bug with non-ASCII word separators.
+		The problem isn't really fixed, but it will no longer corrupt
+		your game text.
+
+		Compiler: re-fixed the obscure bug with divs and spans inside
+		closures, which was previously only fixed for the debugger, not
+		for the compiler. Oops!
+
+		Compiler: better messages when adding resource files to an
+		.aastory file, on both success and failure
+
+		Backend: styles are now properly reset after printing a progress
+		bar inside a div on Z-machine. (Previously it would reset to
+		unstyled text, even if the div was bold or italic.)
+
+		Backend: fixed bug with hex colors (#ff8800) on Z-machine
+		causing problems for older interpreters.
+
+		Backend: colored spans inside (collect words) no longer corrupt
+		the stack on Z-machine.
+
+		Unit test runner: (game over) and (game over $) are
+		now overridden in unit.dg, to enable testing of win
+		conditions.
+
+		Documentation: even more has been added to chapter 12.
+
+		Distribution: Added WebAssembly targets (WASI Preview 1)
+		for dialogc and dgdebug. Requires WASI SDK to build.
+
+### 1c/02, Lib 1.2.3:
+
+		Documentation: more has been added to chapter 12.
+		
 		Library: incredibly trivial changes to make it easier to get
 		identical output across backends. Users are unlikely to ever
 		notice the difference.
@@ -63,7 +132,7 @@ Release notes:
 		Unit test runner: unit.dg now tells the author what the
 		fatal error was when it exits on a fatal error.
 
-	1c/01, Lib 1.2.2:
+### 1c/01, Lib 1.2.2:
 
 		Library: fixed a bug where ASK FOR SOMETHING queried a random
 		closure before printing the error message.
@@ -87,7 +156,7 @@ Release notes:
 		Debugger: --formatting option selects "default", "ansi", or
 		"none" formatting style.
 
-	1b/02, Lib 1.2.1:
+### 1b/02, Lib 1.2.1:
 
 		Compiler: previously, constant lists in rule heads were compiled
 		in a way that was very fast at runtime, but could crash if the
@@ -112,7 +181,7 @@ Release notes:
 		directory. (It was just released, so we don't expect many --
 		or any -- tests to have been written against the old version.)
 
-	1b/01, Lib 1.2.0:
+### 1b/01, Lib 1.2.0:
 	
 		Due to new built-in predicates in this release, all projects
 		compiled for Å-machine will need version 1.0.0 or later of the
@@ -251,7 +320,7 @@ Release notes:
 		Now it instead says that they don't seem receptive, and thus you
 		don't actually hug or kiss them at all.
 
-	1a/01, Lib 1.1.0:
+### 1a/01, Lib 1.1.0:
 	
 		This is the first release handled by the community, and per
 		Linus's wishes, we're bumping the major version for the first
@@ -341,7 +410,7 @@ Release notes:
 		Library: a default (appearance $) rule for pristine objects
 		delegates to (initial appearance $), if defined.
 
-	0m/03, Lib 0.46 (Manual revision 31):
+### 0m/03, Lib 0.46 (Manual revision 31):
 
 		Library: Changed how darkness is handled: Unlit objects are now
 		reachable, and a #darkness object is added to the scope.
@@ -378,7 +447,7 @@ Release notes:
 		Documentation: Added a note about how the compiler looks for
 		'(library version)' to identify the library.
 
-	0m/02, Lib 0.45 (Manual revision 30):
+### 0m/02, Lib 0.45 (Manual revision 30):
 
 		Library: SWITCH now only redirects to SWITCH ON if the object
 		is switchable (and off).
@@ -415,7 +484,7 @@ Release notes:
 
 		Manual: Miscellaneous improvements to Part I.
 
-	0m/01, Lib 0.44 (Manual revision 29):
+### 0m/01, Lib 0.44 (Manual revision 29):
 
 		Language: Added '(clear old)' to clear, from the main area, any
 		text that the player has had a chance to read. Interpreters may
@@ -473,10 +542,9 @@ Release notes:
 
 		Aa-backend: Improved performance thanks to new Aa-machine 0.5
 		features.
-
 	(There is no language version 0l, for reasons of typography.)
 
-	0k/06, Lib 0.43 (Manual revision 28):
+### 0k/06, Lib 0.43 (Manual revision 28):
 
 		Library: Added a default perform-rule saying "You can't"
 		followed by the action description. No more blank responses.
@@ -523,7 +591,7 @@ Release notes:
 
 		Manual: Updated an example in the Items chapter.
 
-	0k/05, Lib 0.42 (Manual revision 27):
+### 0k/05, Lib 0.42 (Manual revision 27):
 
 		Library: Added support for group actions.
 
@@ -555,7 +623,7 @@ Release notes:
 
 		Z-backend: Fixed an off-by-one error in the progress bar.
 
-	0k/04, Lib 0.41 (Manual revision 26):
+### 0k/04, Lib 0.41 (Manual revision 26):
 
 		Library: Fixed a bug where objects immediately inside a closed
 		opaque visibility ceiling weren't considered visible.
@@ -578,7 +646,7 @@ Release notes:
 
 		Manual: Removed wrongly formatted CSS comments.
 
-	0k/03, Lib 0.40 (Manual revision 25):
+### 0k/03, Lib 0.40 (Manual revision 25):
 
 		Library: Printing the name of each object when expanding a
 		complex action, rather than spelling out the entire action.
@@ -607,7 +675,7 @@ Release notes:
 
 		Aa-backend: Picking shorter opcodes in some situations.
 
-	0k/02, Lib 0.39 (Manual revision 24):
+### 0k/02, Lib 0.39 (Manual revision 24):
 
 		Compiler: Fixed a bug that prevented per-object variables from
 		being initialized to complex values.
@@ -655,7 +723,7 @@ Release notes:
 
 		Compiler: Bugfixes and improvements to the optimizer.
 
-	0j/04, Lib 0.38 (Manual revision 23):
+### 0j/04, Lib 0.38 (Manual revision 23):
 
 		Library: Undo is performed as an action, [undo], and reported
 		via '(narrate undoing)'. It is still parsed as a special case.
@@ -669,7 +737,7 @@ Release notes:
 
 		Compiler: Several improvements to the optimizer.
 
-	0j/03, Lib 0.37 (Manual revision 22):
+### 0j/03, Lib 0.37 (Manual revision 22):
 
 		Library: Choice mode.
 
@@ -690,7 +758,7 @@ Release notes:
 		Debugger: Removed spurious blank line when entering a status
 		bar environment.
 
-	0j/02, Lib 0.36 (Manual revision 21):
+### 0j/02, Lib 0.36 (Manual revision 21):
 
 		Debugger: Removed stray warnings about singleton variables when
 		merging changes to the running program.
@@ -698,7 +766,7 @@ Release notes:
 		Library: Visibility is now recomputed after updating the
 		current room variable and moving any floating objects.
 
-	0j/01, Lib 0.35 (Manual revision 21):
+### 0j/01, Lib 0.35 (Manual revision 21):
 
 		Language: '(link)' can now be followed by any kind of
 		statement, not just a plain list of words.
@@ -744,7 +812,7 @@ Release notes:
 		Manual: Moved the section about the pristineness of nested
 		objects to the end of the Items chapter.
 
-	0i/03 Lib 0.34 (Manual revision 20):
+### 0i/03 Lib 0.34 (Manual revision 20):
 
 		Compiler: Fixed a bug where, under very specific circumstances,
 		a register could get overwritten by an else-clause.
@@ -757,7 +825,7 @@ Release notes:
 		Manual: Added a clarification about the pristineness of nested
 		objects, including the initial possessions of the player.
 
-	0i/02 Lib 0.34 (Manual revision 19):
+### 0i/02 Lib 0.34 (Manual revision 19):
 
 		Library: Fixed a bug in how the visibility ceiling was
 		computed.
@@ -769,7 +837,7 @@ Release notes:
 		Manual: Added missing multi-query asterisks to the fungibility
 		examples.
 
-	0i/01 Lib 0.33 (Manual revision 18):
+### 0i/01 Lib 0.33 (Manual revision 18):
 
 		Language: The initial values for ($ has parent $) are derived
 		from a compile-time multi-query.
@@ -796,7 +864,7 @@ Release notes:
 		Library: Rewrote some of the code dealing with unlikely
 		actions.
 
-	0h/05 Lib 0.32 (Manual revision 17):
+### 0h/05 Lib 0.32 (Manual revision 17):
 
 		Library: Facilities for implementing moving NPCs.
 
@@ -843,7 +911,7 @@ Release notes:
 		Debugger: Properly deals with Delete and some other special
 		keys.
 
-	0h/04 Lib 0.31 (Manual revision 16):
+### 0h/04 Lib 0.31 (Manual revision 16):
 
 		Library: Rewrote shortest-path algorithm to reduce memory
 		footprint.
@@ -885,12 +953,12 @@ Release notes:
 
 		Debugger: Fixed a bug related to single-digit input.
 
-	0h/03 Lib 0.30 (Manual revision 16):
+### 0h/03 Lib 0.30 (Manual revision 16):
 
 		Compiler: No longer crashes when trying to generate a zblorb
 		that lacks certain metadata.
 
-	0h/02 Lib 0.30 (Manual revision 16):
+### 0h/02 Lib 0.30 (Manual revision 16):
 
 		Debugger: Results from interactive queries to *(split $ by $
 		into $ and $) are displayed properly.
@@ -900,7 +968,7 @@ Release notes:
 
 		Aa-backend: Improved code generation.
 
-	0h/01 Lib 0.30 (Manual revision 15):
+### 0h/01 Lib 0.30 (Manual revision 15):
 
 		Language: Added support for resources, such as pictures and
 		external links. This includes two new syntactic elements,
@@ -915,7 +983,7 @@ Release notes:
 		'quit' item only appears if '(interpreter supports quit)'
 		succeeds. The normal 'quit' verb is still handled as before.
 
-	0g/06 Lib 0.29 (Manual revision 14):
+### 0g/06 Lib 0.29 (Manual revision 14):
 
 		Library: In the before-rules for eating and drinking, only
 		attempt to pick up the indicated object if it is edible or
@@ -929,7 +997,7 @@ Release notes:
 		Compiler: Fixed a bug related to the optimization of nested
 		disjunctions.
 
-	0g/05 Lib 0.28 (Manual revision 14):
+### 0g/05 Lib 0.28 (Manual revision 14):
 
 		Library and documentation: Added '(heads $)'.
 
@@ -952,7 +1020,7 @@ Release notes:
 		Compiler: Fixed several corner-case bugs discovered through
 		fuzzing.
 
-	0g/04 Lib 0.27 (Manual revision 13):
+### 0g/04 Lib 0.27 (Manual revision 13):
 
 		Debugger and aa-machine backend: Improved support for Unicode
 		characters, including case conversion.
@@ -967,7 +1035,7 @@ Release notes:
 
 		Documentation: Clarifications and minor updates.
 
-	0g/03 Lib 0.26 (Manual revision 12):
+### 0g/03 Lib 0.26 (Manual revision 12):
 
 		Z-machine backend: Added support for selecting the fixed-width
 		font using CSS (font-family: monospace).
@@ -982,23 +1050,23 @@ Release notes:
 
 		Documentation: Minor updates.
 
-	0g/02 Lib 0.26 (Manual revision 11):
+### 0g/02 Lib 0.26 (Manual revision 11):
 
 		Re-release of 0g/01, including several files that were missing.
 
-	0g/01 Lib 0.26 (Manual revision 11):
+### 0g/01 Lib 0.26 (Manual revision 11):
 
 		Compiler: Aa-machine backend. Hyperlinks.
 
 		Library: Hyperlink-related features.
 
-	Library bugfix release 0.25:
+#### 	Library bugfix release 0.25:
 
 		When parsing commands to a non-player character, understand
 		nouns based on their relation to the actor rather than the
 		player.
 
-	0f/07 Lib 0.24 (Manual revision 10):
+### 0f/07 Lib 0.24 (Manual revision 10):
 
 		Documentation: Added predicate index. Various minor
 		improvements and clarifications.
@@ -1011,27 +1079,27 @@ Release notes:
 		Z-machine backend: ASCII fallbacks for en-dash, em-dash, and
 		three kinds of fancy quotes.
 
-	0f/06 Lib 0.23 (Manual revision 9):
+### 0f/06 Lib 0.23 (Manual revision 9):
 
 		Bugfix: Removed a case where the Z-machine backend would
 		attempt to set an undefined style bit.
 
-	0f/05 Lib 0.23 (Manual revision 9):
+### 0f/05 Lib 0.23 (Manual revision 9):
 
 		Debugger: Fixed crashing bug when hot-reloading code with
 		closures.
 
-	0f/04 Lib 0.23 (Manual revision 9):
+### 0f/04 Lib 0.23 (Manual revision 9):
 
 		Bugfix related to certain if-conditions.
 
-	0f/03 Lib 0.23 (Manual revision 9):
+### 0f/03 Lib 0.23 (Manual revision 9):
 
 		Compiler: Fixed a bug in the Z-machine backend where, under
 		certain conditions, long dictionary words didn't get truncated
 		at compile-time.
 
-	0f/02 Lib 0.23 (Manual revision 9):
+### 0f/02 Lib 0.23 (Manual revision 9):
 
 		Compiler: Fixed a bug that caused heavily nested conditional
 		expressions to compile very slowly.
@@ -1039,7 +1107,7 @@ Release notes:
 		Documentation: Removed two obsolete entries from the quick
 		reference.
 
-	0f/01 Lib 0.23 (Manual revision 8):
+### 0f/01 Lib 0.23 (Manual revision 8):
 
 		Introduction of closures. Related changes in the standard
 		library.
@@ -1060,7 +1128,7 @@ Release notes:
 
 		Minor bugfixes and optimizations.
 
-	0e/03 Lib 0.22 (Manual revision 7):
+### 0e/03 Lib 0.22 (Manual revision 7):
 
 		Compiler: Internal restructuring and cleanup, as well as new
 		optimizations.
@@ -1070,7 +1138,7 @@ Release notes:
 
 		Debugger: Bugfix related to select and undo.
 
-	0e/02 Lib 0.21 (Manual revision 6):
+### 0e/02 Lib 0.21 (Manual revision 6):
 
 		Library: In object-based disambiguation, the answer is now
 		matched against '(the full $)'.
@@ -1097,7 +1165,7 @@ Release notes:
 		Bugfix: Reporting a number of syntax errors instead of
 		asserting.
 
-	0e/01 Lib 0.20 (Manual revision 5):
+### 0e/01 Lib 0.20 (Manual revision 5):
 
 		Long-term heap for complex values stored in global and
 		per-object variables. Removed the syntax for declaring a global
@@ -1115,11 +1183,11 @@ Release notes:
 
 		Various bugfixes in the debugger and compiler.
 
-	0d/02 Lib 0.19 (Manual revision 4):
+### 0d/02 Lib 0.19 (Manual revision 4):
 
 		A couple of bugfixes in the debugger.
 
-	0d/01 Lib 0.19 (Manual revision 4):
+### 0d/01 Lib 0.19 (Manual revision 4):
 
 		Introduced the Interactive Debugger, with corresponding
 		modifications to the documentation.
@@ -1135,11 +1203,11 @@ Release notes:
 
 		Library: Minor improvements.
 
-	Library release 0.18:
+#### Library release 0.18:
 
 		Added '(print raw input $)'.
 
-	0c/05 Lib 0.17 (Manual revision 3):
+### 0c/05 Lib 0.17 (Manual revision 3):
 
 		Added support for the .z5 output format.
 
@@ -1148,7 +1216,7 @@ Release notes:
 		Library: Improved a few default responses. Added '(narrate
 		failing to look $Dir)'.
 
-	0c/04 Lib 0.16 (Manual revision 2):
+### 0c/04 Lib 0.16 (Manual revision 2):
 
 		Bugfix related to the allocation of a temporary register in a
 		'has parent' optimization.
@@ -1157,7 +1225,7 @@ Release notes:
 
 		Library: Added a synonym ('toss' for 'throw').
 
-	0c/03 Lib 0.15 (Manual revision 2):
+### 0c/03 Lib 0.15 (Manual revision 2):
 
 		Improved disambiguation: Now the library will ask the player to
 		choose from a list of objects, if that makes all the
@@ -1166,11 +1234,11 @@ Release notes:
 
 		Miscellaneous compiler bugfixes.
 
-	0c/02 Lib 0.14 (Manual revision 2):
+### 0c/02 Lib 0.14 (Manual revision 2):
 
 		Compiler bugfix related to '(status bar width $)'.
 
-	0c/01 Lib 0.14 (Manual revision 2):
+### 0c/01 Lib 0.14 (Manual revision 2):
 
 		Added slash expressions, for specifying alternatives in rule
 		heads. In the standard library, most synonyms are now handled
@@ -1199,13 +1267,13 @@ Release notes:
 
 		Removed overly restrictive feature-test macros.
 
-	Library bugfix release 0.13:
+#### Library bugfix release 0.13:
 
 		Bugfix: Made it possible to (try [look]) from within (intro).
 
 		Bugfix: Made it possible to drive vehicles from room to room.
 
-	0b/01 Lib 0.12 (Manual revision 1):
+### 0b/01 Lib 0.12 (Manual revision 1):
 
 		This is the first public release of Dialog.
 

@@ -65,8 +65,3 @@ xref:lib:libref.adoc[]
 
 '''
 
-TODO:
-
-- top level toc list under each main page link
-- centering the top mast
-- columns for Part I vs. Part II

@@ -1,11 +1,17 @@
 %% unit.dg
-(extension version)	Unit test runner 1.2.1 by Susan Davis.
+(extension version)	Unit test runner 1.2.2 by Susan Davis.
 
 %% See example(s) in test/unit in Dialog source distribution, and chapter 12 of
 %% the library manual.
 
 %% Copyright © 2021-2026, Susan Davis. All rights reserved. Licensed under the
 %% same license as the rest of Dialog; see license.txt or LICENSE for details.
+
+(keep running on failure) %% negate to stop at first failed test
+
+(using color) %% negate to use default output instead of green and red
+
+~(list failing tests) %% un-negate to summarize failing tests at the end
 
 %%-------------------------------- INTERFACES --------------------------------
 
@@ -28,13 +34,9 @@
 
 (interface (assert $<Var < $<Val))
 
-(keep running on failure) %% negate to stop at first failed test
-
-(using color) %% negate to use default output instead of green and red
-
-~(list failing tests) %% un-negate to summarize failing tests at the end
-
 %%----------------------------- IMPLEMENTATION -----------------------------
+
+(global variable (game over message $))
 
 %% We almost don't need these, since that final line already does what we
 %% want, but adding binding checks can be useful.
@@ -141,6 +143,16 @@
 	(bold) FAILED TEST -- FATAL ERROR $Code: (roman)
 	(report fatal error $Code) (par)
 	(quit 2)
+
+%% override game over so that we can test conditions that end the game without
+%% preventing running other tests
+
+(game over)
+    (now) (game has ended)
+
+(game over $Message)
+    (now) (game over message $Message)
+	(game over)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% License and copyright notice

@@ -716,9 +716,9 @@ struct rtroutine rtroutines[] = {
 			
 			// We also need to make sure the Standard revision is 1.1 or higher
 			// Otherwise, the Z_TRUECOLOR opcode won't exist! And might crash
-			{Z_LOADW, {SMALL(32), SMALL(0)}, REG_LOCAL+1},
+			{Z_LOADW, {SMALL(0x32), SMALL(0)}, REG_LOCAL+1},
 			// Upper byte = major version, lower byte = minor version
-			// So this needs to be at least 0x0101
+			// So this needs to be at least $0101
 			
 			{Z_JL, {VALUE(REG_FGCOLOR), SMALL(0)}, 0, 1}, // Is the foreground color negative? If so, we should do a "standard" setting instead of a "true" setting
 			{Z_JL, {VALUE(REG_LOCAL+1), LARGE(0x0101)}, 0, 2}, // And if this interpreter doesn't support the Z_TRUECOLOR opcode, we should skip this entirely
@@ -767,6 +767,8 @@ struct rtroutine rtroutines[] = {
 			// 0 (param): styles to set for this box class
 			// 1 (param): styles to unset for this box class
 		(struct zinstr []) {
+			{Z_JNZ, {VALUE(REG_FORWORDS)}, 0, RFALSE},
+			
 			{Z_CALL2N, {ROUTINE(R_AUX_PUSH1), VALUE(REG_STYLE)}}, // Save the previous value of REG_STYLE
 			{Z_JE, {VALUE(REG_STYLE), SMALL(STYLE_INVISIBLE)}, 0, RFALSE}, // Then if we're currently in an invisible box, don't save anything, the style should remain invisible until we exit the original invisible box
 			
@@ -794,6 +796,8 @@ struct rtroutine rtroutines[] = {
 		1,
 			// 0: previous value of REG_STYLE for checking things
 		(struct zinstr []) {
+			{Z_JNZ, {VALUE(REG_FORWORDS)}, 0, RFALSE},
+			
 			{Z_STORE, {SMALL(REG_LOCAL+0), VALUE(REG_STYLE)}}, // Save the current value of REG_STYLE to check something
 			{Z_DEC, {SMALL(REG_COLL)}}, // Pull the previous value of REG_STYLE back off the stack
 			{Z_LOADW, {VALUE(REG_AUXBASE), VALUE(REG_COLL)}, REG_STYLE},
@@ -813,6 +817,8 @@ struct rtroutine rtroutines[] = {
 			// 0 (param): foreground color to use
 			// 1 (param): background color to use
 		(struct zinstr []) {
+			{Z_JNZ, {VALUE(REG_FORWORDS)}, 0, RFALSE},
+			
 			// Push BGCOLOR, then FGCOLOR
 			{Z_CALL2N, {ROUTINE(R_AUX_PUSH1), VALUE(REG_BGCOLOR)}},
 			{Z_CALL2N, {ROUTINE(R_AUX_PUSH1), VALUE(REG_FGCOLOR)}},
@@ -837,6 +843,7 @@ struct rtroutine rtroutines[] = {
 						// We don't have to do this for styles because that's handled within BEGIN_ and END_ for the boxes and spans, but the Dialog assembler can't pass more than three arguments to a routine (it doesn't support Z_CALLVN2), so we just assemble a separate routine call instead
 		0,
 		(struct zinstr []) {
+			{Z_JNZ, {VALUE(REG_FORWORDS)}, 0, RFALSE},
 			// Pull FGCOLOR, then BGCOLOR
 			{Z_DEC, {SMALL(REG_COLL)}},
 			{Z_LOADW, {VALUE(REG_AUXBASE), VALUE(REG_COLL)}, REG_FGCOLOR},
@@ -3995,6 +4002,7 @@ struct rtroutine rtroutines[] = {
 			// not inside status box
 			{Z_BUFFER_MODE, {SMALL(1)}},
 			{Z_TEXTSTYLE, {SMALL(0)}},
+			{Z_CALL1N, {ROUTINE(R_RESET_STYLE)}}, // Reset to the div's style
 			{Z_RFALSE},
 			{Z_END},
 		}
