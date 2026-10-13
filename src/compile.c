@@ -2211,10 +2211,23 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 			}
 			break;
 		case AN_COLLECT_WORDS:
+			// Avoid a bug with (stop) breaking out of (collect words) and leaving CWL set
+			if(body_might_stop(an->children[0])) {
+				stoplab = make_routine_id();
+			} else {
+				stoplab = -1;
+			}
 			endlab = make_routine_id();
+			
 			ci = add_instr(I_COLLECT_BEGIN);
 			ci = add_instr(I_FOR_WORDS);
 			ci->subop = 1;
+			
+			if(stoplab >= 0) {
+				ci = add_instr(I_PUSH_STOP);
+				ci->oper[0] = (value_t) {OPER_RLAB, stoplab};
+			}
+			
 			ci = add_instr(I_PUSH_CHOICE);
 			ci->oper[0] = (value_t) {OPER_NUM, 0};
 			ci->oper[1] = (value_t) {OPER_RLAB, endlab};
@@ -2224,6 +2237,19 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 			ci = add_instr(I_JUMP);
 			ci->oper[0] = (value_t) {OPER_FAIL};
 			end_routine_cl(cl);
+			
+			// TODO: this is new and I need to make sure it doesn't break
+			if(stoplab >= 0) {
+				begin_routine(stoplab);
+				ci = add_instr(I_POP_CHOICE);
+				ci->oper[0] = (value_t) {OPER_NUM, 0};
+				ci = add_instr(I_POP_STOP);
+				ci = add_instr(I_FOR_WORDS);
+				ci->subop = 0;
+				ci = add_instr(I_STOP);
+				end_routine_cl(cl);
+			}
+			
 			memset(known_args, 0, MAXPARAM * sizeof(struct astnode *));
 			begin_routine(endlab);
 			ci = add_instr(I_POP_CHOICE);
@@ -2242,6 +2268,12 @@ static void comp_body(struct program *prg, struct clause *cl, struct astnode *an
 				ci = add_instr(I_COLLECT_END_V);
 				ci->oper[0] = v1;
 			}
+			
+			if(stoplab >= 0) {
+				ci = add_instr(I_CUT_CHOICE);
+				ci = add_instr(I_POP_STOP);
+			}
+			
 			break;
 		case AN_DETERMINE_OBJECT:
 			comp_ensure_seen_if_nonlocal(cl, an, seen);
