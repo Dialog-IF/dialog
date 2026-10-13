@@ -94,8 +94,10 @@ Supported values are `normal`, `bold`, and `inherit`.
 font-family::
 The value is checked for the presence or absence of the keyword `monospace`, or for the exact text `inherit`.
 
-text-decoration::
-The value is checked for the presence or absence of the keyword `reverse`, or for the exact text `inherit`. A value containing `reverse` instructs the interpreter to reverse the foreground and background colors, whatever they might be; this is not standard CSS, but is more widely supported on retro hardware than setting the colors directly.
+-iftf-reverse-video::
+Supported values are `reverse`, `none`, and `inherit`. This is not standard CSS, and will not be recognized by the web interpreter; some platforms, like the Z-machine and the Apple II, have a special ability to swap their foreground and background colors, and this property was invented to represent that.
+
+CAUTION: Previous versions of Dialog used `text-decoration: reverse` for this purpose. This caused problems with other values of `text-decoration` on the web interpreter and has been removed.
 
 display::
 Supported values are `none` and `inherit`. Content marked with `display: none` is not displayed in any way, but _will_ appear in the xref:builtins.adoc#system[transcript]. If any important information is conveyed in a status area, this can be used to ensure it's also recorded in the transcript.
@@ -350,7 +352,7 @@ The Z-machine backend will reserve this many lines at the top of the screen.
 	}
 ----
 
-On the Z-machine, text inside the top status area is always rendered in a fixed-pitch font. Unless specified otherwise (with `text-decoration: none` in the style class), it will also be displayed in reverse video style.
+On the Z-machine, text inside the top status area is always rendered in a fixed-pitch font. Unless specified otherwise (with `-iftf-reverse-video: none` in the style class), it will also be displayed in reverse video style.
 When entering the status bar environment, Dialog fills the status area with space characters and positions the cursor in the top left corner.
 
 Inline style changes (bold, italic, reverse, fixed pitch, and roman) are ignored in the top status area, but spans are not.
@@ -469,9 +471,9 @@ All of them may be ignored by interpreters.
 [#dimensions]
 == Sizing
 
-For the most part, Dialog tries to present its output as a document: a series of words divided by spaces and breaks, partitioned off into divs and spans. The exact appearance of this document is then left to the interpreter to realize in whichever way is best for a given platform. Finer details, like the position of each character on the screen, are deliberately left unspecified—there might not even be a "screen" at all, if the game is being played through a screen reader or a messaging platform.
+For the most part, Dialog tries to present its output as a document: a series of words divided by spaces and breaks, partitioned off into divs and spans. The exact appearance of this document is then left to the interpreter to realize in whichever way is best for a given platform. Finer details, like the position of each character on the screen, are deliberately left unspecified—there might not even be a "screen" at all, if the game is being played through text-to-speech or a messaging platform.
 
-In some cases, though, the limitations of the Z-machine pose a problem for this model. On the Å-machine, for example, a status bar with `height: auto` will expand freely to fit its content. But on the Z-machine, the height of a status bar must always be specified before printing into it. In these cases, Dialog allows the author more fine-grained control; on more flexible backends, like the Å-machine, this additional detail is simply ignored.
+In some cases, though, the limitations of the Z-machine (and the 8-bit Å-machine interpreters) pose a problem for this model. In the Å-machine web interpreter, for example, a status bar with `height: auto` will expand freely to fit its content. But on the Z-machine, the height of a status bar must always be specified before printing into it. In these cases, Dialog allows the author more fine-grained control; on more flexible backends, this additional detail is simply ignored.
 
 [source,subs="quotes"]
 ----
@@ -495,7 +497,7 @@ However, note that not all interpreters can provide this information—on a scre
 reader or messaging platform, for example, there might not be any screen to
 measure! If this happens, the predicate will simply fail.
 
-On the Z-machine backend and the Commodore 64 Å-machine interpreter, these
+On the Z-machine backend and the 8-bit Å-machine interpreter, these
 predicates are most useful within the top status area, which always has fixed
 dimensions and a monospace font. If used anywhere else, they will attempt to 
 provide the width and height of the entire screen.

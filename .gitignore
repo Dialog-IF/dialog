@@ -4,6 +4,7 @@ dialogc
 dgdebug.exe
 dgdebug_tty.exe
 dialogc.exe
+dialogc.wasm
 **/log.txt
 **/.DS_Store
 **/*~
@@ -12,6 +13,7 @@ dialogc.exe
 *.z8
 *.zblorb
 *.aastory
+*.ustory
 *.log
 *.out
 /*.dg

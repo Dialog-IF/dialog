@@ -2399,26 +2399,42 @@ static void assign_select_statements(struct program *prg) {
 	selectforms = 0;
 }
 
-char *decode_metadata_str(int builtin, struct word *param, struct program *prg, struct arena *arena) {
+char *decode_metadata_str(int builtin, struct word *param, struct program *prg, struct arena *arena, const char *report_as, int lib_file) {
 	struct predname *predname;
 	struct predicate *pred;
-	char *buf;
+	char *buf = 0;
 	int i;
+	int nfound = 0;
+	int nlib = 0;
+	line_t whichline = 0;
 
 	predname = find_builtin(prg, builtin);
 	pred = predname->pred;
 	for(i = 0; i < pred->nclause; i++) {
 		if(!param
 		|| (pred->clauses[i]->params[0]->kind == AN_DICTWORD && pred->clauses[i]->params[0]->word == param)) {
-			if(decode_output(&buf, pred->clauses[i]->body, 0, 0, arena, "Story metadata")) {
-				return buf;
-			} else {
-				return 0;
+			if(!nfound) { // First one found
+				if(!decode_output(&buf, pred->clauses[i]->body, 0, 0, arena, "Story metadata")) {
+					buf = 0; // Failed to decode into buf
+				}
+				whichline = pred->clauses[i]->line;
+			}
+			nfound ++;
+			if(FILENUMPART(pred->clauses[i]->line) == lib_file) { // This one was in a library file
+				nlib ++;
 			}
 		}
 	}
 
-	return 0;
+	if(nfound - nlib > 1) {
+		if(param) {
+			report(LVL_WARN, whichline, "%d separate definitions found for (%s @%s) outside of the library. Only the first (at this line) will be used.", nfound, report_as, param->name);
+		} else {
+			report(LVL_WARN, whichline, "%d separate definitions found for (%s) outside of the library. Only the first (at this line) will be used.", nfound, report_as);
+		}
+	}
+
+	return buf;
 }
 
 int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t dictmap_callback) {
@@ -2482,6 +2498,7 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 	} else if(lexer.lib_file != nfile - 1) {
 		report(LVL_WARN, 0, "The library (in this case %s) should normally appear last on the commandline.", sourcefile[lexer.lib_file]);
 	}
+	prg->lib_file = lexer.lib_file;
 	
 	// Warn about objects never used as topics, depending on topic_warning_level
 	if(prg->topic_warning_level == WARN_DEFAULT && lexer.lib_file >= 0) { // Default: warn only if library file found
@@ -2896,7 +2913,7 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 
 	for(i = 0; i < prg->nboxclass; i++) {
 		struct boxclass *bc = &prg->boxclasses[i];
-		char *css = decode_metadata_str(BI_STYLEDEF, bc->class, prg, &lexer.temp_arena);
+		char *css = decode_metadata_str(BI_STYLEDEF, bc->class, prg, &lexer.temp_arena, "style class", lexer.lib_file);
 		char *param, *str;
 		struct boxclassline *bcl, **bclptr;
 
@@ -2975,14 +2992,24 @@ int frontend(struct program *prg, int nfile, char **fname, dictmap_callback_t di
 					} else if(strcmp(param, "inherit")) { // Something that's not monospace was specified, and it was *not* inherit
 						bc->unstyle |= STYLE_FIXED;
 					}
-				} else if(1 == sscanf(str, "text-decoration : %s", param)) {
-					if(strstr(str, "reverse")) { // This is not a standard CSS property, but there is no standard CSS property for reverse video, and unrecognized property values are explicitly not an error in CSS
+				} else if(1 == sscanf(str, "-iftf-reverse-video : %s", param)) {
+					// The new, modern replacement for text-decoration: reverse
+					// See discussion at https://intfiction.org/t/should-we-standardize-a-pseudo-css-property-for-reverse-video/81692 for rationale
+					if(!strcmp(param, "reverse")) {
 						bc->style |= STYLE_REVERSE;
-					} else if(strcmp(param, "inherit")) { // As above, something that's not reverse was specified, and it's *not* inherit
+					} else if(!strcmp(param, "none")) {
 						bc->unstyle |= STYLE_REVERSE;
 					}
-					if(strstr(str, "debug")) { // It's sometimes useful to set the STYLE_DEBUG flag manually. This is deliberately not documented.
+				} else if(1 == sscanf(str, "-dialog-debug : %s", param)) {
+					// This is deliberately undocumented, but occasionally useful
+					if(!strcmp(param, "debug")) {
 						bc->style |= STYLE_DEBUG;
+					} else if(!strcmp(param, "none")) {
+						bc->unstyle |= STYLE_DEBUG;
+					}
+				} else if(1 == sscanf(str, "text-decoration : %s", param)) {
+					if(strstr(str, "reverse")) { // This used to be Dialog's way of specifying reverse-video style, but it caused problems: "text-decoration: underline reverse" would produce nothing in web browsers, rather than only an underline. So it's been replaced. (We use strstr and str here because sscanf breaks on the first whitespace, so param will have only the first word.)
+						report(LVL_WARN, 0, "'text-decoration: reverse' is no longer supported; use '-iftf-reverse-video: reverse' instead (in style class @%s)", bc->class->name);
 					}
 				} else if(1 == sscanf(str, "display : %s", param)) {
 					if(!strcmp(param, "none")) { // display:none indicates that a span/div should be sent to the transcript but not to the screen, like the quote boxes in Trinity
