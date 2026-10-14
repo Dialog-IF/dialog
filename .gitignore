@@ -13,6 +13,7 @@ dialogc.wasm
 *.z8
 *.zblorb
 *.aastory
+*.ustory
 *.log
 *.out
 /*.dg
