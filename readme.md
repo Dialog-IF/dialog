@@ -56,6 +56,9 @@ wasmtime run --dir=. src/dialogc.wasm story.dg stdlib.dg
 
 ### 1c/04, Lib 1.2.4:
 
+		Language: ($ times $ into $) now fails if the product is too
+		large, rather than succeeding with the wrong result.
+
 		Library: LOOK OUT in a room without an #out exit now lists the
 		possible exits. The previous message, "There's no obvious way
 		out of here", was often misleading.
@@ -66,9 +69,6 @@ wasmtime run --dir=. src/dialogc.wasm story.dg stdlib.dg
 
 		Compiler: multiple definitions for the same style class or
 		metadata predicate (outside the library) now produce a warning.
-
-		Language: ($ times $ into $) now fails if the product is too
-		large, rather than succeeding with the wrong result.
 
 		Compiler: improved dictionary word matching accuracy.
 

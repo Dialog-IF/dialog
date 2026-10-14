@@ -75,7 +75,7 @@ fails.
 their product. If the product is outside the valid range of numbers, the query
 fails.
 
-NOTE: Before version 1c/03, this predicate would return an incorrect value
+NOTE: Before version 1c/04, this predicate would return an incorrect value
 instead of failing.
 
 ($A divided by $B into $C)::
