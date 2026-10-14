@@ -56,6 +56,8 @@ wasmtime run --dir=. src/dialogc.wasm story.dg stdlib.dg
 
 ### 1c/04, Lib 1.2.4:
 
+This version of Dialog now requires version 1.1 of the Å-machine.
+
 		Language: ($ times $ into $) now fails if the product is too
 		large, rather than succeeding with the wrong result.
 
