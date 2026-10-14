@@ -69,13 +69,15 @@ wasmtime run --dir=. src/dialogc.wasm story.dg stdlib.dg
 
 		Compiler: improved dictionary word matching accuracy.
 
-		Compiler: Improved ordering of strings in WRIT chunk, which
+		Compiler: improved ordering of strings in WRIT chunk, which
 		improves performance on slow platforms like 6502.
 
 		Debugger: fails more gracefully when given non-ASCII word
 		separators.
 
-		Distribution: Convert the repository readme to markdown.
+		Distribution: convert the repository readme to Markdown.
+
+		Manual: minor clarifications and wording improvements.
 
 ### 1c/03, Lib 1.2.3:
 
