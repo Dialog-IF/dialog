@@ -619,6 +619,9 @@ then Dialog will attempt to remove certain word endings,
 and check whether the remaining part of the word exists in the dictionary.
 This procedure is necessary for games written in e.g. German,
 whereas English games generally do not require it.
+(Note that this will _only_ happen if the word is not recognized; if the full
+word, including its ending, is found in the game dictionary, then the ending
+will not be removed.)
 
 To specify removable endings, add one or more rule definitions to the predicate `(removable word endings)`.
 Each rule body should consist of one or more word endings:

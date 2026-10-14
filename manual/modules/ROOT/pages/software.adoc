@@ -14,7 +14,7 @@ interactive debugger, as well as pre-built executable files for Linux
 The compiler is called `dialogc`, and the debugger is called `dgdebug`.
 
 Alternately, if you are on OS X, you can install the
-[Homebrew package manager](https://brew.sh/),
+https://brew.sh/[Homebrew package manager],
 and then use the command `brew install dialog-if/brew/dialog`, which will
 install `dgdebug` and `dialogc`. This command also installs Dialog's standard libraries (`stdlib.dg` and `stddebug.dg`) to
 either `/opt/homebrew/share/dialog-if` or `/usr/local/share/dialog-if`
@@ -31,6 +31,8 @@ the directory that contains them.
 The graphical version of the debugger on Windows makes use of a third-party
 library, _Windows Glk_ by David Kinder. Make sure to put the two included `DLL`
 files in the same directory as the executable file (`dgdebug_gui.exe`).
+Along with being harder to install, the graphical debugger struggles with
+non-Latin letters, so the plain `dgdebug.exe` is recommended.
 
 To check that everything is in place, try the following two commands:
 
