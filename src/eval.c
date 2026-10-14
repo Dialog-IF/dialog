@@ -1182,8 +1182,11 @@ static int eval_compute(struct eval_state *es, int op, int a, int b, int *res) {
 		}
 		break;
 	case BI_TIMES:
-		*res = (a * b) & 16383;
-		return 1;
+		r = a * b;
+		if(r < 16384) {
+			*res = r;
+			return 1;
+		}
 		break;
 	case BI_DIVIDED:
 		if(b) {

@@ -465,6 +465,7 @@ enum { // Runtime routines
 
 	R_PLUS,
 	R_MINUS,
+	R_MULT_WOULD_OVERFLOW, // Needed for R_TIMES
 	R_TIMES,
 	R_DIVIDED,
 	R_MODULO,
