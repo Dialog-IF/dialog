@@ -173,6 +173,8 @@
 #define REG_NIL			0x3e // Constant [] ($3f00) - immediate constants take two bytes, registers take only one, and this is needed often
 #define REG_IDX			0x3f // Opcodes $7x, $Fx operate implicitly on this register for smaller code
 
+#define AA_MAX_TEMP		(REG_TMP - REG_X) // 48
+
 #define AASTYLE_REVERSE		1
 #define AASTYLE_BOLD		2
 #define AASTYLE_ITALIC		4
