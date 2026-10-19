@@ -28,12 +28,11 @@
 #define AA_AUX_PUSH_VAL		0x14	// VALUE
 #define AA_AUX_PUSH_RAW_0	0x94	// 0
 #define AA_AUX_PUSH_RAW		0x15	// VWORD/VBYTE
-#define AA_AUX_POP_VAL		0x16	// DEST - before 1.0
 #define AA_AUX_POP_LIST		0x17	// DEST
 #define AA_AUX_POP_LIST_CHK	0x18	// VALUE
 #define AA_AUX_POP_LIST_MATCH	0x19	// VALUE
-#define AA_PACK_EXTDICT	0x1a	// VALUE VALUE DEST
-#define AA_UNPACK_EXTDICT	0x9a	// VALUE DEST DEST
+#define AA_PACK_EXTDICT	0x1a	// VALUE VALUE DEST - 1.1
+#define AA_UNPACK_EXTDICT	0x9a	// VALUE DEST DEST - 1.1
 #define AA_SPLIT_LIST		0x1b	// VALUE VALUE DEST
 #define AA_STOP			0x1c
 #define AA_PUSH_STOP		0x1d	// CODE
@@ -106,9 +105,7 @@
 #define AA_PRINT_VAL		0x65	// VALUE
 #define AA_ENTER_DIV		0x66	// INDEX
 #define AA_LEAVE_DIV		0xe6
-#define AA_ENTER_STATUS_0		0x67	// 0 INDEX - before 1.0
-#define AA_SET_BODY		0x67	// INDEX - 1.0 onwards
-#define AA_LEAVE_STATUS_OLD	0xe7	// before 1.0
+#define AA_SET_BODY		0x67	// INDEX - 1.0
 #define AA_ENTER_LINK_RES	0x68	// VALUE
 #define AA_LEAVE_LINK_RES	0xe8
 #define AA_ENTER_LINK		0x69	// VALUE
@@ -123,7 +120,7 @@
 #define AA_ENTER_SPAN		0x6e	// INDEX
 #define AA_LEAVE_SPAN		0xee
 #define AA_ENTER_STATUS		0x6f	// BYTE INDEX
-#define AA_LEAVE_STATUS		0xef	// 1.0 onwards
+#define AA_LEAVE_STATUS		0xef	// 1.0
 #define AA_EXT0			0x70	// BYTE
 #define AA_SAVE			0x72	// CODE
 #define AA_SAVE_UNDO		0xf2	// CODE
@@ -162,8 +159,8 @@
 #define AAEXT0_CLEAR_LINKS	0x0f
 #define AAEXT0_CLEAR_OLD	0x10
 #define AAEXT0_CLEAR_DIV	0x11
-#define AAEXT0_CLEAR_STATUS	0x12
-#define AAEXT0_NBSP		0x13
+#define AAEXT0_CLEAR_STATUS	0x12 // Added in 1b/01, Å-machine 1.0
+#define AAEXT0_NBSP		0x13 // Added in 1b/01, Å-machine 1.0
 #define AAEXT0_N		0x14
 
 #define OVAR_PARENT		0
@@ -252,4 +249,4 @@ struct aaopinfo {
 extern struct aaopinfo aaopinfo[256];
 extern char *aaext0name[AAEXT0_N];
 
-void aavm_init(int version_major);
+void aavm_init();
