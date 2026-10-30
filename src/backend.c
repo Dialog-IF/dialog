@@ -59,6 +59,18 @@ void suggest_new_ifid(int level) {
 	}
 }
 
+static int multiple_definitions_outside_library(struct program *prg, struct predicate *pred) {
+	// Duplicates some of the logic of decode_metadata_str in frontend.c - TODO consolidate
+	int i, nfound=0, nlib=0;
+	for(i = 0; i < pred->nclause; i++) {
+		nfound++;
+		if(FILENUMPART(pred->clauses[i]->line) == prg->lib_file) { // This one was in a library file
+			nlib ++;
+		}
+	}
+	return nfound - nlib > 1;
+}
+
 void usage(char *prgname) {
 	fprintf(stderr, "Dialog compiler " VERSION ".\n");
 	fprintf(stderr, "Original compiler copyright 2018-2021 Linus Akesson.\n");
@@ -342,7 +354,7 @@ int main(int argc, char **argv) {
 			exit(1);
 		}
 		prg->meta_release = pred->clauses[0]->params[0]->value;
-		if(pred->nclause > 1) {
+		if(multiple_definitions_outside_library(prg, pred)) {
 			report(LVL_WARN, pred->clauses[0]->line, "%d separate definitions found for (story release $). Only the first (at this line) will be used.", pred->nclause);
 		}
 	} else {
