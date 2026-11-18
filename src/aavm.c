@@ -41,6 +41,8 @@ static struct aaopinfo aaopinfosrc[] = {
 	{AA_AUX_POP_LIST,	{AAO_DEST}, 0,						"aux_pop_list"},
 	{AA_AUX_POP_LIST_CHK,	{AAO_VALUE}, 0,						"aux_pop_list_chk"},
 	{AA_AUX_POP_LIST_MATCH,	{AAO_VALUE}, 0,						"aux_pop_list_match"},
+	{AA_PACK_EXTDICT,	{AAO_VALUE, AAO_VALUE, AAO_DEST}, 0,	"pack_extdict"},
+	{AA_UNPACK_EXTDICT,	{AAO_VALUE, AAO_DEST, AAO_DEST}, 0,	"unpack_extdict"},
 	{AA_SPLIT_LIST,		{AAO_VALUE, AAO_VALUE, AAO_DEST}, 0,			"split_list"},
 	{AA_LOAD_WORD,		{AAO_VALUE, AAO_INDEX, AAO_DEST}, AAO_ZERO,		"load_word"},
 	{AA_LOAD_BYTE,		{AAO_VALUE, AAO_INDEX, AAO_DEST}, AAO_ZERO,		"load_byte"},
