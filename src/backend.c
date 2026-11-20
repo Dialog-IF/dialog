@@ -85,7 +85,7 @@ void usage(char *prgname) {
 	fprintf(stderr, "--verbose         -v    Increase verbosity (may be used multiple times).\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "--output          -o    Set output filename.\n");
-	fprintf(stderr, "--format          -t    Set output format (zblorb, z8, z5, aa).\n");
+	fprintf(stderr, "--format          -t    Set output format (zblorb, z5blorb, z8, z5, aa).\n");
 	fprintf(stderr, "--resources       -r    Set resource directory (default '.').\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "--heap            -H    Set main heap size (default 1000 words).\n");
@@ -97,13 +97,13 @@ void usage(char *prgname) {
 	fprintf(stderr, "--no-warn-not-topic     Never warn about objects not used as topics.\n");
 	fprintf(stderr, "--override-serial       Override serial number for reproducible builds.\n");
 	fprintf(stderr, "\n");
-	fprintf(stderr, "Only for z5, z8, or zblorb format:\n");
+	fprintf(stderr, "Only for z5, z8, zblorb, or z5blorb format:\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "--no-default-unicode    Don't preserve the default Unicode translation table.\n");
 	fprintf(stderr, "--basic-zscii           Restrict the parser to default ZSCII for compatibility.\n");
 	fprintf(stderr, "--optimize-alphabet     Increase dictionary resolution for non-English letters.\n");
 	fprintf(stderr, "\n");
-	fprintf(stderr, "Only for zblorb format:\n");
+	fprintf(stderr, "Only for zblorb or z5blorb format:\n");
 	fprintf(stderr, "\n");
 	fprintf(stderr, "--cover           -c    Cover image filename (PNG or JPEG, max 1200x1200).\n");
 	fprintf(stderr, "--cover-alt       -a    Textual description of cover image.\n");
@@ -235,6 +235,7 @@ int main(int argc, char **argv) {
 	} while(opt >= 0);
 
 	if(strcmp(format, "zblorb")
+	&& strcmp(format, "z5blorb")
 	&& strcmp(format, "z8")
 	&& strcmp(format, "z5")
 	&& strcmp(format, "aa")) {
@@ -266,6 +267,8 @@ int main(int argc, char **argv) {
 			outname[i++] = '.';
 			if(!strcmp(format, "aa")) {
 				strcpy(outname + i, "aastory");
+			} else if(!strcmp(format, "z5blorb")) {
+				strcpy(outname + i, "zblorb");
 			} else {
 				strcpy(outname + i, format);
 			}
@@ -314,7 +317,7 @@ int main(int argc, char **argv) {
 
 	prg->meta_ifid = decode_metadata_str(BI_STORY_IFID, 0, prg, &prg->arena, "story ifid", prg->lib_file);
 	if(!prg->meta_ifid) {
-		if(!strcmp(format, "zblorb")) { // Mandatory for zblorb, make it an error
+		if(!strcmp(format, "zblorb") || !strcmp(format, "z5blorb")) { // Mandatory for zblorb, make it an error
 			report(LVL_ERR, 0, "An IFID is mandatory for the blorb output format.");
 			suggest_new_ifid(LVL_ERR);
 			exit(1);

@@ -65,7 +65,7 @@ attribution is given.
 
 Dialog is a compiled language. Source code is stored in text files with the filename extension `.dg`, which must be encoded in UTF-8.
 The compiler delivers its output in `.zblorb`, `.z8`, `.z5`, or `.aastory` format.
-When the zblorb format is chosen, the compiler can optionally include cover art with the story,
+When the `zblorb` format (or `z5blorb`, which wraps a Z5 story file instead of a Z8 one) is chosen, the compiler can optionally include cover art with the story,
 but this feature is not regarded as a part of the Dialog language itself.
 
 image:overview.png[overview]

@@ -4541,7 +4541,7 @@ void backend_z(
 	struct backend_pred *bp;
 	int need_colors = 0;
 
-	if(!strcmp(format, "z5")) {
+	if(!strcmp(format, "z5") || !strcmp(format, "z5blorb")) {
 		zversion = 5;
 		packfactor = 4;
 	} else {
@@ -5371,7 +5371,7 @@ void backend_z(
 		if(coverfname || coveralt) {
 			report(LVL_WARN, 0, "Ignoring cover image options for the %s output format.", format);
 		}
-	} else if(!strcmp(format, "zblorb")) {
+	} else if(!strcmp(format, "zblorb") || !strcmp(format, "z5blorb")) {
 		if(!prg->meta_ifid) { // Shouldn't be possible now, caught in backend.c instead
 			report(LVL_ERR, 0, "An IFID declaration is mandatory for the blorb output format.");
 			exit(1);

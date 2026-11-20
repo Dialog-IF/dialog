@@ -63,7 +63,7 @@ the relevant locations in the output files. You may also query these predicates
 from your own code; the standard library invokes several of them while printing
 the banner, for instance.
 
-When compiling to the `zblorb` file format, it is possible to include cover
+When compiling to the `zblorb` or `z5blorb` file format, it is possible to include cover
 art with your story. This is not part of the Dialog language itself, but is an
 extra service provided by the Dialog compiler. Specify the name of a JPEG or PNG file
 and, optionally, a short textual description of the image, using the command-line
